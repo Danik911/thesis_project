@@ -202,3 +202,38 @@ secrets.yaml
 
 # Claude Code specific
 .claude/settings.local.json
+
+# PRP Framework specific
+# Keep PRPs/completed/ in version control for reference
+# Keep PRPs/templates/ and PRPs/ai_docs/ for team sharing
+# Ignore active work-in-progress PRPs if desired (uncomment next line)
+# PRPs/*.md
+
+# Screenshots folder
+screenshots/
+
+# Examples folder
+examples/
+
+# Project specific
+/cache/
+/lib/chroma_db/
+/tmp/
+/data/
+*.bak
+
+# Environment Variables
+.env.local
+.env.*.local
+
+# Security
+*.pem
+*.key
+*.cert
+*.crt
+
+# MCP
+.mcp/
+
+# Phoenix tracing
+phoenix_traces/
