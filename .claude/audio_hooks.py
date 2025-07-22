@@ -84,20 +84,18 @@ class AudioManager:
     def _try_windows_powershell(self, sound_path: str) -> bool:
         """Try Windows PowerShell system sounds (primary method for WSL2)"""
         try:
-            # Map sound files to PowerShell sound types
-            sound_type = self._get_powershell_sound_type(sound_path)
+            # Map sound files to PowerShell system sounds
+            sound_command = self._get_powershell_sound_command(sound_path)
             
             cmd = [
                 self.powershell_path,
-                "-ExecutionPolicy", "Bypass",
-                "-File", self.powershell_script,
-                "-SoundType", sound_type
+                "-Command", sound_command
             ]
             
-            result = subprocess.run(cmd, capture_output=True, timeout=10, text=True)
+            result = subprocess.run(cmd, capture_output=True, timeout=5, text=True)
             
             if result.returncode == 0:
-                logger.info(f"Windows PowerShell audio successful: {sound_type}")
+                logger.info(f"Windows PowerShell audio successful: {sound_command}")
                 return True
             else:
                 logger.debug(f"PowerShell failed: {result.stderr}")
@@ -107,24 +105,25 @@ class AudioManager:
             logger.debug(f"Windows PowerShell method failed: {e}")
             return False
     
-    def _get_powershell_sound_type(self, sound_path: str) -> str:
-        """Map sound file to PowerShell sound type"""
+    def _get_powershell_sound_command(self, sound_path: str) -> str:
+        """Map sound file to direct PowerShell SystemSounds command"""
         filename = Path(sound_path).stem.lower()
         
+        # Map to Windows SystemSounds API calls
         mapping = {
-            'edit': 'edit',
-            'write': 'write', 
-            'bash': 'bash',
-            'todo': 'todo',
-            'test': 'default',
-            'error': 'bash'  # Use distinctive sound for errors
+            'edit': '[System.Media.SystemSounds]::Question.Play()',
+            'write': '[System.Media.SystemSounds]::Exclamation.Play()', 
+            'bash': '[System.Media.SystemSounds]::Hand.Play()',
+            'todo': '[System.Media.SystemSounds]::Asterisk.Play()',
+            'test': '[System.Media.SystemSounds]::Beep.Play()',
+            'error': '[System.Media.SystemSounds]::Hand.Play()'
         }
         
-        for key, sound_type in mapping.items():
+        for key, command in mapping.items():
             if key in filename:
-                return sound_type
+                return command
         
-        return 'default'
+        return '[System.Media.SystemSounds]::Beep.Play()'  # default
     
     def _try_vlc(self, sound_path: str) -> bool:
         """Try VLC media player (quietest, most reliable)"""
