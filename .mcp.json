@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "perplexity-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "perplexity-mcp"
+      ],
+      "env": {
+        "PERPLEXITY_API_KEY": "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",
+        "PERPLEXITY_MODEL": "sonar"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/anteb"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "one-search-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "one-search-mcp"
+      ],
+      "env": {
+        "SEARCH_PROVIDER": "tavily",
+        "SEARCH_API_KEY": "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",
+        "FIRECRAWL_API_KEY": "fc-c6514ba933e64dc9aa10be5f786a84df",
+        "SEARCH_API_URL": "https://api.tavily.com/search",
+        "FIRECRAWL_API_URL": "https://api.firecrawl.dev"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+
+  }
+}
