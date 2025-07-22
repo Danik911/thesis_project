@@ -30,6 +30,14 @@ This is a **thesis project** with integrated **PRP (Product Requirement Prompt) 
 - `PRPs/ai_docs/` contains curated documentation for AI context injection
 - Framework supports multiple programming languages and tech stacks
 
+### Model Configuration
+
+- **Testing Model**: `gpt-4.1-mini-2025-04-14` (fast development, higher rate limits)
+- **Production Model**: `o3-2025-04-16` (highest quality reasoning)
+- **Embedding Model**: `text-embedding-3-small` (for all agents)
+  - Designed for compatibility with open-source models
+  - Can be swapped with open-source embeddings after workflow validation
+
 ## Development Workflow
 
 ### Creating Features with PRPs
@@ -83,6 +91,16 @@ npm run test
 - **Security**: Input validation, no hardcoded secrets
 - **Performance**: Efficient algorithms, proper async usage where applicable
 
+## CRITICAL DEVELOPMENT PRINCIPLES
+
+**DO NOT WRITE EXCESSIVE CODE. THE BEST CODE IS THE CODE THAT IS NOT WRITTEN.**
+
+- **Always check official documentation before implementation**
+- **Always check context7 before implementation**
+- **This project contains new libraries you don't know - research first**
+- **Minimize code complexity - prioritize simplicity over features**
+- **Verify minimal viable solutions before adding complexity**
+
 ## Project Structure
 
 ```
@@ -98,9 +116,21 @@ thesis_project/
 │   ├── scripts/          # PRP execution scripts
 │   ├── ai_docs/          # AI documentation for context
 │   └── completed/        # Archive of finished PRPs
+├── src/                  # Source code
+│   ├── agents/           # Multi-agent components
+│   ├── core/             # Workflow orchestration
+│   ├── rag/              # RAG/CAG implementation
+│   ├── security/         # Security validators
+│   ├── validation/       # Compliance checks
+│   └── shared/           # Shared utilities
+├── tests/                # Test suites
+│   ├── unit/             # Unit tests
+│   └── integration/      # Integration tests
+├── docs/                 # Documentation
 ├── screenshots/          # Project screenshots
 ├── test_generation/      # Test generation utilities
 ├── CLAUDE.md            # This file
+├── README.md            # Project overview
 └── LICENSE
 ```
 
@@ -129,7 +159,37 @@ thesis_project/
 - Use the PRP methodology for all significant changes
 - Leverage review commands before committing changes
 
-### Development Guidelines
+## Development Guidelines
+
+### Core Development Principles
+
+#### 1. Planning & Problem Solving
+- **ALWAYS use "Ultrathink"** when planning complex tasks or solving difficult issues
+- Use sequential-thinking tool (`mcp__sequential-thinking__sequentialthinking`) for complex problem analysis
+- Create detailed task execution plans before implementation
+- Document architectural decisions and reasoning
+
+#### 2. Technology Standards
+- **Use latest versions** of all libraries and dependencies (as of July 2025)
+- Always check for the most recent library versions and updates
+- Stick strictly to documentation from context7 tool or from provided web links
+- Stick strictly to the examples provided by a user
+
+#### 3. Code Quality Standards
+- **Keep files under 500 lines** to preserve readability
+- Write concise, focused code with clear separation of concerns
+- Follow Python PEP 8 style guidelines
+- Use descriptive variable and function names
+- Add docstrings for all public functions and classes
+
+#### 4. Implementation Approach
+- **Implement iterative approach**: Verify functionality with real app after ANY changes
+- Only add complexity after verifying core features work with real app
+- Always create REAL implementation - no fake data or mock implementations
+- Choose the most straightforward approach always
+- Launch the app after changes to verify functionality
+
+### PRP-Specific Guidelines
 
 - **Always** create a PRP for non-trivial features
 - **Include** comprehensive context in every PRP
