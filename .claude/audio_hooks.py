@@ -38,12 +38,12 @@ class AudioManager:
         self.powershell_script = str(sounds_dir.parent / "play_sound.ps1")
         self.audio_methods = [
             self._try_windows_powershell,
+            self._try_terminal_bell,
+            self._try_system_beep,
             self._try_vlc,
             self._try_mpg123,
             self._try_paplay,
             self._try_aplay,
-            self._try_system_beep,
-            self._try_terminal_bell,
             self._try_visual_notification
         ]
         
@@ -65,7 +65,10 @@ class AudioManager:
         
         if not sound_path.exists():
             logger.warning(f"Sound file not found: {sound_path}")
-            # Fall back to visual notification
+            # Fall back to PowerShell system sounds first
+            if self._try_windows_powershell(sound_file):
+                return True
+            # Then visual notification as final fallback
             return self._try_visual_notification(sound_file)
         
         # Try each audio method until one succeeds
@@ -87,19 +90,33 @@ class AudioManager:
             # Map sound files to PowerShell system sounds
             sound_command = self._get_powershell_sound_command(sound_path)
             
-            cmd = [
-                self.powershell_path,
-                "-Command", sound_command
+            # Try with different PowerShell execution modes for better reliability
+            cmd_variations = [
+                # Standard approach
+                [self.powershell_path, "-Command", sound_command],
+                # With explicit execution policy
+                [self.powershell_path, "-ExecutionPolicy", "Bypass", "-Command", sound_command],
+                # With window style hidden
+                [self.powershell_path, "-WindowStyle", "Hidden", "-Command", sound_command],
+                # With no profile
+                [self.powershell_path, "-NoProfile", "-Command", sound_command]
             ]
             
-            result = subprocess.run(cmd, capture_output=True, timeout=5, text=True)
-            
-            if result.returncode == 0:
-                logger.info(f"Windows PowerShell audio successful: {sound_command}")
-                return True
-            else:
-                logger.debug(f"PowerShell failed: {result.stderr}")
-                return False
+            for cmd in cmd_variations:
+                try:
+                    result = subprocess.run(cmd, capture_output=True, timeout=5, text=True, 
+                                          creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
+                    
+                    if result.returncode == 0:
+                        logger.info(f"Windows PowerShell audio successful: {sound_command}")
+                        return True
+                    else:
+                        logger.debug(f"PowerShell cmd failed: {' '.join(cmd)}, error: {result.stderr}")
+                except Exception as inner_e:
+                    logger.debug(f"PowerShell cmd exception: {inner_e}")
+                    continue
+                    
+            return False
                 
         except Exception as e:
             logger.debug(f"Windows PowerShell method failed: {e}")
@@ -115,8 +132,11 @@ class AudioManager:
             'write': '[System.Media.SystemSounds]::Exclamation.Play()', 
             'bash': '[System.Media.SystemSounds]::Hand.Play()',
             'todo': '[System.Media.SystemSounds]::Asterisk.Play()',
-            'test': '[System.Media.SystemSounds]::Beep.Play()',
-            'error': '[System.Media.SystemSounds]::Hand.Play()'
+            'test': '[System.Media.SystemSounds]::Question.Play()',
+            'error': '[System.Media.SystemSounds]::Hand.Play()',
+            'notification': '[System.Media.SystemSounds]::Exclamation.Play()',
+            'prompt': '[System.Media.SystemSounds]::Beep.Play()',
+            'completion': '[System.Media.SystemSounds]::Asterisk.Play()'
         }
         
         for key, command in mapping.items():
@@ -257,6 +277,11 @@ class ClaudeHooksHandler:
             "completion": "todo.wav",
             "error": "error.wav",
             
+            # Hook events
+            "Notification": "notification.wav",
+            "UserPromptSubmit": "prompt.wav", 
+            "Stop": "todo.wav",
+            
             # Default fallback
             "default": "test.wav"
         }
@@ -295,7 +320,15 @@ class ClaudeHooksHandler:
         tool_name = hook_data.get("tool_name", "")
         hook_event = hook_data.get("hook_event_name", "")
         
-        # Check for specific tool matches first
+        # Enhanced Stop event handling with context-aware sounds
+        if hook_event == "Stop":
+            return self.get_context_aware_stop_sound(hook_data)
+        
+        # Check hook event types first for system events
+        if hook_event in self.sound_map:
+            return self.sound_map[hook_event]
+        
+        # Check for specific tool matches
         if tool_name in self.sound_map:
             return self.sound_map[tool_name]
         
@@ -350,6 +383,15 @@ class ClaudeHooksHandler:
         tool_name = hook_data.get("tool_name", "Unknown")
         hook_event = hook_data.get("hook_event_name", "")
         
+        # Handle system hook events
+        if hook_event == "Notification":
+            return "🔔 Permission request notification"
+        elif hook_event == "UserPromptSubmit":
+            return "📤 User prompt submitted"
+        elif hook_event == "Stop":
+            return self.get_enhanced_stop_summary(hook_data)
+        
+        # Handle tool events
         if tool_name == "Edit":
             file_path = hook_data.get("tool_input", {}).get("file_path", "")
             filename = Path(file_path).name if file_path else "file"
@@ -370,6 +412,44 @@ class ClaudeHooksHandler:
         
         else:
             return f"🔔 {tool_name} - {hook_event}"
+    
+    def get_enhanced_stop_summary(self, hook_data: Dict[str, Any]) -> str:
+        """Enhanced Stop event analysis - Limited to available hook data only"""
+        try:
+            # Since Claude Code only provides hook_event_name, tool_name, and tool_input,
+            # we need alternative approaches for planning mode detection
+            
+            # For now, use simple detection based on timing patterns or manual triggers
+            # This is a limitation of the Claude Code hooks system
+            
+            return "✅ Task completed"
+            
+        except Exception as e:
+            logger.error(f"Enhanced stop analysis error: {e}")
+            return "✅ Task completed"
+    
+    def get_context_aware_stop_sound(self, hook_data: Dict[str, Any]) -> str:
+        """Return different sounds based on Stop event context"""
+        try:
+            # Since Claude Code hooks have limited data, use a simple approach:
+            # Check for a planning mode flag file as a manual override
+            planning_flag_file = self.base_dir / "planning_mode_flag.txt"
+            
+            if planning_flag_file.exists():
+                # Planning mode detected - use different sound
+                try:
+                    planning_flag_file.unlink()  # Remove the flag file after use
+                    logger.info("Planning mode flag detected - using planning completion sound")
+                    return "test.wav"  # Different sound for planning completion
+                except:
+                    pass
+            
+            # Default task completion sound
+            return self.sound_map["Stop"]
+            
+        except Exception as e:
+            logger.debug(f"Context-aware stop sound error: {e}")
+            return self.sound_map["Stop"]
 
 def main():
     """Main entry point for Claude Code hooks"""
