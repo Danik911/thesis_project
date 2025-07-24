@@ -1,0 +1,440 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Event System Foundation",
+        "description": "Create comprehensive event definitions for all agent communications with Pydantic validation",
+        "details": "Implement URSIngestionEvent, GAMPCategorizationEvent, PlanningEvent, AgentRequestEvent, AgentResultEvent, ConsultationRequiredEvent, UserDecisionEvent, TestGenerationEvent, ValidationEvent, and ErrorRecoveryEvent classes with proper validation and error handling. These events form the foundation of the entire workflow system.",
+        "testStrategy": "Unit tests for event validation, serialization/deserialization, and error cases",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Base Event Model with Pydantic Validation",
+            "description": "Establish a reusable base event class using Pydantic's BaseModel, including common fields (e.g., event_id, timestamp, event_type) and foundational validation logic.",
+            "dependencies": [],
+            "details": "Create a BaseEvent class inheriting from pydantic.BaseModel. Include shared attributes such as event_id (UUID), timestamp (datetime), and event_type (str). Implement basic validation using type hints and, if needed, @field_validator for cross-field or custom logic. Ensure the base class provides a consistent interface for all event types.",
+            "status": "pending",
+            "testStrategy": "Unit tests for instantiation, required fields, and validation error handling for missing or invalid data."
+          },
+          {
+            "id": 2,
+            "title": "Implement Specific Event Classes with Field-Level Validation",
+            "description": "Create individual event classes (URSIngestionEvent, GAMPCategorizationEvent, PlanningEvent, AgentRequestEvent, AgentResultEvent, ConsultationRequiredEvent, UserDecisionEvent, TestGenerationEvent, ValidationEvent, ErrorRecoveryEvent) inheriting from the base event, each with their own fields and validation logic.",
+            "dependencies": [],
+            "details": "For each event type, define a subclass of BaseEvent. Specify all required and optional fields using Pydantic type annotations. Use @field_validator decorators to enforce constraints (e.g., non-empty strings, valid enums, positive numbers) as appropriate for each event's semantics. Document each class and its fields for clarity.",
+            "status": "pending",
+            "testStrategy": "Unit tests for each event class covering valid instantiation, field validation, and error scenarios."
+          },
+          {
+            "id": 3,
+            "title": "Add Custom Validation and Error Handling Logic",
+            "description": "Enhance event classes with custom validation methods and robust error handling to ensure data integrity and clear error reporting.",
+            "dependencies": [],
+            "details": "Implement custom @field_validator methods for complex validation rules (e.g., cross-field dependencies, conditional requirements). Ensure that all validation errors raise Pydantic's ValidationError with informative messages. Where necessary, override model methods to provide additional error context or normalization.",
+            "status": "pending",
+            "testStrategy": "Unit tests for custom validation logic, including edge cases and error message verification."
+          },
+          {
+            "id": 4,
+            "title": "Implement Serialization and Deserialization Methods",
+            "description": "Provide methods for serializing event objects to JSON and deserializing from JSON, ensuring compatibility with the workflow system's communication protocols.",
+            "dependencies": [],
+            "details": "Leverage Pydantic's .model_dump() and .model_validate_json() methods for serialization and deserialization. Add helper methods or classmethods as needed for custom encoding/decoding (e.g., handling datetime or enum fields). Ensure all event classes can be reliably converted to and from JSON representations.",
+            "status": "pending",
+            "testStrategy": "Unit tests for round-trip serialization/deserialization, including validation of data integrity and error handling for malformed input."
+          },
+          {
+            "id": 5,
+            "title": "Document Event Definitions and Validation Contracts",
+            "description": "Produce comprehensive documentation for all event classes, their fields, validation rules, and error handling behaviors to support maintainability and onboarding.",
+            "dependencies": [],
+            "details": "Generate docstrings for each event class and field, describing expected data, validation logic, and error cases. Create a reference document (e.g., Markdown or Sphinx) summarizing all event types, their schemas, and usage examples. Ensure documentation is accessible to both developers and system integrators.",
+            "status": "pending",
+            "testStrategy": "Documentation review for completeness and clarity; sample code snippets tested for accuracy."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "GAMP-5 Categorization Agent",
+        "description": "Implement GAMP-5 categorization step (CRITICAL - FIRST workflow step)",
+        "details": "Create the critical first workflow step that analyzes URS documents to determine GAMP-5 software category (3, 4, or 5). This determines the validation rigor for the entire process. Must include error handling, fallback to Category 5 on uncertainty, and confidence scoring.",
+        "testStrategy": "Unit tests for categorization logic, integration tests with sample URS documents, validation of fallback behavior",
+        "status": "pending",
+        "dependencies": [
+          1
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design GAMP-5 Categorization Logic",
+            "description": "Define and implement the core logic to analyze URS documents and determine the appropriate GAMP-5 software category (3, 4, or 5) based on software type, configuration, and risk profile.",
+            "dependencies": [],
+            "details": "Study GAMP-5 guidelines to extract clear criteria for categories 3 (non-configurable), 4 (configurable), and 5 (customizable). Develop a rules-based or ML-driven approach to parse URS documents and map features to the correct category. Ensure the logic is modular for future updates.",
+            "status": "pending",
+            "testStrategy": "Unit tests with synthetic and real URS samples to verify correct category assignment for each scenario."
+          },
+          {
+            "id": 2,
+            "title": "Implement Confidence Scoring Mechanism",
+            "description": "Develop a system to assign a confidence score to each categorization decision, reflecting the certainty of the mapping between URS content and GAMP-5 category.",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Integrate a scoring algorithm that evaluates the strength and clarity of evidence in the URS for each category decision. Use heuristics, keyword matching, or ML model probabilities to generate a normalized confidence score (e.g., 0-1 or 0-100%). Document scoring rationale for traceability.",
+            "status": "pending",
+            "testStrategy": "Test with ambiguous and clear URS examples to ensure confidence scores align with human expert judgment."
+          },
+          {
+            "id": 3,
+            "title": "Develop Error Handling and Fallback Strategy",
+            "description": "Implement robust error handling for parsing, logic failures, and ambiguous cases, ensuring fallback to Category 5 when uncertainty or errors are detected.",
+            "dependencies": [
+              "2.1",
+              "2.2"
+            ],
+            "details": "Add exception handling for document parsing and categorization logic. Detect low-confidence or conflicting results and automatically assign Category 5 as a conservative default. Log all fallback events with reasons for auditability.",
+            "status": "pending",
+            "testStrategy": "Inject malformed, incomplete, and ambiguous URS documents to verify fallback and error logging behavior."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Categorization Agent as Workflow Step",
+            "description": "Package the categorization logic, confidence scoring, and error handling into a callable agent and integrate it as the first step in the overall workflow.",
+            "dependencies": [
+              "2.1",
+              "2.2",
+              "2.3"
+            ],
+            "details": "Expose the agent via a defined interface (API or function) that accepts URS documents and returns category, confidence score, and error/fallback status. Ensure compatibility with downstream workflow steps and provide clear output schema.",
+            "status": "pending",
+            "testStrategy": "Integration tests with the workflow engine, verifying correct invocation, output structure, and propagation of fallback/error states."
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Planner Agent Workflow",
+        "description": "Create planner agent workflow step for orchestrating test generation",
+        "details": "Implement the orchestrator agent that plans test generation approach based on GAMP category. Creates planning context, determines test types needed, and coordinates parallel agent execution.",
+        "testStrategy": "Integration tests for planning logic, validation of test type determination based on GAMP category",
+        "status": "pending",
+        "dependencies": [
+          2
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Parallel Agent Execution System",
+        "description": "Implement parallel agent execution (context, SME, research) with num_workers=3",
+        "details": "Create the multi-agent system with Context Provider Agent (RAG/CAG), SME Agents (domain experts), and Research Agent (regulatory updates). Implement parallel execution with comprehensive error handling, timeout protection, and partial failure recovery.",
+        "testStrategy": "Unit tests for individual agents, integration tests for parallel execution, timeout and error handling validation",
+        "status": "pending",
+        "dependencies": [
+          3
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Agent Interfaces and Workflow Contracts",
+            "description": "Define clear interfaces and contracts for the Context Provider Agent, SME Agents, and Research Agent, specifying input/output schemas, error signaling, and timeout semantics.",
+            "dependencies": [],
+            "details": "Specify Pydantic models or equivalent for agent requests and responses. Document expected behaviors, error codes, and timeout handling for each agent type. Ensure compatibility with LlamaIndex workflow orchestration and event system foundations.",
+            "status": "pending",
+            "testStrategy": "Unit test interface validation, schema enforcement, and contract compliance for each agent."
+          },
+          {
+            "id": 2,
+            "title": "Implement Individual Agent Logic",
+            "description": "Develop the core logic for the Context Provider Agent (RAG/CAG), SME Agents (domain experts), and Research Agent (regulatory updates), ensuring each can process requests independently.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "For each agent, implement request handling, context management, and domain-specific processing. Integrate with LlamaIndex for retrieval and generation as appropriate. Include robust error handling and logging within each agent.",
+            "status": "pending",
+            "testStrategy": "Unit test each agent's logic, including normal and error scenarios, using mock requests and responses."
+          },
+          {
+            "id": 3,
+            "title": "Develop Parallel Execution Orchestrator",
+            "description": "Create an orchestrator to manage parallel execution of the three agent types using num_workers=3, supporting concurrent task dispatch and result aggregation.",
+            "dependencies": [
+              "4.2"
+            ],
+            "details": "Implement a workflow manager leveraging LlamaIndex or equivalent parallel execution primitives. Ensure agents are invoked concurrently, respecting the num_workers=3 constraint. Aggregate results and maintain execution context for each agent.",
+            "status": "pending",
+            "testStrategy": "Integration test orchestrator with simulated agent workloads, verifying parallelism and correct result aggregation."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Comprehensive Error Handling and Timeout Protection",
+            "description": "Add error handling and timeout logic to the orchestrator and agents, ensuring graceful degradation, error propagation, and recovery from partial failures.",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Implement per-agent and global timeouts. Capture and log all exceptions, returning structured error responses. Design recovery strategies for partial failures (e.g., retry, fallback, or partial result return). Ensure orchestrator can continue processing if one or more agents fail.",
+            "status": "pending",
+            "testStrategy": "Test with induced agent failures and timeouts, verifying correct error reporting, logging, and partial recovery behavior."
+          },
+          {
+            "id": 5,
+            "title": "Implement Partial Failure Recovery and Result Merging",
+            "description": "Enable the system to merge successful agent results and handle missing or failed agent outputs, providing a coherent aggregated response.",
+            "dependencies": [
+              "4.4"
+            ],
+            "details": "Design logic to merge agent outputs, annotate partial results, and flag missing data. Ensure downstream consumers can distinguish between complete and partial responses. Document recovery and merging strategies.",
+            "status": "pending",
+            "testStrategy": "Integration test with various combinations of agent success/failure, validating merged output structure and correctness."
+          },
+          {
+            "id": 6,
+            "title": "Validate System with End-to-End and Stress Testing",
+            "description": "Conduct comprehensive end-to-end and stress tests of the parallel agent execution system, including error, timeout, and recovery scenarios.",
+            "dependencies": [
+              "4.5"
+            ],
+            "details": "Develop test suites simulating realistic and edge-case workflows. Measure system throughput, latency, and robustness under load. Validate that all error handling, timeout, and recovery mechanisms function as intended.",
+            "status": "pending",
+            "testStrategy": "Automated end-to-end tests, stress/load testing, and manual validation of error and recovery paths."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Human-in-the-Loop Consultation",
+        "description": "Add human-in-the-loop consultation step with timeout handling",
+        "details": "Implement critical decision points where human consultation is required for regulatory compliance. Include timeout mechanisms with conservative defaults, user interface integration, and audit trail logging.",
+        "testStrategy": "Integration tests for consultation flow, timeout behavior validation, default decision logic testing",
+        "status": "pending",
+        "dependencies": [
+          4
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Test Generation Engine",
+        "description": "Create test generation step with validation and GAMP-5 awareness",
+        "details": "Implement the core test script generation functionality that produces OQ test scripts based on agent outputs, GAMP category, and compliance requirements. Include traceability matrix generation and validation.",
+        "testStrategy": "Unit tests for test script generation, validation of GAMP-5 compliance, traceability matrix testing",
+        "status": "pending",
+        "dependencies": [
+          5
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Compliance Validation System",
+        "description": "Add compliance validation (ALCOA+, 21 CFR Part 11, GAMP-5)",
+        "details": "Implement comprehensive compliance validation including ALCOA+ data integrity principles, 21 CFR Part 11 electronic records compliance, and GAMP-5 validation requirements. Include automated validation gates and reporting.",
+        "testStrategy": "Compliance validation tests, regulatory requirement verification, audit trail validation",
+        "status": "pending",
+        "dependencies": [
+          6
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement ALCOA+ Data Integrity Controls",
+            "description": "Design and implement system features that enforce ALCOA+ data integrity principles, ensuring all data is attributable, legible, contemporaneous, original, accurate, complete, consistent, enduring, and available.",
+            "dependencies": [],
+            "details": "Integrate audit trails, unique user authentication, time-stamped records, and data versioning. Ensure all data entries are traceable to their originator and modification history is preserved. Use automated data capture and validation mechanisms to minimize human error and enforce contemporaneous recording. Provide mechanisms for long-term data retention and accessibility in accordance with regulatory requirements.",
+            "status": "pending",
+            "testStrategy": "Verify audit trail completeness, test user attribution, simulate data entry and modification scenarios, and validate data accessibility and legibility over time."
+          },
+          {
+            "id": 2,
+            "title": "Integrate 21 CFR Part 11 Electronic Records Compliance",
+            "description": "Implement controls and features to ensure compliance with 21 CFR Part 11 requirements for electronic records and electronic signatures.",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "Add electronic signature functionality with multi-factor authentication, enforce secure user access controls, and implement system checks for record authenticity and integrity. Ensure all electronic records are protected against unauthorized access or modification. Maintain a secure, validated audit trail for all record-related actions, and provide mechanisms for record retrieval and review as required by regulatory authorities.",
+            "status": "pending",
+            "testStrategy": "Conduct validation tests for electronic signatures, access control enforcement, audit trail integrity, and simulate regulatory audit scenarios."
+          },
+          {
+            "id": 3,
+            "title": "Apply GAMP-5 Validation Lifecycle Requirements",
+            "description": "Establish and document a validation lifecycle for the compliance system in accordance with GAMP-5 guidelines, covering risk assessment, specification, verification, and change management.",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "Develop validation plans, user requirements specifications, functional specifications, and risk assessments. Implement verification protocols (IQ/OQ/PQ) and maintain traceability matrices. Set up change control procedures and periodic review processes to ensure ongoing compliance. Document all validation activities and outcomes for regulatory inspection.",
+            "status": "pending",
+            "testStrategy": "Review validation documentation for completeness, execute verification protocols, and audit traceability matrices and change control records."
+          },
+          {
+            "id": 4,
+            "title": "Automate Validation Gates and Regulatory Reporting",
+            "description": "Develop automated validation gates to enforce compliance checkpoints and generate regulatory reports summarizing compliance status and audit findings.",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "Implement automated workflows that trigger validation checks at key process stages (e.g., data entry, record modification, system updates). Generate real-time compliance dashboards and periodic reports detailing validation status, audit trail summaries, and any detected non-conformities. Ensure reports are exportable in formats suitable for regulatory submission and internal review.",
+            "status": "pending",
+            "testStrategy": "Test automated gate triggers, validate report accuracy and completeness, and simulate regulatory reporting scenarios."
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Error Handling and Recovery",
+        "description": "Implement comprehensive error handling and retry logic",
+        "details": "Create robust error handling for all known failure modes including rate limits, agent failures, timeouts, and configuration issues. Implement retry mechanisms, fallback strategies, and graceful degradation.",
+        "testStrategy": "Error injection testing, recovery mechanism validation, fallback strategy testing",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Monitoring and Audit Trail",
+        "description": "Add monitoring and audit trail system",
+        "details": "Implement Phoenix AI integration for tracing and observability, comprehensive audit trail logging for regulatory compliance, and monitoring dashboard for system health.",
+        "testStrategy": "Monitoring integration tests, audit trail completeness validation, dashboard functionality testing",
+        "status": "pending",
+        "dependencies": [
+          8
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Performance Optimization",
+        "description": "Implement rate limit protection, caching, and performance optimization",
+        "details": "Create WorkflowAPIManager for rate limit protection, implement embedding cache with content hashing, add transaction safety for RAG operations, and optimize vector DB performance.",
+        "testStrategy": "Performance benchmarking, rate limit testing, cache efficiency validation",
+        "status": "pending",
+        "dependencies": [
+          8
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Vector DB Integrity and Transaction Safety",
+        "description": "Add vector DB integrity checks and transaction safety for RAG operations",
+        "details": "Implement transactional RAG ingestion with resume capability, vector database integrity checks, and automatic re-indexing. Ensure data consistency and recovery from partial failures.",
+        "testStrategy": "Transaction safety testing, integrity check validation, recovery mechanism testing",
+        "status": "pending",
+        "dependencies": [
+          10
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Comprehensive Testing Suite",
+        "description": "Create comprehensive tests and validation scripts",
+        "details": "Implement unit tests for all workflow steps, integration tests for multi-agent coordination, compliance validation scripts, and end-to-end testing scenarios. Include test data and mock services.",
+        "testStrategy": "Test coverage analysis, continuous integration setup, automated testing pipeline",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Security Implementation",
+        "description": "Implement OWASP LLM Top 10 security mitigations",
+        "details": "Address OWASP LLM Top 10 risks including prompt injection protection (StruQ), data poisoning prevention, output handling (Llama Guard), and zero-trust architecture implementation.",
+        "testStrategy": "Security testing, penetration testing, vulnerability assessment",
+        "status": "pending",
+        "dependencies": [
+          8
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Documentation and Deployment",
+        "description": "Create production deployment documentation and user guides",
+        "details": "Comprehensive documentation including deployment guides, user manuals, API documentation, regulatory compliance documentation, and troubleshooting guides.",
+        "testStrategy": "Documentation review, deployment testing in staging environment",
+        "status": "pending",
+        "dependencies": [
+          12,
+          13
+        ],
+        "priority": "low",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-24T13:02:40.457Z",
+      "description": "Default tasks context",
+      "updated": "2025-07-24T13:03:50.374Z"
+    }
+  },
+  "implementation": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-07-24T13:05:00.967Z",
+      "updated": "2025-07-24T13:05:00.967Z",
+      "description": "Core implementation tasks for the multi-agent workflow system"
+    }
+  },
+  "compliance": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-07-24T13:05:01.214Z",
+      "updated": "2025-07-24T13:05:01.214Z",
+      "description": "Regulatory compliance tasks (GAMP-5, 21 CFR Part 11, ALCOA+)"
+    }
+  },
+  "security": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-07-24T13:05:01.421Z",
+      "updated": "2025-07-24T13:05:01.421Z",
+      "description": "Security implementation and OWASP LLM Top 10 mitigations"
+    }
+  },
+  "testing": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-07-24T13:05:01.605Z",
+      "updated": "2025-07-24T13:05:01.605Z",
+      "description": "Testing, validation, and quality assurance tasks"
+    }
+  }
+}

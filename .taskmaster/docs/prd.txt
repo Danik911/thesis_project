@@ -1,0 +1,132 @@
+<context>
+# Overview
+This thesis project implements a multi-agent LLM system for generating Operational Qualification (OQ) test scripts from User Requirements Specifications (URS) in the pharmaceutical/life sciences domain. The system addresses the critical challenge of automating Computerised System Validation (CSV) while maintaining regulatory compliance (GAMP-5, 21 CFR Part 11, ALCOA+) and security.
+
+**Research Goal**: Achieve 70% reduction in test script generation time while maintaining ≥90% requirements coverage and 100% regulatory compliance.
+
+# Core Features
+- **GAMP-5 Categorization Agent**: Critical first step that analyzes URS documents to determine software category (3, 4, or 5), defining validation rigor
+- **Multi-Agent Workflow**: Event-driven LlamaIndex workflow with specialized agents (Planner, Context Provider, SME Agents, Research Agent, Test Generator)
+- **Human-in-the-Loop**: Critical decision points with timeout fallbacks for regulatory compliance
+- **Compliance Validation**: Automated ALCOA+ and 21 CFR Part 11 compliance checking
+- **Error Recovery**: Comprehensive error handling for rate limits, agent failures, and timeout scenarios
+- **Audit Trail**: Complete regulatory audit trail for all decisions and generated artifacts
+
+# User Experience
+- **Primary Users**: Pharmaceutical validation engineers and compliance specialists
+- **Key User Flow**: Upload URS → Automated GAMP-5 categorization → Multi-agent analysis → Human consultation → Test script generation → Compliance validation
+- **Interface**: Gradio web interface with monitoring dashboard (Phoenix AI)
+</context>
+
+<PRD>
+# Technical Architecture
+## Core Technology Stack
+- **Framework**: LlamaIndex 0.12.0+ with Workflows (event-driven architecture)
+- **LLM**: OpenAI GPT-4 (primary), GPT-4.1-mini (cost-effective fallback)
+- **Embeddings**: text-embedding-3-small (OpenAI) with intelligent caching
+- **Vector Store**: ChromaDB with transactional support and integrity checks
+- **Monitoring**: Phoenix AI for tracing and observability
+- **Validation**: Custom GAMP-5 and ALCOA+ validators
+
+## System Components
+### Event-Driven Workflow System
+- URSIngestionEvent, GAMPCategorizationEvent, PlanningEvent, AgentRequestEvent, AgentResultEvent
+- ConsultationRequiredEvent, UserDecisionEvent, TestGenerationEvent, ValidationEvent
+- ErrorRecoveryEvent for comprehensive error handling
+
+### Multi-Agent Architecture
+1. **GAMP-5 Categorizer Agent** (Entry Point): Determines software category and validation requirements
+2. **Planner Agent** (Orchestrator): Plans test generation approach based on GAMP category
+3. **Context Provider Agent**: RAG/CAG for retrieving relevant documentation
+4. **SME Agents**: Domain-specific expertise (fine-tuned models)
+5. **Research Agent**: Latest regulatory updates and compliance requirements
+6. **Test Generator Agent**: Produces compliant test scripts
+7. **Validation Agent**: ALCOA+ and security compliance checks
+
+## Data Models
+- URS document processing with metadata extraction
+- GAMP-5 categorization schema with confidence scoring
+- Test script templates with traceability matrices
+- Audit trail records with regulatory compliance
+
+# Development Roadmap
+## Phase 1: Foundation (Core Event System)
+- Event definitions with Pydantic validation
+- Basic workflow infrastructure with timeout handling
+- GAMP-5 categorization agent (CRITICAL FIRST STEP)
+- Error recovery mechanisms and audit logging
+
+## Phase 2: Multi-Agent System
+- Planner agent workflow step implementation
+- Parallel agent execution system (num_workers=3)
+- Agent communication protocols with error handling
+- Rate limit protection and API management
+
+## Phase 3: Human Integration & Test Generation
+- Human-in-the-loop consultation with timeout defaults
+- Test generation engine with GAMP-5 awareness
+- Compliance validation (ALCOA+, 21 CFR Part 11)
+- Traceability matrix generation
+
+## Phase 4: Production Readiness
+- Comprehensive error handling and retry logic
+- Monitoring and observability (Phoenix AI integration)
+- Performance optimization (caching, rate limiting)
+- Security implementation (OWASP LLM Top 10)
+
+## Phase 5: Validation & Testing
+- Unit tests for all workflow steps
+- Integration tests for multi-agent coordination
+- Compliance validation scripts
+- Performance benchmarking and evaluation
+
+# Logical Dependency Chain
+1. **Event System Foundation**: Must be implemented first - all agent communication depends on events
+2. **GAMP-5 Categorization**: Critical first workflow step - determines entire validation approach
+3. **Basic Workflow Infrastructure**: Planner agent and orchestration logic
+4. **Parallel Agent System**: Context, SME, and Research agents with error handling
+5. **Human Consultation**: Decision points with timeout fallbacks
+6. **Test Generation**: Core functionality depending on all agent outputs
+7. **Validation & Compliance**: Final verification before output
+8. **Error Handling**: Comprehensive recovery mechanisms throughout
+9. **Monitoring & Optimization**: Performance and observability features
+10. **Testing & Validation**: Comprehensive test suite and compliance verification
+
+# Risks and Mitigations
+## Technical Challenges
+- **Rate Limit Exhaustion**: Implement WorkflowAPIManager with call tracking and cheaper model fallbacks
+- **Agent Communication Failures**: Robust event validation, timeout handling, and partial failure recovery
+- **Vector DB Transaction Failures**: Transactional ingestion with resume capability and integrity checks
+- **Large Output Handling**: Truncated stream handlers and safe output functions
+
+## Regulatory Compliance Risks
+- **GAMP-5 Categorization Errors**: Default to most rigorous validation (Category 5) on uncertainty
+- **Audit Trail Gaps**: Comprehensive logging at every workflow step with timestamp and details
+- **Validation Failures**: Multiple validation gates with clear failure reporting and recovery
+
+## Performance and Scalability
+- **Embedding Cache Misses**: Intelligent content-based caching with persistent storage
+- **Workflow Timeouts**: Configurable timeouts with graceful degradation
+- **Memory and Storage**: Efficient document processing and cleanup procedures
+
+# Appendix
+## Critical Implementation Patterns
+- Event-driven architecture with comprehensive validation
+- Rate limit protection with fallback strategies
+- Human-in-the-loop with timeout defaults
+- Transaction safety for all data operations
+- Comprehensive audit trail for regulatory compliance
+
+## Validation Requirements
+- GAMP-5 compliance validation
+- ALCOA+ data integrity principles
+- 21 CFR Part 11 electronic records compliance
+- OWASP LLM Top 10 security mitigations
+
+## Success Metrics
+- 70% reduction in test script generation time
+- ≥90% requirements coverage with <5% false positives
+- 100% regulatory compliance rate
+- >95% error recovery success rate
+- >90% one-pass implementation rate
+</PRD>

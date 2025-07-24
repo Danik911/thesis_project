@@ -1,213 +1,135 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this thesis project.
 
 ## 🚨 CRITICAL OPERATING PRINCIPLE 🚨
 
 **NEVER CLAIM SUCCESS WITHOUT USER CONFIRMATION**
 
 - ❌ NEVER say "working", "successful", "complete", "fixed", "resolved" without explicit user verification
-- ❌ NEVER assume logs showing "success" mean actual success from user perspective  
-- ❌ NEVER claim "mission accomplished" or similar without user confirming the result
 - ✅ ALWAYS ask "Did you hear/see/experience the expected result?" before claiming success
 - ✅ ALWAYS wait for user confirmation before updating status to "complete"
-- ✅ ALWAYS acknowledge when user reports "no" or "didn't work" immediately
 
-**USER FEEDBACK IS THE ONLY SOURCE OF TRUTH FOR SUCCESS**
+## Project Overview
 
-## Project Nature
+**Thesis Project**: Multi-agent LLM system for pharmaceutical test generation (GAMP-5 compliant)
+**Dual Framework**: Task-Master AI (project management) + PRP Framework (technical specs)
 
-This is a **thesis project** with integrated **PRP (Product Requirement Prompt) Framework**. The project follows the PRP methodology: **"PRP = PRD + curated codebase intelligence + agent/runbook"** - designed to enable AI agents to ship production-ready code on the first pass.
+## 🎯 Task-Master AI Integration
 
-## Core Architecture
-
-### PRP Framework Integration
-
-- **Pre-configured Claude Code commands** in `.claude/commands/`
-- Core commands available:
-  - `/create-base-prp` - Generate comprehensive PRPs with research
-  - `/execute-base-prp` - Execute PRPs against codebase
-  - `/review-general` - Code review workflows
-  - `/review-staged-unstaged` - Review git changes
-  - `/prime-core` - Prime Claude with project context
-  - `/onboarding` - Onboarding process for new team members
-
-### Template-Based Methodology
-
-- **PRP Templates** in `PRPs/templates/` follow structured format with validation loops
-- **Context-Rich Approach**: Every PRP must include comprehensive documentation, examples, and gotchas
-- **Validation-First Design**: Each PRP contains executable validation gates (syntax, tests, integration)
-
-### AI Documentation Curation
-
-- `PRPs/ai_docs/` contains curated documentation for AI context injection
-- Framework supports multiple programming languages and tech stacks
-
-### Model Configuration
-
-- **Testing Model**: `gpt-4.1-mini-2025-04-14` (fast development, higher rate limits)
-- **Production Model**: `o3-2025-04-16` (highest quality reasoning)
-- **Embedding Model**: `text-embedding-3-small` (for all agents)
-  - Designed for compatibility with open-source models
-  - Can be swapped with open-source embeddings after workflow validation
-
-## Development Workflow
-
-### Creating Features with PRPs
-
-1. **Use PRP Creation**: `/create-base-prp [feature description]`
-2. **Research Phase**: Deep codebase analysis and external research
-3. **Context Gathering**: Include all necessary documentation and examples
-4. **Implementation**: `/execute-base-prp PRPs/[feature-name].md`
-5. **Validation**: Run all validation gates until passing
-
-### Validation Requirements
-
-Every implementation must pass these validation gates:
-
+### Essential Commands
 ```bash
-# Level 1: Syntax & Style (adjust based on your tech stack)
-# For Python projects:
-ruff check --fix && mypy .
+# Daily workflow
+mcp__task-master-ai__next_task                    # Get next task
+mcp__task-master-ai__get_task --id=X              # View task details
+mcp__task-master-ai__set_task_status --id=X --status=in-progress
+mcp__task-master-ai__update_subtask --id=X.Y --prompt="Progress notes"
+mcp__task-master-ai__set_task_status --id=X.Y --status=done
 
-# For JavaScript/TypeScript:
-npm run lint && npm run typecheck
-
-# Level 2: Unit Tests
-# For Python:
-uv run pytest tests/ -v
-# For Node.js:
-npm run test
-
-# Level 3: Integration Tests
-# Start your application and test endpoints/functionality
-
-# Level 4: Creative Validation
-# Custom validation methods specific to your project
+# Task management
+mcp__task-master-ai__expand_task --id=X --research
+mcp__task-master-ai__research --query="..." --taskIds="X,Y"
+mcp__task-master-ai__get_tasks --status=pending
 ```
 
-## Critical Success Patterns
+### Pre-configured Tasks
+- **14 main tasks** following GAMP-5 implementation order
+- **19+ subtasks** for detailed tracking
+- **Dependencies** enforced for proper workflow
+- **Compliance focus** (ALCOA+, 21 CFR Part 11)
 
-### The PRP Methodology
+**📖 Full Documentation**: [Task-Master AI Guide](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
 
-1. **Context is King**: Include ALL necessary documentation, examples, and caveats
-2. **Validation Loops**: Provide executable tests/lints the AI can run and fix
-3. **Information Dense**: Use keywords and patterns from the codebase
-4. **Progressive Success**: Start simple, validate, then enhance
+## 🔧 PRP Framework Integration
 
-### Code Quality Standards
+### Core Commands
+```bash
+/create-base-prp "feature description"     # Generate comprehensive PRPs
+/execute-base-prp PRPs/feature.md         # Execute PRP implementation
+/review-staged-unstaged                    # Review changes
+```
 
-- **Type Safety**: Use proper type hints/annotations
-- **Error Handling**: Specific exception handling, no broad catches
-- **Testing**: Unit tests co-located with features
-- **Documentation**: Clear README and inline documentation
-- **Security**: Input validation, no hardcoded secrets
-- **Performance**: Efficient algorithms, proper async usage where applicable
+### Usage Pattern
+- **Task-Master**: Daily progress tracking, dependencies, research
+- **PRP**: Detailed technical specifications and implementation guidance
+- **Integration**: Reference PRP details within task-master tasks
 
-## CRITICAL DEVELOPMENT PRINCIPLES
+## 🏗️ Development Workflow
 
-**DO NOT WRITE EXCESSIVE CODE. THE BEST CODE IS THE CODE THAT IS NOT WRITTEN.**
+### 1. Start Development Session
+```bash
+mcp__task-master-ai__next_task              # Get next available task
+mcp__task-master-ai__set_task_status --id=X --status=in-progress
+```
 
-- **Always check official documentation before implementation**
-- **Always check context7 before implementation**
-- **This project contains new libraries you don't know - research first**
-- **Minimize code complexity - prioritize simplicity over features**
-- **Verify minimal viable solutions before adding complexity**
+### 2. During Implementation
+```bash
+# Log progress frequently
+mcp__task-master-ai__update_subtask --id=X.Y --prompt="Implementation notes"
 
-## Project Structure
+# Research when stuck
+mcp__task-master-ai__research --query="specific question" --taskIds="X"
 
+# Use PRP for complex features
+/execute-base-prp PRPs/detailed-feature.md
+```
+
+### 3. Complete Tasks
+```bash
+# Mark subtasks complete
+mcp__task-master-ai__set_task_status --id=X.Y --status=done
+
+# Validate with tests
+uv run ruff check --fix && uv run mypy .
+uv run pytest tests/ -v
+
+# Mark main task complete
+mcp__task-master-ai__set_task_status --id=X --status=done
+```
+
+## 🧪 Critical Project Requirements
+
+### Architecture
+- **LlamaIndex 0.12.0+** workflows with event-driven multi-agent system
+- **GAMP-5 categorization** as critical first step
+- **Compliance validation** (ALCOA+, 21 CFR Part 11)
+- **Error handling** with comprehensive recovery
+
+### Technology Stack
+- **Python 3.12+** with UV package manager
+- **Claude Sonnet 4.0** (configured in task-master)
+- **Phoenix AI** monitoring integration
+- **ChromaDB** with transactional support
+
+### Development Principles
+- **Research first**: Always check context7 and official docs
+- **Incremental validation**: Test after each change
+- **Compliance focus**: All implementations must be GAMP-5 compliant
+- **Error prevention**: Address known gotchas proactively
+
+## 📂 Project Structure
 ```
 thesis_project/
-├── .claude/
-│   ├── commands/          # Claude Code commands for PRP workflow
-│   └── settings.local.json
-├── .git/
-├── .gitignore
-├── .mcp.json
-├── PRPs/
-│   ├── templates/         # PRP templates (prp_base.md, prp_spec.md, prp_planning.md)
-│   ├── scripts/          # PRP execution scripts
-│   ├── ai_docs/          # AI documentation for context
-│   └── completed/        # Archive of finished PRPs
-├── src/                  # Source code
-│   ├── agents/           # Multi-agent components
-│   ├── core/             # Workflow orchestration
-│   ├── rag/              # RAG/CAG implementation
-│   ├── security/         # Security validators
-│   ├── validation/       # Compliance checks
-│   └── shared/           # Shared utilities
-├── tests/                # Test suites
-│   ├── unit/             # Unit tests
-│   └── integration/      # Integration tests
-├── docs/                 # Documentation
-├── screenshots/          # Project screenshots
-├── test_generation/      # Test generation utilities
-├── CLAUDE.md            # This file
-├── README.md            # Project overview
-└── LICENSE
+├── .taskmaster/           # Task-Master AI (project management)
+├── PRPs/                  # PRP Framework (technical specs)
+├── src/agents/            # Multi-agent implementation
+├── src/core/              # Workflow orchestration
+├── tests/                 # Comprehensive test suites
+└── .claude/commands/      # Custom Claude commands
 ```
 
-## Anti-Patterns to Avoid
+## 🔗 External Resources
 
-- ❌ Don't create minimal context prompts - context is everything
-- ❌ Don't skip validation steps - they're critical for success
-- ❌ Don't ignore the structured PRP format
-- ❌ Don't create new patterns when existing templates work
-- ❌ Don't hardcode values that should be configurable
-- ❌ Don't use broad exception handling
+- **Task-Master Documentation**: [GitHub Repository](https://github.com/eyaltoledano/claude-task-master)
+- **Task-Master Tutorial**: [Getting Started Guide](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
+- **GAMP-5 Guidelines**: [ISPE GAMP-5](https://ispe.org/publications/guidance-documents/gamp-5)
+- **LlamaIndex Workflows**: [Official Documentation](https://docs.llamaindex.ai/en/stable/module_guides/workflow/)
+- **21 CFR Part 11**: [FDA Guidance](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application)
 
-## Working with This Project
+## ⚡ Quick References
 
-### Getting Started
+**Status Values**: `pending`, `in-progress`, `done`, `blocked`, `deferred`, `cancelled`
+**Priority Levels**: `high`, `medium`, `low`
+**Task ID Format**: Main tasks (1, 2, 3), Subtasks (1.1, 1.2, 2.1)
 
-1. **Prime Context**: Use `/prime-core` to understand the project
-2. **Onboarding**: Use `/onboarding` for comprehensive project overview
-3. **Create Features**: Use `/create-base-prp [description]` for new functionality
-4. **Execute Work**: Use `/execute-base-prp PRPs/[feature].md` to implement
-
-### Command Usage
-
-- Access commands via `/` prefix in Claude Code
-- Commands are self-documenting with argument placeholders
-- Use the PRP methodology for all significant changes
-- Leverage review commands before committing changes
-
-## Development Guidelines
-
-### Core Development Principles
-
-#### 1. Planning & Problem Solving
-- **ALWAYS use "Ultrathink"** when planning complex tasks or solving difficult issues
-- Use sequential-thinking tool (`mcp__sequential-thinking__sequentialthinking`) for complex problem analysis
-- Create detailed task execution plans before implementation
-- Document architectural decisions and reasoning
-
-#### 2. Technology Standards
-- **Use latest versions** of all libraries and dependencies (as of July 2025)
-- Always check for the most recent library versions and updates
-- Stick strictly to documentation from context7 tool or from provided web links
-- Stick strictly to the examples provided by a user
-
-#### 3. Code Quality Standards
-- **Keep files under 500 lines** to preserve readability
-- Write concise, focused code with clear separation of concerns
-- Follow Python PEP 8 style guidelines
-- Use descriptive variable and function names
-- Add docstrings for all public functions and classes
-
-#### 4. Implementation Approach
-- **Implement iterative approach**: Verify functionality with real app after ANY changes
-- Only add complexity after verifying core features work with real app
-- Always create REAL implementation - no fake data or mock implementations
-- Choose the most straightforward approach always
-- Launch the app after changes to verify functionality
-
-### PRP-Specific Guidelines
-
-- **Always** create a PRP for non-trivial features
-- **Include** comprehensive context in every PRP
-- **Run** all validation gates before considering work complete
-- **Document** important decisions and patterns
-- **Test** thoroughly with both unit and integration tests
-
-Remember: This project uses the PRP framework for **one-pass implementation success through comprehensive context and validation**. Every PRP should contain the exact context needed for successful implementation.
+Remember: This project requires **regulatory compliance** and **pharmaceutical validation standards**. Always prioritize compliance over speed.

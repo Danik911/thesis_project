@@ -72,6 +72,10 @@ uv pip install -e .
 # Copy environment configuration
 cp .env.example .env
 # Edit .env with your API keys
+
+# Initialize task management (already configured)
+# Task-Master AI is pre-configured with Claude Sonnet 4.0
+# Use MCP tools: mcp__task-master-ai__* for task management
 ```
 
 ### Basic Usage
@@ -88,22 +92,67 @@ python -m phoenix.server.main serve &
 python -m src.main --interactive --enable-monitoring
 ```
 
-## 🛠️ Development Workflow
+### Task Management (Claude Code)
 
-### PRP Framework Integration
-
-This project uses the **Product Requirement Prompt (PRP)** framework for structured development:
+This project uses Task-Master AI for intelligent project management:
 
 ```bash
-# Create a new feature PRP
+# View all tasks and progress
+mcp__task-master-ai__get_tasks
+
+# Get next available task
+mcp__task-master-ai__next_task
+
+# Start working on a task
+mcp__task-master-ai__set_task_status --id=1 --status=in-progress
+
+# Log implementation progress
+mcp__task-master-ai__update_subtask --id=1.1 --prompt="Implemented event validation logic"
+
+# Research with project context
+mcp__task-master-ai__research --query="LlamaIndex workflow patterns" --taskIds="3,4"
+
+# Complete tasks
+mcp__task-master-ai__set_task_status --id=1.1 --status=done
+```
+
+**Pre-configured Tasks:**
+- 14 main tasks with dependencies following GAMP-5 implementation order
+- 19+ subtasks for detailed implementation tracking
+- Compliance-focused task breakdown (ALCOA+, 21 CFR Part 11)
+- Research integration for regulatory best practices
+
+## 🛠️ Development Workflow
+
+### Integrated Development Approach
+
+This project combines **Task-Master AI** for project management with **PRP Framework** for technical specifications:
+
+#### Task-Master AI (Project Management)
+```bash
+# Daily workflow
+mcp__task-master-ai__next_task                    # Get next task
+mcp__task-master-ai__set_task_status --id=X --status=in-progress
+mcp__task-master-ai__update_subtask --id=X.Y --prompt="Progress notes"
+mcp__task-master-ai__set_task_status --id=X.Y --status=done
+
+# Task management
+mcp__task-master-ai__expand_task --id=X --research  # Break down complex tasks
+mcp__task-master-ai__research --query="..." --taskIds="X,Y"  # Research integration
+```
+
+#### PRP Framework (Technical Specifications)
+```bash
+# For detailed technical guidance
 /create-base-prp "Add ALCOA+ validation module"
-
-# Execute the PRP
 /execute-base-prp PRPs/alcoa-validation.md
-
-# Review changes
 /review-staged-unstaged
 ```
+
+**Usage Pattern:**
+- **Task-Master**: Daily progress tracking, task dependencies, research
+- **PRP**: Detailed technical specifications and implementation guidance
+- **Integration**: Reference PRP details within task-master tasks
 
 ### Testing
 
@@ -161,7 +210,12 @@ thesis_project/
 │   ├── rag/               # RAG/CAG implementation
 │   ├── security/          # Security validators
 │   └── validation/        # Compliance checks
-├── PRPs/                  # PRP documents
+├── .taskmaster/           # Task-Master AI configuration
+│   ├── tasks/             # Task files and database
+│   ├── docs/              # PRD and research documents
+│   ├── reports/           # Complexity and analysis reports
+│   └── config.json        # AI model configuration
+├── PRPs/                  # PRP documents (technical specs)
 │   ├── templates/         # PRP templates
 │   └── completed/         # Executed PRPs
 ├── tests/                 # Test suites
@@ -193,10 +247,16 @@ python -m src.monitoring.export --format csv
 
 This is an academic research project. Contributions should align with thesis objectives:
 
-1. Follow PRP methodology for changes
-2. Maintain regulatory compliance
-3. Document security considerations
-4. Include comprehensive tests
+1. Use Task-Master AI for project management and progress tracking
+2. Follow PRP methodology for detailed technical specifications
+3. Maintain regulatory compliance (GAMP-5, 21 CFR Part 11, ALCOA+)
+4. Document security considerations
+5. Include comprehensive tests
+
+**Development Process:**
+- Track work using `mcp__task-master-ai__*` tools
+- Reference PRPs for technical implementation details
+- Update task progress and research findings regularly
 
 ## 📚 References
 
@@ -214,4 +274,26 @@ This project is part of academic research. See [LICENSE](LICENSE) for details.
 
 ---
 
-*This project integrates the PRP (Product Requirement Prompt) framework for enhanced AI-assisted development. For more information, see [PRPs/ai_docs/prp_methodology.md](PRPs/ai_docs/prp_methodology.md)*
+## 🔧 Dual Framework Architecture
+
+This project integrates **Task-Master AI** and **PRP Framework** for comprehensive development management:
+
+### Task-Master AI (Project Management)
+- **Purpose**: Dynamic task tracking, progress management, research integration
+- **Usage**: Daily development workflow, dependency management, AI-assisted research
+- **Location**: `.taskmaster/` directory with 14 pre-configured tasks
+- **Documentation**: [Task-Master AI Documentation](https://github.com/eyaltoledano/claude-task-master)
+
+### PRP Framework (Technical Specifications)
+- **Purpose**: Detailed technical implementation guidance and context
+- **Usage**: Complex feature development, implementation patterns, validation
+- **Available Templates**: 
+  - **LlamaIndex Workflows**: `/prp_context/use-cases/llama-index-workflows/`
+  - **PydanticAI Agents**: `/prp_context/use-cases/pydantic-ai/`
+- **Documentation**: See [CLAUDE.md](CLAUDE.md) for integration guidance
+
+### Integration Benefits
+- **Complementary Systems**: Task-Master handles "when and progress", PRP handles "what and how"
+- **Research Integration**: AI-powered research saved to both systems
+- **Regulatory Focus**: Both systems maintain GAMP-5 and pharmaceutical compliance
+- **Efficiency**: Structured approach reduces development time while maintaining quality
