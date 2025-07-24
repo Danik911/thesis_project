@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL OPERATING PRINCIPLE 🚨
+
+**NEVER CLAIM SUCCESS WITHOUT USER CONFIRMATION**
+
+- ❌ NEVER say "working", "successful", "complete", "fixed", "resolved" without explicit user verification
+- ❌ NEVER assume logs showing "success" mean actual success from user perspective  
+- ❌ NEVER claim "mission accomplished" or similar without user confirming the result
+- ✅ ALWAYS ask "Did you hear/see/experience the expected result?" before claiming success
+- ✅ ALWAYS wait for user confirmation before updating status to "complete"
+- ✅ ALWAYS acknowledge when user reports "no" or "didn't work" immediately
+
+**USER FEEDBACK IS THE ONLY SOURCE OF TRUTH FOR SUCCESS**
+
 ## Project Nature
 
 This is a **thesis project** with integrated **PRP (Product Requirement Prompt) Framework**. The project follows the PRP methodology: **"PRP = PRD + curated codebase intelligence + agent/runbook"** - designed to enable AI agents to ship production-ready code on the first pass.

@@ -87,19 +87,68 @@ class AudioManager:
     def _try_windows_powershell(self, sound_path: str) -> bool:
         """Try Windows PowerShell system sounds (primary method for WSL2)"""
         try:
+            # First try the enhanced PowerShell script with audio session management
+            if self._try_enhanced_powershell_script(sound_path):
+                return True
+            
+            # Fallback to original direct PowerShell commands
+            return self._try_direct_powershell_commands(sound_path)
+                
+        except Exception as e:
+            logger.debug(f"Windows PowerShell method failed: {e}")
+            return False
+    
+    def _try_enhanced_powershell_script(self, sound_path: str) -> bool:
+        """Try enhanced PowerShell script with STA threading and audio session management"""
+        try:
+            enhanced_script = str(self.sounds_dir.parent / "enhanced_play_sound.ps1")
+            if not Path(enhanced_script).exists():
+                logger.debug("Enhanced PowerShell script not found, using fallback")
+                return False
+            
+            # Get sound type from path
+            sound_type = self._get_sound_type_from_path(sound_path)
+            
+            # Execute enhanced script with proper arguments and WSL2 audio permissions
+            cmd = [
+                self.powershell_path,
+                "-WindowStyle", "Hidden",
+                "-ExecutionPolicy", "Bypass", 
+                "-File", enhanced_script,
+                "-SoundType", sound_type,
+                "-Message", f"Claude Code Hook Audio - {sound_type}"
+            ]
+            
+            logger.debug(f"Executing enhanced PowerShell script: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, timeout=10, text=True)
+            
+            if result.returncode == 0 and "SUCCESS:" in result.stdout:
+                logger.info(f"Enhanced PowerShell audio successful: {sound_type}")
+                return True
+            else:
+                logger.debug(f"Enhanced PowerShell script failed: {result.stderr}")
+                logger.debug(f"Enhanced PowerShell stdout: {result.stdout}")
+                return False
+                
+        except Exception as e:
+            logger.debug(f"Enhanced PowerShell script method failed: {e}")
+            return False
+    
+    def _try_direct_powershell_commands(self, sound_path: str) -> bool:
+        """Fallback to direct PowerShell commands (original implementation)"""
+        try:
             # Map sound files to PowerShell system sounds
             sound_command = self._get_powershell_sound_command(sound_path)
             
-            # Try with different PowerShell execution modes for better reliability
+            # Try with different PowerShell execution modes - prioritize working WSL2 audio approach
             cmd_variations = [
-                # Standard approach
-                [self.powershell_path, "-Command", sound_command],
-                # With explicit execution policy
+                # WSL2 audio working approach - WindowStyle Hidden + ExecutionPolicy Bypass
+                [self.powershell_path, "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-Command", sound_command],
+                # Alternative working approach
+                [self.powershell_path, "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", sound_command],
+                # Standard fallbacks
                 [self.powershell_path, "-ExecutionPolicy", "Bypass", "-Command", sound_command],
-                # With window style hidden
-                [self.powershell_path, "-WindowStyle", "Hidden", "-Command", sound_command],
-                # With no profile
-                [self.powershell_path, "-NoProfile", "-Command", sound_command]
+                [self.powershell_path, "-NoProfile", "-WindowStyle", "Hidden", "-Command", sound_command]
             ]
             
             for cmd in cmd_variations:
@@ -108,7 +157,7 @@ class AudioManager:
                                           creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
                     
                     if result.returncode == 0:
-                        logger.info(f"Windows PowerShell audio successful: {sound_command}")
+                        logger.info(f"Direct PowerShell audio successful: {sound_command}")
                         return True
                     else:
                         logger.debug(f"PowerShell cmd failed: {' '.join(cmd)}, error: {result.stderr}")
@@ -119,7 +168,7 @@ class AudioManager:
             return False
                 
         except Exception as e:
-            logger.debug(f"Windows PowerShell method failed: {e}")
+            logger.debug(f"Direct PowerShell commands failed: {e}")
             return False
     
     def _get_powershell_sound_command(self, sound_path: str) -> str:
@@ -144,6 +193,23 @@ class AudioManager:
                 return command
         
         return '[System.Media.SystemSounds]::Beep.Play()'  # default
+    
+    def _get_sound_type_from_path(self, sound_path: str) -> str:
+        """Extract sound type from file path for enhanced PowerShell script"""
+        filename = Path(sound_path).stem.lower()
+        
+        # Map common sound file patterns to sound types
+        sound_types = ['edit', 'write', 'bash', 'todo', 'test', 'error', 'notification', 'prompt', 'completion']
+        
+        for sound_type in sound_types:
+            if sound_type in filename:
+                return sound_type
+        
+        # Check if it's a raw sound type (when called directly)
+        if filename in sound_types:
+            return filename
+            
+        return 'default'
     
     def _try_vlc(self, sound_path: str) -> bool:
         """Try VLC media player (quietest, most reliable)"""
@@ -320,6 +386,18 @@ class ClaudeHooksHandler:
         tool_name = hook_data.get("tool_name", "")
         hook_event = hook_data.get("hook_event_name", "")
         
+        # CRITICAL: Handle PreToolUse events for pre-permission audio
+        if hook_event == "PreToolUse":
+            logger.info(f"PreToolUse hook detected for tool: {tool_name}")
+            # Use notification sound for pre-permission requests
+            return "notification"  # This will trigger 1000 Hz, 250 ms beep
+        
+        # Handle PostToolUse events for post-execution audio
+        if hook_event == "PostToolUse":
+            logger.info(f"PostToolUse hook detected for tool: {tool_name}")
+            # Use completion sound for post-execution
+            return self.sound_map.get(tool_name, "completion")
+        
         # Enhanced Stop event handling with context-aware sounds
         if hook_event == "Stop":
             return self.get_context_aware_stop_sound(hook_data)
@@ -384,7 +462,11 @@ class ClaudeHooksHandler:
         hook_event = hook_data.get("hook_event_name", "")
         
         # Handle system hook events
-        if hook_event == "Notification":
+        if hook_event == "PreToolUse":
+            return f"🚨 PRE-PERMISSION: About to request {tool_name} usage"
+        elif hook_event == "PostToolUse":
+            return f"✅ POST-EXECUTION: {tool_name} completed"
+        elif hook_event == "Notification":
             return "🔔 Permission request notification"
         elif hook_event == "UserPromptSubmit":
             return "📤 User prompt submitted"
@@ -440,7 +522,7 @@ class ClaudeHooksHandler:
                 try:
                     planning_flag_file.unlink()  # Remove the flag file after use
                     logger.info("Planning mode flag detected - using planning completion sound")
-                    return "test.wav"  # Different sound for planning completion
+                    return "planning"  # Use planning sound type for enhanced script
                 except:
                     pass
             
