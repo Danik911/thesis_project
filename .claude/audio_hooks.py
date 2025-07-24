@@ -365,13 +365,21 @@ class ClaudeHooksHandler:
             # Get sound file for this event
             sound_file = self.get_sound_for_event(hook_data)
             
+            # SELECTIVE FILTERING: Only play audio if sound_file is not None
+            if sound_file is None:
+                # Skip audio for filtered events
+                return {
+                    "allow": True,
+                    "message": f"Hook processed (filtered): {hook_data.get('hook_event_name', 'unknown')}"
+                }
+            
             # Play the sound
             success = self.audio_manager.play_sound(sound_file)
             
             # Return appropriate response
             return {
                 "allow": True,
-                "message": f"🔔 Hook processed: {hook_data.get('tool_name', 'unknown')} - Audio: {'✅' if success else '❌'}"
+                "message": f"🔔 Hook processed: {hook_data.get('hook_event_name', 'unknown')} - Audio: {'✅' if success else '❌'}"
             }
             
         except Exception as e:
@@ -382,44 +390,25 @@ class ClaudeHooksHandler:
             }
     
     def get_sound_for_event(self, hook_data: Dict[str, Any]) -> str:
-        """Determine appropriate sound file based on hook event"""
+        """Determine appropriate sound file based on hook event - SELECTIVE MODE"""
         tool_name = hook_data.get("tool_name", "")
         hook_event = hook_data.get("hook_event_name", "")
         
-        # CRITICAL: Handle PreToolUse events for pre-permission audio
-        if hook_event == "PreToolUse":
-            logger.info(f"PreToolUse hook detected for tool: {tool_name}")
-            # Use notification sound for pre-permission requests
-            return "notification"  # This will trigger 1000 Hz, 250 ms beep
-        
-        # Handle PostToolUse events for post-execution audio
-        if hook_event == "PostToolUse":
-            logger.info(f"PostToolUse hook detected for tool: {tool_name}")
-            # Use completion sound for post-execution
-            return self.sound_map.get(tool_name, "completion")
-        
-        # Enhanced Stop event handling with context-aware sounds
+        # SELECTIVE FILTERING: Only process specific events
+        # 1. Stop events (task completion)
         if hook_event == "Stop":
+            logger.info(f"Task completion detected")
             return self.get_context_aware_stop_sound(hook_data)
         
-        # Check hook event types first for system events
-        if hook_event in self.sound_map:
-            return self.sound_map[hook_event]
+        # 2. Notification events (permission requests)
+        if hook_event == "Notification":
+            logger.info(f"Permission request notification detected")
+            return "notification"
         
-        # Check for specific tool matches
-        if tool_name in self.sound_map:
-            return self.sound_map[tool_name]
-        
-        # Check for bash command patterns (from haihai.ai tutorial)
-        if tool_name == "Bash":
-            return self.get_bash_sound(hook_data)
-        
-        # Check hook event types
-        if "error" in hook_event.lower():
-            return self.sound_map["error"]
-        
-        # Default fallback
-        return self.sound_map["default"]
+        # IGNORE all other events (PreToolUse, PostToolUse, UserPromptSubmit)
+        # This eliminates notifications for routine tool operations
+        logger.debug(f"Ignoring hook event: {hook_event} for tool: {tool_name}")
+        return None  # Return None to skip audio
     
     def get_bash_sound(self, hook_data: Dict[str, Any]) -> str:
         """Get sound for bash commands based on command content"""
