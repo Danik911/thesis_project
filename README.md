@@ -19,24 +19,26 @@ This project implements a **multi-agent LLM system** for generating Operational 
 
 ```mermaid
 graph TD
-    A[URS Document] --> B[Agent 1: Planner<br/>Frontier Model]
-    B --> C[Agent 2: Context Provider<br/>RAG/CAG]
-    B --> D[Agent 3-4: SME Agents<br/>Fine-tuned Models]
-    B --> E[Agent 5: Research Agent<br/>Regulatory Updates]
-    C --> F[Agent 6: Test Generator<br/>Open-source Model]
-    D --> F
-    E --> F
-    F --> G[OQ Test Scripts]
-    G --> H[Validation & Review]
+    A[URS Document] --> B[Agent 0: GAMP-5 Categorizer<br/>Determines software category]
+    B --> C[Agent 1: Planner<br/>Frontier Model]
+    C --> D[Agent 2: Context Provider<br/>RAG/CAG]
+    C --> E[Agent 3-4: SME Agents<br/>Fine-tuned Models]
+    C --> F[Agent 5: Research Agent<br/>Regulatory Updates]
+    D --> G[Agent 6: Test Generator<br/>Open-source Model]
+    E --> G
+    F --> G
+    G --> H[OQ Test Scripts]
+    H --> I[Validation & Review]
 ```
 
 ### Key Components
 
-- **Planner Agent**: Orchestrates workflow using frontier model (GPT-4)
+- **GAMP-5 Categorizer Agent**: Analyzes the URS to determine the GAMP 5 software category (e.g., Category 3, 4, or 5). This critical first step defines the scope and rigor of the entire validation process.
+- **Planner Agent**: Orchestrates workflow using frontier model (GPT-4), informed by the software category
 - **Context Agent**: Provides relevant documentation via RAG/CAG
 - **Specialist Agents**: Domain-specific expertise (fine-tuned models)
 - **Research Agent**: Fetches latest regulatory updates
-- **Generator Agent**: Produces compliant test scripts
+- **Generator Agent**: Produces compliant test scripts tailored to the specific GAMP-5 category
 - **Validation Layer**: ALCOA+ and security compliance checks
 
 ## 🚀 Quick Start
