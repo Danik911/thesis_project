@@ -10,6 +10,29 @@ This file provides guidance to Claude Code when working with this thesis project
 - ✅ ALWAYS ask "Did you hear/see/experience the expected result?" before claiming success
 - ✅ ALWAYS wait for user confirmation before updating status to "complete"
 
+## 🔧 System Dependencies & Permissions
+
+### Package Installation Policy
+- **NEVER skip** package installation due to permission issues
+- **ALWAYS ask user** to install missing packages instead of proceeding without them
+- **NEVER assume** packages are optional if they're required for functionality
+
+### Required Actions When Encountering:
+- **Missing packages**: Stop and ask user to run installation command
+- **Permission denied**: Stop and ask user to run with sudo/appropriate permissions  
+- **System-level operations**: Always request user assistance rather than skipping
+
+### Examples:
+```bash
+# When you encounter: "package 'xyz' not found"
+# ❌ DON'T: Skip the operation or suggest workarounds
+# ✅ DO: "Please install the missing package: pip install xyz"
+
+# When you encounter: "Permission denied"  
+# ❌ DON'T: Skip or find alternative approaches
+# ✅ DO: "Please run with appropriate permissions: sudo command"
+```
+
 ## Project Overview
 
 **Thesis Project**: Multi-agent LLM system for pharmaceutical test generation (GAMP-5 compliant)
