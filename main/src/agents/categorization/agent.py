@@ -16,6 +16,7 @@ from llama_index.core.tools import FunctionTool
 from llama_index.core.llms import LLM
 
 from main.src.core.events import GAMPCategory, GAMPCategorizationEvent
+from main.src.agents.categorization.confidence_scorer import EnhancedConfidenceScorer, enhanced_confidence_tool
 
 
 def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
