@@ -38,6 +38,23 @@ This file provides guidance to Claude Code when working with this thesis project
 **Thesis Project**: Multi-agent LLM system for pharmaceutical test generation (GAMP-5 compliant)
 **Dual Framework**: Task-Master AI (project management) + PRP Framework (technical specs)
 
+## 🤖 LLM Configuration
+
+### Development Model
+- **Primary Model**: `gpt-4.1-mini-2025-04-14` (cost-efficient for development)
+- **Production Model**: `gpt-4o-mini` (as configured in .env)
+- **Task-Master AI**: Claude Sonnet 4.0 (via MCP)
+
+### Model Selection Guidelines
+- Use `gpt-4.1-mini-2025-04-14` for development and testing
+- Switch to frontier models for production/final validation
+- Always verify model compatibility with LlamaIndex FunctionAgent workflows
+
+### 🚨 Known Issues
+- **JSON Mode Incompatibility**: NEVER use `response_format={"type": "json_object"}` with LlamaIndex `FunctionAgent`
+- **Causes infinite loops**: Agent cannot parse its own responses, hits max iterations
+- **Use natural language responses**: Let FunctionAgent handle tool coordination naturally
+
 ## 🎯 Task-Master AI Integration
 
 ### Essential Commands

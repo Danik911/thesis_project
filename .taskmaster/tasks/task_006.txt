@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Test Generation Engine
+# Status: pending
+# Dependencies: 5
+# Priority: high
+# Description: Create test generation step with validation and GAMP-5 awareness
+# Details:
+Implement the core test script generation functionality that produces OQ test scripts based on agent outputs, GAMP category, and compliance requirements. Include traceability matrix generation and validation.
+
+# Test Strategy:
+Unit tests for test script generation, validation of GAMP-5 compliance, traceability matrix testing

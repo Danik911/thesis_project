@@ -17,6 +17,7 @@ from pydantic import Field, field_validator
 
 class GAMPCategory(int, Enum):
     """GAMP-5 software categories for pharmaceutical validation."""
+    CATEGORY_1 = 1  # Infrastructure software
     CATEGORY_3 = 3  # Non-configured products
     CATEGORY_4 = 4  # Configured products
     CATEGORY_5 = 5  # Custom applications

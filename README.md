@@ -75,6 +75,7 @@ cp .env.example .env
 
 # Initialize task management (already configured)
 # Task-Master AI is pre-configured with Claude Sonnet 4.0
+# Development uses gpt-4.1-mini-2025-04-14 for cost efficiency
 # Use MCP tools: mcp__task-master-ai__* for task management
 ```
 
@@ -123,6 +124,11 @@ mcp__task-master-ai__set_task_status --id=1.1 --status=done
 - Research integration for regulatory best practices
 
 ## 🛠️ Development Workflow
+
+### Model Configuration
+- **Development**: `gpt-4.1-mini-2025-04-14` (cost-efficient)
+- **Production**: Configurable via `.env` file
+- **Critical**: Avoid JSON mode with LlamaIndex FunctionAgent (causes infinite loops)
 
 ### Integrated Development Approach
 
