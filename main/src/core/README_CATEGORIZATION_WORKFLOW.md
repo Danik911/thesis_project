@@ -13,6 +13,8 @@ StartEvent
     ↓
 start() → URSIngestionEvent
     ↓
+process_document() → DocumentProcessedEvent or URSIngestionEvent (if disabled/failed)
+    ↓
 categorize_document() → GAMPCategorizationEvent or ErrorRecoveryEvent
     ↓                              ↓
     ↓                    handle_error_recovery() → GAMPCategorizationEvent
@@ -56,6 +58,40 @@ print(f"Confidence: {categorization_event.confidence_score:.2%}")
 print(f"Review Required: {categorization_event.review_required}")
 ```
 
+### With Document Processing (NEW - UNTESTED)
+
+```python
+from src.core.categorization_workflow import GAMPCategorizationWorkflow
+
+# Create workflow with document processing enabled
+workflow = GAMPCategorizationWorkflow(
+    enable_document_processing=True,  # Enable LlamaParse integration
+    verbose=True,
+    confidence_threshold=0.60
+)
+
+# Run with file path
+result = await workflow.run(
+    urs_content="/path/to/document.pdf",  # Can be file path
+    document_name="system_requirements.pdf",
+    document_version="1.0",
+    author="qa_team"
+)
+
+# Or with raw content
+result = await workflow.run(
+    urs_content="Your URS document content here",  # Or raw content
+    document_name="system_requirements.urs",
+    document_version="1.0",
+    author="qa_team"
+)
+```
+
+**⚠️ IMPORTANT: Document processing is implemented but NOT TESTED**
+- Requires `LLAMA_CLOUD_API_KEY` environment variable
+- Falls back to raw content processing if parsing fails
+- See "Document Processing" section below for details
+
 ### Using the Helper Function
 
 ```python
@@ -75,6 +111,7 @@ result = await run_categorization_workflow(
 - **enable_error_handling**: Enable comprehensive error handling
 - **confidence_threshold**: Minimum confidence before triggering review (0.0-1.0)
 - **retry_attempts**: Number of retry attempts on categorization failure
+- **enable_document_processing**: Enable LlamaParse document processing (default: False)
 
 ## Output Structure
 
@@ -182,9 +219,143 @@ This implementation follows strict LlamaIndex patterns:
 4. **Context Management**: State stored in workflow context
 5. **Error Recovery**: Dedicated error handling steps
 
+## Document Processing (NEW - UNTESTED)
+
+### Overview
+
+The workflow now includes optional document processing using LlamaParse to extract structured information from URS documents before categorization. This provides richer context for more accurate GAMP-5 classification.
+
+### What It Does
+
+When enabled, the document processor:
+1. Parses PDFs and other documents using LlamaParse API
+2. Extracts document sections and identifies their importance
+3. Captures metadata (author, version, compliance standards)
+4. Extracts charts, diagrams, and tables
+5. Identifies requirements statements
+6. Creates a structured summary for categorization
+
+### Configuration
+
+```python
+# Enable document processing
+workflow = GAMPCategorizationWorkflow(
+    enable_document_processing=True
+)
+```
+
+### Environment Setup
+
+```bash
+# Required for LlamaParse
+export LLAMA_CLOUD_API_KEY="your-api-key"
+```
+
+### Components Created
+
+1. **LlamaParseClient** (`src/document_processing/llama_parse_client.py`)
+   - Wrapper around LlamaParse API
+   - Caching support
+   - Mock parser for testing without API
+
+2. **DocumentProcessor** (`src/document_processing/document_processor.py`)
+   - Orchestrates the processing pipeline
+   - Extracts tables and requirements
+   - Creates structured output
+
+3. **SectionIdentifier** (`src/document_processing/section_identifier.py`)
+   - Identifies document sections
+   - Assesses section importance
+   - Builds hierarchical structure
+
+4. **MetadataExtractor** (`src/document_processing/metadata_extractor.py`)
+   - Extracts compliance information
+   - Identifies document type
+   - Captures approval status
+
+5. **ChartExtractor** (`src/document_processing/chart_extractor.py`)
+   - Processes visual elements
+   - Classifies chart types
+   - Assesses GAMP relevance
+
+6. **CacheManager** (`src/document_processing/cache_manager.py`)
+   - Manages result caching
+   - Configurable TTL
+   - Performance optimization
+
+### Known Issues and Limitations
+
+**⚠️ CRITICAL: This functionality is NOT TESTED**
+
+Potential issues include:
+- LlamaParse API key validation not implemented
+- Mock parser fallback behavior unverified
+- Error handling for document processing failures untested
+- Integration with categorization agent not validated
+- Performance with large PDFs unknown
+- Memory usage for large documents not optimized
+
+### Testing Requirements
+
+Before using in production, test:
+
+1. **Basic Functionality**
+   ```bash
+   # Set API key
+   export LLAMA_CLOUD_API_KEY="your-key"
+   
+   # Test with small text file
+   python test_document_processing.py --file small.txt
+   
+   # Test with PDF
+   python test_document_processing.py --file sample.pdf
+   ```
+
+2. **Error Scenarios**
+   - Missing API key
+   - Invalid file paths
+   - Corrupted PDFs
+   - Network failures
+   - Large documents (>100 pages)
+
+3. **Integration Testing**
+   - Verify processed document format
+   - Test categorization accuracy improvement
+   - Validate caching behavior
+   - Check memory usage
+
+4. **Performance Testing**
+   - Document processing time
+   - Cache hit rates
+   - Memory consumption
+   - API rate limits
+
+### Fallback Behavior
+
+If document processing fails:
+1. Warning is logged
+2. Original URSIngestionEvent is passed through
+3. Categorization uses raw content
+4. No workflow interruption
+
+### Cache Management
+
+Processed documents are cached to avoid redundant API calls:
+
+```python
+# Cache location
+~/.cache/pharma_doc_processor/
+
+# Cache TTL (default: 7 days)
+cache_manager = CacheManager(cache_ttl_hours=24*7)
+```
+
 ## Future Enhancements
 
-- Integration with LlamaParse for PDF processing
+- ~~Integration with LlamaParse for PDF processing~~ ✅ (Implemented but untested)
 - Phoenix observability integration
 - Caching for repeated categorizations
 - Batch processing support
+- Document processing validation tests
+- Performance optimization for large documents
+- Support for additional document formats (Word, Excel)

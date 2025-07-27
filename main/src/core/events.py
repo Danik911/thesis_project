@@ -218,6 +218,28 @@ class ValidationEvent(Event):
         return v
 
 
+class DocumentProcessedEvent(Event):
+    """
+    Event triggered after document processing with LlamaParse.
+    
+    Contains structured document data including sections, metadata,
+    charts, and requirements extracted from the URS document.
+    """
+    document_id: str
+    document_name: str
+    document_version: str
+    metadata: dict[str, Any]
+    content: str
+    sections: list[dict[str, Any]]
+    charts: list[dict[str, Any]]
+    tables: list[dict[str, Any]]
+    requirements: list[dict[str, Any]]
+    processing_info: dict[str, Any]
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    processor_id: str = "document_processor"
+
+
 class ErrorRecoveryEvent(Event):
     """
     Event for error handling and recovery procedures.
@@ -242,6 +264,7 @@ __all__ = [
     "AgentRequestEvent",
     "AgentResultEvent",
     "ConsultationRequiredEvent",
+    "DocumentProcessedEvent",
     "ErrorRecoveryEvent",
     "GAMPCategorizationEvent",
     "GAMPCategory",
