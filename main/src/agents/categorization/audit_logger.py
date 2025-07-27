@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional
 import threading
 from dataclasses import asdict
 
-from main.src.agents.categorization.error_handler import AuditLogEntry
+from src.agents.categorization.error_handler import AuditLogEntry
 
 
 class AuditLogPersistence:

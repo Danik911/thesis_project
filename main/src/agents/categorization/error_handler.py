@@ -25,7 +25,7 @@ from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.events import BaseEvent
 from llama_index.core.instrumentation import get_dispatcher
 
-from main.src.core.events import GAMPCategory, GAMPCategorizationEvent
+from src.core.events import GAMPCategory, GAMPCategorizationEvent
 
 
 class ErrorType(Enum):

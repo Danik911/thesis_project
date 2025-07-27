@@ -40,9 +40,9 @@ from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.core.llms import LLM
 
-from main.src.core.events import GAMPCategory, GAMPCategorizationEvent
-from main.src.agents.categorization.confidence_scorer import EnhancedConfidenceScorer, enhanced_confidence_tool
-from main.src.agents.categorization.error_handler import (
+from src.core.events import GAMPCategory, GAMPCategorizationEvent
+from src.agents.categorization.confidence_scorer import EnhancedConfidenceScorer, enhanced_confidence_tool
+from src.agents.categorization.error_handler import (
     CategorizationErrorHandler, 
     CategorizationEventHandler,
     ErrorType,
