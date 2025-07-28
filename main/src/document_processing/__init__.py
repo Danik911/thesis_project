@@ -12,16 +12,16 @@ The module is designed to work seamlessly with the GAMP-5 categorization
 workflow, providing structured document data for analysis.
 """
 
-from .llama_parse_client import LlamaParseClient
-from .document_processor import DocumentProcessor
-from .section_identifier import SectionIdentifier
-from .metadata_extractor import MetadataExtractor
 from .chart_extractor import ChartExtractor
+from .document_processor import DocumentProcessor
+from .llama_parse_client import LlamaParseClient
+from .metadata_extractor import MetadataExtractor
+from .section_identifier import SectionIdentifier
 
 __all__ = [
+    "ChartExtractor",
+    "DocumentProcessor",
     "LlamaParseClient",
-    "DocumentProcessor", 
-    "SectionIdentifier",
     "MetadataExtractor",
-    "ChartExtractor"
+    "SectionIdentifier"
 ]

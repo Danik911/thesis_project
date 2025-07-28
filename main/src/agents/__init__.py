@@ -12,7 +12,7 @@ from .categorization import create_gamp_categorization_agent
 
 __all__ = [
     # "PlannerAgent",
-    # "ContextAgent", 
+    # "ContextAgent",
     # "SpecialistAgent",
     # "ResearchAgent",
     # "GeneratorAgent",

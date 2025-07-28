@@ -32,42 +32,39 @@ Usage:
 Based on the synthesis document and following the project's established agent patterns.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from llama_index.core.agent.workflow import FunctionAgent
-from llama_index.core.tools import FunctionTool
 from llama_index.core.llms import LLM
-
-from src.core.events import GAMPCategory, GAMPCategorizationEvent
-from src.agents.categorization.confidence_scorer import EnhancedConfidenceScorer, enhanced_confidence_tool
+from llama_index.core.tools import FunctionTool
 from src.agents.categorization.error_handler import (
-    CategorizationErrorHandler, 
-    CategorizationEventHandler,
-    ErrorType,
+    CategorizationError,
+    CategorizationErrorHandler,
     ErrorSeverity,
-    CategorizationError
+    ErrorType,
 )
+from src.core.events import GAMPCategorizationEvent, GAMPCategory
 
 
 class CategorizationAgentWrapper:
     """Wrapper to hold agent and error handler together."""
-    
-    def __init__(self, agent: FunctionAgent, error_handler: Optional[CategorizationErrorHandler] = None):
+
+    def __init__(self, agent: FunctionAgent, error_handler: CategorizationErrorHandler | None = None):
         self.agent = agent
         self.error_handler = error_handler or CategorizationErrorHandler()
-        
+
     def chat(self, *args, **kwargs):
         """Delegate chat to agent."""
         return self.agent.chat(*args, **kwargs)
-        
+
     def __getattr__(self, name):
         """Delegate other attributes to agent."""
         return getattr(self.agent, name)
 
 
-def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
+def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     """
     Analyze URS content for GAMP categorization indicators.
     
@@ -82,13 +79,13 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
     """
     # Normalize content for analysis
     normalized_content = urs_content.lower()
-    normalized_content = ' '.join(normalized_content.split())  # Remove extra whitespace
-    
+    normalized_content = " ".join(normalized_content.split())  # Remove extra whitespace
+
     # Category 1: Infrastructure Software
     category_1_indicators = {
         "strong_indicators": [
             "operating system", "windows server", "linux", "unix", "macos",
-            "database engine", "oracle", "sql server", "mysql", "postgresql", 
+            "database engine", "oracle", "sql server", "mysql", "postgresql",
             "programming language", "java", "python", "c++", ".net framework",
             "network protocol", "tcp/ip", "http", "https", "ftp", "smtp",
             "middleware", "web server", "application server"
@@ -102,7 +99,7 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
             "modified", "extended", "customized"
         ]
     }
-    
+
     # Category 3: Non-Configured Products
     category_3_indicators = {
         "strong_indicators": [
@@ -120,7 +117,7 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
             "workflow", "setup", "parameters"
         ]
     }
-    
+
     # Category 4: Configured Products
     category_4_indicators = {
         "strong_indicators": [
@@ -137,7 +134,7 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
             "custom development", "proprietary code", "bespoke", "programming"
         ]
     }
-    
+
     # Category 5: Custom Applications
     category_5_indicators = {
         "strong_indicators": [
@@ -152,19 +149,19 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
         ],
         "exclusions": []  # Category 5 has no exclusions
     }
-    
+
     # Analyze each category
     categories_analysis = {}
     for category, indicators in [
         (GAMPCategory.CATEGORY_1, category_1_indicators),
-        (GAMPCategory.CATEGORY_3, category_3_indicators), 
+        (GAMPCategory.CATEGORY_3, category_3_indicators),
         (GAMPCategory.CATEGORY_4, category_4_indicators),
         (GAMPCategory.CATEGORY_5, category_5_indicators)
     ]:
         strong_matches = [ind for ind in indicators["strong_indicators"] if ind in normalized_content]
         weak_matches = [ind for ind in indicators["weak_indicators"] if ind in normalized_content]
         exclusions = [exc for exc in indicators["exclusions"] if exc in normalized_content]
-        
+
         categories_analysis[category.value] = {
             "strong_indicators": strong_matches,
             "weak_indicators": weak_matches,
@@ -173,14 +170,14 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
             "weak_count": len(weak_matches),
             "exclusion_count": len(exclusions)
         }
-    
+
     # Apply decision logic (following synthesis document decision tree)
     # 1. Infrastructure components only? → Category 1
     cat1_analysis = categories_analysis[1]
     if cat1_analysis["strong_count"] > 0 and cat1_analysis["exclusion_count"] == 0:
         predicted_category = GAMPCategory.CATEGORY_1
         evidence = cat1_analysis
-    # 2. Custom development required? → Category 5  
+    # 2. Custom development required? → Category 5
     elif categories_analysis[5]["strong_count"] > 0:
         predicted_category = GAMPCategory.CATEGORY_5
         evidence = categories_analysis[5]
@@ -192,7 +189,7 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
     else:
         predicted_category = GAMPCategory.CATEGORY_3
         evidence = categories_analysis[3]
-    
+
     return {
         "predicted_category": predicted_category.value,
         "evidence": evidence,
@@ -201,7 +198,7 @@ def gamp_analysis_tool(urs_content: str) -> Dict[str, Any]:
     }
 
 
-def confidence_tool(category_data: Dict[str, Any]) -> float:
+def confidence_tool(category_data: dict[str, Any]) -> float:
     """
     Calculate confidence score for categorization decision.
     
@@ -215,54 +212,54 @@ def confidence_tool(category_data: Dict[str, Any]) -> float:
     """
     evidence = category_data["evidence"]
     all_analysis = category_data["all_categories_analysis"]
-    
+
     # Base scoring weights
     weights = {
-        'strong_indicators': 0.4,
-        'weak_indicators': 0.2,
-        'exclusion_factors': -0.3,
-        'ambiguity_penalty': -0.1
+        "strong_indicators": 0.4,
+        "weak_indicators": 0.2,
+        "exclusion_factors": -0.3,
+        "ambiguity_penalty": -0.1
     }
-    
+
     # Calculate base score
     base_score = (
-        weights['strong_indicators'] * evidence['strong_count'] +
-        weights['weak_indicators'] * evidence['weak_count'] +
-        weights['exclusion_factors'] * evidence['exclusion_count']
+        weights["strong_indicators"] * evidence["strong_count"] +
+        weights["weak_indicators"] * evidence["weak_count"] +
+        weights["exclusion_factors"] * evidence["exclusion_count"]
     )
-    
+
     # Calculate ambiguity penalty (other categories with strong indicators)
     predicted_category = category_data["predicted_category"]
     competing_strong_indicators = sum(
         analysis["strong_count"] for cat_id, analysis in all_analysis.items()
         if cat_id != predicted_category and analysis["strong_count"] > 0
     )
-    
+
     ambiguity_penalty = 0.0
     if competing_strong_indicators > 0:
         penalty_factor = min(competing_strong_indicators * 0.1, 0.3)
-        ambiguity_penalty = weights['ambiguity_penalty'] * penalty_factor
-    
+        ambiguity_penalty = weights["ambiguity_penalty"] * penalty_factor
+
     # Category-specific adjustments
     category_adjustment = 0.0
-    if predicted_category == 1 and evidence['strong_count'] >= 2:  # Category 1
+    if predicted_category == 1 and evidence["strong_count"] >= 2:  # Category 1
         category_adjustment = 0.1
-    elif predicted_category == 5 and evidence['strong_count'] >= 2:  # Category 5
+    elif predicted_category == 5 and evidence["strong_count"] >= 2:  # Category 5
         category_adjustment = 0.15
-    elif predicted_category in [3, 4] and evidence['strong_count'] >= 1:
+    elif predicted_category in [3, 4] and evidence["strong_count"] >= 1:
         category_adjustment = 0.05
-    
+
     # Final confidence calculation
     raw_confidence = base_score + ambiguity_penalty + category_adjustment
     final_confidence = max(0.0, min(1.0, 0.5 + raw_confidence))
-    
+
     return final_confidence
 
 
 def gamp_analysis_tool_with_error_handling(
-    urs_content: str, 
-    error_handler: Optional[CategorizationErrorHandler] = None
-) -> Dict[str, Any]:
+    urs_content: str,
+    error_handler: CategorizationErrorHandler | None = None
+) -> dict[str, Any]:
     """
     Enhanced GAMP analysis tool with error handling.
     
@@ -271,25 +268,25 @@ def gamp_analysis_tool_with_error_handling(
     if error_handler is None:
         # Use default error handler if none provided
         error_handler = CategorizationErrorHandler()
-        
+
     try:
         # Validate input
         if not urs_content or not isinstance(urs_content, str):
             raise ValueError("Invalid URS content: must be non-empty string")
-            
+
         if len(urs_content.strip()) < 10:
             raise ValueError("URS content too short for meaningful analysis")
-            
+
         # Call original analysis tool
         result = gamp_analysis_tool(urs_content)
-        
+
         # Validate result
         validation_error = error_handler.validate_categorization_result(result)
         if validation_error:
             raise RuntimeError(f"Validation failed: {validation_error.message}")
-            
+
         return result
-        
+
     except Exception as e:
         # Let error handler create appropriate response
         error_event = error_handler.handle_tool_error(
@@ -298,20 +295,20 @@ def gamp_analysis_tool_with_error_handling(
             tool_input=urs_content[:200] if urs_content else "Empty",
             document_name="Analysis Input"
         )
-        
+
         # Return error result that indicates fallback
         return {
             "predicted_category": 5,
             "evidence": {"error": str(e)},
             "all_categories_analysis": {},
-            "decision_rationale": f"Error during analysis: {str(e)}. Fallback to Category 5.",
+            "decision_rationale": f"Error during analysis: {e!s}. Fallback to Category 5.",
             "error": True
         }
 
 
 def confidence_tool_with_error_handling(
-    category_data: Dict[str, Any],
-    error_handler: Optional[CategorizationErrorHandler] = None
+    category_data: dict[str, Any],
+    error_handler: CategorizationErrorHandler | None = None
 ) -> float:
     """
     Enhanced confidence tool with error handling.
@@ -320,28 +317,28 @@ def confidence_tool_with_error_handling(
     """
     if error_handler is None:
         error_handler = CategorizationErrorHandler()
-        
+
     try:
         # Check if this is an error result
         if category_data.get("error", False):
             return 0.0
-            
+
         # Validate input
         if not isinstance(category_data, dict):
             raise ValueError("Invalid category data: must be dictionary")
-            
+
         required_fields = ["predicted_category", "evidence", "all_categories_analysis"]
         missing_fields = [f for f in required_fields if f not in category_data]
         if missing_fields:
             raise ValueError(f"Missing required fields: {missing_fields}")
-            
+
         # Call original confidence tool
         confidence = confidence_tool(category_data)
-        
+
         # Check for ambiguity
         all_analysis = category_data.get("all_categories_analysis", {})
         confidence_scores = {}
-        
+
         for cat_id, analysis in all_analysis.items():
             # Simple confidence calculation for each category
             cat_confidence = (
@@ -350,16 +347,16 @@ def confidence_tool_with_error_handling(
                 0.3 * analysis.get("exclusion_count", 0)
             )
             confidence_scores[int(cat_id)] = max(0.0, min(1.0, 0.5 + cat_confidence))
-            
+
         ambiguity_error = error_handler.check_ambiguity(category_data, confidence_scores)
         if ambiguity_error:
             # Log the ambiguity but don't fail - let low confidence handle it
             error_handler.logger.warning(f"Ambiguity detected: {ambiguity_error.message}")
-            
+
         return confidence
-        
+
     except Exception as e:
-        error_handler.logger.error(f"Confidence calculation error: {str(e)}")
+        error_handler.logger.error(f"Confidence calculation error: {e!s}")
         return 0.0  # Return zero confidence on error
 
 
@@ -386,15 +383,15 @@ def create_gamp_categorization_agent(
     """
     if llm is None:
         # Use OpenAI LLM without JSON mode for FunctionAgent compatibility
+
         from llama_index.llms.openai import OpenAI
-        import os
         llm = OpenAI(
             model="gpt-4o-mini",
             temperature=0.1,
             max_tokens=2000
             # JSON mode NOT used - FunctionAgent requires natural language responses
         )
-    
+
     # Create error handler if enabled
     error_handler = None
     if enable_error_handling:
@@ -402,22 +399,22 @@ def create_gamp_categorization_agent(
             confidence_threshold=confidence_threshold,
             verbose=verbose
         )
-    
+
     # Create function tools with or without error handling
     if enable_error_handling and error_handler:
         # Create wrapped tools with error handling
-        def gamp_tool_wrapper(urs_content: str) -> Dict[str, Any]:
+        def gamp_tool_wrapper(urs_content: str) -> dict[str, Any]:
             return gamp_analysis_tool_with_error_handling(urs_content, error_handler)
-            
-        def confidence_tool_wrapper(category_data: Dict[str, Any]) -> float:
+
+        def confidence_tool_wrapper(category_data: dict[str, Any]) -> float:
             return confidence_tool_with_error_handling(category_data, error_handler)
-            
+
         gamp_analysis_function_tool = FunctionTool.from_defaults(
             fn=gamp_tool_wrapper,
-            name="gamp_analysis_tool", 
+            name="gamp_analysis_tool",
             description="Analyze URS content for GAMP categorization with error handling"
         )
-        
+
         confidence_function_tool = FunctionTool.from_defaults(
             fn=confidence_tool_wrapper,
             name="confidence_tool",
@@ -427,16 +424,16 @@ def create_gamp_categorization_agent(
         # Use original tools without error handling
         gamp_analysis_function_tool = FunctionTool.from_defaults(
             fn=gamp_analysis_tool,
-            name="gamp_analysis_tool", 
+            name="gamp_analysis_tool",
             description="Analyze URS content for GAMP categorization indicators"
         )
-        
+
         confidence_function_tool = FunctionTool.from_defaults(
             fn=confidence_tool,
             name="confidence_tool",
             description="Calculate confidence score for categorization decision"
         )
-    
+
     # Enhanced system prompt with error handling guidance
     system_prompt = """You are a GAMP-5 categorization expert. Analyze URS documents and determine the GAMP category.
 
@@ -457,7 +454,7 @@ Error Handling:
 - Low confidence results require human review
 
 Provide the category number, confidence score, and brief explanation."""
-    
+
     agent = FunctionAgent(
         tools=[gamp_analysis_function_tool, confidence_function_tool],
         llm=llm,
@@ -465,16 +462,16 @@ Provide the category number, confidence score, and brief explanation."""
         max_iterations=10,  # Reduced from default 20 to prevent timeouts
         system_prompt=system_prompt
     )
-    
+
     # Return wrapper if error handling is enabled
     if enable_error_handling and error_handler:
         return CategorizationAgentWrapper(agent, error_handler)
-    
+
     return agent
 
 
 def create_categorization_event(
-    categorization_result: Dict[str, Any],
+    categorization_result: dict[str, Any],
     confidence_score: float,
     document_name: str = "Unknown",
     categorized_by: str = "GAMPCategorizationAgent"
@@ -495,49 +492,49 @@ def create_categorization_event(
     """
     predicted_category = GAMPCategory(categorization_result["predicted_category"])
     evidence = categorization_result["evidence"]
-    
+
     # Generate comprehensive justification
     justification_parts = [
         f"GAMP-5 Categorization Analysis for '{document_name}'",
-        f"",
+        "",
         f"CLASSIFICATION: Category {predicted_category.value}",
         f"CONFIDENCE: {confidence_score:.1%}",
-        f"",
-        f"EVIDENCE ANALYSIS:",
+        "",
+        "EVIDENCE ANALYSIS:",
     ]
-    
+
     if evidence["strong_indicators"]:
         justification_parts.append(f"✓ Strong Indicators ({evidence['strong_count']}): {', '.join(evidence['strong_indicators'][:5])}")
-    
+
     if evidence["weak_indicators"]:
         justification_parts.append(f"○ Supporting Indicators ({evidence['weak_count']}): {', '.join(evidence['weak_indicators'][:3])}")
-    
+
     if evidence["exclusion_factors"]:
         justification_parts.append(f"⚠ Exclusion Factors ({evidence['exclusion_count']}): {', '.join(evidence['exclusion_factors'])}")
-    
-    justification_parts.append(f"")
+
+    justification_parts.append("")
     justification_parts.append(f"DECISION RATIONALE: {categorization_result['decision_rationale']}")
-    
+
     requires_review = confidence_score < 0.85
     if requires_review:
         justification_parts.extend([
-            f"",
-            f"⚠️ HUMAN REVIEW REQUIRED",
-            f"Confidence below threshold (85%) - Expert review needed for regulatory compliance"
+            "",
+            "⚠️ HUMAN REVIEW REQUIRED",
+            "Confidence below threshold (85%) - Expert review needed for regulatory compliance"
         ])
-    
+
     # Build risk assessment
     risk_assessment = {
-        'category': predicted_category.value,
-        'category_description': _get_category_description(predicted_category),
-        'validation_approach': _get_validation_approach(predicted_category),
-        'confidence_score': confidence_score,
-        'evidence_strength': _assess_evidence_strength(evidence),
-        'requires_human_review': requires_review,
-        'regulatory_impact': _assess_regulatory_impact(predicted_category),
-        'validation_effort': _estimate_validation_effort(predicted_category)
+        "category": predicted_category.value,
+        "category_description": _get_category_description(predicted_category),
+        "validation_approach": _get_validation_approach(predicted_category),
+        "confidence_score": confidence_score,
+        "evidence_strength": _assess_evidence_strength(evidence),
+        "requires_human_review": requires_review,
+        "regulatory_impact": _assess_regulatory_impact(predicted_category),
+        "validation_effort": _estimate_validation_effort(predicted_category)
     }
-    
+
     return GAMPCategorizationEvent(
         gamp_category=predicted_category,
         confidence_score=confidence_score,
@@ -554,7 +551,7 @@ def _get_category_description(category: GAMPCategory) -> str:
     """Get human-readable description of a GAMP category."""
     descriptions = {
         GAMPCategory.CATEGORY_1: "Infrastructure software - Operating systems, databases, middleware",
-        GAMPCategory.CATEGORY_3: "Non-configured products - COTS software used as supplied", 
+        GAMPCategory.CATEGORY_3: "Non-configured products - COTS software used as supplied",
         GAMPCategory.CATEGORY_4: "Configured products - Commercial software requiring configuration",
         GAMPCategory.CATEGORY_5: "Custom applications - Bespoke software development"
     }
@@ -565,26 +562,25 @@ def _get_validation_approach(category: GAMPCategory) -> str:
     """Get recommended validation approach for a GAMP category."""
     approaches = {
         GAMPCategory.CATEGORY_1: "Installation Qualification (IQ) and operational procedures",
-        GAMPCategory.CATEGORY_3: "Operational Qualification (OQ) of standard functions", 
+        GAMPCategory.CATEGORY_3: "Operational Qualification (OQ) of standard functions",
         GAMPCategory.CATEGORY_4: "Configuration verification and business process testing",
         GAMPCategory.CATEGORY_5: "Full software development lifecycle (GAMP V-model)"
     }
     return approaches.get(category, "Contact validation expert")
 
 
-def _assess_evidence_strength(evidence: Dict[str, Any]) -> str:
+def _assess_evidence_strength(evidence: dict[str, Any]) -> str:
     """Assess overall strength of evidence."""
     strong_count = evidence["strong_count"]
     exclusion_count = evidence["exclusion_count"]
-    
+
     if strong_count >= 3 and exclusion_count == 0:
         return "Strong"
-    elif strong_count >= 2 and exclusion_count <= 1:
+    if strong_count >= 2 and exclusion_count <= 1:
         return "Moderate"
-    elif strong_count >= 1:
+    if strong_count >= 1:
         return "Weak"
-    else:
-        return "Insufficient"
+    return "Insufficient"
 
 
 def _assess_regulatory_impact(category: GAMPCategory) -> str:
@@ -592,7 +588,7 @@ def _assess_regulatory_impact(category: GAMPCategory) -> str:
     impact_mapping = {
         GAMPCategory.CATEGORY_1: "Low - Infrastructure components with minimal GxP impact",
         GAMPCategory.CATEGORY_3: "Low-Medium - Standard applications with defined validation approach",
-        GAMPCategory.CATEGORY_4: "Medium-High - Configured systems requiring thorough validation", 
+        GAMPCategory.CATEGORY_4: "Medium-High - Configured systems requiring thorough validation",
         GAMPCategory.CATEGORY_5: "High - Custom applications requiring comprehensive lifecycle validation"
     }
     return impact_mapping.get(category, "Unknown impact - review required")
@@ -620,16 +616,16 @@ def categorize_with_structured_output(
     This approach bypasses LLM chat parsing by using tools directly,
     providing more reliable structured results.
     """
-    error_handler = getattr(agent, 'error_handler', None)
+    error_handler = getattr(agent, "error_handler", None)
     if error_handler is None:
         error_handler = CategorizationErrorHandler()
-    
+
     try:
         # Step 1: Run GAMP analysis tool
         analysis_result = gamp_analysis_tool_with_error_handling(
             urs_content, error_handler
         )
-        
+
         # Check for tool error
         if analysis_result.get("error", False):
             return error_handler.handle_tool_error(
@@ -638,12 +634,12 @@ def categorize_with_structured_output(
                 urs_content[:200],
                 document_name
             )
-        
+
         # Step 2: Calculate confidence
         confidence = confidence_tool_with_error_handling(
             analysis_result, error_handler
         )
-        
+
         # Step 3: Check confidence threshold
         if confidence < error_handler.confidence_threshold:
             error = CategorizationError(
@@ -657,7 +653,7 @@ def categorize_with_structured_output(
                 }
             )
             return error_handler._create_fallback_event(error, document_name)
-        
+
         # Step 4: Create successful event
         return create_categorization_event(
             analysis_result,
@@ -665,7 +661,7 @@ def categorize_with_structured_output(
             document_name,
             "GAMPCategorizationAgent"
         )
-        
+
     except Exception as e:
         # Handle any unexpected errors
         return error_handler.handle_llm_error(e, urs_content[:500], document_name)
@@ -693,37 +689,37 @@ def categorize_with_error_handling(
         GAMPCategorizationEvent with categorization or fallback result
     """
     # Get error handler from agent or create default
-    error_handler = getattr(agent, 'error_handler', None)
+    error_handler = getattr(agent, "error_handler", None)
     if error_handler is None:
         error_handler = CategorizationErrorHandler()
-        
+
     retry_count = 0
     last_error = None
-    
+
     while retry_count <= max_retries:
         try:
             # Validate input
             if not urs_content or not isinstance(urs_content, str):
                 raise ValueError("Invalid URS content: must be non-empty string")
-                
+
             # Run agent query
             response = agent.chat(f"Analyze this URS document and categorize it:\n\n{urs_content}")
-            
+
             # Parse response to extract category and confidence
             response_text = str(response)
-            
+
             # Extract category number (look for patterns like "Category 1", "Category: 1", etc.)
             import re
-            category_match = re.search(r'[Cc]ategory[\s:]*(\d)', response_text)
+            category_match = re.search(r"[Cc]ategory[\s:]*(\d)", response_text)
             if not category_match:
                 raise ValueError("Could not extract category from agent response")
-                
+
             category_num = int(category_match.group(1))
             if category_num not in [1, 3, 4, 5]:
                 raise ValueError(f"Invalid category number: {category_num}")
-                
+
             # Extract confidence (look for patterns like "85%", "0.85", "confidence: 0.85")
-            confidence_match = re.search(r'(\d+(?:\.\d+)?)\s*%|confidence[\s:]*(\d+(?:\.\d+)?)', response_text, re.IGNORECASE)
+            confidence_match = re.search(r"(\d+(?:\.\d+)?)\s*%|confidence[\s:]*(\d+(?:\.\d+)?)", response_text, re.IGNORECASE)
             if confidence_match:
                 if confidence_match.group(1):  # Percentage format
                     confidence = float(confidence_match.group(1)) / 100
@@ -732,7 +728,7 @@ def categorize_with_error_handling(
             else:
                 # If no confidence found, use a default based on response
                 confidence = 0.7  # Default moderate confidence
-                
+
             # Check confidence threshold
             if confidence < error_handler.confidence_threshold:
                 error = CategorizationError(
@@ -746,42 +742,40 @@ def categorize_with_error_handling(
                     }
                 )
                 return error_handler._create_fallback_event(error, document_name)
-                
+
             # Create successful event
             return GAMPCategorizationEvent(
                 gamp_category=GAMPCategory(category_num),
                 confidence_score=confidence,
                 justification=response_text,
                 risk_assessment={
-                    'category': category_num,
-                    'category_description': _get_category_description(GAMPCategory(category_num)),
-                    'validation_approach': _get_validation_approach(GAMPCategory(category_num)),
-                    'confidence_score': confidence,
-                    'evidence_strength': 'Agent-based analysis',
-                    'requires_human_review': confidence < 0.85,
-                    'regulatory_impact': _assess_regulatory_impact(GAMPCategory(category_num)),
-                    'validation_effort': _estimate_validation_effort(GAMPCategory(category_num))
+                    "category": category_num,
+                    "category_description": _get_category_description(GAMPCategory(category_num)),
+                    "validation_approach": _get_validation_approach(GAMPCategory(category_num)),
+                    "confidence_score": confidence,
+                    "evidence_strength": "Agent-based analysis",
+                    "requires_human_review": confidence < 0.85,
+                    "regulatory_impact": _assess_regulatory_impact(GAMPCategory(category_num)),
+                    "validation_effort": _estimate_validation_effort(GAMPCategory(category_num))
                 },
                 event_id=uuid4(),
                 timestamp=datetime.now(UTC),
                 categorized_by="GAMPCategorizationAgent",
                 review_required=confidence < 0.85
             )
-            
+
         except Exception as e:
             last_error = e
             retry_count += 1
-            
+
             if retry_count <= max_retries:
-                error_handler.logger.warning(f"Categorization attempt {retry_count} failed: {str(e)}. Retrying...")
+                error_handler.logger.warning(f"Categorization attempt {retry_count} failed: {e!s}. Retrying...")
                 continue
-            else:
-                # Max retries exceeded, create fallback
-                if isinstance(e, ValueError) and "URS content" in str(e):
-                    return error_handler.handle_parsing_error(e, urs_content, document_name)
-                else:
-                    return error_handler.handle_llm_error(e, urs_content[:500], document_name)
-                    
+            # Max retries exceeded, create fallback
+            if isinstance(e, ValueError) and "URS content" in str(e):
+                return error_handler.handle_parsing_error(e, urs_content, document_name)
+            return error_handler.handle_llm_error(e, urs_content[:500], document_name)
+
     # Should not reach here, but if it does, create fallback
     return error_handler.handle_logic_error(
         {"message": "Unexpected error in categorization loop", "last_error": str(last_error)},

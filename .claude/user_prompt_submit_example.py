@@ -5,19 +5,19 @@ Demonstrates the new Claude Code capability to add rich context to user prompts
 """
 
 import json
-import sys
 import logging
-import subprocess
 import os
-from pathlib import Path
+import subprocess
+import sys
 from datetime import datetime
-from typing import Dict, Any, List
+from pathlib import Path
+from typing import Any
 
 # Configure logging
 LOG_FILE = Path(__file__).parent / "prompt_context_hooks.log"
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(LOG_FILE),
         logging.StreamHandler()
@@ -25,26 +25,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def handle_user_prompt_submit(hook_data: Dict[str, Any]) -> Dict[str, Any]:
+def handle_user_prompt_submit(hook_data: dict[str, Any]) -> dict[str, Any]:
     """
     Handle UserPromptSubmit events with enhanced additionalContext
     
     The new feature allows adding rich context to user prompts through
     advanced JSON output with additionalContext field
     """
-    
+
     try:
         user_prompt = hook_data.get("user_prompt", "")
         conversation_context = hook_data.get("conversation_context", {})
-        
+
         logger.info(f"Processing user prompt: {user_prompt[:100]}...")
-        
+
         # Generate comprehensive additional context
         additional_context = generate_additional_context(user_prompt, conversation_context)
-        
+
         # Determine if prompt should be enhanced, blocked, or passed through
         action = determine_prompt_action(user_prompt, additional_context)
-        
+
         if action == "block":
             return {
                 "decision": "block",
@@ -52,38 +52,38 @@ def handle_user_prompt_submit(hook_data: Dict[str, Any]) -> Dict[str, Any]:
                 "reason": additional_context.get("block_reason", "Content policy violation"),
                 "additionalContext": additional_context
             }
-        
-        elif action == "enhance":
+
+        if action == "enhance":
             return {
                 "decision": "continue",
                 "message": "✨ Prompt enhanced with project context",
                 "additionalContext": additional_context
             }
-        
-        else:  # pass through
-            return {
-                "decision": "continue",
-                "message": "📝 Prompt processed with basic context",
-                "additionalContext": {
-                    "enhancement_applied": False,
-                    "timestamp": datetime.now().isoformat()
-                }
+
+        # pass through
+        return {
+            "decision": "continue",
+            "message": "📝 Prompt processed with basic context",
+            "additionalContext": {
+                "enhancement_applied": False,
+                "timestamp": datetime.now().isoformat()
             }
-            
+        }
+
     except Exception as e:
         logger.error(f"UserPromptSubmit error: {e}")
         return {
             "decision": "continue",
-            "message": f"⚠️ Context processing error: {str(e)}",
+            "message": f"⚠️ Context processing error: {e!s}",
             "additionalContext": {
                 "error": str(e),
                 "fallback_mode": True
             }
         }
 
-def generate_additional_context(user_prompt: str, conversation_context: Dict) -> Dict[str, Any]:
+def generate_additional_context(user_prompt: str, conversation_context: dict) -> dict[str, Any]:
     """Generate rich additional context for the user prompt"""
-    
+
     context = {
         "timestamp": datetime.now().isoformat(),
         "prompt_analysis": analyze_prompt_intent(user_prompt),
@@ -94,25 +94,25 @@ def generate_additional_context(user_prompt: str, conversation_context: Dict) ->
         "security_analysis": perform_security_analysis(user_prompt),
         "resource_recommendations": get_resource_recommendations(user_prompt)
     }
-    
+
     # Add conditional context based on prompt content
     if is_coding_request(user_prompt):
         context["coding_context"] = get_coding_context()
-    
+
     if is_git_related(user_prompt):
         context["git_context"] = get_git_context()
-    
+
     if is_file_operation(user_prompt):
         context["file_context"] = get_file_operation_context(user_prompt)
-    
+
     if is_research_request(user_prompt):
         context["research_context"] = get_research_context()
-    
+
     return context
 
-def analyze_prompt_intent(prompt: str) -> Dict[str, Any]:
+def analyze_prompt_intent(prompt: str) -> dict[str, Any]:
     """Analyze the intent and complexity of the user prompt"""
-    
+
     intent_patterns = {
         "code_creation": ["create", "implement", "build", "develop", "write code"],
         "debugging": ["fix", "debug", "error", "not working", "issue"],
@@ -122,16 +122,16 @@ def analyze_prompt_intent(prompt: str) -> Dict[str, Any]:
         "planning": ["plan", "design", "architecture", "structure"],
         "testing": ["test", "verify", "check", "validate"]
     }
-    
+
     detected_intents = []
     prompt_lower = prompt.lower()
-    
+
     for intent, patterns in intent_patterns.items():
         if any(pattern in prompt_lower for pattern in patterns):
             detected_intents.append(intent)
-    
+
     complexity_score = calculate_complexity_score(prompt)
-    
+
     return {
         "detected_intents": detected_intents,
         "primary_intent": detected_intents[0] if detected_intents else "general",
@@ -142,32 +142,32 @@ def analyze_prompt_intent(prompt: str) -> Dict[str, Any]:
         "has_urls": "http" in prompt.lower()
     }
 
-def get_current_project_state() -> Dict[str, Any]:
+def get_current_project_state() -> dict[str, Any]:
     """Get comprehensive current project state"""
-    
+
     try:
         project_root = Path("/home/anteb/thesis_project")
-        
+
         # Git information
         git_info = {}
         try:
             git_info = {
                 "current_branch": subprocess.check_output(
-                    ["git", "branch", "--show-current"], 
+                    ["git", "branch", "--show-current"],
                     cwd=project_root, text=True
                 ).strip(),
                 "has_uncommitted": len(subprocess.check_output(
-                    ["git", "status", "--porcelain"], 
+                    ["git", "status", "--porcelain"],
                     cwd=project_root, text=True
                 ).strip()) > 0,
                 "last_commit": subprocess.check_output(
-                    ["git", "log", "-1", "--oneline"], 
+                    ["git", "log", "-1", "--oneline"],
                     cwd=project_root, text=True
                 ).strip()
             }
         except:
             git_info = {"status": "not_available"}
-        
+
         # Project structure
         structure_info = {
             "has_claude_config": (project_root / ".claude").exists(),
@@ -176,10 +176,10 @@ def get_current_project_state() -> Dict[str, Any]:
             "has_tests": (project_root / "tests").exists(),
             "total_files": len(list(project_root.rglob("*"))) if project_root.exists() else 0
         }
-        
+
         # Recent activity
         recent_files = get_recently_modified_files(project_root)
-        
+
         return {
             "git_info": git_info,
             "structure_info": structure_info,
@@ -189,13 +189,13 @@ def get_current_project_state() -> Dict[str, Any]:
             },
             "project_type": "thesis_project_with_prp_framework"
         }
-        
+
     except Exception as e:
         return {"error": str(e), "fallback": True}
 
-def get_environment_context() -> Dict[str, Any]:
+def get_environment_context() -> dict[str, Any]:
     """Get current environment and system context"""
-    
+
     return {
         "working_directory": os.getcwd(),
         "python_version": sys.version.split()[0],
@@ -207,21 +207,21 @@ def get_environment_context() -> Dict[str, Any]:
         "terminal_type": os.getenv("TERM", "unknown")
     }
 
-def get_coding_context() -> Dict[str, Any]:
+def get_coding_context() -> dict[str, Any]:
     """Get context specific to coding requests"""
-    
+
     try:
         project_root = Path("/home/anteb/thesis_project")
-        
+
         # Language detection
         languages = detect_project_languages(project_root)
-        
+
         # Framework detection
         frameworks = detect_frameworks(project_root)
-        
+
         # Code quality tools
         quality_tools = detect_quality_tools(project_root)
-        
+
         return {
             "languages": languages,
             "frameworks": frameworks,
@@ -229,61 +229,61 @@ def get_coding_context() -> Dict[str, Any]:
             "coding_standards": get_coding_standards(),
             "recommended_patterns": get_recommended_patterns()
         }
-        
+
     except Exception as e:
         return {"error": str(e)}
 
-def get_git_context() -> Dict[str, Any]:
+def get_git_context() -> dict[str, Any]:
     """Get Git-specific context"""
-    
+
     try:
         project_root = Path("/home/anteb/thesis_project")
-        
+
         return {
             "current_branch": subprocess.check_output(
-                ["git", "branch", "--show-current"], 
+                ["git", "branch", "--show-current"],
                 cwd=project_root, text=True
             ).strip(),
             "remote_branches": subprocess.check_output(
-                ["git", "branch", "-r"], 
+                ["git", "branch", "-r"],
                 cwd=project_root, text=True
-            ).strip().split('\n'),
+            ).strip().split("\n"),
             "staged_files": subprocess.check_output(
-                ["git", "diff", "--cached", "--name-only"], 
+                ["git", "diff", "--cached", "--name-only"],
                 cwd=project_root, text=True
-            ).strip().split('\n') if subprocess.check_output(
-                ["git", "diff", "--cached", "--name-only"], 
+            ).strip().split("\n") if subprocess.check_output(
+                ["git", "diff", "--cached", "--name-only"],
                 cwd=project_root, text=True
             ).strip() else [],
             "modified_files": subprocess.check_output(
-                ["git", "diff", "--name-only"], 
+                ["git", "diff", "--name-only"],
                 cwd=project_root, text=True
-            ).strip().split('\n') if subprocess.check_output(
-                ["git", "diff", "--name-only"], 
+            ).strip().split("\n") if subprocess.check_output(
+                ["git", "diff", "--name-only"],
                 cwd=project_root, text=True
             ).strip() else []
         }
-        
+
     except Exception as e:
         return {"error": str(e)}
 
-def determine_prompt_action(prompt: str, context: Dict[str, Any]) -> str:
+def determine_prompt_action(prompt: str, context: dict[str, Any]) -> str:
     """Determine what action to take with the prompt"""
-    
+
     # Security checks
     security_analysis = context.get("security_analysis", {})
     if security_analysis.get("risk_level") == "high":
         return "block"
-    
+
     # Enhancement checks
     if should_enhance_prompt(prompt, context):
         return "enhance"
-    
+
     return "continue"
 
-def should_enhance_prompt(prompt: str, context: Dict[str, Any]) -> bool:
+def should_enhance_prompt(prompt: str, context: dict[str, Any]) -> bool:
     """Determine if prompt should be enhanced with additional context"""
-    
+
     enhancement_triggers = [
         lambda: context.get("prompt_analysis", {}).get("complexity_score", 0) > 7,
         lambda: "implement" in prompt.lower() and context.get("coding_context"),
@@ -291,12 +291,12 @@ def should_enhance_prompt(prompt: str, context: Dict[str, Any]) -> bool:
         lambda: len(prompt.split()) > 50,  # Long prompts benefit from context
         lambda: context.get("project_state", {}).get("git_info", {}).get("has_uncommitted", False)
     ]
-    
+
     return any(trigger() for trigger in enhancement_triggers)
 
-def perform_security_analysis(prompt: str) -> Dict[str, Any]:
+def perform_security_analysis(prompt: str) -> dict[str, Any]:
     """Perform security analysis on the prompt"""
-    
+
     risk_patterns = {
         "high": [
             "rm -rf", "sudo rm", "format", "delete everything",
@@ -310,11 +310,11 @@ def perform_security_analysis(prompt: str) -> Dict[str, Any]:
             "install", "download", "curl", "wget"
         ]
     }
-    
+
     prompt_lower = prompt.lower()
     risk_level = "none"
     detected_patterns = []
-    
+
     for level, patterns in risk_patterns.items():
         for pattern in patterns:
             if pattern in prompt_lower:
@@ -325,7 +325,7 @@ def perform_security_analysis(prompt: str) -> Dict[str, Any]:
                     risk_level = "medium"
                 elif level == "low" and risk_level == "none":
                     risk_level = "low"
-    
+
     return {
         "risk_level": risk_level,
         "detected_patterns": detected_patterns,
@@ -337,23 +337,23 @@ def calculate_complexity_score(prompt: str) -> int:
     """Calculate complexity score 1-10"""
     factors = [
         len(prompt.split()) / 10,  # Word count factor
-        prompt.count('\n'),  # Multi-line factor
-        prompt.count('```') * 2,  # Code block factor
-        len([w for w in prompt.split() if w.startswith('/')]) * 0.5,  # File path factor
+        prompt.count("\n"),  # Multi-line factor
+        prompt.count("```") * 2,  # Code block factor
+        len([w for w in prompt.split() if w.startswith("/")]) * 0.5,  # File path factor
     ]
     return min(10, int(sum(factors)))
 
-def get_recently_modified_files(project_root: Path) -> List[str]:
+def get_recently_modified_files(project_root: Path) -> list[str]:
     """Get recently modified files"""
     try:
         return subprocess.check_output(
             ["find", str(project_root), "-type", "f", "-mtime", "-1"],
             text=True
-        ).strip().split('\n')[:10]
+        ).strip().split("\n")[:10]
     except:
         return []
 
-def identify_active_project_areas(recent_files: List[str]) -> List[str]:
+def identify_active_project_areas(recent_files: list[str]) -> list[str]:
     """Identify active project areas from recent files"""
     areas = set()
     for file_path in recent_files:
@@ -363,31 +363,31 @@ def identify_active_project_areas(recent_files: List[str]) -> List[str]:
                 areas.add(path_parts[-2])  # Parent directory
     return list(areas)[:5]
 
-def detect_project_languages(project_root: Path) -> List[str]:
+def detect_project_languages(project_root: Path) -> list[str]:
     """Detect programming languages in project"""
-    extensions = {'.py': 'Python', '.js': 'JavaScript', '.ts': 'TypeScript', 
-                 '.md': 'Markdown', '.json': 'JSON', '.sh': 'Shell'}
+    extensions = {".py": "Python", ".js": "JavaScript", ".ts": "TypeScript",
+                 ".md": "Markdown", ".json": "JSON", ".sh": "Shell"}
     found_languages = set()
-    
+
     try:
         for ext, lang in extensions.items():
             if list(project_root.rglob(f"*{ext}")):
                 found_languages.add(lang)
     except:
         pass
-    
+
     return list(found_languages)
 
-def detect_frameworks(project_root: Path) -> List[str]:
+def detect_frameworks(project_root: Path) -> list[str]:
     """Detect frameworks in project"""
     framework_indicators = {
-        'package.json': ['Node.js'],
-        'requirements.txt': ['Python'],
-        'pyproject.toml': ['Python', 'Modern Python'],
-        'Dockerfile': ['Docker'],
-        '.github': ['GitHub Actions']
+        "package.json": ["Node.js"],
+        "requirements.txt": ["Python"],
+        "pyproject.toml": ["Python", "Modern Python"],
+        "Dockerfile": ["Docker"],
+        ".github": ["GitHub Actions"]
     }
-    
+
     found_frameworks = set()
     try:
         for indicator, frameworks in framework_indicators.items():
@@ -395,22 +395,22 @@ def detect_frameworks(project_root: Path) -> List[str]:
                 found_frameworks.update(frameworks)
     except:
         pass
-    
+
     return list(found_frameworks)
 
-def detect_quality_tools(project_root: Path) -> List[str]:
+def detect_quality_tools(project_root: Path) -> list[str]:
     """Detect code quality tools"""
     tools = []
     try:
-        if (project_root / '.pre-commit-config.yaml').exists():
-            tools.append('pre-commit')
-        if (project_root / 'pyproject.toml').exists():
-            tools.append('modern Python tooling')
+        if (project_root / ".pre-commit-config.yaml").exists():
+            tools.append("pre-commit")
+        if (project_root / "pyproject.toml").exists():
+            tools.append("modern Python tooling")
     except:
         pass
     return tools
 
-def get_coding_standards() -> Dict[str, str]:
+def get_coding_standards() -> dict[str, str]:
     """Get project coding standards"""
     return {
         "python": "PEP 8, type hints required",
@@ -418,7 +418,7 @@ def get_coding_standards() -> Dict[str, str]:
         "general": "Keep files under 500 lines, comprehensive documentation"
     }
 
-def get_recommended_patterns() -> List[str]:
+def get_recommended_patterns() -> list[str]:
     """Get recommended coding patterns for this project"""
     return [
         "Use PRP methodology for complex features",
@@ -427,40 +427,40 @@ def get_recommended_patterns() -> List[str]:
         "Include comprehensive documentation"
     ]
 
-def get_available_tools() -> List[str]:
+def get_available_tools() -> list[str]:
     """Get list of available Claude Code tools"""
     return [
         "Bash", "Read", "Write", "Edit", "MultiEdit", "Glob", "Grep",
         "TodoWrite", "WebFetch", "mcp__filesystem__*", "mcp__perplexity-mcp__*"
     ]
 
-def generate_context_suggestions(prompt: str) -> List[str]:
+def generate_context_suggestions(prompt: str) -> list[str]:
     """Generate contextual suggestions based on prompt"""
     suggestions = []
     prompt_lower = prompt.lower()
-    
+
     if "implement" in prompt_lower:
         suggestions.append("Consider using /create-base-prp for complex implementations")
-        
+
     if "git" in prompt_lower:
         suggestions.append("Check current branch and uncommitted changes first")
-        
+
     if "test" in prompt_lower:
         suggestions.append("Run existing tests before making changes")
-        
+
     return suggestions
 
-def get_resource_recommendations(prompt: str) -> List[str]:
+def get_resource_recommendations(prompt: str) -> list[str]:
     """Get resource recommendations based on prompt"""
     recommendations = []
     prompt_lower = prompt.lower()
-    
+
     if any(lang in prompt_lower for lang in ["python", "javascript", "typescript"]):
         recommendations.append("Use context7 tool for up-to-date documentation")
-        
+
     if "api" in prompt_lower:
         recommendations.append("Check existing API documentation in project")
-        
+
     return recommendations
 
 def get_security_recommendation(risk_level: str) -> str:
@@ -473,7 +473,7 @@ def get_security_recommendation(risk_level: str) -> str:
     }
     return recommendations.get(risk_level, "Unknown risk level")
 
-def process_conversation_context(context: Dict) -> Dict[str, Any]:
+def process_conversation_context(context: dict) -> dict[str, Any]:
     """Process conversation context metadata"""
     return {
         "message_count": context.get("message_count", 0),
@@ -482,7 +482,7 @@ def process_conversation_context(context: Dict) -> Dict[str, Any]:
         "tools_used": context.get("tools_used", [])
     }
 
-def get_research_context() -> Dict[str, Any]:
+def get_research_context() -> dict[str, Any]:
     """Get context for research requests"""
     return {
         "available_research_tools": ["mcp__perplexity-mcp__search", "WebFetch", "context7"],
@@ -490,7 +490,7 @@ def get_research_context() -> Dict[str, Any]:
         "preferred_sources": ["official documentation", "recent articles", "authoritative sources"]
     }
 
-def get_file_operation_context(prompt: str) -> Dict[str, Any]:
+def get_file_operation_context(prompt: str) -> dict[str, Any]:
     """Get context for file operations"""
     return {
         "current_directory": os.getcwd(),
@@ -536,12 +536,12 @@ def main():
             hook_data = json.loads(sys.stdin.read())
             result = handle_user_prompt_submit(hook_data)
             print(json.dumps(result))
-            
+
     except Exception as e:
         logger.error(f"Main error: {e}")
         print(json.dumps({
             "decision": "continue",
-            "message": f"Context processing error: {str(e)}",
+            "message": f"Context processing error: {e!s}",
             "additionalContext": {"error": str(e)}
         }))
 

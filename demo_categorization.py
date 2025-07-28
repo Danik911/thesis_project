@@ -11,9 +11,10 @@ Usage:
 """
 
 import sys
-sys.path.append('.')
 
-from main.src.agents.categorization.categorization_agent import GAMPCategorizationAgent
+sys.path.append(".")
+
+from main.src.agents.categorization.agent import create_gamp_categorization_agent, categorize_with_structured_output
 
 
 def main():
@@ -22,19 +23,15 @@ def main():
     print("=" * 60)
     print("This demo tests the Phase 1 foundation implementation.")
     print("Future phases will add document processing and workflow integration.\n")
-    
+
     # Initialize agent
-    agent = GAMPCategorizationAgent()
-    
-    # Display configuration
-    config = agent.validate_configuration()
-    print(f"📊 Agent Configuration:")
-    print(f"   Version: {config['version']}")
-    print(f"   Supported Categories: {config['supported_categories']}")
-    print(f"   Confidence Threshold: {config['confidence_threshold']}")
-    print(f"   Features: {', '.join(config['features'][:3])}")
+    agent = create_gamp_categorization_agent()
+    print("📊 Agent Configuration:")
+    print(f"   Agent Type: {type(agent).__name__}")
+    print(f"   Max Iterations: 10 (reduced to prevent timeouts)")
+    print(f"   Using structured output approach (bypasses LLM parsing)")
     print()
-    
+
     # Test cases representing each GAMP category
     test_cases = [
         {
@@ -62,7 +59,7 @@ def main():
             """
         },
         {
-            "name": "Category 4 - Configured Product", 
+            "name": "Category 4 - Configured Product",
             "urs": """
             LIMS Configuration Requirements:
             - Configure stability testing workflows
@@ -94,35 +91,36 @@ def main():
             """
         }
     ]
-    
+
     # Run categorization tests
     print("🔍 Running Categorization Tests:")
     print("-" * 40)
-    
+
     for i, test_case in enumerate(test_cases, 1):
         print(f"\n{i}. {test_case['name']}:")
-        
+
         try:
-            # Categorize the URS content
-            result = agent.categorize_urs(
-                test_case['urs'], 
+            # Categorize using structured output approach
+            result = categorize_with_structured_output(
+                agent,
+                test_case["urs"],
                 f"{test_case['name']} Test URS"
             )
-            
+
             # Display results
             print(f"   📋 Category: {result.gamp_category.name} (Category {result.gamp_category.value})")
             print(f"   📊 Confidence: {result.confidence_score:.1%}")
             print(f"   ⚠️  Review Required: {'YES' if result.review_required else 'NO'}")
-            print(f"   🏭 Validation Effort: {result.risk_assessment['validation_effort']}")
-            
+            print(f"   🏭 Validation Effort: {result.risk_assessment.get('validation_effort', 'Unknown')}")
+
             # Show risk factors if any
-            if result.risk_assessment.get('risk_factors'):
+            if result.risk_assessment.get("risk_factors"):
                 print(f"   🚨 Risk Factors: {len(result.risk_assessment['risk_factors'])} identified")
-            
+
         except Exception as e:
             print(f"   ❌ ERROR: {e}")
-    
-    print(f"\n" + "=" * 60)
+
+    print("\n" + "=" * 60)
     print("✅ Demo completed successfully!")
     print("\n📝 Next Steps:")
     print("   - Phase 2: Document processing integration (LlamaParse)")

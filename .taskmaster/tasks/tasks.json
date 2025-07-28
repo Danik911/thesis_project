@@ -131,7 +131,7 @@
             "title": "Workflow Integration",
             "description": "Implement full LlamaIndex workflow integration with event-driven architecture, multi-step categorization process, and agent orchestration for complete categorization workflow.",
             "details": "Create complete GAMPCategorizationWorkflow class using LlamaIndex Workflow patterns. Implement multi-step process: document processing → feature extraction → classification → validation. Integrate with existing event system and context management. Follow workflow pattern from test_generation/examples/scientific_writer/thesis/workflow.py. Reference implementation plan Phase 3.",
-            "status": "pending",
+            "status": "in-progress",
             "dependencies": [
               "2.1",
               "2.5"
@@ -156,15 +156,52 @@
       {
         "id": 3,
         "title": "Planner Agent Workflow",
-        "description": "Create planner agent workflow step for orchestrating test generation",
-        "details": "Implement the orchestrator agent that plans test generation approach based on GAMP category. Creates planning context, determines test types needed, and coordinates parallel agent execution.",
-        "testStrategy": "Integration tests for planning logic, validation of test type determination based on GAMP category",
-        "status": "pending",
+        "description": "Implement and validate the planner agent workflow step for orchestrating test generation, leveraging event-driven, async-first orchestration with LlamaIndex Workflows.",
+        "status": "in-progress",
         "dependencies": [
           2
         ],
         "priority": "high",
-        "subtasks": []
+        "details": "The core planner agent workflow is now implemented and integrated. The workflow orchestrates test generation based on GAMP category, using modular, event-driven steps triggered by planning and agent coordination events. It incorporates:\n\n- GAMPStrategyGenerator for category-specific test strategy and risk assessment\n- AgentCoordinator for parallel agent execution with robust error handling and timeout management\n- PlannerAgent as the core orchestrator, enhanced with LLM and function tools\n- LlamaIndex Workflow patterns with @step decorators and async/await constructs for all agent calls\n- GAMP-5 category-driven planning logic (Categories 1, 3, 4, 5), defaulting to stricter validation on uncertainty\n- Risk-based test count estimation and timeline calculation\n- LLM-powered strategy enhancement for low-confidence categorizations\n- Comprehensive error handling with fallback strategies and human consultation triggers for complex scenarios\n- Full audit trail and event/context snapshotting for ALCOA+ and 21 CFR Part 11 compliance\n- Integration with the event system in events.py and parallel execution via num_workers\n\nArchitecture follows established categorization agent patterns. All workflow steps are fully async to avoid deadlocks, with careful shared state management to prevent race conditions. Human-in-the-loop review is supported for critical decisions. The workflow is observable via Arize Phoenix and maintains detailed event logs for auditability.\n\nFiles implemented:\n- main/src/agents/planner/__init__.py\n- main/src/agents/planner/gamp_strategies.py\n- main/src/agents/planner/strategy_generator.py\n- main/src/agents/planner/coordination.py\n- main/src/agents/planner/agent.py\n- main/src/agents/planner/workflow.py\n- main/tests/agents/planner/test_planner_agent.py\n\nNext steps focus on integration testing with the categorization workflow, validation of parallel agent request generation, end-to-end workflow testing, and performance optimization for large URS documents.",
+        "testStrategy": "Integration tests for planner agent workflow, including:\n- Validation of GAMP category-driven planning logic and test type determination\n- Verification of parallel agent coordination and error handling\n- End-to-end workflow tests with categorization integration\n- Audit trail and compliance output validation\n- Performance and timeout scenario testing\n- Human-in-the-loop trigger validation",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integration test: Planner agent with categorization workflow",
+            "description": "Develop integration tests to validate planner agent workflow integration with the categorization workflow, ensuring correct event flow and context propagation.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Test: Parallel agent request generation and error handling",
+            "description": "Test parallel execution of agent requests, including error handling, timeout protection, and fallback strategies for partial agent failures.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "End-to-end workflow test: Large URS document",
+            "description": "Run end-to-end workflow tests using large URS documents to validate performance, audit trail completeness, and compliance outputs.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Validation: Human-in-the-loop and consultation triggers",
+            "description": "Verify that human consultation triggers activate correctly for complex or low-confidence scenarios, and that the workflow supports human-in-the-loop review.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 4,
@@ -260,15 +297,61 @@
       {
         "id": 6,
         "title": "Test Generation Engine",
-        "description": "Create test generation step with validation and GAMP-5 awareness",
-        "details": "Implement the core test script generation functionality that produces OQ test scripts based on agent outputs, GAMP category, and compliance requirements. Include traceability matrix generation and validation.",
-        "testStrategy": "Unit tests for test script generation, validation of GAMP-5 compliance, traceability matrix testing",
+        "description": "Finalize and validate the test generation step with comprehensive GAMP-5 awareness, leveraging the existing GAMPCategorizationWorkflow implementation.",
         "status": "pending",
         "dependencies": [
           5
         ],
         "priority": "high",
-        "subtasks": []
+        "details": "Shift focus from core implementation to comprehensive testing, validation, and optimization of the existing GAMPCategorizationWorkflow located at /home/anteb/thesis_project/main/src/core/categorization_workflow.py. Ensure end-to-end test script generation for OQ based on agent outputs, GAMP category, and compliance requirements. Validate traceability matrix generation, event-driven integration, agent coordination, error handling (including Category 5 fallback), human consultation triggers, and audit trail support. Address performance validation, integration with Phoenix AI monitoring, and error scenario coverage. Reference the detailed analysis at /home/anteb/thesis_project/main/docs/tasks/task_2.6_workflow_integration_analysis.md.",
+        "testStrategy": "End-to-end tests with real URS documents, performance benchmarking, integration testing with Phoenix AI monitoring, error scenario validation, and compliance verification against GAMP-5 requirements. Include validation of traceability matrix and audit trail outputs.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Develop end-to-end test suite for GAMPCategorizationWorkflow",
+            "description": "Create and execute comprehensive end-to-end tests using real and representative URS documents to validate the full workflow, including OQ test script generation, traceability matrix, and compliance outputs.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Performance validation and optimization",
+            "description": "Benchmark workflow performance under realistic loads, identify bottlenecks, and implement optimizations as needed to ensure production readiness.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Integration testing with Phoenix AI monitoring",
+            "description": "Test and validate integration points with Phoenix AI monitoring, ensuring all relevant events, error states, and audit trails are correctly reported and tracked.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Error scenario and fallback validation",
+            "description": "Design and execute tests for error handling, including Category 5 fallback, human consultation triggers, and audit trail completeness. Ensure robust recovery and compliance in all edge cases.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Enhancement backlog triage",
+            "description": "Review findings from the above testing and analysis document. Identify and prioritize any required enhancements or fixes for the workflow prior to production deployment.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 7,
@@ -438,7 +521,7 @@
     "metadata": {
       "created": "2025-07-24T13:02:40.457Z",
       "description": "Default tasks context",
-      "updated": "2025-07-27T06:46:23.431Z"
+      "updated": "2025-07-27T21:14:13.017Z"
     }
   },
   "implementation": {

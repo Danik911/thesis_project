@@ -3,4 +3,4 @@
 from .components import RAGSystem
 from .config import RAGConfig
 
-__all__ = ["RAGSystem", "RAGConfig"]
+__all__ = ["RAGConfig", "RAGSystem"]

@@ -15,17 +15,15 @@ Key Features:
 
 import logging
 import traceback
-from typing import Dict, Any, Optional, List, Union
-from datetime import datetime, UTC
-from uuid import uuid4
-from enum import Enum
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
+from uuid import uuid4
 
 from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.events import BaseEvent
-from llama_index.core.instrumentation import get_dispatcher
-
-from src.core.events import GAMPCategory, GAMPCategorizationEvent
+from src.core.events import GAMPCategorizationEvent, GAMPCategory
 
 
 class ErrorType(Enum):
@@ -56,11 +54,11 @@ class CategorizationError:
     error_type: ErrorType = ErrorType.UNKNOWN_ERROR
     severity: ErrorSeverity = ErrorSeverity.HIGH
     message: str = ""
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
-    stack_trace: Optional[str] = None
+    stack_trace: str | None = None
     recovery_action: str = "Fallback to Category 5"
-    
+
 
 @dataclass
 class AuditLogEntry:
@@ -70,13 +68,13 @@ class AuditLogEntry:
     action: str = ""
     actor: str = "GAMPCategorizationAgent"
     document_name: str = "Unknown"
-    original_category: Optional[GAMPCategory] = None
+    original_category: GAMPCategory | None = None
     fallback_category: GAMPCategory = GAMPCategory.CATEGORY_5
-    error: Optional[CategorizationError] = None
+    error: CategorizationError | None = None
     confidence_score: float = 0.0
     decision_rationale: str = ""
     regulatory_impact: str = "High - Manual review required"
-    
+
 
 class CategorizationErrorHandler:
     """
@@ -85,7 +83,7 @@ class CategorizationErrorHandler:
     Provides error detection, fallback mechanisms, and audit logging
     with LlamaIndex integration and Phoenix observability preparation.
     """
-    
+
     def __init__(
         self,
         confidence_threshold: float = 0.60,
@@ -109,18 +107,18 @@ class CategorizationErrorHandler:
         self.enable_audit_logging = enable_audit_logging
         self.enable_phoenix_events = enable_phoenix_events
         self.verbose = verbose
-        
+
         # Audit log storage
-        self.audit_log: List[AuditLogEntry] = []
-        self.error_history: List[CategorizationError] = []
-        
+        self.audit_log: list[AuditLogEntry] = []
+        self.error_history: list[CategorizationError] = []
+
         # Logger setup
         self.logger = logging.getLogger(__name__)
         if verbose:
             self.logger.setLevel(logging.DEBUG)
         else:
             self.logger.setLevel(logging.INFO)
-            
+
         # Statistics tracking
         self.stats = {
             "total_errors": 0,
@@ -128,7 +126,7 @@ class CategorizationErrorHandler:
             "error_types": {},
             "recovery_success": 0
         }
-        
+
     def handle_parsing_error(
         self,
         exception: Exception,
@@ -149,7 +147,7 @@ class CategorizationErrorHandler:
         error = CategorizationError(
             error_type=ErrorType.PARSING_ERROR,
             severity=ErrorSeverity.HIGH,
-            message=f"Failed to parse document: {str(exception)}",
+            message=f"Failed to parse document: {exception!s}",
             details={
                 "document_name": document_name,
                 "content_length": len(document_content),
@@ -158,14 +156,14 @@ class CategorizationErrorHandler:
             },
             stack_trace=traceback.format_exc()
         )
-        
+
         return self._create_fallback_event(error, document_name)
-        
+
     def handle_logic_error(
         self,
-        error_details: Dict[str, Any],
+        error_details: dict[str, Any],
         document_name: str = "Unknown",
-        partial_results: Optional[Dict[str, Any]] = None
+        partial_results: dict[str, Any] | None = None
     ) -> GAMPCategorizationEvent:
         """
         Handle categorization logic failures.
@@ -189,14 +187,14 @@ class CategorizationErrorHandler:
                 "failed_step": error_details.get("step", "unknown")
             }
         )
-        
+
         return self._create_fallback_event(error, document_name)
-        
+
     def check_ambiguity(
         self,
-        categorization_results: Dict[str, Any],
-        confidence_scores: Dict[int, float]
-    ) -> Optional[CategorizationError]:
+        categorization_results: dict[str, Any],
+        confidence_scores: dict[int, float]
+    ) -> CategorizationError | None:
         """
         Check for ambiguous categorization results.
         
@@ -209,10 +207,10 @@ class CategorizationErrorHandler:
         """
         # Check for multiple high-confidence categories
         high_confidence_categories = [
-            cat for cat, score in confidence_scores.items() 
+            cat for cat, score in confidence_scores.items()
             if score > self.confidence_threshold
         ]
-        
+
         if len(high_confidence_categories) > 1:
             return CategorizationError(
                 error_type=ErrorType.AMBIGUITY_ERROR,
@@ -224,7 +222,7 @@ class CategorizationErrorHandler:
                     "ambiguity_score": self._calculate_ambiguity_score(confidence_scores)
                 }
             )
-            
+
         # Check for no clear winner
         max_confidence = max(confidence_scores.values()) if confidence_scores else 0
         if max_confidence < self.confidence_threshold:
@@ -238,9 +236,9 @@ class CategorizationErrorHandler:
                     "threshold": self.confidence_threshold
                 }
             )
-            
+
         return None
-        
+
     def handle_tool_error(
         self,
         tool_name: str,
@@ -263,7 +261,7 @@ class CategorizationErrorHandler:
         error = CategorizationError(
             error_type=ErrorType.TOOL_ERROR,
             severity=ErrorSeverity.HIGH,
-            message=f"Tool '{tool_name}' failed: {str(exception)}",
+            message=f"Tool '{tool_name}' failed: {exception!s}",
             details={
                 "tool_name": tool_name,
                 "exception_type": type(exception).__name__,
@@ -272,9 +270,9 @@ class CategorizationErrorHandler:
             },
             stack_trace=traceback.format_exc()
         )
-        
+
         return self._create_fallback_event(error, document_name)
-        
+
     def handle_llm_error(
         self,
         exception: Exception,
@@ -295,7 +293,7 @@ class CategorizationErrorHandler:
         error = CategorizationError(
             error_type=ErrorType.LLM_ERROR,
             severity=ErrorSeverity.CRITICAL,
-            message=f"LLM call failed: {str(exception)}",
+            message=f"LLM call failed: {exception!s}",
             details={
                 "exception_type": type(exception).__name__,
                 "prompt_length": len(prompt),
@@ -304,14 +302,14 @@ class CategorizationErrorHandler:
             },
             stack_trace=traceback.format_exc()
         )
-        
+
         return self._create_fallback_event(error, document_name)
-        
+
     def validate_categorization_result(
         self,
-        result: Dict[str, Any],
+        result: dict[str, Any],
         document_name: str = "Unknown"
-    ) -> Optional[CategorizationError]:
+    ) -> CategorizationError | None:
         """
         Validate categorization results for completeness and consistency.
         
@@ -324,7 +322,7 @@ class CategorizationErrorHandler:
         """
         required_fields = ["predicted_category", "evidence", "all_categories_analysis"]
         missing_fields = [field for field in required_fields if field not in result]
-        
+
         if missing_fields:
             return CategorizationError(
                 error_type=ErrorType.VALIDATION_ERROR,
@@ -336,7 +334,7 @@ class CategorizationErrorHandler:
                     "document_name": document_name
                 }
             )
-            
+
         # Validate category value
         predicted_category = result.get("predicted_category")
         if predicted_category not in [1, 3, 4, 5]:
@@ -350,9 +348,9 @@ class CategorizationErrorHandler:
                     "document_name": document_name
                 }
             )
-            
+
         return None
-        
+
     def _create_fallback_event(
         self,
         error: CategorizationError,
@@ -373,10 +371,10 @@ class CategorizationErrorHandler:
         self.stats["fallback_count"] += 1
         self.stats["error_types"][error.error_type.value] = \
             self.stats["error_types"].get(error.error_type.value, 0) + 1
-            
+
         # Store error
         self.error_history.append(error)
-        
+
         # Create audit log entry
         if self.enable_audit_logging:
             audit_entry = AuditLogEntry(
@@ -387,10 +385,10 @@ class CategorizationErrorHandler:
             )
             self.audit_log.append(audit_entry)
             self._log_audit_entry(audit_entry)
-            
+
         # Generate comprehensive justification
         justification = self._generate_fallback_justification(error, document_name)
-        
+
         # Create risk assessment
         risk_assessment = {
             "category": 5,
@@ -408,13 +406,13 @@ class CategorizationErrorHandler:
                 "recovery_action": error.recovery_action
             }
         }
-        
+
         # Log the fallback
         self.logger.warning(
             f"Categorization fallback triggered for '{document_name}': "
             f"{error.error_type.value} - {error.message}"
         )
-        
+
         return GAMPCategorizationEvent(
             gamp_category=GAMPCategory.CATEGORY_5,
             confidence_score=0.0,
@@ -425,7 +423,7 @@ class CategorizationErrorHandler:
             categorized_by="GAMPCategorizationAgent-ErrorHandler",
             review_required=True
         )
-        
+
     def _generate_fallback_justification(
         self,
         error: CategorizationError,
@@ -444,7 +442,7 @@ class CategorizationErrorHandler:
             f"- {error.message}",
             ""
         ]
-        
+
         # Add specific error details
         if error.details:
             justification_parts.append("ADDITIONAL INFORMATION:")
@@ -452,7 +450,7 @@ class CategorizationErrorHandler:
                 if key not in ["stack_trace", "content_preview", "prompt_preview"]:
                     justification_parts.append(f"- {key}: {value}")
             justification_parts.append("")
-            
+
         justification_parts.extend([
             "REGULATORY COMPLIANCE NOTICE:",
             "- This document requires manual expert review",
@@ -465,23 +463,23 @@ class CategorizationErrorHandler:
             "- Contact validation expert for manual categorization",
             "- Review error logs for root cause analysis"
         ])
-        
+
         return "\n".join(justification_parts)
-        
-    def _calculate_ambiguity_score(self, confidence_scores: Dict[int, float]) -> float:
+
+    def _calculate_ambiguity_score(self, confidence_scores: dict[int, float]) -> float:
         """Calculate ambiguity score based on confidence distribution."""
         if not confidence_scores:
             return 1.0
-            
+
         scores = list(confidence_scores.values())
         scores.sort(reverse=True)
-        
+
         if len(scores) < 2:
             return 0.0
-            
+
         # Ambiguity is high when top scores are close
         return 1.0 - (scores[0] - scores[1])
-        
+
     def _log_audit_entry(self, entry: AuditLogEntry):
         """Log audit entry for regulatory compliance."""
         audit_message = (
@@ -491,11 +489,11 @@ class CategorizationErrorHandler:
             f"Fallback: Category {entry.fallback_category.value} | "
             f"Reason: {entry.decision_rationale}"
         )
-        
+
         # Always log audit entries at INFO level
         self.logger.info(audit_message)
-        
-    def get_audit_log(self) -> List[Dict[str, Any]]:
+
+    def get_audit_log(self) -> list[dict[str, Any]]:
         """Get audit log entries as dictionaries."""
         return [
             {
@@ -513,8 +511,8 @@ class CategorizationErrorHandler:
             }
             for entry in self.audit_log
         ]
-        
-    def get_error_statistics(self) -> Dict[str, Any]:
+
+    def get_error_statistics(self) -> dict[str, Any]:
         """Get error handling statistics."""
         return {
             "total_errors": self.stats["total_errors"],
@@ -536,7 +534,7 @@ class CategorizationErrorHandler:
                 for error in self.error_history[-10:]  # Last 10 errors
             ]
         }
-        
+
     def reset_statistics(self):
         """Reset error statistics (audit log is preserved)."""
         self.stats = {
@@ -555,33 +553,33 @@ class CategorizationEventHandler(BaseEventHandler):
     Integrates with LlamaIndex's native event system for comprehensive
     error tracking and Phoenix observability preparation.
     """
-    
+
     def __init__(self, error_handler: CategorizationErrorHandler):
         super().__init__()
         self.error_handler = error_handler
         self.logger = logging.getLogger(f"{__name__}.EventHandler")
-        
+
     @classmethod
     def class_name(cls) -> str:
         return "CategorizationEventHandler"
-        
+
     def handle(self, event: BaseEvent) -> None:
         """Handle categorization-related events."""
         try:
             event_type = event.class_name()
-            
+
             # Track error events
             if "Error" in event_type or "Exception" in event_type:
                 self.logger.error(f"Error event detected: {event_type}")
                 # Future: Convert to CategorizationError and handle
-                
+
             # Track tool events
             elif "Tool" in event_type:
                 self.logger.debug(f"Tool event: {event_type}")
-                
-            # Track LLM events  
+
+            # Track LLM events
             elif "LLM" in event_type or "Chat" in event_type:
                 self.logger.debug(f"LLM event: {event_type}")
-                
+
         except Exception as e:
             self.logger.error(f"Error handling event {event.class_name()}: {e}")

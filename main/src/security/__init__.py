@@ -1,6 +1,6 @@
 """Security components for LLM output validation."""
 
-from .owasp_validator import OWASPValidator
 from .alcoa_compliance import ALCOAComplianceChecker
+from .owasp_validator import OWASPValidator
 
-__all__ = ["OWASPValidator", "ALCOAComplianceChecker"]
+__all__ = ["ALCOAComplianceChecker", "OWASPValidator"]

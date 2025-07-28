@@ -9,15 +9,12 @@ This module maintains the CategorizationWorkflowStep class for backward
 compatibility and provides utility functions for workflow integration.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, UTC
+from typing import Any
 
-from src.core.events import GAMPCategory
 from src.agents.categorization.agent import (
     create_gamp_categorization_agent,
-    categorize_with_structured_output
 )
-from src.agents.categorization.error_handler import CategorizationErrorHandler
+from src.core.events import GAMPCategory
 
 
 class CategorizationWorkflowStep:
@@ -28,7 +25,7 @@ class CategorizationWorkflowStep:
     should use GAMPCategorizationWorkflow from src/core/categorization_workflow.py
     which follows proper LlamaIndex workflow patterns.
     """
-    
+
     def __init__(
         self,
         enable_error_handling: bool = True,
@@ -51,7 +48,7 @@ class CategorizationWorkflowStep:
         self.retry_attempts = retry_attempts
         self.agent = None
         self.error_handler = None
-        
+
     def initialize_agent(self):
         """Initialize the categorization agent with configuration."""
         if not self.agent:
@@ -61,11 +58,11 @@ class CategorizationWorkflowStep:
                 verbose=self.verbose
             )
             # Access error handler if available
-            if hasattr(self.agent, 'error_handler'):
+            if hasattr(self.agent, "error_handler"):
                 self.error_handler = self.agent.error_handler
         return self.agent
-    
-    def get_output_schema(self) -> Dict[str, Any]:
+
+    def get_output_schema(self) -> dict[str, Any]:
         """
         Get the output schema for downstream workflow steps.
         
@@ -121,34 +118,34 @@ class CategorizationWorkflowStep:
                 "gamp_5": True
             }
         }
-    
+
     def _determine_risk_level(self, category: GAMPCategory) -> str:
         """Determine risk level based on GAMP category."""
         risk_mapping = {
             GAMPCategory.CATEGORY_1: "low",
-            GAMPCategory.CATEGORY_3: "low", 
+            GAMPCategory.CATEGORY_3: "low",
             GAMPCategory.CATEGORY_4: "medium",
             GAMPCategory.CATEGORY_5: "high"
         }
         return risk_mapping.get(category, "high")
-    
+
     def _determine_validation_rigor(self, category: GAMPCategory) -> str:
         """Determine validation rigor based on GAMP category."""
         rigor_mapping = {
             GAMPCategory.CATEGORY_1: "minimal",
             GAMPCategory.CATEGORY_3: "standard",
-            GAMPCategory.CATEGORY_4: "enhanced", 
+            GAMPCategory.CATEGORY_4: "enhanced",
             GAMPCategory.CATEGORY_5: "full"
         }
         return rigor_mapping.get(category, "full")
-    
-    def get_error_statistics(self) -> Optional[Dict[str, Any]]:
+
+    def get_error_statistics(self) -> dict[str, Any] | None:
         """Get error statistics if error handling is enabled."""
         if self.error_handler:
             return self.error_handler.get_error_statistics()
         return None
-    
-    def get_audit_log(self) -> Optional[list]:
+
+    def get_audit_log(self) -> list | None:
         """Get audit log if error handling is enabled."""
         if self.error_handler:
             return self.error_handler.get_audit_log()

@@ -6,27 +6,22 @@ LlamaIndex Workflow pattern. It provides event-driven categorization
 with error handling, confidence scoring, and human consultation triggers.
 """
 
-from typing import Optional, Dict, Any, Union
-from datetime import datetime, UTC
 import logging
+from datetime import UTC, datetime
+from typing import Any
 
-from llama_index.core.workflow import Workflow, StartEvent, StopEvent, Context, step
-from llama_index.core.agent.workflow import FunctionAgent
-
+from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
+from src.agents.categorization import (
+    categorize_with_structured_output,
+    create_gamp_categorization_agent,
+)
 from src.core.events import (
-    URSIngestionEvent,
+    ConsultationRequiredEvent,
     DocumentProcessedEvent,
+    ErrorRecoveryEvent,
     GAMPCategorizationEvent,
     GAMPCategory,
-    ErrorRecoveryEvent,
-    ConsultationRequiredEvent,
-    AgentRequestEvent,
-    AgentResultEvent
-)
-from src.agents.categorization import (
-    create_gamp_categorization_agent,
-    categorize_with_structured_output,
-    CategorizationWorkflowStep
+    URSIngestionEvent,
 )
 
 
@@ -44,7 +39,7 @@ class GAMPCategorizationWorkflow(Workflow):
     4. Trigger human consultation if needed
     5. Return categorization result (StopEvent)
     """
-    
+
     def __init__(
         self,
         timeout: int = 300,
@@ -72,16 +67,16 @@ class GAMPCategorizationWorkflow(Workflow):
         self.verbose = verbose  # Store verbose flag
         self.enable_document_processing = enable_document_processing
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize categorization agent
         self.categorization_agent = None
         self._initialize_agent()
-        
+
         # Initialize document processor if enabled
         self.document_processor = None
         if self.enable_document_processing:
             self._initialize_document_processor()
-    
+
     def _initialize_agent(self) -> None:
         """Initialize the categorization agent."""
         try:
@@ -94,7 +89,7 @@ class GAMPCategorizationWorkflow(Workflow):
         except Exception as e:
             self.logger.error(f"Failed to initialize categorization agent: {e}")
             raise
-    
+
     def _initialize_document_processor(self) -> None:
         """Initialize the document processor if enabled."""
         try:
@@ -105,7 +100,7 @@ class GAMPCategorizationWorkflow(Workflow):
             self.logger.error(f"Failed to initialize document processor: {e}")
             # Document processing is optional, so just log the error
             self.enable_document_processing = False
-    
+
     @step
     async def start(self, ctx: Context, ev: StartEvent) -> URSIngestionEvent:
         """
@@ -122,12 +117,12 @@ class GAMPCategorizationWorkflow(Workflow):
             URSIngestionEvent for categorization processing
         """
         # Extract URS data from StartEvent
-        urs_content = getattr(ev, 'urs_content', '')
-        document_name = getattr(ev, 'document_name', 'unknown.urs')
-        document_version = getattr(ev, 'document_version', '1.0')
-        author = getattr(ev, 'author', 'system')
-        digital_signature = getattr(ev, 'digital_signature', None)
-        
+        urs_content = getattr(ev, "urs_content", "")
+        document_name = getattr(ev, "document_name", "unknown.urs")
+        document_version = getattr(ev, "document_version", "1.0")
+        author = getattr(ev, "author", "system")
+        digital_signature = getattr(ev, "digital_signature", None)
+
         # Store workflow metadata in context
         await ctx.set("workflow_start_time", datetime.now(UTC))
         await ctx.set("document_metadata", {
@@ -136,10 +131,10 @@ class GAMPCategorizationWorkflow(Workflow):
             "author": author,
             "content_length": len(urs_content)
         })
-        
+
         # Log workflow start
         self.logger.info(f"Starting GAMP-5 categorization for document: {document_name}")
-        
+
         # Create and return URSIngestionEvent
         return URSIngestionEvent(
             urs_content=urs_content,
@@ -148,13 +143,13 @@ class GAMPCategorizationWorkflow(Workflow):
             author=author,
             digital_signature=digital_signature
         )
-    
+
     @step
     async def process_document(
         self,
         ctx: Context,
         ev: URSIngestionEvent
-    ) -> Union[DocumentProcessedEvent, URSIngestionEvent]:
+    ) -> DocumentProcessedEvent | URSIngestionEvent:
         """
         Process document with LlamaParse if enabled.
         
@@ -173,9 +168,9 @@ class GAMPCategorizationWorkflow(Workflow):
         if not self.enable_document_processing or not self.document_processor:
             self.logger.info("Document processing not enabled, using raw content")
             return ev
-            
+
         self.logger.info(f"Processing document: {ev.document_name}")
-        
+
         try:
             # Check if content is file path or actual content
             from pathlib import Path
@@ -196,10 +191,10 @@ class GAMPCategorizationWorkflow(Workflow):
             else:
                 # Process from content
                 result = await self._process_from_content(ev)
-            
+
             # Store processed document in context
             await ctx.set("processed_document", result)
-            
+
             # Create DocumentProcessedEvent
             return DocumentProcessedEvent(
                 document_id=result["document_id"],
@@ -213,25 +208,25 @@ class GAMPCategorizationWorkflow(Workflow):
                 requirements=result["requirements"],
                 processing_info=result["processing_info"]
             )
-            
+
         except Exception as e:
             self.logger.warning(f"Document processing failed: {e}, using raw content")
             # On failure, pass through original event
             return ev
-    
-    async def _process_from_content(self, ev: URSIngestionEvent) -> Dict[str, Any]:
+
+    async def _process_from_content(self, ev: URSIngestionEvent) -> dict[str, Any]:
         """Process document from raw content."""
         import tempfile
         from pathlib import Path
-        
+
         with tempfile.NamedTemporaryFile(
-            mode='w',
-            suffix='.txt',
+            mode="w",
+            suffix=".txt",
             delete=False
         ) as tmp_file:
             tmp_file.write(ev.urs_content)
             tmp_path = Path(tmp_file.name)
-        
+
         try:
             # Process temporary file
             result = self.document_processor.process_document(
@@ -244,15 +239,15 @@ class GAMPCategorizationWorkflow(Workflow):
         finally:
             # Clean up temporary file
             tmp_path.unlink(missing_ok=True)
-        
+
         return result
-    
+
     @step
     async def categorize_document(
-        self, 
-        ctx: Context, 
-        ev: Union[URSIngestionEvent, DocumentProcessedEvent]
-    ) -> Union[GAMPCategorizationEvent, ErrorRecoveryEvent]:
+        self,
+        ctx: Context,
+        ev: URSIngestionEvent | DocumentProcessedEvent
+    ) -> GAMPCategorizationEvent | ErrorRecoveryEvent:
         """
         Perform GAMP-5 categorization on the URS document.
         
@@ -268,7 +263,7 @@ class GAMPCategorizationWorkflow(Workflow):
         """
         # Store event in context
         await ctx.set("categorization_input_event", ev)
-        
+
         # Extract content based on event type
         if isinstance(ev, DocumentProcessedEvent):
             # Use processed document - create formatted input
@@ -282,10 +277,10 @@ class GAMPCategorizationWorkflow(Workflow):
             document_name = ev.document_name
             author = ev.author
             self.logger.info(f"Categorizing raw document: {document_name}")
-        
+
         # Attempt categorization with retries
         last_error = None
-        
+
         for attempt in range(self.retry_attempts):
             try:
                 # Use structured output method for reliability
@@ -294,12 +289,12 @@ class GAMPCategorizationWorkflow(Workflow):
                     urs_content=urs_content,
                     document_name=document_name
                 )
-                
+
                 # Create categorization event from result
                 categorization_event = self._create_categorization_event(
                     result, document_name, author
                 )
-                
+
                 # Store result in context
                 await ctx.set("categorization_result", {
                     "category": categorization_event.gamp_category.value,
@@ -308,36 +303,36 @@ class GAMPCategorizationWorkflow(Workflow):
                     "justification": categorization_event.justification,
                     "is_fallback": categorization_event.confidence_score == 0.0  # Mark as fallback if confidence is 0
                 })
-                
+
                 # Log success
                 self.logger.info(
                     f"Categorization successful: Category {categorization_event.gamp_category.value}, "
                     f"Confidence: {categorization_event.confidence_score:.2%}"
                 )
-                
+
                 return categorization_event
-                
+
             except Exception as e:
                 last_error = e
                 self.logger.warning(
-                    f"Categorization attempt {attempt + 1} failed: {str(e)}"
+                    f"Categorization attempt {attempt + 1} failed: {e!s}"
                 )
-                
+
                 # Store error in context
                 await ctx.set(f"categorization_error_{attempt}", {
                     "error": str(e),
                     "attempt": attempt + 1,
                     "timestamp": datetime.now(UTC).isoformat()
                 })
-        
+
         # All retries failed - create error recovery event
         self.logger.error(
             f"Categorization failed after {self.retry_attempts} attempts"
         )
-        
+
         return ErrorRecoveryEvent(
             error_type="categorization_failure",
-            error_message=f"Failed after {self.retry_attempts} attempts: {str(last_error)}",
+            error_message=f"Failed after {self.retry_attempts} attempts: {last_error!s}",
             error_context={
                 "document_name": ev.document_name,
                 "document_version": ev.document_version,
@@ -355,7 +350,7 @@ class GAMPCategorizationWorkflow(Workflow):
             severity="high",
             auto_recoverable=True
         )
-    
+
     @step
     async def handle_error_recovery(
         self,
@@ -378,12 +373,12 @@ class GAMPCategorizationWorkflow(Workflow):
         # Get document metadata
         doc_metadata = await ctx.get("document_metadata", {})
         urs_event = await ctx.get("urs_ingestion_event", None)
-        
+
         # Log error recovery
         self.logger.info(
             f"Executing error recovery for {doc_metadata.get('name', 'unknown')}"
         )
-        
+
         # Create conservative fallback event
         fallback_event = GAMPCategorizationEvent(
             gamp_category=GAMPCategory.CATEGORY_5,
@@ -403,7 +398,7 @@ class GAMPCategorizationWorkflow(Workflow):
             categorized_by=f"error_recovery_{doc_metadata.get('name', 'unknown')}",
             review_required=True
         )
-        
+
         # Store fallback in context
         await ctx.set("categorization_result", {
             "category": 5,
@@ -412,15 +407,15 @@ class GAMPCategorizationWorkflow(Workflow):
             "justification": fallback_event.justification,
             "is_fallback": True
         })
-        
+
         return fallback_event
-    
+
     @step
     async def check_consultation_required(
         self,
         ctx: Context,
         ev: GAMPCategorizationEvent
-    ) -> Optional[ConsultationRequiredEvent]:
+    ) -> ConsultationRequiredEvent | None:
         """
         Check if human consultation is required based on categorization results.
         
@@ -436,20 +431,20 @@ class GAMPCategorizationWorkflow(Workflow):
         """
         # Store categorization event in context for final step
         await ctx.set("final_categorization_event", ev)
-        
+
         # Check if consultation is required
         if ev.review_required:
             doc_metadata = await ctx.get("document_metadata", {})
-            
+
             # Determine urgency based on confidence
             urgency = "high" if ev.confidence_score < 0.5 else "normal"
-            
+
             # Log consultation requirement
             self.logger.info(
                 f"Human consultation required for {doc_metadata.get('name', 'unknown')} "
                 f"(confidence: {ev.confidence_score:.2%})"
             )
-            
+
             return ConsultationRequiredEvent(
                 consultation_type="categorization_review",
                 context={
@@ -463,15 +458,15 @@ class GAMPCategorizationWorkflow(Workflow):
                 required_expertise=["gamp_5_expert", "validation_specialist"],
                 triggering_step="categorization"
             )
-        
+
         # No consultation needed
         return None
-    
+
     @step
     async def complete_workflow(
         self,
         ctx: Context,
-        ev: Optional[ConsultationRequiredEvent]
+        ev: ConsultationRequiredEvent | None
     ) -> StopEvent:
         """
         Complete the categorization workflow.
@@ -489,10 +484,10 @@ class GAMPCategorizationWorkflow(Workflow):
         categorization_event = await ctx.get("final_categorization_event")
         categorization_result = await ctx.get("categorization_result")
         workflow_start = await ctx.get("workflow_start_time")
-        
+
         # Calculate workflow duration
         workflow_duration = (datetime.now(UTC) - workflow_start).total_seconds()
-        
+
         # Build result dictionary
         result = {
             "categorization_event": categorization_event,
@@ -505,16 +500,16 @@ class GAMPCategorizationWorkflow(Workflow):
                 "workflow_duration_seconds": workflow_duration
             }
         }
-        
+
         # Log workflow completion
         self.logger.info(
             f"Workflow completed in {workflow_duration:.2f}s - "
             f"Category: {result['summary']['category']}, "
             f"Confidence: {result['summary']['confidence']:.2%}"
         )
-        
+
         return StopEvent(result=result)
-    
+
     def _create_categorization_event(
         self,
         result: Any,
@@ -539,7 +534,7 @@ class GAMPCategorizationWorkflow(Workflow):
             "validation_rigor": self._determine_validation_rigor(result.gamp_category),
             "confidence_factors": getattr(result, "confidence_factors", {})
         }
-        
+
         # Create event
         return GAMPCategorizationEvent(
             gamp_category=result.gamp_category,
@@ -549,7 +544,7 @@ class GAMPCategorizationWorkflow(Workflow):
             categorized_by=f"gamp_categorization_workflow_{document_name}",
             review_required=result.review_required
         )
-    
+
     def _create_categorization_input(self, processed_event: DocumentProcessedEvent) -> str:
         """
         Create formatted input for GAMP-5 categorization from processed document.
@@ -561,30 +556,30 @@ class GAMPCategorizationWorkflow(Workflow):
             Formatted text suitable for categorization
         """
         lines = []
-        
+
         # Add document header
         lines.append(f"DOCUMENT: {processed_event.document_name}")
         lines.append(f"VERSION: {processed_event.document_version}")
         lines.append(f"TYPE: {processed_event.metadata.get('document_type', 'URS')}")
         lines.append("")
-        
+
         # Add high-importance sections
         high_importance_sections = [
-            s for s in processed_event.sections 
+            s for s in processed_event.sections
             if s.get("importance") == "high"
         ]
-        
+
         if high_importance_sections:
             lines.append("## KEY SECTIONS")
             for section in high_importance_sections[:5]:  # Top 5 sections
                 lines.append(f"\n### {section['title']}")
                 # Limit content to 500 chars per section
-                content = section['content'][:500]
-                if len(section['content']) > 500:
+                content = section["content"][:500]
+                if len(section["content"]) > 500:
                     content += "..."
                 lines.append(content)
             lines.append("")
-        
+
         # Add requirements summary
         if processed_event.requirements:
             lines.append("## REQUIREMENTS SUMMARY")
@@ -593,21 +588,21 @@ class GAMPCategorizationWorkflow(Workflow):
             for req in processed_event.requirements[:10]:  # Top 10
                 lines.append(f"- [{req['id']}] {req['text']}")
             lines.append("")
-        
+
         # Add technical indicators
         lines.append("## TECHNICAL INDICATORS")
-        
+
         # From processing info
         proc_info = processed_event.processing_info
         lines.append(f"- Page Count: {proc_info.get('page_count', 0)}")
         lines.append(f"- Contains Charts/Diagrams: {proc_info.get('chart_count', 0) > 0}")
         lines.append(f"- Contains Tables: {proc_info.get('table_count', 0) > 0}")
         lines.append(f"- Requirement Count: {proc_info.get('requirement_count', 0)}")
-        
+
         # From metadata
-        if processed_event.metadata.get('compliance_standards'):
+        if processed_event.metadata.get("compliance_standards"):
             lines.append(f"- Compliance Standards: {', '.join(processed_event.metadata['compliance_standards'])}")
-        
+
         # Analyze content for software indicators
         content_lower = processed_event.content.lower()
         software_indicators = {
@@ -618,12 +613,12 @@ class GAMPCategorizationWorkflow(Workflow):
             "COTS": "cots" in content_lower or "off-the-shelf" in content_lower,
             "Configuration": "configuration" in content_lower or "configure" in content_lower
         }
-        
+
         lines.append("\nSoftware Type Indicators:")
         for indicator, present in software_indicators.items():
             if present:
                 lines.append(f"- {indicator}: Yes")
-        
+
         # Add chart summary if relevant
         if processed_event.charts:
             lines.append("\n## VISUAL ELEMENTS")
@@ -631,12 +626,12 @@ class GAMPCategorizationWorkflow(Workflow):
             for chart in processed_event.charts:
                 chart_type = chart.get("type", "unknown")
                 chart_types[chart_type] = chart_types.get(chart_type, 0) + 1
-            
+
             for chart_type, count in chart_types.items():
                 lines.append(f"- {chart_type}: {count}")
-        
+
         return "\n".join(lines)
-    
+
     def _determine_risk_level(self, category: GAMPCategory) -> str:
         """Determine risk level based on GAMP category."""
         risk_mapping = {
@@ -646,7 +641,7 @@ class GAMPCategorizationWorkflow(Workflow):
             GAMPCategory.CATEGORY_5: "high"
         }
         return risk_mapping.get(category, "high")
-    
+
     def _determine_validation_rigor(self, category: GAMPCategory) -> str:
         """Determine validation rigor based on GAMP category."""
         rigor_mapping = {
@@ -665,7 +660,7 @@ async def run_categorization_workflow(
     document_version: str = "1.0",
     author: str = "system",
     **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Run the GAMP-5 categorization workflow.
     
@@ -681,7 +676,7 @@ async def run_categorization_workflow(
     """
     # Create workflow instance
     workflow = GAMPCategorizationWorkflow(**kwargs)
-    
+
     # Run workflow
     result = await workflow.run(
         urs_content=urs_content,
@@ -689,5 +684,5 @@ async def run_categorization_workflow(
         document_version=document_version,
         author=author
     )
-    
+
     return result
