@@ -136,14 +136,19 @@ class GAMPCategorizationWorkflow(Workflow):
         # Log workflow start
         self.logger.info(f"Starting GAMP-5 categorization for document: {document_name}")
 
-        # Create and return URSIngestionEvent
-        return URSIngestionEvent(
+        # Create URSIngestionEvent
+        urs_event = URSIngestionEvent(
             urs_content=urs_content,
             document_name=document_name,
             document_version=document_version,
             author=author,
             digital_signature=digital_signature
         )
+        
+        # Emit event to stream for logging
+        ctx.write_event_to_stream(urs_event)
+        
+        return urs_event
 
     @step
     async def process_document(
@@ -197,7 +202,7 @@ class GAMPCategorizationWorkflow(Workflow):
             await ctx.set("processed_document", result)
 
             # Create DocumentProcessedEvent
-            return DocumentProcessedEvent(
+            doc_event = DocumentProcessedEvent(
                 document_id=result["document_id"],
                 document_name=ev.document_name,
                 document_version=ev.document_version,
@@ -209,6 +214,11 @@ class GAMPCategorizationWorkflow(Workflow):
                 requirements=result["requirements"],
                 processing_info=result["processing_info"]
             )
+            
+            # Emit document processed event to stream
+            ctx.write_event_to_stream(doc_event)
+            
+            return doc_event
 
         except Exception as e:
             self.logger.warning(f"Document processing failed: {e}, continuing with raw content")
@@ -310,6 +320,9 @@ class GAMPCategorizationWorkflow(Workflow):
                     f"Confidence: {categorization_event.confidence_score:.2%}"
                 )
 
+                # Emit event to stream for logging
+                ctx.write_event_to_stream(categorization_event)
+
                 return categorization_event
 
             except Exception as e:
@@ -330,13 +343,13 @@ class GAMPCategorizationWorkflow(Workflow):
             f"Categorization failed after {self.retry_attempts} attempts"
         )
 
-        return ErrorRecoveryEvent(
+        error_event = ErrorRecoveryEvent(
             error_type="categorization_failure",
             error_message=f"Failed after {self.retry_attempts} attempts: {last_error!s}",
             error_context={
-                "document_name": ev.document_name,
-                "document_version": ev.document_version,
-                "content_length": len(ev.urs_content),
+                "document_name": document_name,  
+                "document_version": getattr(ev, "document_version", "1.0"),
+                "content_length": len(urs_content),
                 "attempts": self.retry_attempts
             },
             recovery_strategy="fallback_to_category_5",
@@ -350,6 +363,11 @@ class GAMPCategorizationWorkflow(Workflow):
             severity="high",
             auto_recoverable=True
         )
+        
+        # Emit error event to stream
+        ctx.write_event_to_stream(error_event)
+        
+        return error_event
 
     @step
     async def handle_error_recovery(
@@ -408,6 +426,9 @@ class GAMPCategorizationWorkflow(Workflow):
             "is_fallback": True
         })
 
+        # Emit fallback event to stream
+        ctx.write_event_to_stream(fallback_event)
+
         return fallback_event
 
     @step
@@ -459,13 +480,21 @@ class GAMPCategorizationWorkflow(Workflow):
                 required_expertise=["gamp_5_expert", "validation_specialist"],
                 triggering_step="categorization"
             )
+            
+            # Emit consultation event to stream
+            ctx.write_event_to_stream(consultation_event)
 
-        # Always emit completion event
-        return WorkflowCompletionEvent(
+        # Create completion event
+        completion_event = WorkflowCompletionEvent(
             consultation_event=consultation_event,
             ready_for_completion=True,
             triggering_step="check_consultation_required"
         )
+        
+        # Emit completion event to stream
+        ctx.write_event_to_stream(completion_event)
+        
+        return completion_event
 
     @step
     async def complete_workflow(

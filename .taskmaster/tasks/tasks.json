@@ -516,12 +516,73 @@
         ],
         "priority": "low",
         "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Integrate Structured LlamaIndex Event Streaming Logging System",
+        "description": "A GAMP-5 compliant event streaming logging system has been implemented in LlamaIndex. The system uses the 'async for event in handler.stream_events()' pattern to capture structured logs with ISO 8601 timestamps, event types, contextual data, and regulatory metadata for categorization, planning, and agent coordination events. The solution ensures tamper-evident, append-only audit trails meeting GAMP-5, ALCOA+, and 21 CFR Part 11 requirements, and is ready for integration and validation.",
+        "status": "done",
+        "dependencies": [
+          1,
+          3,
+          7,
+          8
+        ],
+        "priority": "high",
+        "details": "Key components implemented:\n1. EventStreamHandler class supporting async event streaming for real-time event capture.\n2. StructuredEventLogger integrating with Python's logging module for structured, multi-level logging (DEBUG, INFO, ERROR) to both console and file outputs.\n3. GAMP5ComplianceLogger for regulatory audit trails, ensuring tamper-evident, append-only logs with SHA-256 integrity.\n4. Comprehensive configuration system (main/src/shared/config.py) supporting GAMP-5, ALCOA+, and 21 CFR Part 11 settings, including log retention, rotation, and secure storage.\n5. Integration utilities and mixin classes (main/src/shared/event_logging_integration.py) for seamless adoption in LlamaIndex workflows.\n6. Complete documentation and architecture guide (main/docs/EVENT_LOGGING_SYSTEM_ARCHITECTURE.md).\n7. Test script (test_event_logging_system.py) for system validation.\n8. Utility functions (main/src/shared/utils.py) to be completed as needed.\n\nThe system supports:\n- Real-time event streaming with 'async for event in handler.stream_events()' pattern\n- Structured logging with ISO 8601 timestamps, event types, payloads, workflow context, and metadata\n- Tamper-evident, append-only logs with cryptographic integrity\n- ALCOA+ principles and GAMP-5/21 CFR Part 11 compliance\n- Configurable retention, rotation, and secure storage\n- Integration with existing LlamaIndex workflows\n\nReady for testing and integration with other workflow components.",
+        "testStrategy": "- Run the provided test_event_logging_system.py script to validate event streaming, structured logging output, and regulatory compliance features.\n- Write additional unit tests for any new or customized event handlers to verify correct event streaming and logging.\n- Simulate full workflow runs to ensure all categorization, planning, and agent coordination events are captured with accurate timestamps, event types, and context.\n- Validate log integrity by checking for completeness, correct ordering, and immutability (append-only behavior with SHA-256 verification).\n- Perform compliance validation against GAMP-5, ALCOA+, and 21 CFR Part 11 audit trail requirements.\n- Review logs for correct formatting, error handling, log rotation, and secure storage configuration.\n- Complete and test any missing utility functions in main/src/shared/utils.py as needed.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Complete missing utility functions in main/src/shared/utils.py",
+            "description": "Implement any required utility functions in main/src/shared/utils.py to support event streaming, logging, or configuration features not yet covered by the core implementation.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Integrate event streaming logging system with downstream workflow components",
+            "description": "Connect the implemented logging system to other workflow modules, ensuring all categorization, planning, and agent coordination events are captured and logged in real time.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Validate regulatory compliance and log integrity",
+            "description": "Use the test_event_logging_system.py script and additional tests to verify GAMP-5, ALCOA+, and 21 CFR Part 11 compliance, including log immutability, traceability, and secure storage.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Integrate Production-Grade Arize Phoenix Observability with OpenInference and Custom Pharmaceutical Workflow Event Handlers",
+        "description": "Implement a comprehensive, production-ready observability stack using Arize Phoenix, OpenTelemetry, and OpenInference, including environment-based configuration, custom event handlers for pharmaceutical workflows, and advanced tracing for GAMP-5 compliance.",
+        "details": "1. **Phase 1: Quick Integration**\n   - Install all required dependencies: `arize-phoenix`, `opentelemetry-sdk`, `opentelemetry-exporter-otlp`, `openinference-instrumentation-*`, and relevant LlamaIndex/CrewAI connectors as per the latest Phoenix and OpenInference documentation[1][2][3].\n   - Launch the Phoenix app in development and staging environments using `phoenix.launch_app()` for immediate observability feedback[1][2].\n   - Configure Phoenix and OpenTelemetry endpoints via environment variables (e.g., `PHOENIX_OTLP_ENDPOINT`, `PHOENIX_API_KEY`, `PHOENIX_PROJECT`, etc.), ensuring all secrets are managed securely and are compatible with containerized/cloud deployments[1][4].\n\n2. **Phase 2: Production Integration**\n   - Refactor observability configuration to be fully environment-driven, supporting seamless deployment across dev, staging, and production. Use `.env` files and/or secret managers for sensitive configuration[2][4].\n   - Integrate OpenTelemetry tracing at the application entry points, ensuring all agent invocations, workflow steps, and external API calls are traced. Use the OTLP exporter to send traces to Phoenix or a centralized observability backend[1][3].\n   - Implement OpenInference instrumentation for LlamaIndex and any other supported frameworks, enabling automatic capture of LLM, RAG, and agent workflow traces[2][3].\n\n3. **Phase 3: Advanced Observability**\n   - Develop custom Phoenix/OpenInference event handlers tailored to pharmaceutical workflow requirements. These handlers should:\n     - Capture domain-specific events (e.g., GAMP categorization, test generation, human-in-the-loop decisions, compliance validation) with rich context (agent ID, workflow step, correlation ID, etc.)\n     - Emit structured events compatible with both Phoenix and the structured logging system from Task 15, ensuring traceability and auditability for GAMP-5 compliance.\n   - Ensure all observability data (traces, logs, events) is correlated via context propagation (e.g., correlation IDs, trace IDs) for end-to-end debugging and compliance validation.\n   - Document observability architecture, environment variable schema, and event handler interfaces for maintainability and audit readiness.\n\n**Best Practices:**\n- Use OpenTelemetry's context propagation and span attributes to enrich traces with compliance-relevant metadata.\n- Ensure all observability components are non-blocking and fail-safe to avoid impacting production workflow reliability.\n- Regularly review and update observability coverage as workflows evolve, especially for new compliance or audit requirements.",
+        "testStrategy": "- Validate that Phoenix dashboards display real-time traces and metrics for all major workflow steps in dev, staging, and production environments.\n- Use synthetic and real workflow runs to verify that custom event handlers emit correct, structured events for all pharmaceutical workflow actions, including GAMP-5 categorization, test generation, and compliance validation.\n- Confirm that all observability configuration is environment-driven and secrets are not hardcoded.\n- Simulate failure scenarios (e.g., agent errors, compliance violations) and verify that traces and logs provide sufficient detail for root cause analysis and GAMP-5 audit requirements.\n- Perform end-to-end trace correlation checks to ensure that logs, events, and traces are linked via correlation/trace IDs.\n- Review documentation and environment variable schema for completeness and clarity.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          3,
+          7,
+          8,
+          15
+        ],
+        "priority": "high",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-24T13:02:40.457Z",
       "description": "Default tasks context",
-      "updated": "2025-07-27T21:14:13.017Z"
+      "updated": "2025-07-28T13:28:31.082Z"
     }
   },
   "implementation": {
