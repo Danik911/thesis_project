@@ -6,6 +6,7 @@ LlamaIndex Workflow pattern. It provides event-driven categorization
 with error handling, confidence scoring, and human consultation triggers.
 """
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -720,3 +721,88 @@ async def run_categorization_workflow(
     )
 
     return result
+
+
+async def main():
+    """Main entry point for testing the categorization workflow."""
+    import logging
+    from pathlib import Path
+    
+    # Setup logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # Test with a sample document
+    test_document_path = Path(__file__).parent.parent.parent.parent / "simple_test_data.md"
+    
+    if test_document_path.exists():
+        print(f"📄 Loading test document: {test_document_path}")
+        test_content = test_document_path.read_text()
+    else:
+        print("📝 Using default test content")
+        test_content = """
+        # Pharmaceutical System URS
+        
+        ## System Overview
+        This document describes requirements for a Laboratory Information Management System (LIMS).
+        
+        ## Requirements
+        - The system shall manage laboratory test results
+        - The system shall ensure 21 CFR Part 11 compliance
+        - The system shall provide audit trails for all data changes
+        """
+    
+    print("\n🚀 Running GAMP-5 Categorization Workflow")
+    print("=" * 60)
+    
+    try:
+        # Run the workflow
+        result = await run_categorization_workflow(
+            urs_content=test_content,
+            document_name="test_urs.md",
+            enable_error_handling=True,
+            verbose=True,
+            confidence_threshold=0.60
+        )
+        
+        # Display results
+        if result:
+            summary = result.get("summary", {})
+            print(f"\n✅ Categorization Complete!")
+            print(f"  - Category: {summary.get('category', 'Unknown')}")
+            print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
+            print(f"  - Review Required: {summary.get('review_required', False)}")
+            print(f"  - Is Fallback: {summary.get('is_fallback', False)}")
+            print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
+            
+            # Show categorization details
+            cat_event = result.get("categorization_event")
+            if cat_event:
+                print(f"\n📋 Categorization Details:")
+                print(f"  - Justification: {cat_event.justification[:200]}...")
+                if cat_event.risk_assessment:
+                    print(f"  - Risk Level: {cat_event.risk_assessment.get('risk_level', 'Unknown')}")
+                    print(f"  - Validation Approach: {cat_event.risk_assessment.get('validation_approach', 'Unknown')}")
+            
+            # Show consultation details if required
+            consult_event = result.get("consultation_event")
+            if consult_event:
+                print(f"\n🤝 Consultation Required:")
+                print(f"  - Type: {consult_event.consultation_type}")
+                print(f"  - Urgency: {consult_event.urgency}")
+                print(f"  - Required Expertise: {', '.join(consult_event.required_expertise)}")
+                
+        else:
+            print("\n❌ Workflow failed to produce results")
+            
+    except Exception as e:
+        print(f"\n❌ Error running workflow: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    # Run the async main function
+    asyncio.run(main())

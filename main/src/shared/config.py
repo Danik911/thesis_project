@@ -169,6 +169,57 @@ class EventStreamConfig:
 
 
 @dataclass
+class PhoenixConfig:
+    """Configuration for Arize Phoenix observability integration."""
+    
+    # Phoenix settings
+    enable_phoenix: bool = field(
+        default_factory=lambda: os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true"
+    )
+    enable_tracing: bool = field(
+        default_factory=lambda: os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true"
+    )
+    phoenix_host: str = field(default_factory=lambda: os.getenv("PHOENIX_HOST", "localhost"))
+    phoenix_port: int = field(default_factory=lambda: int(os.getenv("PHOENIX_PORT", "6006")))
+    phoenix_api_key: str | None = field(default_factory=lambda: os.getenv("PHOENIX_API_KEY"))
+    
+    # Project settings
+    project_name: str = field(
+        default_factory=lambda: os.getenv("PHOENIX_PROJECT_NAME", "test_generation_thesis")
+    )
+    experiment_name: str = field(
+        default_factory=lambda: os.getenv("PHOENIX_EXPERIMENT_NAME", "multi_agent_workflow")
+    )
+    
+    # OTLP settings
+    otlp_endpoint: str | None = field(
+        default_factory=lambda: os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    )
+    service_name: str = field(
+        default_factory=lambda: os.getenv("OTEL_SERVICE_NAME", "test_generator")
+    )
+    
+    # Performance settings
+    enable_batch_export: bool = True
+    batch_export_delay_ms: int = 5000
+    
+    # UI settings
+    enable_local_ui: bool = field(
+        default_factory=lambda: os.getenv("PHOENIX_ENABLE_LOCAL_UI", "true").lower() == "true"
+    )
+    
+    # Environment
+    deployment_environment: str = field(
+        default_factory=lambda: os.getenv("DEPLOYMENT_ENVIRONMENT", "development")
+    )
+    
+    def __post_init__(self):
+        """Set default OTLP endpoint if not provided."""
+        if not self.otlp_endpoint and self.enable_phoenix:
+            self.otlp_endpoint = f"http://{self.phoenix_host}:{self.phoenix_port}/v1/traces"
+
+
+@dataclass
 class Config:
     """Main configuration class combining all system settings."""
 
@@ -176,6 +227,7 @@ class Config:
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     gamp5_compliance: GAMP5ComplianceConfig = field(default_factory=GAMP5ComplianceConfig)
     event_streaming: EventStreamConfig = field(default_factory=EventStreamConfig)
+    phoenix: PhoenixConfig = field(default_factory=PhoenixConfig)
 
     # Environment settings
     environment: str = "development"  # development, testing, production
@@ -241,6 +293,15 @@ class Config:
                 "captured_event_types": self.event_streaming.captured_event_types,
                 "persist_events": self.event_streaming.persist_events,
                 "stream_buffer_size": self.event_streaming.stream_buffer_size
+            },
+            "phoenix": {
+                "enable_phoenix": self.phoenix.enable_phoenix,
+                "phoenix_host": self.phoenix.phoenix_host,
+                "phoenix_port": self.phoenix.phoenix_port,
+                "project_name": self.phoenix.project_name,
+                "experiment_name": self.phoenix.experiment_name,
+                "otlp_endpoint": self.phoenix.otlp_endpoint,
+                "service_name": self.phoenix.service_name
             },
             "environment": self.environment,
             "debug_mode": self.debug_mode

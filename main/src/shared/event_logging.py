@@ -590,8 +590,32 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
         ]
     )
 
-    # Create event stream handler
-    handler = EventStreamHandler(config=config)
+    # Create event stream handler with Phoenix integration if enabled
+    if config.phoenix.enable_phoenix:
+        try:
+            # Import Phoenix components
+            from ..monitoring import setup_phoenix, PhoenixEventStreamHandler
+            
+            # Initialize Phoenix
+            logger = logging.getLogger(__name__)
+            logger.info("Initializing Phoenix observability...")
+            phoenix_manager = setup_phoenix(config.phoenix)
+            
+            # Use Phoenix-enabled event handler
+            handler = PhoenixEventStreamHandler(config=config)
+            logger.info("Phoenix observability enabled for event logging")
+            
+            if phoenix_manager.phoenix_session:
+                logger.info(f"Phoenix UI available at: {phoenix_manager.phoenix_session.url}")
+        except Exception as e:
+            # Fallback to standard handler if Phoenix setup fails
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to initialize Phoenix observability: {e}")
+            logger.info("Falling back to standard event logging")
+            handler = EventStreamHandler(config=config)
+    else:
+        # Use standard event handler
+        handler = EventStreamHandler(config=config)
 
     logger = logging.getLogger(__name__)
     logger.info("Event logging system initialized successfully")
