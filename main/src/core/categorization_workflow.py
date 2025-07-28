@@ -12,9 +12,9 @@ from typing import Any
 
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
 from src.agents.categorization import (
-    categorize_with_structured_output,
     create_gamp_categorization_agent,
 )
+from src.agents.categorization.agent import categorize_with_error_handling
 from src.core.events import (
     ConsultationRequiredEvent,
     DocumentProcessedEvent,
@@ -22,6 +22,7 @@ from src.core.events import (
     GAMPCategorizationEvent,
     GAMPCategory,
     URSIngestionEvent,
+    WorkflowCompletionEvent,
 )
 
 
@@ -149,7 +150,7 @@ class GAMPCategorizationWorkflow(Workflow):
         self,
         ctx: Context,
         ev: URSIngestionEvent
-    ) -> DocumentProcessedEvent | URSIngestionEvent:
+    ) -> DocumentProcessedEvent | None:
         """
         Process document with LlamaParse if enabled.
         
@@ -162,12 +163,12 @@ class GAMPCategorizationWorkflow(Workflow):
             
         Returns:
             DocumentProcessedEvent if processing enabled and successful,
-            otherwise passes through URSIngestionEvent
+            None if processing disabled (allows original event to continue)
         """
-        # If document processing is not enabled, pass through
+        # If document processing is not enabled, skip this step
         if not self.enable_document_processing or not self.document_processor:
-            self.logger.info("Document processing not enabled, using raw content")
-            return ev
+            self.logger.info("Document processing not enabled, skipping processing step")
+            return None  # Let original URSIngestionEvent continue to categorization
 
         self.logger.info(f"Processing document: {ev.document_name}")
 
@@ -210,9 +211,9 @@ class GAMPCategorizationWorkflow(Workflow):
             )
 
         except Exception as e:
-            self.logger.warning(f"Document processing failed: {e}, using raw content")
-            # On failure, pass through original event
-            return ev
+            self.logger.warning(f"Document processing failed: {e}, continuing with raw content")
+            # On failure, skip processing step
+            return None
 
     async def _process_from_content(self, ev: URSIngestionEvent) -> dict[str, Any]:
         """Process document from raw content."""
@@ -283,17 +284,16 @@ class GAMPCategorizationWorkflow(Workflow):
 
         for attempt in range(self.retry_attempts):
             try:
-                # Use structured output method for reliability
-                result = categorize_with_structured_output(
+                # Use LLM-based categorization for real AI analysis
+                result = await categorize_with_error_handling(
                     agent=self.categorization_agent,
                     urs_content=urs_content,
-                    document_name=document_name
+                    document_name=document_name,
+                    max_retries=1
                 )
 
-                # Create categorization event from result
-                categorization_event = self._create_categorization_event(
-                    result, document_name, author
-                )
+                # Result is already a GAMPCategorizationEvent from LLM-based function
+                categorization_event = result
 
                 # Store result in context
                 await ctx.set("categorization_result", {
@@ -415,7 +415,7 @@ class GAMPCategorizationWorkflow(Workflow):
         self,
         ctx: Context,
         ev: GAMPCategorizationEvent
-    ) -> ConsultationRequiredEvent | None:
+    ) -> WorkflowCompletionEvent:
         """
         Check if human consultation is required based on categorization results.
         
@@ -427,12 +427,13 @@ class GAMPCategorizationWorkflow(Workflow):
             ev: Categorization event
             
         Returns:
-            ConsultationRequiredEvent if review needed, None otherwise
+            WorkflowCompletionEvent with optional consultation information
         """
         # Store categorization event in context for final step
         await ctx.set("final_categorization_event", ev)
 
         # Check if consultation is required
+        consultation_event = None
         if ev.review_required:
             doc_metadata = await ctx.get("document_metadata", {})
 
@@ -445,7 +446,7 @@ class GAMPCategorizationWorkflow(Workflow):
                 f"(confidence: {ev.confidence_score:.2%})"
             )
 
-            return ConsultationRequiredEvent(
+            consultation_event = ConsultationRequiredEvent(
                 consultation_type="categorization_review",
                 context={
                     "category": ev.gamp_category.value,
@@ -459,14 +460,18 @@ class GAMPCategorizationWorkflow(Workflow):
                 triggering_step="categorization"
             )
 
-        # No consultation needed
-        return None
+        # Always emit completion event
+        return WorkflowCompletionEvent(
+            consultation_event=consultation_event,
+            ready_for_completion=True,
+            triggering_step="check_consultation_required"
+        )
 
     @step
     async def complete_workflow(
         self,
         ctx: Context,
-        ev: ConsultationRequiredEvent | None
+        ev: WorkflowCompletionEvent
     ) -> StopEvent:
         """
         Complete the categorization workflow.
@@ -475,7 +480,7 @@ class GAMPCategorizationWorkflow(Workflow):
         
         Args:
             ctx: Workflow context
-            ev: Optional consultation event
+            ev: Workflow completion event
             
         Returns:
             StopEvent with complete workflow results
@@ -491,7 +496,7 @@ class GAMPCategorizationWorkflow(Workflow):
         # Build result dictionary
         result = {
             "categorization_event": categorization_event,
-            "consultation_event": ev,
+            "consultation_event": ev.consultation_event,
             "summary": {
                 "category": categorization_result["category"],
                 "confidence": categorization_result["confidence"],

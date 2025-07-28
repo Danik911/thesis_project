@@ -259,6 +259,20 @@ class ErrorRecoveryEvent(Event):
     auto_recoverable: bool = False
 
 
+class WorkflowCompletionEvent(Event):
+    """
+    Event indicating workflow completion readiness.
+    
+    This event is emitted to trigger the final completion step,
+    carrying information about consultation requirements.
+    """
+    consultation_event: ConsultationRequiredEvent | None = None
+    ready_for_completion: bool = True
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    triggering_step: str
+
+
 # Export all event classes for workflow use
 __all__ = [
     "AgentRequestEvent",
@@ -274,4 +288,5 @@ __all__ = [
     "UserDecisionEvent",
     "ValidationEvent",
     "ValidationStatus",
+    "WorkflowCompletionEvent",
 ]

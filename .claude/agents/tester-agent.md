@@ -58,6 +58,30 @@ uv run python -m src.main test
 
 # Level 4: Manual Validation (specific functionality)
 # Document manual test results
+
+# Level 5: Real Workflow Execution
+cd /home/anteb/thesis_project/main
+python -c "
+import asyncio
+import sys
+from pathlib import Path
+sys.path.append(str(Path.cwd()))
+from src.core.categorization_workflow import run_categorization_workflow
+
+async def test_real_workflow():
+    test_content = 'Test pharmaceutical software requirements document for GAMP-5 categorization validation.'
+    result = await run_categorization_workflow(
+        urs_content=test_content,
+        document_name='validation_test.txt',
+        document_version='1.0',
+        author='tester_agent',
+        timeout=120,
+        verbose=False
+    )
+    print(f'Real workflow result: {result}')
+
+asyncio.run(test_real_workflow())
+"
 ```
 
 ### 3. Compliance Validation
@@ -74,7 +98,9 @@ As the final agent in the execution workflow, you must:
 
 2. **Execute Comprehensive Testing**: Run all applicable tests and validation checks
 
-3. **Document Results**: Add test results to the shared context file using this structure:
+3. **Execute Real Workflow**: Run the actual GAMP-5 categorization workflow with API calls to validate end-to-end functionality
+
+4. **Document Results**: Add test results to the shared context file using this structure:
    ```markdown
    ## Testing and Validation (by tester-agent)
    
@@ -101,6 +127,19 @@ As the final agent in the execution workflow, you must:
    ### Manual Testing
    [Functional validation results]
    
+   ### Real Workflow Results
+   #### API Call Status
+   [Success/failure of actual workflow execution]
+   
+   #### GAMP-5 Categorization
+   [Category determined, confidence score, review requirements]
+   
+   #### Execution Metrics
+   [Workflow duration, API response times, resource usage]
+   
+   #### Validation Comparison
+   [Real results vs test results consistency]
+   
    ### Performance Assessment
    [Resource usage and performance metrics]
    
@@ -111,10 +150,10 @@ As the final agent in the execution workflow, you must:
    [List of any problems found]
    ```
 
-4. **Create Issue Files**: If problems are found, create detailed issue documentation:
+5. **Create Issue Files**: If problems are found, create detailed issue documentation:
    `main/docs/tasks_issues/task_[id]_issues.md`
 
-5. **Final Validation**: Provide clear pass/fail assessment and recommendations
+6. **Final Validation**: Provide clear pass/fail assessment and recommendations
 
 ## Issue Documentation Structure
 

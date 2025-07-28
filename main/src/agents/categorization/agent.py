@@ -55,9 +55,9 @@ class CategorizationAgentWrapper:
         self.agent = agent
         self.error_handler = error_handler or CategorizationErrorHandler()
 
-    def chat(self, *args, **kwargs):
-        """Delegate chat to agent."""
-        return self.agent.chat(*args, **kwargs)
+    async def run(self, *args, **kwargs):
+        """Delegate run to agent using proper FunctionAgent method."""
+        return await self.agent.run(*args, **kwargs)
 
     def __getattr__(self, name):
         """Delegate other attributes to agent."""
@@ -667,7 +667,7 @@ def categorize_with_structured_output(
         return error_handler.handle_llm_error(e, urs_content[:500], document_name)
 
 
-def categorize_with_error_handling(
+async def categorize_with_error_handling(
     agent: FunctionAgent,
     urs_content: str,
     document_name: str = "Unknown",
@@ -702,8 +702,8 @@ def categorize_with_error_handling(
             if not urs_content or not isinstance(urs_content, str):
                 raise ValueError("Invalid URS content: must be non-empty string")
 
-            # Run agent query
-            response = agent.chat(f"Analyze this URS document and categorize it:\n\n{urs_content}")
+            # Run agent query using FunctionAgent's run method
+            response = await agent.run(user_msg=f"Analyze this URS document and categorize it:\n\n{urs_content}")
 
             # Parse response to extract category and confidence
             response_text = str(response)
