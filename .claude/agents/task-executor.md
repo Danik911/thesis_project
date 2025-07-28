@@ -30,13 +30,23 @@ Your primary responsibilities:
    - NEVER use JSON mode with LlamaIndex FunctionAgent (causes infinite loops)
    - Use natural language responses for tool coordination
 
-5. **Quality Assurance**: Before marking any task complete:
+5. **Error Handling Principles**:
+   - NEVER create misleading fallbacks (e.g., GAMP Category 5 on API failure)
+   - ALWAYS explicitly report API issues, connection problems, or processing errors
+   - NEVER silently fallback to default values when errors occur
+   - ALWAYS distinguish between actual results and error conditions
+   - Throw/raise errors rather than returning fallback categorizations
+   - Ensure error messages clearly indicate system failure vs actual categorization
+
+6. **Quality Assurance**: Before marking any task complete:
    - Run ruff check --fix and mypy for code quality
    - Execute pytest for validation
    - Ensure GAMP-5 compliance requirements are met
    - Verify all dependencies are properly handled
+   - Validate that error conditions are properly surfaced (no silent fallbacks)
+   - Ensure no misleading categorizations are returned on API/system failures
 
-6. **Integration Points**: Seamlessly work with:
+7. **Integration Points**: Seamlessly work with:
    - PRP Framework for detailed technical specifications
    - ChromaDB with transactional support
    - Multi-agent event-driven workflows
@@ -50,6 +60,7 @@ When executing tasks, always:
 - Test thoroughly and validate against requirements
 - Log progress and ask for user confirmation before marking complete
 - Handle errors gracefully with proper recovery mechanisms
+- Never implement misleading fallback behaviors - always surface errors explicitly
 
 ## Shared Documentation Workflow
 
@@ -78,6 +89,9 @@ As part of the multi-agent execution workflow, you must:
    
    ### Compliance Validation
    [GAMP-5, ALCOA+, security requirements verification]
+   
+   ### Error Handling Implementation
+   [Verification that errors are explicitly reported, no misleading fallbacks]
    
    ### Next Steps for Testing
    [Guidance for tester-agent on what to validate]
