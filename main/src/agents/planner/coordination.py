@@ -275,7 +275,7 @@ class AgentCoordinator:
     ) -> AgentRequestEvent:
         """Create request for Context Provider Agent."""
         request_data = {
-            "gamp_category": gamp_category.value,
+            "gamp_category": str(gamp_category.value),
             "test_strategy": {
                 "validation_rigor": test_strategy.validation_rigor,
                 "test_types": test_strategy.test_types,
@@ -359,13 +359,11 @@ class AgentCoordinator:
             research_areas.extend(["custom_software_guidance", "cybersecurity_updates"])
 
         request_data = {
-            "research_areas": research_areas,
-            "gamp_category": gamp_category.value,
-            "compliance_requirements": test_strategy.compliance_requirements,
-            "risk_level": test_strategy.risk_factors.get("risk_level", "medium"),
-            "focus_areas": test_strategy.focus_areas,
-            "validation_rigor": test_strategy.validation_rigor,
-            "categorization_context": categorization_context or {}
+            "research_focus": research_areas,
+            "regulatory_scope": ["FDA", "EMA", "ICH"],
+            "update_priority": "high" if gamp_category == GAMPCategory.CATEGORY_5 else "standard",
+            "depth_level": "comprehensive" if gamp_category == GAMPCategory.CATEGORY_5 else "standard",
+            "include_trends": True
         }
 
         return AgentRequestEvent(
