@@ -17,43 +17,21 @@ This file provides guidance to Claude Code when working with this thesis project
 - **ALWAYS ask user** to install missing packages instead of proceeding without them
 - **NEVER assume** packages are optional if they're required for functionality
 
-### Required Actions When Encountering:
-- **Missing packages**: Stop and ask user to run installation command
-- **Permission denied**: Stop and ask user to run with sudo/appropriate permissions  
-- **System-level operations**: Always request user assistance rather than skipping
-
-### Examples:
-```bash
-# When you encounter: "package 'xyz' not found"
-# ❌ DON'T: Skip the operation or suggest workarounds
-# ✅ DO: "Please install the missing package: pip install xyz"
-
-# When you encounter: "Permission denied"  
-# ❌ DON'T: Skip or find alternative approaches
-# ✅ DO: "Please run with appropriate permissions: sudo command"
-```
+### Required Actions:
+- **Missing packages**: Stop and ask user to install rather than skipping
+- **Permission denied**: Request user run with appropriate permissions
+- **System operations**: Always ask for user assistance
 
 ## Project Overview
 
 **Thesis Project**: Multi-agent LLM system for pharmaceutical test generation (GAMP-5 compliant)
-**Dual Framework**: Task-Master AI (project management) + PRP Framework (technical specs)
+**Management Framework**: Task-Master AI for project management and workflow tracking
 
 ## 🤖 LLM Configuration
 
-### Development Model
-- **Primary Model**: `gpt-4.1-mini-2025-04-14` (cost-efficient for development)
-- **Production Model**: `gpt-4o-mini` (as configured in .env)
+- **Development Model**: `gpt-4.1-mini-2025-04-14` (cost-efficient)
 - **Task-Master AI**: Claude Sonnet 4.0 (via MCP)
-
-### Model Selection Guidelines
-- Use `gpt-4.1-mini-2025-04-14` for development and testing
-- Switch to frontier models for production/final validation
-- Always verify model compatibility with LlamaIndex FunctionAgent workflows
-
-### 🚨 Known Issues
-- **JSON Mode Incompatibility**: NEVER use `response_format={"type": "json_object"}` with LlamaIndex `FunctionAgent`
-- **Causes infinite loops**: Agent cannot parse its own responses, hits max iterations
-- **Use natural language responses**: Let FunctionAgent handle tool coordination naturally
+- **🚨 Critical Issue**: NEVER use `response_format={"type": "json_object"}` with LlamaIndex `FunctionAgent` - causes infinite loops
 
 ## 🎯 Task-Master AI Integration
 
@@ -73,26 +51,11 @@ mcp__task-master-ai__get_tasks --status=pending
 ```
 
 ### Pre-configured Tasks
-- **14 main tasks** following GAMP-5 implementation order
-- **19+ subtasks** for detailed tracking
-- **Dependencies** enforced for proper workflow
+- **GAMP-5 implementation workflow** with enforced dependencies
+- **Detailed subtask tracking** for granular progress
 - **Compliance focus** (ALCOA+, 21 CFR Part 11)
 
 **📖 Full Documentation**: [Task-Master AI Guide](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
-
-## 🔧 PRP Framework Integration
-
-### Core Commands
-```bash
-/create-base-prp "feature description"     # Generate comprehensive PRPs
-/execute-base-prp PRPs/feature.md         # Execute PRP implementation
-/review-staged-unstaged                    # Review changes
-```
-
-### Usage Pattern
-- **Task-Master**: Daily progress tracking, dependencies, research
-- **PRP**: Detailed technical specifications and implementation guidance
-- **Integration**: Reference PRP details within task-master tasks
 
 ## 🏗️ Development Workflow
 
@@ -147,24 +110,40 @@ mcp__task-master-ai__set_task_status --id=X --status=done
 - **Compliance focus**: All implementations must be GAMP-5 compliant
 - **Error prevention**: Address known gotchas proactively
 
+## 🤖 Subagent Workflow System
+
+You have 5 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`:
+
+### Core Subagents
+- **context-collector**: Research specialist for GAMP-5 compliance, LlamaIndex patterns, pharmaceutical standards
+- **debugger**: Advanced debugging with systematic root cause analysis using Ultrathink methodology
+- **task-analyzer**: Analyzes Task-Master AI tasks, checks dependencies, creates execution documentation
+- **task-executor**: Executes specific Task-Master AI tasks following GAMP-5 compliance patterns
+- **tester-agent**: Validates implementations, runs tests, ensures regulatory compliance
+
+### 🚨 Critical Orchestration Rules
+- **Subagents lack context**: Always provide comprehensive context when delegating tasks
+- **Verify results**: Must check and validate all subagent work before accepting
+- **Orchestration responsibility**: You manage workflow coordination and final decisions
+
 ## 📂 Project Structure
 ```
 thesis_project/
-├── .taskmaster/           # Task-Master AI (project management)
-├── PRPs/                  # PRP Framework (technical specs)
-├── src/agents/            # Multi-agent implementation
-├── src/core/              # Workflow orchestration
-├── tests/                 # Comprehensive test suites
-└── .claude/commands/      # Custom Claude commands
+├── .taskmaster/                              # Task-Master AI (project management)
+├── PRPs/                                     # PRP Framework (technical specs)
+├── main/                                     # Main application
+│   ├── main.py                              # Main entry point
+│   ├── src/core/unified_workflow.py         # Master workflow orchestrator
+│   ├── docs/                                # All project documentation
+│   └── tests/                               # Comprehensive test suites
+├── test_generation/examples/scientific_writer/thesis/  # Legacy examples for reference
+└── .claude/agents/                          # Subagent specifications
 ```
 
-## 🔗 External Resources
+## 🔗 Key References
 
-- **Task-Master Documentation**: [GitHub Repository](https://github.com/eyaltoledano/claude-task-master)
-- **Task-Master Tutorial**: [Getting Started Guide](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
-- **GAMP-5 Guidelines**: [ISPE GAMP-5](https://ispe.org/publications/guidance-documents/gamp-5)
-- **LlamaIndex Workflows**: [Official Documentation](https://docs.llamaindex.ai/en/stable/module_guides/workflow/)
-- **21 CFR Part 11**: [FDA Guidance](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application)
+- **Task-Master AI**: [Tutorial Guide](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
+- **LlamaIndex Workflows**: [Official Docs](https://docs.llamaindex.ai/en/stable/module_guides/workflow/)
 
 ## ⚡ Quick References
 
