@@ -523,10 +523,13 @@ class GAMP5ComplianceLogger:
         """Write audit entry to file with rotation check."""
         # Check if rotation needed
         if self.config.logging.enable_rotation:
-            if self._current_file.stat().st_size >= (
+            if self._current_file.exists() and self._current_file.stat().st_size >= (
                 self.config.logging.max_file_size_mb * 1024 * 1024
             ):
                 self._current_file = self._get_current_audit_file()
+
+        # Ensure parent directory exists
+        self._current_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Write entry as JSON line
         with open(self._current_file, "a") as f:

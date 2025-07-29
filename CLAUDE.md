@@ -10,6 +10,19 @@ This file provides guidance to Claude Code when working with this thesis project
 - ✅ ALWAYS ask "Did you hear/see/experience the expected result?" before claiming success
 - ✅ ALWAYS wait for user confirmation before updating status to "complete"
 
+## 🚨 ABSOLUTE RULE: NO FUCKING FALLBACKS 🚨
+
+**ZERO TOLERANCE FOR FALLBACK LOGIC**
+
+- ❌ NEVER implement fallback values, default behaviors, or "safe" alternatives
+- ❌ NEVER mask errors with artificial confidence scores
+- ❌ NEVER create deceptive logic that hides real system behavior
+- ✅ ALWAYS throw errors with full stack traces when something fails
+- ✅ ALWAYS preserve genuine confidence levels and uncertainties
+- ✅ ALWAYS expose real system state to users for regulatory compliance
+
+**If something doesn't work - FAIL LOUDLY with complete diagnostic information**
+
 ## 🔧 System Dependencies & Permissions
 
 ### Package Installation Policy
@@ -109,6 +122,7 @@ mcp__task-master-ai__set_task_status --id=X --status=done
 - **Incremental validation**: Test after each change
 - **Compliance focus**: All implementations must be GAMP-5 compliant
 - **Error prevention**: Address known gotchas proactively
+- **NO FALLBACKS**: Fail explicitly with full diagnostic information
 
 ## 🤖 Subagent Workflow System
 
@@ -116,15 +130,16 @@ You have 5 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`
 
 ### Core Subagents
 - **context-collector**: Research specialist for GAMP-5 compliance, LlamaIndex patterns, pharmaceutical standards
-- **debugger**: Advanced debugging with systematic root cause analysis using Ultrathink methodology
+- **debugger**: Advanced debugging with systematic root cause analysis using Ultrathink methodology - **NO FALLBACKS ALLOWED**
 - **task-analyzer**: Analyzes Task-Master AI tasks, checks dependencies, creates execution documentation
-- **task-executor**: Executes specific Task-Master AI tasks following GAMP-5 compliance patterns
-- **tester-agent**: Validates implementations, runs tests, ensures regulatory compliance
+- **task-executor**: Executes specific Task-Master AI tasks following GAMP-5 compliance patterns - **NO FALLBACKS ALLOWED** 
+- **tester-agent**: Validates implementations, runs tests, ensures regulatory compliance - **NO FALLBACKS ALLOWED**
 
 ### 🚨 Critical Orchestration Rules
 - **Subagents lack context**: Always provide comprehensive context when delegating tasks
 - **Verify results**: Must check and validate all subagent work before accepting
 - **Orchestration responsibility**: You manage workflow coordination and final decisions
+- **NO FALLBACKS**: All subagents must fail explicitly rather than mask problems
 
 ## 📂 Project Structure
 ```
@@ -151,4 +166,4 @@ thesis_project/
 **Priority Levels**: `high`, `medium`, `low`
 **Task ID Format**: Main tasks (1, 2, 3), Subtasks (1.1, 1.2, 2.1)
 
-Remember: This project requires **regulatory compliance** and **pharmaceutical validation standards**. Always prioritize compliance over speed.
+Remember: This project requires **regulatory compliance** and **pharmaceutical validation standards**. Always prioritize compliance over speed. **NEVER IMPLEMENT FALLBACKS - FAIL EXPLICITLY WITH FULL DIAGNOSTIC INFORMATION.**

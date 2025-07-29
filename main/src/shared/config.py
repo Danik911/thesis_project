@@ -147,7 +147,12 @@ class EventStreamConfig:
             "ValidationEvent",
             "ErrorRecoveryEvent",
             "ConsultationRequiredEvent",
-            "UserDecisionEvent"
+            "UserDecisionEvent",
+            "URSIngestionEvent",
+            "DocumentProcessedEvent",
+            "WorkflowCompletionEvent",
+            "StopEvent",  # To capture final results
+            "StartEvent"  # To capture workflow starts
         ]
     )
 

@@ -362,7 +362,8 @@ class PlannerAgent:
         """
 
         try:
-            response = self.function_agent.chat(prompt)
+            # FunctionAgent uses run() method, not chat()
+            response = self.function_agent.run(user_msg=prompt)
 
             # Parse LLM recommendations and apply to strategy
             recommendations = self._parse_llm_recommendations(str(response))

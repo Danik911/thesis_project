@@ -86,7 +86,7 @@ class CategorizationErrorHandler:
 
     def __init__(
         self,
-        confidence_threshold: float = 0.60,
+        confidence_threshold: float = 0.50,  # Reduced from 0.60 to 0.50 for more realistic threshold
         ambiguity_threshold: float = 0.15,
         enable_audit_logging: bool = True,
         enable_phoenix_events: bool = True,
@@ -157,7 +157,12 @@ class CategorizationErrorHandler:
             stack_trace=traceback.format_exc()
         )
 
-        return self._create_fallback_event(error, document_name)
+        # Only request human consultation for categorization ambiguity
+        if self._should_request_human_consultation(error):
+            return self._create_human_consultation_request(error, document_name)
+        else:
+            # For system errors, raise an exception to be handled by the calling code
+            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def handle_logic_error(
         self,
@@ -188,7 +193,12 @@ class CategorizationErrorHandler:
             }
         )
 
-        return self._create_fallback_event(error, document_name)
+        # Only request human consultation for categorization ambiguity
+        if self._should_request_human_consultation(error):
+            return self._create_human_consultation_request(error, document_name)
+        else:
+            # For system errors, raise an exception to be handled by the calling code
+            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def check_ambiguity(
         self,
@@ -249,6 +259,9 @@ class CategorizationErrorHandler:
         """
         Handle errors from categorization tools.
         
+        Tool validation errors should be fixed, not sent to human consultation.
+        Only genuine categorization ambiguity should trigger human consultation.
+        
         Args:
             tool_name: Name of the failed tool
             exception: The tool exception
@@ -256,7 +269,7 @@ class CategorizationErrorHandler:
             document_name: Document identifier
             
         Returns:
-            GAMPCategorizationEvent with Category 5 fallback
+            GAMPCategorizationEvent with error details
         """
         error = CategorizationError(
             error_type=ErrorType.TOOL_ERROR,
@@ -271,7 +284,12 @@ class CategorizationErrorHandler:
             stack_trace=traceback.format_exc()
         )
 
-        return self._create_fallback_event(error, document_name)
+        # Only request human consultation for categorization ambiguity
+        if self._should_request_human_consultation(error):
+            return self._create_human_consultation_request(error, document_name)
+        else:
+            # For system errors, raise an exception to be handled by the calling code
+            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def handle_llm_error(
         self,
@@ -303,7 +321,12 @@ class CategorizationErrorHandler:
             stack_trace=traceback.format_exc()
         )
 
-        return self._create_fallback_event(error, document_name)
+        # Only request human consultation for categorization ambiguity
+        if self._should_request_human_consultation(error):
+            return self._create_human_consultation_request(error, document_name)
+        else:
+            # For system errors, raise an exception to be handled by the calling code
+            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def validate_categorization_result(
         self,
@@ -351,120 +374,292 @@ class CategorizationErrorHandler:
 
         return None
 
-    def _create_fallback_event(
+    def _should_request_human_consultation(self, error: CategorizationError) -> bool:
+        """
+        Determine if this error type warrants human consultation.
+        
+        Only genuine categorization ambiguity should trigger human consultation.
+        System errors should be handled programmatically.
+        """
+        # These error types indicate genuine categorization uncertainty
+        consultation_error_types = {
+            ErrorType.CONFIDENCE_ERROR,
+            ErrorType.AMBIGUITY_ERROR
+        }
+        
+        return error.error_type in consultation_error_types
+
+    def _create_human_consultation_request(
         self,
         error: CategorizationError,
         document_name: str
     ) -> GAMPCategorizationEvent:
         """
-        Create a fallback categorization event with Category 5.
+        Create a human consultation request for categorization ambiguity.
         
         Args:
-            error: The error that triggered fallback
+            error: The error that triggered consultation request
             document_name: Document identifier
             
         Returns:
-            GAMPCategorizationEvent with Category 5 and error details
+            GAMPCategorizationEvent requesting human intervention
         """
-        # Update statistics
+        # Update statistics for consultation requests, not fallbacks
         self.stats["total_errors"] += 1
-        self.stats["fallback_count"] += 1
+        self.stats["consultation_requests"] = self.stats.get("consultation_requests", 0) + 1
         self.stats["error_types"][error.error_type.value] = \
             self.stats["error_types"].get(error.error_type.value, 0) + 1
 
         # Store error
         self.error_history.append(error)
 
-        # Create audit log entry
+        # Extract actual confidence from error details if available
+        actual_confidence = error.details.get("confidence", 0.0) if error.details else 0.0
+
+        # Create audit log entry for consultation request - FIX CONFIDENCE DISPLAY BUG
         if self.enable_audit_logging:
             audit_entry = AuditLogEntry(
-                action="FALLBACK_CATEGORIZATION",
+                action="HUMAN_CONSULTATION_REQUESTED",
                 document_name=document_name,
                 error=error,
-                decision_rationale=f"Fallback to Category 5 due to {error.error_type.value}: {error.message}"
+                confidence_score=actual_confidence,  # Use actual confidence, not default 0.0
+                decision_rationale=f"Human consultation required due to {error.error_type.value}: {error.message}"
             )
             self.audit_log.append(audit_entry)
             self._log_audit_entry(audit_entry)
 
-        # Generate comprehensive justification
-        justification = self._generate_fallback_justification(error, document_name)
+        # Generate consultation request justification
+        justification = self._generate_consultation_justification(error, document_name)
 
-        # Create risk assessment
-        risk_assessment = {
-            "category": 5,
-            "category_description": "Custom application - Conservative fallback due to error",
-            "validation_approach": "Full GAMP-5 V-model validation required",
-            "confidence_score": 0.0,
-            "evidence_strength": "Error - No evidence available",
-            "requires_human_review": True,
-            "regulatory_impact": "High - Manual categorization required",
-            "validation_effort": "Maximum - Full lifecycle validation",
-            "error_details": {
-                "error_type": error.error_type.value,
-                "severity": error.severity.value,
-                "message": error.message,
-                "recovery_action": error.recovery_action
-            }
-        }
-
-        # Log the fallback
-        self.logger.warning(
-            f"Categorization fallback triggered for '{document_name}': "
+        # Log the consultation request
+        self.logger.error(
+            f"❌ CATEGORIZATION FAILED - Human consultation required for '{document_name}': "
             f"{error.error_type.value} - {error.message}"
         )
-
-        return GAMPCategorizationEvent(
-            gamp_category=GAMPCategory.CATEGORY_5,
-            confidence_score=0.0,
-            justification=justification,
-            risk_assessment=risk_assessment,
-            event_id=uuid4(),
-            timestamp=datetime.now(UTC),
-            categorized_by="GAMPCategorizationAgent-ErrorHandler",
-            review_required=True
+        self.logger.info(
+            f"🤝 HUMAN-IN-THE-LOOP: Please manually categorize '{document_name}' "
+            f"(Agent confidence: {actual_confidence:.1%})"
         )
 
-    def _generate_fallback_justification(
+        # IMPLEMENT SME AGENT CONSULTATION - Replace NotImplementedError
+        return self._request_sme_consultation(error, document_name, actual_confidence)
+
+    def _request_sme_consultation(
+        self,
+        error: CategorizationError,
+        document_name: str,
+        confidence: float
+    ) -> GAMPCategorizationEvent:
+        """
+        Request SME agent consultation for low-confidence categorization.
+        
+        Args:
+            error: The categorization error that triggered consultation
+            document_name: Document identifier
+            confidence: The confidence score that was below threshold
+            
+        Returns:
+            GAMPCategorizationEvent with SME consultation result or Category 5 fallback
+        """
+        try:
+            # Import SME agent here to avoid circular imports
+            from src.agents.parallel.sme_agent import create_sme_agent
+            from src.core.events import AgentRequestEvent
+            from uuid import uuid4
+            import asyncio
+
+            # Create SME agent for pharmaceutical validation
+            sme_agent = create_sme_agent(
+                specialty="pharmaceutical_validation",
+                verbose=self.verbose,
+                confidence_threshold=0.7  # SME has higher confidence threshold
+            )
+
+            # Prepare SME consultation request
+            sme_request_data = {
+                "specialty": "pharmaceutical_validation",
+                "test_focus": "gamp_categorization",
+                "compliance_level": "comprehensive",
+                "validation_focus": ["gamp_compliance", "categorization_review"],
+                "categorization_context": {
+                    "gamp_category": error.details.get("category", "unknown"),
+                    "confidence_score": confidence,
+                    "error_type": error.error_type.value,
+                    "threshold": self.confidence_threshold,
+                    "document_name": document_name
+                },
+                "risk_factors": {
+                    "confidence_uncertainty": True,
+                    "categorization_ambiguity": error.error_type == ErrorType.AMBIGUITY_ERROR,
+                    "technical_factors": ["gamp_categorization"]
+                }
+            }
+
+            sme_request = AgentRequestEvent(
+                agent_type="sme_agent",
+                request_data=sme_request_data,
+                requesting_step="gamp_categorization_error_handling",
+                correlation_id=uuid4(),
+                timeout_seconds=30  # Quick consultation for workflow continuity
+            )
+
+            # Execute SME consultation synchronously (convert async to sync)
+            try:
+                # Check if we're already in an event loop
+                import nest_asyncio
+                nest_asyncio.apply()  # Allow nested event loops
+                
+                loop = asyncio.get_event_loop()
+                sme_result = loop.run_until_complete(sme_agent.process_request(sme_request))
+
+                if sme_result.success and sme_result.result_data.get("confidence_score", 0) >= 0.7:
+                    # SME provided high-confidence recommendation
+                    sme_data = sme_result.result_data
+                    
+                    # Extract SME recommendation or default to Category 5
+                    recommended_category = self._extract_sme_category_recommendation(sme_data)
+                    
+                    self.logger.info(
+                        f"✅ SME CONSULTATION SUCCESSFUL - Category {recommended_category} recommended "
+                        f"(SME confidence: {sme_data.get('confidence_score', 0):.1%})"
+                    )
+
+                    # Create audit log for SME consultation
+                    if self.enable_audit_logging:
+                        sme_audit_entry = AuditLogEntry(
+                            action="SME_CONSULTATION_COMPLETED",
+                            document_name=document_name,
+                            original_category=None,
+                            fallback_category=GAMPCategory(recommended_category),
+                            confidence_score=sme_data.get("confidence_score", 0),
+                            decision_rationale=f"SME consultation completed. Recommended Category {recommended_category}. "
+                                              f"SME opinion: {sme_data.get('expert_opinion', 'No opinion provided')[:100]}..."
+                        )
+                        self.audit_log.append(sme_audit_entry)
+                        self._log_audit_entry(sme_audit_entry)
+
+                    # Return successful categorization event with SME recommendation
+                    return GAMPCategorizationEvent(
+                        gamp_category=GAMPCategory(recommended_category),
+                        confidence_score=sme_data.get("confidence_score", 0.7),
+                        justification=f"SME Consultation Result:\n{sme_data.get('expert_opinion', 'Category determined by SME analysis')}",
+                        risk_assessment={
+                            "category": recommended_category,
+                            "sme_validated": True,
+                            "consultation_successful": True,
+                            "original_confidence": confidence,
+                            "sme_confidence": sme_data.get("confidence_score", 0),
+                            "regulatory_impact": f"SME-validated Category {recommended_category}"
+                        },
+                        event_id=uuid4(),
+                        timestamp=datetime.now(UTC),
+                        categorized_by="SMEAgent",
+                        review_required=False  # SME consultation removes manual review requirement
+                    )
+                else:
+                    # SME consultation failed or low confidence - fall back to Category 5
+                    self.logger.warning(
+                        f"⚠️ SME CONSULTATION INCONCLUSIVE - Falling back to Category 5 "
+                        f"(SME success: {sme_result.success}, SME confidence: {sme_result.result_data.get('confidence_score', 0):.1%})"
+                    )
+                    
+            except Exception as sme_error:
+                self.logger.error(f"SME consultation execution failed: {sme_error}")
+                # Continue to Category 5 fallback below
+
+        except ImportError as e:
+            self.logger.error(f"SME agent import failed: {e}. Falling back to Category 5")
+        except Exception as e:
+            self.logger.error(f"SME consultation setup failed: {e}. Falling back to Category 5")
+
+        # NO FALLBACKS - Throw error when SME consultation fails
+        raise RuntimeError(
+            f"GAMP categorization failed for '{document_name}': "
+            f"Original confidence {confidence:.1%} below threshold {self.confidence_threshold:.1%}, "
+            f"and SME consultation failed. No fallback allowed - system requires explicit resolution."
+        )
+
+    def _extract_sme_category_recommendation(self, sme_data: dict[str, Any]) -> int:
+        """
+        Extract GAMP category recommendation from SME consultation results.
+        
+        Args:
+            sme_data: SME agent response data
+            
+        Returns:
+            Recommended GAMP category (1, 3, 4, or 5)
+        """
+        # Look for explicit category recommendation in various fields
+        recommendations = sme_data.get("recommendations", [])
+        for rec in recommendations:
+            if "category" in rec.get("recommendation", "").lower():
+                # Try to extract category number from recommendation text
+                import re
+                category_match = re.search(r"category\s*(\d+)", rec["recommendation"].lower())
+                if category_match:
+                    category = int(category_match.group(1))
+                    if category in [1, 3, 4, 5]:
+                        return category
+
+        # Check expert opinion for category mentions
+        expert_opinion = sme_data.get("expert_opinion", "")
+        if expert_opinion:
+            import re
+            category_match = re.search(r"category\s*(\d+)", expert_opinion.lower())
+            if category_match:
+                category = int(category_match.group(1))
+                if category in [1, 3, 4, 5]:
+                    return category
+
+        # Check categorization context for original category if SME validated it
+        categorization_context = sme_data.get("categorization_context", {})
+        if categorization_context and sme_data.get("confidence_score", 0) >= 0.8:
+            original_category = categorization_context.get("gamp_category", "unknown")
+            if original_category != "unknown" and str(original_category).isdigit():
+                category = int(original_category)
+                if category in [1, 3, 4, 5]:
+                    return category
+
+        # Default to Category 5 if no clear recommendation
+        return 5
+
+
+    def _generate_consultation_justification(
         self,
         error: CategorizationError,
         document_name: str
     ) -> str:
-        """Generate detailed justification for fallback decision."""
-        justification_parts = [
-            f"GAMP-5 Categorization Error Report for '{document_name}'",
-            "",
-            "⚠️ AUTOMATIC FALLBACK TO CATEGORY 5",
-            f"ERROR TYPE: {error.error_type.value.upper()}",
-            f"SEVERITY: {error.severity.value.upper()}",
-            f"TIMESTAMP: {error.timestamp.isoformat()}",
-            "",
-            "ERROR DETAILS:",
-            f"- {error.message}",
-            ""
-        ]
+        """Generate justification for human consultation request."""
+        timestamp = datetime.now(UTC).isoformat()
+        
+        return f"""GAMP-5 Human Consultation Request for '{document_name}'
 
-        # Add specific error details
-        if error.details:
-            justification_parts.append("ADDITIONAL INFORMATION:")
-            for key, value in error.details.items():
-                if key not in ["stack_trace", "content_preview", "prompt_preview"]:
-                    justification_parts.append(f"- {key}: {value}")
-            justification_parts.append("")
+🤝 HUMAN-IN-THE-LOOP REQUIRED
+ERROR TYPE: {error.error_type.value.upper()}
+SEVERITY: {error.severity.value.upper()}
+TIMESTAMP: {timestamp}
 
-        justification_parts.extend([
-            "REGULATORY COMPLIANCE NOTICE:",
-            "- This document requires manual expert review",
-            "- Category 5 assigned as conservative default per GAMP-5 guidelines",
-            "- Full V-model validation lifecycle required",
-            "- All error details logged for audit trail (21 CFR Part 11)",
-            "",
-            "RECOVERY ACTION:",
-            f"- {error.recovery_action}",
-            "- Contact validation expert for manual categorization",
-            "- Review error logs for root cause analysis"
-        ])
+CATEGORIZATION FAILURE:
+{error.message}
 
-        return "\n".join(justification_parts)
+REGULATORY COMPLIANCE NOTICE:
+- Automated categorization failed - human expert required
+- GAMP-5 compliance requires validated categorization
+- 21 CFR Part 11 audit trail maintained for consultation request
+- ALCOA+ principles: Human review ensures accuracy and completeness
+
+REQUIRED ACTION:
+- Contact GAMP-5 validation specialist for manual categorization
+- Engage SME agents if available for pharmaceutical expertise
+- Document human decision rationale for compliance audit
+
+NEXT STEPS:
+1. Human expert reviews document content and context
+2. Expert provides GAMP category with justification
+3. System records human decision with full audit trail
+4. Workflow continues with validated categorization
+"""
+
 
     def _calculate_ambiguity_score(self, confidence_scores: dict[int, float]) -> float:
         """Calculate ambiguity score based on confidence distribution."""

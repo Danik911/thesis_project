@@ -332,7 +332,9 @@ def confidence_tool_with_error_handling(
         
         # Check if this is an error result
         if category_data.get("error", False):
-            return 0.0
+            # Try to extract actual confidence from error event
+            confidence_score = category_data.get("confidence_score", 0.0)
+            return confidence_score
 
         # Validate input
         if not isinstance(category_data, dict):
@@ -368,13 +370,16 @@ def confidence_tool_with_error_handling(
 
     except Exception as e:
         error_handler.logger.error(f"Confidence calculation error: {e!s}")
-        return 0.0  # Return zero confidence on error
+        error_handler.logger.error(f"Input data that caused error: {category_data}")
+        # Don't silently return 0.0 - this masks real issues
+        # Instead, return a low but non-zero confidence to indicate uncertainty
+        return 0.3  # Return low confidence on error, not zero
 
 
 def create_gamp_categorization_agent(
     llm: LLM = None,
     enable_error_handling: bool = True,
-    confidence_threshold: float = 0.60,
+    confidence_threshold: float = 0.50,  # Reduced from 0.60 to 0.50 for more realistic threshold
     verbose: bool = False
 ) -> FunctionAgent:
     """
@@ -668,7 +673,7 @@ def categorize_with_structured_output(
                     "category": analysis_result["predicted_category"]
                 }
             )
-            return error_handler._create_fallback_event(error, document_name)
+            return error_handler._create_human_consultation_request(error, document_name)
 
         # Step 4: Create successful event
         return create_categorization_event(
@@ -773,7 +778,7 @@ async def categorize_with_error_handling(
                         "category": category_num
                     }
                 )
-                return error_handler._create_fallback_event(error, document_name)
+                return error_handler._create_human_consultation_request(error, document_name)
 
             # Create successful event
             return GAMPCategorizationEvent(

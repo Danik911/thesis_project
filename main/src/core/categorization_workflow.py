@@ -15,7 +15,7 @@ from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, 
 from src.agents.categorization import (
     create_gamp_categorization_agent,
 )
-from src.agents.categorization.agent import categorize_with_error_handling
+from src.agents.categorization.agent import categorize_with_structured_output
 from src.core.events import (
     ConsultationRequiredEvent,
     DocumentProcessedEvent,
@@ -295,12 +295,11 @@ class GAMPCategorizationWorkflow(Workflow):
 
         for attempt in range(self.retry_attempts):
             try:
-                # Use LLM-based categorization for real AI analysis
-                result = await categorize_with_error_handling(
+                # Use structured output categorization for reliable results
+                result = categorize_with_structured_output(
                     agent=self.categorization_agent,
                     urs_content=urs_content,
-                    document_name=document_name,
-                    max_retries=1
+                    document_name=document_name
                 )
 
                 # Result is already a GAMPCategorizationEvent from LLM-based function
