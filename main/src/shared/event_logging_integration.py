@@ -364,6 +364,137 @@ class GAMP5EventLoggingWorkflow(Workflow, EventLoggingMixin):
         return StopEvent(result=summary)
 
 
+async def handle_hitl_consultation(
+    event: Any,
+    handler: Any
+) -> bool:
+    """
+    Handle human-in-the-loop consultation during workflow execution.
+    
+    This function detects ConsultationRequiredEvent and prompts the user
+    for input, then creates and sends a HumanResponseEvent back to the workflow.
+    
+    Args:
+        event: The workflow event to check
+        handler: The workflow handler to send events to
+        
+    Returns:
+        True if consultation was handled, False otherwise
+    """
+    # Import here to avoid circular imports
+    from ..core.events import ConsultationRequiredEvent, HumanResponseEvent
+    from ..shared.output_manager import safe_print
+    import sys
+    from uuid import uuid4
+    
+    # Check if this is a consultation required event
+    if not isinstance(event, ConsultationRequiredEvent):
+        return False
+    
+    # Check if running in interactive terminal
+    if not sys.stdin.isatty():
+        safe_print("⚠️  Non-interactive terminal detected - HITL consultation will timeout")
+        return False
+    
+    safe_print("\n" + "="*60)
+    safe_print("🧑‍⚕️ HUMAN CONSULTATION REQUIRED")
+    safe_print("="*60)
+    safe_print(f"Consultation Type: {event.consultation_type}")
+    safe_print(f"Urgency: {event.urgency}")
+    safe_print(f"Required Expertise: {', '.join(event.required_expertise)}")
+    safe_print("")
+    safe_print("Context:")
+    for key, value in event.context.items():
+        safe_print(f"  {key}: {value}")
+    safe_print("")
+    
+    try:
+        # Handle different consultation types
+        if "categorization" in event.consultation_type.lower():
+            safe_print("Please provide GAMP categorization decision:")
+            safe_print("Available categories: 1 (Infrastructure), 3 (Non-configured), 4 (Configured), 5 (Custom)")
+            
+            user_input = input("Enter GAMP category (1, 3, 4, 5): ").strip()
+            if user_input not in ["1", "3", "4", "5"]:
+                safe_print("❌ Invalid category. Using conservative default (Category 5)")
+                gamp_category = 5
+            else:
+                gamp_category = int(user_input)
+            
+            rationale = input("Enter decision rationale: ").strip()
+            if not rationale:
+                rationale = f"Human decision: GAMP Category {gamp_category}"
+            
+            confidence_input = input("Enter confidence level (0.0-1.0) [default: 0.8]: ").strip()
+            try:
+                confidence = float(confidence_input) if confidence_input else 0.8
+                confidence = max(0.0, min(1.0, confidence))  # Clamp to valid range
+            except ValueError:
+                confidence = 0.8
+            
+            # Create response data
+            response_data = {
+                "gamp_category": gamp_category,
+                "risk_assessment": {
+                    "risk_level": "HIGH" if gamp_category >= 4 else "MEDIUM"
+                }
+            }
+            
+        else:
+            # Generic consultation handling
+            safe_print("Please provide your consultation response:")
+            user_input = input("Enter your decision/response: ").strip()
+            rationale = input("Enter decision rationale: ").strip()
+            
+            if not user_input:
+                safe_print("❌ No input provided - consultation will timeout")
+                return False
+            
+            if not rationale:
+                rationale = f"Human decision: {user_input}"
+            
+            confidence_input = input("Enter confidence level (0.0-1.0) [default: 0.8]: ").strip()
+            try:
+                confidence = float(confidence_input) if confidence_input else 0.8
+                confidence = max(0.0, min(1.0, confidence))
+            except ValueError:
+                confidence = 0.8
+            
+            response_data = {"decision": user_input}
+        
+        # Get user details
+        user_id = input("Enter your user ID [default: cli_user]: ").strip() or "cli_user"
+        user_role = input("Enter your role [default: validation_engineer]: ").strip() or "validation_engineer"
+        
+        # Create HumanResponseEvent
+        human_response = HumanResponseEvent(
+            response_type="decision",
+            response_data=response_data,
+            user_id=user_id,
+            user_role=user_role,
+            decision_rationale=rationale,
+            confidence_level=confidence,
+            consultation_id=event.consultation_id,
+            session_id=event.consultation_id,  # Use consultation_id as session_id for simplicity
+            approval_level="user"
+        )
+        
+        # Send the response event to the workflow
+        handler.ctx.send_event(human_response)
+        
+        safe_print("✅ Human response recorded and sent to workflow")
+        safe_print("="*60)
+        
+        return True
+        
+    except (EOFError, KeyboardInterrupt):
+        safe_print("\n👋 Consultation cancelled by user - workflow will timeout")
+        return False
+    except Exception as e:
+        safe_print(f"❌ Error processing consultation: {e}")
+        return False
+
+
 async def run_workflow_with_event_logging(
     workflow: Workflow,
     event_handler: EventStreamHandler,
@@ -417,6 +548,9 @@ async def run_workflow_with_event_logging(
                     else:
                         event_data["payload"][key] = str(value)
 
+        # Handle HITL consultation if required
+        consultation_handled = await handle_hitl_consultation(event, handler)
+        
         # Process through event handler
         processed_event = await event_handler._process_event(event_data)
         if processed_event:

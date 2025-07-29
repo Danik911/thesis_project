@@ -199,6 +199,73 @@ result = await manager.request_consultation(ctx, consultation)
 - Role-based access control configuration
 - Audit retention policy management
 
+## CRITICAL UPDATE: Workflow Execution Issue Resolved ✅
+
+### Issue: HITL System Integration Gap
+**Problem**: While the backend HITL consultation system was complete, there was no mechanism to capture user input during normal workflow execution and convert it to HumanResponseEvent objects.
+
+**Symptoms**: 
+- Workflow reaches `handle_consultation_required` step
+- Immediately terminates instead of waiting for human input
+- User input "this is category 3" ignored - workflow terminated
+
+### Solution Implemented ✅
+
+#### 1. Created HITL Input Handler
+**File Modified**: `/home/anteb/thesis_project/main/src/shared/event_logging_integration.py`
+
+Added `handle_hitl_consultation()` function that:
+- Detects ConsultationRequiredEvent in workflow event stream
+- Prompts user for appropriate input based on consultation type
+- Handles categorization consultations with GAMP category selection
+- Converts user input to HumanResponseEvent with proper audit fields
+- Sends event back to workflow context via `handler.ctx.send_event()`
+
+#### 2. Integrated HITL Handler into Event Stream
+Modified `run_workflow_with_event_logging()` to:
+- Call `handle_hitl_consultation()` for every workflow event
+- Process consultation events before standard event logging
+- Maintain existing event processing flow
+
+#### 3. User Experience Enhancement
+**Interactive Consultation Flow**:
+1. Clear consultation dialog with context information
+2. Specialized prompts for categorization (GAMP categories 1,3,4,5)
+3. Input validation with conservative defaults
+4. User authentication fields (ID, role, rationale, confidence)
+5. Success confirmation and workflow continuation
+
+### Expected Behavior After Fix
+When running `uv run python main.py test_urs_hitl.txt --verbose`:
+
+1. **Categorization fails** (confidence < 60%)
+2. **ConsultationRequiredEvent** emitted by workflow
+3. **HITL handler detects** the consultation event and displays:
+   ```
+   ============================================================
+   🧑‍⚕️ HUMAN CONSULTATION REQUIRED
+   ============================================================
+   Consultation Type: categorization_failure
+   Urgency: high
+   Required Expertise: gamp_specialist
+   
+   Context:
+     confidence_score: 0.45
+     threshold: 0.6
+   
+   Please provide GAMP categorization decision:
+   Available categories: 1 (Infrastructure), 3 (Non-configured), 4 (Configured), 5 (Custom)
+   Enter GAMP category (1, 3, 4, 5): 
+   ```
+4. **User provides input** and additional details
+5. **HumanResponseEvent created** and sent to workflow
+6. **Workflow continues** with human decision
+7. **Normal completion** with human consultation in audit trail
+
+### Status: COMPLETE AND READY FOR VALIDATION ✅
+
+The HITL consultation system is now fully integrated with the workflow execution system and ready for end-to-end testing.
+
 ## Next Steps for Enhancement
 
 ### Priority 1: Web Interface

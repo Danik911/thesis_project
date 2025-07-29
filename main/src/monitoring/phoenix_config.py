@@ -65,7 +65,9 @@ class PhoenixConfig:
     # Performance settings
     batch_span_processor_max_queue_size: int = 2048
     batch_span_processor_max_export_batch_size: int = 512
-    batch_span_processor_schedule_delay_millis: int = 5000
+    batch_span_processor_schedule_delay_millis: int = field(
+        default_factory=lambda: int(os.getenv("PHOENIX_BATCH_EXPORT_DELAY_MS", "1000"))
+    )  # Reduced from 5000ms to 1000ms for faster exports
 
     # Compliance settings
     enable_compliance_attributes: bool = True
@@ -166,6 +168,12 @@ class PhoenixManager:
                 logger.debug("No existing Phoenix instance found, launching local...")
 
             # Launch local Phoenix if no existing instance
+            # Check if PHOENIX_EXTERNAL environment variable is set
+            if os.getenv("PHOENIX_EXTERNAL", "").lower() == "true":
+                logger.info("PHOENIX_EXTERNAL=true, skipping local Phoenix launch")
+                self.phoenix_session = MockSession(f"http://{self.config.phoenix_host}:{self.config.phoenix_port}")
+                return
+            
             self.phoenix_session = px.launch_app(
                 host=self.config.phoenix_host,
                 port=self.config.phoenix_port,
@@ -192,24 +200,10 @@ class PhoenixManager:
 
     def _setup_tracer(self) -> None:
         """Set up OpenTelemetry tracer with OTLP exporter using Phoenix patterns."""
-        try:
-            # Try to use phoenix.otel.register for better integration
-            from phoenix.otel import register
-            
-            self.tracer_provider = register(
-                endpoint=self.config.otlp_endpoint,
-                project_name=self.config.project_name,
-                headers=self.config.otlp_headers
-            )
-            
-            logger.debug(f"Tracer configured with Phoenix OTEL register: {self.config.otlp_endpoint}")
-            
-        except ImportError:
-            logger.debug("Phoenix OTEL register not available, using manual setup")
-            self._setup_manual_tracer()
-        except Exception as e:
-            logger.warning(f"Phoenix OTEL register failed: {e}, falling back to manual setup")
-            self._setup_manual_tracer()
+        # Always use manual setup to ensure BatchSpanProcessor is used
+        # This prevents the "Exporter already shutdown" issue
+        logger.debug("Using manual tracer setup for better control over span processing")
+        self._setup_manual_tracer()
 
     def _setup_manual_tracer(self) -> None:
         """Set up OpenTelemetry tracer manually (fallback method)."""
@@ -299,8 +293,13 @@ class PhoenixManager:
             try:
                 # Force flush any pending spans before shutdown
                 timeout_millis = timeout_seconds * 1000
-                self.tracer_provider.force_flush(timeout_millis=timeout_millis)
-                logger.debug(f"Successfully flushed traces within {timeout_seconds}s")
+                logger.info(f"Force flushing Phoenix traces (timeout: {timeout_seconds}s)...")
+                flush_success = self.tracer_provider.force_flush(timeout_millis=timeout_millis)
+                
+                if flush_success:
+                    logger.info(f"✅ Successfully flushed all pending traces")
+                else:
+                    logger.warning(f"⚠️  Trace flush may have timed out after {timeout_seconds}s")
                 
                 # Now shutdown the tracer provider
                 self.tracer_provider.shutdown()

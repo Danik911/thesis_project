@@ -644,6 +644,11 @@ async def main():
         # Ensure Phoenix observability is properly shut down
         if not args.no_logging:
             try:
+                # Add a small delay to ensure all spans are exported before shutdown
+                import time
+                print("⏳ Waiting for span export completion...")
+                time.sleep(2)
+                
                 from src.shared.event_logging import shutdown_event_logging
                 shutdown_event_logging()
                 safe_print("\n🔒 Phoenix observability shutdown complete")

@@ -640,6 +640,8 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
                 otlp_endpoint=config.phoenix.otlp_endpoint or f"http://{config.phoenix.phoenix_host}:{config.phoenix.phoenix_port}/v1/traces"
             )
             
+            # Use the global singleton pattern for phoenix_manager
+            # This ensures it's accessible during shutdown
             phoenix_manager = setup_phoenix(monitoring_config)
 
             # Use Phoenix-enabled event handler
@@ -678,15 +680,29 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
 def shutdown_event_logging() -> None:
     """
     Shutdown event logging system and Phoenix observability.
+    
+    This function ensures all traces are properly flushed before shutdown
+    to prevent data loss due to BatchSpanProcessor delays.
     """
     logger = logging.getLogger(__name__)
     logger.info("Shutting down event logging system...")
     
     try:
-        # Shutdown Phoenix if it was initialized
-        from ..monitoring.phoenix_config import shutdown_phoenix
-        shutdown_phoenix(timeout_seconds=5)
-        logger.info("Phoenix observability shutdown complete")
+        # Import and check for Phoenix manager
+        from ..monitoring.phoenix_config import get_phoenix_manager, shutdown_phoenix
+        
+        # Get the phoenix manager to check if it was initialized
+        phoenix_manager = get_phoenix_manager()
+        
+        if phoenix_manager and phoenix_manager._initialized:
+            logger.info("Flushing pending Phoenix traces...")
+            # Give more time for shutdown to ensure all spans are exported
+            # This is critical because BatchSpanProcessor has a 5-second delay
+            shutdown_phoenix(timeout_seconds=10)
+            logger.info("Phoenix observability shutdown complete")
+        else:
+            logger.debug("Phoenix was not initialized, skipping shutdown")
+            
     except ImportError:
         logger.debug("Phoenix not available for shutdown")
     except Exception as e:

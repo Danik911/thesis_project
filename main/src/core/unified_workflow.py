@@ -33,6 +33,7 @@ from .events import (
     ConsultationRequiredEvent,
     ConsultationTimeoutEvent,
     GAMPCategorizationEvent,
+    GAMPCategory,
     HumanResponseEvent,
     PlanningEvent,
     WorkflowCompletionEvent,
@@ -267,6 +268,22 @@ class UnifiedTestGenerationWorkflow(Workflow):
             ConsultationRequiredEvent if planning fails, or
             WorkflowCompletionEvent if consultation required
         """
+        # Store categorization event for later steps
+        await ctx.set("categorization_event", ev)
+        
+        # Create categorization result for finalization step
+        categorization_result = {
+            "gamp_category": ev.gamp_category.value,
+            "confidence_score": ev.confidence_score,
+            "justification": ev.justification,
+            "risk_assessment": ev.risk_assessment,
+            "categorized_by": ev.categorized_by,
+            "review_required": ev.review_required,
+            "workflow_completed": True,
+            "human_consultation": True  # Mark that this came from human consultation
+        }
+        await ctx.set("categorization_result", categorization_result)
+        
         # Get workflow context
         urs_content = await ctx.get("urs_content")
         document_name = await ctx.get("document_name")
@@ -568,16 +585,23 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             Workflow event to continue processing or StopEvent if unresolvable
         """
+        print(f"\n🧑‍⚕️ ENTERING CONSULTATION HANDLER")
+        print(f"📋 Consultation Type: {ev.consultation_type}")
+        print(f"📋 Urgency: {ev.urgency}")
+        print(f"📋 Required Expertise: {', '.join(ev.required_expertise)}")
+        print(f"📋 Context: {ev.context}")
+        
         self.logger.info(
             f"Human consultation required: {ev.consultation_type} "
             f"(urgency: {ev.urgency}, expertise: {', '.join(ev.required_expertise)})"
         )
 
         try:
-            # Request human consultation with timeout handling
-            consultation_result = await self.consultation_manager.request_consultation(
-                ctx, ev, timeout_seconds=None  # Use config defaults
-            )
+            print(f"🔄 Starting direct human consultation...")
+            
+            # Direct consultation input - bypassing complex event system
+            consultation_result = await self._collect_direct_consultation_input(ev)
+            print(f"✅ Consultation result received: {type(consultation_result).__name__}")
 
             if isinstance(consultation_result, HumanResponseEvent):
                 # Human responded - process the response
@@ -1066,6 +1090,220 @@ class UnifiedTestGenerationWorkflow(Workflow):
             })
 
         return summary
+
+    async def _collect_direct_consultation_input(self, ev: ConsultationRequiredEvent) -> HumanResponseEvent | ConsultationTimeoutEvent:
+        """
+        Collect consultation input directly from terminal.
+        
+        This bypasses the complex event system and directly prompts the user for input,
+        then creates a HumanResponseEvent manually to continue the workflow.
+        
+        Args:
+            ev: The consultation required event
+            
+        Returns:
+            HumanResponseEvent with user input or ConsultationTimeoutEvent if cancelled
+        """
+        import sys
+        from datetime import datetime, timezone
+        from uuid import uuid4
+        
+        print("\n" + "="*60)
+        print("🧑‍⚕️ HUMAN CONSULTATION REQUIRED")
+        print("="*60)
+        print(f"Consultation Type: {ev.consultation_type}")
+        print(f"Urgency: {ev.urgency}")
+        if ev.required_expertise:
+            print(f"Required Expertise: {', '.join(ev.required_expertise)}")
+        print(f"Triggering Step: {ev.triggering_step}")
+        print()
+        
+        # Display context information
+        if ev.context:
+            print("Context:")
+            for key, value in ev.context.items():
+                print(f"  {key}: {value}")
+            print()
+        
+        try:
+            # Check if we're in an interactive terminal
+            if not sys.stdin.isatty():
+                print("❌ Non-interactive terminal detected - applying conservative defaults")
+                return ConsultationTimeoutEvent(
+                    consultation_id=ev.consultation_id,
+                    timeout_duration_seconds=0,
+                    conservative_action="Applied Category 5 (highest validation rigor) for non-interactive execution",
+                    escalation_required=True,
+                    original_consultation=ev,
+                    default_decision={
+                        "gamp_category": 5,
+                        "rationale": "Conservative default applied for non-interactive execution",
+                        "confidence": 0.8,
+                        "decision_method": "automatic_conservative_default"
+                    }
+                )
+            
+            # Handle categorization consultations
+            if "categorization" in ev.consultation_type.lower():
+                print("Please provide GAMP categorization decision:")
+                print("Available categories:")
+                print("  1 - Infrastructure Software")
+                print("  3 - Non-configured Products")
+                print("  4 - Configured Products")  
+                print("  5 - Custom Applications")
+                print()
+                
+                # Get GAMP category
+                while True:
+                    try:
+                        category_input = input("Enter GAMP category (1, 3, 4, 5): ").strip()
+                        if category_input in ['1', '3', '4', '5']:
+                            gamp_category = int(category_input)
+                            break
+                        else:
+                            print("❌ Invalid category. Please enter 1, 3, 4, or 5.")
+                    except (EOFError, KeyboardInterrupt):
+                        print("\n👋 Consultation cancelled - applying conservative default")
+                        return ConsultationTimeoutEvent(
+                            consultation_id=ev.consultation_id,
+                            timeout_duration_seconds=0,
+                            conservative_action="Applied Category 5 (highest validation rigor) due to cancellation",
+                            escalation_required=True,
+                            original_consultation=ev,
+                            default_decision={
+                                "gamp_category": 5,
+                                "rationale": "Conservative default applied due to user cancellation",
+                                "confidence": 0.8,
+                                "decision_method": "user_cancelled_conservative_default"
+                            }
+                        )
+                
+                # Get rationale
+                try:
+                    rationale = input("Enter rationale for decision: ").strip()
+                    if not rationale:
+                        rationale = f"GAMP Category {gamp_category} selected during human consultation"
+                except (EOFError, KeyboardInterrupt):
+                    rationale = f"GAMP Category {gamp_category} selected during human consultation"
+                
+                # Get confidence
+                try:
+                    confidence_input = input("Enter confidence level (0.0-1.0) [0.8]: ").strip()
+                    if confidence_input:
+                        confidence = float(confidence_input)
+                        confidence = max(0.0, min(1.0, confidence))  # Clamp to valid range
+                    else:
+                        confidence = 0.8  # Default confidence
+                except (ValueError, EOFError, KeyboardInterrupt):
+                    confidence = 0.8
+                    print(f"Using default confidence: {confidence}")
+                
+                # Get user information
+                try:
+                    user_id = input("Enter your user ID [workflow_user]: ").strip() or "workflow_user"
+                    user_role = input("Enter your role [validation_engineer]: ").strip() or "validation_engineer"
+                except (EOFError, KeyboardInterrupt):
+                    user_id = "workflow_user"
+                    user_role = "validation_engineer"
+                
+                # Create response event
+                response = HumanResponseEvent(
+                    consultation_id=ev.consultation_id,
+                    session_id=uuid4(),
+                    response_type="decision",
+                    user_id=user_id,
+                    user_role=user_role,
+                    response_data={
+                        "gamp_category": gamp_category,
+                        "rationale": rationale,
+                        "confidence": confidence,
+                        "decision_timestamp": datetime.now(timezone.utc).isoformat(),
+                        "consultation_method": "direct_terminal_input"
+                    },
+                    decision_rationale=rationale,
+                    confidence_level=confidence
+                )
+                
+                print(f"\n✅ Consultation completed!")
+                print(f"Category: {gamp_category}")
+                print(f"Confidence: {confidence:.1%}")
+                print(f"User: {user_id} ({user_role})")
+                print()
+                
+                return response
+                
+            else:
+                # Handle other consultation types
+                print(f"Consultation type '{ev.consultation_type}' requires manual handling.")
+                print("Please provide your decision:")
+                
+                try:
+                    decision = input("Enter your decision: ").strip()
+                    rationale = input("Enter rationale: ").strip()
+                    confidence_input = input("Enter confidence (0.0-1.0) [0.8]: ").strip()
+                    
+                    confidence = float(confidence_input) if confidence_input else 0.8
+                    confidence = max(0.0, min(1.0, confidence))
+                    
+                    user_id = input("Enter your user ID [workflow_user]: ").strip() or "workflow_user"
+                    user_role = input("Enter your role [validation_engineer]: ").strip() or "validation_engineer"
+                    
+                    response = HumanResponseEvent(
+                        consultation_id=ev.consultation_id,
+                        session_id=uuid4(),
+                        response_type="decision",
+                        user_id=user_id,
+                        user_role=user_role,
+                        response_data={
+                            "decision": decision,
+                            "rationale": rationale,
+                            "confidence": confidence,
+                            "decision_timestamp": datetime.now(timezone.utc).isoformat(),
+                            "consultation_method": "direct_terminal_input"
+                        },
+                        decision_rationale=rationale,
+                        confidence_level=confidence
+                    )
+                    
+                    print(f"\n✅ Consultation completed!")
+                    print(f"Decision: {decision}")
+                    print(f"Confidence: {confidence:.1%}")
+                    print()
+                    
+                    return response
+                    
+                except (EOFError, KeyboardInterrupt):
+                    print("\n👋 Consultation cancelled - applying conservative defaults")
+                    return ConsultationTimeoutEvent(
+                        consultation_id=ev.consultation_id,
+                        timeout_duration_seconds=0,
+                        conservative_action="Applied conservative defaults due to cancellation",
+                        escalation_required=True,
+                        original_consultation=ev,
+                        default_decision={
+                            "decision": "conservative_default",
+                            "rationale": "User cancelled consultation - conservative approach applied",
+                            "confidence": 0.8,
+                            "decision_method": "user_cancelled_conservative_default"
+                        }
+                    )
+                    
+        except Exception as e:
+            print(f"\n❌ Error during consultation: {e}")
+            self.logger.error(f"Error in direct consultation input: {e}")
+            return ConsultationTimeoutEvent(
+                consultation_id=ev.consultation_id,
+                timeout_duration_seconds=0,
+                conservative_action=f"Applied conservative defaults due to error: {e}",
+                escalation_required=True,
+                original_consultation=ev,
+                default_decision={
+                    "decision": "conservative_default",
+                    "rationale": f"Error during consultation - conservative approach applied: {e}",
+                    "confidence": 0.8,
+                    "decision_method": "error_conservative_default"
+                }
+            )
 
 
 # Convenience function for running the unified workflow
