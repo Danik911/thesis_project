@@ -626,7 +626,17 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
             # Fallback to standard handler if Phoenix setup fails
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to initialize Phoenix observability: {e}")
-            logger.info("Falling back to standard event logging")
+            
+            # Try additional fallback mechanisms
+            try:
+                # Try simple Phoenix global handler as fallback
+                import llama_index.core
+                llama_index.core.set_global_handler("arize_phoenix")
+                logger.info("✅ Successfully initialized Phoenix fallback global handler")
+            except Exception as fallback_error:
+                logger.warning(f"Phoenix fallback also failed: {fallback_error}")
+            
+            logger.info("Using standard event logging (Phoenix fallback may still be active)")
             handler = EventStreamHandler(config=config)
     else:
         # Use standard event handler
@@ -637,6 +647,24 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
     logger.info(f"Configuration: {config.to_dict()}")
 
     return handler
+
+
+def shutdown_event_logging() -> None:
+    """
+    Shutdown event logging system and Phoenix observability.
+    """
+    logger = logging.getLogger(__name__)
+    logger.info("Shutting down event logging system...")
+    
+    try:
+        # Shutdown Phoenix if it was initialized
+        from ..monitoring.phoenix_config import shutdown_phoenix
+        shutdown_phoenix(timeout_seconds=5)
+        logger.info("Phoenix observability shutdown complete")
+    except ImportError:
+        logger.debug("Phoenix not available for shutdown")
+    except Exception as e:
+        logger.warning(f"Error shutting down Phoenix: {e}")
 
 
 # Example usage patterns for workflow integration
@@ -661,8 +689,9 @@ async def example_workflow_integration(context: Context) -> None:
 # Export main classes and functions
 __all__ = [
     "EventStreamHandler",
-    "GAMP5ComplianceLogger",
+    "GAMP5ComplianceLogger", 
     "StructuredEventLogger",
     "example_workflow_integration",
-    "setup_event_logging"
+    "setup_event_logging",
+    "shutdown_event_logging"
 ]

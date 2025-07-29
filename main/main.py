@@ -396,6 +396,15 @@ async def main():
                 tb_output = "\n".join(tb_lines)
             safe_print(truncate_string(tb_output, 2000))
         return 1
+    finally:
+        # Ensure Phoenix observability is properly shut down
+        if not args.no_logging:
+            try:
+                from src.shared.event_logging import shutdown_event_logging
+                shutdown_event_logging()
+                safe_print("\n🔒 Phoenix observability shutdown complete")
+            except Exception as shutdown_error:
+                safe_print(f"\n⚠️  Warning: Error during Phoenix shutdown: {shutdown_error}")
 
 
 if __name__ == "__main__":

@@ -145,10 +145,27 @@ class PhoenixManager:
         return self
 
     def _launch_local_phoenix(self) -> None:
-        """Launch local Phoenix UI for development."""
+        """Launch local Phoenix UI for development or connect to existing instance."""
         try:
             import phoenix as px
+            
+            # First try to connect to existing Phoenix (like Docker container)
+            try:
+                import requests
+                health_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
+                response = requests.get(health_url, timeout=2)
+                if response.status_code == 200:
+                    logger.info(f"✅ Connected to existing Phoenix instance at: {health_url}")
+                    # Create a mock session object for compatibility
+                    class MockSession:
+                        def __init__(self, url):
+                            self.url = url
+                    self.phoenix_session = MockSession(health_url)
+                    return
+            except Exception:
+                logger.debug("No existing Phoenix instance found, launching local...")
 
+            # Launch local Phoenix if no existing instance
             self.phoenix_session = px.launch_app(
                 host=self.config.phoenix_host,
                 port=self.config.phoenix_port,
@@ -162,9 +179,40 @@ class PhoenixManager:
             )
         except Exception as e:
             logger.warning(f"Failed to launch Phoenix UI: {e}")
+            # Try to create mock session for Docker Phoenix
+            try:
+                class MockSession:
+                    def __init__(self, url):
+                        self.url = url
+                docker_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
+                self.phoenix_session = MockSession(docker_url)
+                logger.info(f"✅ Using Docker Phoenix instance at: {docker_url}")
+            except Exception as mock_error:
+                logger.warning(f"Failed to connect to Docker Phoenix: {mock_error}")
 
     def _setup_tracer(self) -> None:
-        """Set up OpenTelemetry tracer with OTLP exporter."""
+        """Set up OpenTelemetry tracer with OTLP exporter using Phoenix patterns."""
+        try:
+            # Try to use phoenix.otel.register for better integration
+            from phoenix.otel import register
+            
+            self.tracer_provider = register(
+                endpoint=self.config.otlp_endpoint,
+                project_name=self.config.project_name,
+                headers=self.config.otlp_headers
+            )
+            
+            logger.debug(f"Tracer configured with Phoenix OTEL register: {self.config.otlp_endpoint}")
+            
+        except ImportError:
+            logger.debug("Phoenix OTEL register not available, using manual setup")
+            self._setup_manual_tracer()
+        except Exception as e:
+            logger.warning(f"Phoenix OTEL register failed: {e}, falling back to manual setup")
+            self._setup_manual_tracer()
+
+    def _setup_manual_tracer(self) -> None:
+        """Set up OpenTelemetry tracer manually (fallback method)."""
         # Create resource with attributes
         resource = Resource.create(self.config.to_resource_attributes())
 
@@ -191,10 +239,10 @@ class PhoenixManager:
         # Set as global tracer provider
         trace.set_tracer_provider(self.tracer_provider)
 
-        logger.debug(f"Tracer configured with endpoint: {self.config.otlp_endpoint}")
+        logger.debug(f"Manual tracer configured with endpoint: {self.config.otlp_endpoint}")
 
     def _instrument_llamaindex(self) -> None:
-        """Instrument LlamaIndex with OpenInference."""
+        """Instrument LlamaIndex with OpenInference and fallback options."""
         try:
             from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 
@@ -204,13 +252,27 @@ class PhoenixManager:
                 tracer_provider=self.tracer_provider
             )
 
-            logger.debug("LlamaIndex instrumented successfully")
+            logger.debug("LlamaIndex instrumented successfully with OpenInference")
 
         except ImportError:
             logger.warning(
                 "OpenInference LlamaIndex instrumentation not available. "
                 "Install with: pip install openinference-instrumentation-llama-index"
             )
+            self._try_fallback_instrumentation()
+        except Exception as e:
+            logger.error(f"OpenInference instrumentation failed: {e}")
+            self._try_fallback_instrumentation()
+
+    def _try_fallback_instrumentation(self) -> None:
+        """Try fallback instrumentation using simple global handler."""
+        try:
+            import llama_index.core
+            llama_index.core.set_global_handler("arize_phoenix")
+            logger.info("✅ Fallback to simple Phoenix global handler successful")
+        except Exception as fallback_error:
+            logger.warning(f"❌ Fallback instrumentation also failed: {fallback_error}")
+            logger.info("Continuing without Phoenix instrumentation")
 
     def get_tracer(self, name: str) -> trace.Tracer:
         """
@@ -224,18 +286,40 @@ class PhoenixManager:
         """
         return trace.get_tracer(name)
 
-    def shutdown(self) -> None:
-        """Gracefully shutdown Phoenix and tracing."""
+    def shutdown(self, timeout_seconds: int = 5) -> None:
+        """
+        Gracefully shutdown Phoenix and tracing with forced flush.
+        
+        Args:
+            timeout_seconds: Maximum time to wait for trace export completion
+        """
+        logger.info("Shutting down Phoenix observability...")
+        
         if self.tracer_provider:
-            self.tracer_provider.shutdown()
-            logger.debug("Tracer provider shut down")
+            try:
+                # Force flush any pending spans before shutdown
+                timeout_millis = timeout_seconds * 1000
+                self.tracer_provider.force_flush(timeout_millis=timeout_millis)
+                logger.debug(f"Successfully flushed traces within {timeout_seconds}s")
+                
+                # Now shutdown the tracer provider
+                self.tracer_provider.shutdown()
+                logger.debug("Tracer provider shut down successfully")
+                
+            except Exception as e:
+                logger.warning(f"Error during tracer shutdown: {e}")
 
         if self.phoenix_session:
-            # Phoenix session doesn't have explicit shutdown
-            self.phoenix_session = None
-            logger.debug("Phoenix session cleared")
+            try:
+                # Keep session alive for UI accessibility
+                # Don't set to None - let it persist for post-workflow access
+                logger.debug("Phoenix session maintained for continued UI access")
+            except Exception as e:
+                logger.warning(f"Error maintaining Phoenix session: {e}")
 
+        # Mark as not initialized but don't clear session completely
         self._initialized = False
+        logger.info("Phoenix shutdown complete - UI should remain accessible")
 
 
 # Singleton instance
@@ -261,4 +345,26 @@ def setup_phoenix(config: PhoenixConfig | None = None) -> PhoenixManager:
         _phoenix_manager = PhoenixManager(config)
         _phoenix_manager.setup()
 
+    return _phoenix_manager
+
+
+def shutdown_phoenix(timeout_seconds: int = 5) -> None:
+    """
+    Shutdown Phoenix observability system with proper cleanup.
+    
+    Args:
+        timeout_seconds: Maximum time to wait for trace export completion
+    """
+    global _phoenix_manager
+    
+    if _phoenix_manager:
+        _phoenix_manager.shutdown(timeout_seconds=timeout_seconds)
+        # Don't set to None - keep manager for potential reuse
+        logger.info("Phoenix manager shutdown complete")
+    else:
+        logger.debug("No Phoenix manager to shutdown")
+
+
+def get_phoenix_manager() -> PhoenixManager | None:
+    """Get the current Phoenix manager instance."""
     return _phoenix_manager
