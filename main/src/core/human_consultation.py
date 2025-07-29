@@ -342,6 +342,29 @@ class HumanConsultationManager:
                 if response_event.consultation_id != consultation_event.consultation_id:
                     raise ValueError("Response consultation ID mismatch")
 
+                # Validate session ID matches or create corrected response
+                if response_event.session_id != session.session_id:
+                    self.logger.warning(
+                        f"Response session ID {response_event.session_id} does not match "
+                        f"session {session.session_id}. Creating corrected response for audit compliance."
+                    )
+                    
+                    # Create corrected response with proper session ID for audit compliance
+                    corrected_response = HumanResponseEvent(
+                        response_type=response_event.response_type,
+                        response_data=response_event.response_data,
+                        user_id=response_event.user_id,
+                        user_role=response_event.user_role,
+                        decision_rationale=response_event.decision_rationale,
+                        confidence_level=response_event.confidence_level,
+                        consultation_id=response_event.consultation_id,
+                        session_id=session.session_id,  # Correct session ID
+                        digital_signature=response_event.digital_signature,
+                        approval_level=response_event.approval_level,
+                        regulatory_impact=response_event.regulatory_impact
+                    )
+                    response_event = corrected_response
+
                 # Add response to session
                 await session.add_response(response_event)
 

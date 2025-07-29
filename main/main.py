@@ -44,6 +44,11 @@ from src.shared.output_manager import (
 # Utilities
 from src.shared.utils import setup_logging
 
+# Human consultation system
+from src.core.human_consultation import HumanConsultationManager
+from src.core.events import HumanResponseEvent
+from uuid import UUID, uuid4
+
 
 def setup_safe_output_management():
     """Setup safe output management to prevent Claude Code overflow."""
@@ -123,6 +128,25 @@ def parse_arguments():
         "--disable-parallel-coordination",
         action="store_true",
         help="Disable parallel agent coordination in planning workflow"
+    )
+
+    # Human consultation commands
+    parser.add_argument(
+        "--consult",
+        action="store_true",
+        help="Enter human consultation interface mode"
+    )
+
+    parser.add_argument(
+        "--list-consultations",
+        action="store_true",
+        help="List active consultations"
+    )
+
+    parser.add_argument(
+        "--respond-to",
+        type=str,
+        help="Respond to consultation by ID"
     )
 
     return parser.parse_args()
@@ -352,6 +376,193 @@ async def run_without_logging(document_path: Path, args):
     return None
 
 
+async def run_consultation_interface():
+    """Run the human consultation interface."""
+    import sys
+    
+    # Check if running in interactive terminal
+    if not sys.stdin.isatty():
+        safe_print("❌ Consultation interface requires an interactive terminal")
+        safe_print("💡 Run this command in an interactive shell, not through scripts or timeouts")
+        return
+    
+    safe_print("🧑‍⚕️ Human Consultation Interface")
+    safe_print("=" * 40)
+    
+    config = get_config()
+    manager = HumanConsultationManager(config)
+    
+    while True:
+        safe_print("\nAvailable commands:")
+        safe_print("1. List active consultations")
+        safe_print("2. View consultation details")
+        safe_print("3. Respond to consultation")
+        safe_print("4. Exit")
+        
+        try:
+            choice = input("\nEnter choice (1-4): ").strip()
+            
+            if choice == "1":
+                await list_active_consultations(manager)
+            elif choice == "2":
+                await view_consultation_details(manager)
+            elif choice == "3":
+                await respond_to_consultation(manager)
+            elif choice == "4":
+                safe_print("👋 Exiting consultation interface")
+                break
+            else:
+                safe_print("❌ Invalid choice. Please enter 1-4.")
+                
+        except KeyboardInterrupt:
+            safe_print("\n👋 Exiting consultation interface")
+            break
+        except EOFError:
+            safe_print("\n👋 No more input available - exiting consultation interface")
+            break
+        except Exception as e:
+            safe_print(f"❌ Unexpected error: {e}")
+            break
+
+async def list_active_consultations(manager: HumanConsultationManager):
+    """List active consultations."""
+    if not manager.active_sessions:
+        safe_print("📋 No active consultations")
+        return
+    
+    safe_print(f"📋 Active Consultations ({len(manager.active_sessions)}):")
+    for session_id, session in manager.active_sessions.items():
+        info = session.get_session_info()
+        safe_print(f"  📄 {session_id}")
+        safe_print(f"     Type: {info['consultation_type']}")
+        safe_print(f"     Urgency: {info['urgency']}")
+        safe_print(f"     Status: {info['status']}")
+        safe_print(f"     Duration: {info['duration_seconds']:.1f}s")
+
+async def view_consultation_details(manager: HumanConsultationManager):
+    """View details of a specific consultation."""
+    if not manager.active_sessions:
+        safe_print("📋 No active consultations")
+        return
+    
+    try:
+        session_id = input("Enter consultation session ID: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        safe_print("\n👋 Cancelled")
+        return
+    
+    try:
+        session_uuid = UUID(session_id)
+        if session_uuid in manager.active_sessions:
+            session = manager.active_sessions[session_uuid]
+            info = session.get_session_info()
+            
+            safe_print(f"\n📄 Consultation Details:")
+            safe_print(f"   Session ID: {info['session_id']}")
+            safe_print(f"   Consultation ID: {info['consultation_id']}")
+            safe_print(f"   Type: {info['consultation_type']}")
+            safe_print(f"   Urgency: {info['urgency']}")
+            safe_print(f"   Status: {info['status']}")
+            safe_print(f"   Created: {info['created_at']}")
+            safe_print(f"   Duration: {info['duration_seconds']:.1f}s")
+            safe_print(f"   Timeout: {info['timeout_seconds']}s")
+            safe_print(f"   Participants: {info['participants']}")
+            safe_print(f"   Responses: {info['total_responses']}")
+            
+            # Show consultation context
+            consultation_event = session.consultation_event
+            safe_print(f"\n📝 Context:")
+            for key, value in consultation_event.context.items():
+                safe_print(f"   {key}: {value}")
+                
+        else:
+            safe_print("❌ Consultation not found")
+            
+    except ValueError:
+        safe_print("❌ Invalid session ID format")
+
+async def respond_to_consultation(manager: HumanConsultationManager):
+    """Respond to a consultation."""
+    if not manager.active_sessions:
+        safe_print("📋 No active consultations")
+        return
+    
+    try:
+        session_id = input("Enter consultation session ID: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        safe_print("\n👋 Cancelled")
+        return
+    
+    try:
+        session_uuid = UUID(session_id)
+        if session_uuid not in manager.active_sessions:
+            safe_print("❌ Consultation not found")
+            return
+            
+        session = manager.active_sessions[session_uuid]
+        consultation_event = session.consultation_event
+        
+        safe_print(f"\n📄 Responding to: {consultation_event.consultation_type}")
+        safe_print(f"Context: {consultation_event.context}")
+        
+        # Collect response data
+        try:
+            user_id = input("Enter your user ID: ").strip() or "cli_user"
+            user_role = input("Enter your role (validation_engineer/quality_assurance/regulatory_specialist): ").strip() or "validation_engineer"
+            decision_rationale = input("Enter decision rationale: ").strip()
+            
+            if not decision_rationale:
+                safe_print("❌ Decision rationale is required")
+                return
+                
+            confidence_input = input("Enter confidence level (0.0-1.0): ").strip() or "0.8"
+            confidence_level = float(confidence_input)
+            
+            if not 0.0 <= confidence_level <= 1.0:
+                raise ValueError("Confidence must be between 0.0 and 1.0")
+                
+        except (EOFError, KeyboardInterrupt):
+            safe_print("\n👋 Cancelled")
+            return
+        except ValueError as e:
+            safe_print(f"❌ Invalid confidence level: {e}")
+            return
+        
+        response_data = {}
+        if "categorization" in consultation_event.consultation_type.lower():
+            try:
+                gamp_category = int(input("Enter GAMP category (1, 3, 4, 5): ").strip() or "5")
+                if gamp_category not in [1, 3, 4, 5]:
+                    raise ValueError("Invalid GAMP category")
+                response_data["gamp_category"] = gamp_category
+                response_data["risk_assessment"] = {"risk_level": input("Enter risk level (LOW/MEDIUM/HIGH): ").strip().upper() or "HIGH"}
+            except ValueError as e:
+                safe_print(f"❌ Invalid GAMP category: {e}")
+                return
+        
+        # Create response event
+        response_event = HumanResponseEvent(
+            response_type="decision",
+            response_data=response_data,
+            user_id=user_id,
+            user_role=user_role,
+            decision_rationale=decision_rationale,
+            confidence_level=confidence_level,
+            consultation_id=consultation_event.consultation_id,
+            session_id=session_uuid,
+            approval_level="user"
+        )
+        
+        # Add response to session
+        await session.add_response(response_event)
+        
+        safe_print("✅ Response recorded successfully!")
+        
+    except ValueError:
+        safe_print("❌ Invalid session ID format")
+    except Exception as e:
+        safe_print(f"❌ Error recording response: {e}")
+
 async def main():
     """Main entry point."""
     args = parse_arguments()
@@ -362,6 +573,23 @@ async def main():
     # Setup logging with reduced verbosity
     log_level = "WARNING" if not args.verbose else "INFO"  # Reduced default verbosity
     setup_logging(log_level)
+
+    # Handle consultation interface commands
+    if args.consult:
+        await run_consultation_interface()
+        return
+    elif args.list_consultations:
+        config = get_config()
+        manager = HumanConsultationManager(config)
+        await list_active_consultations(manager)
+        return
+    elif args.respond_to:
+        config = get_config()
+        manager = HumanConsultationManager(config)
+        # Mock session for response (in real implementation, this would load from persistent storage)
+        safe_print(f"📝 Response functionality would respond to consultation: {args.respond_to}")
+        safe_print("⚠️  Note: This requires active consultation sessions which are currently in-memory only")
+        return
 
     safe_print("🏥 GAMP-5 Pharmaceutical Test Generation System")
     if args.categorization_only:

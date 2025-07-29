@@ -186,12 +186,24 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 document_name=document_name
             )
 
-            # Extract categorization event from result
-            if isinstance(categorization_result, dict) and "categorization_event" in categorization_result:
-                categorization_event = categorization_result["categorization_event"]
+            # Extract categorization event and check for consultation from result
+            if isinstance(categorization_result, dict):
+                categorization_event = categorization_result.get("categorization_event")
+                consultation_event = categorization_result.get("consultation_event")
+                
+                # If consultation is required, return it immediately
+                if consultation_event:
+                    self.logger.info(
+                        f"Categorization requires consultation: {consultation_event.consultation_type} "
+                        f"(urgency: {consultation_event.urgency})"
+                    )
+                    await ctx.set("consultation_event", consultation_event)
+                    return consultation_event
+                    
             else:
                 # Handle case where result is direct categorization event
                 categorization_event = categorization_result
+                consultation_event = None
 
             # Validate categorization result
             if not isinstance(categorization_event, GAMPCategorizationEvent):
@@ -443,9 +455,15 @@ class UnifiedTestGenerationWorkflow(Workflow):
         consultation_event = await ctx.get("consultation_event", default=None)
         document_metadata = await ctx.get("document_metadata", {})
 
-        # Determine workflow status
+        # Handle consultation if required
         if isinstance(ev, WorkflowCompletionEvent) and ev.consultation_event:
-            workflow_status = "consultation_required"
+            self.logger.info("Consultation required - routing to consultation handler")
+            # Route the consultation event to the consultation handler
+            return await self.handle_consultation_required(ctx, ev.consultation_event)
+        
+        # Determine workflow status for completed workflows
+        if isinstance(ev, WorkflowCompletionEvent):
+            workflow_status = "completed"
             planning_event = None
         elif isinstance(ev, PlanningEvent):
             workflow_status = "completed"
