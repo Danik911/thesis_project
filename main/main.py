@@ -218,8 +218,16 @@ async def run_with_event_logging(document_path: Path, args):
             if summary.get("estimated_test_count"):
                 safe_print(f"  - Estimated Tests: {summary['estimated_test_count']}")
                 safe_print(f"  - Timeline: {summary.get('timeline_estimate_days', 'N/A')} days")
-                safe_print(f"  - Agents Coordinated: {summary.get('agents_coordinated', 0)}")
-                safe_print(f"  - Agent Success Rate: {summary.get('coordination_success_rate', 0):.1%}")
+                
+                # Show accurate agent execution information
+                agents_executed = summary.get('agents_coordinated', 0)
+                if agents_executed > 0:
+                    success_rate = summary.get('coordination_success_rate', 0)
+                    safe_print(f"  - Agents Executed: {agents_executed}")
+                    safe_print(f"  - Agent Success Rate: {success_rate:.1%}")
+                else:
+                    safe_print(f"  - Active Agents: 2 (Categorization + Planner)")
+                    safe_print(f"  - Parallel Agents: Not integrated (coordination requests generated only)")
 
             if consultation.get("required"):
                 safe_print(f"  - Consultation Required: {consultation['event'].consultation_type}")
@@ -323,8 +331,16 @@ async def run_without_logging(document_path: Path, args):
             if summary.get("estimated_test_count"):
                 safe_print(f"  - Estimated Tests: {summary['estimated_test_count']}")
                 safe_print(f"  - Timeline: {summary.get('timeline_estimate_days', 'N/A')} days")
-                safe_print(f"  - Agents Coordinated: {summary.get('agents_coordinated', 0)}")
-                safe_print(f"  - Agent Success Rate: {summary.get('coordination_success_rate', 0):.1%}")
+                
+                # Show accurate agent execution information
+                agents_executed = summary.get('agents_coordinated', 0)
+                if agents_executed > 0:
+                    success_rate = summary.get('coordination_success_rate', 0)
+                    safe_print(f"  - Agents Executed: {agents_executed}")
+                    safe_print(f"  - Agent Success Rate: {success_rate:.1%}")
+                else:
+                    safe_print(f"  - Active Agents: 2 (Categorization + Planner)")
+                    safe_print(f"  - Parallel Agents: Not integrated (coordination requests generated only)")
 
             if consultation.get("required"):
                 safe_print(f"  - Consultation Required: {consultation['event'].consultation_type}")

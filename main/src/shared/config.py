@@ -169,6 +169,104 @@ class EventStreamConfig:
 
 
 @dataclass
+class HumanConsultationConfig:
+    """Configuration for human-in-the-loop consultation system."""
+
+    # Consultation timeouts
+    default_timeout_seconds: int = 3600  # 1 hour default
+    escalation_timeout_seconds: int = 7200  # 2 hours for escalation
+    critical_timeout_seconds: int = 1800  # 30 minutes for critical issues
+
+    # Conservative defaults (applied when timeout occurs)
+    conservative_gamp_category: int = 5  # Category 5 (custom application)
+    conservative_risk_level: str = "HIGH"
+    conservative_validation_approach: str = "full_validation_required"
+    conservative_test_coverage: float = 1.0  # 100% coverage
+    conservative_review_required: bool = True
+
+    # User roles and permissions
+    authorized_roles: list[str] = field(
+        default_factory=lambda: [
+            "validation_engineer",
+            "quality_assurance",
+            "regulatory_specialist",
+            "gamp_specialist",
+            "system_engineer",
+            "document_analyst",
+            "planning_specialist"
+        ]
+    )
+
+    # Escalation hierarchy
+    escalation_hierarchy: dict[str, list[str]] = field(
+        default_factory=lambda: {
+            "user": ["supervisor", "quality_assurance"],
+            "supervisor": ["quality_assurance", "regulatory_specialist"],
+            "quality_assurance": ["regulatory_specialist", "gmp_officer"],
+            "regulatory_specialist": ["gmp_officer", "system_owner"]
+        }
+    )
+
+    # Consultation types and their default timeouts
+    consultation_timeouts: dict[str, int] = field(
+        default_factory=lambda: {
+            "categorization_failure": 3600,
+            "categorization_error": 1800,
+            "planning_error": 3600,
+            "planning_incomplete": 2400,
+            "planning_result_invalid": 1800,
+            "missing_urs_content": 7200,
+            "low_confidence_categorization": 2400,
+            "validation_failure": 3600,
+            "compliance_issue": 1800
+        }
+    )
+
+    # Notification settings
+    enable_notifications: bool = True
+    notification_channels: list[str] = field(
+        default_factory=lambda: ["email", "dashboard", "audit_log"]
+    )
+
+    # Session management
+    max_concurrent_sessions: int = 10
+    session_cleanup_interval_seconds: int = 300  # 5 minutes
+    session_history_retention_days: int = 90
+
+    # Digital signature requirements
+    require_digital_signature: bool = False  # Requires PKI setup
+    signature_algorithm: str = "RSA-SHA256"
+
+    # Audit trail settings
+    detailed_audit_logging: bool = True
+    include_decision_context: bool = True
+    include_user_metadata: bool = True
+
+    def __post_init__(self):
+        """Validate consultation configuration."""
+        # Ensure timeout values are positive
+        if self.default_timeout_seconds <= 0:
+            raise ValueError("Default timeout must be positive")
+
+        if self.escalation_timeout_seconds <= 0:
+            raise ValueError("Escalation timeout must be positive")
+
+        if self.critical_timeout_seconds <= 0:
+            raise ValueError("Critical timeout must be positive")
+
+        # Validate conservative defaults
+        if not 1 <= self.conservative_gamp_category <= 5:
+            raise ValueError("Conservative GAMP category must be between 1 and 5")
+
+        if not 0.0 <= self.conservative_test_coverage <= 1.0:
+            raise ValueError("Conservative test coverage must be between 0.0 and 1.0")
+
+        # Validate roles
+        if not self.authorized_roles:
+            raise ValueError("At least one authorized role must be specified")
+
+
+@dataclass
 class PhoenixConfig:
     """Configuration for Arize Phoenix observability integration."""
 
@@ -227,6 +325,7 @@ class Config:
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     gamp5_compliance: GAMP5ComplianceConfig = field(default_factory=GAMP5ComplianceConfig)
     event_streaming: EventStreamConfig = field(default_factory=EventStreamConfig)
+    human_consultation: HumanConsultationConfig = field(default_factory=HumanConsultationConfig)
     phoenix: PhoenixConfig = field(default_factory=PhoenixConfig)
 
     # Environment settings
@@ -293,6 +392,15 @@ class Config:
                 "captured_event_types": self.event_streaming.captured_event_types,
                 "persist_events": self.event_streaming.persist_events,
                 "stream_buffer_size": self.event_streaming.stream_buffer_size
+            },
+            "human_consultation": {
+                "default_timeout_seconds": self.human_consultation.default_timeout_seconds,
+                "conservative_gamp_category": self.human_consultation.conservative_gamp_category,
+                "conservative_risk_level": self.human_consultation.conservative_risk_level,
+                "authorized_roles": self.human_consultation.authorized_roles,
+                "enable_notifications": self.human_consultation.enable_notifications,
+                "require_digital_signature": self.human_consultation.require_digital_signature,
+                "detailed_audit_logging": self.human_consultation.detailed_audit_logging
             },
             "phoenix": {
                 "enable_phoenix": self.phoenix.enable_phoenix,

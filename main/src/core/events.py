@@ -148,12 +148,83 @@ class ConsultationRequiredEvent(Event):
     consultation_id: UUID = Field(default_factory=uuid4)
 
 
+class HumanResponseEvent(Event):
+    """
+    Event containing human responses for consultation requests.
+    
+    Captures human decisions with comprehensive pharmaceutical compliance
+    metadata including user authentication, decision rationale, and
+    regulatory compliance validation.
+    """
+    response_type: str  # decision, escalation, request_more_info
+    response_data: dict[str, Any]
+    user_id: str
+    user_role: str
+    decision_rationale: str
+    confidence_level: float = Field(ge=0.0, le=1.0)
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    consultation_id: UUID
+    session_id: UUID
+    digital_signature: str | None = None
+    approval_level: str = "user"  # user, supervisor, quality_assurance
+    regulatory_impact: str = "medium"  # low, medium, high, critical
+
+    @field_validator("confidence_level")
+    @classmethod
+    def validate_confidence_level(cls, v: float) -> float:
+        """Validate confidence level range."""
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("Confidence level must be between 0.0 and 1.0")
+        return v
+
+
+class ConsultationTimeoutEvent(Event):
+    """
+    Event triggered when human consultation request times out.
+    
+    Indicates that no human response was received within the specified
+    timeout period, triggering conservative default actions.
+    """
+    consultation_id: UUID
+    timeout_duration_seconds: int
+    conservative_action: str
+    escalation_required: bool = True
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    original_consultation: ConsultationRequiredEvent
+    default_decision: dict[str, Any]
+    escalation_contacts: list[str] = Field(default_factory=list)
+
+
+class ConsultationSessionEvent(Event):
+    """
+    Event for managing consultation sessions and lifecycle.
+    
+    Tracks the complete lifecycle of consultation requests including
+    session creation, updates, and completion for audit trail purposes.
+    """
+    session_action: str  # created, updated, completed, cancelled
+    session_id: UUID
+    consultation_id: UUID
+    session_data: dict[str, Any]
+    participants: list[str] = Field(default_factory=list)
+    duration_seconds: int | None = None
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    session_status: str = "active"  # active, completed, cancelled, escalated
+    compliance_metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class UserDecisionEvent(Event):
     """
     Event containing user decisions and approvals.
     
     Records human input and decisions with digital signatures
     for regulatory compliance and audit trail requirements.
+    
+    Note: This event is being phased out in favor of HumanResponseEvent
+    for better pharmaceutical compliance features.
     """
     decision: str
     decision_context: dict[str, Any]
@@ -278,10 +349,13 @@ __all__ = [
     "AgentRequestEvent",
     "AgentResultEvent",
     "ConsultationRequiredEvent",
+    "ConsultationSessionEvent",
+    "ConsultationTimeoutEvent",
     "DocumentProcessedEvent",
     "ErrorRecoveryEvent",
     "GAMPCategorizationEvent",
     "GAMPCategory",
+    "HumanResponseEvent",
     "PlanningEvent",
     "ScriptGenerationEvent",
     "URSIngestionEvent",

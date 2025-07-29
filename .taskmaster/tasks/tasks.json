@@ -285,9 +285,9 @@
         "id": 5,
         "title": "Human-in-the-Loop Consultation",
         "description": "Add human-in-the-loop consultation step with timeout handling",
-        "details": "Implement critical decision points where human consultation is required for regulatory compliance. Include timeout mechanisms with conservative defaults, user interface integration, and audit trail logging.",
+        "details": "Implement critical decision points where human consultation is required for regulatory compliance. Include timeout mechanisms with conservative defaults, user interface integration, and audit trail logging.\n<info added on 2025-07-29T12:47:08.329Z>\nIncorporate the following human-in-the-loop (HITL) consultation patterns for pharmaceutical test generation:\n\n- At each critical decision point (e.g., ambiguous results, protocol deviations), pause automated processing and require human input, with workflow triggers and clear audit logging of context and rationale.\n- Implement timeout handling for all HITL steps: if human input is not received within a regulatory-compliant window, apply a conservative default action (such as escalation, flagging for review, or halting progression), and log the timeout event and default action for compliance.\n- Integrate a user interface for human reviewers that provides contextual information, regulatory guidance, decision options with explanations, and real-time timeout status indicators.\n- Ensure all HITL interactions are logged immutably, capturing user identity, decision details (including defaults on timeout), timestamps, and supporting context for traceability and audit purposes.\n- Set timeout durations and escalation paths based on regulatory guidelines and risk assessments, with fallback logic that prioritizes patient safety and regulatory caution.\n- Maintain comprehensive documentation of all HITL interventions, including rationale and outcomes, to support regulatory inspections and audits.\n- Design the system to support iterative feedback between human reviewers and AI agents, enabling continuous improvement of both compliance and model performance.\n- Align all timeout and escalation mechanisms with local regulatory requirements, and ensure human resource availability and training for effective HITL operation.\n</info added on 2025-07-29T12:47:08.329Z>",
         "testStrategy": "Integration tests for consultation flow, timeout behavior validation, default decision logic testing",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           4
         ],
@@ -619,7 +619,7 @@
     "metadata": {
       "created": "2025-07-24T13:02:40.457Z",
       "description": "Default tasks context",
-      "updated": "2025-07-29T07:43:55.073Z"
+      "updated": "2025-07-29T14:55:39.214Z"
     }
   },
   "implementation": {
