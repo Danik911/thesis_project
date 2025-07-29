@@ -6,24 +6,24 @@ providing rich observability for GAMP-5 compliant workflows.
 """
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from openinference.semconv.trace import SpanAttributes
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
-from ..shared.event_logging import EventStreamHandler
 from ..shared.config import Config
+from ..shared.event_logging import EventStreamHandler
 
 
 class PhoenixEventStreamHandler(EventStreamHandler):
     """Extended event handler with Phoenix tracing integration."""
-    
+
     def __init__(
         self,
-        event_types: Optional[list[str]] = None,
-        config: Optional[Config] = None,
-        tracer: Optional[trace.Tracer] = None
+        event_types: list[str] | None = None,
+        config: Config | None = None,
+        tracer: trace.Tracer | None = None
     ):
         """
         Initialize Phoenix-enabled event stream handler.
@@ -35,8 +35,8 @@ class PhoenixEventStreamHandler(EventStreamHandler):
         """
         super().__init__(event_types, config)
         self.tracer = tracer or trace.get_tracer(__name__)
-        
-    async def _process_event(self, event_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+
+    async def _process_event(self, event_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         Process event with Phoenix span context.
         
@@ -45,14 +45,14 @@ class PhoenixEventStreamHandler(EventStreamHandler):
         """
         # Get current span
         current_span = trace.get_current_span()
-        
+
         if current_span and current_span.is_recording():
             event_type = event_data.get("event_type", "Unknown")
-            
+
             # Add base event attributes
             current_span.set_attribute("event.type", event_type)
             current_span.set_attribute("event.id", event_data.get("event_id", ""))
-            
+
             # Add pharmaceutical workflow attributes
             workflow_context = event_data.get("workflow_context", {})
             current_span.set_attribute(
@@ -67,7 +67,7 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                 "pharmaceutical.workflow.correlation_id",
                 workflow_context.get("correlation_id", "")
             )
-            
+
             # Handle specific event types with domain attributes
             if "GAMPCategorizationEvent" in event_type:
                 self._add_gamp_attributes(current_span, event_data)
@@ -79,7 +79,7 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                 self._add_consultation_attributes(current_span, event_data)
             elif "UserDecisionEvent" in event_type:
                 self._add_user_decision_attributes(current_span, event_data)
-            
+
             # Add input/output for LLM observability
             payload = event_data.get("payload", {})
             if "message" in payload:
@@ -92,29 +92,29 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                     SpanAttributes.OUTPUT_VALUE,
                     str(payload["result"])[:1000]  # Limit size
                 )
-        
+
         # Process with parent implementation
         return await super()._process_event(event_data)
-    
-    def _add_gamp_attributes(self, span: trace.Span, event_data: Dict[str, Any]) -> None:
+
+    def _add_gamp_attributes(self, span: trace.Span, event_data: dict[str, Any]) -> None:
         """Add GAMP-5 categorization attributes to span."""
         payload = event_data.get("payload", {})
-        
+
         # GAMP category and confidence
         span.set_attribute("gamp5.category", payload.get("category", ""))
         span.set_attribute("gamp5.confidence_score", payload.get("confidence", 0.0))
         span.set_attribute("gamp5.review_required", payload.get("review_required", False))
-        
+
         # Risk assessment
         risk_assessment = payload.get("risk_assessment", {})
         span.set_attribute("gamp5.risk.level", risk_assessment.get("level", ""))
         span.set_attribute("gamp5.risk.patient_impact", risk_assessment.get("patient_impact", ""))
         span.set_attribute("gamp5.risk.data_integrity", risk_assessment.get("data_integrity", ""))
-        
+
         # Compliance metadata
         span.set_attribute("gamp5.alcoa_compliant", True)
         span.set_attribute("gamp5.cfr_part_11_compliant", True)
-        
+
         # Add categorization rationale as span event
         if "rationale" in payload:
             span.add_event(
@@ -125,21 +125,21 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                     "confidence": payload.get("confidence", 0.0)
                 }
             )
-    
-    def _add_validation_attributes(self, span: trace.Span, event_data: Dict[str, Any]) -> None:
+
+    def _add_validation_attributes(self, span: trace.Span, event_data: dict[str, Any]) -> None:
         """Add validation event attributes to span."""
         payload = event_data.get("payload", {})
-        
+
         span.set_attribute("validation.type", payload.get("validation_type", ""))
         span.set_attribute("validation.result", payload.get("result", ""))
         span.set_attribute("validation.gamp_category", payload.get("gamp_category", ""))
-        
+
         # Add validation errors if present
         errors = payload.get("errors", [])
         if errors:
             span.set_attribute("validation.error_count", len(errors))
             span.set_attribute("validation.errors", json.dumps(errors[:5]))  # Limit size
-            
+
             # Set span status to error
             span.set_status(
                 Status(
@@ -147,16 +147,16 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                     f"Validation failed with {len(errors)} errors"
                 )
             )
-    
-    def _add_error_attributes(self, span: trace.Span, event_data: Dict[str, Any]) -> None:
+
+    def _add_error_attributes(self, span: trace.Span, event_data: dict[str, Any]) -> None:
         """Add error recovery event attributes to span."""
         payload = event_data.get("payload", {})
-        
+
         span.set_attribute("error.type", payload.get("error_type", ""))
         span.set_attribute("error.message", payload.get("error_message", ""))
         span.set_attribute("error.recovery_action", payload.get("recovery_action", ""))
         span.set_attribute("error.retry_count", payload.get("retry_count", 0))
-        
+
         # Set span status
         span.set_status(
             Status(
@@ -164,7 +164,7 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                 payload.get("error_message", "Unknown error")
             )
         )
-        
+
         # Add error event with full context
         span.add_event(
             "Error Recovery Attempted",
@@ -174,16 +174,16 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                 "success": payload.get("recovery_success", False)
             }
         )
-    
-    def _add_consultation_attributes(self, span: trace.Span, event_data: Dict[str, Any]) -> None:
+
+    def _add_consultation_attributes(self, span: trace.Span, event_data: dict[str, Any]) -> None:
         """Add consultation required event attributes to span."""
         payload = event_data.get("payload", {})
-        
+
         span.set_attribute("consultation.reason", payload.get("reason", ""))
         span.set_attribute("consultation.urgency", payload.get("urgency", "normal"))
         span.set_attribute("consultation.expertise_required", payload.get("expertise_required", ""))
         span.set_attribute("consultation.gamp_category", payload.get("gamp_category", ""))
-        
+
         # Add consultation event
         span.add_event(
             "Human Consultation Required",
@@ -193,16 +193,16 @@ class PhoenixEventStreamHandler(EventStreamHandler):
                 "suggested_actions": json.dumps(payload.get("suggested_actions", []))
             }
         )
-    
-    def _add_user_decision_attributes(self, span: trace.Span, event_data: Dict[str, Any]) -> None:
+
+    def _add_user_decision_attributes(self, span: trace.Span, event_data: dict[str, Any]) -> None:
         """Add user decision event attributes to span."""
         payload = event_data.get("payload", {})
-        
+
         span.set_attribute("user.decision_type", payload.get("decision_type", ""))
         span.set_attribute("user.decision_outcome", payload.get("outcome", ""))
         span.set_attribute("user.decision_maker", payload.get("user_id", ""))
         span.set_attribute("user.decision_timestamp", payload.get("timestamp", ""))
-        
+
         # Add decision event with rationale
         span.add_event(
             "User Decision Made",

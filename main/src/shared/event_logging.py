@@ -594,17 +594,32 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
     if config.phoenix.enable_phoenix:
         try:
             # Import Phoenix components
-            from ..monitoring import setup_phoenix, PhoenixEventStreamHandler
-            
+            from ..monitoring import PhoenixEventStreamHandler, setup_phoenix
+            from ..monitoring.phoenix_config import PhoenixConfig as MonitoringPhoenixConfig
+
             # Initialize Phoenix
             logger = logging.getLogger(__name__)
             logger.info("Initializing Phoenix observability...")
-            phoenix_manager = setup_phoenix(config.phoenix)
             
+            # Convert simple config to monitoring config
+            monitoring_config = MonitoringPhoenixConfig(
+                phoenix_host=config.phoenix.phoenix_host,
+                phoenix_port=config.phoenix.phoenix_port,
+                phoenix_api_key=config.phoenix.phoenix_api_key,
+                service_name=config.phoenix.service_name,
+                project_name=config.phoenix.project_name,
+                experiment_name=config.phoenix.experiment_name,
+                enable_tracing=config.phoenix.enable_tracing,
+                enable_local_ui=config.phoenix.enable_local_ui,
+                otlp_endpoint=config.phoenix.otlp_endpoint or f"http://{config.phoenix.phoenix_host}:{config.phoenix.phoenix_port}/v1/traces"
+            )
+            
+            phoenix_manager = setup_phoenix(monitoring_config)
+
             # Use Phoenix-enabled event handler
             handler = PhoenixEventStreamHandler(config=config)
             logger.info("Phoenix observability enabled for event logging")
-            
+
             if phoenix_manager.phoenix_session:
                 logger.info(f"Phoenix UI available at: {phoenix_manager.phoenix_session.url}")
         except Exception as e:

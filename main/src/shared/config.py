@@ -171,7 +171,7 @@ class EventStreamConfig:
 @dataclass
 class PhoenixConfig:
     """Configuration for Arize Phoenix observability integration."""
-    
+
     # Phoenix settings
     enable_phoenix: bool = field(
         default_factory=lambda: os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true"
@@ -182,7 +182,7 @@ class PhoenixConfig:
     phoenix_host: str = field(default_factory=lambda: os.getenv("PHOENIX_HOST", "localhost"))
     phoenix_port: int = field(default_factory=lambda: int(os.getenv("PHOENIX_PORT", "6006")))
     phoenix_api_key: str | None = field(default_factory=lambda: os.getenv("PHOENIX_API_KEY"))
-    
+
     # Project settings
     project_name: str = field(
         default_factory=lambda: os.getenv("PHOENIX_PROJECT_NAME", "test_generation_thesis")
@@ -190,7 +190,7 @@ class PhoenixConfig:
     experiment_name: str = field(
         default_factory=lambda: os.getenv("PHOENIX_EXPERIMENT_NAME", "multi_agent_workflow")
     )
-    
+
     # OTLP settings
     otlp_endpoint: str | None = field(
         default_factory=lambda: os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
@@ -198,21 +198,21 @@ class PhoenixConfig:
     service_name: str = field(
         default_factory=lambda: os.getenv("OTEL_SERVICE_NAME", "test_generator")
     )
-    
+
     # Performance settings
     enable_batch_export: bool = True
     batch_export_delay_ms: int = 5000
-    
+
     # UI settings
     enable_local_ui: bool = field(
         default_factory=lambda: os.getenv("PHOENIX_ENABLE_LOCAL_UI", "true").lower() == "true"
     )
-    
+
     # Environment
     deployment_environment: str = field(
         default_factory=lambda: os.getenv("DEPLOYMENT_ENVIRONMENT", "development")
     )
-    
+
     def __post_init__(self):
         """Set default OTLP endpoint if not provided."""
         if not self.otlp_endpoint and self.enable_phoenix:

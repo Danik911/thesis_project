@@ -190,11 +190,14 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
         predicted_category = GAMPCategory.CATEGORY_3
         evidence = categories_analysis[3]
 
+    # Return a simplified structure that's easier for the LLM to process
     return {
         "predicted_category": predicted_category.value,
         "evidence": evidence,
         "all_categories_analysis": categories_analysis,
-        "decision_rationale": f"Category {predicted_category.value} selected based on {evidence['strong_count']} strong indicators"
+        "decision_rationale": f"Category {predicted_category.value} selected based on {evidence['strong_count']} strong indicators",
+        # Add a simple summary for the LLM
+        "summary": f"GAMP Category {predicted_category.value} with {evidence['strong_count']} strong and {evidence['weak_count']} weak indicators"
     }
 
 
@@ -279,6 +282,10 @@ def gamp_analysis_tool_with_error_handling(
 
         # Call original analysis tool
         result = gamp_analysis_tool(urs_content)
+        
+        # Log the result for debugging
+        error_handler.logger.debug(f"GAMP analysis tool returned keys: {list(result.keys())}")
+        error_handler.logger.debug(f"GAMP analysis predicted category: {result.get('predicted_category')}")
 
         # Validate result
         validation_error = error_handler.validate_categorization_result(result)
@@ -319,6 +326,10 @@ def confidence_tool_with_error_handling(
         error_handler = CategorizationErrorHandler()
 
     try:
+        # Log the input for debugging
+        error_handler.logger.debug(f"Confidence tool received data type: {type(category_data)}")
+        error_handler.logger.debug(f"Confidence tool received keys: {list(category_data.keys()) if isinstance(category_data, dict) else 'Not a dict'}")
+        
         # Check if this is an error result
         if category_data.get("error", False):
             return 0.0
@@ -412,30 +423,30 @@ def create_gamp_categorization_agent(
         gamp_analysis_function_tool = FunctionTool.from_defaults(
             fn=gamp_tool_wrapper,
             name="gamp_analysis_tool",
-            description="Analyze URS content for GAMP categorization with error handling"
+            description="Analyze URS content to determine GAMP category. Input: URS content string. Returns: dictionary with predicted_category, evidence, and analysis."
         )
 
         confidence_function_tool = FunctionTool.from_defaults(
             fn=confidence_tool_wrapper,
             name="confidence_tool",
-            description="Calculate confidence score with error detection"
+            description="Calculate confidence score for categorization. Input: category_data dictionary from gamp_analysis_tool. Returns: confidence score (0.0-1.0)."
         )
     else:
         # Use original tools without error handling
         gamp_analysis_function_tool = FunctionTool.from_defaults(
             fn=gamp_analysis_tool,
             name="gamp_analysis_tool",
-            description="Analyze URS content for GAMP categorization indicators"
+            description="Analyze URS content to determine GAMP category. Input: URS content string. Returns: dictionary with predicted_category, evidence, and analysis."
         )
 
         confidence_function_tool = FunctionTool.from_defaults(
             fn=confidence_tool,
             name="confidence_tool",
-            description="Calculate confidence score for categorization decision"
+            description="Calculate confidence score for categorization. Input: category_data dictionary from gamp_analysis_tool. Returns: confidence score (0.0-1.0)."
         )
 
     # Enhanced system prompt with error handling guidance
-    system_prompt = """You are a GAMP-5 categorization expert. Analyze URS documents and determine the GAMP category.
+    system_prompt = """You are a GAMP-5 categorization expert. Your task is to analyze URS documents and determine the GAMP category.
 
 Categories:
 - Category 1: Infrastructure (OS, databases, middleware)
@@ -443,23 +454,28 @@ Categories:
 - Category 4: Configured products (user parameters)
 - Category 5: Custom applications (bespoke code)
 
-Process:
-1. Use gamp_analysis_tool to analyze the content
-2. Use confidence_tool to get confidence score
-3. Provide clear categorization with justification
+IMPORTANT INSTRUCTIONS:
+1. First, call the gamp_analysis_tool with the URS content to analyze categorization indicators
+2. Then, call the confidence_tool with the complete analysis results dictionary
+3. After calling BOTH tools EXACTLY ONCE, provide your final answer
+
+Your final answer MUST include:
+- The determined category number (1, 3, 4, or 5)
+- The confidence score as a percentage (e.g., 75%)
+- A brief justification (2-3 sentences)
+
+DO NOT call any tool more than once. Once you have results from both tools, immediately provide your final categorization.
 
 Error Handling:
 - If analysis fails or confidence is below 60%, Category 5 will be assigned
 - All errors are logged for regulatory compliance
-- Low confidence results require human review
-
-Provide the category number, confidence score, and brief explanation."""
+- Low confidence results require human review"""
 
     agent = FunctionAgent(
         tools=[gamp_analysis_function_tool, confidence_function_tool],
         llm=llm,
         verbose=verbose,
-        max_iterations=10,  # Reduced from default 20 to prevent timeouts
+        max_iterations=15,  # Balanced: enough for both tools but prevents infinite loops
         system_prompt=system_prompt
     )
 
@@ -703,16 +719,28 @@ async def categorize_with_error_handling(
                 raise ValueError("Invalid URS content: must be non-empty string")
 
             # Run agent query using FunctionAgent's run method
+            error_handler.logger.info(f"Starting categorization attempt {retry_count + 1} for document: {document_name}")
             response = await agent.run(user_msg=f"Analyze this URS document and categorize it:\n\n{urs_content}")
+            error_handler.logger.info(f"Agent response received (length: {len(str(response))} chars)")
 
             # Parse response to extract category and confidence
             response_text = str(response)
+            
+            # Debug logging
+            error_handler.logger.debug(f"Agent response: {response_text[:500]}...")
 
             # Extract category number (look for patterns like "Category 1", "Category: 1", etc.)
             import re
             category_match = re.search(r"[Cc]ategory[\s:]*(\d)", response_text)
             if not category_match:
-                raise ValueError("Could not extract category from agent response")
+                # Try alternative patterns
+                category_match = re.search(r"GAMP[\s-]*(\d)", response_text)
+                if not category_match:
+                    # Try markdown format
+                    category_match = re.search(r"\*\*Determined Category\*\*[\s:]*(\d)", response_text)
+                    if not category_match:
+                        error_handler.logger.error(f"Failed to extract category from response: {response_text[:200]}...")
+                        raise ValueError("Could not extract category from agent response")
 
             category_num = int(category_match.group(1))
             if category_num not in [1, 3, 4, 5]:
@@ -720,11 +748,15 @@ async def categorize_with_error_handling(
 
             # Extract confidence (look for patterns like "85%", "0.85", "confidence: 0.85")
             confidence_match = re.search(r"(\d+(?:\.\d+)?)\s*%|confidence[\s:]*(\d+(?:\.\d+)?)", response_text, re.IGNORECASE)
+            if not confidence_match:
+                # Try markdown format
+                confidence_match = re.search(r"\*\*Confidence Score\*\*[\s:]*(\d+(?:\.\d+)?)\s*%", response_text)
+            
             if confidence_match:
                 if confidence_match.group(1):  # Percentage format
                     confidence = float(confidence_match.group(1)) / 100
                 else:  # Decimal format
-                    confidence = float(confidence_match.group(2))
+                    confidence = float(confidence_match.group(2) if confidence_match.group(2) else confidence_match.group(1)) / 100
             else:
                 # If no confidence found, use a default based on response
                 confidence = 0.7  # Default moderate confidence

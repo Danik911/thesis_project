@@ -384,14 +384,14 @@ async def run_workflow_with_event_logging(
         Tuple of (workflow_result, captured_events)
     """
     from llama_index.core.workflow import StopEvent
-    
+
     # Start the workflow - returns a WorkflowHandler (Future-like object)
     handler = workflow.run(**kwargs)
-    
+
     # Process events as they stream
     events_captured = []
     result = None
-    
+
     async for event in handler.stream_events():
         # Convert LlamaIndex event to our event format
         event_data = {
@@ -406,7 +406,7 @@ async def run_workflow_with_event_logging(
             },
             "payload": {}
         }
-        
+
         # Extract event-specific data
         if hasattr(event, "__dict__"):
             for key, value in event.__dict__.items():
@@ -416,16 +416,16 @@ async def run_workflow_with_event_logging(
                         event_data["payload"][key] = value
                     else:
                         event_data["payload"][key] = str(value)
-        
+
         # Process through event handler
         processed_event = await event_handler._process_event(event_data)
         if processed_event:
             events_captured.append(processed_event)
-        
+
         # Check if this is the final result
         if isinstance(event, StopEvent):
             result = event.result
-    
+
     return result, events_captured
 
 
@@ -619,10 +619,10 @@ async def run_workflow_with_event_logging(
     """
     processed_events = []
     result = None
-    
+
     # Start the workflow
     handler = workflow.run(**kwargs)
-    
+
     # Stream and process events
     async for event in handler.stream_events():
         # Convert LlamaIndex event to our format
@@ -638,7 +638,7 @@ async def run_workflow_with_event_logging(
             },
             "payload": {}
         }
-        
+
         # Extract event attributes
         if hasattr(event, "__dict__"):
             for key, value in event.__dict__.items():
@@ -648,16 +648,16 @@ async def run_workflow_with_event_logging(
                         event_data["payload"][key] = value
                     else:
                         event_data["payload"][key] = str(value)
-        
+
         # Process through event handler
         processed_event = await event_handler._process_event(event_data)
         if processed_event:
             processed_events.append(processed_event)
-        
+
         # Extract result from StopEvent
         if hasattr(event, "result"):
             result = event.result
-    
+
     return result, processed_events
 
 

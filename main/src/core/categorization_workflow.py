@@ -145,10 +145,10 @@ class GAMPCategorizationWorkflow(Workflow):
             author=author,
             digital_signature=digital_signature
         )
-        
+
         # Emit event to stream for logging
         ctx.write_event_to_stream(urs_event)
-        
+
         return urs_event
 
     @step
@@ -215,10 +215,10 @@ class GAMPCategorizationWorkflow(Workflow):
                 requirements=result["requirements"],
                 processing_info=result["processing_info"]
             )
-            
+
             # Emit document processed event to stream
             ctx.write_event_to_stream(doc_event)
-            
+
             return doc_event
 
         except Exception as e:
@@ -348,7 +348,7 @@ class GAMPCategorizationWorkflow(Workflow):
             error_type="categorization_failure",
             error_message=f"Failed after {self.retry_attempts} attempts: {last_error!s}",
             error_context={
-                "document_name": document_name,  
+                "document_name": document_name,
                 "document_version": getattr(ev, "document_version", "1.0"),
                 "content_length": len(urs_content),
                 "attempts": self.retry_attempts
@@ -364,10 +364,10 @@ class GAMPCategorizationWorkflow(Workflow):
             severity="high",
             auto_recoverable=True
         )
-        
+
         # Emit error event to stream
         ctx.write_event_to_stream(error_event)
-        
+
         return error_event
 
     @step
@@ -481,7 +481,7 @@ class GAMPCategorizationWorkflow(Workflow):
                 required_expertise=["gamp_5_expert", "validation_specialist"],
                 triggering_step="categorization"
             )
-            
+
             # Emit consultation event to stream
             ctx.write_event_to_stream(consultation_event)
 
@@ -491,10 +491,10 @@ class GAMPCategorizationWorkflow(Workflow):
             ready_for_completion=True,
             triggering_step="check_consultation_required"
         )
-        
+
         # Emit completion event to stream
         ctx.write_event_to_stream(completion_event)
-        
+
         return completion_event
 
     @step
@@ -727,16 +727,16 @@ async def main():
     """Main entry point for testing the categorization workflow."""
     import logging
     from pathlib import Path
-    
+
     # Setup logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    
+
     # Test with a sample document
     test_document_path = Path(__file__).parent.parent.parent.parent / "simple_test_data.md"
-    
+
     if test_document_path.exists():
         print(f"📄 Loading test document: {test_document_path}")
         test_content = test_document_path.read_text()
@@ -753,10 +753,10 @@ async def main():
         - The system shall ensure 21 CFR Part 11 compliance
         - The system shall provide audit trails for all data changes
         """
-    
+
     print("\n🚀 Running GAMP-5 Categorization Workflow")
     print("=" * 60)
-    
+
     try:
         # Run the workflow
         result = await run_categorization_workflow(
@@ -766,37 +766,37 @@ async def main():
             verbose=True,
             confidence_threshold=0.60
         )
-        
+
         # Display results
         if result:
             summary = result.get("summary", {})
-            print(f"\n✅ Categorization Complete!")
+            print("\n✅ Categorization Complete!")
             print(f"  - Category: {summary.get('category', 'Unknown')}")
             print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
             print(f"  - Review Required: {summary.get('review_required', False)}")
             print(f"  - Is Fallback: {summary.get('is_fallback', False)}")
             print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
-            
+
             # Show categorization details
             cat_event = result.get("categorization_event")
             if cat_event:
-                print(f"\n📋 Categorization Details:")
+                print("\n📋 Categorization Details:")
                 print(f"  - Justification: {cat_event.justification[:200]}...")
                 if cat_event.risk_assessment:
                     print(f"  - Risk Level: {cat_event.risk_assessment.get('risk_level', 'Unknown')}")
                     print(f"  - Validation Approach: {cat_event.risk_assessment.get('validation_approach', 'Unknown')}")
-            
+
             # Show consultation details if required
             consult_event = result.get("consultation_event")
             if consult_event:
-                print(f"\n🤝 Consultation Required:")
+                print("\n🤝 Consultation Required:")
                 print(f"  - Type: {consult_event.consultation_type}")
                 print(f"  - Urgency: {consult_event.urgency}")
                 print(f"  - Required Expertise: {', '.join(consult_event.required_expertise)}")
-                
+
         else:
             print("\n❌ Workflow failed to produce results")
-            
+
     except Exception as e:
         print(f"\n❌ Error running workflow: {e}")
         import traceback

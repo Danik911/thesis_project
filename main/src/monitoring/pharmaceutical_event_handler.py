@@ -6,20 +6,19 @@ workflow events with rich context for GAMP-5 compliance and audit trails.
 """
 
 import json
-from datetime import datetime, UTC
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
 from uuid import uuid4
 
+from llama_index.core.workflow import Event
 from openinference.instrumentation import using_attributes
 from opentelemetry import trace
-from llama_index.core.workflow import Event
 
 from ..core.events import (
-    GAMPCategorizationEvent,
-    ValidationEvent,
     ConsultationRequiredEvent,
+    ErrorRecoveryEvent,
+    GAMPCategorizationEvent,
     UserDecisionEvent,
-    ErrorRecoveryEvent
+    ValidationEvent,
 )
 
 
@@ -29,8 +28,8 @@ class PharmaceuticalEventHandler:
     
     Captures domain-specific events and enriches traces with compliance metadata.
     """
-    
-    def __init__(self, tracer: Optional[trace.Tracer] = None):
+
+    def __init__(self, tracer: trace.Tracer | None = None):
         """
         Initialize pharmaceutical event handler.
         
@@ -39,7 +38,7 @@ class PharmaceuticalEventHandler:
         """
         self.tracer = tracer or trace.get_tracer(__name__)
         self.processed_events = 0
-        
+
     async def handle_event(self, event: Event) -> None:
         """
         Route event to appropriate handler based on type.
@@ -60,9 +59,9 @@ class PharmaceuticalEventHandler:
         else:
             # Generic handling for other events
             await self.handle_generic_event(event)
-            
+
         self.processed_events += 1
-    
+
     async def handle_gamp_categorization(self, event: GAMPCategorizationEvent) -> None:
         """
         Handle GAMP categorization with compliance tracing.
@@ -96,13 +95,13 @@ class PharmaceuticalEventHandler:
                 span.set_attribute("gamp5.category", event.gamp_category.value)
                 span.set_attribute("gamp5.confidence_score", event.confidence_score)
                 span.set_attribute("gamp5.review_required", event.review_required)
-                
+
                 # Add risk assessment details
                 if event.risk_assessment:
                     span.set_attribute("gamp5.risk.level", event.risk_assessment.get("level", ""))
                     span.set_attribute("gamp5.risk.patient_impact", event.risk_assessment.get("patient_impact", ""))
                     span.set_attribute("gamp5.risk.data_integrity", event.risk_assessment.get("data_integrity", ""))
-                
+
                 # Add categorization decision as span event
                 span.add_event(
                     "GAMP-5 Categorization Decision",
@@ -115,7 +114,7 @@ class PharmaceuticalEventHandler:
                         "requires_review": event.review_required
                     }
                 )
-    
+
     async def handle_validation_event(self, event: ValidationEvent) -> None:
         """
         Handle validation events with audit trail.
@@ -142,11 +141,11 @@ class PharmaceuticalEventHandler:
                 span.set_attribute("validation.type", event.validation_type)
                 span.set_attribute("validation.status", event.validation_status.value)
                 span.set_attribute("validation.compliance_score", event.compliance_score)
-                
+
                 if event.issues_found:
                     span.set_attribute("validation.issue_count", len(event.issues_found))
                     span.set_attribute("validation.has_issues", True)
-                    
+
                     # Add validation issues event
                     span.add_event(
                         "Validation Issues Found",
@@ -157,7 +156,7 @@ class PharmaceuticalEventHandler:
                     )
                 else:
                     span.set_attribute("validation.has_issues", False)
-    
+
     async def handle_consultation_event(self, event: ConsultationRequiredEvent) -> None:
         """
         Handle consultation required events.
@@ -182,7 +181,7 @@ class PharmaceuticalEventHandler:
                 span.set_attribute("consultation.type", event.consultation_type)
                 span.set_attribute("consultation.urgency", event.urgency)
                 span.set_attribute("consultation.expertise", ", ".join(event.required_expertise))
-                
+
                 # Add consultation event with recommendations
                 span.add_event(
                     "Human Consultation Requested",
@@ -193,7 +192,7 @@ class PharmaceuticalEventHandler:
                         "workflow_blocked": True
                     }
                 )
-    
+
     async def handle_user_decision(self, event: UserDecisionEvent) -> None:
         """
         Handle user decision events.
@@ -219,7 +218,7 @@ class PharmaceuticalEventHandler:
                 span.set_attribute("decision.value", event.decision)
                 span.set_attribute("decision.maker", event.user_id)
                 span.set_attribute("decision.approval_level", event.approval_level)
-                
+
                 # Add decision event with full context
                 span.add_event(
                     "User Decision Recorded",
@@ -231,7 +230,7 @@ class PharmaceuticalEventHandler:
                         "approval_level": event.approval_level
                     }
                 )
-    
+
     async def handle_error_recovery(self, event: ErrorRecoveryEvent) -> None:
         """
         Handle error recovery events.
@@ -261,9 +260,9 @@ class PharmaceuticalEventHandler:
                 span.set_attribute("error.recovery_strategy", event.recovery_strategy)
                 span.set_attribute("error.failed_step", event.failed_step)
                 span.set_attribute("error.severity", event.severity)
-                retry_count = event.error_context.get('retry_count', 0)
+                retry_count = event.error_context.get("retry_count", 0)
                 span.set_attribute("error.retry_count", retry_count)
-                
+
                 # Set span status based on severity
                 if event.severity in ["high", "critical"]:
                     span.set_status(
@@ -272,7 +271,7 @@ class PharmaceuticalEventHandler:
                             f"High severity error: {event.error_message}"
                         )
                     )
-                
+
                 # Add recovery event
                 span.add_event(
                     "Error Recovery Attempted",
@@ -284,22 +283,22 @@ class PharmaceuticalEventHandler:
                         "severity": event.severity
                     }
                 )
-    
+
     async def handle_generic_event(self, event: Event) -> None:
         """
         Handle generic events not covered by specific handlers.
         
         Provides basic tracing for all event types.
         """
-        event_id = str(getattr(event, 'event_id', uuid4()))
-        
+        event_id = str(getattr(event, "event_id", uuid4()))
+
         with using_attributes(
             session_id=event_id,
             tags=[event.__class__.__name__],
             metadata={
                 "event_type": event.__class__.__name__,
                 "event_id": event_id,
-                "timestamp": getattr(event, 'timestamp', datetime.now(UTC)).isoformat()
+                "timestamp": getattr(event, "timestamp", datetime.now(UTC)).isoformat()
             }
         ):
             with self.tracer.start_as_current_span(

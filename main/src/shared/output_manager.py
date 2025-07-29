@@ -7,8 +7,7 @@ truncation, safe printing functions, and monitoring capabilities.
 """
 
 import logging
-import sys
-from typing import Any, Dict
+from typing import Any
 
 
 class SafeOutputManager:
@@ -21,22 +20,22 @@ class SafeOutputManager:
     - Truncation with user notification
     - Emergency output controls
     """
-    
+
     def __init__(self, max_console_output: int = 100000):  # 100KB default limit
         """Initialize the safe output manager."""
         self.max_console_output = max_console_output
         self.total_output_size = 0
         self.truncated = False
         self.truncation_warned = False
-        
+
         # Configure logging with reduced verbosity
         self._setup_safe_logging()
-    
+
     def _setup_safe_logging(self) -> None:
         """Configure logging to prevent excessive output."""
         # Set warning level to reduce verbosity
         logging.getLogger().setLevel(logging.WARNING)
-        
+
         # Configure specific loggers (safely handle missing modules)
         try:
             logging.getLogger("llama_index").setLevel(logging.WARNING)
@@ -47,10 +46,10 @@ class SafeOutputManager:
         except:
             pass
         try:
-            logging.getLogger("openai").setLevel(logging.WARNING)  
+            logging.getLogger("openai").setLevel(logging.WARNING)
         except:
             pass
-    
+
     def safe_print(self, *args, **kwargs) -> bool:
         """
         Print with output size checking to prevent overflow.
@@ -63,9 +62,9 @@ class SafeOutputManager:
             bool: True if printed successfully, False if truncated
         """
         # Convert all arguments to string and calculate size
-        str_message = ' '.join(str(arg) for arg in args)
-        message_size = len(str_message.encode('utf-8'))
-        
+        str_message = " ".join(str(arg) for arg in args)
+        message_size = len(str_message.encode("utf-8"))
+
         # Check if adding this message would exceed limit
         if self.total_output_size + message_size > self.max_console_output:
             if not self.truncation_warned:
@@ -73,12 +72,12 @@ class SafeOutputManager:
                 self.truncation_warned = True
                 self.truncated = True
             return False
-        
+
         # Safe to print
         print(str_message, **kwargs)
         self.total_output_size += message_size
         return True
-    
+
     def truncate_string(self, text: str, max_length: int = 10000, suffix: str = "... [TRUNCATED]") -> str:
         """
         Safely truncate a string to prevent memory issues.
@@ -94,7 +93,7 @@ class SafeOutputManager:
         if len(text) <= max_length:
             return text
         return text[:max_length - len(suffix)] + suffix
-    
+
     def safe_format_response(self, result: Any, max_length: int = 5000) -> str:
         """
         Safely format a response object for display.
@@ -115,17 +114,17 @@ class SafeOutputManager:
                     if len(str_value) > 500:  # Truncate long values
                         str_value = str_value[:500] + "... [TRUNCATED]"
                     formatted[key] = str_value
-                
+
                 result_str = str(formatted)
             else:
                 result_str = str(result)
-            
+
             return self.truncate_string(result_str, max_length)
-            
+
         except (MemoryError, OverflowError):
             return "[LARGE OUTPUT ERROR: Result too large for safe handling]"
-    
-    def get_output_stats(self) -> Dict[str, Any]:
+
+    def get_output_stats(self) -> dict[str, Any]:
         """
         Get current output statistics.
         
@@ -140,7 +139,7 @@ class SafeOutputManager:
             "truncation_warned": self.truncation_warned,
             "usage_percentage": (self.total_output_size / self.max_console_output) * 100
         }
-    
+
     def reset_output_tracking(self) -> None:
         """Reset output tracking counters."""
         self.total_output_size = 0
@@ -177,19 +176,19 @@ def safe_format_response(result: Any, max_length: int = 5000) -> str:
 
 class TruncatedStreamHandler(logging.StreamHandler):
     """Stream handler that truncates output to prevent memory issues."""
-    
+
     def __init__(self, stream=None, max_output_size: int = 100000):
         super().__init__(stream)
         self.max_output_size = max_output_size
         self.current_output_size = 0
         self.truncation_warned = False
-    
+
     def emit(self, record):
         """Emit a record with output size checking."""
         try:
             msg = self.format(record)
-            msg_size = len(msg.encode('utf-8'))
-            
+            msg_size = len(msg.encode("utf-8"))
+
             if self.current_output_size + msg_size > self.max_output_size:
                 if not self.truncation_warned:
                     truncation_msg = f"\n[LOG OUTPUT TRUNCATED: Exceeded {self.max_output_size} bytes]\n"
@@ -204,10 +203,10 @@ class TruncatedStreamHandler(logging.StreamHandler):
                     ))
                     self.truncation_warned = True
                 return
-            
+
             self.current_output_size += msg_size
             super().emit(record)
-            
+
         except Exception:
             # Fail silently to prevent recursive errors
             pass
