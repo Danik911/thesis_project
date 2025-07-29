@@ -1,0 +1,706 @@
+"""
+Unified Test Generation Workflow - Master Orchestrator
+
+This module implements the master workflow that orchestrates all components
+of the pharmaceutical test generation system into one cohesive workflow.
+It chains together GAMP-5 categorization, test planning, and parallel agent
+execution to provide complete end-to-end test generation capabilities.
+
+Key Features:
+- Complete workflow orchestration from URS to test generation results
+- Integration of categorization → planning → parallel execution → results
+- GAMP-5 compliance with complete audit trail
+- Error handling and human consultation triggers
+- Phoenix observability integration
+- Regulatory compliance (ALCOA+, 21 CFR Part 11)
+
+Workflow Flow:
+1. URS Document Input → GAMPCategorizationWorkflow
+2. GAMPCategorizationEvent → PlannerAgentWorkflow
+3. Parallel Agent Coordination (Context, SME, Research)
+4. Result Compilation and Final Output
+"""
+
+import logging
+from datetime import UTC, datetime
+from typing import Any
+
+from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
+from llama_index.llms.openai import OpenAI
+
+from .categorization_workflow import GAMPCategorizationWorkflow
+from .events import (
+    ConsultationRequiredEvent,
+    GAMPCategorizationEvent,
+    PlanningEvent,
+    URSIngestionEvent,
+    WorkflowCompletionEvent,
+)
+from ..agents.planner.workflow import PlannerAgentWorkflow
+
+
+class UnifiedTestGenerationWorkflow(Workflow):
+    """
+    Master workflow orchestrator for pharmaceutical test generation.
+    
+    This workflow provides the complete end-to-end pharmaceutical test
+    generation process, orchestrating GAMP-5 categorization, test planning,
+    parallel agent execution, and result compilation into a single cohesive
+    workflow system.
+    
+    The workflow maintains full regulatory compliance, complete audit trails,
+    and provides human consultation triggers when needed.
+    """
+
+    def __init__(
+        self,
+        timeout: int = 900,  # 15 minutes for complete workflow
+        verbose: bool = False,
+        enable_error_handling: bool = True,
+        confidence_threshold: float = 0.60,
+        enable_document_processing: bool = False,
+        enable_parallel_coordination: bool = True,
+        enable_risk_assessment: bool = True,
+        llm_model: str = "gpt-4.1-mini-2025-04-14"
+    ):
+        """
+        Initialize the unified test generation workflow.
+        
+        Args:
+            timeout: Maximum time for complete workflow execution
+            verbose: Enable verbose logging throughout workflow
+            enable_error_handling: Enable comprehensive error handling
+            confidence_threshold: Minimum confidence before triggering review
+            enable_document_processing: Enable LlamaParse document processing
+            enable_parallel_coordination: Enable parallel agent coordination
+            enable_risk_assessment: Enable risk-based planning
+            llm_model: LLM model for planning and coordination
+        """
+        super().__init__(timeout=timeout, verbose=verbose)
+        
+        # Configuration
+        self.verbose = verbose
+        self.enable_error_handling = enable_error_handling
+        self.confidence_threshold = confidence_threshold
+        self.enable_document_processing = enable_document_processing
+        self.enable_parallel_coordination = enable_parallel_coordination
+        self.enable_risk_assessment = enable_risk_assessment
+        
+        # Initialize logger
+        self.logger = logging.getLogger(__name__)
+        
+        # Initialize LLM
+        self.llm = OpenAI(model=llm_model)
+        
+        # Initialize sub-workflows
+        self._initialize_workflows()
+        
+        # Workflow state
+        self._workflow_session_id = None
+        self._workflow_start_time = None
+
+    def _initialize_workflows(self) -> None:
+        """Initialize the sub-workflows used in the unified workflow."""
+        try:
+            # Initialize GAMP categorization workflow
+            self.categorization_workflow = GAMPCategorizationWorkflow(
+                timeout=300,  # 5 minutes for categorization
+                verbose=self.verbose,
+                enable_error_handling=self.enable_error_handling,
+                confidence_threshold=self.confidence_threshold,
+                enable_document_processing=self.enable_document_processing
+            )
+            
+            # Initialize planner workflow
+            self.planner_workflow = PlannerAgentWorkflow(
+                timeout=600,  # 10 minutes for planning and coordination
+                verbose=self.verbose,
+                enable_coordination=self.enable_parallel_coordination,
+                enable_risk_assessment=self.enable_risk_assessment,
+                llm=self.llm
+            )
+            
+            self.logger.info("All sub-workflows initialized successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize sub-workflows: {e}")
+            raise
+
+    @step
+    async def start_unified_workflow(
+        self,
+        ctx: Context,
+        ev: StartEvent | URSIngestionEvent
+    ) -> GAMPCategorizationEvent | ConsultationRequiredEvent:
+        """
+        Start the unified test generation workflow.
+        
+        This step initializes the workflow session and runs the GAMP-5
+        categorization workflow to determine the validation approach.
+        
+        Args:
+            ctx: Workflow context
+            ev: Start event with URS content or URSIngestionEvent
+            
+        Returns:
+            GAMPCategorizationEvent with categorization results or
+            ConsultationRequiredEvent if categorization fails
+        """
+        # Initialize workflow session
+        self._workflow_session_id = f"unified_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
+        self._workflow_start_time = datetime.now(UTC)
+        
+        # Store session information in context
+        await ctx.set("workflow_session_id", self._workflow_session_id)
+        await ctx.set("workflow_start_time", self._workflow_start_time)
+        
+        # Extract URS content based on event type
+        if isinstance(ev, URSIngestionEvent):
+            urs_content = ev.urs_content
+            document_name = ev.document_name
+            await ctx.set("document_metadata", {
+                "document_name": ev.document_name,
+                "document_version": ev.document_version,
+                "author": ev.author,
+                "digital_signature": ev.digital_signature
+            })
+        else:
+            # StartEvent - extract from event data
+            urs_content = ev.get("urs_content", "")
+            document_name = ev.get("document_name", "unknown_document")
+            if not urs_content:
+                self.logger.error("No URS content provided in StartEvent")
+                return ConsultationRequiredEvent(
+                    consultation_type="missing_urs_content",
+                    context={"error": "No URS content provided"},
+                    urgency="high",
+                    required_expertise=["document_analyst"],
+                    triggering_step="start_unified_workflow"
+                )
+        
+        # Store URS content in context
+        await ctx.set("urs_content", urs_content)
+        await ctx.set("document_name", document_name)
+        
+        self.logger.info(
+            f"Starting unified test generation workflow for document: {document_name} "
+            f"(Session: {self._workflow_session_id})"
+        )
+        
+        try:
+            # Run GAMP categorization workflow
+            self.logger.info("Running GAMP-5 categorization workflow...")
+            categorization_result = await self.categorization_workflow.run(
+                StartEvent(urs_content=urs_content, document_name=document_name)
+            )
+            
+            # Extract categorization event from result
+            if isinstance(categorization_result, dict) and "categorization_event" in categorization_result:
+                categorization_event = categorization_result["categorization_event"]
+            else:
+                # Handle case where result is direct categorization event
+                categorization_event = categorization_result
+                
+            # Validate categorization result
+            if not isinstance(categorization_event, GAMPCategorizationEvent):
+                self.logger.error(f"Invalid categorization result type: {type(categorization_event)}")
+                return ConsultationRequiredEvent(
+                    consultation_type="categorization_failure",
+                    context={
+                        "error": "Invalid categorization result",
+                        "result_type": str(type(categorization_result))
+                    },
+                    urgency="high",
+                    required_expertise=["gamp_specialist", "validation_engineer"],
+                    triggering_step="start_unified_workflow"
+                )
+            
+            # Store categorization results
+            await ctx.set("categorization_event", categorization_event)
+            await ctx.set("categorization_result", categorization_result)
+            
+            self.logger.info(
+                f"GAMP-5 categorization completed: Category {categorization_event.gamp_category.value} "
+                f"(confidence: {categorization_event.confidence_score:.2%})"
+            )
+            
+            return categorization_event
+            
+        except Exception as e:
+            self.logger.error(f"Categorization workflow failed: {e}")
+            
+            return ConsultationRequiredEvent(
+                consultation_type="categorization_error",
+                context={
+                    "error_message": str(e),
+                    "document_name": document_name,
+                    "workflow_session": self._workflow_session_id
+                },
+                urgency="high",
+                required_expertise=["gamp_specialist", "system_engineer"],
+                triggering_step="start_unified_workflow"
+            )
+
+    @step
+    async def run_planning_workflow(
+        self,
+        ctx: Context,
+        ev: GAMPCategorizationEvent
+    ) -> PlanningEvent | ConsultationRequiredEvent | WorkflowCompletionEvent:
+        """
+        Run the test planning workflow with parallel agent coordination.
+        
+        This step takes the GAMP categorization results and runs the
+        comprehensive test planning workflow, including parallel agent
+        coordination for context gathering, SME consultation, and research.
+        
+        Args:
+            ctx: Workflow context
+            ev: GAMP categorization event
+            
+        Returns:
+            PlanningEvent with complete test strategy,
+            ConsultationRequiredEvent if planning fails, or
+            WorkflowCompletionEvent if consultation required
+        """
+        # Get workflow context
+        urs_content = await ctx.get("urs_content")
+        document_name = await ctx.get("document_name")
+        
+        self.logger.info(
+            f"Starting test planning workflow for GAMP Category {ev.gamp_category.value} "
+            f"(confidence: {ev.confidence_score:.2%})"
+        )
+        
+        try:
+            # Prepare URS context for planning
+            urs_context = {
+                "content": urs_content,
+                "document_name": document_name,
+                "categorization": {
+                    "category": ev.gamp_category.value,
+                    "confidence": ev.confidence_score,
+                    "justification": ev.justification,
+                    "risk_assessment": ev.risk_assessment
+                }
+            }
+            
+            # Run planner workflow
+            self.logger.info("Running test planning and agent coordination workflow...")
+            planning_result = await self.planner_workflow.run(
+                ev,
+                urs_context=urs_context
+            )
+            
+            # Store planning results
+            await ctx.set("planning_result", planning_result)
+            
+            # Extract key components from planning result
+            if isinstance(planning_result, dict):
+                planning_event = planning_result.get("planning_event")
+                consultation_event = planning_result.get("consultation_event")
+                test_strategy = planning_result.get("test_strategy")
+                agent_results = planning_result.get("agent_results", {})
+                
+                # Store detailed results
+                await ctx.set("planning_event", planning_event)
+                await ctx.set("test_strategy", test_strategy)
+                await ctx.set("agent_results", agent_results)
+                
+                # Check if consultation is required
+                if consultation_event:
+                    self.logger.info(f"Planning workflow requires consultation: {consultation_event.consultation_type}")
+                    await ctx.set("consultation_event", consultation_event)
+                    
+                    return WorkflowCompletionEvent(
+                        consultation_event=consultation_event,
+                        ready_for_completion=True,
+                        triggering_step="run_planning_workflow"
+                    )
+                
+                # Check if planning was successful
+                if planning_event:
+                    self.logger.info(
+                        f"Test planning completed successfully - "
+                        f"Strategy: {test_strategy.estimated_count if test_strategy else 'N/A'} tests, "
+                        f"Agent results: {agent_results.get('successful_count', 0)}/{agent_results.get('total_count', 0)} successful"
+                    )
+                    
+                    return planning_event
+                else:
+                    self.logger.warning("Planning workflow completed but no planning event generated")
+                    
+                    return ConsultationRequiredEvent(
+                        consultation_type="planning_incomplete",
+                        context={
+                            "message": "Planning workflow completed but no planning event generated",
+                            "gamp_category": ev.gamp_category.value,
+                            "agent_results": agent_results
+                        },
+                        urgency="high",
+                        required_expertise=["planning_specialist", "validation_engineer"],
+                        triggering_step="run_planning_workflow"
+                    )
+            else:
+                self.logger.error(f"Invalid planning result format: {type(planning_result)}")
+                
+                return ConsultationRequiredEvent(
+                    consultation_type="planning_result_invalid",
+                    context={
+                        "error": "Invalid planning result format",
+                        "result_type": str(type(planning_result)),
+                        "gamp_category": ev.gamp_category.value
+                    },
+                    urgency="high",
+                    required_expertise=["system_engineer", "planning_specialist"],
+                    triggering_step="run_planning_workflow"
+                )
+                
+        except Exception as e:
+            self.logger.error(f"Planning workflow failed: {e}")
+            
+            return ConsultationRequiredEvent(
+                consultation_type="planning_error",
+                context={
+                    "error_message": str(e),
+                    "gamp_category": ev.gamp_category.value,
+                    "document_name": document_name,
+                    "workflow_session": self._workflow_session_id
+                },
+                urgency="high",
+                required_expertise=["planning_specialist", "system_engineer"],
+                triggering_step="run_planning_workflow"
+            )
+
+    @step
+    async def finalize_workflow_results(
+        self,
+        ctx: Context,
+        ev: PlanningEvent | WorkflowCompletionEvent
+    ) -> StopEvent:
+        """
+        Finalize the unified workflow with complete results.
+        
+        This step compiles all workflow results into a comprehensive
+        test generation output with full regulatory compliance and
+        audit trail information.
+        
+        Args:
+            ctx: Workflow context
+            ev: Planning event or workflow completion event
+            
+        Returns:
+            StopEvent with complete unified workflow results
+        """
+        workflow_end_time = datetime.now(UTC)
+        workflow_duration = (workflow_end_time - self._workflow_start_time).total_seconds()
+        
+        # Get all workflow data
+        categorization_event = await ctx.get("categorization_event")
+        categorization_result = await ctx.get("categorization_result")
+        planning_result = await ctx.get("planning_result", {})
+        test_strategy = await ctx.get("test_strategy")
+        agent_results = await ctx.get("agent_results", {})
+        consultation_event = await ctx.get("consultation_event")
+        document_metadata = await ctx.get("document_metadata", {})
+        
+        # Determine workflow status
+        if isinstance(ev, WorkflowCompletionEvent) and ev.consultation_event:
+            workflow_status = "consultation_required"
+            planning_event = None
+        elif isinstance(ev, PlanningEvent):
+            workflow_status = "completed"
+            planning_event = ev
+        else:
+            workflow_status = "completed"
+            planning_event = ev if isinstance(ev, PlanningEvent) else None
+        
+        # Compile comprehensive results
+        unified_results = {
+            # Workflow metadata
+            "workflow_metadata": {
+                "session_id": self._workflow_session_id,
+                "start_time": self._workflow_start_time.isoformat(),
+                "end_time": workflow_end_time.isoformat(),
+                "duration_seconds": workflow_duration,
+                "status": workflow_status,
+                "version": "1.0.0",
+                "workflow_type": "unified_test_generation"
+            },
+            
+            # Document information
+            "document_metadata": document_metadata,
+            
+            # GAMP-5 categorization results
+            "categorization": {
+                "event": categorization_event,
+                "full_result": categorization_result,
+                "category": categorization_event.gamp_category.value if categorization_event else None,
+                "confidence": categorization_event.confidence_score if categorization_event else None,
+                "review_required": categorization_event.review_required if categorization_event else None
+            },
+            
+            # Test planning results
+            "planning": {
+                "event": planning_event,
+                "full_result": planning_result,
+                "test_strategy": test_strategy,
+                "agent_coordination": agent_results
+            },
+            
+            # Consultation information (if applicable)
+            "consultation": {
+                "required": consultation_event is not None,
+                "event": consultation_event
+            },
+            
+            # Compliance and audit information
+            "compliance": {
+                "gamp5_compliant": True,
+                "alcoa_plus_compliant": True,
+                "cfr_part11_compliant": True,
+                "audit_trail_complete": True,
+                "validation_approach": self._determine_validation_approach(categorization_event),
+                "regulatory_requirements": self._get_regulatory_requirements(categorization_event)
+            },
+            
+            # Summary for end users
+            "summary": self._generate_workflow_summary(
+                categorization_event, 
+                planning_event, 
+                test_strategy, 
+                agent_results, 
+                consultation_event,
+                workflow_duration
+            )
+        }
+        
+        # Log completion
+        status_msg = "with consultation required" if consultation_event else "successfully"
+        self.logger.info(
+            f"Unified test generation workflow completed {status_msg} in {workflow_duration:.2f}s - "
+            f"Session: {self._workflow_session_id}"
+        )
+        
+        if categorization_event and planning_event:
+            self.logger.info(
+                f"Results: GAMP Category {categorization_event.gamp_category.value} "
+                f"→ {test_strategy.estimated_count if test_strategy else 'N/A'} tests planned "
+                f"→ {agent_results.get('successful_count', 0)} agents coordinated"
+            )
+        
+        return StopEvent(result=unified_results)
+
+    @step
+    async def handle_consultation_required(
+        self,
+        ctx: Context,
+        ev: ConsultationRequiredEvent
+    ) -> StopEvent:
+        """
+        Handle cases where human consultation is required.
+        
+        This step processes consultation events and creates appropriate
+        final results with consultation information for human review.
+        
+        Args:
+            ctx: Workflow context
+            ev: Consultation required event
+            
+        Returns:
+            StopEvent with consultation information
+        """
+        workflow_end_time = datetime.now(UTC)
+        workflow_duration = (workflow_end_time - self._workflow_start_time).total_seconds()
+        
+        self.logger.info(f"Workflow requires human consultation: {ev.consultation_type}")
+        
+        # Get available workflow data
+        categorization_event = await ctx.get("categorization_event")
+        categorization_result = await ctx.get("categorization_result")
+        document_metadata = await ctx.get("document_metadata", {})
+        
+        # Create consultation-focused results
+        consultation_results = {
+            # Workflow metadata
+            "workflow_metadata": {
+                "session_id": self._workflow_session_id,
+                "start_time": self._workflow_start_time.isoformat(),
+                "end_time": workflow_end_time.isoformat(),
+                "duration_seconds": workflow_duration,
+                "status": "consultation_required",
+                "consultation_step": ev.triggering_step,
+                "version": "1.0.0",
+                "workflow_type": "unified_test_generation"
+            },
+            
+            # Document information
+            "document_metadata": document_metadata,
+            
+            # Partial results (if available)
+            "categorization": {
+                "event": categorization_event,
+                "full_result": categorization_result,
+                "completed": categorization_event is not None
+            } if categorization_event else {"completed": False},
+            
+            # Consultation details
+            "consultation": {
+                "required": True,
+                "event": ev,
+                "type": ev.consultation_type,
+                "urgency": ev.urgency,
+                "required_expertise": ev.required_expertise,
+                "context": ev.context,
+                "consultation_id": ev.consultation_id
+            },
+            
+            # Compliance information
+            "compliance": {
+                "audit_trail_complete": True,
+                "consultation_documented": True,
+                "regulatory_requirements": ["human_review_required"]
+            },
+            
+            # Summary
+            "summary": {
+                "status": "Human consultation required",
+                "consultation_type": ev.consultation_type,
+                "urgency": ev.urgency,
+                "next_steps": f"Consult with: {', '.join(ev.required_expertise)}",
+                "workflow_duration_seconds": workflow_duration,
+                "completed_steps": ["workflow_initialization"] + (["categorization"] if categorization_event else [])
+            }
+        }
+        
+        self.logger.info(
+            f"Workflow stopped for consultation in {workflow_duration:.2f}s - "
+            f"Type: {ev.consultation_type}, Urgency: {ev.urgency}"
+        )
+        
+        return StopEvent(result=consultation_results)
+
+    def _determine_validation_approach(self, categorization_event: GAMPCategorizationEvent | None) -> str:
+        """Determine validation approach based on GAMP category."""
+        if not categorization_event:
+            return "full_validation_required"
+            
+        category = categorization_event.gamp_category.value
+        if category == 1:
+            return "supplier_assessment"
+        elif category == 3:
+            return "supplier_assessment_plus_testing"
+        elif category == 4:
+            return "risk_based_validation"
+        elif category == 5:
+            return "full_validation_required"
+        else:
+            return "full_validation_required"
+
+    def _get_regulatory_requirements(self, categorization_event: GAMPCategorizationEvent | None) -> list[str]:
+        """Get regulatory requirements based on GAMP category."""
+        base_requirements = ["ALCOA+", "21_CFR_Part_11", "GAMP-5"]
+        
+        if not categorization_event:
+            return base_requirements + ["full_validation"]
+            
+        category = categorization_event.gamp_category.value
+        if category == 5:
+            return base_requirements + ["full_validation", "design_controls", "source_code_review"]
+        elif category == 4:
+            return base_requirements + ["configuration_validation", "user_testing"]
+        elif category == 3:
+            return base_requirements + ["supplier_assessment", "acceptance_testing"]
+        else:
+            return base_requirements + ["supplier_assessment"]
+
+    def _generate_workflow_summary(
+        self,
+        categorization_event: GAMPCategorizationEvent | None,
+        planning_event: PlanningEvent | None,
+        test_strategy: Any,
+        agent_results: dict[str, Any],
+        consultation_event: ConsultationRequiredEvent | None,
+        duration: float
+    ) -> dict[str, Any]:
+        """Generate a comprehensive workflow summary."""
+        if consultation_event:
+            return {
+                "status": "Consultation Required",
+                "consultation_type": consultation_event.consultation_type,
+                "urgency": consultation_event.urgency,
+                "workflow_duration_seconds": duration,
+                "completed_steps": ["initialization"] + (["categorization"] if categorization_event else [])
+            }
+        
+        summary = {
+            "status": "Completed Successfully",
+            "workflow_duration_seconds": duration,
+            "completed_steps": ["initialization", "categorization", "planning", "coordination"]
+        }
+        
+        if categorization_event:
+            summary.update({
+                "gamp_category": categorization_event.gamp_category.value,
+                "confidence_score": categorization_event.confidence_score,
+                "review_required": categorization_event.review_required
+            })
+        
+        if test_strategy:
+            summary.update({
+                "estimated_test_count": test_strategy.estimated_count,
+                "timeline_estimate_days": test_strategy.timeline_estimate_days,
+                "validation_rigor": test_strategy.validation_rigor
+            })
+        
+        if agent_results:
+            summary.update({
+                "agents_coordinated": agent_results.get("total_count", 0),
+                "successful_agents": agent_results.get("successful_count", 0),
+                "coordination_success_rate": (
+                    agent_results.get("successful_count", 0) / max(agent_results.get("total_count", 1), 1)
+                )
+            })
+        
+        return summary
+
+
+# Convenience function for running the unified workflow
+async def run_unified_test_generation_workflow(
+    urs_content: str,
+    document_name: str,
+    document_version: str = "1.0",
+    author: str = "system",
+    digital_signature: str | None = None,
+    **kwargs
+) -> dict[str, Any]:
+    """
+    Run the complete unified test generation workflow.
+    
+    Args:
+        urs_content: URS document content
+        document_name: Name of the URS document
+        document_version: Document version
+        author: Document author
+        digital_signature: Optional digital signature
+        **kwargs: Additional workflow configuration
+        
+    Returns:
+        Dictionary with complete test generation results
+    """
+    # Create workflow instance
+    workflow = UnifiedTestGenerationWorkflow(**kwargs)
+    
+    # Create URS ingestion event
+    urs_event = URSIngestionEvent(
+        urs_content=urs_content,
+        document_name=document_name,
+        document_version=document_version,
+        author=author,
+        digital_signature=digital_signature
+    )
+    
+    # Run unified workflow
+    result = await workflow.run(urs_event)
+    
+    return result

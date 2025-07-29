@@ -14,8 +14,9 @@ from pathlib import Path
 # Add the main directory to the path
 sys.path.insert(0, str(Path(__file__).parent))
 
-# Core workflow
+# Core workflows
 from src.core.categorization_workflow import GAMPCategorizationWorkflow, run_categorization_workflow
+from src.core.unified_workflow import UnifiedTestGenerationWorkflow, run_unified_test_generation_workflow
 
 # Event logging
 from src.shared import (
@@ -27,6 +28,38 @@ from src.shared import (
 
 # Utilities
 from src.shared.utils import setup_logging
+from src.shared.output_manager import (
+    get_output_manager,
+    safe_print,
+    truncate_string,
+    safe_format_response,
+    TruncatedStreamHandler
+)
+
+
+def setup_safe_output_management():
+    """Setup safe output management to prevent Claude Code overflow."""
+    import logging
+    
+    # Get output manager and configure
+    output_manager = get_output_manager()
+    
+    # Replace root logger handlers with truncated handlers
+    root_logger = logging.getLogger()
+    
+    # Remove existing console handlers
+    console_handlers = [h for h in root_logger.handlers if isinstance(h, logging.StreamHandler)]
+    for handler in console_handlers:
+        root_logger.removeHandler(handler)
+    
+    # Add truncated stream handler
+    truncated_handler = TruncatedStreamHandler()
+    truncated_handler.setLevel(logging.WARNING)  # Reduce verbosity
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    truncated_handler.setFormatter(formatter)
+    root_logger.addHandler(truncated_handler)
+    
+    return output_manager
 
 
 def parse_arguments():
@@ -38,7 +71,7 @@ def parse_arguments():
     parser.add_argument(
         "document",
         nargs="?",
-        help="Path to the URS document to categorize"
+        help="Path to the URS document to process (categorization + test generation by default)"
     )
     
     parser.add_argument(
@@ -73,6 +106,18 @@ def parse_arguments():
         help="Enable LlamaParse document processing"
     )
     
+    parser.add_argument(
+        "--categorization-only",
+        action="store_true",
+        help="Run only GAMP-5 categorization (skip planning and agent coordination)"
+    )
+    
+    parser.add_argument(
+        "--disable-parallel-coordination",
+        action="store_true",
+        help="Disable parallel agent coordination in planning workflow"
+    )
+    
     return parser.parse_args()
 
 
@@ -89,21 +134,35 @@ async def run_with_event_logging(document_path: Path, args):
     Path(config.gamp5_compliance.audit_log_directory).mkdir(parents=True, exist_ok=True)
     
     # Setup event logging
-    print("📊 Setting up event logging system...")
+    safe_print("📊 Setting up event logging system...")
     event_handler = setup_event_logging(config)
     
-    # Create workflow
-    workflow = GAMPCategorizationWorkflow(
-        timeout=300,
-        verbose=args.verbose,
-        enable_error_handling=True,
-        confidence_threshold=args.confidence_threshold,
-        enable_document_processing=args.enable_document_processing
-    )
+    # Determine workflow type
+    if args.categorization_only:
+        # Create categorization-only workflow
+        workflow = GAMPCategorizationWorkflow(
+            timeout=300,
+            verbose=args.verbose,
+            enable_error_handling=True,
+            confidence_threshold=args.confidence_threshold,
+            enable_document_processing=args.enable_document_processing
+        )
+        workflow_type = "categorization"
+    else:
+        # Create unified workflow
+        workflow = UnifiedTestGenerationWorkflow(
+            timeout=900,  # 15 minutes for complete workflow
+            verbose=args.verbose,
+            enable_error_handling=True,
+            confidence_threshold=args.confidence_threshold,
+            enable_document_processing=args.enable_document_processing,
+            enable_parallel_coordination=not args.disable_parallel_coordination
+        )
+        workflow_type = "unified"
     
     # Load document
     if document_path.exists():
-        print(f"📄 Loading document: {document_path}")
+        safe_print(f"📄 Loading document: {document_path}")
         if document_path.suffix in ['.md', '.txt', '.rst']:
             document_content = document_path.read_text()
         else:
@@ -113,7 +172,10 @@ async def run_with_event_logging(document_path: Path, args):
         raise FileNotFoundError(f"Document not found: {document_path}")
     
     # Run workflow with event logging
-    print(f"\n🚀 Running GAMP-5 categorization with event logging...")
+    if workflow_type == "categorization":
+        safe_print(f"\n🚀 Running GAMP-5 categorization with event logging...")
+    else:
+        safe_print(f"\n🚀 Running unified test generation workflow with event logging...")
     result, events = await run_workflow_with_event_logging(
         workflow,
         event_handler,
@@ -123,34 +185,68 @@ async def run_with_event_logging(document_path: Path, args):
     
     # Display results
     if result:
-        summary = result.get("summary", {})
-        print(f"\n✅ Categorization Complete!")
-        print(f"  - Category: {summary.get('category', 'Unknown')}")
-        print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
-        print(f"  - Review Required: {summary.get('review_required', False)}")
-        print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
+        if workflow_type == "categorization":
+            summary = result.get("summary", {})
+            safe_print(f"\n✅ Categorization Complete!")
+            safe_print(f"  - Category: {summary.get('category', 'Unknown')}")
+            safe_print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
+            safe_print(f"  - Review Required: {summary.get('review_required', False)}")
+            safe_print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
+        else:
+            # Display unified workflow results
+            summary = result.get("summary", {})
+            categorization = result.get("categorization", {})
+            planning = result.get("planning", {})
+            consultation = result.get("consultation", {})
+            
+            safe_print(f"\n✅ Unified Test Generation Complete!")
+            safe_print(f"  - Status: {summary.get('status', 'Unknown')}")
+            safe_print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
+            
+            if categorization.get('category'):
+                safe_print(f"  - GAMP Category: {categorization['category']}")
+                safe_print(f"  - Confidence: {categorization.get('confidence', 0):.1%}")
+                safe_print(f"  - Review Required: {categorization.get('review_required', False)}")
+            
+            if summary.get('estimated_test_count'):
+                safe_print(f"  - Estimated Tests: {summary['estimated_test_count']}")
+                safe_print(f"  - Timeline: {summary.get('timeline_estimate_days', 'N/A')} days")
+                safe_print(f"  - Agents Coordinated: {summary.get('agents_coordinated', 0)}")
+                safe_print(f"  - Agent Success Rate: {summary.get('coordination_success_rate', 0):.1%}")
+            
+            if consultation.get('required'):
+                safe_print(f"  - Consultation Required: {consultation['event'].consultation_type}")
+                safe_print(f"  - Urgency: {consultation['event'].urgency}")
         
         # Event statistics
-        print(f"\n📊 Event Logging Summary:")
-        print(f"  - Events Captured: {len(events)}")
+        safe_print(f"\n📊 Event Logging Summary:")
+        safe_print(f"  - Events Captured: {len(events)}")
         stats = event_handler.get_statistics()
-        print(f"  - Events Processed: {stats['events_processed']}")
-        print(f"  - Processing Rate: {stats['events_per_second']:.2f} events/sec")
+        safe_print(f"  - Events Processed: {stats['events_processed']}")
+        safe_print(f"  - Processing Rate: {stats['events_per_second']:.2f} events/sec")
         
         # Compliance statistics
         compliance_stats = event_handler.compliance_logger.get_audit_statistics()
-        print(f"\n🔒 GAMP-5 Compliance:")
-        print(f"  - Audit Entries: {compliance_stats['total_audit_entries']}")
-        print(f"  - Compliance Standards: {', '.join(compliance_stats['compliance_standards'])}")
+        safe_print(f"\n🔒 GAMP-5 Compliance:")
+        safe_print(f"  - Audit Entries: {compliance_stats['total_audit_entries']}")
+        safe_print(f"  - Compliance Standards: {', '.join(compliance_stats['compliance_standards'])}")
         
         # Log file locations
-        print(f"\n📁 Log Files:")
-        print(f"  - Events: {config.logging.log_directory}/")
-        print(f"  - Audit: {config.gamp5_compliance.audit_log_directory}/")
+        safe_print(f"\n📁 Log Files:")
+        safe_print(f"  - Events: {config.logging.log_directory}/")
+        safe_print(f"  - Audit: {config.gamp5_compliance.audit_log_directory}/")
+        
+        # Output management statistics
+        output_stats = get_output_manager().get_output_stats()
+        safe_print(f"\n📈 Output Management:")
+        safe_print(f"  - Console Output Used: {output_stats['total_output_size']} / {output_stats['max_console_output']} bytes")
+        safe_print(f"  - Usage: {output_stats['usage_percentage']:.1f}%")
+        if output_stats['truncated']:
+            safe_print(f"  - ⚠️  Output was truncated to prevent overflow")
         
         return result
     else:
-        print("\n❌ Workflow failed to produce results")
+        safe_print("\n❌ Workflow failed to produce results")
         return None
 
 
@@ -158,34 +254,80 @@ async def run_without_logging(document_path: Path, args):
     """Run the workflow without event logging (simpler mode)."""
     # Load document
     if document_path.exists():
-        print(f"📄 Loading document: {document_path}")
-        document_content = document_path.read_text()
+        safe_print(f"📄 Loading document: {document_path}")
+        if document_path.suffix in ['.md', '.txt', '.rst']:
+            document_content = document_path.read_text()
+        else:
+            # For other file types, pass the path
+            document_content = str(document_path)
     else:
         raise FileNotFoundError(f"Document not found: {document_path}")
     
-    # Run workflow directly
-    print(f"\n🚀 Running GAMP-5 categorization...")
-    result = await run_categorization_workflow(
-        urs_content=document_content,
-        document_name=document_path.name,
-        enable_error_handling=True,
-        verbose=args.verbose,
-        confidence_threshold=args.confidence_threshold,
-        enable_document_processing=args.enable_document_processing
-    )
+    # Determine workflow type and run
+    if args.categorization_only:
+        safe_print(f"\n🚀 Running GAMP-5 categorization...")
+        result = await run_categorization_workflow(
+            urs_content=document_content,
+            document_name=document_path.name,
+            enable_error_handling=True,
+            verbose=args.verbose,
+            confidence_threshold=args.confidence_threshold,
+            enable_document_processing=args.enable_document_processing
+        )
+    else:
+        safe_print(f"\n🚀 Running unified test generation workflow...")
+        result = await run_unified_test_generation_workflow(
+            urs_content=document_content,
+            document_name=document_path.name,
+            document_version="1.0",
+            author="system",
+            timeout=900,
+            verbose=args.verbose,
+            enable_error_handling=True,
+            confidence_threshold=args.confidence_threshold,
+            enable_document_processing=args.enable_document_processing,
+            enable_parallel_coordination=not args.disable_parallel_coordination
+        )
     
     # Display results
     if result:
-        summary = result.get("summary", {})
-        print(f"\n✅ Categorization Complete!")
-        print(f"  - Category: {summary.get('category', 'Unknown')}")
-        print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
-        print(f"  - Review Required: {summary.get('review_required', False)}")
-        print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
+        if args.categorization_only:
+            summary = result.get("summary", {})
+            safe_print(f"\n✅ Categorization Complete!")
+            safe_print(f"  - Category: {summary.get('category', 'Unknown')}")
+            safe_print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
+            safe_print(f"  - Review Required: {summary.get('review_required', False)}")
+            safe_print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
+        else:
+            # Display unified workflow results
+            summary = result.get("summary", {})
+            categorization = result.get("categorization", {})
+            planning = result.get("planning", {})
+            consultation = result.get("consultation", {})
+            
+            safe_print(f"\n✅ Unified Test Generation Complete!")
+            safe_print(f"  - Status: {summary.get('status', 'Unknown')}")
+            safe_print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
+            
+            if categorization.get('category'):
+                safe_print(f"  - GAMP Category: {categorization['category']}")
+                safe_print(f"  - Confidence: {categorization.get('confidence', 0):.1%}")
+                safe_print(f"  - Review Required: {categorization.get('review_required', False)}")
+            
+            if summary.get('estimated_test_count'):
+                safe_print(f"  - Estimated Tests: {summary['estimated_test_count']}")
+                safe_print(f"  - Timeline: {summary.get('timeline_estimate_days', 'N/A')} days")
+                safe_print(f"  - Agents Coordinated: {summary.get('agents_coordinated', 0)}")
+                safe_print(f"  - Agent Success Rate: {summary.get('coordination_success_rate', 0):.1%}")
+            
+            if consultation.get('required'):
+                safe_print(f"  - Consultation Required: {consultation['event'].consultation_type}")
+                safe_print(f"  - Urgency: {consultation['event'].urgency}")
         
         return result
     else:
-        print("\n❌ Workflow failed to produce results")
+        workflow_name = "Categorization" if args.categorization_only else "Unified workflow"
+        safe_print(f"\n❌ {workflow_name} failed to produce results")
         return None
 
 
@@ -193,12 +335,19 @@ async def main():
     """Main entry point."""
     args = parse_arguments()
     
-    # Setup logging
-    log_level = "DEBUG" if args.verbose else "INFO"
+    # Setup safe output management first
+    output_manager = setup_safe_output_management()
+    
+    # Setup logging with reduced verbosity
+    log_level = "WARNING" if not args.verbose else "INFO"  # Reduced default verbosity
     setup_logging(log_level)
     
-    print("🏥 GAMP-5 Pharmaceutical Test Generation System")
-    print("=" * 60)
+    safe_print("🏥 GAMP-5 Pharmaceutical Test Generation System")
+    if args.categorization_only:
+        safe_print("📋 Running in Categorization-Only Mode")
+    else:
+        safe_print("🚀 Running Unified Test Generation Workflow")
+    safe_print("=" * 60)
     
     # Determine document path
     if args.document:
@@ -207,8 +356,8 @@ async def main():
         # Use default test document
         document_path = Path(__file__).parent.parent / "simple_test_data.md"
         if not document_path.exists():
-            print("❌ No document specified and default test document not found")
-            print("Usage: python main.py <document_path>")
+            safe_print("❌ No document specified and default test document not found")
+            safe_print("Usage: python main.py <document_path>")
             return 1
     
     try:
@@ -225,16 +374,23 @@ async def main():
             return 1
             
     except FileNotFoundError as e:
-        print(f"\n❌ Error: {e}")
+        safe_print(f"\n❌ Error: {e}")
         return 1
     except KeyboardInterrupt:
-        print("\n⏹️  Operation cancelled by user")
+        safe_print("\n⏹️  Operation cancelled by user")
         return 1
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        error_msg = truncate_string(str(e), 300)  # Truncate long error messages
+        safe_print(f"\n❌ Unexpected error: {error_msg}")
         if args.verbose:
             import traceback
-            traceback.print_exc()
+            # Limit traceback output
+            tb_lines = traceback.format_exc().split('\n')
+            if len(tb_lines) > 20:  # Limit traceback lines
+                tb_output = '\n'.join(tb_lines[:10] + ["... [TRACEBACK TRUNCATED] ..."] + tb_lines[-5:])
+            else:
+                tb_output = '\n'.join(tb_lines)
+            safe_print(truncate_string(tb_output, 2000))
         return 1
 
 
