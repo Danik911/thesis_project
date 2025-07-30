@@ -1,0 +1,762 @@
+{
+  "test_execution_summary": {
+    "total_questions_tested": 6,
+    "successful_tests": 6,
+    "failed_tests": 0,
+    "success_rate_percentage": 100.0,
+    "test_start_time": "2025-07-30T09:37:59.586471+00:00",
+    "test_end_time": "2025-07-30T09:38:14.188479+00:00",
+    "total_execution_time_seconds": 14.602008
+  },
+  "performance_metrics": {
+    "average_confidence_score": 0.3083758638126758,
+    "average_processing_time_seconds": 1.4317138333333332,
+    "average_documents_retrieved": 5.0,
+    "context_quality_distribution": {
+      "low": 6
+    }
+  },
+  "answer_quality_metrics": {
+    "excellent_answers": 0,
+    "good_answers": 0,
+    "acceptable_answers": 0,
+    "poor_answers": 6
+  },
+  "phoenix_observability": {
+    "phoenix_initialized": true,
+    "traces_generated": 6,
+    "phoenix_ui_url": "http://localhost:6006"
+  },
+  "detailed_results": [
+    {
+      "question_id": "q1_scope_narrow_interpretation",
+      "question_category": "Scope and Application",
+      "question_text": "What is FDA's narrow interpretation of Part 11 scope and when does Part 11 apply to electronic records?",
+      "test_timestamp": "2025-07-30T09:37:59.586491+00:00",
+      "processing_time_seconds": 1.634674,
+      "correlation_id": "81e7e015-835b-41e9-b369-555b58b285d9",
+      "success": true,
+      "documents_retrieved": 5,
+      "context_quality": "low",
+      "search_coverage": 0.0,
+      "confidence_score": 0.3392896212677999,
+      "answer_validation": {
+        "question_id": "q1_scope_narrow_interpretation",
+        "expected_concepts_count": 5,
+        "found_concepts_count": 0,
+        "found_concepts": [],
+        "missing_concepts": [
+          "narrow interpretation",
+          "electronic format in place of paper format",
+          "predicate rule requirements",
+          "rely on electronic records",
+          "business practices"
+        ],
+        "coverage_percentage": 0.0,
+        "meets_expectations": false,
+        "quality_assessment": "poor"
+      },
+      "meets_confidence_threshold": false,
+      "retrieved_documents_details": [
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.4817696895667736,
+          "content_preview": "In this guidance document, we use the term legacy system to describe systems already in operation before the effective date of part 11.\n---\n# Contains Nonbinding Recommendations\n\nIn each case, we reco...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "Keywords: 21 CFR Part 11, electronic records, electronic signatures, record retention, legacy systems, validation, audit trails, compliance, hybrid records, regulatory guidance"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.42877717067582694,
+          "content_preview": "We recommend that you document this decision (e.g., in a Standard Operating Procedure (SOP), or specification document).\n- Records submitted to FDA, under predicate rules (even if such records are not...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "electronic records, electronic signatures, validation, audit trail, legacy systems, record retention, FDA guidance, compliance, predicate rules, record integrity"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.41428906951484085,
+          "content_preview": "As mentioned previously, part 11 remains in effect during this re-examination period.\n\n# III. DISCUSSION\n\n# A. Overall Approach to Part 11 Requirements\n\nAlthough we withdrew the draft guidance on time...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "FDA, Part 11, electronic records, electronic signatures, compliance, validation, audit trails, legacy systems, recordkeeping, regulatory guidance"
+          }
+        }
+      ],
+      "phoenix_trace_available": true,
+      "expected_phoenix_spans": [
+        "context_provider.process_request.q1_scope_narrow_interpretation",
+        "chromadb.search_documents",
+        "chromadb.search_collection.regulatory",
+        "confidence_score_calculation",
+        "context_quality_assessment"
+      ]
+    },
+    {
+      "question_id": "q2_validation_enforcement_discretion",
+      "question_category": "Validation Requirements",
+      "question_text": "What is FDA's current enforcement approach regarding validation requirements for computerized systems under Part 11?",
+      "test_timestamp": "2025-07-30T09:38:02.224399+00:00",
+      "processing_time_seconds": 1.147823,
+      "correlation_id": "35df8181-a1e4-40b4-9a20-6c80049d7829",
+      "success": true,
+      "documents_retrieved": 5,
+      "context_quality": "low",
+      "search_coverage": 0.0,
+      "confidence_score": 0.3085898396654984,
+      "answer_validation": {
+        "question_id": "q2_validation_enforcement_discretion",
+        "expected_concepts_count": 5,
+        "found_concepts_count": 1,
+        "found_concepts": [
+          "enforcement discretion"
+        ],
+        "missing_concepts": [
+          "validation of computerized systems",
+          "predicate rule requirements",
+          "risk assessment",
+          "justified and documented"
+        ],
+        "coverage_percentage": 20.0,
+        "meets_expectations": false,
+        "quality_assessment": "poor"
+      },
+      "meets_confidence_threshold": false,
+      "retrieved_documents_details": [
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.41375324520793394,
+          "content_preview": "In this guidance document, we use the term legacy system to describe systems already in operation before the effective date of part 11.\n---\n# Contains Nonbinding Recommendations\n\nIn each case, we reco...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "Keywords: 21 CFR Part 11, electronic records, electronic signatures, record retention, legacy systems, validation, audit trails, compliance, hybrid records, regulatory guidance"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.3621900311442976,
+          "content_preview": "We recommend that you document this decision (e.g., in a Standard Operating Procedure (SOP), or specification document).\n- Records submitted to FDA, under predicate rules (even if such records are not...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "electronic records, electronic signatures, validation, audit trail, legacy systems, record retention, FDA guidance, compliance, predicate rules, record integrity"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.3278840829994851,
+          "content_preview": "---\n# Contains Nonbinding Recommendations\n\nAs an outgrowth of its current good manufacturing practice (CGMP) initiative for human and animal drugs and biologics,\u2074 FDA is re-examining part 11 as it app...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "regulatory, FDA, 21 CFR Part 11, electronic records, electronic signatures, enforcement discretion, validation, legacy systems, record retention, guidance"
+          }
+        }
+      ],
+      "phoenix_trace_available": true,
+      "expected_phoenix_spans": [
+        "context_provider.process_request.q2_validation_enforcement_discretion",
+        "chromadb.search_documents",
+        "chromadb.search_collection.regulatory",
+        "confidence_score_calculation",
+        "context_quality_assessment"
+      ]
+    },
+    {
+      "question_id": "q3_audit_trail_requirements",
+      "question_category": "Audit Trail and Security",
+      "question_text": "Under what circumstances does FDA exercise enforcement discretion for audit trail requirements, and what controls should still be maintained?",
+      "test_timestamp": "2025-07-30T09:38:04.374844+00:00",
+      "processing_time_seconds": 1.795635,
+      "correlation_id": "1954aa9a-0fdf-42e8-b6b0-233993fb1ffb",
+      "success": true,
+      "documents_retrieved": 5,
+      "context_quality": "low",
+      "search_coverage": 0.0,
+      "confidence_score": 0.29149456061224044,
+      "answer_validation": {
+        "question_id": "q3_audit_trail_requirements",
+        "expected_concepts_count": 5,
+        "found_concepts_count": 1,
+        "found_concepts": [
+          "enforcement discretion"
+        ],
+        "missing_concepts": [
+          "audit trail",
+          "computer-generated, time-stamped",
+          "predicate rule requirements",
+          "trustworthiness and integrity"
+        ],
+        "coverage_percentage": 20.0,
+        "meets_expectations": false,
+        "quality_assessment": "poor"
+      },
+      "meets_confidence_threshold": false,
+      "retrieved_documents_details": [
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.3411097001105805,
+          "content_preview": "In this guidance document, we use the term legacy system to describe systems already in operation before the effective date of part 11.\n---\n# Contains Nonbinding Recommendations\n\nIn each case, we reco...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "Keywords: 21 CFR Part 11, electronic records, electronic signatures, record retention, legacy systems, validation, audit trails, compliance, hybrid records, regulatory guidance"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.3302915588675019,
+          "content_preview": "We recommend that you document this decision (e.g., in a Standard Operating Procedure (SOP), or specification document).\n- Records submitted to FDA, under predicate rules (even if such records are not...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "electronic records, electronic signatures, validation, audit trail, legacy systems, record retention, FDA guidance, compliance, predicate rules, record integrity"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.29432077181727534,
+          "content_preview": "---\n# Contains Nonbinding Recommendations\n\nAs an outgrowth of its current good manufacturing practice (CGMP) initiative for human and animal drugs and biologics,\u2074 FDA is re-examining part 11 as it app...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "regulatory, FDA, 21 CFR Part 11, electronic records, electronic signatures, enforcement discretion, validation, legacy systems, record retention, guidance"
+          }
+        }
+      ],
+      "phoenix_trace_available": true,
+      "expected_phoenix_spans": [
+        "context_provider.process_request.q3_audit_trail_requirements",
+        "chromadb.search_documents",
+        "chromadb.search_collection.regulatory",
+        "confidence_score_calculation",
+        "context_quality_assessment"
+      ]
+    },
+    {
+      "question_id": "q4_legacy_systems_criteria",
+      "question_category": "Legacy Systems",
+      "question_text": "What are the specific criteria that legacy systems must meet to qualify for Part 11 enforcement discretion?",
+      "test_timestamp": "2025-07-30T09:38:07.172007+00:00",
+      "processing_time_seconds": 1.230177,
+      "correlation_id": "d56266e0-1229-4fb8-aa5e-e5fb6a1a1a97",
+      "success": true,
+      "documents_retrieved": 5,
+      "context_quality": "low",
+      "search_coverage": 0.0,
+      "confidence_score": 0.30581938752468196,
+      "answer_validation": {
+        "question_id": "q4_legacy_systems_criteria",
+        "expected_concepts_count": 5,
+        "found_concepts_count": 0,
+        "found_concepts": [],
+        "missing_concepts": [
+          "legacy systems",
+          "operational before August 20, 1997",
+          "predicate rule requirements",
+          "documented evidence",
+          "fit for intended use"
+        ],
+        "coverage_percentage": 0.0,
+        "meets_expectations": false,
+        "quality_assessment": "poor"
+      },
+      "meets_confidence_threshold": false,
+      "retrieved_documents_details": [
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.39317584557943347,
+          "content_preview": "In this guidance document, we use the term legacy system to describe systems already in operation before the effective date of part 11.\n---\n# Contains Nonbinding Recommendations\n\nIn each case, we reco...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "Keywords: 21 CFR Part 11, electronic records, electronic signatures, record retention, legacy systems, validation, audit trails, compliance, hybrid records, regulatory guidance"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.36162843957018403,
+          "content_preview": "We recommend that you document this decision (e.g., in a Standard Operating Procedure (SOP), or specification document).\n- Records submitted to FDA, under predicate rules (even if such records are not...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "electronic records, electronic signatures, validation, audit trail, legacy systems, record retention, FDA guidance, compliance, predicate rules, record integrity"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.33359736059944856,
+          "content_preview": "---\n# Contains Nonbinding Recommendations\n\nAs an outgrowth of its current good manufacturing practice (CGMP) initiative for human and animal drugs and biologics,\u2074 FDA is re-examining part 11 as it app...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "regulatory, FDA, 21 CFR Part 11, electronic records, electronic signatures, enforcement discretion, validation, legacy systems, record retention, guidance"
+          }
+        }
+      ],
+      "phoenix_trace_available": true,
+      "expected_phoenix_spans": [
+        "context_provider.process_request.q4_legacy_systems_criteria",
+        "chromadb.search_documents",
+        "chromadb.search_collection.regulatory",
+        "confidence_score_calculation",
+        "context_quality_assessment"
+      ]
+    },
+    {
+      "question_id": "q5_electronic_signatures_definition",
+      "question_category": "Electronic Signatures",
+      "question_text": "How does Part 11 define electronic signatures and what makes them equivalent to handwritten signatures?",
+      "test_timestamp": "2025-07-30T09:38:09.403449+00:00",
+      "processing_time_seconds": 1.289198,
+      "correlation_id": "862783fc-a9c0-4e71-9187-2d388d0619ba",
+      "success": true,
+      "documents_retrieved": 5,
+      "context_quality": "low",
+      "search_coverage": 0.0,
+      "confidence_score": 0.30522386378496175,
+      "answer_validation": {
+        "question_id": "q5_electronic_signatures_definition",
+        "expected_concepts_count": 5,
+        "found_concepts_count": 2,
+        "found_concepts": [
+          "electronic signatures",
+          "predicate rules"
+        ],
+        "missing_concepts": [
+          "equivalent of handwritten signatures",
+          "initials and other general signings",
+          "approved, reviewed, and verified"
+        ],
+        "coverage_percentage": 40.0,
+        "meets_expectations": false,
+        "quality_assessment": "poor"
+      },
+      "meets_confidence_threshold": false,
+      "retrieved_documents_details": [
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.36734248243953516,
+          "content_preview": "As mentioned previously, part 11 remains in effect during this re-examination period.\n\n# III. DISCUSSION\n\n# A. Overall Approach to Part 11 Requirements\n\nAlthough we withdrew the draft guidance on time...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "FDA, Part 11, electronic records, electronic signatures, compliance, validation, audit trails, legacy systems, recordkeeping, regulatory guidance"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.36674828668813003,
+          "content_preview": "In this guidance document, we use the term legacy system to describe systems already in operation before the effective date of part 11.\n---\n# Contains Nonbinding Recommendations\n\nIn each case, we reco...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "Keywords: 21 CFR Part 11, electronic records, electronic signatures, record retention, legacy systems, validation, audit trails, compliance, hybrid records, regulatory guidance"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.3658907650058507,
+          "content_preview": "We recommend that you document this decision (e.g., in a Standard Operating Procedure (SOP), or specification document).\n- Records submitted to FDA, under predicate rules (even if such records are not...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "electronic records, electronic signatures, validation, audit trail, legacy systems, record retention, FDA guidance, compliance, predicate rules, record integrity"
+          }
+        }
+      ],
+      "phoenix_trace_available": true,
+      "expected_phoenix_spans": [
+        "context_provider.process_request.q5_electronic_signatures_definition",
+        "chromadb.search_documents",
+        "chromadb.search_collection.regulatory",
+        "confidence_score_calculation",
+        "context_quality_assessment"
+      ]
+    },
+    {
+      "question_id": "q6_records_copying_inspection",
+      "question_category": "Record Management",
+      "question_text": "What are FDA's expectations for providing copies of electronic records during inspections under the current guidance?",
+      "test_timestamp": "2025-07-30T09:38:11.693854+00:00",
+      "processing_time_seconds": 1.492776,
+      "correlation_id": "1bc5b663-b50d-4818-ad7c-fc74927a75a5",
+      "success": true,
+      "documents_retrieved": 5,
+      "context_quality": "low",
+      "search_coverage": 0.0,
+      "confidence_score": 0.29983791002087223,
+      "answer_validation": {
+        "question_id": "q6_records_copying_inspection",
+        "expected_concepts_count": 5,
+        "found_concepts_count": 2,
+        "found_concepts": [
+          "enforcement discretion",
+          "predicate rules"
+        ],
+        "missing_concepts": [
+          "copies of records",
+          "reasonable and useful access",
+          "inspection"
+        ],
+        "coverage_percentage": 40.0,
+        "meets_expectations": false,
+        "quality_assessment": "poor"
+      },
+      "meets_confidence_threshold": false,
+      "retrieved_documents_details": [
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.3696492067919852,
+          "content_preview": "In this guidance document, we use the term legacy system to describe systems already in operation before the effective date of part 11.\n---\n# Contains Nonbinding Recommendations\n\nIn each case, we reco...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "Keywords: 21 CFR Part 11, electronic records, electronic signatures, record retention, legacy systems, validation, audit trails, compliance, hybrid records, regulatory guidance"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.35611516562647577,
+          "content_preview": "We recommend that you document this decision (e.g., in a Standard Operating Procedure (SOP), or specification document).\n- Records submitted to FDA, under predicate rules (even if such records are not...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "electronic records, electronic signatures, validation, audit trail, legacy systems, record retention, FDA guidance, compliance, predicate rules, record integrity"
+          }
+        },
+        {
+          "title": "Untitled Document",
+          "relevance_score": 0.3012765752190079,
+          "content_preview": "# Guidance for Industry\n\n# Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application\n\nU.S. Department of Health and Human Services\n\nFood and Drug Administration\n\nCenter for Drug Evalu...",
+          "sections": [
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "Guidance for Industry",
+            "Part 11",
+            " Electronic Records; Electronic Signatures \u2014 Scope and Application",
+            "TABLE OF CONTENTS"
+          ],
+          "metadata": {
+            "file_name": "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "file_path": "/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
+            "collection": "regulatory",
+            "ingestion_timestamp": "2025-07-30T09:36:57.134568+00:00",
+            "type": "regulatory_requirement",
+            "compliance_level": "mandatory",
+            "gamp_categories": "4",
+            "test_types": "",
+            "sections": "Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,Guidance for Industry,Part 11, Electronic Records; Electronic Signatures \u2014 Scope and Application,TABLE OF CONTENTS",
+            "document_title": "Comprehensive Title:  \n**FDA Guidance on 21 CFR Part 11: Scope, Application, Enforcement Discretion, Documentation, Validation, Audit Trails, Legacy Systems, Record Preservation, and Regulatory Expectations for Electronic Records and Signatures**",
+            "excerpt_keywords": "regulatory compliance, 21 CFR Part 11, electronic records, electronic signatures, validation, audit trail, record retention, legacy systems, FDA guidance, enforcement discretion"
+          }
+        }
+      ],
+      "phoenix_trace_available": true,
+      "expected_phoenix_spans": [
+        "context_provider.process_request.q6_records_copying_inspection",
+        "chromadb.search_documents",
+        "chromadb.search_collection.regulatory",
+        "confidence_score_calculation",
+        "context_quality_assessment"
+      ]
+    }
+  ]
+}
