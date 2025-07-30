@@ -1,0 +1,93 @@
+{
+  "generated_at": "2025-07-30T20:20:43.843353+00:00",
+  "phoenix_url": "http://localhost:6006",
+  "summary_24h": {
+    "phoenix_url": "http://localhost:6006",
+    "total_spans": 176,
+    "recent_spans": 176,
+    "time_range_hours": 24,
+    "cutoff_time": "2025-07-29T20:20:44.010654+00:00",
+    "span_breakdown": {
+      "OpenAIEmbedding._get_query_embedding": 23,
+      "OpenAIEmbedding.get_query_embedding": 23,
+      "VectorIndexRetriever._retrieve": 23,
+      "VectorIndexRetriever.retrieve": 23,
+      "OpenAIEmbedding._get_text_embedding": 6,
+      "chromadb.chunk.5": 6,
+      "context_provider.process_request": 6,
+      "chromadb.search_documents": 6,
+      "chromadb.search_collection.best_practices": 6,
+      "OpenAIEmbedding.get_text_embedding": 6,
+      "chromadb.search_collection.regulatory": 6,
+      "chromadb.chunk.4": 6,
+      "chromadb.chunk.3": 6,
+      "chromadb.chunk.2": 6,
+      "chromadb.chunk.1": 6,
+      "chromadb.search_collection.gamp5": 6,
+      "chromadb.search_collection.sops": 5,
+      "GAMPCategorizationWorkflow.start": 1,
+      "GAMPCategorizationWorkflow.process_document": 1,
+      "GAMPCategorizationWorkflow.categorize_document": 1,
+      "GAMPCategorizationWorkflow.handle_error_recovery": 1,
+      "GAMPCategorizationWorkflow.check_consultation_required": 1,
+      "GAMPCategorizationWorkflow.complete_workflow": 1,
+      "GAMPCategorizationWorkflow._done": 1
+    },
+    "workflow_traces": {
+      "gamp_workflow_spans": 19,
+      "workflow_operations": {
+        "chromadb.search_collection.gamp5": 6,
+        "context_provider.process_request": 6,
+        "GAMPCategorizationWorkflow.start": 1,
+        "GAMPCategorizationWorkflow.process_document": 1,
+        "GAMPCategorizationWorkflow.categorize_document": 1,
+        "GAMPCategorizationWorkflow.handle_error_recovery": 1,
+        "GAMPCategorizationWorkflow.check_consultation_required": 1,
+        "GAMPCategorizationWorkflow.complete_workflow": 1,
+        "GAMPCategorizationWorkflow._done": 1
+      },
+      "avg_duration_ms": NaN
+    },
+    "performance_metrics": {},
+    "earliest_trace": "2025-07-30T09:37:59.590247+00:00",
+    "latest_trace": "2025-07-30T20:18:05.552958+00:00"
+  },
+  "summary_1h": {
+    "phoenix_url": "http://localhost:6006",
+    "total_spans": 176,
+    "recent_spans": 7,
+    "time_range_hours": 1,
+    "cutoff_time": "2025-07-30T19:20:44.303649+00:00",
+    "span_breakdown": {
+      "GAMPCategorizationWorkflow.start": 1,
+      "GAMPCategorizationWorkflow.process_document": 1,
+      "GAMPCategorizationWorkflow.categorize_document": 1,
+      "GAMPCategorizationWorkflow.handle_error_recovery": 1,
+      "GAMPCategorizationWorkflow.check_consultation_required": 1,
+      "GAMPCategorizationWorkflow.complete_workflow": 1,
+      "GAMPCategorizationWorkflow._done": 1
+    },
+    "workflow_traces": {
+      "gamp_workflow_spans": 7,
+      "workflow_operations": {
+        "GAMPCategorizationWorkflow.start": 1,
+        "GAMPCategorizationWorkflow.process_document": 1,
+        "GAMPCategorizationWorkflow.categorize_document": 1,
+        "GAMPCategorizationWorkflow.handle_error_recovery": 1,
+        "GAMPCategorizationWorkflow.check_consultation_required": 1,
+        "GAMPCategorizationWorkflow.complete_workflow": 1,
+        "GAMPCategorizationWorkflow._done": 1
+      },
+      "avg_duration_ms": NaN
+    },
+    "performance_metrics": {},
+    "earliest_trace": "2025-07-30T20:18:05.293239+00:00",
+    "latest_trace": "2025-07-30T20:18:05.552958+00:00"
+  },
+  "gamp_workflow_details": {
+    "error": "'trace_id'"
+  },
+  "context_provider_details": {
+    "error": "'trace_id'"
+  }
+}
