@@ -110,6 +110,31 @@ def setup_event_logging(config: SystemConfig) -> EventStreamHandler:
 # All LLM calls are traced automatically when Phoenix is enabled
 ```
 
+#### 4. Context Provider Agent (`src/agents/parallel/context_provider.py`)
+```python
+# Enhanced Phoenix observability for ChromaDB operations
+class ContextProviderAgent:
+    @trace_agent_method  # Automatic Phoenix tracing
+    async def process_request(self, request_event):
+        # Full request tracing with detailed attributes
+        
+    async def _search_documents(self, ...):
+        # ChromaDB search with span hierarchy:
+        # - chromadb.search_documents (parent)
+        #   - chromadb.search_collection.{name} (per collection)
+        #     - chromadb.chunk.{n} (per retrieved chunk)
+        
+    def _calculate_confidence_score(self, ...):
+        # Detailed confidence calculation logging:
+        # - Average relevance factor (weight: 0.4)
+        # - Search coverage factor (weight: 0.3) 
+        # - Context quality factor (weight: 0.2)
+        # - Document count factor (weight: 0.1)
+        
+    async def ingest_documents(self, ...):
+        # Document ingestion tracing with progress tracking
+```
+
 ---
 
 ## 📋 Environment Configuration
@@ -160,6 +185,8 @@ SERVICE_VERSION=1.0.0
 - **Test Planning**: Monitors planning decisions and strategy generation
 - **Agent Coordination**: Traces agent handoffs and parallel execution
 - **Error Recovery**: Captures fallback mechanisms and error handling
+- **Context Provider Agent**: Full ChromaDB document retrieval and search tracing
+- **Document Ingestion**: Phoenix spans for pharmaceutical document processing
 
 ### 2. LLM Call Monitoring
 - **Token Usage**: Real-time tracking of prompt, completion, and total tokens
@@ -172,6 +199,8 @@ SERVICE_VERSION=1.0.0
 - **Decision Rationale**: Detailed reasoning for all categorization decisions
 - **Error Documentation**: Comprehensive error logging with context
 - **Confidence Scoring**: Tracking of all confidence thresholds and decisions
+- **Document Retrieval Audit**: Full ChromaDB search audit trail with timestamps
+- **Quality Metrics**: Context quality assessments for pharmaceutical compliance
 
 ### 4. Enhanced Phoenix Integration (NEW)
 - **Docker Support**: Automatic detection and connection to Docker Phoenix instances
@@ -179,6 +208,15 @@ SERVICE_VERSION=1.0.0
 - **Force Flush**: Ensures trace persistence with configurable timeout
 - **Production Ready**: BatchSpanProcessor optimization and error recovery
 - **API Key Authentication**: Secure trace transmission with API key headers
+
+### 5. ChromaDB Integration Observability (NEW)
+- **Document Retrieval Tracing**: Full visibility into ChromaDB search operations
+- **Chunk-Level Monitoring**: Individual spans for each retrieved document chunk
+- **Confidence Score Visibility**: Complete confidence calculation breakdowns
+- **Quality Assessment Logging**: Context quality evaluation with detailed metrics
+- **Search Performance Metrics**: Collection-level search timing and results
+- **Embedding Generation Tracking**: Query embedding time and dimension metrics
+- **Error Diagnostics**: Full stack traces for ChromaDB operation failures
 
 ---
 
@@ -537,12 +575,27 @@ def test_categorization_with_tracing():
     agent = create_gamp_categorization_agent(verbose=True)
     # Test should work with or without Phoenix
     assert agent is not None
+
+# Test Context Provider ChromaDB integration
+def test_context_provider_phoenix():
+    from main.tests.test_context_provider_phoenix import test_context_provider_with_phoenix
+    
+    # This test validates:
+    # - Phoenix server startup
+    # - Document ingestion with tracing
+    # - Search operations with detailed logging
+    # - Confidence score calculations
+    # - Chunk-level span creation
+    test_context_provider_with_phoenix()
 ```
 
 ### Integration Tests
 ```bash
 # Test full workflow with observability
 uv run python main/main.py simple_test_data.md
+
+# Test Context Provider Phoenix integration
+uv run python main/tests/test_context_provider_phoenix.py
 
 # Verify Phoenix UI is accessible
 curl -f http://localhost:6006/health

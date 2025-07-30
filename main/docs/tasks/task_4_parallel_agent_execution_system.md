@@ -643,3 +643,402 @@ python validate_task4_completion.py
 ```
 
 **Task 4 - Parallel Agent Execution System is complete and production-ready for pharmaceutical test generation workflows.**
+
+## ChromaDB Integration Research (by context-collector)
+
+### Current State Analysis
+The Context Provider Agent currently uses mock data (lines 246-316 in `context_provider.py`) instead of a real vector database. The goal is to integrate ChromaDB following the successful pattern from the scientific_writer example while maintaining pharmaceutical compliance requirements.
+
+### Code Examples and Patterns
+
+#### 1. ChromaDB Integration Pattern from Scientific Writer Example
+The working implementation at `/home/anteb/thesis_project/test_generation/examples/scientific_writer/thesis/rag/components.py` provides an excellent template:
+
+```python
+class ScientificRAGSystem:
+    def __init__(self, 
+                 vector_store_path: str = "./lib/chroma_db",
+                 cache_dir: str = "./cache/rag",
+                 embedding_model: str = "text-embedding-3-small"):
+        # Initialize components
+        self.embedding_model = OpenAIEmbedding(
+            model=embedding_model,
+            api_key=config.llm_config["api_key"]
+        )
+        
+        # Setup vector store
+        self.chroma_client = chromadb.PersistentClient(
+            path=str(self.vector_store_path)
+        )
+        self.chroma_collection = self.chroma_client.get_or_create_collection(
+            name="scientific_documents",
+            metadata={"description": "Scientific papers and documents"}
+        )
+        self.vector_store = ChromaVectorStore(
+            chroma_collection=self.chroma_collection
+        )
+        self.storage_context = StorageContext.from_defaults(
+            vector_store=self.vector_store
+        )
+```
+
+#### 2. IngestionPipeline with Caching
+The scientific_writer example implements efficient document ingestion with caching:
+
+```python
+def _setup_ingestion_pipeline(self):
+    # Setup caching for efficiency
+    cache_file = self.cache_dir / "ingestion_cache.json"
+    self.ingestion_cache = IngestionCache(
+        cache_file=str(cache_file)
+    )
+    
+    # Setup transformations with pharmaceutical focus
+    transformations = [
+        # Text splitting optimized for regulatory documents
+        SentenceSplitter(
+            chunk_size=1500,  # Larger chunks for regulatory context
+            chunk_overlap=200,
+            include_metadata=True,
+            include_prev_next_rel=True  # Important for compliance traceability
+        ),
+        # Metadata extraction for GAMP-5 categorization
+        TitleExtractor(llm=extractor_llm, nodes=5),
+        KeywordExtractor(llm=extractor_llm, keywords=10),
+        # Embeddings
+        self.embedding_model
+    ]
+    
+    # Create ingestion pipeline
+    self.ingestion_pipeline = IngestionPipeline(
+        transformations=transformations,
+        cache=self.ingestion_cache,
+        vector_store=self.vector_store
+    )
+```
+
+#### 3. Pharmaceutical-Specific Modifications for Context Provider
+
+```python
+class PharmaceuticalContextProvider:
+    async def _setup_chromadb(self):
+        """Initialize ChromaDB with pharmaceutical compliance features."""
+        # Persistent storage for audit trail compliance
+        self.chroma_client = chromadb.PersistentClient(
+            path=str(self.vector_store_path),
+            settings=chromadb.Settings(
+                anonymized_telemetry=False,  # HIPAA compliance
+                persist_directory=str(self.vector_store_path)
+            )
+        )
+        
+        # Create collections for different document types
+        self.collections = {
+            'gamp5': self.chroma_client.get_or_create_collection(
+                name="gamp5_documents",
+                metadata={
+                    "description": "GAMP-5 guidelines and validation documents",
+                    "retention_period": "10_years",
+                    "compliance_level": "gxp"
+                }
+            ),
+            'regulatory': self.chroma_client.get_or_create_collection(
+                name="regulatory_documents", 
+                metadata={
+                    "description": "FDA, EMA, ICH regulatory guidance",
+                    "retention_period": "permanent",
+                    "compliance_level": "regulatory"
+                }
+            ),
+            'sops': self.chroma_client.get_or_create_collection(
+                name="sop_documents",
+                metadata={
+                    "description": "Standard Operating Procedures",
+                    "retention_period": "7_years",
+                    "compliance_level": "gxp"
+                }
+            )
+        }
+```
+
+#### 4. Event System Integration Pattern
+Maintain compatibility with existing event system:
+
+```python
+async def _search_documents(self, request: ContextProviderRequest) -> list[dict[str, Any]]:
+    """Search documents using ChromaDB with event compatibility."""
+    try:
+        # Determine which collection to search based on request
+        collection_name = self._select_collection(request.gamp_category)
+        vector_store = ChromaVectorStore(
+            chroma_collection=self.collections[collection_name]
+        )
+        
+        # Create query with pharmaceutical context
+        query_str = self._build_pharmaceutical_query(request)
+        
+        # Perform vector search
+        retriever = VectorIndexRetriever(
+            index=self.vector_index,
+            similarity_top_k=self.max_documents,
+            vector_store_query_mode="hybrid"  # Combine semantic + keyword
+        )
+        
+        # Execute search with audit logging
+        with self._audit_context(request.correlation_id):
+            nodes = await retriever.aretrieve(query_str)
+            
+        # Convert to expected format
+        documents = self._convert_nodes_to_documents(nodes, request)
+        
+        return documents
+        
+    except Exception as e:
+        self.logger.error(f"ChromaDB search failed: {str(e)}")
+        # No fallback - fail explicitly per CLAUDE.md
+        raise
+```
+
+### Implementation Gotchas
+
+#### 1. Embedding Model Consistency
+- **Issue**: Different embedding models produce incompatible vectors
+- **Solution**: Standardize on `text-embedding-3-small` across all components
+- **Implementation**: Configure embedding model in centralized config
+
+#### 2. Async Operation Compatibility
+- **Issue**: ChromaDB operations are synchronous, but agent uses async
+- **Solution**: Use `asyncio.to_thread()` for blocking operations
+```python
+async def _chromadb_search(self, query: str):
+    # Run synchronous ChromaDB operation in thread pool
+    return await asyncio.to_thread(
+        self.collection.query,
+        query_embeddings=[query_embedding],
+        n_results=self.max_documents
+    )
+```
+
+#### 3. Collection Management for GAMP Categories
+- **Issue**: Different GAMP categories require different validation approaches
+- **Solution**: Separate collections with category-specific metadata
+```python
+GAMP_COLLECTION_MAPPING = {
+    "1": "infrastructure_docs",
+    "3": "cots_validation_docs", 
+    "4": "configured_system_docs",
+    "5": "custom_system_docs"
+}
+```
+
+#### 4. Audit Trail Implementation
+- **Issue**: ChromaDB doesn't natively support audit trails
+- **Solution**: Implement wrapper with audit logging
+```python
+class AuditedChromaCollection:
+    def __init__(self, collection, audit_logger):
+        self.collection = collection
+        self.audit_logger = audit_logger
+        
+    async def add(self, documents, embeddings, metadatas, ids):
+        # Log before operation
+        audit_id = self.audit_logger.log_operation(
+            operation="document_ingestion",
+            document_count=len(documents),
+            user="system",
+            timestamp=datetime.now(UTC)
+        )
+        
+        # Perform operation
+        result = await asyncio.to_thread(
+            self.collection.add,
+            documents=documents,
+            embeddings=embeddings,
+            metadatas=metadatas,
+            ids=ids
+        )
+        
+        # Log completion
+        self.audit_logger.log_completion(audit_id, success=True)
+        return result
+```
+
+#### 5. Metadata Schema for Pharmaceutical Documents
+```python
+PHARMACEUTICAL_METADATA_SCHEMA = {
+    "document_id": str,          # Unique identifier
+    "document_type": str,        # sop, validation, regulatory
+    "gamp_category": str,        # 1, 3, 4, 5
+    "version": str,              # Document version
+    "effective_date": str,       # ISO format date
+    "expiry_date": str,          # For time-limited guidance
+    "regulatory_body": str,      # FDA, EMA, ICH, etc.
+    "compliance_areas": list,    # ["21_cfr_11", "gamp5", "ich_q9"]
+    "validation_status": str,    # draft, approved, obsolete
+    "change_control_id": str,    # Link to change management
+    "author": str,               # Document author
+    "approver": str,             # Regulatory approver
+    "keywords": list,            # Searchable terms
+    "relevance_score": float,    # Pre-computed relevance
+    "last_accessed": str,        # For usage tracking
+    "access_count": int,         # Usage metrics
+    "checksum": str              # Data integrity verification
+}
+```
+
+### Regulatory Considerations
+
+#### GAMP-5 Compliance Requirements
+1. **Software Categorization**: ChromaDB integration is Category 4 (configured software)
+2. **Validation Approach**: Risk-based testing of configuration and customization
+3. **Documentation**: Maintain configuration specifications and test protocols
+4. **Change Control**: Version control for schema and configuration changes
+
+#### ALCOA+ Principles for Vector Databases
+1. **Attributable**: All operations linked to system user with correlation IDs
+2. **Legible**: Human-readable metadata alongside embeddings
+3. **Contemporaneous**: Real-time logging of all vector operations
+4. **Original**: Preserve source documents alongside embeddings
+5. **Accurate**: Checksums for data integrity verification
+6. **Complete**: Full document lineage and transformation history
+7. **Consistent**: Standardized metadata schema across collections
+8. **Enduring**: Persistent storage with backup strategies
+9. **Available**: Indexed for regulatory inspection access
+
+#### 21 CFR Part 11 Specific Requirements
+```python
+class CFRCompliantVectorStore:
+    def __init__(self, base_store):
+        self.base_store = base_store
+        self.audit_trail = ImmutableAuditTrail()
+        
+    def add_document(self, doc, metadata):
+        # Generate unique ID with timestamp
+        doc_id = f"{uuid4()}_{datetime.now(UTC).isoformat()}"
+        
+        # Add CFR-required metadata
+        metadata.update({
+            "cfr_11_compliant": True,
+            "electronic_signature": self._generate_signature(doc),
+            "creation_timestamp": datetime.now(UTC).isoformat(),
+            "system_user": "automated_ingestion",
+            "validation_status": "pending_review"
+        })
+        
+        # Log to immutable audit trail
+        self.audit_trail.log({
+            "action": "document_addition",
+            "document_id": doc_id,
+            "timestamp": datetime.now(UTC),
+            "metadata": metadata
+        })
+        
+        # Store document
+        return self.base_store.add(doc, metadata, doc_id)
+```
+
+### Recommended Libraries and Versions
+
+Based on project compatibility and pharmaceutical requirements:
+
+```python
+# Core dependencies (already in project)
+llama-index>=0.12.0
+pydantic>=2.0
+openai>=1.0
+
+# ChromaDB specific
+chromadb>=0.4.22  # Latest stable with persistence support
+llama-index-vector-stores-chroma>=0.3.0  # LlamaIndex integration
+
+# Supporting libraries
+numpy>=1.24.0  # For vector operations
+tiktoken>=0.5.0  # For token counting in chunks
+pandas>=2.0.0  # For bulk data operations
+
+# Monitoring (optional but recommended)
+opentelemetry-api>=1.20.0  # For distributed tracing
+prometheus-client>=0.19.0  # For metrics collection
+```
+
+### Migration Strategy from Mock to ChromaDB
+
+#### Phase 1: Parallel Implementation (Week 1)
+1. Implement ChromaDB alongside existing mock system
+2. Add feature flag to switch between implementations
+3. Validate ChromaDB results match mock expectations
+
+#### Phase 2: Data Ingestion (Week 2)
+1. Ingest pharmaceutical documents into ChromaDB
+2. Implement document processing pipeline
+3. Validate retrieval accuracy and performance
+
+#### Phase 3: Integration Testing (Week 3)
+1. Run parallel tests comparing mock vs ChromaDB
+2. Validate event system compatibility
+3. Performance benchmarking and optimization
+
+#### Phase 4: Cutover (Week 4)
+1. Switch default to ChromaDB implementation
+2. Maintain mock as fallback for testing
+3. Complete validation documentation
+
+### Performance Optimization Strategies
+
+1. **Batch Processing**: Ingest documents in batches of 100-500
+2. **Async Operations**: Use thread pool for ChromaDB blocking calls
+3. **Caching Strategy**: Cache frequently accessed documents in memory
+4. **Index Optimization**: Create separate indices for different query patterns
+5. **Connection Pooling**: Reuse ChromaDB client connections
+
+### Error Recovery Patterns
+
+```python
+class ResilientChromaDBProvider:
+    async def search_with_recovery(self, query, max_retries=3):
+        """Search with automatic recovery - no fallbacks."""
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                # Attempt search
+                results = await self._perform_search(query)
+                
+                # Validate results
+                if self._validate_results(results):
+                    return results
+                else:
+                    raise ValueError("Invalid search results")
+                    
+            except Exception as e:
+                last_error = e
+                self.logger.error(
+                    f"Search attempt {attempt + 1} failed: {str(e)}"
+                )
+                
+                if attempt < max_retries - 1:
+                    # Exponential backoff
+                    await asyncio.sleep(2 ** attempt)
+                    
+                    # Reconnect to ChromaDB if needed
+                    if self._is_connection_error(e):
+                        await self._reconnect()
+        
+        # All attempts failed - raise with full context
+        raise RuntimeError(
+            f"ChromaDB search failed after {max_retries} attempts. "
+            f"Last error: {str(last_error)}. "
+            f"Query: {query}. "
+            f"No fallback available - manual intervention required."
+        )
+```
+
+### Testing Approach
+
+1. **Unit Tests**: Test individual ChromaDB operations
+2. **Integration Tests**: Validate event system compatibility
+3. **Performance Tests**: Benchmark retrieval speed and accuracy
+4. **Compliance Tests**: Verify audit trail completeness
+5. **Load Tests**: Validate system under pharmaceutical workload
+
+This comprehensive research provides the foundation for implementing ChromaDB integration in the context_provider.py agent while maintaining pharmaceutical compliance and system reliability.
