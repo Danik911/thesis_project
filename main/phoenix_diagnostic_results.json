@@ -1,0 +1,72 @@
+{
+  "test_timestamp": 1753998015.1544023,
+  "phoenix_host": "localhost",
+  "phoenix_port": 6006,
+  "base_url": "http://localhost:6006",
+  "test_results": {
+    "Basic HTTP Connectivity": {
+      "success": true,
+      "details": {
+        "status_code": 200,
+        "response_time_ms": 10.871,
+        "content_length": 2722,
+        "headers": {
+          "date": "Thu, 31 Jul 2025 21:40:14 GMT",
+          "server": "uvicorn",
+          "content-type": "text/html; charset=utf-8",
+          "x-colab-notebook-cache-control": "no-cache",
+          "x-phoenix-server-version": "11.13.2",
+          "vary": "Accept-Encoding",
+          "content-encoding": "gzip",
+          "Transfer-Encoding": "chunked"
+        }
+      },
+      "timestamp": 1753998015.1693282
+    },
+    "GraphQL Endpoint Access": {
+      "success": true,
+      "details": {
+        "status_code": 200,
+        "response_time_ms": 8.719,
+        "content_type": "application/json",
+        "graphql_schema_accessible": true,
+        "query_type": "Query"
+      },
+      "timestamp": 1753998016.1822443
+    },
+    "Trace Data Access": {
+      "success": false,
+      "details": {
+        "error": "Trace data access test failed: argument of type 'NoneType' is not iterable",
+        "error_type": "TypeError",
+        "recommendation": "Check Phoenix service health and restart if necessary"
+      },
+      "timestamp": 1753998017.205606
+    },
+    "OTLP Traces Endpoint": {
+      "success": true,
+      "details": {
+        "status_code": 415,
+        "response_time_ms": 4.77,
+        "headers": {
+          "date": "Thu, 31 Jul 2025 21:40:18 GMT",
+          "server": "uvicorn",
+          "content-type": "text/plain; charset=utf-8",
+          "x-colab-notebook-cache-control": "no-cache",
+          "x-phoenix-server-version": "11.13.2",
+          "vary": "Accept-Encoding",
+          "content-encoding": "gzip",
+          "Transfer-Encoding": "chunked"
+        },
+        "endpoint_accessible": true
+      },
+      "timestamp": 1753998018.2120495
+    }
+  },
+  "recommendations": [
+    "\ud83d\udea8 CRITICAL: Unknown GraphQL error accessing trace data",
+    "\ud83d\udccb ACTION: Check Phoenix server logs for detailed error information",
+    "\ud83d\udd04 SOLUTION: Restart Phoenix server and monitor initialization"
+  ],
+  "overall_success": false
+}

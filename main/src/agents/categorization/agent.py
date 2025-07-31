@@ -1,15 +1,53 @@
 """
-GAMP-5 Categorization Agent - LlamaIndex Implementation
+GAMP-5 Categorization Agent - Enhanced with Pydantic Structured Output
 
-This module provides the GAMP-5 categorization agent following LlamaIndex patterns.
-Uses FunctionAgent with LLM intelligence and categorization tools.
+This module provides the GAMP-5 categorization agent with multiple approaches:
+1. NEW: Pydantic structured output using LLMTextCompletionProgram (RECOMMENDED)
+2. Legacy: FunctionAgent with LLM intelligence and categorization tools
 
 Key Features:
+- Pydantic structured output eliminates fragile regex parsing
+- LLMTextCompletionProgram for guaranteed structured responses
 - Comprehensive error handling with explicit failure reporting
 - Confidence scoring with configurable thresholds
 - Full audit trail for regulatory compliance (21 CFR Part 11)
-- Multiple categorization approaches (LLM chat or structured output)
 - Support for all GAMP categories (1, 3, 4, 5)
+- NO FALLBACK LOGIC - all errors must be addressed explicitly
+
+Implementation Approaches:
+
+1. RECOMMENDED: Pydantic Structured Output
+   - Uses LLMTextCompletionProgram with GAMPCategorizationResult model
+   - Eliminates regex parsing fragility
+   - Guaranteed structured responses
+   - Better error handling and validation
+
+2. Legacy: FunctionAgent Approach
+   - Uses FunctionAgent with tools for analysis
+   - Still uses regex parsing for response extraction
+   - Maintained for backward compatibility
+
+Usage Examples:
+
+    # RECOMMENDED: High-level convenience function
+    result = categorize_urs_document(
+        urs_content="Software for managing laboratory data...",
+        document_name="LIMS_URS_v1.2.pdf",
+        use_structured_output=True  # Default
+    )
+    
+    # Direct Pydantic structured output
+    from llama_index.llms.openai import OpenAI
+    llm = OpenAI(model="gpt-4o-mini")
+    result = categorize_with_pydantic_structured_output(
+        llm=llm,
+        urs_content=urs_content,
+        document_name="document.urs"
+    )
+    
+    # Legacy FunctionAgent approach (deprecated)
+    agent = create_gamp_categorization_agent(use_structured_output=False)
+    result = categorize_with_structured_output(agent, urs_content, "document.urs")
 
 Error Handling:
 - Explicit detection of parsing, logic, ambiguity, and confidence errors
@@ -18,19 +56,7 @@ Error Handling:
 - Integration ready for Phoenix observability
 - NO FALLBACK LOGIC - all errors must be addressed explicitly
 
-Usage:
-    # Create agent with error handling
-    agent = create_gamp_categorization_agent(
-        enable_error_handling=True,
-        confidence_threshold=0.60
-    )
-    
-    # Categorize with structured output (recommended)
-    result = categorize_with_structured_output(
-        agent, urs_content, "document.urs"
-    )
-
-Based on the synthesis document and following the project's established agent patterns.
+Based on Task 2 implementation replacing fragile regex parsing with Pydantic structured output.
 """
 
 from datetime import UTC, datetime
@@ -39,7 +65,9 @@ from uuid import uuid4
 
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
+from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.core.tools import FunctionTool
+from pydantic import BaseModel, Field
 from src.agents.categorization.error_handler import (
     CategorizationError,
     CategorizationErrorHandler,
@@ -48,6 +76,33 @@ from src.agents.categorization.error_handler import (
 )
 from src.core.events import GAMPCategorizationEvent, GAMPCategory
 from src.monitoring.phoenix_config import instrument_tool
+
+
+class GAMPCategorizationResult(BaseModel):
+    """Pydantic model for structured GAMP categorization output."""
+
+    category: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="GAMP category number (must be 1, 3, 4, or 5)"
+    )
+    confidence_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score between 0.0 and 1.0"
+    )
+    reasoning: str = Field(
+        ...,
+        min_length=10,
+        description="Brief justification for the categorization decision"
+    )
+
+    def validate_category(self) -> None:
+        """Validate that category is a valid GAMP category (1, 3, 4, or 5)."""
+        if self.category not in [1, 3, 4, 5]:
+            raise ValueError(f"Invalid GAMP category: {self.category}. Must be 1, 3, 4, or 5.")
 
 
 class CategorizationAgentWrapper:
@@ -377,7 +432,8 @@ def create_gamp_categorization_agent(
     llm: LLM = None,
     enable_error_handling: bool = True,
     confidence_threshold: float = 0.50,  # Reduced from 0.60 to 0.50 for more realistic threshold
-    verbose: bool = False
+    verbose: bool = False,
+    use_structured_output: bool = True  # New parameter to enable Pydantic structured output
 ) -> FunctionAgent:
     """
     Create GAMP-5 categorization agent with enhanced error handling.
@@ -390,9 +446,15 @@ def create_gamp_categorization_agent(
         enable_error_handling: Whether to enable comprehensive error handling
         confidence_threshold: Minimum confidence threshold for categorization
         verbose: Enable verbose logging
+        use_structured_output: Whether to use Pydantic structured output (recommended)
         
     Returns:
         FunctionAgent configured for GAMP-5 categorization with error handling
+        
+    Note:
+        When use_structured_output=True, the agent should be used with
+        categorize_with_pydantic_structured_output() instead of the regular
+        categorize_with_error_handling() function for optimal results.
     """
     if llm is None:
         # Use OpenAI LLM without JSON mode for FunctionAgent compatibility
@@ -624,6 +686,141 @@ def _estimate_validation_effort(category: GAMPCategory) -> str:
     return effort_mapping.get(category, "Effort unknown - expert consultation required")
 
 
+def categorize_with_pydantic_structured_output(
+    llm: LLM,
+    urs_content: str,
+    document_name: str = "Unknown",
+    error_handler: CategorizationErrorHandler | None = None
+) -> GAMPCategorizationEvent:
+    """
+    Categorize URS using LLMTextCompletionProgram with Pydantic structured output.
+    
+    This approach uses LLMTextCompletionProgram for guaranteed structured output,
+    replacing fragile regex parsing with Pydantic models.
+    
+    Args:
+        llm: LLM instance to use for categorization
+        urs_content: URS document content
+        document_name: Document identifier for logging
+        error_handler: Optional error handler for compliance tracking
+        
+    Returns:
+        GAMPCategorizationEvent with categorization result
+    """
+    if error_handler is None:
+        error_handler = CategorizationErrorHandler()
+
+    try:
+        # Create structured output program with Pydantic model
+        categorization_prompt = """You are a GAMP-5 categorization expert. Analyze the URS document content and determine the appropriate GAMP category.
+
+GAMP Categories:
+- Category 1: Infrastructure software (operating systems, databases, middleware)
+- Category 3: Non-configured products (COTS software used as supplied)
+- Category 4: Configured products (commercial software requiring user configuration)
+- Category 5: Custom applications (bespoke software development)
+
+IMPORTANT INSTRUCTIONS:
+1. First analyze the URS content for key indicators
+2. Apply GAMP-5 decision logic systematically
+3. Provide a confidence score based on evidence strength
+4. Give a clear reasoning for your decision
+
+CRITICAL: You must respond with a valid JSON object matching the required schema.
+
+URS Content to analyze:
+{urs_content}
+
+Provide your analysis in the required structured format."""
+
+        program = LLMTextCompletionProgram.from_defaults(
+            output_cls=GAMPCategorizationResult,
+            llm=llm,
+            prompt_template_str=categorization_prompt
+        )
+
+        # Execute structured categorization
+        error_handler.logger.info(f"Starting structured categorization for document: {document_name}")
+        result = program(urs_content=urs_content)
+
+        # Validate the result
+        result.validate_category()
+
+        error_handler.logger.info(f"Structured categorization completed: Category {result.category}, Confidence {result.confidence_score:.2f}")
+
+        # Check confidence threshold
+        if result.confidence_score < error_handler.confidence_threshold:
+            error = CategorizationError(
+                error_type=ErrorType.CONFIDENCE_ERROR,
+                severity=ErrorSeverity.MEDIUM,
+                message=f"Confidence {result.confidence_score:.2f} below threshold {error_handler.confidence_threshold}",
+                details={
+                    "confidence": result.confidence_score,
+                    "threshold": error_handler.confidence_threshold,
+                    "category": result.category
+                }
+            )
+            return error_handler._create_human_consultation_request(error, document_name)
+
+        # Create successful categorization event
+        gamp_category = GAMPCategory(result.category)
+
+        # Build comprehensive justification
+        justification_parts = [
+            f"GAMP-5 Structured Categorization Analysis for '{document_name}'",
+            "",
+            f"CLASSIFICATION: Category {result.category}",
+            f"CONFIDENCE: {result.confidence_score:.1%}",
+            "",
+            "ANALYSIS METHOD: LLMTextCompletionProgram with Pydantic structured output",
+            "",
+            "REASONING:",
+            result.reasoning,
+            "",
+            f"CATEGORY DESCRIPTION: {_get_category_description(gamp_category)}",
+            f"VALIDATION APPROACH: {_get_validation_approach(gamp_category)}"
+        ]
+
+        requires_review = result.confidence_score < 0.85
+        if requires_review:
+            justification_parts.extend([
+                "",
+                "⚠️ HUMAN REVIEW REQUIRED",
+                "Confidence below threshold (85%) - Expert review needed for regulatory compliance"
+            ])
+
+        # Build comprehensive risk assessment
+        risk_assessment = {
+            "category": result.category,
+            "category_description": _get_category_description(gamp_category),
+            "validation_approach": _get_validation_approach(gamp_category),
+            "confidence_score": result.confidence_score,
+            "evidence_strength": "Structured LLM analysis",
+            "requires_human_review": requires_review,
+            "regulatory_impact": _assess_regulatory_impact(gamp_category),
+            "validation_effort": _estimate_validation_effort(gamp_category),
+            "analysis_method": "LLMTextCompletionProgram with Pydantic validation"
+        }
+
+        return GAMPCategorizationEvent(
+            gamp_category=gamp_category,
+            confidence_score=result.confidence_score,
+            justification="\n".join(justification_parts),
+            risk_assessment=risk_assessment,
+            event_id=uuid4(),
+            timestamp=datetime.now(UTC),
+            categorized_by="GAMPCategorizationAgent-Structured",
+            review_required=requires_review
+        )
+
+    except Exception as e:
+        # NO FALLBACKS: Handle errors explicitly with full diagnostic information
+        error_handler.logger.error(f"Structured categorization failed: {e!s}")
+        error_handler.logger.error(f"Input that caused error: {urs_content[:200]}...")
+        # Re-raise with comprehensive diagnostic information
+        raise RuntimeError(f"Structured categorization failed for document '{document_name}': {e!s}") from e
+
+
 def categorize_with_structured_output(
     agent: FunctionAgent,
     urs_content: str,
@@ -817,3 +1014,70 @@ async def categorize_with_error_handling(
         {"message": "Unexpected error in categorization loop", "last_error": str(last_error)},
         document_name
     )
+
+
+def categorize_urs_document(
+    urs_content: str,
+    document_name: str = "Unknown",
+    llm: LLM = None,
+    use_structured_output: bool = True,
+    confidence_threshold: float = 0.50,
+    verbose: bool = False
+) -> GAMPCategorizationEvent:
+    """
+    High-level convenience function for URS document categorization.
+    
+    This function provides a simple interface for categorizing URS documents
+    with either the new Pydantic structured output approach (recommended)
+    or the legacy FunctionAgent approach.
+    
+    Args:
+        urs_content: URS document content to categorize
+        document_name: Document identifier for logging and traceability
+        llm: Optional LLM instance (uses default if not provided)
+        use_structured_output: Use Pydantic structured output (recommended: True)
+        confidence_threshold: Minimum confidence threshold for categorization
+        verbose: Enable verbose logging
+        
+    Returns:
+        GAMPCategorizationEvent with categorization results
+        
+    Example:
+        # Recommended approach with structured output
+        result = categorize_urs_document(
+            urs_content="Software for managing laboratory data...",
+            document_name="LIMS_URS_v1.2.pdf",
+            use_structured_output=True
+        )
+    """
+    if llm is None:
+        from llama_index.llms.openai import OpenAI
+        llm = OpenAI(
+            model="gpt-4o-mini",
+            temperature=0.1,
+            max_tokens=2000
+        )
+
+    # Create error handler for compliance tracking
+    error_handler = CategorizationErrorHandler(
+        confidence_threshold=confidence_threshold,
+        verbose=verbose
+    )
+
+    if use_structured_output:
+        # Use new Pydantic structured output approach (recommended)
+        return categorize_with_pydantic_structured_output(
+            llm=llm,
+            urs_content=urs_content,
+            document_name=document_name,
+            error_handler=error_handler
+        )
+    # Use legacy FunctionAgent approach (deprecated)
+    agent = create_gamp_categorization_agent(
+        llm=llm,
+        enable_error_handling=True,
+        confidence_threshold=confidence_threshold,
+        verbose=verbose,
+        use_structured_output=False
+    )
+    return categorize_with_structured_output(agent, urs_content, document_name)

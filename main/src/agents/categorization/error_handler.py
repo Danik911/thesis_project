@@ -1,16 +1,17 @@
 """
-Error handling and fallback strategy for GAMP-5 categorization.
+Explicit error handling for GAMP-5 categorization - NO FALLBACKS.
 
-This module provides comprehensive error handling, fallback mechanisms, and audit logging
+This module provides comprehensive error handling with explicit failure reporting
 for the GAMP-5 categorization agent. Integrates with LlamaIndex native error handling
 and prepares for Phoenix observability.
 
 Key Features:
 - Multiple error type detection (parsing, logic, ambiguity)
-- Conservative fallback to Category 5
+- Explicit failure reporting with full diagnostic information (NO FALLBACKS)
 - Comprehensive audit trail generation
 - LlamaIndex event-based tracking
 - Phoenix observability preparation
+- Pharmaceutical compliance with regulatory requirements
 """
 
 import logging
@@ -57,7 +58,7 @@ class CategorizationError:
     details: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     stack_trace: str | None = None
-    recovery_action: str = "Fallback to Category 5"
+    recovery_action: str = "Explicit failure with diagnostic information"
 
 
 @dataclass
@@ -142,7 +143,7 @@ class CategorizationErrorHandler:
             document_name: Document identifier
             
         Returns:
-            GAMPCategorizationEvent with Category 5 fallback
+            GAMPCategorizationEvent with human consultation request or explicit failure
         """
         error = CategorizationError(
             error_type=ErrorType.PARSING_ERROR,
@@ -178,7 +179,7 @@ class CategorizationErrorHandler:
             partial_results: Any partial results before failure
             
         Returns:
-            GAMPCategorizationEvent with Category 5 fallback
+            GAMPCategorizationEvent with human consultation request or explicit failure
         """
         error = CategorizationError(
             error_type=ErrorType.LOGIC_ERROR,
@@ -303,7 +304,7 @@ class CategorizationErrorHandler:
             document_name: Document identifier
             
         Returns:
-            GAMPCategorizationEvent with Category 5 fallback
+            GAMPCategorizationEvent with human consultation request or explicit failure
         """
         error = CategorizationError(
             error_type=ErrorType.LLM_ERROR,
@@ -455,7 +456,7 @@ class CategorizationErrorHandler:
             confidence: The confidence score that was below threshold
             
         Returns:
-            GAMPCategorizationEvent with SME consultation result or Category 5 fallback
+            GAMPCategorizationEvent with SME consultation result or explicit failure with diagnostics
         """
         try:
             # Import SME agent here to avoid circular imports
@@ -513,7 +514,7 @@ class CategorizationErrorHandler:
                     # SME provided high-confidence recommendation
                     sme_data = sme_result.result_data
 
-                    # Extract SME recommendation or default to Category 5
+                    # Extract SME recommendation or fail explicitly with diagnostic information
                     recommended_category = self._extract_sme_category_recommendation(sme_data)
 
                     self.logger.info(
@@ -553,20 +554,21 @@ class CategorizationErrorHandler:
                         categorized_by="SMEAgent",
                         review_required=False  # SME consultation removes manual review requirement
                     )
-                # SME consultation failed or low confidence - fall back to Category 5
-                self.logger.warning(
-                    f"⚠️ SME CONSULTATION INCONCLUSIVE - Falling back to Category 5 "
-                    f"(SME success: {sme_result.success}, SME confidence: {sme_result.result_data.get('confidence_score', 0):.1%})"
+                # SME consultation failed or low confidence - NO FALLBACKS available
+                self.logger.error(
+                    f"❌ SME CONSULTATION INCONCLUSIVE - NO automated fallbacks available "
+                    f"(SME success: {sme_result.success}, SME confidence: {sme_result.result_data.get('confidence_score', 0):.1%}). "
+                    f"Explicit failure required per regulatory compliance."
                 )
 
             except Exception as sme_error:
                 self.logger.error(f"SME consultation execution failed: {sme_error}")
-                # Continue to Category 5 fallback below
+                # NO FALLBACKS - will raise explicit error below
 
         except ImportError as e:
-            self.logger.error(f"SME agent import failed: {e}. Falling back to Category 5")
+            self.logger.error(f"SME agent import failed: {e}. NO fallbacks available per regulatory requirements")
         except Exception as e:
-            self.logger.error(f"SME consultation setup failed: {e}. Falling back to Category 5")
+            self.logger.error(f"SME consultation setup failed: {e}. NO fallbacks available per regulatory requirements")
 
         # NO FALLBACKS - Throw error when SME consultation fails
         raise RuntimeError(
@@ -616,8 +618,13 @@ class CategorizationErrorHandler:
                 if category in [1, 3, 4, 5]:
                     return category
 
-        # Default to Category 5 if no clear recommendation
-        return 5
+        # NO FALLBACKS: Explicit failure when no clear SME recommendation available
+        raise RuntimeError(
+            f"SME consultation failed to provide clear GAMP category recommendation. "
+            f"SME response data: {sme_data}. "
+            f"No automated fallback available - human intervention required for regulatory compliance. "
+            f"All categorization decisions must be explicit and traceable per pharmaceutical validation requirements."
+        )
 
 
     def _generate_consultation_justification(
