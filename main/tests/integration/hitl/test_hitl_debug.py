@@ -18,7 +18,7 @@ def run_hitl_tests():
     # Run the specific test file
     cmd = [
         sys.executable, '-m', 'pytest', 
-        'tests/core/test_human_consultation.py', 
+        'tests/unit/core/test_human_consultation.py', 
         '-v', '--tb=short', '--no-header'
     ]
     

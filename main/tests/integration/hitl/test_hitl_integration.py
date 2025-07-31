@@ -22,7 +22,7 @@ def run_pytest_tests():
     # Run the test with detailed output
     cmd = [
         sys.executable, '-m', 'pytest', 
-        'tests/core/test_human_consultation.py', 
+        'tests/unit/core/test_human_consultation.py', 
         '-v', '--tb=short', '--no-header', '--disable-warnings'
     ]
     

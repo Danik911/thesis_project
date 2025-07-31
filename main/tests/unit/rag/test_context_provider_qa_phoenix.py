@@ -32,7 +32,7 @@ from main.src.agents.parallel.context_provider import (
 )
 from main.src.core.events import AgentRequestEvent
 from main.src.monitoring.phoenix_config import setup_phoenix, shutdown_phoenix
-from main.tests.rag.fda_part11_qa_questions import FDApart11Questions
+from main.tests.regulatory.fda_part11.fda_part11_qa_questions import FDApart11Questions
 
 
 class ContextProviderQATest:
@@ -415,7 +415,7 @@ async def main():
         print()
         
         # Save results to file
-        results_file = Path("/home/anteb/thesis_project/main/tests/rag/qa_test_results.json")
+        results_file = Path("/home/anteb/thesis_project/main/tests/test_data/qa_test_results.json")
         with open(results_file, 'w') as f:
             json.dump(summary, f, indent=2, default=str)
         print(f"💾 Detailed results saved to: {results_file}")

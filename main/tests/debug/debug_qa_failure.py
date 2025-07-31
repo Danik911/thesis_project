@@ -23,7 +23,7 @@ from main.src.agents.parallel.context_provider import (
     create_context_provider_agent
 )
 from main.src.core.events import AgentRequestEvent
-from main.tests.rag.fda_part11_qa_questions import FDApart11Questions
+from main.tests.regulatory.fda_part11.fda_part11_qa_questions import FDApart11Questions
 
 
 async def debug_single_question():
