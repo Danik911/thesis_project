@@ -46,6 +46,7 @@ from src.agents.categorization.error_handler import (
     ErrorType,
 )
 from src.core.events import GAMPCategorizationEvent, GAMPCategory
+from src.monitoring.phoenix_config import instrument_tool
 
 
 class CategorizationAgentWrapper:
@@ -64,6 +65,7 @@ class CategorizationAgentWrapper:
         return getattr(self.agent, name)
 
 
+@instrument_tool("gamp_analysis", "categorization", critical=True, regulatory_impact=True)
 def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     """
     Analyze URS content for GAMP categorization indicators.
@@ -201,6 +203,7 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     }
 
 
+@instrument_tool("confidence_scoring", "categorization", critical=True, compliance_required=True)
 def confidence_tool(category_data: dict[str, Any]) -> float:
     """
     Calculate confidence score for categorization decision.

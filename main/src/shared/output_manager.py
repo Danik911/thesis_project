@@ -73,8 +73,13 @@ class SafeOutputManager:
                 self.truncated = True
             return False
 
-        # Safe to print
-        print(str_message, **kwargs)
+        # Safe to print with Unicode error handling
+        try:
+            print(str_message, **kwargs)
+        except UnicodeEncodeError:
+            # Fallback: Replace problematic Unicode characters
+            safe_message = str_message.encode('ascii', errors='replace').decode('ascii')
+            print(safe_message, **kwargs)
         self.total_output_size += message_size
         return True
 

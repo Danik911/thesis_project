@@ -1,0 +1,25 @@
+User Requirements Specification for Pharmaceutical Manufacturing System
+
+GAMP Category: Category 5 (Custom Application)
+Risk Level: High
+
+System Description:
+This system requires computerized control of critical manufacturing processes
+including temperature monitoring, batch recording, and quality assurance.
+
+Functional Requirements:
+1. User authentication required
+2. Data integrity (ALCOA+ compliance)
+3. Audit trail logging
+4. Electronic signatures
+5. Temperature control system
+6. Batch tracking and recording
+7. Quality control integration
+8. Regulatory compliance reporting
+
+Testing Requirements:
+- Full validation testing required
+- Performance testing required  
+- Security testing required
+- User acceptance testing
+- Regulatory compliance verification

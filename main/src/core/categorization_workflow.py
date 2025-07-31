@@ -25,6 +25,7 @@ from src.core.events import (
     URSIngestionEvent,
     WorkflowCompletionEvent,
 )
+from src.monitoring.phoenix_config import enhance_workflow_span_with_compliance, get_current_span
 
 
 class GAMPCategorizationWorkflow(Workflow):
@@ -133,6 +134,20 @@ class GAMPCategorizationWorkflow(Workflow):
             "author": author,
             "content_length": len(urs_content)
         })
+        
+        # Enhance current span with pharmaceutical compliance metadata
+        current_span = get_current_span()
+        if current_span:
+            enhance_workflow_span_with_compliance(
+                current_span,
+                workflow_type="gamp5_categorization",
+                document_name=document_name,
+                document_version=document_version,
+                workflow_phase="start",
+                pharmaceutical_process="categorization",
+                gamp_category_determination=True,
+                regulatory_significance="critical"
+            )
 
         # Log workflow start
         self.logger.info(f"Starting GAMP-5 categorization for document: {document_name}")

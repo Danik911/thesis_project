@@ -39,6 +39,7 @@ from .events import (
     WorkflowCompletionEvent,
 )
 from .human_consultation import HumanConsultationManager
+from src.monitoring.phoenix_config import enhance_workflow_span_with_compliance, get_current_span
 
 
 class UnifiedTestGenerationWorkflow(Workflow):
@@ -143,6 +144,18 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # Store session information in context
         await ctx.set("workflow_session_id", self._workflow_session_id)
         await ctx.set("workflow_start_time", self._workflow_start_time)
+        
+        # Enhance current span with pharmaceutical compliance metadata
+        current_span = get_current_span()
+        if current_span:
+            enhance_workflow_span_with_compliance(
+                current_span,
+                workflow_type="unified_test_generation",
+                session_id=self._workflow_session_id,
+                workflow_phase="initialization",
+                pharmaceutical_process="test_generation",
+                gamp_category_determination=True
+            )
 
         # Extract URS content from StartEvent
         urs_content = ev.get("urs_content", "")

@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
+from src.monitoring.phoenix_config import instrument_tool
 
 
 class ConfidenceLevel(Enum):
@@ -467,6 +468,7 @@ class EnhancedConfidenceScorer:
 
 
 # Backward compatibility wrapper
+@instrument_tool("enhanced_confidence", "categorization", critical=True, audit_required=True)
 def enhanced_confidence_tool(category_data: dict[str, Any]) -> dict[str, Any]:
     """
     Enhanced confidence tool with full traceability.

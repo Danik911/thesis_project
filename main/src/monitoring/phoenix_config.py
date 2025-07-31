@@ -7,8 +7,10 @@ and production deployment with full GAMP-5 compliance tracing.
 
 import logging
 import os
+import time
 from dataclasses import dataclass, field
-from typing import Any
+from functools import wraps
+from typing import Any, Callable
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -61,6 +63,17 @@ class PhoenixConfig:
     enable_local_ui: bool = field(
         default_factory=lambda: os.getenv("PHOENIX_ENABLE_LOCAL_UI", "true").lower() == "true"
     )
+    
+    # Enhanced instrumentation flags
+    enable_openai_instrumentation: bool = field(
+        default_factory=lambda: os.getenv("PHOENIX_ENABLE_OPENAI", "true").lower() == "true"
+    )
+    enable_chromadb_instrumentation: bool = field(
+        default_factory=lambda: os.getenv("PHOENIX_ENABLE_CHROMADB", "true").lower() == "true"
+    )
+    enable_tool_instrumentation: bool = field(
+        default_factory=lambda: os.getenv("PHOENIX_ENABLE_TOOLS", "true").lower() == "true"
+    )
 
     # Performance settings
     batch_span_processor_max_queue_size: int = 2048
@@ -94,6 +107,10 @@ class PhoenixConfig:
             "phoenix.experiment": self.experiment_name,
             "compliance.gamp5.enabled": self.enable_compliance_attributes,
             "compliance.pii.filtering": self.enable_pii_filtering,
+            # Enhanced instrumentation capabilities
+            "instrumentation.openai.enabled": self.enable_openai_instrumentation,
+            "instrumentation.chromadb.enabled": self.enable_chromadb_instrumentation,
+            "instrumentation.tools.enabled": self.enable_tool_instrumentation,
         }
 
 
@@ -132,6 +149,14 @@ class PhoenixManager:
 
             # Instrument LlamaIndex
             self._instrument_llamaindex()
+            
+            # Instrument OpenAI if enabled
+            if self.config.enable_openai_instrumentation:
+                self._instrument_openai()
+            
+            # Instrument ChromaDB if enabled
+            if self.config.enable_chromadb_instrumentation:
+                self._instrument_chromadb()
 
             self._initialized = True
             logger.info(
@@ -268,6 +293,43 @@ class PhoenixManager:
             logger.warning(f"❌ Fallback instrumentation also failed: {fallback_error}")
             logger.info("Continuing without Phoenix instrumentation")
 
+    def _instrument_openai(self) -> None:
+        """Instrument OpenAI client for comprehensive LLM call tracing."""
+        try:
+            from openinference.instrumentation.openai import OpenAIInstrumentor
+            
+            # Instrument OpenAI with our tracer provider
+            OpenAIInstrumentor().instrument(tracer_provider=self.tracer_provider)
+            
+            logger.info("✅ OpenAI instrumented successfully - LLM calls will be traced with token usage and costs")
+            
+        except ImportError:
+            logger.warning(
+                "OpenAI instrumentation not available. "
+                "Install with: pip install openinference-instrumentation-openai"
+            )
+        except Exception as e:
+            logger.error(f"OpenAI instrumentation failed: {e}")
+
+    def _instrument_chromadb(self) -> None:
+        """Instrument ChromaDB for vector database operation tracing."""
+        try:
+            from openinference.instrumentation.chromadb import ChromaDBInstrumentor
+            
+            # Instrument ChromaDB with our tracer provider
+            ChromaDBInstrumentor().instrument(tracer_provider=self.tracer_provider)
+            
+            logger.info("✅ ChromaDB instrumented successfully - Vector operations will be traced")
+            
+        except ImportError:
+            logger.warning(
+                "ChromaDB instrumentation not available. "
+                "Install with: pip install openinference-instrumentation-chromadb"
+            )
+        except Exception as e:
+            logger.error(f"ChromaDB instrumentation failed: {e}")
+            logger.info("Continuing without ChromaDB instrumentation")
+
     def get_tracer(self, name: str) -> trace.Tracer:
         """
         Get a tracer instance for manual instrumentation.
@@ -279,6 +341,36 @@ class PhoenixManager:
             Tracer instance
         """
         return trace.get_tracer(name)
+
+    def create_tool_span(self, tracer: trace.Tracer, tool_name: str, **attributes):
+        """
+        Create a span for tool execution with pharmaceutical compliance attributes.
+        
+        Args:
+            tracer: OpenTelemetry tracer instance
+            tool_name: Name of the tool being executed
+            **attributes: Additional span attributes
+            
+        Returns:
+            Context manager for the span
+        """
+        span_name = f"tool.{tool_name}"
+        span = tracer.start_span(span_name)
+        
+        # Set standard tool attributes
+        span.set_attribute("tool.name", tool_name)
+        span.set_attribute("tool.type", "pharmaceutical_agent_tool")
+        
+        # Add GAMP-5 compliance attributes if enabled
+        if self.config.enable_compliance_attributes:
+            span.set_attribute("compliance.gamp5.category", "tool_execution")
+            span.set_attribute("compliance.audit.required", True)
+        
+        # Add custom attributes
+        for key, value in attributes.items():
+            span.set_attribute(f"tool.{key}", value)
+        
+        return span
 
     def shutdown(self, timeout_seconds: int = 5) -> None:
         """
@@ -319,6 +411,284 @@ class PhoenixManager:
         # Mark as not initialized but don't clear session completely
         self._initialized = False
         logger.info("Phoenix shutdown complete - UI should remain accessible")
+
+
+def instrument_tool(tool_name: str, tool_category: str = "agent_tool", **span_attributes):
+    """
+    Decorator to instrument pharmaceutical agent tools with Phoenix observability.
+    
+    This decorator creates detailed spans for tool execution with pharmaceutical
+    compliance attributes, performance metrics, and error tracking.
+    
+    Args:
+        tool_name: Name of the tool being instrumented
+        tool_category: Category of tool (e.g., 'categorization', 'confidence', 'analysis')
+        **span_attributes: Additional span attributes to add
+        
+    Usage:
+        @instrument_tool("gamp_analysis", "categorization", critical=True)
+        def gamp_analysis_tool(urs_content: str) -> dict:
+            return analyze_urs(urs_content)
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            # Get global Phoenix manager and tracer
+            phoenix_manager = get_phoenix_manager()
+            if not phoenix_manager or not phoenix_manager._initialized:
+                # If Phoenix not initialized, run function without instrumentation
+                return func(*args, **kwargs)
+            
+            tracer = phoenix_manager.get_tracer("pharmaceutical_tools")
+            
+            # Create tool span with enhanced attributes
+            span_name = f"tool.{tool_category}.{tool_name}"
+            with tracer.start_as_current_span(span_name) as span:
+                try:
+                    # Set standard tool attributes
+                    span.set_attribute("tool.name", tool_name)
+                    span.set_attribute("tool.category", tool_category)
+                    span.set_attribute("tool.type", "pharmaceutical_agent_tool")
+                    span.set_attribute("tool.function", func.__name__)
+                    
+                    # Add GAMP-5 compliance attributes if enabled
+                    if phoenix_manager.config.enable_compliance_attributes:
+                        span.set_attribute("compliance.gamp5.category", "tool_execution")
+                        span.set_attribute("compliance.audit.required", True)
+                        span.set_attribute("compliance.pharmaceutical.tool", True)
+                    
+                    # Add custom span attributes
+                    for key, value in span_attributes.items():
+                        span.set_attribute(f"tool.{key}", value)
+                    
+                    # Add input parameter information (be careful with PII)
+                    if phoenix_manager.config.enable_pii_filtering:
+                        # Only add non-sensitive parameter counts and types
+                        span.set_attribute("tool.input.arg_count", len(args))
+                        span.set_attribute("tool.input.kwarg_count", len(kwargs))
+                        
+                        # Add parameter types (not values for PII safety)
+                        arg_types = [type(arg).__name__ for arg in args]
+                        span.set_attribute("tool.input.arg_types", str(arg_types))
+                    
+                    # Record execution start time
+                    start_time = time.time()
+                    
+                    # Execute the tool function
+                    result = func(*args, **kwargs)
+                    
+                    # Record execution metrics
+                    execution_time = time.time() - start_time
+                    span.set_attribute("tool.execution.duration_ms", execution_time * 1000)
+                    span.set_attribute("tool.execution.status", "success")
+                    
+                    # Add result information (safe for PII)
+                    if result is not None:
+                        span.set_attribute("tool.output.type", type(result).__name__)
+                        if isinstance(result, dict):
+                            span.set_attribute("tool.output.dict_keys", list(result.keys()))
+                        elif isinstance(result, (list, tuple)):
+                            span.set_attribute("tool.output.collection_size", len(result))
+                    
+                    # Set span status as OK
+                    span.set_status(trace.Status(trace.StatusCode.OK))
+                    
+                    return result
+                    
+                except Exception as e:
+                    # Record error information
+                    execution_time = time.time() - start_time
+                    span.set_attribute("tool.execution.duration_ms", execution_time * 1000)
+                    span.set_attribute("tool.execution.status", "error")
+                    span.set_attribute("tool.error.type", type(e).__name__)
+                    span.set_attribute("tool.error.message", str(e))
+                    
+                    # Set span status as error
+                    span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                    
+                    # Re-raise the exception
+                    raise
+        
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            # Get global Phoenix manager and tracer
+            phoenix_manager = get_phoenix_manager()
+            if not phoenix_manager or not phoenix_manager._initialized:
+                # If Phoenix not initialized, run function without instrumentation
+                return await func(*args, **kwargs)
+            
+            tracer = phoenix_manager.get_tracer("pharmaceutical_tools")
+            
+            # Create tool span with enhanced attributes
+            span_name = f"tool.{tool_category}.{tool_name}"
+            with tracer.start_as_current_span(span_name) as span:
+                try:
+                    # Set standard tool attributes
+                    span.set_attribute("tool.name", tool_name)
+                    span.set_attribute("tool.category", tool_category)
+                    span.set_attribute("tool.type", "pharmaceutical_agent_tool")
+                    span.set_attribute("tool.function", func.__name__)
+                    span.set_attribute("tool.async", True)
+                    
+                    # Add GAMP-5 compliance attributes if enabled
+                    if phoenix_manager.config.enable_compliance_attributes:
+                        span.set_attribute("compliance.gamp5.category", "tool_execution")
+                        span.set_attribute("compliance.audit.required", True)
+                        span.set_attribute("compliance.pharmaceutical.tool", True)
+                    
+                    # Add custom span attributes
+                    for key, value in span_attributes.items():
+                        span.set_attribute(f"tool.{key}", value)
+                    
+                    # Add input parameter information (be careful with PII)
+                    if phoenix_manager.config.enable_pii_filtering:
+                        # Only add non-sensitive parameter counts and types
+                        span.set_attribute("tool.input.arg_count", len(args))
+                        span.set_attribute("tool.input.kwarg_count", len(kwargs))
+                        
+                        # Add parameter types (not values for PII safety)
+                        arg_types = [type(arg).__name__ for arg in args]
+                        span.set_attribute("tool.input.arg_types", str(arg_types))
+                    
+                    # Record execution start time
+                    start_time = time.time()
+                    
+                    # Execute the tool function
+                    result = await func(*args, **kwargs)
+                    
+                    # Record execution metrics
+                    execution_time = time.time() - start_time
+                    span.set_attribute("tool.execution.duration_ms", execution_time * 1000)
+                    span.set_attribute("tool.execution.status", "success")
+                    
+                    # Add result information (safe for PII)
+                    if result is not None:
+                        span.set_attribute("tool.output.type", type(result).__name__)
+                        if isinstance(result, dict):
+                            span.set_attribute("tool.output.dict_keys", list(result.keys()))
+                        elif isinstance(result, (list, tuple)):
+                            span.set_attribute("tool.output.collection_size", len(result))
+                    
+                    # Set span status as OK
+                    span.set_status(trace.Status(trace.StatusCode.OK))
+                    
+                    return result
+                    
+                except Exception as e:
+                    # Record error information
+                    execution_time = time.time() - start_time
+                    span.set_attribute("tool.execution.duration_ms", execution_time * 1000)
+                    span.set_attribute("tool.execution.status", "error")
+                    span.set_attribute("tool.error.type", type(e).__name__)
+                    span.set_attribute("tool.error.message", str(e))
+                    
+                    # Set span status as error
+                    span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                    
+                    # Re-raise the exception
+                    raise
+        
+        # Return appropriate wrapper based on function type
+        if hasattr(func, '__code__') and func.__code__.co_flags & 0x80:  # CO_COROUTINE
+            return async_wrapper
+        else:
+            return sync_wrapper
+    
+    return decorator
+
+
+def enhance_workflow_span_with_compliance(span, workflow_type: str = "general", **metadata):
+    """
+    Enhance workflow spans with pharmaceutical compliance attributes.
+    
+    This function adds comprehensive GAMP-5 and pharmaceutical validation
+    attributes to workflow spans for regulatory compliance and audit trails.
+    
+    Args:
+        span: OpenTelemetry span to enhance
+        workflow_type: Type of workflow (categorization, planning, unified, etc.)
+        **metadata: Additional metadata to include
+    """
+    if not span:
+        return
+    
+    try:
+        # Core pharmaceutical compliance attributes
+        span.set_attribute("workflow.type", workflow_type)
+        span.set_attribute("workflow.pharmaceutical.compliant", True)
+        
+        # GAMP-5 specific attributes
+        span.set_attribute("compliance.gamp5.workflow", True)
+        span.set_attribute("compliance.gamp5.validation_required", True)
+        span.set_attribute("compliance.gamp5.category", "workflow_execution")
+        
+        # Regulatory compliance attributes
+        span.set_attribute("compliance.21cfr_part11.applicable", True)
+        span.set_attribute("compliance.alcoa_plus.principles", True)
+        
+        # Audit trail attributes
+        span.set_attribute("audit.pharmaceutical.workflow", True)
+        span.set_attribute("audit.trail.required", True)
+        span.set_attribute("audit.regulatory.significance", "high")
+        
+        # Data integrity attributes (ALCOA+)
+        span.set_attribute("data_integrity.attributable", True)
+        span.set_attribute("data_integrity.legible", True)
+        span.set_attribute("data_integrity.contemporaneous", True)
+        span.set_attribute("data_integrity.original", True)
+        span.set_attribute("data_integrity.accurate", True)
+        span.set_attribute("data_integrity.complete", True)
+        span.set_attribute("data_integrity.consistent", True)
+        span.set_attribute("data_integrity.enduring", True)
+        span.set_attribute("data_integrity.available", True)
+        
+        # Process attributes
+        span.set_attribute("process.validation.category", "automated")
+        span.set_attribute("process.pharmaceutical.test_generation", True)
+        span.set_attribute("process.quality.assurance", True)
+        
+        # Add custom metadata
+        for key, value in metadata.items():
+            if isinstance(value, (str, int, float, bool)):
+                span.set_attribute(f"workflow.{key}", value)
+            else:
+                span.set_attribute(f"workflow.{key}", str(value))
+                
+    except Exception as e:
+        # Don't fail if span enhancement fails
+        logger.warning(f"Failed to enhance workflow span with compliance attributes: {e}")
+
+
+def get_workflow_tracer(workflow_name: str):
+    """
+    Get a tracer specifically configured for workflow instrumentation.
+    
+    Args:
+        workflow_name: Name of the workflow (e.g., 'unified_workflow', 'categorization')
+    
+    Returns:
+        Tracer configured for workflow instrumentation
+    """
+    phoenix_manager = get_phoenix_manager()
+    if phoenix_manager and phoenix_manager._initialized:
+        return phoenix_manager.get_tracer(f"pharmaceutical_workflows.{workflow_name}")
+    return None
+
+
+def get_current_span():
+    """
+    Get the current active span from OpenTelemetry context.
+    
+    Returns:
+        Current span or None if no active span
+    """
+    try:
+        from opentelemetry.trace import get_current_span as otel_get_current_span
+        return otel_get_current_span()
+    except ImportError:
+        return None
 
 
 # Singleton instance

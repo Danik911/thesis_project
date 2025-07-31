@@ -48,6 +48,7 @@ from src.core.events import (
 from .coordination import AgentCoordinationConfig, AgentCoordinator, CoordinationResult
 from .gamp_strategies import get_category_strategy, validate_strategy_compatibility
 from .strategy_generator import GAMPStrategyGenerator, TestStrategyResult
+from src.monitoring.phoenix_config import instrument_tool
 
 
 class PlannerAgent:
@@ -439,6 +440,7 @@ class PlannerAgent:
 
     def _create_strategy_analysis_tool(self) -> FunctionTool:
         """Create strategy analysis tool."""
+        @instrument_tool("strategy_analysis", "planning", critical=True, gamp_category=True)
         def analyze_strategy(test_count: int, gamp_category: int, risk_level: str) -> dict[str, Any]:
             """
             Analyze test strategy for completeness and optimization opportunities.
