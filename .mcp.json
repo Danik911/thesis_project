@@ -1,9 +1,52 @@
 {
 	"mcpServers": {
+		"sequential-thinking": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"@modelcontextprotocol/server-sequential-thinking"
+			]
+		},
+		"filesystem": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"@modelcontextprotocol/server-filesystem",
+				"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project"
+			]
+		},
+		"context7": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"@upstash/context7-mcp"
+			]
+		},
+		"puppeteer": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"puppeteer-mcp-server"
+			]
+		},
 		"perplexity-mcp": {
 			"type": "stdio",
-			"command": "npx",
+			"command": "cmd",
 			"args": [
+				"/c",
+				"npx",
 				"-y",
 				"perplexity-mcp"
 			],
@@ -12,27 +55,12 @@
 				"PERPLEXITY_MODEL": "sonar"
 			}
 		},
-		"filesystem": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"-y",
-				"@modelcontextprotocol/server-filesystem",
-				"/home/anteb"
-			]
-		},
-		"sequential-thinking": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"-y",
-				"@modelcontextprotocol/server-sequential-thinking"
-			]
-		},
 		"one-search-mcp": {
 			"type": "stdio",
-			"command": "npx",
+			"command": "cmd",
 			"args": [
+				"/c",
+				"npx",
 				"-y",
 				"one-search-mcp"
 			],
@@ -44,29 +72,18 @@
 				"FIRECRAWL_API_URL": "https://api.firecrawl.dev"
 			}
 		},
-		"context7": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"-y",
-				"@upstash/context7-mcp"
-			]
-		},
 		"task-master-ai": {
 			"type": "stdio",
-			"command": "npx",
+			"command": "cmd",
 			"args": [
+				"/c",
+				"npx",
 				"-y",
 				"task-master-ai"
 			],
 			"env": {
 				"PERPLEXITY_API_KEY": "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"
 			}
-		},
-		"puppeteer": {
-			"command": "npx",
-			"args": ["-y", "puppeteer-mcp-server"],
-			"env": {}
-		  }
+		}
 	}
 }
