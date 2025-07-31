@@ -1,43 +1,37 @@
 # Task ID: 1
-# Title: Event System Foundation
-# Status: done
+# Title: Fix Categorization Agent Fallback Violations
+# Status: pending
 # Dependencies: None
 # Priority: high
-# Description: Create comprehensive event definitions for all agent communications with Pydantic validation
+# Description: Remove ALL fallback logic from categorization agent that violates NO FALLBACKS policy
 # Details:
-Implement URSIngestionEvent, GAMPCategorizationEvent, PlanningEvent, AgentRequestEvent, AgentResultEvent, ConsultationRequiredEvent, UserDecisionEvent, TestGenerationEvent, ValidationEvent, and ErrorRecoveryEvent classes with proper validation and error handling. These events form the foundation of the entire workflow system.
+The categorization agent currently has prohibited fallback logic that hides real failures by automatically assigning Category 5 and artificial confidence scores. Must remove all fallback mechanisms (lines 309-316, 378-379, 769-770, system prompt line 478) and replace with explicit failure modes that expose full diagnostic information. This is CRITICAL as it blocks all downstream work.
 
 # Test Strategy:
-Unit tests for event validation, serialization/deserialization, and error cases
+For each fallback mechanism removed, verify that: (1) no automatic Category 5 assignment occurs on exceptions, (2) no artificial confidence values (0.3 or 0.7) are injected, (3) the system prompt contains no fallback instructions, and (4) explicit error or failure information is surfaced in logs or outputs. Add unit and integration tests to confirm that failures are not masked and that diagnostic information is available.
 
 # Subtasks:
-## 1. Define Base Event Model with Pydantic Validation [done]
+## 5. Remove automatic Category 5 fallback (lines 309-316) [pending]
 ### Dependencies: None
-### Description: Establish a reusable base event class using Pydantic's BaseModel, including common fields (e.g., event_id, timestamp, event_type) and foundational validation logic.
+### Description: Remove the error handler that returns Category 5 on any exception. Ensure that exceptions are surfaced explicitly and not masked by fallback categorization.
 ### Details:
-Create a BaseEvent class inheriting from pydantic.BaseModel. Include shared attributes such as event_id (UUID), timestamp (datetime), and event_type (str). Implement basic validation using type hints and, if needed, @field_validator for cross-field or custom logic. Ensure the base class provides a consistent interface for all event types.
+Locate and delete the code block (lines 309-316) that catches exceptions and returns Category 5. Replace with logic that surfaces the exception and provides diagnostic information without assigning a fallback category.
 
-## 2. Implement Specific Event Classes with Field-Level Validation [done]
+## 6. Remove artificial confidence injection (lines 378-379) [pending]
 ### Dependencies: None
-### Description: Create individual event classes (URSIngestionEvent, GAMPCategorizationEvent, PlanningEvent, AgentRequestEvent, AgentResultEvent, ConsultationRequiredEvent, UserDecisionEvent, TestGenerationEvent, ValidationEvent, ErrorRecoveryEvent) inheriting from the base event, each with their own fields and validation logic.
+### Description: Remove the code that returns a default confidence value of 0.3. Ensure that confidence is only set based on actual model output or explicit error reporting.
 ### Details:
-For each event type, define a subclass of BaseEvent. Specify all required and optional fields using Pydantic type annotations. Use @field_validator decorators to enforce constraints (e.g., non-empty strings, valid enums, positive numbers) as appropriate for each event's semantics. Document each class and its fields for clarity.
+Delete lines 378-379 where a default confidence of 0.3 is returned. Update logic to avoid assigning confidence unless it is derived from a valid categorization process.
 
-## 3. Add Custom Validation and Error Handling Logic [done]
+## 7. Remove default confidence on parse failure (lines 769-770) [pending]
 ### Dependencies: None
-### Description: Enhance event classes with custom validation methods and robust error handling to ensure data integrity and clear error reporting.
+### Description: Remove the code that assigns a default confidence of 0.7 on parse failure. Ensure parse failures are reported explicitly.
 ### Details:
-Implement custom @field_validator methods for complex validation rules (e.g., cross-field dependencies, conditional requirements). Ensure that all validation errors raise Pydantic's ValidationError with informative messages. Where necessary, override model methods to provide additional error context or normalization.
+Delete lines 769-770 where a default confidence of 0.7 is assigned on parse failure. Update error handling to surface parse errors without assigning fallback confidence.
 
-## 4. Implement Serialization and Deserialization Methods [done]
+## 8. Update system prompt to remove fallback instructions (line 478) [pending]
 ### Dependencies: None
-### Description: Provide methods for serializing event objects to JSON and deserializing from JSON, ensuring compatibility with the workflow system's communication protocols.
+### Description: Remove the instruction in the system prompt that directs the agent to assign Category 5 on low confidence.
 ### Details:
-Leverage Pydantic's .model_dump() and .model_validate_json() methods for serialization and deserialization. Add helper methods or classmethods as needed for custom encoding/decoding (e.g., handling datetime or enum fields). Ensure all event classes can be reliably converted to and from JSON representations.
-
-## 5. Document Event Definitions and Validation Contracts [done]
-### Dependencies: None
-### Description: Produce comprehensive documentation for all event classes, their fields, validation rules, and error handling behaviors to support maintainability and onboarding.
-### Details:
-Generate docstrings for each event class and field, describing expected data, validation logic, and error cases. Create a reference document (e.g., Markdown or Sphinx) summarizing all event types, their schemas, and usage examples. Ensure documentation is accessible to both developers and system integrators.
+Edit the system prompt at line 478 to eliminate any mention of assigning Category 5 as a fallback or on low confidence. Ensure the prompt reflects the NO FALLBACKS policy.
 

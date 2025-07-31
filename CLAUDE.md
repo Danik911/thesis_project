@@ -39,6 +39,8 @@ This file provides guidance to Claude Code when working with this thesis project
 
 **Thesis Project**: Multi-agent LLM system for pharmaceutical test generation (GAMP-5 compliant)
 **Management Framework**: Task-Master AI for project management and workflow tracking
+**Current Status**: MVP implementation (Tasks 1-9) - ~1 week timeline
+**Focus**: OQ test generation only, fix categorization agent issues
 
 ## 🤖 LLM Configuration
 
@@ -63,10 +65,15 @@ mcp__task-master-ai__research --query="..." --taskIds="X,Y"
 mcp__task-master-ai__get_tasks --status=pending
 ```
 
-### Pre-configured Tasks
-- **GAMP-5 implementation workflow** with enforced dependencies
-- **Detailed subtask tracking** for granular progress
-- **Compliance focus** (ALCOA+, 21 CFR Part 11)
+### Current MVP Tasks (9 tasks)
+- **Task 1**: Fix categorization agent fallback violations (CRITICAL)
+- **Task 2**: Implement Pydantic structured output (HIGH)
+- **Task 3**: Integrate context provider (HIGH)
+- **Task 4**: Test categorization fixes (HIGH)
+- **Task 5**: Implement OQ test generation agent (HIGH)
+- **Tasks 6-9**: Complete agents and integration (MEDIUM)
+
+**Implementation Plan**: [`main/docs/mvp_implementation_plan.md`](main/docs/mvp_implementation_plan.md)
 
 **📖 Full Documentation**: [Task-Master AI Guide](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
 
@@ -145,16 +152,22 @@ You have 6 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`
 ## 📂 Project Structure
 ```
 thesis_project/
-├── .taskmaster/                              # Task-Master AI (project management)
-├── PRPs/                                     # PRP Framework (technical specs)
+├── .taskmaster/                              # Task-Master AI (9 MVP tasks)
 ├── main/                                     # Main application
-│   ├── main.py                              # Main entry point
+│   ├── main.py                              # Current entry point
 │   ├── src/core/unified_workflow.py         # Master workflow orchestrator
-│   ├── docs/                                # All project documentation
-│   └── tests/                               # Comprehensive test suites
-├── test_generation/examples/scientific_writer/thesis/  # Legacy examples for reference
-└── .claude/agents/                          # Subagent specifications
+│   ├── src/agents/categorization/           # NEEDS FIXES (Task 1)
+│   ├── src/agents/parallel/                 # Context, SME, Research agents
+│   ├── docs/mvp_implementation_plan.md      # MVP roadmap
+│   └── tests/                               # Test suites
+├── .claude/agents/                          # Subagent specifications
+└── PRPs/                                    # Technical specs (reference)
 ```
+
+## 🚨 Critical Files for MVP
+- `main/src/agents/categorization/agent.py` - Remove fallback logic (Task 1)
+- `main/src/agents/parallel/context_provider.py` - Integration tool (Task 3)
+- `main/tests/test_data/gamp5_test_data/testing_data.md` - Test cases
 
 ## 🔗 Key References
 

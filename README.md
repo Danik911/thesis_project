@@ -79,18 +79,28 @@ cp .env.example .env
 # Use MCP tools: mcp__task-master-ai__* for task management
 ```
 
+### Current MVP Status
+
+⚠️ **Under Active Development** - MVP implementation in progress:
+
+**Completed**: Event system, Phoenix observability, human-in-loop consultation  
+**In Progress**: Categorization agent fixes, OQ test generation  
+**Next**: Full workflow integration and testing
+
+See [`main/docs/mvp_implementation_plan.md`](main/docs/mvp_implementation_plan.md) for detailed roadmap.
+
 ### Basic Usage
 
 ```bash
-# Run the test generation workflow
+# Current: Run unified workflow (basic functionality)
+python main/main.py
+
+# Future: Full test generation workflow
 python -m src.main --urs-file path/to/urs.txt
 
-# Interactive mode with Gradio UI
-python -m src.main --interactive
-
-# With monitoring
+# Interactive mode with monitoring
 python -m phoenix.server.main serve &
-python -m src.main --interactive --enable-monitoring
+python main/main.py --enable-monitoring
 ```
 
 ### Task Management (Claude Code)
@@ -117,11 +127,14 @@ mcp__task-master-ai__research --query="LlamaIndex workflow patterns" --taskIds="
 mcp__task-master-ai__set_task_status --id=1.1 --status=done
 ```
 
-**Pre-configured Tasks:**
-- 14 main tasks with dependencies following GAMP-5 implementation order
-- 19+ subtasks for detailed implementation tracking
-- Compliance-focused task breakdown (ALCOA+, 21 CFR Part 11)
-- Research integration for regulatory best practices
+**Current MVP Tasks (9 main tasks):**
+- **Phase 1**: Fix categorization agent fallback violations (Task 1)
+- **Phase 2**: Implement Pydantic structured output (Task 2)
+- **Phase 3**: Context provider integration (Task 3)
+- **Phase 4**: OQ test generation agent (Task 5)
+- **Phase 5**: Complete parallel agents and integration (Tasks 6-9)
+
+See task details: `mcp__task-master-ai__get_tasks`
 
 ## 🛠️ Development Workflow
 

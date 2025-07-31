@@ -1,8 +1,10 @@
 # Unified Test Generation Workflow - Usage Guide
 
+⚠️ **MVP Status**: This guide covers current basic functionality. See [`mvp_implementation_plan.md`](../mvp_implementation_plan.md) for development roadmap.
+
 ## Overview
 
-The Unified Test Generation Workflow compiles all existing pharmaceutical test generation components into one cohesive workflow system. This provides complete end-to-end pharmaceutical test generation from URS document input to comprehensive test strategy and agent coordination results.
+The Unified Test Generation Workflow provides basic pharmaceutical test generation components. **Under active development** transitioning to full MVP implementation with OQ test generation focus.
 
 ## Quick Start
 

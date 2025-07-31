@@ -1,12 +1,15 @@
 # Multi-Agent Pharmaceutical Workflow System - Documentation
 
 **Project**: GAMP-5 Pharmaceutical Test Generation System  
-**Version**: 1.0  
+**Version**: 1.1 - MVP Implementation  
 **Last Updated**: July 31, 2025  
+**Status**: ⚠️ **Under Active Development** - MVP in progress
 
 ## 🏥 **CRITICAL** Documentation Overview
 
-This documentation suite provides comprehensive guidance for using the pharmaceutical multi-agent workflow system with **6 specialized agents**, **Phoenix observability**, and **regulatory compliance** (GAMP-5, ALCOA+, 21 CFR Part 11).
+⚠️ **Current Status**: MVP implementation focusing on OQ test generation with 9 critical tasks.
+
+This documentation suite provides guidance for the pharmaceutical multi-agent workflow system transitioning from legacy implementation to **MVP architecture** with **Phoenix observability** and **regulatory compliance** (GAMP-5, ALCOA+, 21 CFR Part 11).
 
 ## 🚨 **ABSOLUTE RULE: NO FUCKING FALLBACKS** 🚨
 
@@ -20,60 +23,68 @@ All system components follow **ZERO TOLERANCE FOR FALLBACK LOGIC**:
 
 ## 📚 Documentation Suite
 
-### **1. Multi-Agent Workflow Guide** ⭐ **ESSENTIAL**
-**File**: `multi-agent-workflow-guide.md`  
-**Purpose**: Complete system documentation with architecture, agent descriptions, and workflow patterns  
-**Use When**: Learning the system, implementing new workflows, understanding pharmaceutical compliance requirements  
+### **1. MVP Implementation Plan** ⭐ **ESSENTIAL**
+**File**: [`mvp_implementation_plan.md`](../mvp_implementation_plan.md)  
+**Purpose**: Complete MVP roadmap with 9 tasks, timeline, and technical details  
+**Use When**: Understanding current development status, implementation priorities, daily task planning  
 
 **Key Sections**:
-- System Architecture & 6 Agent Descriptions
-- Workflow Coordination Patterns  
+- 9 Task breakdown with dependencies
+- Phase-based implementation (5-7 days)
+- Technical architecture decisions
+- Success metrics and risk mitigation
+
+---
+
+### **2. Multi-Agent Workflow Guide** 📖 **REFERENCE**
+**File**: `multi-agent-workflow-guide.md`  
+**Purpose**: Legacy system documentation (being transitioned to MVP)  
+**Use When**: Understanding completed components, future architecture reference  
+
+**Key Sections**:
+- System Architecture & Agent Descriptions
 - Phoenix Observability Integration
 - Pharmaceutical Compliance Requirements
-- Complete Usage Examples
 
 ---
 
-### **2. Quick Reference Card** 🚀 **DAILY USE**
-**File**: `quick-reference-card.md`  
-**Purpose**: Copy-paste ready commands and essential patterns  
-**Use When**: Daily workflow execution, quick agent calls, emergency situations  
+### **3. Quick Start Guide** 🚀 **DAILY USE**
+**File**: `QUICK_START_GUIDE.md`  
+**Purpose**: Current workflow execution with unified system  
+**Use When**: Running current implementation, testing basic functionality  
 
 **Key Features**:
-- Ready-to-use agent coordination commands
-- Agent sequence reference table
-- Pre-flight checklist
-- Emergency escalation patterns
+- Basic workflow execution (`python main/main.py`)
+- Phoenix monitoring setup
+- Current system capabilities
 
 ---
 
-### **3. Troubleshooting Guide** 🔧 **PROBLEM SOLVING**
-**File**: `troubleshooting-guide.md`  
-**Purpose**: Systematic issue resolution with diagnostic procedures  
-**Use When**: Agents not working, Phoenix failures, compliance violations, system errors  
+### **4. Phoenix Observability Guide** 🔍 **MONITORING**
+**File**: `PHOENIX_OBSERVABILITY_GUIDE.md`  
+**Purpose**: Monitoring and trace analysis for compliance  
+**Use When**: Setting up monitoring, validating system behavior, audit preparation  
 
 **Key Sections**:
-- Common Issues & Solutions (Agent Not Found, Context Missing, etc.)
-- Phoenix Observability Failures
-- Unicode Encoding Issues
-- Emergency Escalation Patterns
-- Diagnostic Information Collection
+- Phoenix setup and configuration
+- Trace analysis patterns
+- Compliance monitoring requirements
 
 ---
 
 ## 🎯 **Quick Start Workflow**
 
-### **For New Users**:
-1. **Read**: `multi-agent-workflow-guide.md` (System Overview)
-2. **Reference**: `quick-reference-card.md` (Commands & Patterns)
-3. **Execute**: First workflow using coordinated approach
-4. **Troubleshoot**: `troubleshooting-guide.md` (If issues arise)
+### **For MVP Development** (Current):
+1. **Read**: [`mvp_implementation_plan.md`](../mvp_implementation_plan.md) (Current priorities)
+2. **Execute**: `mcp__task-master-ai__next_task` (Get next MVP task)
+3. **Implement**: Focus on Task 1 (categorization agent fixes) first
+4. **Test**: Use `main/tests/test_data/gamp5_test_data/testing_data.md`
 
-### **For Daily Use**:
-1. **Pre-flight**: Check Phoenix, set PYTHONUTF8=1
-2. **Execute**: Use coordination commands from quick reference
-3. **Monitor**: Run monitor-agent after major workflows
-4. **Validate**: Ensure compliance attributes in all outputs
+### **For System Testing** (Current capabilities):
+1. **Setup**: `python -m phoenix.server.main serve &`
+2. **Execute**: `python main/main.py`
+3. **Monitor**: Check Phoenix UI at http://localhost:6006
+4. **Validate**: Basic workflow execution and event logging
 
 ---
 

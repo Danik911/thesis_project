@@ -889,3 +889,715 @@ The Task 3 (Planner Agent Workflow) implementation has been successfully validat
 **VALIDATION STATUS: ✅ APPROVED FOR PRODUCTION DEPLOYMENT**
 
 The Task 3 implementation successfully validates all pharmaceutical compliance requirements and demonstrates robust multi-agent coordination capabilities essential for the test generation workflow.
+
+## Test-Script Generation Agent Design Research (by context-collector)
+
+### Overview and Context Integration
+
+Based on the planner agent workflow implementation above, the **Test-Script Generation Agent** serves as the downstream component that receives `PlanningEvent` outputs and generates actual pharmaceutical test scripts. This agent must integrate seamlessly with the established multi-agent architecture while maintaining GAMP-5 compliance and regulatory requirements.
+
+**Integration Point with Planner Agent:**
+- **Input**: `PlanningEvent` containing test strategy, required test types, compliance requirements, and estimated test count
+- **Context Sources**: Results from Context Provider, SME Agents, and Research Agent coordination
+- **Output**: Structured test scripts (IQ/OQ/PQ/RTM) ready for execution and validation
+
+### LlamaIndex 0.12.0+ Code Generation Agent Patterns
+
+**Core Architecture for Test Generation:**
+
+**1. Structured Code Generation Workflow:**
+```python
+class TestScriptGeneratorWorkflow(Workflow):
+    """
+    Generates pharmaceutical test scripts based on planning context.
+    Implements GAMP-5 compliant test generation with ALCOA+ principles.
+    """
+    
+    @step
+    async def receive_planning_context(self, ctx: Context, ev: PlanningEvent) -> TestGenerationEvent:
+        """Receive planning context and initialize test generation."""
+        await ctx.store.set("test_strategy", ev.test_strategy)
+        await ctx.store.set("gamp_category", ev.gamp_category)
+        await ctx.store.set("compliance_requirements", ev.compliance_requirements)
+        
+        return TestGenerationEvent(
+            test_types=ev.required_test_types,
+            test_count=ev.estimated_test_count,
+            generation_context=ev.test_strategy
+        )
+    
+    @step
+    async def generate_test_scripts(self, ctx: Context, ev: TestGenerationEvent) -> List[TestScriptEvent]:
+        """Generate individual test scripts for each required test type."""
+        
+        # Parallel generation for different test types
+        script_events = []
+        for test_type in ev.test_types:
+            ctx.send_event(GenerateScriptEvent(
+                script_type=test_type,
+                context=ev.generation_context,
+                gamp_category=await ctx.store.get("gamp_category")
+            ))
+        
+        return script_events
+```
+
+**2. Multi-Agent Integration Pattern:**
+Based on the existing planner coordination, the test generation agent integrates with specialized agents:
+
+```python
+@step
+async def integrate_agent_context(self, ctx: Context, ev: AgentResultEvent) -> EnrichedContextEvent:
+    """Integrate results from Context Provider, SME, and Research agents."""
+    
+    # Context Provider Results: URS requirements, regulatory guidelines
+    context_data = ev.context_provider_results.get("documentation", {})
+    urs_requirements = context_data.get("functional_requirements", [])
+    
+    # SME Agent Results: Domain expertise and validation patterns
+    sme_expertise = ev.sme_results.get("domain_knowledge", {})
+    validation_patterns = sme_expertise.get("test_patterns", [])
+    
+    # Research Agent Results: Latest regulatory updates
+    regulatory_updates = ev.research_results.get("compliance_updates", {})
+    
+    return EnrichedContextEvent(
+        urs_requirements=urs_requirements,
+        validation_patterns=validation_patterns,
+        regulatory_context=regulatory_updates,
+        enrichment_timestamp=datetime.utcnow()
+    )
+```
+
+### Structured Output Generation with Pydantic Models
+
+**1. Test Script Data Models:**
+```python
+from pydantic import BaseModel, Field, validator
+from typing import List, Dict, Optional, Literal
+from enum import Enum
+
+class TestType(str, Enum):
+    INSTALLATION_QUALIFICATION = "IQ"
+    OPERATIONAL_QUALIFICATION = "OQ" 
+    PERFORMANCE_QUALIFICATION = "PQ"
+    REQUIREMENTS_TRACEABILITY_MATRIX = "RTM"
+
+class TestStep(BaseModel):
+    step_number: int = Field(..., description="Sequential step number")
+    procedure: str = Field(..., description="Detailed test procedure")
+    expected_result: str = Field(..., description="Expected outcome")
+    acceptance_criteria: str = Field(..., description="Pass/fail criteria")
+    data_recording: str = Field(..., description="Data to be recorded")
+    responsible_role: str = Field(..., description="Role responsible for execution")
+    alcoa_compliance: Dict[str, str] = Field(default_factory=dict, 
+                                           description="ALCOA+ compliance notes")
+
+class TestScript(BaseModel):
+    test_id: str = Field(..., description="Unique test identifier")
+    test_type: TestType = Field(..., description="Type of qualification test")
+    gamp_category: GAMPCategory = Field(..., description="Associated GAMP category")
+    title: str = Field(..., description="Test script title")
+    purpose: str = Field(..., description="Test purpose and objectives")
+    scope: str = Field(..., description="Test scope and boundaries")
+    prerequisites: List[str] = Field(default_factory=list, description="Required preconditions")
+    test_steps: List[TestStep] = Field(..., description="Detailed test procedures")
+    approval_signatures: List[str] = Field(default_factory=list, description="Required approvals")
+    traceability_matrix: Dict[str, List[str]] = Field(default_factory=dict, 
+                                                    description="Requirement traceability")
+    compliance_checklist: Dict[str, bool] = Field(default_factory=dict,
+                                                 description="Regulatory compliance validation")
+    
+    @validator('test_steps')
+    def validate_test_steps(cls, v):
+        if not v:
+            raise ValueError("Test script must contain at least one test step")
+        return v
+    
+    @validator('traceability_matrix')
+    def validate_traceability(cls, v, values):
+        """Ensure all requirements are traced to test steps."""
+        if values.get('test_type') == TestType.REQUIREMENTS_TRACEABILITY_MATRIX:
+            if not v:
+                raise ValueError("RTM must contain requirement traceability mappings")
+        return v
+```
+
+**2. Structured Output Generation:**
+```python
+from llama_index.core.llms.function_calling import FunctionCallingLLM
+from llama_index.core.tools import FunctionTool
+
+def generate_test_script_tool(
+    test_type: str,
+    gamp_category: str,
+    urs_requirements: List[str],
+    compliance_requirements: List[str]
+) -> TestScript:
+    """
+    Generate structured test script based on input parameters.
+    Uses Pydantic model validation to ensure compliance.
+    """
+    # Implementation details for script generation
+    pass
+
+# Integration with LlamaIndex FunctionAgent
+class TestGenerationAgent(FunctionAgent):
+    def __init__(self, llm: FunctionCallingLLM, **kwargs):
+        tools = [
+            FunctionTool.from_defaults(generate_test_script_tool),
+            FunctionTool.from_defaults(validate_test_compliance),
+            FunctionTool.from_defaults(generate_traceability_matrix)
+        ]
+        super().__init__(llm=llm, tools=tools, **kwargs)
+        
+    def generate_with_validation(self, planning_context: Dict) -> TestScript:
+        """Generate test script with automatic Pydantic validation."""
+        try:
+            response = self.run(f"Generate test script for: {planning_context}")
+            # Pydantic model validation happens automatically
+            return TestScript.model_validate_json(response)
+        except ValidationError as e:
+            # Handle validation errors and retry with corrections
+            return self._retry_with_corrections(e, planning_context)
+```
+
+### Pharmaceutical Test Types and Templates
+
+**1. Installation Qualification (IQ) Structure:**
+```python
+class IQTestScript(TestScript):
+    """Installation Qualification specific test script."""
+    
+    equipment_details: Dict[str, str] = Field(..., description="Equipment specifications")
+    installation_checklist: List[str] = Field(..., description="Installation verification items")
+    environmental_conditions: Dict[str, str] = Field(..., description="Environmental parameters")
+    utility_connections: List[str] = Field(..., description="Utility connection verification")
+    documentation_review: List[str] = Field(..., description="Required documentation")
+    
+    def generate_iq_template(self) -> Dict[str, Any]:
+        """Generate IQ-specific test template."""
+        return {
+            "test_categories": [
+                "Equipment delivery verification",
+                "Installation per manufacturer specifications", 
+                "Utility connections validation",
+                "Environmental conditions verification",
+                "Documentation completeness check",
+                "Personnel training confirmation"
+            ],
+            "acceptance_criteria": {
+                "installation": "Per manufacturer specifications",
+                "documentation": "100% complete and approved",
+                "environmental": "Within specified operating ranges"
+            }
+        }
+```
+
+**2. Operational Qualification (OQ) Structure:**
+```python
+class OQTestScript(TestScript):
+    """Operational Qualification specific test script."""
+    
+    functional_tests: List[Dict] = Field(..., description="Functional test scenarios")
+    operating_ranges: Dict[str, str] = Field(..., description="Operating parameter ranges")
+    alarm_tests: List[str] = Field(..., description="Alarm and alert testing")
+    interface_tests: List[str] = Field(..., description="System interface validation")
+    
+    def generate_oq_template(self) -> Dict[str, Any]:
+        """Generate OQ-specific test template."""
+        return {
+            "test_categories": [
+                "Functional operation verification",
+                "Operating range validation",
+                "Alarm and safety system testing",
+                "User interface functionality",
+                "Data integrity verification",
+                "System integration testing"
+            ],
+            "test_parameters": {
+                "normal_operation": "All functions within specifications",
+                "boundary_conditions": "Performance at operating limits",
+                "error_conditions": "Proper error handling and recovery"
+            }
+        }
+```
+
+**3. Performance Qualification (PQ) Structure:**
+```python
+class PQTestScript(TestScript):
+    """Performance Qualification specific test script."""
+    
+    performance_criteria: Dict[str, str] = Field(..., description="Performance benchmarks")
+    production_scenarios: List[str] = Field(..., description="Real-world test scenarios")
+    statistical_requirements: Dict[str, int] = Field(..., description="Statistical validation needs")
+    continuous_monitoring: List[str] = Field(..., description="Ongoing monitoring requirements")
+    
+    def generate_pq_template(self) -> Dict[str, Any]:
+        """Generate PQ-specific test template."""
+        return {
+            "test_categories": [
+                "Production simulation testing",
+                "Statistical process validation",
+                "Continuous operation verification",
+                "Performance consistency demonstration",
+                "Long-term stability assessment",
+                "Change control validation"
+            ],
+            "statistical_requirements": {
+                "sample_size": "Minimum 30 data points per parameter",
+                "confidence_level": "95% confidence interval",
+                "process_capability": "Cpk ≥ 1.33 for critical parameters"
+            }
+        }
+```
+
+**4. Requirements Traceability Matrix (RTM) Structure:**
+```python
+class RTMTestScript(TestScript):
+    """Requirements Traceability Matrix specific implementation."""
+    
+    requirement_mappings: Dict[str, List[str]] = Field(..., description="Requirement to test mappings")
+    coverage_analysis: Dict[str, float] = Field(..., description="Coverage percentages")
+    gap_analysis: List[str] = Field(default_factory=list, description="Identified gaps")
+    verification_methods: Dict[str, str] = Field(..., description="Verification approach per requirement")
+    
+    def generate_rtm_template(self) -> Dict[str, Any]:
+        """Generate RTM-specific template."""
+        return {
+            "traceability_categories": [
+                "User requirements to functional requirements",
+                "Functional requirements to design specifications", 
+                "Design specifications to test cases",
+                "Test cases to test results",
+                "Requirements to validation evidence"
+            ],
+            "coverage_requirements": {
+                "user_requirements": "100% coverage mandatory",
+                "functional_requirements": "100% coverage mandatory", 
+                "design_specifications": "95% minimum coverage",
+                "regulatory_requirements": "100% coverage mandatory"
+            }
+        }
+```
+
+### Context Requirements from Multi-Agent System
+
+**1. URS Requirements Context:**
+```python
+class URSContext(BaseModel):
+    """Context extracted from User Requirements Specification."""
+    
+    functional_requirements: List[str] = Field(..., description="Functional requirements list")
+    performance_requirements: Dict[str, str] = Field(..., description="Performance criteria")
+    interface_requirements: List[str] = Field(..., description="System interfaces")
+    regulatory_requirements: List[str] = Field(..., description="Compliance requirements")
+    user_requirements: List[str] = Field(..., description="User-level requirements")
+    
+    def extract_testable_requirements(self) -> List[TestableRequirement]:
+        """Extract requirements that can be directly tested."""
+        testable = []
+        for req in self.functional_requirements:
+            testable.append(TestableRequirement(
+                requirement_id=f"FR-{len(testable)+1:03d}",
+                description=req,
+                test_method="functional_test",
+                acceptance_criteria="As specified in URS",
+                trace_to_test_type=self._determine_test_type(req)
+            ))
+        return testable
+```
+
+**2. GAMP Categorization Context:**
+```python
+class GAMPContext(BaseModel):
+    """Context from GAMP-5 categorization agent."""
+    
+    gamp_category: GAMPCategory = Field(..., description="Determined GAMP category")
+    confidence_score: float = Field(..., description="Categorization confidence")
+    validation_rigor: str = Field(..., description="Required validation level")
+    test_types_required: List[TestType] = Field(..., description="Mandatory test types")
+    compliance_requirements: List[str] = Field(..., description="Compliance obligations")
+    
+    def get_test_generation_strategy(self) -> Dict[str, Any]:
+        """Get category-specific test generation strategy."""
+        strategies = {
+            GAMPCategory.CATEGORY_1: {
+                "focus": "installation_verification",
+                "test_depth": "minimal",
+                "documentation_level": "basic"
+            },
+            GAMPCategory.CATEGORY_4: {
+                "focus": "configuration_validation", 
+                "test_depth": "enhanced",
+                "documentation_level": "comprehensive"
+            },
+            GAMPCategory.CATEGORY_5: {
+                "focus": "custom_validation",
+                "test_depth": "full",
+                "documentation_level": "complete_lifecycle"
+            }
+        }
+        return strategies.get(self.gamp_category, strategies[GAMPCategory.CATEGORY_5])
+```
+
+**3. SME Agent Domain Expertise Context:**
+```python
+class SMEContext(BaseModel):
+    """Context from Subject Matter Expert agents."""
+    
+    domain_expertise: List[str] = Field(..., description="Areas of expertise")
+    validation_patterns: List[Dict] = Field(..., description="Proven validation approaches")
+    risk_assessments: List[str] = Field(..., description="Risk considerations")
+    best_practices: List[str] = Field(..., description="Industry best practices")
+    regulatory_insights: List[str] = Field(..., description="Regulatory guidance")
+    
+    def get_test_recommendations(self, test_type: TestType) -> List[str]:
+        """Get SME recommendations for specific test type."""
+        recommendations = {
+            TestType.INSTALLATION_QUALIFICATION: [
+                "Verify all equipment tags and labels",
+                "Document all utility connections and specifications",
+                "Confirm environmental monitoring placement",
+                "Validate spare parts inventory completeness"
+            ],
+            TestType.OPERATIONAL_QUALIFICATION: [
+                "Test all operating modes and conditions",
+                "Validate alarm setpoints and responses", 
+                "Verify data integrity throughout operation",
+                "Test emergency shutdown procedures"
+            ],
+            TestType.PERFORMANCE_QUALIFICATION: [
+                "Demonstrate process consistency over time",
+                "Validate critical process parameters",
+                "Confirm product quality specifications",
+                "Establish ongoing monitoring requirements"
+            ]
+        }
+        return recommendations.get(test_type, [])
+```
+
+### Validation and Verification Requirements for Test Generation Agent
+
+**1. Agent Validation Framework:**
+```python
+class TestGenerationAgentValidator:
+    """Validates the test generation agent itself for pharmaceutical compliance."""
+    
+    def __init__(self):
+        self.validation_criteria = {
+            "accuracy": "Generated tests must accurately reflect requirements",
+            "completeness": "All requirements must be covered by generated tests",
+            "consistency": "Similar requirements should produce similar tests",
+            "compliance": "All tests must meet regulatory standards",
+            "traceability": "Full audit trail of generation decisions"
+        }
+    
+    async def validate_agent_performance(self, agent: TestGenerationAgent) -> ValidationReport:
+        """Comprehensive validation of agent performance."""
+        
+        # Test accuracy validation
+        accuracy_score = await self._test_requirement_accuracy(agent)
+        
+        # Coverage completeness validation  
+        coverage_score = await self._test_requirement_coverage(agent)
+        
+        # Regulatory compliance validation
+        compliance_score = await self._test_regulatory_compliance(agent)
+        
+        # Consistency validation across similar inputs
+        consistency_score = await self._test_output_consistency(agent)
+        
+        return ValidationReport(
+            accuracy=accuracy_score,
+            coverage=coverage_score,
+            compliance=compliance_score,
+            consistency=consistency_score,
+            overall_status="PASS" if all(s >= 0.9 for s in [accuracy_score, coverage_score, compliance_score, consistency_score]) else "FAIL",
+            recommendations=self._generate_improvement_recommendations()
+        )
+```
+
+**2. ALCOA+ Compliance for Agent Output:**
+```python
+class ALCOAComplianceValidator:
+    """Ensures test generation agent outputs meet ALCOA+ principles."""
+    
+    def validate_test_script_alcoa(self, test_script: TestScript) -> Dict[str, bool]:
+        """Validate test script against ALCOA+ principles."""
+        
+        return {
+            "attributable": self._check_attribution(test_script),
+            "legible": self._check_legibility(test_script),  
+            "contemporaneous": self._check_timestamps(test_script),
+            "original": self._check_originality(test_script),
+            "accurate": self._check_accuracy(test_script),
+            "complete": self._check_completeness(test_script),
+            "consistent": self._check_consistency(test_script),
+            "enduring": self._check_durability(test_script),
+            "available": self._check_availability(test_script)
+        }
+    
+    def _check_attribution(self, test_script: TestScript) -> bool:
+        """Ensure test script is attributable to generation agent and context."""
+        return all([
+            hasattr(test_script, 'generated_by'),
+            hasattr(test_script, 'generation_timestamp'),
+            hasattr(test_script, 'source_requirements'),
+            len(test_script.approval_signatures) > 0
+        ])
+```
+
+### Implementation Gotchas and Compatibility Issues
+
+**1. LlamaIndex-Specific Issues for Test Generation:**
+```python
+# CRITICAL: Never use JSON mode with FunctionAgent - causes infinite loops
+# ❌ WRONG:
+# llm = OpenAI(model="gpt-4o", response_format={"type": "json_object"})
+
+# ✅ CORRECT: Use Pydantic structured output instead
+from llama_index.core.program import LLMTextCompletionProgram
+
+test_generation_program = LLMTextCompletionProgram.from_defaults(
+    output_cls=TestScript,
+    llm=OpenAI(model="gpt-4o"),
+    prompt_template="Generate test script based on: {planning_context}"
+)
+```
+
+**2. Memory Management for Large Test Script Generation:**
+```python
+class ChunkedTestGeneration:
+    """Handle large test script generation with memory management."""
+    
+    async def generate_large_test_suite(
+        self, 
+        planning_context: PlanningEvent, 
+        max_tests_per_chunk: int = 10
+    ) -> List[TestScript]:
+        """Generate large test suites in manageable chunks."""
+        
+        total_tests = planning_context.estimated_test_count
+        chunks = math.ceil(total_tests / max_tests_per_chunk)
+        
+        all_scripts = []
+        for chunk_idx in range(chunks):
+            chunk_scripts = await self._generate_test_chunk(
+                planning_context, 
+                chunk_idx, 
+                max_tests_per_chunk
+            )
+            all_scripts.extend(chunk_scripts)
+            
+            # Memory cleanup between chunks
+            await self._cleanup_chunk_memory()
+            
+        return all_scripts
+```
+
+**3. Error Recovery and Fallback Strategies:**
+```python
+class TestGenerationErrorHandler:
+    """Robust error handling for test generation failures."""
+    
+    async def handle_generation_failure(
+        self, 
+        error: Exception, 
+        context: PlanningEvent
+    ) -> TestScript | None:
+        """Handle generation failures with fallback strategies."""
+        
+        if isinstance(error, ValidationError):
+            # Pydantic validation failed - retry with simplified template
+            return await self._retry_with_template(context, simplified=True)
+            
+        elif isinstance(error, TimeoutError):
+            # LLM timeout - break into smaller generation tasks
+            return await self._generate_with_chunking(context)
+            
+        elif isinstance(error, TokenLimitError):
+            # Context too large - summarize and retry
+            return await self._generate_with_summarized_context(context)
+            
+        else:
+            # Unknown error - trigger human consultation
+            await self._trigger_human_consultation(error, context)
+            return None
+```
+
+### Regulatory Considerations for AI-Generated Tests
+
+**1. Validation of AI-Generated Content:**
+```python
+class AITestValidationFramework:
+    """Framework for validating AI-generated pharmaceutical tests."""
+    
+    def __init__(self):
+        self.validation_layers = [
+            "syntactic_validation",  # Correct format and structure
+            "semantic_validation",   # Meaningful and logical content
+            "regulatory_validation", # Compliance with regulations
+            "expert_review",        # SME approval required
+            "traceability_validation" # Full audit trail
+        ]
+    
+    async def validate_generated_tests(
+        self, 
+        test_scripts: List[TestScript],
+        original_requirements: List[str]
+    ) -> ValidationResult:
+        """Multi-layer validation of AI-generated tests."""
+        
+        results = {}
+        for layer in self.validation_layers:
+            validator = getattr(self, f"_validate_{layer}")
+            results[layer] = await validator(test_scripts, original_requirements)
+        
+        return ValidationResult(
+            validation_results=results,
+            overall_pass=all(results.values()),
+            recommendations=self._generate_validation_recommendations(results)
+        )
+```
+
+**2. Human-in-the-Loop Requirements:**
+```python
+class HumanValidationRequirements:
+    """Defines when human validation is required for generated tests."""
+    
+    MANDATORY_HUMAN_REVIEW = [
+        "GAMP Category 5 systems (custom applications)",
+        "Tests involving patient safety risks", 
+        "Novel or unprecedented test scenarios",
+        "Tests with low confidence scores (<0.8)",
+        "Regulatory submission critical tests"
+    ]
+    
+    def requires_human_validation(
+        self, 
+        test_script: TestScript, 
+        generation_context: PlanningEvent
+    ) -> bool:
+        """Determine if human validation is mandatory."""
+        
+        if generation_context.gamp_category == GAMPCategory.CATEGORY_5:
+            return True
+            
+        if any(risk in test_script.purpose.lower() for risk in ["safety", "critical", "patient"]):
+            return True
+            
+        if hasattr(generation_context, "confidence_score") and generation_context.confidence_score < 0.8:
+            return True
+            
+        return False
+```
+
+### Recommended Architecture for Test Generation Agent
+
+**1. Agent Architecture Overview:**
+```python
+class TestScriptGenerationAgent:
+    """
+    Comprehensive test script generation agent for pharmaceutical validation.
+    
+    Architecture Components:
+    - Planning Context Processor: Receives and processes PlanningEvent
+    - Multi-Agent Context Integrator: Combines results from Context Provider, SME, Research agents
+    - Template Engine: GAMP-category-specific test template generation
+    - Content Generator: LLM-powered test script content generation
+    - Validation Engine: Multi-layer validation and compliance checking
+    - Output Formatter: Structured output using Pydantic models
+    - Error Handler: Comprehensive error recovery and fallback strategies
+    - Audit Logger: Full traceability for regulatory compliance
+    """
+    
+    def __init__(
+        self,
+        llm: FunctionCallingLLM,
+        template_repository: TestTemplateRepository,
+        validation_engine: AITestValidationFramework,
+        audit_logger: ComplianceAuditLogger
+    ):
+        self.llm = llm
+        self.templates = template_repository
+        self.validator = validation_engine
+        self.audit = audit_logger
+        
+        self.workflow = TestScriptGeneratorWorkflow(
+            timeout=600,  # 10 minutes for complex test generation
+            verbose=True
+        )
+    
+    async def generate_test_suite(
+        self, 
+        planning_event: PlanningEvent,
+        agent_contexts: Dict[str, Any]
+    ) -> TestSuiteResult:
+        """Main entry point for test suite generation."""
+        
+        # Start audit trail
+        session_id = await self.audit.start_generation_session(planning_event)
+        
+        try:
+            # Process planning context
+            generation_context = await self._process_planning_context(
+                planning_event, agent_contexts
+            )
+            
+            # Generate test scripts using workflow
+            test_scripts = await self.workflow.run(
+                planning_context=generation_context,
+                session_id=session_id
+            )
+            
+            # Validate generated tests
+            validation_result = await self.validator.validate_generated_tests(
+                test_scripts, generation_context.requirements
+            )
+            
+            # Return comprehensive results
+            return TestSuiteResult(
+                test_scripts=test_scripts,
+                validation_result=validation_result,
+                generation_metadata={
+                    "session_id": session_id,
+                    "generation_timestamp": datetime.utcnow(),
+                    "agent_version": self.get_version(),
+                    "compliance_status": validation_result.overall_pass
+                },
+                audit_trail=await self.audit.get_session_log(session_id)
+            )
+            
+        except Exception as e:
+            await self.audit.log_error(session_id, e)
+            raise
+        finally:
+            await self.audit.close_session(session_id)
+```
+
+**2. Integration with Existing Planner Workflow:**
+```python
+# Extends the existing workflow from lines 222-337 above
+@step
+async def trigger_test_generation(
+    self, ctx: Context, ev: StopEvent
+) -> TestGenerationTriggerEvent:
+    """Trigger downstream test generation after successful planning."""
+    
+    planning_result = ev.result
+    agent_results = planning_result["agent_results"]
+    
+    return TestGenerationTriggerEvent(
+        planning_context=await ctx.store.get("test_strategy"),
+        agent_contexts={
+            "context_provider": agent_results.get("context_provider_results", {}),
+            "sme_agents": agent_results.get("sme_results", {}),
+            "research_agent": agent_results.get("research_results", {})
+        },
+        generation_priority="high" if planning_result["coordination_summary"]["failed_responses"] == 0 else "medium",
+        session_correlation_id=ctx.session_id
+    )
+```
+
+This comprehensive research and architectural design provides a robust foundation for implementing a GAMP-5 compliant pharmaceutical test generation agent that integrates seamlessly with the existing planner agent workflow while maintaining full regulatory compliance and audit trail requirements.

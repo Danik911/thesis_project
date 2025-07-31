@@ -1,11 +1,11 @@
 # Task ID: 6
-# Title: Test Generation Engine
+# Title: Complete SME Agent Implementation
 # Status: pending
 # Dependencies: 5
-# Priority: high
-# Description: Create test generation step with validation and GAMP-5 awareness
+# Priority: medium
+# Description: Implement the SME (Subject Matter Expert) agent for domain expertise
 # Details:
-Implement the core test script generation functionality that produces OQ test scripts based on agent outputs, GAMP category, and compliance requirements. Include traceability matrix generation and validation.
+Complete the partially implemented SME agent in main/src/agents/parallel/sme_agent.py. The agent should provide pharmaceutical domain expertise, validation patterns, and best practices. Must follow existing parallel agent patterns and integrate with the planner's coordination requests.
 
 # Test Strategy:
-Unit tests for test script generation, validation of GAMP-5 compliance, traceability matrix testing
+

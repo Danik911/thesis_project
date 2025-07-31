@@ -1,11 +1,11 @@
 # Task ID: 9
-# Title: Monitoring and Audit Trail
+# Title: End-to-End Workflow Testing with Phoenix
 # Status: pending
 # Dependencies: 8
 # Priority: medium
-# Description: Add monitoring and audit trail system
+# Description: Perform comprehensive integration testing of the complete workflow
 # Details:
-Implement Phoenix AI integration for tracing and observability, comprehensive audit trail logging for regulatory compliance, and monitoring dashboard for system health.
+Test the entire pharmaceutical test generation workflow end-to-end with all agents integrated. Validate Phoenix observability is capturing all events, traces, and metrics. Test with various URS documents including edge cases. Ensure compliance with GAMP-5, ALCOA+, and 21 CFR Part 11 requirements.
 
 # Test Strategy:
-Monitoring integration tests, audit trail completeness validation, dashboard functionality testing
+

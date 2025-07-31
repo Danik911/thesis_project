@@ -1,11 +1,11 @@
 # Task ID: 3
-# Title: Planner Agent Workflow
+# Title: Integrate Context Provider as Categorization Tool
 # Status: pending
 # Dependencies: 2
 # Priority: high
-# Description: Create planner agent workflow step for orchestrating test generation
+# Description: Add context_provider agent as a tool to boost categorization confidence
 # Details:
-Implement the orchestrator agent that plans test generation approach based on GAMP category. Creates planning context, determines test types needed, and coordinates parallel agent execution.
+Integrate the existing context_provider agent as a FunctionTool within the categorization agent. This will provide access to GAMP-5 regulatory knowledge base, precedent matching, and guidance validation. Expected confidence boost of +0.15 to +0.20. Implementation should query context provider after initial analysis to validate and enhance categorization decisions.
 
 # Test Strategy:
-Integration tests for planning logic, validation of test type determination based on GAMP category
+

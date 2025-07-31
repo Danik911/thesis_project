@@ -1,72 +1,11 @@
 # Task ID: 2
-# Title: GAMP-5 Categorization Agent
+# Title: Implement Pydantic Structured Output for Categorization
 # Status: pending
 # Dependencies: 1
 # Priority: high
-# Description: Implement GAMP-5 categorization step (CRITICAL - FIRST workflow step)
+# Description: Replace fragile regex parsing with Pydantic models for structured LLM output
 # Details:
-Create the critical first workflow step that analyzes URS documents to determine GAMP-5 software category (3, 4, or 5). This determines the validation rigor for the entire process. Must include error handling, fallback to Category 5 on uncertainty, and confidence scoring.
+Current categorization agent uses complex regex patterns (lines 740-805) to extract category and confidence from natural language. This is fragile and error-prone. Replace with Pydantic models using LLMTextCompletionProgram for guaranteed structured output. Must NOT use response_format json_object with FunctionAgent.
 
 # Test Strategy:
-Unit tests for categorization logic, integration tests with sample URS documents, validation of fallback behavior
-
-# Subtasks:
-## 1. Design GAMP-5 Categorization Logic [pending]
-### Dependencies: None
-### Description: Define and implement the core logic to analyze URS documents and determine the appropriate GAMP-5 software category (3, 4, or 5) based on software type, configuration, and risk profile.
-### Details:
-Study GAMP-5 guidelines to extract clear criteria for categories 3 (non-configurable), 4 (configurable), and 5 (customizable). Develop a rules-based or ML-driven approach to parse URS documents and map features to the correct category. Ensure the logic is modular for future updates.
-<info added on 2025-07-26T07:58:58.846Z>
-Scope reduced to foundational implementation:
-
-CURRENT SCOPE (Task 2.1):
-- Add Category 1 (Infrastructure) support to GAMPCategory enum in events.py
-- Implement core categorization rules engine based on synthesis document
-- Create basic confidence scoring algorithm 
-- Establish foundation patterns for future workflow integration
-
-DEFERRED TO FUTURE SUBTASKS:
-- Full LlamaIndex workflow implementation 
-- LlamaParse document processing integration
-- Complex multi-step workflow with multiple agents
-- Advanced document parsing and feature extraction
-
-This focused approach ensures manageable implementation while establishing solid foundation for the multi-agent categorization system. Next agent will continue with workflow integration based on detailed implementation plan.
-</info added on 2025-07-26T07:58:58.846Z>
-
-## 2. Implement Confidence Scoring Mechanism [pending]
-### Dependencies: 2.1
-### Description: Develop a system to assign a confidence score to each categorization decision, reflecting the certainty of the mapping between URS content and GAMP-5 category.
-### Details:
-Integrate a scoring algorithm that evaluates the strength and clarity of evidence in the URS for each category decision. Use heuristics, keyword matching, or ML model probabilities to generate a normalized confidence score (e.g., 0-1 or 0-100%). Document scoring rationale for traceability.
-
-## 3. Develop Error Handling and Fallback Strategy [pending]
-### Dependencies: 2.1, 2.2
-### Description: Implement robust error handling for parsing, logic failures, and ambiguous cases, ensuring fallback to Category 5 when uncertainty or errors are detected.
-### Details:
-Add exception handling for document parsing and categorization logic. Detect low-confidence or conflicting results and automatically assign Category 5 as a conservative default. Log all fallback events with reasons for auditability.
-
-## 4. Integrate Categorization Agent as Workflow Step [pending]
-### Dependencies: 2.1, 2.2, 2.3
-### Description: Package the categorization logic, confidence scoring, and error handling into a callable agent and integrate it as the first step in the overall workflow.
-### Details:
-Expose the agent via a defined interface (API or function) that accepts URS documents and returns category, confidence score, and error/fallback status. Ensure compatibility with downstream workflow steps and provide clear output schema.
-
-## 5. Document Processing Integration [pending]
-### Dependencies: 2.1
-### Description: Integrate LlamaParse for URS document processing and implement document analysis pipeline with text extraction, structure preservation, and chart/diagram extraction capabilities.
-### Details:
-Implement LlamaParse integration for processing complex URS PDF documents. Create document preprocessing pipeline with section identification, metadata extraction, and traceability support. Handle technical diagrams and charts extraction critical for categorization. Reference implementation plan in main/docs/tasks/task_2_gamp5_categorization_implementation_plan.md Phase 2.
-
-## 6. Workflow Integration [pending]
-### Dependencies: 2.1, 2.5
-### Description: Implement full LlamaIndex workflow integration with event-driven architecture, multi-step categorization process, and agent orchestration for complete categorization workflow.
-### Details:
-Create complete GAMPCategorizationWorkflow class using LlamaIndex Workflow patterns. Implement multi-step process: document processing → feature extraction → classification → validation. Integrate with existing event system and context management. Follow workflow pattern from test_generation/examples/scientific_writer/thesis/workflow.py. Reference implementation plan Phase 3.
-
-## 7. Advanced Features and Optimization [pending]
-### Dependencies: 2.1, 2.5, 2.6
-### Description: Implement performance optimization, advanced categorization features, and prepare for machine learning enhancement with caching, async processing, and multi-category detection.
-### Details:
-Add performance optimization with caching mechanisms and async processing for large document batches. Implement multi-category detection for hybrid systems. Prepare ML enhancement framework. Add regulatory compliance validation and comprehensive audit trails. Reference implementation plan Phase 4.
 

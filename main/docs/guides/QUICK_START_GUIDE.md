@@ -1,23 +1,19 @@
-# Quick Start Guide - End-to-End Workflow with Phoenix
+# Quick Start Guide - Current System Status
 
-## 🚀 Launch the Complete System in 3 Steps
+⚠️ **MVP Status**: Basic workflow available, full features under development
+
+## 🚀 Current System (3 Steps)
 
 ### Step 1: Start Phoenix (Docker)
 ```bash
 docker run -d -p 6006:6006 --name phoenix-observability arizephoenix/phoenix:latest
 ```
 
-### Step 2: Create Your URS Document
+### Step 2: Run Current Workflow
 ```bash
-# Create a test document
-cat > my_urs.txt << EOF
-PHARMACEUTICAL SYSTEM REQUIREMENTS
-
-GAMP Category: Category 5 (Custom Application)
-Risk Level: High
-
-Functional Requirements:
-1. User authentication required
+# Execute basic workflow
+cd main
+python main.py
 2. Data integrity (ALCOA+ compliance)
 3. Audit trail logging
 4. Electronic signatures
