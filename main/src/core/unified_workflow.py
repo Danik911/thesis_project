@@ -40,6 +40,7 @@ from .events import (
 )
 from .human_consultation import HumanConsultationManager
 from src.monitoring.phoenix_config import enhance_workflow_span_with_compliance, get_current_span
+from src.shared.output_manager import safe_print
 
 
 class UnifiedTestGenerationWorkflow(Workflow):
@@ -598,11 +599,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             Workflow event to continue processing or StopEvent if unresolvable
         """
-        print(f"\n🧑‍⚕️ ENTERING CONSULTATION HANDLER")
-        print(f"📋 Consultation Type: {ev.consultation_type}")
-        print(f"📋 Urgency: {ev.urgency}")
-        print(f"📋 Required Expertise: {', '.join(ev.required_expertise)}")
-        print(f"📋 Context: {ev.context}")
+        safe_print(f"\n🧑‍⚕️ ENTERING CONSULTATION HANDLER")
+        safe_print(f"📋 Consultation Type: {ev.consultation_type}")
+        safe_print(f"📋 Urgency: {ev.urgency}")
+        safe_print(f"📋 Required Expertise: {', '.join(ev.required_expertise)}")
+        safe_print(f"📋 Context: {ev.context}")
         
         self.logger.info(
             f"Human consultation required: {ev.consultation_type} "
@@ -610,11 +611,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         )
 
         try:
-            print(f"🔄 Starting direct human consultation...")
+            safe_print(f"🔄 Starting direct human consultation...")
             
             # Direct consultation input - bypassing complex event system
             consultation_result = await self._collect_direct_consultation_input(ev)
-            print(f"✅ Consultation result received: {type(consultation_result).__name__}")
+            safe_print(f"✅ Consultation result received: {type(consultation_result).__name__}")
 
             if isinstance(consultation_result, HumanResponseEvent):
                 # Human responded - process the response
@@ -1121,27 +1122,27 @@ class UnifiedTestGenerationWorkflow(Workflow):
         from datetime import datetime, timezone
         from uuid import uuid4
         
-        print("\n" + "="*60)
-        print("🧑‍⚕️ HUMAN CONSULTATION REQUIRED")
-        print("="*60)
-        print(f"Consultation Type: {ev.consultation_type}")
-        print(f"Urgency: {ev.urgency}")
+        safe_print("\n" + "="*60)
+        safe_print("🧑‍⚕️ HUMAN CONSULTATION REQUIRED")
+        safe_print("="*60)
+        safe_print(f"Consultation Type: {ev.consultation_type}")
+        safe_print(f"Urgency: {ev.urgency}")
         if ev.required_expertise:
-            print(f"Required Expertise: {', '.join(ev.required_expertise)}")
-        print(f"Triggering Step: {ev.triggering_step}")
-        print()
+            safe_print(f"Required Expertise: {', '.join(ev.required_expertise)}")
+        safe_print(f"Triggering Step: {ev.triggering_step}")
+        safe_print()
         
         # Display context information
         if ev.context:
-            print("Context:")
+            safe_print("Context:")
             for key, value in ev.context.items():
-                print(f"  {key}: {value}")
-            print()
+                safe_print(f"  {key}: {value}")
+            safe_print()
         
         try:
             # Check if we're in an interactive terminal
             if not sys.stdin.isatty():
-                print("❌ Non-interactive terminal detected - applying conservative defaults")
+                safe_print("❌ Non-interactive terminal detected - applying conservative defaults")
                 return ConsultationTimeoutEvent(
                     consultation_id=ev.consultation_id,
                     timeout_duration_seconds=0,
@@ -1158,13 +1159,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
             
             # Handle categorization consultations
             if "categorization" in ev.consultation_type.lower():
-                print("Please provide GAMP categorization decision:")
-                print("Available categories:")
-                print("  1 - Infrastructure Software")
-                print("  3 - Non-configured Products")
-                print("  4 - Configured Products")  
-                print("  5 - Custom Applications")
-                print()
+                safe_print("Please provide GAMP categorization decision:")
+                safe_print("Available categories:")
+                safe_print("  1 - Infrastructure Software")
+                safe_print("  3 - Non-configured Products")
+                safe_print("  4 - Configured Products")  
+                safe_print("  5 - Custom Applications")
+                safe_print()
                 
                 # Get GAMP category
                 while True:
@@ -1174,9 +1175,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
                             gamp_category = int(category_input)
                             break
                         else:
-                            print("❌ Invalid category. Please enter 1, 3, 4, or 5.")
+                            safe_print("❌ Invalid category. Please enter 1, 3, 4, or 5.")
                     except (EOFError, KeyboardInterrupt):
-                        print("\n👋 Consultation cancelled - applying conservative default")
+                        safe_print("\n👋 Consultation cancelled - applying conservative default")
                         return ConsultationTimeoutEvent(
                             consultation_id=ev.consultation_id,
                             timeout_duration_seconds=0,
@@ -1209,7 +1210,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         confidence = 0.8  # Default confidence
                 except (ValueError, EOFError, KeyboardInterrupt):
                     confidence = 0.8
-                    print(f"Using default confidence: {confidence}")
+                    safe_print(f"Using default confidence: {confidence}")
                 
                 # Get user information
                 try:
@@ -1237,18 +1238,18 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     confidence_level=confidence
                 )
                 
-                print(f"\n✅ Consultation completed!")
-                print(f"Category: {gamp_category}")
-                print(f"Confidence: {confidence:.1%}")
-                print(f"User: {user_id} ({user_role})")
-                print()
+                safe_print(f"\n✅ Consultation completed!")
+                safe_print(f"Category: {gamp_category}")
+                safe_print(f"Confidence: {confidence:.1%}")
+                safe_print(f"User: {user_id} ({user_role})")
+                safe_print()
                 
                 return response
                 
             else:
                 # Handle other consultation types
-                print(f"Consultation type '{ev.consultation_type}' requires manual handling.")
-                print("Please provide your decision:")
+                safe_print(f"Consultation type '{ev.consultation_type}' requires manual handling.")
+                safe_print("Please provide your decision:")
                 
                 try:
                     decision = input("Enter your decision: ").strip()
@@ -1278,15 +1279,15 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         confidence_level=confidence
                     )
                     
-                    print(f"\n✅ Consultation completed!")
-                    print(f"Decision: {decision}")
-                    print(f"Confidence: {confidence:.1%}")
-                    print()
+                    safe_print(f"\n✅ Consultation completed!")
+                    safe_print(f"Decision: {decision}")
+                    safe_print(f"Confidence: {confidence:.1%}")
+                    safe_print()
                     
                     return response
                     
                 except (EOFError, KeyboardInterrupt):
-                    print("\n👋 Consultation cancelled - applying conservative defaults")
+                    safe_print("\n👋 Consultation cancelled - applying conservative defaults")
                     return ConsultationTimeoutEvent(
                         consultation_id=ev.consultation_id,
                         timeout_duration_seconds=0,
@@ -1302,7 +1303,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     )
                     
         except Exception as e:
-            print(f"\n❌ Error during consultation: {e}")
+            safe_print(f"\n❌ Error during consultation: {e}")
             self.logger.error(f"Error in direct consultation input: {e}")
             return ConsultationTimeoutEvent(
                 consultation_id=ev.consultation_id,

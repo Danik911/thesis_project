@@ -73,15 +73,28 @@ class SafeOutputManager:
                 self.truncated = True
             return False
 
-        # Safe to print with Unicode error handling
+        # Print with proper Unicode handling - NO FALLBACKS
+        # If Unicode fails, we want to see the full error for debugging
         try:
             print(str_message, **kwargs)
-        except UnicodeEncodeError:
-            # Fallback: Replace problematic Unicode characters
-            safe_message = str_message.encode('ascii', errors='replace').decode('ascii')
-            print(safe_message, **kwargs)
-        self.total_output_size += message_size
-        return True
+            self.total_output_size += message_size
+            return True
+        except UnicodeEncodeError as e:
+            # NO FALLBACKS - fail explicitly with full diagnostic information
+            error_msg = (
+                f"CRITICAL UNICODE ERROR: Failed to print message due to encoding issues.\n"
+                f"Error: {e}\n"
+                f"Message (first 200 chars): {str_message[:200]!r}\n"
+                f"Console encoding: {getattr(kwargs.get('file', __import__('sys').stdout), 'encoding', 'unknown')}\n"
+                f"System platform: {__import__('sys').platform}\n"
+                f"SOLUTION: Configure PYTHONUTF8=1 environment variable or use sys.stdout.reconfigure(encoding='utf-8')"
+            )
+            # Try to print the error message itself (may fail too, but that's intentional)
+            print(error_msg, **kwargs)
+            raise UnicodeEncodeError(
+                e.encoding, e.object, e.start, e.end,
+                f"{e.reason} - Use PYTHONUTF8=1 or sys.stdout.reconfigure(encoding='utf-8') to fix"
+            ) from e
 
     def truncate_string(self, text: str, max_length: int = 10000, suffix: str = "... [TRUNCATED]") -> str:
         """

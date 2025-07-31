@@ -41,6 +41,7 @@ dependencies = [
     # OpenInference instrumentation
     "openinference-instrumentation-llama-index>=2.0.0",
     "openinference-instrumentation-openai>=0.1.30",
+    # "openinference-instrumentation-chromadb>=0.1.12",  # Package not available - using custom instrumentation
     "openinference-semantic-conventions>=0.1.9",
     # Token counting for cost monitoring
     "tiktoken>=0.5.0",

@@ -312,22 +312,132 @@ class PhoenixManager:
             logger.error(f"OpenAI instrumentation failed: {e}")
 
     def _instrument_chromadb(self) -> None:
-        """Instrument ChromaDB for vector database operation tracing."""
+        """
+        Custom ChromaDB instrumentation for pharmaceutical compliance.
+        
+        Since openinference-instrumentation-chromadb is not available,
+        this implements custom tracing for ChromaDB operations using
+        OpenTelemetry manual instrumentation.
+        """
         try:
-            from openinference.instrumentation.chromadb import ChromaDBInstrumentor
+            # Check if ChromaDB is available in the environment
+            import chromadb
             
-            # Instrument ChromaDB with our tracer provider
-            ChromaDBInstrumentor().instrument(tracer_provider=self.tracer_provider)
+            # Create a tracer for ChromaDB operations
+            tracer = self.get_tracer("chromadb")
             
-            logger.info("✅ ChromaDB instrumented successfully - Vector operations will be traced")
+            # Store original ChromaDB methods for wrapping
+            original_query = None
+            original_add = None
+            original_delete = None
             
+            # Get the collection class to wrap
+            try:
+                collection_class = chromadb.Collection
+                
+                # Store original methods if they exist
+                if hasattr(collection_class, 'query'):
+                    original_query = collection_class.query
+                if hasattr(collection_class, 'add'):
+                    original_add = collection_class.add
+                if hasattr(collection_class, 'delete'):
+                    original_delete = collection_class.delete
+                
+                # Create instrumented wrapper functions
+                def instrumented_query(self, *args, **kwargs):
+                    with tracer.start_as_current_span("chromadb.query") as span:
+                        # Add pharmaceutical compliance attributes
+                        span.set_attribute("vector_db.operation", "query")
+                        span.set_attribute("compliance.gamp5.vector_operation", True)
+                        span.set_attribute("compliance.pharmaceutical", True)
+                        span.set_attribute("data_integrity.vector_search", True)
+                        
+                        # Add query parameters if available
+                        if 'n_results' in kwargs:
+                            span.set_attribute("chromadb.query.n_results", kwargs['n_results'])
+                        if 'query_texts' in kwargs and kwargs['query_texts']:
+                            span.set_attribute("chromadb.query.text_count", len(kwargs['query_texts']))
+                        
+                        try:
+                            result = original_query(self, *args, **kwargs)
+                            span.set_attribute("chromadb.query.status", "success")
+                            
+                            # Add result metadata (without exposing actual content for PII compliance)
+                            if isinstance(result, dict):
+                                if 'documents' in result and result['documents']:
+                                    span.set_attribute("chromadb.query.result_count", len(result['documents'][0]) if result['documents'][0] else 0)
+                                if 'distances' in result and result['distances']:
+                                    span.set_attribute("chromadb.query.avg_distance", sum(result['distances'][0]) / len(result['distances'][0]) if result['distances'][0] else 0)
+                            
+                            return result
+                        except Exception as e:
+                            span.set_attribute("chromadb.query.status", "error")
+                            span.set_attribute("chromadb.query.error", str(e))
+                            span.record_exception(e)
+                            raise
+                
+                def instrumented_add(self, *args, **kwargs):
+                    with tracer.start_as_current_span("chromadb.add") as span:
+                        span.set_attribute("vector_db.operation", "add")
+                        span.set_attribute("compliance.gamp5.vector_operation", True)
+                        span.set_attribute("compliance.pharmaceutical", True)
+                        span.set_attribute("data_integrity.vector_add", True)
+                        
+                        # Add operation parameters
+                        if 'documents' in kwargs and kwargs['documents']:
+                            span.set_attribute("chromadb.add.document_count", len(kwargs['documents']))
+                        if 'ids' in kwargs and kwargs['ids']:
+                            span.set_attribute("chromadb.add.id_count", len(kwargs['ids']))
+                        
+                        try:
+                            result = original_add(self, *args, **kwargs)
+                            span.set_attribute("chromadb.add.status", "success")
+                            return result
+                        except Exception as e:
+                            span.set_attribute("chromadb.add.status", "error")
+                            span.set_attribute("chromadb.add.error", str(e))
+                            span.record_exception(e)
+                            raise
+                
+                def instrumented_delete(self, *args, **kwargs):
+                    with tracer.start_as_current_span("chromadb.delete") as span:
+                        span.set_attribute("vector_db.operation", "delete")
+                        span.set_attribute("compliance.gamp5.vector_operation", True)
+                        span.set_attribute("compliance.pharmaceutical", True)
+                        span.set_attribute("data_integrity.vector_delete", True)
+                        
+                        # Add operation parameters
+                        if 'ids' in kwargs and kwargs['ids']:
+                            span.set_attribute("chromadb.delete.id_count", len(kwargs['ids']))
+                        
+                        try:
+                            result = original_delete(self, *args, **kwargs)
+                            span.set_attribute("chromadb.delete.status", "success")
+                            return result
+                        except Exception as e:
+                            span.set_attribute("chromadb.delete.status", "error")
+                            span.set_attribute("chromadb.delete.error", str(e))
+                            span.record_exception(e)
+                            raise
+                
+                # Apply the instrumentation by monkey patching
+                if original_query:
+                    collection_class.query = instrumented_query
+                if original_add:
+                    collection_class.add = instrumented_add
+                if original_delete:
+                    collection_class.delete = instrumented_delete
+                
+                logger.info("✅ ChromaDB custom instrumentation applied - Vector operations will be traced with pharmaceutical compliance")
+                
+            except AttributeError as e:
+                logger.warning(f"ChromaDB class structure changed - custom instrumentation may not work: {e}")
+                logger.info("Vector database operations may not be fully traced")
+                
         except ImportError:
-            logger.warning(
-                "ChromaDB instrumentation not available. "
-                "Install with: pip install openinference-instrumentation-chromadb"
-            )
+            logger.info("ChromaDB not installed - vector database instrumentation skipped")
         except Exception as e:
-            logger.error(f"ChromaDB instrumentation failed: {e}")
+            logger.error(f"ChromaDB custom instrumentation failed: {e}")
             logger.info("Continuing without ChromaDB instrumentation")
 
     def get_tracer(self, name: str) -> trace.Tracer:

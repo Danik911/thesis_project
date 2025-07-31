@@ -126,7 +126,7 @@ mcp__task-master-ai__set_task_status --id=X --status=done
 
 ## 🤖 Subagent Workflow System
 
-You have 5 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`:
+You have 6 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`:
 
 ### Core Subagents
 - **context-collector**: Research specialist for GAMP-5 compliance, LlamaIndex patterns, pharmaceutical standards
@@ -134,6 +134,7 @@ You have 5 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`
 - **task-analyzer**: Analyzes Task-Master AI tasks, checks dependencies, creates execution documentation
 - **task-executor**: Executes specific Task-Master AI tasks following GAMP-5 compliance patterns - **NO FALLBACKS ALLOWED** 
 - **tester-agent**: Validates implementations, runs tests, ensures regulatory compliance - **NO FALLBACKS ALLOWED**
+- **monitor-agent**: Phoenix observability analysis and monitoring assessment specialist - **NO FALLBACKS ALLOWED**
 
 ### 🚨 Critical Orchestration Rules
 - **Subagents lack context**: Always provide comprehensive context when delegating tasks

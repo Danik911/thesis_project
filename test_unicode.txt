@@ -1,0 +1,10 @@
+Simple Test Document for Unicode Validation
+
+This is a basic User Requirements Specification for testing Phoenix observability enhancements.
+
+Requirements:
+1. System shall process pharmaceutical data with GAMP-5 compliance
+2. System shall handle Unicode characters: 🧑‍⚕️ ✅ ❌ 📋 🔍 ⚡
+3. System shall maintain audit trails for regulatory compliance
+
+Classification: This appears to be a Category 5 (Custom Application) system requiring full validation.

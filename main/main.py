@@ -15,6 +15,47 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
+def setup_unicode_support():
+    """
+    Configure proper Unicode support for Windows console to prevent encoding crashes.
+    
+    This is critical for pharmaceutical systems that must handle Unicode characters
+    in documentation and user interfaces without fallback masking.
+    """
+    try:
+        import os, codecs
+        
+        # Set UTF-8 environment variable (Python 3.7+)
+        os.environ.setdefault('PYTHONUTF8', '1')
+        
+        # Reconfigure stdout and stderr for UTF-8 on Windows
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='strict')
+        if hasattr(sys.stderr, 'reconfigure'):
+            sys.stderr.reconfigure(encoding='utf-8', errors='strict')
+            
+        # Verify Unicode support
+        test_unicode = "🧑‍⚕️ GAMP-5 Test: ✅ ❌ 📋 🔍 ⚡"
+        
+        # Test print capability - fail explicitly if Unicode not supported
+        try:
+            print(test_unicode)
+            return True
+        except UnicodeEncodeError as e:
+            raise UnicodeEncodeError(
+                e.encoding, e.object, e.start, e.end,
+                f"Console does not support Unicode characters required for pharmaceutical UI. "
+                f"Configure PYTHONUTF8=1 environment variable or use a UTF-8 capable terminal. "
+                f"Error: {e.reason}"
+            ) from e
+            
+    except Exception as e:
+        # NO FALLBACKS - pharmaceutical systems must handle Unicode properly
+        raise RuntimeError(
+            f"Failed to configure Unicode support for pharmaceutical compliance system. "
+            f"Unicode characters are required for regulatory interface. Error: {e}"
+        ) from e
+
 # Add the main directory to the path
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -48,6 +89,64 @@ from src.shared.utils import setup_logging
 from src.core.human_consultation import HumanConsultationManager
 from src.core.events import HumanResponseEvent
 from uuid import UUID, uuid4
+
+
+def setup_unicode_support():
+    """
+    Configure proper Unicode support for Windows console.
+    
+    This function addresses critical Unicode encoding issues by configuring
+    Python's standard streams to use UTF-8 encoding, preventing UnicodeEncodeError
+    crashes when printing Unicode characters (like emojis) on Windows systems.
+    
+    NO FALLBACKS: This function ensures proper Unicode support or fails explicitly
+    with diagnostic information, in compliance with pharmaceutical system requirements.
+    """
+    import sys
+    import os
+    
+    try:
+        # Method 1: Configure UTF-8 mode via environment (most comprehensive)
+        if not os.environ.get("PYTHONUTF8"):
+            os.environ["PYTHONUTF8"] = "1"
+        
+        # Method 2: Reconfigure standard streams for UTF-8 (Python 3.7+)
+        if hasattr(sys.stdout, 'reconfigure'):
+            # Check current encoding
+            current_encoding = getattr(sys.stdout, 'encoding', 'unknown')
+            if current_encoding.lower() not in ['utf-8', 'utf8']:
+                sys.stdout.reconfigure(encoding='utf-8', errors='strict')
+                sys.stderr.reconfigure(encoding='utf-8', errors='strict')
+                # Note: stdin reconfiguration can cause issues, so we skip it
+        
+        # Verify configuration with actual test characters
+        test_unicode = "🧑‍⚕️✅📋"  # Test characters that were causing crashes
+        try:
+            # Test if we can actually print unicode to stdout
+            print(test_unicode)  # Direct test without safe_print to avoid recursion
+            # If we get here, Unicode is working
+        except UnicodeEncodeError as e:
+            error_msg = (
+                f"CRITICAL: Unicode configuration failed verification.\n"
+                f"Test characters: {test_unicode!r}\n"
+                f"Current stdout encoding: {getattr(sys.stdout, 'encoding', 'unknown')}\n"  
+                f"Error: {e}\n"
+                f"Platform: {sys.platform}\n"
+                f"SOLUTION: Ensure Windows Terminal or configure system for UTF-8 support"
+            )
+            safe_print(error_msg)
+            raise RuntimeError("Unicode configuration verification failed - system cannot handle required characters") from e
+            
+    except Exception as e:
+        error_msg = (
+            f"CRITICAL: Unable to configure Unicode support.\n"
+            f"Error: {e}\n"
+            f"Platform: {sys.platform}\n"
+            f"This will cause crashes when consultation workflow runs.\n"
+            f"SOLUTION: Use Windows Terminal or configure PYTHONUTF8=1 environment variable"
+        )
+        safe_print(error_msg)
+        raise RuntimeError("Unicode configuration failed - pharmaceutical system requires Unicode support") from e
 
 
 def setup_safe_output_management():
@@ -195,7 +294,8 @@ async def run_with_event_logging(document_path: Path, args):
     if document_path.exists():
         safe_print(f"📄 Loading document: {document_path}")
         if document_path.suffix in [".md", ".txt", ".rst"]:
-            document_content = document_path.read_text()
+            # Read with explicit UTF-8 encoding to handle Unicode characters
+            document_content = document_path.read_text(encoding='utf-8')
         else:
             # For other file types, pass the path
             document_content = str(document_path)
@@ -294,7 +394,8 @@ async def run_without_logging(document_path: Path, args):
     if document_path.exists():
         safe_print(f"📄 Loading document: {document_path}")
         if document_path.suffix in [".md", ".txt", ".rst"]:
-            document_content = document_path.read_text()
+            # Read with explicit UTF-8 encoding to handle Unicode characters
+            document_content = document_path.read_text(encoding='utf-8')
         else:
             # For other file types, pass the path
             document_content = str(document_path)
@@ -567,7 +668,10 @@ async def main():
     """Main entry point."""
     args = parse_arguments()
 
-    # Setup safe output management first
+    # Setup Unicode support FIRST to prevent encoding crashes
+    setup_unicode_support()
+
+    # Setup safe output management after Unicode is configured
     output_manager = setup_safe_output_management()
 
     # Setup logging with reduced verbosity
@@ -646,7 +750,7 @@ async def main():
             try:
                 # Add a small delay to ensure all spans are exported before shutdown
                 import time
-                print("⏳ Waiting for span export completion...")
+                safe_print("⏳ Waiting for span export completion...")
                 time.sleep(2)
                 
                 from src.shared.event_logging import shutdown_event_logging
