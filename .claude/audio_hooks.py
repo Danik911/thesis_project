@@ -16,13 +16,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Configure logging
+# Configure logging with UTF-8 encoding for Windows compatibility
 LOG_FILE = Path(__file__).parent / "hooks.log"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(LOG_FILE),
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -33,17 +33,19 @@ class AudioManager:
 
     def __init__(self, sounds_dir: Path):
         self.sounds_dir = sounds_dir
-        self.powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+        self.powershell_path = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
         self.powershell_script = str(sounds_dir.parent / "play_sound.ps1")
+        # Prioritize actual audio file playback over system beeps
         self.audio_methods = [
-            self._try_windows_powershell,
-            self._try_terminal_bell,
-            self._try_system_beep,
-            self._try_vlc,
-            self._try_mpg123,
-            self._try_paplay,
-            self._try_aplay,
-            self._try_visual_notification
+            self._try_windows_media_player,  # Windows native audio player
+            self._try_vlc,           # Best quality audio playback
+            self._try_mpg123,        # Good for MP3 files
+            self._try_paplay,        # Linux audio (fallback)
+            self._try_aplay,         # ALSA audio (fallback)
+            self._try_windows_powershell,  # PowerShell with custom sound mapping
+            self._try_system_beep,   # System beeps (lower priority)
+            self._try_terminal_bell, # Terminal bell (lower priority)
+            self._try_visual_notification  # Final fallback
         ]
 
     def play_sound(self, sound_file: str) -> bool:
@@ -207,6 +209,36 @@ class AudioManager:
             return filename
 
         return "default"
+
+    def _try_windows_media_player(self, sound_path: str) -> bool:
+        """Try Windows Media Player for audio file playback"""
+        try:
+            # Use PowerShell to play audio files with Windows Media Player
+            cmd = [
+                self.powershell_path,
+                "-WindowStyle", "Hidden",
+                "-ExecutionPolicy", "Bypass",
+                "-Command",
+                f"Add-Type -AssemblyName presentationCore; "
+                f"$mediaPlayer = New-Object system.windows.media.mediaplayer; "
+                f"$mediaPlayer.open([uri]'{sound_path}'); "
+                f"$mediaPlayer.Play(); "
+                f"Start-Sleep -Milliseconds 2000; "
+                f"$mediaPlayer.Stop(); "
+                f"$mediaPlayer.Close()"
+            ]
+            
+            result = subprocess.run(cmd, check=False, capture_output=True, timeout=10, text=True)
+            if result.returncode == 0:
+                logger.info(f"Windows Media Player successfully played: {sound_path}")
+                return True
+            else:
+                logger.debug(f"Windows Media Player failed: {result.stderr}")
+                return False
+                
+        except Exception as e:
+            logger.debug(f"Windows Media Player method failed: {e}")
+            return False
 
     def _try_vlc(self, sound_path: str) -> bool:
         """Try VLC media player (quietest, most reliable)"""

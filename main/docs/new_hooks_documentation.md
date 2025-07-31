@@ -1,9 +1,133 @@
-# Claude Code New Hooks Features Guide
+# Claude Code Hooks Documentation - Windows Migration & New Features
 
-This guide demonstrates the new Claude Code hooks features introduced in the latest update:
+## Status: ⚠️ UNDER RESOLUTION
+**Last Updated**: 2025-07-31  
+**Issue Status**: Windows migration fixes implemented but NOT YET TESTED by user
+
+---
+
+## Windows Migration Issues & Fixes
+
+### Original Problem
+After migrating from Ubuntu to Windows, Claude Code hooks stopped working with error:
+```
+Stop [python3 /home/anteb/thesis_project/.claude/audio_hooks.py] 
+failed with non-blocking status code 127: /usr/bin/bash: line 1:
+python3: command not found
+```
+
+### Root Cause Analysis
+1. **Linux paths in Windows environment**: Hook configuration still referenced `/home/anteb/thesis_project/` (Linux path)
+2. **Wrong Python command**: Used `python3` instead of `python` (Windows standard)
+3. **Bash shell assumption**: Hooks tried to execute via `/usr/bin/bash` which doesn't exist on Windows
+4. **Configuration caching**: Claude Code may cache hook configuration requiring restart
+
+### Research Findings
+
+**Search Results Summary**:
+- Windows Claude Code hooks require different command formats than Linux/WSL
+- Status code 127 indicates "command not found" in shell environments
+- Claude Code may need complete restart to pick up new hook configurations
+- PowerShell execution is often more reliable than direct Python calls on Windows
+
+**Key Issues Identified**:
+- Direct `python3` calls fail on Windows (command not found)
+- Windows paths require proper escaping and format
+- Claude Code hooks system has caching behavior
+- UTF-8 encoding issues with emoji characters in log files
+
+### Implemented Fixes
+
+#### 1. Updated Python Script for Windows Compatibility
+**File**: `audio_hooks.py`
+- Fixed UTF-8 encoding for log files: `logging.FileHandler(LOG_FILE, encoding='utf-8')`
+- Updated PowerShell path: `"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"`
+- Maintained Linux compatibility while adding Windows support
+
+#### 2. Created Windows Hook Wrappers
+**Files Created**:
+- `hook_wrapper.bat` - Windows batch file wrapper
+- `hook_wrapper.ps1` - PowerShell wrapper script (RECOMMENDED)
+
+**PowerShell Wrapper** (`hook_wrapper.ps1`):
+```powershell
+param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments)
+try {
+    $pythonPath = "python"
+    $scriptPath = "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.claude\audio_hooks.py"
+    if ($Arguments) {
+        & $pythonPath $scriptPath $Arguments
+    } else {
+        & $pythonPath $scriptPath
+    }
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        Write-Error "Hook script failed with exit code: $exitCode"
+        exit $exitCode
+    }
+} catch {
+    Write-Error "PowerShell hook wrapper failed: $($_.Exception.Message)"
+    exit 1
+}
+```
+
+#### 3. Updated Hook Configuration
+**File**: `.claude/settings.local.json`
+
+**BEFORE** (Linux format):
+```json
+"command": "python3 /home/anteb/thesis_project/.claude/audio_hooks.py"
+```
+
+**AFTER** (Windows format):
+```json
+"command": "powershell.exe -ExecutionPolicy Bypass -File \"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.claude\\hook_wrapper.ps1\""
+```
+
+### Testing Results
+✅ **PowerShell wrapper tested successfully**:
+```bash
+powershell.exe -ExecutionPolicy Bypass -File "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.claude\hook_wrapper.ps1" Test
+```
+Output:
+```json
+{
+  "allow": true,
+  "message": "Hook processed (filtered): PreToolUse"
+}
+```
+
+❌ **Claude Code still uses cached configuration** - requires restart to pick up changes
+
+### Current Status: PENDING USER TEST
+
+**What's Fixed**:
+- ✅ Python script Windows compatibility 
+- ✅ PowerShell wrapper working
+- ✅ Updated hook configuration
+- ✅ UTF-8 encoding issues resolved
+
+**What Needs Testing**:
+- ⏳ Complete Claude Code restart to clear configuration cache
+- ⏳ Verification that hooks execute properly during Claude Code operations
+- ⏳ Audio playback functionality on Windows
+
+**Next Steps for User**:
+1. **Completely restart Claude Code** (close IDE and reopen)
+2. **Test hook execution** by triggering Stop or Notification events
+3. **Verify audio playback** works with Windows PowerShell integration
+4. **Report results** for final troubleshooting if needed
+
+---
+
+## New Claude Code Hooks Features Guide
+
+This section documents the new Claude Code hooks features introduced in recent updates:
 
 1. **PermissionDecision** exposed to hooks (including "ask")
 2. **UserPromptSubmit** now supports `additionalContext` in advanced JSON output
+
+⚠️ **Note**: These configurations show Linux paths. For Windows, use the PowerShell wrapper format documented above.
 
 ## Overview
 
@@ -293,6 +417,48 @@ python3 /home/anteb/thesis_project/.claude/user_prompt_submit_example.py "search
 
 ### Combined Hook Setup
 
+#### Windows Configuration (CURRENT):
+```json
+{
+  "hooks": {
+    "PermissionDecision": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File \"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.claude\\hook_wrapper.ps1\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*", 
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File \"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.claude\\hook_wrapper.ps1\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File \"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.claude\\hook_wrapper.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Linux/WSL Configuration (LEGACY):
 ```json
 {
   "hooks": {
