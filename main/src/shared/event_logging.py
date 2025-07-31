@@ -402,14 +402,14 @@ class GAMP5ComplianceLogger:
         try:
             self.audit_dir = Path(self.config.gamp5_compliance.audit_log_directory)
             self.audit_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Test write permissions
             test_file = self.audit_dir / "test_write.tmp"
             test_file.touch()
             test_file.unlink()
-            
+
             self.logger.info(f"GAMP5ComplianceLogger initialized - Audit dir: {self.audit_dir}")
-            
+
         except (PermissionError, OSError) as e:
             self.logger.warning(f"Cannot create audit directory {self.audit_dir}: {e}")
             # Fallback to system temp directory for testing
@@ -550,7 +550,7 @@ class GAMP5ComplianceLogger:
             with open(self._current_file, "a") as f:
                 json.dump(audit_entry, f, separators=(",", ":"))
                 f.write("\n")
-                
+
         except (PermissionError, OSError) as e:
             self.logger.error(f"Failed to write audit entry to {self._current_file}: {e}")
             # For testing, we can continue without failing
@@ -621,12 +621,14 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
         try:
             # Import Phoenix components
             from ..monitoring import PhoenixEventStreamHandler, setup_phoenix
-            from ..monitoring.phoenix_config import PhoenixConfig as MonitoringPhoenixConfig
+            from ..monitoring.phoenix_config import (
+                PhoenixConfig as MonitoringPhoenixConfig,
+            )
 
             # Initialize Phoenix
             logger = logging.getLogger(__name__)
             logger.info("Initializing Phoenix observability...")
-            
+
             # Convert simple config to monitoring config
             monitoring_config = MonitoringPhoenixConfig(
                 phoenix_host=config.phoenix.phoenix_host,
@@ -639,7 +641,7 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
                 enable_local_ui=config.phoenix.enable_local_ui,
                 otlp_endpoint=config.phoenix.otlp_endpoint or f"http://{config.phoenix.phoenix_host}:{config.phoenix.phoenix_port}/v1/traces"
             )
-            
+
             # Use the global singleton pattern for phoenix_manager
             # This ensures it's accessible during shutdown
             phoenix_manager = setup_phoenix(monitoring_config)
@@ -654,7 +656,7 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
             # Fallback to standard handler if Phoenix setup fails
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to initialize Phoenix observability: {e}")
-            
+
             # Try additional fallback mechanisms
             try:
                 # Try simple Phoenix global handler as fallback
@@ -663,7 +665,7 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
                 logger.info("✅ Successfully initialized Phoenix fallback global handler")
             except Exception as fallback_error:
                 logger.warning(f"Phoenix fallback also failed: {fallback_error}")
-            
+
             logger.info("Using standard event logging (Phoenix fallback may still be active)")
             handler = EventStreamHandler(config=config)
     else:
@@ -686,14 +688,14 @@ def shutdown_event_logging() -> None:
     """
     logger = logging.getLogger(__name__)
     logger.info("Shutting down event logging system...")
-    
+
     try:
         # Import and check for Phoenix manager
         from ..monitoring.phoenix_config import get_phoenix_manager, shutdown_phoenix
-        
+
         # Get the phoenix manager to check if it was initialized
         phoenix_manager = get_phoenix_manager()
-        
+
         if phoenix_manager and phoenix_manager._initialized:
             logger.info("Flushing pending Phoenix traces...")
             # Give more time for shutdown to ensure all spans are exported
@@ -702,7 +704,7 @@ def shutdown_event_logging() -> None:
             logger.info("Phoenix observability shutdown complete")
         else:
             logger.debug("Phoenix was not initialized, skipping shutdown")
-            
+
     except ImportError:
         logger.debug("Phoenix not available for shutdown")
     except Exception as e:
@@ -731,7 +733,7 @@ async def example_workflow_integration(context: Context) -> None:
 # Export main classes and functions
 __all__ = [
     "EventStreamHandler",
-    "GAMP5ComplianceLogger", 
+    "GAMP5ComplianceLogger",
     "StructuredEventLogger",
     "example_workflow_integration",
     "setup_event_logging",

@@ -239,39 +239,46 @@ class TestErrorHandlingIntegration:
         assert len(agent.tools) == 2
 
     def test_gamp_tool_with_error_handling(self):
-        """Test GAMP analysis tool with error handling."""
+        """Test GAMP analysis tool with explicit error handling (NO FALLBACKS)."""
+        import pytest
         error_handler = CategorizationErrorHandler()
 
-        # Test with invalid input
-        result = gamp_analysis_tool_with_error_handling("", error_handler)
+        # Test with invalid input - should raise exception, not return fallback
+        with pytest.raises(RuntimeError) as exc_info:
+            gamp_analysis_tool_with_error_handling("", error_handler)
 
-        assert result["predicted_category"] == 5
-        assert result.get("error") is True
-        assert "Invalid URS content" in result["decision_rationale"]
+        assert "GAMP analysis tool failed" in str(exc_info.value)
+        assert "Invalid URS content" in str(exc_info.value)
 
-        # Test with too short input
-        result = gamp_analysis_tool_with_error_handling("Short", error_handler)
+        # Test with too short input - should raise exception, not return fallback
+        with pytest.raises(RuntimeError) as exc_info:
+            gamp_analysis_tool_with_error_handling("Short", error_handler)
 
-        assert result["predicted_category"] == 5
-        assert "too short" in result["decision_rationale"]
+        assert "GAMP analysis tool failed" in str(exc_info.value)
+        assert "too short" in str(exc_info.value)
 
     def test_confidence_tool_with_error_handling(self):
-        """Test confidence tool with error handling."""
+        """Test confidence tool with explicit error handling (NO FALLBACKS)."""
+        import pytest
         error_handler = CategorizationErrorHandler()
 
-        # Test with error result
-        error_result = {"error": True}
+        # Test with error result - should extract actual confidence, not return 0.0
+        error_result = {"error": True, "confidence_score": 0.5}
         confidence = confidence_tool_with_error_handling(error_result, error_handler)
-        assert confidence == 0.0
+        assert confidence == 0.5
 
-        # Test with invalid input
-        confidence = confidence_tool_with_error_handling("invalid", error_handler)
-        assert confidence == 0.0
+        # Test with invalid input - should raise exception, not return 0.0
+        with pytest.raises(RuntimeError) as exc_info:
+            confidence_tool_with_error_handling("invalid", error_handler)
 
-        # Test with missing fields
+        assert "Confidence calculation failed" in str(exc_info.value)
+
+        # Test with missing fields - should raise exception, not return 0.0
         incomplete_result = {"predicted_category": 3}
-        confidence = confidence_tool_with_error_handling(incomplete_result, error_handler)
-        assert confidence == 0.0
+        with pytest.raises(RuntimeError) as exc_info:
+            confidence_tool_with_error_handling(incomplete_result, error_handler)
+
+        assert "Confidence calculation failed" in str(exc_info.value)
 
 
 class TestCategorizationWithErrorHandling:

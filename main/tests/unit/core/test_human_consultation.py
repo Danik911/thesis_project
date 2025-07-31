@@ -6,23 +6,22 @@ conservative defaults, and regulatory compliance for pharmaceutical test generat
 """
 
 import asyncio
-import pytest
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4, UUID
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
+from uuid import UUID, uuid4
 
+import pytest
 from llama_index.core.workflow import Context
-
 from src.core.events import (
     ConsultationRequiredEvent,
     ConsultationTimeoutEvent,
     GAMPCategory,
-    HumanResponseEvent
+    HumanResponseEvent,
 )
 from src.core.human_consultation import (
     ConsultationSession,
     HumanConsultationManager,
-    request_human_consultation
+    request_human_consultation,
 )
 from src.shared.config import Config, HumanConsultationConfig
 
@@ -99,12 +98,12 @@ def mock_context():
     context.get = AsyncMock()
     context.send_event = AsyncMock()
     context.wait_for_event = AsyncMock()
-    
+
     # Ensure mock methods return proper awaitables
     context.set.return_value = None
     context.get.return_value = None
     context.send_event.return_value = None
-    
+
     return context
 
 
@@ -164,7 +163,7 @@ class TestConsultationSession:
         assert session.timeout_seconds == 1  # From test config
 
     @pytest.mark.asyncio
-    async def test_add_response(self, sample_consultation_event, 
+    async def test_add_response(self, sample_consultation_event,
                                test_config, mock_compliance_logger):
         """Test adding human response to session."""
         session = ConsultationSession(
@@ -275,7 +274,7 @@ class TestHumanConsultationManager:
         manager = HumanConsultationManager(test_config)
 
         # Mock timeout
-        mock_context.wait_for_event.side_effect = asyncio.TimeoutError()
+        mock_context.wait_for_event.side_effect = TimeoutError()
 
         result = await manager.request_consultation(
             mock_context,
@@ -421,7 +420,7 @@ class TestComplianceValidation:
     @pytest.mark.asyncio
     async def test_audit_trail_logging(self, sample_consultation_event, test_config):
         """Test that all consultation activities are logged for compliance."""
-        with patch('src.core.human_consultation.GAMP5ComplianceLogger') as mock_logger_class:
+        with patch("src.core.human_consultation.GAMP5ComplianceLogger") as mock_logger_class:
             mock_logger = AsyncMock()
             mock_logger_class.return_value = mock_logger
 
@@ -429,7 +428,7 @@ class TestComplianceValidation:
 
             # Timeout scenario to trigger logging
             mock_context = AsyncMock()
-            mock_context.wait_for_event.side_effect = asyncio.TimeoutError()
+            mock_context.wait_for_event.side_effect = TimeoutError()
             mock_context.send_event = AsyncMock()
 
             await manager.request_consultation(
@@ -450,14 +449,14 @@ class TestComplianceValidation:
 
         # Should include timestamp (Contemporaneous)
         assert "applied_at" in defaults
-        
+
         # Should include rationale (Accurate)
         assert "regulatory_rationale" in defaults
-        
+
         # Should include system metadata (Attributable)
         assert "system_version" in defaults
         assert "default_source" in defaults
-        
+
         # Should include compliance standards (Complete)
         assert "compliance_standards" in defaults
 
@@ -505,7 +504,7 @@ class TestComplianceValidation:
             session_id=uuid4(),
             digital_signature="digital_signature_hash_example"
         )
-        
+
         assert response_with_sig.digital_signature is not None
         assert isinstance(response_with_sig.digital_signature, str)
 
@@ -514,13 +513,13 @@ class TestComplianceValidation:
             response_type="decision",
             response_data={},
             user_id="test_user",
-            user_role="validation_engineer", 
+            user_role="validation_engineer",
             decision_rationale="Test decision",
             confidence_level=0.8,
             consultation_id=uuid4(),
             session_id=uuid4()
         )
-        
+
         assert response_without_sig.digital_signature is None
 
 
@@ -549,7 +548,7 @@ class TestErrorHandling:
         """Test validation of invalid consultation responses."""
         # Create mock compliance logger
         mock_compliance_logger = AsyncMock()
-        
+
         session = ConsultationSession(
             sample_consultation_event,
             test_config,
@@ -596,7 +595,7 @@ class TestPerformanceAndScalability:
         mock_contexts = []
         for i in range(5):
             ctx = AsyncMock()
-            ctx.wait_for_event.side_effect = asyncio.TimeoutError()
+            ctx.wait_for_event.side_effect = TimeoutError()
             ctx.send_event = AsyncMock()
             mock_contexts.append(ctx)
 

@@ -5,17 +5,18 @@ This module provides the GAMP-5 categorization agent following LlamaIndex patter
 Uses FunctionAgent with LLM intelligence and categorization tools.
 
 Key Features:
-- Comprehensive error handling with automatic Category 5 fallback
+- Comprehensive error handling with explicit failure reporting
 - Confidence scoring with configurable thresholds
 - Full audit trail for regulatory compliance (21 CFR Part 11)
 - Multiple categorization approaches (LLM chat or structured output)
 - Support for all GAMP categories (1, 3, 4, 5)
 
 Error Handling:
-- Automatic detection of parsing, logic, ambiguity, and confidence errors
-- Conservative fallback to Category 5 on any uncertainty
+- Explicit detection of parsing, logic, ambiguity, and confidence errors
+- All failures reported with complete diagnostic information
 - Complete audit trail with decision rationale
 - Integration ready for Phoenix observability
+- NO FALLBACK LOGIC - all errors must be addressed explicitly
 
 Usage:
     # Create agent with error handling
@@ -285,7 +286,7 @@ def gamp_analysis_tool_with_error_handling(
 
         # Call original analysis tool
         result = gamp_analysis_tool(urs_content)
-        
+
         # Log the result for debugging
         error_handler.logger.debug(f"GAMP analysis tool returned keys: {list(result.keys())}")
         error_handler.logger.debug(f"GAMP analysis predicted category: {result.get('predicted_category')}")
@@ -306,14 +307,8 @@ def gamp_analysis_tool_with_error_handling(
             document_name="Analysis Input"
         )
 
-        # Return error result that indicates fallback
-        return {
-            "predicted_category": 5,
-            "evidence": {"error": str(e)},
-            "all_categories_analysis": {},
-            "decision_rationale": f"Error during analysis: {e!s}. Fallback to Category 5.",
-            "error": True
-        }
+        # NO FALLBACKS: Re-raise exception with full diagnostic information
+        raise RuntimeError(f"GAMP analysis tool failed: {e!s}") from e
 
 
 def confidence_tool_with_error_handling(
@@ -332,7 +327,7 @@ def confidence_tool_with_error_handling(
         # Log the input for debugging
         error_handler.logger.debug(f"Confidence tool received data type: {type(category_data)}")
         error_handler.logger.debug(f"Confidence tool received keys: {list(category_data.keys()) if isinstance(category_data, dict) else 'Not a dict'}")
-        
+
         # Check if this is an error result
         if category_data.get("error", False):
             # Try to extract actual confidence from error event
@@ -374,9 +369,8 @@ def confidence_tool_with_error_handling(
     except Exception as e:
         error_handler.logger.error(f"Confidence calculation error: {e!s}")
         error_handler.logger.error(f"Input data that caused error: {category_data}")
-        # Don't silently return 0.0 - this masks real issues
-        # Instead, return a low but non-zero confidence to indicate uncertainty
-        return 0.3  # Return low confidence on error, not zero
+        # NO FALLBACKS: Re-raise exception with full diagnostic information
+        raise RuntimeError(f"Confidence calculation failed: {e!s}") from e
 
 
 def create_gamp_categorization_agent(
@@ -475,9 +469,10 @@ Your final answer MUST include:
 DO NOT call any tool more than once. Once you have results from both tools, immediately provide your final categorization.
 
 Error Handling:
-- If analysis fails or confidence is below 60%, Category 5 will be assigned
-- All errors are logged for regulatory compliance
-- Low confidence results require human review"""
+- All analysis failures are reported explicitly with full diagnostic information
+- All errors are logged for regulatory compliance with complete stack traces
+- Low confidence results require human review
+- NO FALLBACK ASSIGNMENTS - failures must be addressed explicitly"""
 
     agent = FunctionAgent(
         tools=[gamp_analysis_function_tool, confidence_function_tool],
@@ -733,7 +728,7 @@ async def categorize_with_error_handling(
 
             # Parse response to extract category and confidence
             response_text = str(response)
-            
+
             # Debug logging
             error_handler.logger.debug(f"Agent response: {response_text[:500]}...")
 
@@ -759,15 +754,16 @@ async def categorize_with_error_handling(
             if not confidence_match:
                 # Try markdown format
                 confidence_match = re.search(r"\*\*Confidence Score\*\*[\s:]*(\d+(?:\.\d+)?)\s*%", response_text)
-            
+
             if confidence_match:
                 if confidence_match.group(1):  # Percentage format
                     confidence = float(confidence_match.group(1)) / 100
                 else:  # Decimal format
                     confidence = float(confidence_match.group(2) if confidence_match.group(2) else confidence_match.group(1)) / 100
             else:
-                # If no confidence found, use a default based on response
-                confidence = 0.7  # Default moderate confidence
+                # NO FALLBACKS: Raise exception when confidence cannot be parsed
+                error_handler.logger.error(f"Failed to extract confidence from response: {response_text[:500]}...")
+                raise ValueError("Could not extract confidence from agent response")
 
             # Check confidence threshold
             if confidence < error_handler.confidence_threshold:

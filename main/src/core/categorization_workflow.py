@@ -25,7 +25,10 @@ from src.core.events import (
     URSIngestionEvent,
     WorkflowCompletionEvent,
 )
-from src.monitoring.phoenix_config import enhance_workflow_span_with_compliance, get_current_span
+from src.monitoring.phoenix_config import (
+    enhance_workflow_span_with_compliance,
+    get_current_span,
+)
 
 
 class GAMPCategorizationWorkflow(Workflow):
@@ -134,7 +137,7 @@ class GAMPCategorizationWorkflow(Workflow):
             "author": author,
             "content_length": len(urs_content)
         })
-        
+
         # Enhance current span with pharmaceutical compliance metadata
         current_span = get_current_span()
         if current_span:

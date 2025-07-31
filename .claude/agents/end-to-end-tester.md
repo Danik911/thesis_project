@@ -74,23 +74,23 @@ cd /home/anteb/thesis_project/main
 echo "=== Testing with GAMP-5 Test Data ==="
 
 # Test 1: Training data document
-uv run python main.py gamp5_test_data/training_data.md --verbose
+uv run python main.py tests/test_data/gamp5_test_data/training_data.md --verbose
 
 # Test 2: Testing data document  
-uv run python main.py gamp5_test_data/testing_data.md --verbose
+uv run python main.py tests/test_data/gamp5_test_data/testing_data.md --verbose
 
 # Test 3: Validation data document
-uv run python main.py gamp5_test_data/validation_data.md --verbose
+uv run python main.py tests/test_data/gamp5_test_data/validation_data.md --verbose
 
 # Also test PDF processing capabilities
 # Test 4: PDF training data
-uv run python main.py gamp5_test_data/training_data.pdf --verbose
+uv run python main.py tests/test_data/gamp5_test_data/training_data.pdf --verbose
 
 # Test 5: PDF testing data
-uv run python main.py gamp5_test_data/testing_data.pdf --verbose
+uv run python main.py tests/test_data/gamp5_test_data/testing_data.pdf --verbose
 
 # Test 6: PDF validation data
-uv run python main.py gamp5_test_data/validation_data.pdf --verbose
+uv run python main.py tests/test_data/gamp5_test_data/validation_data.pdf --verbose
 ```
 
 ### Phase 3: Phoenix Analysis
@@ -263,9 +263,9 @@ python -c "import openai; print('✅ OpenAI available')" 2>/dev/null || echo "�
 
 # Check GAMP-5 test data availability
 echo "=== GAMP-5 Test Data Check ==="
-ls -la gamp5_test_data/ 2>/dev/null && echo "✅ GAMP-5 test data directory exists" || echo "❌ GAMP-5 test data missing"
-ls -la gamp5_test_data/*.md 2>/dev/null && echo "✅ Markdown test files available" || echo "⚠️ Markdown test files missing"
-ls -la gamp5_test_data/*.pdf 2>/dev/null && echo "✅ PDF test files available" || echo "⚠️ PDF test files missing"
+ls -la tests/test_data/gamp5_test_data/ 2>/dev/null && echo "✅ GAMP-5 test data directory exists" || echo "❌ GAMP-5 test data missing"
+ls -la tests/test_data/gamp5_test_data/*.md 2>/dev/null && echo "✅ Markdown test files available" || echo "⚠️ Markdown test files missing"
+ls -la tests/test_data/gamp5_test_data/*.pdf 2>/dev/null && echo "✅ PDF test files available" || echo "⚠️ PDF test files missing"
 ```
 
 ### Full Workflow Test
@@ -276,13 +276,13 @@ echo "=== Starting Full Workflow Test with GAMP-5 Test Data ==="
 
 # Test comprehensive pharmaceutical document processing
 echo "Testing with training data..."
-time uv run python main.py gamp5_test_data/training_data.md --verbose 2>&1 | tee workflow_training_execution.log
+time uv run python main.py tests/test_data/gamp5_test_data/training_data.md --verbose 2>&1 | tee workflow_training_execution.log
 
 echo "Testing with validation data..."
-time uv run python main.py gamp5_test_data/validation_data.md --verbose 2>&1 | tee workflow_validation_execution.log
+time uv run python main.py tests/test_data/gamp5_test_data/validation_data.md --verbose 2>&1 | tee workflow_validation_execution.log
 
 echo "Testing with testing data..."
-time uv run python main.py gamp5_test_data/testing_data.md --verbose 2>&1 | tee workflow_testing_execution.log
+time uv run python main.py tests/test_data/gamp5_test_data/testing_data.md --verbose 2>&1 | tee workflow_testing_execution.log
 
 echo "=== All Workflow Tests Completed ==="
 ```

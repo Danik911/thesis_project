@@ -2,23 +2,24 @@
 
 ## Overview
 
-The Workflow Coordinator Agent is the **CRITICAL** master orchestrator for pharmaceutical multi-agent systems, designed to efficiently coordinate specialized agents while maintaining GAMP-5 compliance and pharmaceutical regulatory requirements.
+The **CRITICAL** main agent (Claude Code) directly orchestrates pharmaceutical multi-agent systems, coordinating specialized agents while maintaining GAMP-5 compliance and pharmaceutical regulatory requirements. **IMPORTANT**: The main agent serves as the central coordinator, managing context flow between isolated subagents.
 
 ## **IMPORTANT** Design Principles
 
 ### 1. Context Management Authority
-- **CRITICAL RESPONSIBILITY**: The coordinator is the ONLY agent responsible for context flow between isolated subagents
+- **CRITICAL RESPONSIBILITY**: The main agent (Claude Code) is the ONLY agent responsible for context flow between isolated subagents
 - Each subagent operates in its own context window to prevent contamination
-- Context sharing happens through structured documentation files and coordinator mediation
-- **NO** direct communication between subagents - ALL coordination flows through this agent
+- Context sharing happens through structured documentation files and main agent mediation
+- **NO** direct communication between subagents - ALL coordination flows through the main agent
 
 ### 2. Agent Specialization
-Each agent has a specific expertise area:
+Each specialized subagent has a specific expertise area:
 - `task-analyzer`: Task analysis, dependency validation, initial documentation
 - `context-collector`: Research, context gathering, multi-source investigation
 - `task-executor`: Implementation with compliance requirements
 - `tester-agent`: Validation, testing, quality assurance
 - `end-to-end-tester`: Complete workflow validation with Phoenix observability
+- `monitor-agent`: Phoenix observability analysis and monitoring assessment (CRITICAL for major features)
 - `debugger`: Complex issue resolution using systematic analysis
 
 ### 3. Pharmaceutical Compliance
@@ -31,22 +32,27 @@ Each agent has a specific expertise area:
 
 ### Standard Development Workflow
 ```
-Task-Master AI → workflow-coordinator → task-analyzer → context-collector → task-executor → tester-agent → Task-Master AI
+Task-Master AI → Main Agent → task-analyzer → context-collector → task-executor → tester-agent → Task-Master AI
 ```
 
 ### Research-Heavy Workflow
 ```
-Task-Master AI → workflow-coordinator → task-analyzer → context-collector (extended research) → task-executor → tester-agent → end-to-end-tester → Task-Master AI
+Task-Master AI → Main Agent → task-analyzer → context-collector (extended research) → task-executor → tester-agent → end-to-end-tester → Task-Master AI
+```
+
+### Major Feature Workflow
+```
+Task-Master AI → Main Agent → task-analyzer → context-collector → task-executor → tester-agent → end-to-end-tester → monitor-agent → Task-Master AI
 ```
 
 ### Issue Resolution Workflow
 ```
-Any Agent → workflow-coordinator → debugger → (resolution) → tester-agent → Task-Master AI
+Any Agent → Main Agent → debugger → (resolution) → tester-agent → Task-Master AI
 ```
 
 ### Emergency Escalation Workflow
 ```
-Blocked Agent → workflow-coordinator → debugger → human consultation → recovery workflow
+Blocked Agent → Main Agent → debugger → human consultation → recovery workflow
 ```
 
 ## **CRITICAL** Context Sharing Mechanism
@@ -60,15 +66,19 @@ main/docs/tasks/task_[id]_[description].md
 ├── ## Research and Context (by context-collector)
 ├── ## Implementation (by task-executor)
 ├── ## Testing and Validation (by tester-agent)
-└── ## Coordination Summary (by workflow-coordinator)
+├── ## End-to-End Testing (by end-to-end-tester, if applicable)
+├── ## Monitoring Analysis (by monitor-agent, if applicable)
+└── ## Coordination Summary (by main agent)
 ```
 
 ### Context Handoff Protocol
-1. **Read** complete context from previous agent sections
-2. **Synthesize** information for next agent
-3. **Prepare** comprehensive briefing with specific guidance
+**CRITICAL**: The main agent MUST perform these steps between each subagent invocation:
+1. **Read** complete context from previous agent sections in task documentation
+2. **Synthesize** information for next agent with comprehensive briefing
+3. **Prepare** specific guidance based on previous agent outputs
 4. **Include** compliance requirements and success criteria
 5. **Update** task documentation with coordination decisions
+6. **Provide** complete context to next subagent via Task tool
 
 ## Usage Instructions
 
@@ -104,10 +114,14 @@ main/docs/tasks/task_[id]_[description].md
 /escalate all
 ```
 
-### Direct Agent Invocation
+### Direct Main Agent Orchestration
+The main agent (Claude Code) directly coordinates all subagents:
 ```bash
-# Use workflow-coordinator agent directly
-Use the workflow-coordinator agent to orchestrate task 3.2 implementation
+# Main agent uses Task tool with subagent_type parameter
+Use the task-analyzer agent to analyze task 3.2 and validate dependencies.
+Use the context-collector agent to gather research for task 3.2.
+Use the task-executor agent to implement task 3.2.
+# ... continuing with other agents as needed
 ```
 
 ## **IMPORTANT** Error Handling
@@ -115,11 +129,11 @@ Use the workflow-coordinator agent to orchestrate task 3.2 implementation
 ### Error Escalation Matrix
 | Error Type | Escalation Path | Required Action |
 |------------|-----------------|-----------------|
-| Dependency blocked | task-analyzer → workflow-coordinator → human consultation | Dependency resolution |
-| Research insufficient | context-collector → debugger → additional research | Context enhancement |
-| Implementation failure | task-executor → debugger → root cause analysis | Technical resolution |
-| Test failures | tester-agent → debugger → fix validation | Quality assurance |
-| Compliance violations | Any agent → workflow-coordinator → human consultation | Regulatory review |
+| Dependency blocked | task-analyzer → main agent → human consultation | Dependency resolution |
+| Research insufficient | context-collector → main agent → debugger → additional research | Context enhancement |
+| Implementation failure | task-executor → main agent → debugger → root cause analysis | Technical resolution |
+| Test failures | tester-agent → main agent → debugger → fix validation | Quality assurance |
+| Compliance violations | Any agent → main agent → human consultation | Regulatory review |
 
 ### **NO FALLBACKS** Policy
 - **NEVER** mask errors with artificial success reporting
@@ -130,7 +144,7 @@ Use the workflow-coordinator agent to orchestrate task 3.2 implementation
 ## Agent Communication Protocols
 
 ### Context Preparation Before Handoff
-The coordinator **MUST** provide each agent with:
+The main agent **MUST** provide each subagent with:
 1. **Complete context** from all previous agents
 2. **Specific task requirements** clearly defined
 3. **Compliance implications** identified and communicated
@@ -138,10 +152,10 @@ The coordinator **MUST** provide each agent with:
 5. **Success criteria** and next steps outlined
 
 ### Monitoring and Status Updates
-- Monitor each agent's execution for failures or blocking issues
-- Update Task-Master AI with progress throughout workflow
-- Maintain audit trail in task documentation files
-- Route to human consultation when compliance issues arise
+- Main agent monitors each subagent's execution for failures or blocking issues
+- Main agent updates Task-Master AI with progress throughout workflow
+- Main agent maintains audit trail in task documentation files
+- Main agent routes to human consultation when compliance issues arise
 
 ## Best Practices
 
@@ -153,9 +167,9 @@ The coordinator **MUST** provide each agent with:
 
 ### For Agent Development
 1. **Follow documentation templates** exactly for consistency
-2. **Include coordinator handoff sections** in all agent outputs
+2. **Include main agent handoff sections** in all subagent outputs
 3. **Maintain compliance focus** throughout implementation
-4. **Test context flow** between agents during development
+4. **Test context flow** through main agent coordination during development
 
 ### For Pharmaceutical Compliance
 1. **Validate GAMP-5 requirements** at each workflow stage
@@ -187,7 +201,7 @@ The coordinator **MUST** provide each agent with:
 
 #### Context Not Flowing Between Agents
 **Problem**: Subagents lack necessary context from previous work
-**Solution**: Use workflow-coordinator to read and synthesize complete context before each handoff
+**Solution**: Main agent must read and synthesize complete context before each handoff
 
 #### Workflow Stalls or Blocks
 **Problem**: Tasks get stuck in one agent without progression
@@ -195,11 +209,11 @@ The coordinator **MUST** provide each agent with:
 
 #### Compliance Violations
 **Problem**: Regulatory requirements not properly tracked
-**Solution**: Escalate to human consultation through workflow-coordinator
+**Solution**: Main agent escalates to human consultation immediately
 
 #### Test Failures or Quality Issues
 **Problem**: Implementation doesn't meet validation criteria
-**Solution**: Route back through debugger → task-executor → tester-agent cycle
+**Solution**: Main agent routes back through debugger → task-executor → tester-agent cycle
 
 ### Diagnostic Commands
 ```bash
@@ -219,10 +233,10 @@ mcp__task-master-ai__get_tasks --status=in-progress
 ## **CRITICAL** Success Metrics
 
 The coordination system is successful when:
-- **Context Continuity**: Each agent receives complete necessary context
-- **Workflow Efficiency**: Minimal back-and-forth between agents
-- **Compliance Maintenance**: All regulatory requirements tracked and validated
-- **Error Resolution**: Issues escalated and resolved systematically
-- **Audit Trail Completeness**: Full traceability from start to finish
+- **Context Continuity**: Each subagent receives complete necessary context from main agent
+- **Workflow Efficiency**: Minimal back-and-forth between agents through proper coordination
+- **Compliance Maintenance**: All regulatory requirements tracked and validated by main agent
+- **Error Resolution**: Issues escalated and resolved systematically through main agent
+- **Audit Trail Completeness**: Full traceability from start to finish maintained by main agent
 
-**Remember**: The workflow coordinator is the intelligence that connects specialized agents into a cohesive, compliant, and effective development workflow. Every coordination decision impacts patient safety and regulatory compliance.
+**Remember**: The main agent (Claude Code) is the central intelligence that connects specialized subagents into a cohesive, compliant, and effective development workflow. Every coordination decision impacts patient safety and regulatory compliance.

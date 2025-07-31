@@ -4,17 +4,18 @@ Test HITL consultation with a pseudo-terminal to simulate true interactive mode.
 """
 
 import os
-import sys
 import pty
-import subprocess
 import signal
+import subprocess
+import sys
 import time
+
 
 def test_with_pty():
     """Test the consultation system using a pseudo-terminal."""
     print("🧪 Testing HITL Consultation with Pseudo-Terminal")
     print("=" * 50)
-    
+
     # Test input sequence
     test_inputs = [
         "4\n",  # GAMP category
@@ -23,13 +24,13 @@ def test_with_pty():
         "test_validator\n",  # user ID
         "validation_engineer\n"  # user role
     ]
-    
+
     try:
         # Create pseudo-terminal
         master_fd, slave_fd = pty.openpty()
-        
+
         print("🔄 Starting workflow with pseudo-terminal...")
-        
+
         # Start the process with pseudo-terminal
         proc = subprocess.Popen(
             [sys.executable, "main.py", "test_urs_hitl.txt", "--verbose"],
@@ -39,10 +40,10 @@ def test_with_pty():
             text=True,
             preexec_fn=os.setsid  # Create new process group
         )
-        
+
         # Close slave fd in parent process
         os.close(slave_fd)
-        
+
         # Function to send input after delay
         def send_inputs():
             time.sleep(2)  # Wait for startup
@@ -50,23 +51,23 @@ def test_with_pty():
                 print(f"📝 Sending input {i+1}: {input_text.strip()}")
                 os.write(master_fd, input_text.encode())
                 time.sleep(0.5)  # Small delay between inputs
-        
+
         # Start input sender in background
         import threading
         input_thread = threading.Thread(target=send_inputs)
         input_thread.daemon = True
         input_thread.start()
-        
+
         # Wait for process to complete with timeout
         try:
             stdout, stderr = proc.communicate(timeout=30)
-            
+
             print("📊 STDOUT:")
             print(stdout)
             print("\n📊 STDERR:")
             print(stderr)
             print(f"\n📊 Return code: {proc.returncode}")
-            
+
             # Check for success indicators
             if "✅ Consultation completed!" in stdout:
                 print("\n🎉 SUCCESS: Interactive consultation worked!")
@@ -76,12 +77,12 @@ def test_with_pty():
                 print("\n⚠️ Still detecting as non-interactive (expected in some environments)")
             else:
                 print("\n❓ Unexpected result - check output above")
-                
+
         except subprocess.TimeoutExpired:
             print("⏰ Process timed out - terminating...")
             os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
             proc.kill()
-            
+
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback

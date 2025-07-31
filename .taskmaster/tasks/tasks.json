@@ -4,7 +4,7 @@
       "id": 1,
       "title": "Fix Categorization Agent Fallback Violations",
       "description": "Remove ALL fallback logic from categorization agent that violates NO FALLBACKS policy",
-      "status": "pending",
+      "status": "done",
       "dependencies": [],
       "priority": "high",
       "details": "The categorization agent currently has prohibited fallback logic that hides real failures by automatically assigning Category 5 and artificial confidence scores. Must remove all fallback mechanisms (lines 309-316, 378-379, 769-770, system prompt line 478) and replace with explicit failure modes that expose full diagnostic information. This is CRITICAL as it blocks all downstream work.",
@@ -16,7 +16,7 @@
           "description": "Remove the error handler that returns Category 5 on any exception. Ensure that exceptions are surfaced explicitly and not masked by fallback categorization.",
           "dependencies": [],
           "details": "Locate and delete the code block (lines 309-316) that catches exceptions and returns Category 5. Replace with logic that surfaces the exception and provides diagnostic information without assigning a fallback category.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 6,
@@ -24,7 +24,7 @@
           "description": "Remove the code that returns a default confidence value of 0.3. Ensure that confidence is only set based on actual model output or explicit error reporting.",
           "dependencies": [],
           "details": "Delete lines 378-379 where a default confidence of 0.3 is returned. Update logic to avoid assigning confidence unless it is derived from a valid categorization process.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 7,
@@ -32,7 +32,7 @@
           "description": "Remove the code that assigns a default confidence of 0.7 on parse failure. Ensure parse failures are reported explicitly.",
           "dependencies": [],
           "details": "Delete lines 769-770 where a default confidence of 0.7 is assigned on parse failure. Update error handling to surface parse errors without assigning fallback confidence.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 8,
@@ -40,7 +40,7 @@
           "description": "Remove the instruction in the system prompt that directs the agent to assign Category 5 on low confidence.",
           "dependencies": [],
           "details": "Edit the system prompt at line 478 to eliminate any mention of assigning Category 5 as a fallback or on low confidence. Ensure the prompt reflects the NO FALLBACKS policy.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -87,7 +87,7 @@
       "id": 5,
       "title": "Implement OQ Test-Script Generation Agent",
       "description": "Create test-script generation agent focused on OQ (Operational Qualification) tests only",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         4
       ],
@@ -101,7 +101,7 @@
           "description": "Define Pydantic models for OQTestStep, OQTestScript, and any related entities to ensure structured, validated test output.",
           "dependencies": [],
           "details": "Design and implement Pydantic models representing individual OQ test steps and complete OQ test scripts. Ensure models capture all required fields for pharmaceutical OQ compliance and support validation logic.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 6,
@@ -111,7 +111,7 @@
             5
           ],
           "details": "Use LlamaIndex Workflow to define event-driven steps for OQ test generation. Ensure each step processes and emits events as required, and the workflow produces structured OQ test scripts using the defined Pydantic models.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 7,
@@ -121,7 +121,7 @@
             6
           ],
           "details": "Design and implement OQ test templates tailored to GAMP category requirements. Ensure templates are parameterized and can be populated dynamically within the workflow.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 8,
@@ -131,7 +131,7 @@
             7
           ],
           "details": "Implement logic to collect and merge relevant context from all upstream agents. Ensure the workflow uses this context to generate accurate and complete OQ test scripts.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 9,
@@ -141,7 +141,7 @@
             8
           ],
           "details": "Develop validation logic and review processes to check that OQ test scripts are compliant, complete, and aligned with GAMP and regulatory expectations.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -151,7 +151,7 @@
       "description": "Implement the SME (Subject Matter Expert) agent for domain expertise",
       "details": "Complete the partially implemented SME agent in main/src/agents/parallel/sme_agent.py. The agent should provide pharmaceutical domain expertise, validation patterns, and best practices. Must follow existing parallel agent patterns and integrate with the planner's coordination requests.",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         5
       ],
@@ -164,7 +164,7 @@
       "description": "Implement the Research agent for regulatory updates and best practices",
       "details": "Complete the partially implemented Research agent in main/src/agents/parallel/research_agent.py. The agent should provide regulatory updates, current best practices, and industry standards. Must follow existing parallel agent patterns and integrate with the planner's coordination requests.",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         5
       ],
@@ -177,7 +177,7 @@
       "description": "Connect planner agent requests to actual parallel agent execution",
       "details": "The planner generates parallel agent coordination requests but returns placeholder responses. Need to bridge the gap between planning and execution by implementing proper agent factory and execution pipeline. Ensure SME, Research, and Test Generator agents are actually invoked when requested by the planner.",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         6,
         7

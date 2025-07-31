@@ -182,12 +182,10 @@ class HumanConsultationConfig:
     escalation_timeout_seconds: int = 7200  # 2 hours for escalation
     critical_timeout_seconds: int = 1800  # 30 minutes for critical issues
 
-    # Conservative defaults (applied when timeout occurs)
-    conservative_gamp_category: int = 5  # Category 5 (custom application)
-    conservative_risk_level: str = "HIGH"
-    conservative_validation_approach: str = "full_validation_required"
-    conservative_test_coverage: float = 1.0  # 100% coverage
-    conservative_review_required: bool = True
+    # Consultation failure handling (NO fallback values - explicit failures only)
+    require_explicit_consultation_resolution: bool = True
+    disable_conservative_fallbacks: bool = True
+    enable_strict_compliance_mode: bool = True
 
     # User roles and permissions
     authorized_roles: list[str] = field(
@@ -259,12 +257,12 @@ class HumanConsultationConfig:
         if self.critical_timeout_seconds <= 0:
             raise ValueError("Critical timeout must be positive")
 
-        # Validate conservative defaults
-        if not 1 <= self.conservative_gamp_category <= 5:
-            raise ValueError("Conservative GAMP category must be between 1 and 5")
+        # Validate strict compliance settings
+        if not self.require_explicit_consultation_resolution:
+            raise ValueError("Explicit consultation resolution is mandatory for pharmaceutical compliance")
 
-        if not 0.0 <= self.conservative_test_coverage <= 1.0:
-            raise ValueError("Conservative test coverage must be between 0.0 and 1.0")
+        if not self.disable_conservative_fallbacks:
+            raise ValueError("Conservative fallbacks must be disabled for regulatory compliance")
 
         # Validate roles
         if not self.authorized_roles:
@@ -400,8 +398,8 @@ class Config:
             },
             "human_consultation": {
                 "default_timeout_seconds": self.human_consultation.default_timeout_seconds,
-                "conservative_gamp_category": self.human_consultation.conservative_gamp_category,
-                "conservative_risk_level": self.human_consultation.conservative_risk_level,
+                "require_explicit_consultation_resolution": self.human_consultation.require_explicit_consultation_resolution,
+                "disable_conservative_fallbacks": self.human_consultation.disable_conservative_fallbacks,
                 "authorized_roles": self.human_consultation.authorized_roles,
                 "enable_notifications": self.human_consultation.enable_notifications,
                 "require_digital_signature": self.human_consultation.require_digital_signature,

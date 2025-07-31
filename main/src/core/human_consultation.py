@@ -28,7 +28,6 @@ from .events import (
     ConsultationRequiredEvent,
     ConsultationSessionEvent,
     ConsultationTimeoutEvent,
-    GAMPCategory,
     HumanResponseEvent,
 )
 
@@ -348,7 +347,7 @@ class HumanConsultationManager:
                         f"Response session ID {response_event.session_id} does not match "
                         f"session {session.session_id}. Creating corrected response for audit compliance."
                     )
-                    
+
                     # Create corrected response with proper session ID for audit compliance
                     corrected_response = HumanResponseEvent(
                         response_type=response_event.response_type,
@@ -380,30 +379,28 @@ class HumanConsultationManager:
                 return response_event
 
             except TimeoutError:
-                # Timeout occurred - apply conservative defaults
-                self.logger.warning(
-                    f"Consultation timed out for session {session.session_id}"
+                # Timeout occurred - throw explicit error (NO fallback values)
+                self.logger.error(
+                    f"Consultation timed out for session {session.session_id} - "
+                    f"NO fallback values available per pharmaceutical compliance requirements"
                 )
-
-                # Create timeout event with conservative defaults
-                timeout_event = await self._create_timeout_event(session)
 
                 # Complete session as timed out
                 await session.complete_session("timed_out")
                 self.timed_out_consultations += 1
 
-                return timeout_event
+                # This will throw ConsultationRequiredError with full diagnostics
+                await self._create_timeout_event(session)
 
         except Exception as e:
-            # Handle unexpected errors
+            # Handle unexpected errors - throw explicit error (NO fallback values)
             self.logger.error(f"Error in consultation request: {e}")
 
             # Complete session with error status
             await session.complete_session("error")
 
-            # Create error timeout event
-            timeout_event = await self._create_timeout_event(session, error_message=str(e))
-            return timeout_event
+            # This will throw ConsultationRequiredError with full diagnostics
+            await self._create_timeout_event(session, error_message=str(e))
 
         finally:
             # Cleanup session
@@ -414,137 +411,136 @@ class HumanConsultationManager:
         self,
         session: ConsultationSession,
         error_message: str | None = None
-    ) -> ConsultationTimeoutEvent:
+    ) -> None:
         """
-        Create timeout event with conservative defaults.
+        Handle consultation timeout with explicit failure (NO fallback values).
+        
+        This method throws an explicit ConsultationRequiredError when consultation
+        timeouts occur, preserving full diagnostic information without creating
+        any fallback values or artificial confidence scores.
         
         Args:
             session: The consultation session that timed out
             error_message: Optional error message
             
-        Returns:
-            ConsultationTimeoutEvent with conservative defaults
+        Raises:
+            ConsultationRequiredError: Always throws explicit error with diagnostics
         """
         consultation_event = session.consultation_event
 
-        # Generate conservative defaults based on pharmaceutical requirements
-        conservative_defaults = self._generate_conservative_defaults(consultation_event)
+        # Generate comprehensive failure diagnostics (NO fallback values)
+        failure_diagnostics = self._generate_consultation_failure_diagnostics(consultation_event)
 
-        # Determine escalation contacts
-        escalation_contacts = self._get_escalation_contacts(consultation_event)
+        # Create explicit failure - NO conservative defaults allowed
+        class ConsultationRequiredError(RuntimeError):
+            """Raised when human consultation is required and no fallbacks are permitted."""
+            def __init__(self, message: str, diagnostics: dict[str, Any]):
+                super().__init__(message)
+                self.diagnostics = diagnostics
 
-        # Create timeout event
-        timeout_event = ConsultationTimeoutEvent(
-            consultation_id=consultation_event.consultation_id,
-            timeout_duration_seconds=session.timeout_seconds,
-            conservative_action=conservative_defaults["action_description"],
-            escalation_required=True,
-            original_consultation=consultation_event,
-            default_decision=conservative_defaults,
-            escalation_contacts=escalation_contacts
-        )
-
-        # Log timeout with conservative defaults for compliance
+        # Log the consultation failure for audit trail (no fallback values)
         await self.compliance_logger.log_audit_event({
-            "event_type": "CONSULTATION_TIMEOUT_WITH_DEFAULTS",
+            "event_type": "CONSULTATION_TIMEOUT_EXPLICIT_FAILURE",
             "session_id": str(session.session_id),
             "consultation_id": str(consultation_event.consultation_id),
             "consultation_type": consultation_event.consultation_type,
             "timeout_duration_seconds": session.timeout_seconds,
-            "conservative_defaults_applied": conservative_defaults,
-            "escalation_contacts": escalation_contacts,
+            "failure_diagnostics": failure_diagnostics,
             "error_message": error_message,
             "urgency": consultation_event.urgency,
-            "regulatory_justification": "Conservative defaults applied per pharmaceutical validation requirements"
+            "regulatory_compliance": "NO fallback values - explicit failure per pharmaceutical requirements",
+            "system_action": "Throwing ConsultationRequiredError with full diagnostics"
         })
 
-        self.logger.warning(
-            f"Applied conservative defaults for timed out consultation "
-            f"{consultation_event.consultation_id}: {conservative_defaults['action_description']}"
+        self.logger.error(
+            f"Consultation timeout for {consultation_event.consultation_id}. "
+            f"NO fallback values available per pharmaceutical compliance requirements. "
+            f"Human consultation must be completed before system can proceed. "
+            f"Throwing explicit error with full diagnostics."
         )
 
-        return timeout_event
+        # Prepare detailed error message
+        error_message = (
+            f"Human consultation required for {consultation_event.consultation_type}. "
+            f"Consultation ID: {consultation_event.consultation_id}. "
+            f"System cannot proceed without explicit human decision. "
+            f"No fallback mechanisms available per pharmaceutical compliance requirements."
+        )
 
-    def _generate_conservative_defaults(
+        # Throw explicit error with full diagnostics - NO fallback values
+        raise ConsultationRequiredError(error_message, failure_diagnostics)
+
+    def _generate_consultation_failure_diagnostics(
         self,
         consultation_event: ConsultationRequiredEvent
     ) -> dict[str, Any]:
         """
-        Generate conservative defaults for pharmaceutical compliance.
+        Generate comprehensive failure diagnostics for consultation timeouts.
+        
+        This method creates detailed diagnostic information about consultation
+        failures without creating any fallback values or artificial confidence scores.
+        All failures are explicitly surfaced to maintain regulatory compliance.
         
         Args:
-            consultation_event: The consultation request
+            consultation_event: The consultation request that failed
             
         Returns:
-            Dictionary with conservative default decisions
+            Dictionary with comprehensive diagnostic information (NO fallback values)
         """
         consultation_type = consultation_event.consultation_type
-        config = self.config.human_consultation
 
-        # Base conservative defaults
-        defaults = {
-            "gamp_category": GAMPCategory(config.conservative_gamp_category),
-            "risk_level": config.conservative_risk_level,
-            "validation_approach": config.conservative_validation_approach,
-            "test_coverage": config.conservative_test_coverage,
-            "review_required": config.conservative_review_required,
-            "confidence_score": 0.0,  # Lowest confidence for system defaults
-            "human_override_required": True,
-            "regulatory_rationale": "Conservative defaults applied due to timeout - requires human review",
-            "default_source": "system_timeout_policy"
-        }
-
-        # Consultation-type specific adjustments
-        if "categorization" in consultation_type.lower():
-            defaults.update({
-                "action_description": f"Applied Category {config.conservative_gamp_category} (highest validation rigor) due to categorization consultation timeout",
-                "specific_actions": [
-                    "Set GAMP Category 5 (custom application)",
-                    "Require full validation lifecycle",
-                    "Mandate design controls and source code review",
-                    "Escalate to regulatory specialist for review"
-                ]
-            })
-        elif "planning" in consultation_type.lower():
-            defaults.update({
-                "action_description": "Applied maximum test coverage and validation rigor due to planning consultation timeout",
-                "specific_actions": [
-                    "Set 100% test coverage requirement",
-                    "Include all test types (unit, integration, system, UAT)",
-                    "Require validation specialist review",
-                    "Apply strictest acceptance criteria"
-                ]
-            })
-        elif "missing_urs" in consultation_type.lower():
-            defaults.update({
-                "action_description": "Halt processing and escalate due to missing URS content",
-                "specific_actions": [
-                    "Stop automated processing",
-                    "Escalate to document analyst",
-                    "Require complete URS before proceeding",
-                    "Document compliance risk"
-                ]
-            })
-        else:
-            defaults.update({
-                "action_description": f"Applied conservative defaults for {consultation_type} consultation timeout",
-                "specific_actions": [
-                    "Apply highest validation rigor",
-                    "Require human review before proceeding",
-                    "Escalate to appropriate expertise",
-                    "Document regulatory impact"
-                ]
-            })
-
-        # Add timestamp and system metadata
-        defaults.update({
-            "applied_at": datetime.now(UTC).isoformat(),
+        # Generate comprehensive failure diagnostics
+        failure_diagnostics = {
+            "failure_type": "consultation_timeout",
+            "consultation_type": consultation_type,
+            "consultation_id": str(consultation_event.consultation_id),
+            "triggering_step": consultation_event.triggering_step,
+            "urgency": consultation_event.urgency,
+            "required_expertise": consultation_event.required_expertise,
+            "original_context": consultation_event.context,
+            "failed_at": datetime.now(UTC).isoformat(),
             "system_version": "1.0.0",
             "compliance_standards": ["GAMP-5", "ALCOA+", "21 CFR Part 11"],
-            "timeout_policy": "pharmaceutical_conservative_defaults_v1"
-        })
+            "regulatory_impact": "HIGH - System cannot proceed without human consultation",
+            "required_actions": [
+                "Human consultation must be completed before system can proceed",
+                "No automated fallbacks available per regulatory requirements",
+                "System administrator intervention required",
+                "Audit trail preserved with full failure information"
+            ],
+            "no_fallback_rationale": "Pharmaceutical compliance requires explicit human decisions - no system fallbacks permitted"
+        }
 
-        return defaults
+        # Add consultation-type specific diagnostic information
+        if "categorization" in consultation_type.lower():
+            failure_diagnostics.update({
+                "categorization_failure_details": {
+                    "failed_operation": "GAMP-5 categorization decision",
+                    "required_decision": "Human expert must determine GAMP category (1, 3, 4, or 5)",
+                    "cannot_proceed_reason": "No valid GAMP categorization available",
+                    "compliance_requirement": "GAMP-5 requires human validation of software categorization"
+                }
+            })
+        elif "planning" in consultation_type.lower():
+            failure_diagnostics.update({
+                "planning_failure_details": {
+                    "failed_operation": "Test planning and strategy development",
+                    "required_decision": "Human expert must define test strategy and requirements",
+                    "cannot_proceed_reason": "No valid test planning strategy available",
+                    "compliance_requirement": "Pharmaceutical validation requires human-approved test strategies"
+                }
+            })
+        elif "missing_urs" in consultation_type.lower():
+            failure_diagnostics.update({
+                "urs_failure_details": {
+                    "failed_operation": "URS content analysis",
+                    "required_decision": "Complete URS document must be provided",
+                    "cannot_proceed_reason": "Insufficient URS content for analysis",
+                    "compliance_requirement": "Pharmaceutical validation requires complete requirements documentation"
+                }
+            })
+
+        return failure_diagnostics
 
     def _get_escalation_contacts(
         self,
@@ -658,7 +654,8 @@ class HumanConsultationManager:
             ),
             "configuration": {
                 "default_timeout_seconds": self.config.human_consultation.default_timeout_seconds,
-                "conservative_gamp_category": self.config.human_consultation.conservative_gamp_category,
+                "require_explicit_consultation_resolution": self.config.human_consultation.require_explicit_consultation_resolution,
+                "disable_conservative_fallbacks": self.config.human_consultation.disable_conservative_fallbacks,
                 "authorized_roles": self.config.human_consultation.authorized_roles,
                 "enable_notifications": self.config.human_consultation.enable_notifications
             }

@@ -22,7 +22,7 @@ import os
 import traceback
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 import chromadb
@@ -123,15 +123,15 @@ class ContextProviderAgent:
         self.vector_store_path = Path(vector_store_path or os.getenv("RAG_VECTOR_STORE_PATH", "./lib/chroma_db"))
         self.cache_dir = Path(cache_dir or os.getenv("RAG_CACHE_DIR", "./cache/rag"))
         self.embedding_model_name = embedding_model or os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
-        
+
         # Create directories
         self.vector_store_path.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize ChromaDB and ingestion pipeline
         self._initialize_chromadb()
         self._setup_ingestion_pipeline()
-        
+
         # Initialize function agent with RAG tools
         self.function_agent = self._create_function_agent()
 
@@ -142,10 +142,10 @@ class ContextProviderAgent:
             "avg_processing_time": 0.0,
             "cache_hits": 0
         }
-        
+
         # Audit trail for ALCOA+ compliance
         self._audit_trail = []
-        
+
         # Initialize Phoenix tracer for observability
         self.tracer = trace.get_tracer(__name__)
 
@@ -165,17 +165,17 @@ class ContextProviderAgent:
         """
         start_time = datetime.now(UTC)
         self._processing_stats["total_requests"] += 1
-        
+
         # Get current span for detailed tracing
         current_span = trace.get_current_span()
-        
+
         try:
             # Parse request data
             request_data = ContextProviderRequest(
                 **request_event.request_data,
                 correlation_id=request_event.correlation_id
             )
-            
+
             # Add request attributes to span
             if current_span and current_span.is_recording():
                 current_span.set_attribute("request.gamp_category", request_data.gamp_category)
@@ -184,7 +184,7 @@ class ContextProviderAgent:
                 current_span.set_attribute("request.search_scope", json.dumps(request_data.search_scope))
                 current_span.set_attribute("request.document_sections_count", len(request_data.document_sections))
                 current_span.set_attribute("request.timeout_seconds", request_data.timeout_seconds)
-                
+
                 # Add test strategy details
                 test_types = request_data.test_strategy.get("test_types", [])
                 current_span.set_attribute("request.test_types", json.dumps(test_types))
@@ -216,7 +216,7 @@ class ContextProviderAgent:
                 current_span.set_attribute("result.search_coverage", context_response.search_coverage)
                 current_span.set_attribute("result.confidence_score", context_response.confidence_score)
                 current_span.set_attribute("result.processing_time", processing_time)
-                
+
                 # Add document summaries as event
                 if context_response.retrieved_documents:
                     current_span.add_event(
@@ -228,7 +228,7 @@ class ContextProviderAgent:
                                 for doc in context_response.retrieved_documents[:5]
                             ]),
                             "average_relevance_score": sum(
-                                doc.get("relevance_score", 0.0) 
+                                doc.get("relevance_score", 0.0)
                                 for doc in context_response.retrieved_documents
                             ) / len(context_response.retrieved_documents)
                         }
@@ -255,7 +255,7 @@ class ContextProviderAgent:
             error_msg = f"Context retrieval timeout after {processing_time:.1f}s"
 
             self.logger.error(f"Context Provider timeout: {error_msg}")
-            
+
             # Record timeout in span
             if current_span and current_span.is_recording():
                 current_span.set_status(Status(StatusCode.ERROR, "Timeout"))
@@ -279,7 +279,7 @@ class ContextProviderAgent:
             stack_trace = traceback.format_exc()
 
             self.logger.error(f"Context Provider error: {error_msg}\n{stack_trace}")
-            
+
             # Record exception in span with full diagnostic information
             if current_span and current_span.is_recording():
                 current_span.record_exception(e)
@@ -292,7 +292,7 @@ class ContextProviderAgent:
             return AgentResultEvent(
                 agent_type="context_provider",
                 result_data={
-                    "error": str(e), 
+                    "error": str(e),
                     "error_type": type(e).__name__,
                     "stack_trace": stack_trace
                 },
@@ -363,10 +363,10 @@ class ContextProviderAgent:
                     persist_directory=str(self.vector_store_path)
                 )
             )
-            
+
             # Create collections for different pharmaceutical document types
             self.collections = {
-                'gamp5': self.chroma_client.get_or_create_collection(
+                "gamp5": self.chroma_client.get_or_create_collection(
                     name="gamp5_documents",
                     metadata={
                         "description": "GAMP-5 validation and testing guidelines",
@@ -374,7 +374,7 @@ class ContextProviderAgent:
                         "last_updated": datetime.now(UTC).isoformat()
                     }
                 ),
-                'regulatory': self.chroma_client.get_or_create_collection(
+                "regulatory": self.chroma_client.get_or_create_collection(
                     name="regulatory_documents",
                     metadata={
                         "description": "FDA, EMA, ICH regulatory requirements",
@@ -382,7 +382,7 @@ class ContextProviderAgent:
                         "last_updated": datetime.now(UTC).isoformat()
                     }
                 ),
-                'sops': self.chroma_client.get_or_create_collection(
+                "sops": self.chroma_client.get_or_create_collection(
                     name="sop_documents",
                     metadata={
                         "description": "Standard Operating Procedures",
@@ -390,7 +390,7 @@ class ContextProviderAgent:
                         "last_updated": datetime.now(UTC).isoformat()
                     }
                 ),
-                'best_practices': self.chroma_client.get_or_create_collection(
+                "best_practices": self.chroma_client.get_or_create_collection(
                     name="best_practices",
                     metadata={
                         "description": "Industry best practices and methodologies",
@@ -399,22 +399,22 @@ class ContextProviderAgent:
                     }
                 )
             }
-            
+
             # Initialize embedding model
             self.embedding_model = OpenAIEmbedding(
                 model=self.embedding_model_name,
                 api_key=os.getenv("OPENAI_API_KEY")
             )
-            
+
             if self.verbose:
                 self.logger.info(f"ChromaDB initialized with collections: {list(self.collections.keys())}")
-                
+
         except Exception as e:
-            error_msg = f"Failed to initialize ChromaDB: {str(e)}"
+            error_msg = f"Failed to initialize ChromaDB: {e!s}"
             self.logger.error(error_msg)
             # NO FALLBACK - fail explicitly
             raise RuntimeError(error_msg) from e
-    
+
     def _setup_ingestion_pipeline(self) -> None:
         """Setup ingestion pipeline with caching and transformations."""
         try:
@@ -423,10 +423,10 @@ class ContextProviderAgent:
             self.ingestion_cache = IngestionCache(
                 cache_file=str(cache_file)
             )
-            
+
             # Create optimized LLM for metadata extraction
             extractor_llm = self._create_extractor_llm()
-            
+
             # Setup transformations for pharmaceutical documents
             transformations = [
                 # Text splitting optimized for pharmaceutical content
@@ -436,52 +436,52 @@ class ContextProviderAgent:
                     include_metadata=True,
                     include_prev_next_rel=True
                 ),
-                
+
                 # Metadata extraction for compliance tracking
                 TitleExtractor(
                     llm=extractor_llm,
                     nodes=5  # Extract from first 5 chunks
                 ),
-                
+
                 # Keyword extraction for pharmaceutical terms
                 KeywordExtractor(
                     llm=extractor_llm,
                     keywords=10
                 ),
-                
+
                 # Embeddings
                 self.embedding_model
             ]
-            
+
             # Create ingestion pipelines for each collection
             self.ingestion_pipelines = {}
             for collection_name, collection in self.collections.items():
                 vector_store = ChromaVectorStore(
                     chroma_collection=collection
                 )
-                
+
                 self.ingestion_pipelines[collection_name] = IngestionPipeline(
                     transformations=transformations,
                     cache=self.ingestion_cache,
                     vector_store=vector_store
                 )
-            
+
             if self.verbose:
                 self.logger.info("Ingestion pipelines configured successfully")
-                
+
         except Exception as e:
-            error_msg = f"Failed to setup ingestion pipeline: {str(e)}"
+            error_msg = f"Failed to setup ingestion pipeline: {e!s}"
             self.logger.error(error_msg)
             # NO FALLBACK - fail explicitly
             raise RuntimeError(error_msg) from e
-    
+
     def _create_extractor_llm(self) -> OpenAI | None:
         """Create optimized LLM for metadata extraction."""
         try:
             extractor_model = os.getenv("RAG_EXTRACTOR_MODEL", "gpt-4.1-nano-2025-04-14")
             extractor_temperature = float(os.getenv("RAG_EXTRACTOR_TEMPERATURE", "0.1"))
             extractor_max_tokens = int(os.getenv("RAG_EXTRACTOR_MAX_TOKENS", "500"))
-            
+
             return OpenAI(
                 model=extractor_model,
                 temperature=extractor_temperature,
@@ -489,9 +489,9 @@ class ContextProviderAgent:
                 api_key=os.getenv("OPENAI_API_KEY")
             )
         except Exception as e:
-            self.logger.warning(f"Could not create extractor LLM: {str(e)}")
+            self.logger.warning(f"Could not create extractor LLM: {e!s}")
             return None
-    
+
     async def _search_documents(self, request: ContextProviderRequest) -> list[dict[str, Any]]:
         """Search documents using ChromaDB with comprehensive Phoenix observability."""
         # Create a span for document search
@@ -509,13 +509,13 @@ class ContextProviderAgent:
                     }
                 }
                 self._audit_trail.append(audit_entry)
-                
+
                 # Determine which collections to search
                 collection_names = self._select_collections(request.gamp_category, request.search_scope)
-                
+
                 # Build search query
                 query = self._build_search_query(request)
-                
+
                 # Create query embedding for observability
                 query_embedding_start = datetime.now(UTC)
                 query_embedding = await asyncio.to_thread(
@@ -523,7 +523,7 @@ class ContextProviderAgent:
                     query
                 )
                 query_embedding_time = (datetime.now(UTC) - query_embedding_start).total_seconds() * 1000
-                
+
                 # Add comprehensive span attributes
                 span.set_attribute("chromadb.query", query)
                 span.set_attribute("chromadb.query_length", len(query))
@@ -535,7 +535,7 @@ class ContextProviderAgent:
                 span.set_attribute("chromadb.max_documents", self.max_documents)
                 span.set_attribute("chromadb.context_depth", request.context_depth)
                 span.set_attribute("chromadb.search_scope", json.dumps(request.search_scope))
-                
+
                 # Add query generation event
                 span.add_event(
                     "query_generated",
@@ -546,7 +546,7 @@ class ContextProviderAgent:
                         "embedding_norm": float(sum(x*x for x in query_embedding)**0.5)
                     }
                 )
-                
+
                 # Log detailed search information
                 self.logger.info(
                     f"🔍 Starting ChromaDB search:\n"
@@ -556,45 +556,45 @@ class ContextProviderAgent:
                     f"   - Max documents: {self.max_documents}\n"
                     f"   - Query embedding time: {query_embedding_time:.2f}ms"
                 )
-                
+
                 # Perform searches across selected collections
                 all_results = []
-                
+
                 for collection_name in collection_names:
                     # Create a span for each collection search
                     with self.tracer.start_as_current_span(f"chromadb.search_collection.{collection_name}") as collection_span:
                         collection_span.set_attribute("collection.name", collection_name)
-                        
+
                         # Get vector store for collection
                         vector_store = ChromaVectorStore(
                             chroma_collection=self.collections[collection_name]
                         )
-                        
+
                         # Log collection info
                         collection_count = self.collections[collection_name].count()
                         collection_span.set_attribute("collection.document_count", collection_count)
                         self.logger.info(f"   📁 Searching collection '{collection_name}' ({collection_count} documents)")
-                        
+
                         # Create index and retriever
                         storage_context = StorageContext.from_defaults(
                             vector_store=vector_store
                         )
-                        
+
                         index = VectorStoreIndex.from_vector_store(
                             vector_store=vector_store,
                             storage_context=storage_context,
                             embed_model=self.embedding_model
                         )
-                        
+
                         retriever = VectorIndexRetriever(
                             index=index,
                             similarity_top_k=self.max_documents,
                             vector_store_query_mode="hybrid"  # Combine semantic + keyword
                         )
-                        
+
                         # Execute search in thread pool for async compatibility
                         query_bundle = QueryBundle(query_str=query)
-                        
+
                         # Time the retrieval operation
                         retrieval_start = datetime.now(UTC)
                         nodes = await asyncio.to_thread(
@@ -602,32 +602,32 @@ class ContextProviderAgent:
                             query_bundle
                         )
                         retrieval_time = (datetime.now(UTC) - retrieval_start).total_seconds() * 1000
-                        
+
                         # Track retrieval results
                         collection_span.set_attribute("collection.nodes_retrieved", len(nodes))
                         collection_span.set_attribute("collection.retrieval_time_ms", retrieval_time)
-                        
+
                         # Convert nodes to document format and track details
                         collection_results = []
                         chunk_details = []
-                        
+
                         for i, node in enumerate(nodes):
                             doc = self._node_to_document(node, collection_name)
                             collection_results.append(doc)
-                            
+
                             # Capture detailed chunk information
                             chunk_info = {
                                 "rank": i + 1,
                                 "node_id": node.node.node_id,
                                 "score": float(node.score) if node.score else 0.0,
-                                "title": doc['title'],
-                                "type": doc['type'],
+                                "title": doc["title"],
+                                "type": doc["type"],
                                 "text_preview": node.node.text[:200] if node.node.text else "",
                                 "metadata": node.node.metadata or {},
                                 "embedding_id": node.node.embedding
                             }
                             chunk_details.append(chunk_info)
-                            
+
                             # Create span for each chunk retrieved
                             with self.tracer.start_as_current_span(f"chromadb.chunk.{i+1}") as chunk_span:
                                 chunk_span.set_attribute("chunk.rank", i + 1)
@@ -637,12 +637,12 @@ class ContextProviderAgent:
                                 chunk_span.set_attribute("chunk.type", chunk_info["type"])
                                 chunk_span.set_attribute("chunk.text_length", len(node.node.text) if node.node.text else 0)
                                 chunk_span.set_attribute("chunk.has_embedding", bool(node.node.embedding))
-                                
+
                                 # Add metadata attributes
                                 for key, value in chunk_info["metadata"].items():
                                     if isinstance(value, (str, int, float, bool)):
                                         chunk_span.set_attribute(f"chunk.metadata.{key}", value)
-                            
+
                             # Log top 5 results per collection with more detail
                             if i < 5:
                                 self.logger.info(
@@ -652,7 +652,7 @@ class ContextProviderAgent:
                                     f"         Node ID: {node.node.node_id}\n"
                                     f"         Text preview: {chunk_info['text_preview'][:100]}..."
                                 )
-                        
+
                         # Add comprehensive collection search event
                         collection_span.add_event(
                             "collection_search_complete",
@@ -664,38 +664,38 @@ class ContextProviderAgent:
                                 "chunk_details": json.dumps(chunk_details[:10])  # Top 10 chunks
                             }
                         )
-                        
+
                         all_results.extend(collection_results)
-                
+
                 # Apply metadata filters if specified
                 pre_filter_count = len(all_results)
                 if request.search_scope.get("filters"):
                     all_results = self._apply_metadata_filters(
-                        all_results, 
+                        all_results,
                         request.search_scope["filters"]
                     )
                     span.set_attribute("chromadb.filtered_count", pre_filter_count - len(all_results))
                     self.logger.info(f"   🔽 Applied filters: {pre_filter_count} → {len(all_results)} documents")
-                
+
                 # Sort by relevance and limit results
                 all_results.sort(key=lambda x: x.get("relevance_score", 0.0), reverse=True)
                 final_results = all_results[:self.max_documents]
-                
+
                 # Update audit trail with results
                 audit_entry["results_count"] = len(final_results)
                 audit_entry["completion_time"] = datetime.now(UTC).isoformat()
-                
+
                 # Add final search metrics to span
                 span.set_attribute("chromadb.total_results", len(all_results))
                 span.set_attribute("chromadb.final_results", len(final_results))
                 span.set_attribute("chromadb.success", True)
-                
+
                 if final_results:
                     # Calculate and log confidence metrics
                     avg_score = sum(d["relevance_score"] for d in final_results) / len(final_results)
                     span.set_attribute("chromadb.average_relevance_score", avg_score)
                     span.set_attribute("chromadb.top_relevance_score", final_results[0]["relevance_score"])
-                    
+
                     # Add detailed results event
                     span.add_event(
                         "search_results_summary",
@@ -704,12 +704,12 @@ class ContextProviderAgent:
                             "collections_searched": json.dumps(collection_names),
                             "document_types": json.dumps(list(set(d["type"] for d in final_results))),
                             "gamp_categories_found": json.dumps(list(set(
-                                cat for d in final_results 
+                                cat for d in final_results
                                 for cat in d.get("gamp_categories", [])
                             )))
                         }
                     )
-                
+
                 if self.verbose:
                     self.logger.info(
                         f"✅ ChromaDB search completed:\n"
@@ -717,21 +717,21 @@ class ContextProviderAgent:
                         f"   - Collections searched: {collection_names}\n"
                         f"   - Average relevance: {avg_score:.3f}" if final_results else "   - No results found"
                     )
-                
+
                 return final_results
-                
+
             except Exception as e:
-                error_msg = f"ChromaDB search failed: {str(e)}"
+                error_msg = f"ChromaDB search failed: {e!s}"
                 stack_trace = traceback.format_exc()
                 self.logger.error(f"{error_msg}\n{stack_trace}")
-                
+
                 # Record failure in span
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
                 span.set_attribute("chromadb.success", False)
                 span.set_attribute("chromadb.error_type", type(e).__name__)
                 span.set_attribute("chromadb.error_message", str(e))
-                
+
                 # Record failure in audit trail
                 self._audit_trail.append({
                     "timestamp": datetime.now(UTC).isoformat(),
@@ -741,7 +741,7 @@ class ContextProviderAgent:
                     "error_type": type(e).__name__,
                     "stack_trace": stack_trace
                 })
-                
+
                 # NO FALLBACK - fail explicitly with full diagnostic information
                 raise RuntimeError(
                     f"{error_msg}\n"
@@ -750,79 +750,79 @@ class ContextProviderAgent:
                     f"correlation_id={request.correlation_id}\n"
                     f"Stack trace:\n{stack_trace}"
                 ) from e
-    
+
     def _select_collections(self, gamp_category: str, search_scope: dict[str, Any]) -> list[str]:
         """Select appropriate collections based on GAMP category and scope."""
         collections = []
-        
+
         # Always include GAMP-5 collection for any category
-        collections.append('gamp5')
-        
+        collections.append("gamp5")
+
         # Add regulatory collection for categories 3, 4, 5
         if gamp_category in ["3", "4", "5"]:
-            collections.append('regulatory')
-        
+            collections.append("regulatory")
+
         # Add SOPs for categories 4 and 5
         if gamp_category in ["4", "5"]:
-            collections.append('sops')
-        
+            collections.append("sops")
+
         # Add best practices based on search scope
         if search_scope.get("include_best_practices", True):
-            collections.append('best_practices')
-        
+            collections.append("best_practices")
+
         return collections
-    
+
     def _build_search_query(self, request: ContextProviderRequest) -> str:
         """Build search query from request parameters."""
         query_parts = []
-        
+
         # Add GAMP category context
         query_parts.append(f"GAMP Category {request.gamp_category} validation testing")
-        
+
         # Add test strategy types
         test_types = request.test_strategy.get("test_types", [])
         if test_types:
             query_parts.append(" ".join(test_types))
-        
+
         # Add document sections
         if request.document_sections:
             query_parts.append(" ".join(request.document_sections))
-        
+
         # Add specific focus areas from search scope
         focus_areas = request.search_scope.get("focus_areas", [])
         if focus_areas:
             query_parts.append(" ".join(focus_areas))
-        
+
         return " ".join(query_parts)
-    
+
     def _node_to_document(self, node: NodeWithScore, collection_name: str) -> dict[str, Any]:
         """Convert retrieval node to document format with comprehensive chunk details."""
         metadata = node.node.metadata or {}
-        
+
         # Convert string metadata back to lists
         gamp_categories = metadata.get("gamp_categories", "").split(",") if metadata.get("gamp_categories") else []
         test_types = metadata.get("test_types", "").split(",") if metadata.get("test_types") else []
         sections = metadata.get("sections", "").split(",") if metadata.get("sections") else []
-        
+
         # Extract chunk-specific information
         chunk_info = {
             "chunk_id": node.node.node_id,
             "chunk_text": node.node.text or "",
             "chunk_length": len(node.node.text) if node.node.text else 0,
-            "chunk_start_char": node.node.start_char_idx if hasattr(node.node, 'start_char_idx') else None,
-            "chunk_end_char": node.node.end_char_idx if hasattr(node.node, 'end_char_idx') else None,
+            "chunk_start_char": node.node.start_char_idx if hasattr(node.node, "start_char_idx") else None,
+            "chunk_end_char": node.node.end_char_idx if hasattr(node.node, "end_char_idx") else None,
             "has_embedding": bool(node.node.embedding),
             "relationships": {}
         }
-        
+
         # Extract relationships if available
-        if hasattr(node.node, 'relationships') and node.node.relationships:
+        if hasattr(node.node, "relationships") and node.node.relationships:
             for rel_type, rel_node in node.node.relationships.items():
                 chunk_info["relationships"][rel_type] = {
-                    "node_id": rel_node.node_id if hasattr(rel_node, 'node_id') else None,
+                    "node_id": rel_node.node_id if hasattr(rel_node, "node_id") else None,
                     "type": rel_type
                 }
-        
+
         return {
             "title": metadata.get("title", "Untitled Document"),
             "type": metadata.get("type", collection_name),
@@ -839,20 +839,20 @@ class ContextProviderAgent:
             "creation_date": metadata.get("creation_date", "unknown"),
             "last_modified": metadata.get("last_modified", "unknown")
         }
-    
+
     def _apply_metadata_filters(self, documents: list[dict[str, Any]], filters: dict[str, Any]) -> list[dict[str, Any]]:
         """Apply metadata filters to search results."""
         filtered_docs = []
-        
+
         for doc in documents:
             include = True
             metadata = doc.get("metadata", {})
-            
+
             for key, value in filters.items():
                 if key not in metadata:
                     include = False
                     break
-                    
+
                 if isinstance(value, list):
                     if metadata[key] not in value:
                         include = False
@@ -860,10 +860,10 @@ class ContextProviderAgent:
                 elif metadata[key] != value:
                     include = False
                     break
-            
+
             if include:
                 filtered_docs.append(doc)
-        
+
         return filtered_docs
 
     def _assess_context_quality(self, documents: list[dict[str, Any]], request: ContextProviderRequest) -> str:
@@ -883,7 +883,7 @@ class ContextProviderAgent:
             covered_sections.update(doc.get("sections", []))
 
         section_coverage = len(covered_sections.intersection(required_sections)) / len(required_sections) if required_sections else 1.0
-        
+
         # Determine quality based on relevance and coverage
         if avg_relevance >= 0.85 and section_coverage >= 0.8:
             quality = "high"
@@ -891,7 +891,7 @@ class ContextProviderAgent:
             quality = "medium"
         else:
             quality = "low"
-        
+
         # Log quality assessment details
         self.logger.info(
             f"📊 Context quality assessment:\n"
@@ -901,7 +901,7 @@ class ContextProviderAgent:
             f"   - Section coverage: {section_coverage:.2%}\n"
             f"   - Quality assessment: {quality}"
         )
-        
+
         # Add trace event
         current_span = trace.get_current_span()
         if current_span and current_span.is_recording():
@@ -915,7 +915,7 @@ class ContextProviderAgent:
                     "quality": quality
                 }
             )
-        
+
         return quality
 
     def _calculate_search_coverage(self, documents: list[dict[str, Any]], request: ContextProviderRequest) -> float:
@@ -1079,7 +1079,7 @@ class ContextProviderAgent:
 
         # Combine factors
         confidence = (avg_relevance * 0.4 + search_coverage * 0.3 + quality_factor * 0.2 + document_count_factor * 0.1)
-        
+
         # Log calculation details
         self.logger.info(
             f"🔢 Confidence calculation:\n"
@@ -1089,7 +1089,7 @@ class ContextProviderAgent:
             f"   - Document count: {len(documents)} → {document_count_factor:.1f} (weight: 0.1)\n"
             f"   - Final confidence: {confidence:.3f}"
         )
-        
+
         # Add trace event for confidence calculation
         current_span = trace.get_current_span()
         if current_span and current_span.is_recording():
@@ -1219,16 +1219,16 @@ Always maintain regulatory compliance and provide complete audit trails."""
     def get_performance_stats(self) -> dict[str, Any]:
         """Get current performance statistics."""
         stats = self._processing_stats.copy()
-        
+
         # Add ChromaDB statistics
         try:
             for collection_name, collection in self.collections.items():
                 stats[f"{collection_name}_documents"] = collection.count()
         except Exception as e:
-            self.logger.warning(f"Could not get collection statistics: {str(e)}")
-        
+            self.logger.warning(f"Could not get collection statistics: {e!s}")
+
         return stats
-    
+
     @trace_agent_method(
         span_name="chromadb.ingest_documents",
         attributes={"operation": "document_ingestion"}
@@ -1252,17 +1252,17 @@ Always maintain regulatory compliance and provide complete audit trails."""
         """
         # Get current span for detailed tracing
         current_span = trace.get_current_span()
-        
+
         try:
             if collection_name not in self.collections:
                 raise ValueError(f"Invalid collection name: {collection_name}. Valid: {list(self.collections.keys())}")
-            
+
             # Add ingestion parameters to span
             if current_span and current_span.is_recording():
                 current_span.set_attribute("ingestion.collection_name", collection_name)
                 current_span.set_attribute("ingestion.documents_path", documents_path)
                 current_span.set_attribute("ingestion.force_reprocess", force_reprocess)
-            
+
             # Record ingestion in audit trail
             audit_entry = {
                 "timestamp": datetime.now(UTC).isoformat(),
@@ -1272,23 +1272,23 @@ Always maintain regulatory compliance and provide complete audit trails."""
                 "force_reprocess": force_reprocess
             }
             self._audit_trail.append(audit_entry)
-            
+
             self.logger.info(
                 f"📥 Starting document ingestion:\n"
                 f"   - Path: {documents_path}\n"
                 f"   - Collection: {collection_name}\n"
                 f"   - Force reprocess: {force_reprocess}"
             )
-            
+
             # Process documents with tracing
             with self.tracer.start_as_current_span("ingestion.process_documents") as process_span:
                 documents = await self._process_documents_for_ingestion(documents_path, collection_name)
                 process_span.set_attribute("documents.count", len(documents))
-                
+
                 if not documents:
                     self.logger.warning("No documents found to ingest")
                     return {"status": "no_documents", "processed": 0}
-                
+
                 # Log document details
                 for i, doc in enumerate(documents[:3]):  # Log first 3 documents
                     self.logger.info(
@@ -1296,33 +1296,33 @@ Always maintain regulatory compliance and provide complete audit trails."""
                         f"      - Type: {doc.metadata.get('type', 'unknown')}\n"
                         f"      - GAMP categories: {doc.metadata.get('gamp_categories', 'none')}"
                     )
-            
+
             # Clear cache if force reprocessing
             if force_reprocess:
                 self.ingestion_cache.clear()
                 self.logger.info("   🗑️  Cleared ingestion cache for reprocessing")
                 if current_span and current_span.is_recording():
                     current_span.add_event("cache_cleared")
-            
+
             # Run ingestion pipeline with tracing
             with self.tracer.start_as_current_span("ingestion.pipeline_run") as pipeline_span:
                 pipeline = self.ingestion_pipelines[collection_name]
-                
+
                 # Add pipeline configuration to span
                 pipeline_span.set_attribute("pipeline.collection", collection_name)
                 pipeline_span.set_attribute("pipeline.chunk_size", int(os.getenv("RAG_CHUNK_SIZE", "1500")))
                 pipeline_span.set_attribute("pipeline.chunk_overlap", int(os.getenv("RAG_CHUNK_OVERLAP", "200")))
-                
+
                 # Run pipeline
                 nodes = await asyncio.to_thread(
                     pipeline.run,
                     documents=documents
                 )
-                
+
                 # Track node processing
                 pipeline_span.set_attribute("pipeline.nodes_created", len(nodes))
                 pipeline_span.set_attribute("pipeline.documents_processed", len(documents))
-                
+
                 # Log chunking statistics
                 avg_chunks_per_doc = len(nodes) / len(documents) if documents else 0
                 self.logger.info(
@@ -1331,27 +1331,27 @@ Always maintain regulatory compliance and provide complete audit trails."""
                     f"      - Nodes created: {len(nodes)}\n"
                     f"      - Avg chunks/document: {avg_chunks_per_doc:.1f}"
                 )
-            
+
             # Update statistics
             stats = {
                 "status": "success",
                 "collection": collection_name,
                 "processed_documents": len(documents),
                 "processed_nodes": len(nodes),
-                "cache_hits": getattr(self.ingestion_cache, 'cache_hits', 0),
+                "cache_hits": getattr(self.ingestion_cache, "cache_hits", 0),
                 "timestamp": datetime.now(UTC).isoformat()
             }
-            
+
             # Update audit trail
             audit_entry.update(stats)
-            
+
             # Add final metrics to span
             if current_span and current_span.is_recording():
                 current_span.set_attribute("ingestion.success", True)
                 current_span.set_attribute("ingestion.documents_processed", len(documents))
                 current_span.set_attribute("ingestion.nodes_created", len(nodes))
                 current_span.set_attribute("ingestion.cache_hits", stats["cache_hits"])
-                
+
                 # Add summary event
                 current_span.add_event(
                     "ingestion_complete",
@@ -1362,7 +1362,7 @@ Always maintain regulatory compliance and provide complete audit trails."""
                         "avg_chunks_per_doc": len(nodes) / len(documents) if documents else 0
                     }
                 )
-            
+
             self.logger.info(
                 f"✅ Document ingestion completed:\n"
                 f"   - Status: {stats['status']}\n"
@@ -1370,14 +1370,14 @@ Always maintain regulatory compliance and provide complete audit trails."""
                 f"   - Nodes: {stats['processed_nodes']}\n"
                 f"   - Cache hits: {stats['cache_hits']}"
             )
-            
+
             return stats
-            
+
         except Exception as e:
-            error_msg = f"Document ingestion failed: {str(e)}"
+            error_msg = f"Document ingestion failed: {e!s}"
             stack_trace = traceback.format_exc()
             self.logger.error(f"{error_msg}\n{stack_trace}")
-            
+
             # Record failure in span
             if current_span and current_span.is_recording():
                 current_span.record_exception(e)
@@ -1385,7 +1385,7 @@ Always maintain regulatory compliance and provide complete audit trails."""
                 current_span.set_attribute("ingestion.success", False)
                 current_span.set_attribute("ingestion.error_type", type(e).__name__)
                 current_span.set_attribute("ingestion.error_message", str(e))
-            
+
             # Record failure in audit trail
             self._audit_trail.append({
                 "timestamp": datetime.now(UTC).isoformat(),
@@ -1396,19 +1396,19 @@ Always maintain regulatory compliance and provide complete audit trails."""
                 "error_type": type(e).__name__,
                 "stack_trace": stack_trace
             })
-            
+
             # NO FALLBACK - fail explicitly
             raise RuntimeError(f"{error_msg}\n{stack_trace}") from e
-    
+
     async def _process_documents_for_ingestion(
-        self, 
-        documents_path: str, 
+        self,
+        documents_path: str,
         collection_name: str
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Process documents for ingestion with pharmaceutical metadata."""
         documents = []
         path = Path(documents_path)
-        
+
         if path.is_file():
             # Single file
             doc = await self._create_document_from_file(path, collection_name)
@@ -1423,14 +1423,14 @@ Always maintain regulatory compliance and provide complete audit trails."""
                         documents.append(doc)
         else:
             raise ValueError(f"Path does not exist: {documents_path}")
-        
+
         return documents
-    
+
     async def _create_document_from_file(
         self,
         file_path: Path,
         collection_name: str
-    ) -> Optional[Document]:
+    ) -> Document | None:
         """Create a LlamaIndex Document from a file with compliance metadata."""
         try:
             # Read file content
@@ -1439,16 +1439,15 @@ Always maintain regulatory compliance and provide complete audit trails."""
                 # For now, skip PDFs unless you have pdf reader installed
                 self.logger.warning(f"PDF processing not implemented, skipping: {file_path}")
                 return None
-            else:
-                # Text-based files
-                content = file_path.read_text(encoding="utf-8")
-            
+            # Text-based files
+            content = file_path.read_text(encoding="utf-8")
+
             # Create metadata for pharmaceutical compliance
             # ChromaDB only supports flat metadata (str, int, float, None)
             gamp_categories = self._extract_gamp_categories(content)
             test_types = self._extract_test_types(content)
             sections = self._extract_sections(content)
-            
+
             metadata = {
                 "file_name": file_path.name,
                 "file_path": str(file_path),
@@ -1460,86 +1459,85 @@ Always maintain regulatory compliance and provide complete audit trails."""
                 "test_types": ",".join(test_types) if test_types else "",
                 "sections": ",".join(sections[:5]) if sections else ""  # Limit sections for metadata size
             }
-            
+
             # Create document
             return Document(
                 text=content,
                 metadata=metadata
             )
-            
+
         except Exception as e:
-            self.logger.error(f"Failed to process file {file_path}: {str(e)}")
+            self.logger.error(f"Failed to process file {file_path}: {e!s}")
             return None
-    
+
     def _determine_document_type(self, file_path: Path, collection_name: str) -> str:
         """Determine document type based on filename and collection."""
         filename_lower = file_path.name.lower()
-        
+
         if "regulation" in filename_lower or "cfr" in filename_lower or "fda" in filename_lower:
             return "regulatory_requirement"
-        elif "guidance" in filename_lower or "guideline" in filename_lower:
+        if "guidance" in filename_lower or "guideline" in filename_lower:
             return "regulatory_guidance"
-        elif "sop" in filename_lower or "procedure" in filename_lower:
+        if "sop" in filename_lower or "procedure" in filename_lower:
             return "standard_operating_procedure"
-        elif "best" in filename_lower or "practice" in filename_lower:
+        if "best" in filename_lower or "practice" in filename_lower:
             return "best_practices"
-        elif "methodology" in filename_lower or "method" in filename_lower:
+        if "methodology" in filename_lower or "method" in filename_lower:
             return "methodology"
-        elif "test" in filename_lower:
+        if "test" in filename_lower:
             return "testing_methodology"
-        else:
-            # Default based on collection
-            collection_defaults = {
-                "gamp5": "regulatory_guidance",
-                "regulatory": "regulatory_requirement",
-                "sops": "standard_operating_procedure",
-                "best_practices": "best_practices"
-            }
-            return collection_defaults.get(collection_name, "general")
-    
-    def _extract_gamp_categories(self, content: str) -> List[str]:
+        # Default based on collection
+        collection_defaults = {
+            "gamp5": "regulatory_guidance",
+            "regulatory": "regulatory_requirement",
+            "sops": "standard_operating_procedure",
+            "best_practices": "best_practices"
+        }
+        return collection_defaults.get(collection_name, "general")
+
+    def _extract_gamp_categories(self, content: str) -> list[str]:
         """Extract GAMP categories mentioned in the document."""
         categories = []
         content_lower = content.lower()
-        
+
         for category in ["1", "2", "3", "4", "5"]:
             if f"gamp {category}" in content_lower or f"category {category}" in content_lower:
                 categories.append(category)
-        
+
         return categories
-    
-    def _extract_test_types(self, content: str) -> List[str]:
+
+    def _extract_test_types(self, content: str) -> list[str]:
         """Extract test types mentioned in the document."""
         test_types = []
         content_lower = content.lower()
-        
+
         common_test_types = [
             "unit_testing", "integration_testing", "system_testing",
             "acceptance_testing", "performance_testing", "security_testing",
             "validation_testing", "qualification_testing", "regression_testing"
         ]
-        
+
         for test_type in common_test_types:
             if test_type.replace("_", " ") in content_lower:
                 test_types.append(test_type)
-        
+
         return test_types
-    
-    def _extract_sections(self, content: str) -> List[str]:
+
+    def _extract_sections(self, content: str) -> list[str]:
         """Extract section headers from the document."""
         sections = []
-        lines = content.split('\n')
-        
+        lines = content.split("\n")
+
         for line in lines:
             # Look for markdown headers or numbered sections
-            if line.strip().startswith('#') or (line.strip() and line.strip()[0].isdigit() and '.' in line):
-                section = line.strip().lstrip('#').strip()
+            if line.strip().startswith("#") or (line.strip() and line.strip()[0].isdigit() and "." in line):
+                section = line.strip().lstrip("#").strip()
                 if section and len(section) < 100:  # Reasonable length for a section title
                     sections.append(section)
-        
+
         return sections[:20]  # Limit to first 20 sections
-    
-    def get_audit_trail(self, limit: int = 100) -> List[Dict[str, Any]]:
+
+    def get_audit_trail(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get audit trail for ALCOA+ compliance."""
         return self._audit_trail[-limit:]
 

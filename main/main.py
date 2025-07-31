@@ -13,6 +13,7 @@ from pathlib import Path
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
+
 load_dotenv()
 
 def setup_unicode_support():
@@ -23,20 +24,20 @@ def setup_unicode_support():
     in documentation and user interfaces without fallback masking.
     """
     try:
-        import os, codecs
-        
+        import os
+
         # Set UTF-8 environment variable (Python 3.7+)
-        os.environ.setdefault('PYTHONUTF8', '1')
-        
+        os.environ.setdefault("PYTHONUTF8", "1")
+
         # Reconfigure stdout and stderr for UTF-8 on Windows
-        if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(encoding='utf-8', errors='strict')
-        if hasattr(sys.stderr, 'reconfigure'):
-            sys.stderr.reconfigure(encoding='utf-8', errors='strict')
-            
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="strict")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="strict")
+
         # Verify Unicode support
         test_unicode = "🧑‍⚕️ GAMP-5 Test: ✅ ❌ 📋 🔍 ⚡"
-        
+
         # Test print capability - fail explicitly if Unicode not supported
         try:
             print(test_unicode)
@@ -48,7 +49,7 @@ def setup_unicode_support():
                 f"Configure PYTHONUTF8=1 environment variable or use a UTF-8 capable terminal. "
                 f"Error: {e.reason}"
             ) from e
-            
+
     except Exception as e:
         # NO FALLBACKS - pharmaceutical systems must handle Unicode properly
         raise RuntimeError(
@@ -60,10 +61,16 @@ def setup_unicode_support():
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Core workflows
+from uuid import UUID
+
 from src.core.categorization_workflow import (
     GAMPCategorizationWorkflow,
     run_categorization_workflow,
 )
+from src.core.events import HumanResponseEvent
+
+# Human consultation system
+from src.core.human_consultation import HumanConsultationManager
 from src.core.unified_workflow import (
     UnifiedTestGenerationWorkflow,
     run_unified_test_generation_workflow,
@@ -85,11 +92,6 @@ from src.shared.output_manager import (
 # Utilities
 from src.shared.utils import setup_logging
 
-# Human consultation system
-from src.core.human_consultation import HumanConsultationManager
-from src.core.events import HumanResponseEvent
-from uuid import UUID, uuid4
-
 
 def setup_unicode_support():
     """
@@ -102,23 +104,23 @@ def setup_unicode_support():
     NO FALLBACKS: This function ensures proper Unicode support or fails explicitly
     with diagnostic information, in compliance with pharmaceutical system requirements.
     """
-    import sys
     import os
-    
+    import sys
+
     try:
         # Method 1: Configure UTF-8 mode via environment (most comprehensive)
         if not os.environ.get("PYTHONUTF8"):
             os.environ["PYTHONUTF8"] = "1"
-        
+
         # Method 2: Reconfigure standard streams for UTF-8 (Python 3.7+)
-        if hasattr(sys.stdout, 'reconfigure'):
+        if hasattr(sys.stdout, "reconfigure"):
             # Check current encoding
-            current_encoding = getattr(sys.stdout, 'encoding', 'unknown')
-            if current_encoding.lower() not in ['utf-8', 'utf8']:
-                sys.stdout.reconfigure(encoding='utf-8', errors='strict')
-                sys.stderr.reconfigure(encoding='utf-8', errors='strict')
+            current_encoding = getattr(sys.stdout, "encoding", "unknown")
+            if current_encoding.lower() not in ["utf-8", "utf8"]:
+                sys.stdout.reconfigure(encoding="utf-8", errors="strict")
+                sys.stderr.reconfigure(encoding="utf-8", errors="strict")
                 # Note: stdin reconfiguration can cause issues, so we skip it
-        
+
         # Verify configuration with actual test characters
         test_unicode = "🧑‍⚕️✅📋"  # Test characters that were causing crashes
         try:
@@ -129,14 +131,14 @@ def setup_unicode_support():
             error_msg = (
                 f"CRITICAL: Unicode configuration failed verification.\n"
                 f"Test characters: {test_unicode!r}\n"
-                f"Current stdout encoding: {getattr(sys.stdout, 'encoding', 'unknown')}\n"  
+                f"Current stdout encoding: {getattr(sys.stdout, 'encoding', 'unknown')}\n"
                 f"Error: {e}\n"
                 f"Platform: {sys.platform}\n"
                 f"SOLUTION: Ensure Windows Terminal or configure system for UTF-8 support"
             )
             safe_print(error_msg)
             raise RuntimeError("Unicode configuration verification failed - system cannot handle required characters") from e
-            
+
     except Exception as e:
         error_msg = (
             f"CRITICAL: Unable to configure Unicode support.\n"
@@ -295,7 +297,7 @@ async def run_with_event_logging(document_path: Path, args):
         safe_print(f"📄 Loading document: {document_path}")
         if document_path.suffix in [".md", ".txt", ".rst"]:
             # Read with explicit UTF-8 encoding to handle Unicode characters
-            document_content = document_path.read_text(encoding='utf-8')
+            document_content = document_path.read_text(encoding="utf-8")
         else:
             # For other file types, pass the path
             document_content = str(document_path)
@@ -342,16 +344,16 @@ async def run_with_event_logging(document_path: Path, args):
             if summary.get("estimated_test_count"):
                 safe_print(f"  - Estimated Tests: {summary['estimated_test_count']}")
                 safe_print(f"  - Timeline: {summary.get('timeline_estimate_days', 'N/A')} days")
-                
+
                 # Show accurate agent execution information
-                agents_executed = summary.get('agents_coordinated', 0)
+                agents_executed = summary.get("agents_coordinated", 0)
                 if agents_executed > 0:
-                    success_rate = summary.get('coordination_success_rate', 0)
+                    success_rate = summary.get("coordination_success_rate", 0)
                     safe_print(f"  - Agents Executed: {agents_executed}")
                     safe_print(f"  - Agent Success Rate: {success_rate:.1%}")
                 else:
-                    safe_print(f"  - Active Agents: 2 (Categorization + Planner)")
-                    safe_print(f"  - Parallel Agents: Not integrated (coordination requests generated only)")
+                    safe_print("  - Active Agents: 2 (Categorization + Planner)")
+                    safe_print("  - Parallel Agents: Not integrated (coordination requests generated only)")
 
             if consultation.get("required"):
                 safe_print(f"  - Consultation Required: {consultation['event'].consultation_type}")
@@ -395,7 +397,7 @@ async def run_without_logging(document_path: Path, args):
         safe_print(f"📄 Loading document: {document_path}")
         if document_path.suffix in [".md", ".txt", ".rst"]:
             # Read with explicit UTF-8 encoding to handle Unicode characters
-            document_content = document_path.read_text(encoding='utf-8')
+            document_content = document_path.read_text(encoding="utf-8")
         else:
             # For other file types, pass the path
             document_content = str(document_path)
@@ -456,16 +458,16 @@ async def run_without_logging(document_path: Path, args):
             if summary.get("estimated_test_count"):
                 safe_print(f"  - Estimated Tests: {summary['estimated_test_count']}")
                 safe_print(f"  - Timeline: {summary.get('timeline_estimate_days', 'N/A')} days")
-                
+
                 # Show accurate agent execution information
-                agents_executed = summary.get('agents_coordinated', 0)
+                agents_executed = summary.get("agents_coordinated", 0)
                 if agents_executed > 0:
-                    success_rate = summary.get('coordination_success_rate', 0)
+                    success_rate = summary.get("coordination_success_rate", 0)
                     safe_print(f"  - Agents Executed: {agents_executed}")
                     safe_print(f"  - Agent Success Rate: {success_rate:.1%}")
                 else:
-                    safe_print(f"  - Active Agents: 2 (Categorization + Planner)")
-                    safe_print(f"  - Parallel Agents: Not integrated (coordination requests generated only)")
+                    safe_print("  - Active Agents: 2 (Categorization + Planner)")
+                    safe_print("  - Parallel Agents: Not integrated (coordination requests generated only)")
 
             if consultation.get("required"):
                 safe_print(f"  - Consultation Required: {consultation['event'].consultation_type}")
@@ -480,29 +482,29 @@ async def run_without_logging(document_path: Path, args):
 async def run_consultation_interface():
     """Run the human consultation interface."""
     import sys
-    
+
     # Check if running in interactive terminal
     if not sys.stdin.isatty():
         safe_print("❌ Consultation interface requires an interactive terminal")
         safe_print("💡 Run this command in an interactive shell, not through scripts or timeouts")
         return
-    
+
     safe_print("🧑‍⚕️ Human Consultation Interface")
     safe_print("=" * 40)
-    
+
     config = get_config()
     manager = HumanConsultationManager(config)
-    
+
     while True:
         safe_print("\nAvailable commands:")
         safe_print("1. List active consultations")
         safe_print("2. View consultation details")
         safe_print("3. Respond to consultation")
         safe_print("4. Exit")
-        
+
         try:
             choice = input("\nEnter choice (1-4): ").strip()
-            
+
             if choice == "1":
                 await list_active_consultations(manager)
             elif choice == "2":
@@ -514,7 +516,7 @@ async def run_consultation_interface():
                 break
             else:
                 safe_print("❌ Invalid choice. Please enter 1-4.")
-                
+
         except KeyboardInterrupt:
             safe_print("\n👋 Exiting consultation interface")
             break
@@ -530,7 +532,7 @@ async def list_active_consultations(manager: HumanConsultationManager):
     if not manager.active_sessions:
         safe_print("📋 No active consultations")
         return
-    
+
     safe_print(f"📋 Active Consultations ({len(manager.active_sessions)}):")
     for session_id, session in manager.active_sessions.items():
         info = session.get_session_info()
@@ -545,20 +547,20 @@ async def view_consultation_details(manager: HumanConsultationManager):
     if not manager.active_sessions:
         safe_print("📋 No active consultations")
         return
-    
+
     try:
         session_id = input("Enter consultation session ID: ").strip()
     except (EOFError, KeyboardInterrupt):
         safe_print("\n👋 Cancelled")
         return
-    
+
     try:
         session_uuid = UUID(session_id)
         if session_uuid in manager.active_sessions:
             session = manager.active_sessions[session_uuid]
             info = session.get_session_info()
-            
-            safe_print(f"\n📄 Consultation Details:")
+
+            safe_print("\n📄 Consultation Details:")
             safe_print(f"   Session ID: {info['session_id']}")
             safe_print(f"   Consultation ID: {info['consultation_id']}")
             safe_print(f"   Type: {info['consultation_type']}")
@@ -569,16 +571,16 @@ async def view_consultation_details(manager: HumanConsultationManager):
             safe_print(f"   Timeout: {info['timeout_seconds']}s")
             safe_print(f"   Participants: {info['participants']}")
             safe_print(f"   Responses: {info['total_responses']}")
-            
+
             # Show consultation context
             consultation_event = session.consultation_event
-            safe_print(f"\n📝 Context:")
+            safe_print("\n📝 Context:")
             for key, value in consultation_event.context.items():
                 safe_print(f"   {key}: {value}")
-                
+
         else:
             safe_print("❌ Consultation not found")
-            
+
     except ValueError:
         safe_print("❌ Invalid session ID format")
 
@@ -587,48 +589,48 @@ async def respond_to_consultation(manager: HumanConsultationManager):
     if not manager.active_sessions:
         safe_print("📋 No active consultations")
         return
-    
+
     try:
         session_id = input("Enter consultation session ID: ").strip()
     except (EOFError, KeyboardInterrupt):
         safe_print("\n👋 Cancelled")
         return
-    
+
     try:
         session_uuid = UUID(session_id)
         if session_uuid not in manager.active_sessions:
             safe_print("❌ Consultation not found")
             return
-            
+
         session = manager.active_sessions[session_uuid]
         consultation_event = session.consultation_event
-        
+
         safe_print(f"\n📄 Responding to: {consultation_event.consultation_type}")
         safe_print(f"Context: {consultation_event.context}")
-        
+
         # Collect response data
         try:
             user_id = input("Enter your user ID: ").strip() or "cli_user"
             user_role = input("Enter your role (validation_engineer/quality_assurance/regulatory_specialist): ").strip() or "validation_engineer"
             decision_rationale = input("Enter decision rationale: ").strip()
-            
+
             if not decision_rationale:
                 safe_print("❌ Decision rationale is required")
                 return
-                
+
             confidence_input = input("Enter confidence level (0.0-1.0): ").strip() or "0.8"
             confidence_level = float(confidence_input)
-            
+
             if not 0.0 <= confidence_level <= 1.0:
                 raise ValueError("Confidence must be between 0.0 and 1.0")
-                
+
         except (EOFError, KeyboardInterrupt):
             safe_print("\n👋 Cancelled")
             return
         except ValueError as e:
             safe_print(f"❌ Invalid confidence level: {e}")
             return
-        
+
         response_data = {}
         if "categorization" in consultation_event.consultation_type.lower():
             try:
@@ -640,7 +642,7 @@ async def respond_to_consultation(manager: HumanConsultationManager):
             except ValueError as e:
                 safe_print(f"❌ Invalid GAMP category: {e}")
                 return
-        
+
         # Create response event
         response_event = HumanResponseEvent(
             response_type="decision",
@@ -653,12 +655,12 @@ async def respond_to_consultation(manager: HumanConsultationManager):
             session_id=session_uuid,
             approval_level="user"
         )
-        
+
         # Add response to session
         await session.add_response(response_event)
-        
+
         safe_print("✅ Response recorded successfully!")
-        
+
     except ValueError:
         safe_print("❌ Invalid session ID format")
     except Exception as e:
@@ -681,19 +683,19 @@ async def main():
     # Handle consultation interface commands
     if args.consult:
         await run_consultation_interface()
-        return
-    elif args.list_consultations:
+        return None
+    if args.list_consultations:
         config = get_config()
         manager = HumanConsultationManager(config)
         await list_active_consultations(manager)
-        return
-    elif args.respond_to:
+        return None
+    if args.respond_to:
         config = get_config()
         manager = HumanConsultationManager(config)
         # Mock session for response (in real implementation, this would load from persistent storage)
         safe_print(f"📝 Response functionality would respond to consultation: {args.respond_to}")
         safe_print("⚠️  Note: This requires active consultation sessions which are currently in-memory only")
-        return
+        return None
 
     safe_print("🏥 GAMP-5 Pharmaceutical Test Generation System")
     if args.categorization_only:
@@ -752,7 +754,7 @@ async def main():
                 import time
                 safe_print("⏳ Waiting for span export completion...")
                 time.sleep(2)
-                
+
                 from src.shared.event_logging import shutdown_event_logging
                 shutdown_event_logging()
                 safe_print("\n🔒 Phoenix observability shutdown complete")

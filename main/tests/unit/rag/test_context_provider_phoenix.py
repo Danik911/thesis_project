@@ -9,10 +9,10 @@ This script demonstrates:
 """
 
 import asyncio
-import os
 import sys
 from pathlib import Path
 from uuid import uuid4
+
 from dotenv import load_dotenv
 
 # Add project root to path
@@ -23,11 +23,7 @@ sys.path.insert(0, str(project_root))
 env_path = project_root / ".env"
 load_dotenv(env_path)
 
-from main.src.agents.parallel.context_provider import (
-    ContextProviderAgent,
-    ContextProviderRequest,
-    create_context_provider_agent
-)
+from main.src.agents.parallel.context_provider import create_context_provider_agent
 from main.src.core.events import AgentRequestEvent
 from main.src.monitoring.phoenix_config import setup_phoenix, shutdown_phoenix
 
@@ -35,12 +31,12 @@ from main.src.monitoring.phoenix_config import setup_phoenix, shutdown_phoenix
 async def test_context_provider_with_phoenix():
     """Test the Context Provider Agent with Phoenix observability enabled."""
     print("🔬 Testing Context Provider Agent with Phoenix Observability\n")
-    
+
     # 1. Setup Phoenix
     print("1️⃣ Setting up Phoenix observability...")
     phoenix_manager = setup_phoenix()
     print("✅ Phoenix observability initialized\n")
-    
+
     # 2. Initialize agent with Phoenix enabled
     print("2️⃣ Initializing Context Provider Agent with Phoenix tracing...")
     agent = create_context_provider_agent(
@@ -48,12 +44,12 @@ async def test_context_provider_with_phoenix():
         enable_phoenix=True
     )
     print("✅ Agent initialized with Phoenix tracing enabled\n")
-    
+
     # 3. Create and ingest test documents
     print("3️⃣ Creating test pharmaceutical documents...")
     test_docs_dir = Path("./test_docs")
     test_docs_dir.mkdir(exist_ok=True)
-    
+
     # Create GAMP-5 test document with high relevance content
     gamp5_content = """
     # GAMP-5 Testing Guidelines for Category 4 Systems
@@ -86,10 +82,10 @@ async def test_context_provider_with_phoenix():
     - Audit trail implementation and validation
     - Change control procedures
     """
-    
+
     gamp5_path = test_docs_dir / "gamp5_category_4_guidelines.md"
     gamp5_path.write_text(gamp5_content)
-    
+
     # Create regulatory document
     regulatory_content = """
     # 21 CFR Part 11 Compliance Framework for Category 4 Systems
@@ -117,15 +113,15 @@ async def test_context_provider_with_phoenix():
     Performance testing for audit trail under load conditions
     Security testing for access controls and data encryption
     """
-    
+
     regulatory_path = test_docs_dir / "21cfr_part11_category4.md"
     regulatory_path.write_text(regulatory_content)
-    
+
     print(f"✅ Created test documents in {test_docs_dir}\n")
-    
+
     # 4. Ingest documents with Phoenix tracing
     print("4️⃣ Ingesting documents into ChromaDB (observe Phoenix traces)...")
-    
+
     # Ingest GAMP-5 document
     gamp5_stats = await agent.ingest_documents(
         documents_path=str(gamp5_path),
@@ -133,7 +129,7 @@ async def test_context_provider_with_phoenix():
         force_reprocess=True
     )
     print(f"   GAMP-5 ingestion stats: {gamp5_stats}\n")
-    
+
     # Ingest regulatory document
     regulatory_stats = await agent.ingest_documents(
         documents_path=str(regulatory_path),
@@ -141,10 +137,10 @@ async def test_context_provider_with_phoenix():
         force_reprocess=True
     )
     print(f"   Regulatory ingestion stats: {regulatory_stats}\n")
-    
+
     # 5. Test search with comprehensive Phoenix tracing
     print("5️⃣ Testing document search with Phoenix observability...")
-    
+
     # Create test request with specific requirements
     request_event = AgentRequestEvent(
         agent_type="context_provider",
@@ -154,8 +150,8 @@ async def test_context_provider_with_phoenix():
                 "test_types": ["unit_testing", "integration_testing", "validation", "security_testing"]
             },
             "document_sections": [
-                "validation_requirements", 
-                "testing_strategy", 
+                "validation_requirements",
+                "testing_strategy",
                 "risk_assessment",
                 "audit_trail_requirements"
             ],
@@ -169,33 +165,33 @@ async def test_context_provider_with_phoenix():
         correlation_id=uuid4(),
         requesting_step="phoenix_test_search"
     )
-    
+
     # Process request with full Phoenix tracing
     print("\n   🔍 Executing search (check Phoenix UI for detailed traces)...")
     result = await agent.process_request(request_event)
-    
-    print(f"\n   📊 Search Results:")
+
+    print("\n   📊 Search Results:")
     print(f"      - Success: {result.success}")
     print(f"      - Processing time: {result.processing_time:.2f}s")
     print(f"      - Documents retrieved: {len(result.result_data.get('retrieved_documents', []))}")
     print(f"      - Context quality: {result.result_data.get('context_quality', 'unknown')}")
     print(f"      - Search coverage: {result.result_data.get('search_coverage', 0.0):.2%}")
     print(f"      - Confidence score: {result.result_data.get('confidence_score', 0.0):.2%}")
-    
-    if result.success and result.result_data.get('retrieved_documents'):
-        print(f"\n   📄 Top Retrieved Documents:")
-        for i, doc in enumerate(result.result_data['retrieved_documents'][:5], 1):
+
+    if result.success and result.result_data.get("retrieved_documents"):
+        print("\n   📄 Top Retrieved Documents:")
+        for i, doc in enumerate(result.result_data["retrieved_documents"][:5], 1):
             print(f"      {i}. {doc.get('title', 'Unknown')}")
             print(f"         - Relevance: {doc.get('relevance_score', 0.0):.3f}")
             print(f"         - Type: {doc.get('type', 'unknown')}")
             print(f"         - Collection: {doc.get('collection', 'unknown')}")
             print(f"         - GAMP Categories: {doc.get('gamp_categories', [])}")
-    
+
     print("\n✅ Search completed - check Phoenix UI for detailed traces\n")
-    
+
     # 6. Test error handling with Phoenix tracing
     print("6️⃣ Testing error handling with full diagnostics...")
-    
+
     # Test with invalid search that should fail
     error_request = AgentRequestEvent(
         agent_type="context_provider",
@@ -209,54 +205,54 @@ async def test_context_provider_with_phoenix():
         correlation_id=uuid4(),
         requesting_step="phoenix_error_test"
     )
-    
+
     error_result = await agent.process_request(error_request)
     if not error_result.success:
         print(f"   ✅ Error properly traced: {error_result.error_message}")
-        print(f"   📊 Check Phoenix UI for error details and stack trace\n")
-    
+        print("   📊 Check Phoenix UI for error details and stack trace\n")
+
     # 7. Performance statistics
     print("7️⃣ Agent Performance Statistics:")
     stats = agent.get_performance_stats()
     print(f"   - Total requests: {stats['total_requests']}")
     print(f"   - Successful requests: {stats['successful_requests']}")
     print(f"   - Average processing time: {stats['avg_processing_time']:.2f}s")
-    print(f"   - Documents in collections:")
+    print("   - Documents in collections:")
     for key, value in stats.items():
-        if key.endswith('_documents'):
+        if key.endswith("_documents"):
             print(f"     - {key}: {value}")
-    
+
     # Cleanup
     print("\n8️⃣ Cleaning up test data...")
     for file in test_docs_dir.glob("*.md"):
         file.unlink()
     test_docs_dir.rmdir()
     print("✅ Test cleanup complete\n")
-    
+
     # Shutdown Phoenix with trace flush
     print("9️⃣ Shutting down Phoenix (flushing traces)...")
     shutdown_phoenix(timeout_seconds=5)
     print("✅ Phoenix shutdown complete\n")
-    
+
     print("🎉 All tests completed! Check Phoenix UI at http://localhost:6006 for:")
     print("   - Detailed span hierarchy")
     print("   - ChromaDB operation traces")
     print("   - Document retrieval metrics")
     print("   - Confidence score calculations")
     print("   - Error diagnostics with stack traces")
-    
+
     return True
 
 
 async def test_parallel_requests_with_phoenix():
     """Test parallel request handling with Phoenix tracing."""
     print("\n🔄 Testing parallel requests with Phoenix tracing...")
-    
+
     # Setup Phoenix if not already setup
     phoenix_manager = setup_phoenix()
-    
+
     agent = create_context_provider_agent(verbose=False, enable_phoenix=True)
-    
+
     # Create multiple requests with different GAMP categories
     requests = []
     for i in range(3):
@@ -272,13 +268,13 @@ async def test_parallel_requests_with_phoenix():
             requesting_step=f"parallel_phoenix_test_{i}"
         )
         requests.append(agent.process_request(request))
-    
+
     # Process in parallel
     results = await asyncio.gather(*requests)
-    
+
     success_count = sum(1 for r in results if r.success)
     print(f"✅ Processed {success_count}/{len(results)} requests in parallel")
-    print(f"   Check Phoenix UI for parallel execution traces\n")
+    print("   Check Phoenix UI for parallel execution traces\n")
 
 
 if __name__ == "__main__":

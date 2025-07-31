@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent / "main"))
 
 from src.core.unified_workflow import run_unified_test_generation_workflow
 
+
 async def test_unified_workflow():
     # Simple test URS content
     urs_content = """
@@ -22,7 +23,7 @@ async def test_unified_workflow():
     
     The system is a custom software application developed specifically for pharmaceutical use.
     """
-    
+
     try:
         print("Testing unified workflow...")
         result = await run_unified_test_generation_workflow(
@@ -31,16 +32,16 @@ async def test_unified_workflow():
             timeout=60,  # Short timeout for testing
             verbose=False
         )
-        
+
         print("Result received:")
         print(f"- Status: {result.get('workflow_metadata', {}).get('status', 'Unknown')}")
         print(f"- Duration: {result.get('workflow_metadata', {}).get('duration_seconds', 0):.2f}s")
-        
-        if result.get('categorization', {}).get('category'):
+
+        if result.get("categorization", {}).get("category"):
             print(f"- GAMP Category: {result['categorization']['category']}")
-            
+
         return result
-        
+
     except Exception as e:
         print(f"Error: {e}")
         import traceback

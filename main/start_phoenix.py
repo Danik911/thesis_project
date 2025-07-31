@@ -2,6 +2,7 @@
 """Start Phoenix server for observability."""
 
 import os
+
 import phoenix as px
 
 # Set environment variables

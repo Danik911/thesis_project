@@ -160,9 +160,8 @@ class CategorizationErrorHandler:
         # Only request human consultation for categorization ambiguity
         if self._should_request_human_consultation(error):
             return self._create_human_consultation_request(error, document_name)
-        else:
-            # For system errors, raise an exception to be handled by the calling code
-            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # For system errors, raise an exception to be handled by the calling code
+        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def handle_logic_error(
         self,
@@ -196,9 +195,8 @@ class CategorizationErrorHandler:
         # Only request human consultation for categorization ambiguity
         if self._should_request_human_consultation(error):
             return self._create_human_consultation_request(error, document_name)
-        else:
-            # For system errors, raise an exception to be handled by the calling code
-            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # For system errors, raise an exception to be handled by the calling code
+        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def check_ambiguity(
         self,
@@ -287,9 +285,8 @@ class CategorizationErrorHandler:
         # Only request human consultation for categorization ambiguity
         if self._should_request_human_consultation(error):
             return self._create_human_consultation_request(error, document_name)
-        else:
-            # For system errors, raise an exception to be handled by the calling code
-            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # For system errors, raise an exception to be handled by the calling code
+        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def handle_llm_error(
         self,
@@ -324,9 +321,8 @@ class CategorizationErrorHandler:
         # Only request human consultation for categorization ambiguity
         if self._should_request_human_consultation(error):
             return self._create_human_consultation_request(error, document_name)
-        else:
-            # For system errors, raise an exception to be handled by the calling code
-            raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # For system errors, raise an exception to be handled by the calling code
+        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
 
     def validate_categorization_result(
         self,
@@ -386,7 +382,7 @@ class CategorizationErrorHandler:
             ErrorType.CONFIDENCE_ERROR,
             ErrorType.AMBIGUITY_ERROR
         }
-        
+
         return error.error_type in consultation_error_types
 
     def _create_human_consultation_request(
@@ -463,10 +459,11 @@ class CategorizationErrorHandler:
         """
         try:
             # Import SME agent here to avoid circular imports
+            import asyncio
+            from uuid import uuid4
+
             from src.agents.parallel.sme_agent import create_sme_agent
             from src.core.events import AgentRequestEvent
-            from uuid import uuid4
-            import asyncio
 
             # Create SME agent for pharmaceutical validation
             sme_agent = create_sme_agent(
@@ -508,17 +505,17 @@ class CategorizationErrorHandler:
                 # Check if we're already in an event loop
                 import nest_asyncio
                 nest_asyncio.apply()  # Allow nested event loops
-                
+
                 loop = asyncio.get_event_loop()
                 sme_result = loop.run_until_complete(sme_agent.process_request(sme_request))
 
                 if sme_result.success and sme_result.result_data.get("confidence_score", 0) >= 0.7:
                     # SME provided high-confidence recommendation
                     sme_data = sme_result.result_data
-                    
+
                     # Extract SME recommendation or default to Category 5
                     recommended_category = self._extract_sme_category_recommendation(sme_data)
-                    
+
                     self.logger.info(
                         f"✅ SME CONSULTATION SUCCESSFUL - Category {recommended_category} recommended "
                         f"(SME confidence: {sme_data.get('confidence_score', 0):.1%})"
@@ -556,13 +553,12 @@ class CategorizationErrorHandler:
                         categorized_by="SMEAgent",
                         review_required=False  # SME consultation removes manual review requirement
                     )
-                else:
-                    # SME consultation failed or low confidence - fall back to Category 5
-                    self.logger.warning(
-                        f"⚠️ SME CONSULTATION INCONCLUSIVE - Falling back to Category 5 "
-                        f"(SME success: {sme_result.success}, SME confidence: {sme_result.result_data.get('confidence_score', 0):.1%})"
-                    )
-                    
+                # SME consultation failed or low confidence - fall back to Category 5
+                self.logger.warning(
+                    f"⚠️ SME CONSULTATION INCONCLUSIVE - Falling back to Category 5 "
+                    f"(SME success: {sme_result.success}, SME confidence: {sme_result.result_data.get('confidence_score', 0):.1%})"
+                )
+
             except Exception as sme_error:
                 self.logger.error(f"SME consultation execution failed: {sme_error}")
                 # Continue to Category 5 fallback below
@@ -631,7 +627,7 @@ class CategorizationErrorHandler:
     ) -> str:
         """Generate justification for human consultation request."""
         timestamp = datetime.now(UTC).isoformat()
-        
+
         return f"""GAMP-5 Human Consultation Request for '{document_name}'
 
 🤝 HUMAN-IN-THE-LOOP REQUIRED

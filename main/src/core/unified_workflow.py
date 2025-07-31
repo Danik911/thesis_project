@@ -27,6 +27,11 @@ from typing import Any
 
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
 from llama_index.llms.openai import OpenAI
+from src.monitoring.phoenix_config import (
+    enhance_workflow_span_with_compliance,
+    get_current_span,
+)
+from src.shared.output_manager import safe_print
 
 from .categorization_workflow import GAMPCategorizationWorkflow
 from .events import (
@@ -39,8 +44,6 @@ from .events import (
     WorkflowCompletionEvent,
 )
 from .human_consultation import HumanConsultationManager
-from src.monitoring.phoenix_config import enhance_workflow_span_with_compliance, get_current_span
-from src.shared.output_manager import safe_print
 
 
 class UnifiedTestGenerationWorkflow(Workflow):
@@ -145,7 +148,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # Store session information in context
         await ctx.set("workflow_session_id", self._workflow_session_id)
         await ctx.set("workflow_start_time", self._workflow_start_time)
-        
+
         # Enhance current span with pharmaceutical compliance metadata
         current_span = get_current_span()
         if current_span:
@@ -205,7 +208,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             if isinstance(categorization_result, dict):
                 categorization_event = categorization_result.get("categorization_event")
                 consultation_event = categorization_result.get("consultation_event")
-                
+
                 # If consultation is required, return it immediately
                 if consultation_event:
                     self.logger.info(
@@ -214,7 +217,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     )
                     await ctx.set("consultation_event", consultation_event)
                     return consultation_event
-                    
+
             else:
                 # Handle case where result is direct categorization event
                 categorization_event = categorization_result
@@ -284,7 +287,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         # Store categorization event for later steps
         await ctx.set("categorization_event", ev)
-        
+
         # Create categorization result for finalization step
         categorization_result = {
             "gamp_category": ev.gamp_category.value,
@@ -297,7 +300,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             "human_consultation": True  # Mark that this came from human consultation
         }
         await ctx.set("categorization_result", categorization_result)
-        
+
         # Get workflow context
         urs_content = await ctx.get("urs_content")
         document_name = await ctx.get("document_name")
@@ -491,7 +494,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             self.logger.info("Consultation required - routing to consultation handler")
             # Route the consultation event to the consultation handler
             return await self.handle_consultation_required(ctx, ev.consultation_event)
-        
+
         # Determine workflow status for completed workflows
         if isinstance(ev, WorkflowCompletionEvent):
             workflow_status = "completed"
@@ -599,20 +602,20 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             Workflow event to continue processing or StopEvent if unresolvable
         """
-        safe_print(f"\n🧑‍⚕️ ENTERING CONSULTATION HANDLER")
+        safe_print("\n🧑‍⚕️ ENTERING CONSULTATION HANDLER")
         safe_print(f"📋 Consultation Type: {ev.consultation_type}")
         safe_print(f"📋 Urgency: {ev.urgency}")
         safe_print(f"📋 Required Expertise: {', '.join(ev.required_expertise)}")
         safe_print(f"📋 Context: {ev.context}")
-        
+
         self.logger.info(
             f"Human consultation required: {ev.consultation_type} "
             f"(urgency: {ev.urgency}, expertise: {', '.join(ev.required_expertise)})"
         )
 
         try:
-            safe_print(f"🔄 Starting direct human consultation...")
-            
+            safe_print("🔄 Starting direct human consultation...")
+
             # Direct consultation input - bypassing complex event system
             consultation_result = await self._collect_direct_consultation_input(ev)
             safe_print(f"✅ Consultation result received: {type(consultation_result).__name__}")
@@ -1119,9 +1122,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
             HumanResponseEvent with user input or ConsultationTimeoutEvent if cancelled
         """
         import sys
-        from datetime import datetime, timezone
+        from datetime import datetime
         from uuid import uuid4
-        
+
         safe_print("\n" + "="*60)
         safe_print("🧑‍⚕️ HUMAN CONSULTATION REQUIRED")
         safe_print("="*60)
@@ -1131,67 +1134,104 @@ class UnifiedTestGenerationWorkflow(Workflow):
             safe_print(f"Required Expertise: {', '.join(ev.required_expertise)}")
         safe_print(f"Triggering Step: {ev.triggering_step}")
         safe_print()
-        
+
         # Display context information
         if ev.context:
             safe_print("Context:")
             for key, value in ev.context.items():
                 safe_print(f"  {key}: {value}")
             safe_print()
-        
+
         try:
             # Check if we're in an interactive terminal
             if not sys.stdin.isatty():
-                safe_print("❌ Non-interactive terminal detected - applying conservative defaults")
-                return ConsultationTimeoutEvent(
-                    consultation_id=ev.consultation_id,
-                    timeout_duration_seconds=0,
-                    conservative_action="Applied Category 5 (highest validation rigor) for non-interactive execution",
-                    escalation_required=True,
-                    original_consultation=ev,
-                    default_decision={
-                        "gamp_category": 5,
-                        "rationale": "Conservative default applied for non-interactive execution",
-                        "confidence": 0.8,
-                        "decision_method": "automatic_conservative_default"
-                    }
+                safe_print("❌ Non-interactive terminal detected - NO fallbacks available")
+
+                # Create explicit failure with full diagnostic information
+                class NonInteractiveConsultationError(RuntimeError):
+                    """Raised when consultation is required in non-interactive environment."""
+                    def __init__(self, message: str, consultation_event: ConsultationRequiredEvent):
+                        super().__init__(message)
+                        self.consultation_event = consultation_event
+                        self.diagnostics = {
+                            "failure_type": "non_interactive_consultation_required",
+                            "consultation_type": consultation_event.consultation_type,
+                            "consultation_id": str(consultation_event.consultation_id),
+                            "urgency": consultation_event.urgency,
+                            "required_expertise": consultation_event.required_expertise,
+                            "context": consultation_event.context,
+                            "terminal_type": "non-interactive",
+                            "failed_at": datetime.now(UTC).isoformat(),
+                            "regulatory_impact": "HIGH - Cannot proceed without human consultation",
+                            "no_fallback_rationale": "Pharmaceutical compliance prohibits automated fallbacks"
+                        }
+
+                # Throw explicit error - NO automatic defaults
+                error_message = (
+                    f"Human consultation required for {ev.consultation_type} but running in non-interactive terminal. "
+                    f"Consultation ID: {ev.consultation_id}. "
+                    f"System cannot proceed without explicit human decision. "
+                    f"No automated fallbacks available per pharmaceutical compliance requirements."
                 )
-            
+
+                self.logger.error(
+                    f"Non-interactive consultation failure: {ev.consultation_type}. "
+                    f"NO automated fallbacks available per regulatory requirements. "
+                    f"Human intervention required."
+                )
+
+                raise NonInteractiveConsultationError(error_message, ev)
+
             # Handle categorization consultations
             if "categorization" in ev.consultation_type.lower():
                 safe_print("Please provide GAMP categorization decision:")
                 safe_print("Available categories:")
                 safe_print("  1 - Infrastructure Software")
                 safe_print("  3 - Non-configured Products")
-                safe_print("  4 - Configured Products")  
+                safe_print("  4 - Configured Products")
                 safe_print("  5 - Custom Applications")
                 safe_print()
-                
+
                 # Get GAMP category
                 while True:
                     try:
                         category_input = input("Enter GAMP category (1, 3, 4, 5): ").strip()
-                        if category_input in ['1', '3', '4', '5']:
+                        if category_input in ["1", "3", "4", "5"]:
                             gamp_category = int(category_input)
                             break
-                        else:
-                            safe_print("❌ Invalid category. Please enter 1, 3, 4, or 5.")
+                        safe_print("❌ Invalid category. Please enter 1, 3, 4, or 5.")
                     except (EOFError, KeyboardInterrupt):
-                        safe_print("\n👋 Consultation cancelled - applying conservative default")
-                        return ConsultationTimeoutEvent(
-                            consultation_id=ev.consultation_id,
-                            timeout_duration_seconds=0,
-                            conservative_action="Applied Category 5 (highest validation rigor) due to cancellation",
-                            escalation_required=True,
-                            original_consultation=ev,
-                            default_decision={
-                                "gamp_category": 5,
-                                "rationale": "Conservative default applied due to user cancellation",
-                                "confidence": 0.8,
-                                "decision_method": "user_cancelled_conservative_default"
-                            }
+                        safe_print("\n👋 Consultation cancelled - NO fallbacks available")
+
+                        # Create explicit failure for cancelled consultation
+                        class ConsultationCancelledError(RuntimeError):
+                            """Raised when user cancels consultation and no fallbacks are permitted."""
+                            def __init__(self, message: str, consultation_event: ConsultationRequiredEvent):
+                                super().__init__(message)
+                                self.consultation_event = consultation_event
+                                self.diagnostics = {
+                                    "failure_type": "consultation_cancelled_by_user",
+                                    "consultation_type": consultation_event.consultation_type,
+                                    "consultation_id": str(consultation_event.consultation_id),
+                                    "cancelled_at": datetime.now(UTC).isoformat(),
+                                    "regulatory_impact": "HIGH - Cannot proceed without human consultation",
+                                    "no_fallback_rationale": "User cancelled consultation - no automated alternatives permitted"
+                                }
+
+                        error_message = (
+                            f"User cancelled consultation for {ev.consultation_type}. "
+                            f"Consultation ID: {ev.consultation_id}. "
+                            f"System cannot proceed without explicit human decision. "
+                            f"No fallback mechanisms available per pharmaceutical compliance requirements."
                         )
-                
+
+                        self.logger.error(
+                            f"User cancelled consultation: {ev.consultation_type}. "
+                            f"NO fallback values available per regulatory requirements."
+                        )
+
+                        raise ConsultationCancelledError(error_message, ev)
+
                 # Get rationale
                 try:
                     rationale = input("Enter rationale for decision: ").strip()
@@ -1199,7 +1239,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         rationale = f"GAMP Category {gamp_category} selected during human consultation"
                 except (EOFError, KeyboardInterrupt):
                     rationale = f"GAMP Category {gamp_category} selected during human consultation"
-                
+
                 # Get confidence
                 try:
                     confidence_input = input("Enter confidence level (0.0-1.0) [0.8]: ").strip()
@@ -1211,7 +1251,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 except (ValueError, EOFError, KeyboardInterrupt):
                     confidence = 0.8
                     safe_print(f"Using default confidence: {confidence}")
-                
+
                 # Get user information
                 try:
                     user_id = input("Enter your user ID [workflow_user]: ").strip() or "workflow_user"
@@ -1219,7 +1259,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 except (EOFError, KeyboardInterrupt):
                     user_id = "workflow_user"
                     user_role = "validation_engineer"
-                
+
                 # Create response event
                 response = HumanResponseEvent(
                     consultation_id=ev.consultation_id,
@@ -1231,93 +1271,127 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "gamp_category": gamp_category,
                         "rationale": rationale,
                         "confidence": confidence,
-                        "decision_timestamp": datetime.now(timezone.utc).isoformat(),
+                        "decision_timestamp": datetime.now(UTC).isoformat(),
                         "consultation_method": "direct_terminal_input"
                     },
                     decision_rationale=rationale,
                     confidence_level=confidence
                 )
-                
-                safe_print(f"\n✅ Consultation completed!")
+
+                safe_print("\n✅ Consultation completed!")
                 safe_print(f"Category: {gamp_category}")
                 safe_print(f"Confidence: {confidence:.1%}")
                 safe_print(f"User: {user_id} ({user_role})")
                 safe_print()
-                
+
                 return response
-                
-            else:
-                # Handle other consultation types
-                safe_print(f"Consultation type '{ev.consultation_type}' requires manual handling.")
-                safe_print("Please provide your decision:")
-                
-                try:
-                    decision = input("Enter your decision: ").strip()
-                    rationale = input("Enter rationale: ").strip()
-                    confidence_input = input("Enter confidence (0.0-1.0) [0.8]: ").strip()
-                    
-                    confidence = float(confidence_input) if confidence_input else 0.8
-                    confidence = max(0.0, min(1.0, confidence))
-                    
-                    user_id = input("Enter your user ID [workflow_user]: ").strip() or "workflow_user"
-                    user_role = input("Enter your role [validation_engineer]: ").strip() or "validation_engineer"
-                    
-                    response = HumanResponseEvent(
-                        consultation_id=ev.consultation_id,
-                        session_id=uuid4(),
-                        response_type="decision",
-                        user_id=user_id,
-                        user_role=user_role,
-                        response_data={
-                            "decision": decision,
-                            "rationale": rationale,
-                            "confidence": confidence,
-                            "decision_timestamp": datetime.now(timezone.utc).isoformat(),
-                            "consultation_method": "direct_terminal_input"
-                        },
-                        decision_rationale=rationale,
-                        confidence_level=confidence
-                    )
-                    
-                    safe_print(f"\n✅ Consultation completed!")
-                    safe_print(f"Decision: {decision}")
-                    safe_print(f"Confidence: {confidence:.1%}")
-                    safe_print()
-                    
-                    return response
-                    
-                except (EOFError, KeyboardInterrupt):
-                    safe_print("\n👋 Consultation cancelled - applying conservative defaults")
-                    return ConsultationTimeoutEvent(
-                        consultation_id=ev.consultation_id,
-                        timeout_duration_seconds=0,
-                        conservative_action="Applied conservative defaults due to cancellation",
-                        escalation_required=True,
-                        original_consultation=ev,
-                        default_decision={
-                            "decision": "conservative_default",
-                            "rationale": "User cancelled consultation - conservative approach applied",
-                            "confidence": 0.8,
-                            "decision_method": "user_cancelled_conservative_default"
+
+            # Handle other consultation types
+            safe_print(f"Consultation type '{ev.consultation_type}' requires manual handling.")
+            safe_print("Please provide your decision:")
+
+            try:
+                decision = input("Enter your decision: ").strip()
+                rationale = input("Enter rationale: ").strip()
+                confidence_input = input("Enter confidence (0.0-1.0) [0.8]: ").strip()
+
+                confidence = float(confidence_input) if confidence_input else 0.8
+                confidence = max(0.0, min(1.0, confidence))
+
+                user_id = input("Enter your user ID [workflow_user]: ").strip() or "workflow_user"
+                user_role = input("Enter your role [validation_engineer]: ").strip() or "validation_engineer"
+
+                response = HumanResponseEvent(
+                    consultation_id=ev.consultation_id,
+                    session_id=uuid4(),
+                    response_type="decision",
+                    user_id=user_id,
+                    user_role=user_role,
+                    response_data={
+                        "decision": decision,
+                        "rationale": rationale,
+                        "confidence": confidence,
+                        "decision_timestamp": datetime.now(UTC).isoformat(),
+                        "consultation_method": "direct_terminal_input"
+                    },
+                    decision_rationale=rationale,
+                    confidence_level=confidence
+                )
+
+                safe_print("\n✅ Consultation completed!")
+                safe_print(f"Decision: {decision}")
+                safe_print(f"Confidence: {confidence:.1%}")
+                safe_print()
+
+                return response
+
+            except (EOFError, KeyboardInterrupt):
+                safe_print("\n👋 Consultation cancelled - NO fallbacks available")
+
+                # Create explicit failure for cancelled consultation
+                class ConsultationCancelledError(RuntimeError):
+                    """Raised when user cancels consultation and no fallbacks are permitted."""
+                    def __init__(self, message: str, consultation_event: ConsultationRequiredEvent):
+                        super().__init__(message)
+                        self.consultation_event = consultation_event
+                        self.diagnostics = {
+                            "failure_type": "consultation_cancelled_by_user",
+                            "consultation_type": consultation_event.consultation_type,
+                            "consultation_id": str(consultation_event.consultation_id),
+                            "cancelled_at": datetime.now(UTC).isoformat(),
+                            "regulatory_impact": "HIGH - Cannot proceed without human consultation",
+                            "no_fallback_rationale": "User cancelled consultation - no automated alternatives permitted"
                         }
-                    )
-                    
+
+                error_message = (
+                    f"User cancelled consultation for {ev.consultation_type}. "
+                    f"Consultation ID: {ev.consultation_id}. "
+                    f"System cannot proceed without explicit human decision. "
+                    f"No fallback mechanisms available per pharmaceutical compliance requirements."
+                )
+
+                self.logger.error(
+                    f"User cancelled consultation: {ev.consultation_type}. "
+                    f"NO fallback values available per regulatory requirements."
+                )
+
+                raise ConsultationCancelledError(error_message, ev)
+
         except Exception as e:
             safe_print(f"\n❌ Error during consultation: {e}")
             self.logger.error(f"Error in direct consultation input: {e}")
-            return ConsultationTimeoutEvent(
-                consultation_id=ev.consultation_id,
-                timeout_duration_seconds=0,
-                conservative_action=f"Applied conservative defaults due to error: {e}",
-                escalation_required=True,
-                original_consultation=ev,
-                default_decision={
-                    "decision": "conservative_default",
-                    "rationale": f"Error during consultation - conservative approach applied: {e}",
-                    "confidence": 0.8,
-                    "decision_method": "error_conservative_default"
-                }
+
+            # Create explicit failure for consultation system error
+            class ConsultationSystemError(RuntimeError):
+                """Raised when consultation system encounters error and no fallbacks are permitted."""
+                def __init__(self, message: str, consultation_event: ConsultationRequiredEvent, original_error: Exception):
+                    super().__init__(message)
+                    self.consultation_event = consultation_event
+                    self.original_error = original_error
+                    self.diagnostics = {
+                        "failure_type": "consultation_system_error",
+                        "consultation_type": consultation_event.consultation_type,
+                        "consultation_id": str(consultation_event.consultation_id),
+                        "error_type": type(original_error).__name__,
+                        "error_message": str(original_error),
+                        "failed_at": datetime.now(UTC).isoformat(),
+                        "regulatory_impact": "HIGH - Cannot proceed without human consultation",
+                        "no_fallback_rationale": "System error during consultation - no automated alternatives permitted"
+                    }
+
+            error_message = (
+                f"System error during consultation for {ev.consultation_type}: {e}. "
+                f"Consultation ID: {ev.consultation_id}. "
+                f"System cannot proceed without explicit human decision. "
+                f"No fallback mechanisms available per pharmaceutical compliance requirements."
             )
+
+            self.logger.error(
+                f"Consultation system error: {ev.consultation_type} - {e}. "
+                f"NO fallback values available per regulatory requirements."
+            )
+
+            raise ConsultationSystemError(error_message, ev, e)
 
 
 # Convenience function for running the unified workflow

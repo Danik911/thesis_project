@@ -9,6 +9,7 @@ operations are fully traced in Phoenix with comprehensive observability.
 import asyncio
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Add project root to path
@@ -28,12 +29,12 @@ async def verify_phoenix_observability():
     print("🔬 Phoenix Observability Verification Report")
     print("=" * 50)
     print()
-    
+
     # 1. Phoenix Setup Verification
     print("1️⃣ Phoenix Setup Verification")
     print("-" * 30)
     phoenix_manager = setup_phoenix()
-    
+
     if phoenix_manager._initialized:
         print("✅ Phoenix observability initialized successfully")
         print(f"   • Host: {phoenix_manager.config.phoenix_host}")
@@ -45,12 +46,12 @@ async def verify_phoenix_observability():
         print("❌ Phoenix initialization failed")
         return False
     print()
-    
+
     # 2. Agent Initialization Verification
     print("2️⃣ Agent Initialization with Phoenix")
     print("-" * 35)
     agent = create_context_provider_agent(
-        verbose=True, 
+        verbose=True,
         enable_phoenix=True,
         max_documents=50
     )
@@ -58,23 +59,23 @@ async def verify_phoenix_observability():
     print(f"   • Phoenix enabled: {agent.enable_phoenix}")
     print(f"   • Collection mapping: {list(agent.collections.keys())}")
     print()
-    
+
     # 3. Document Ingestion Verification
     print("3️⃣ Document Ingestion Traceability")
     print("-" * 35)
     fda_doc_path = Path("/home/anteb/thesis_project/main/tests/test_data/FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md")
-    
+
     if fda_doc_path.exists():
         print(f"📄 FDA Part 11 document: {fda_doc_path.name}")
         print(f"   • Size: {fda_doc_path.stat().st_size:,} bytes")
-        
+
         # Perform ingestion with Phoenix tracing
         ingestion_stats = await agent.ingest_documents(
             documents_path=str(fda_doc_path),
             collection_name="regulatory",
             force_reprocess=True
         )
-        
+
         print("✅ Document ingestion completed with Phoenix traces")
         print(f"   • Status: {ingestion_stats.get('status')}")
         print(f"   • Collection: {ingestion_stats.get('collection')}")
@@ -86,7 +87,7 @@ async def verify_phoenix_observability():
         print("❌ FDA Part 11 document not found")
         return False
     print()
-    
+
     # 4. ChromaDB State Verification
     print("4️⃣ ChromaDB State Verification")
     print("-" * 30)
@@ -95,19 +96,19 @@ async def verify_phoenix_observability():
         regulatory_collection = agent.chroma_client.get_collection("regulatory")
         count = regulatory_collection.count()
         print(f"✅ Regulatory collection: {count} documents")
-        
+
         if count > 0:
             # Get sample document
-            result = regulatory_collection.get(limit=1, include=['documents', 'metadatas'])
-            if result['documents']:
-                doc_preview = result['documents'][0][:100] + "..." if len(result['documents'][0]) > 100 else result['documents'][0]
+            result = regulatory_collection.get(limit=1, include=["documents", "metadatas"])
+            if result["documents"]:
+                doc_preview = result["documents"][0][:100] + "..." if len(result["documents"][0]) > 100 else result["documents"][0]
                 print(f"   • Sample content: {doc_preview}")
                 print(f"   • Metadata keys: {list(result['metadatas'][0].keys()) if result['metadatas'] else 'None'}")
-        
+
     except Exception as e:
         print(f"❌ ChromaDB verification failed: {e}")
     print()
-    
+
     # 5. Phoenix Trace Categories Generated
     print("5️⃣ Phoenix Trace Categories Generated")
     print("-" * 35)
@@ -126,7 +127,7 @@ async def verify_phoenix_observability():
     print("     • context_provider.search_documents")
     print("     • context_provider.confidence_calculation")
     print()
-    
+
     # 6. Compliance and Audit Trail
     print("6️⃣ GAMP-5 Compliance and Audit Trail")
     print("-" * 35)
@@ -134,7 +135,7 @@ async def verify_phoenix_observability():
     print("   📋 ALCOA+ Principles:")
     print("     • Attributable: All operations traced with timestamps")
     print("     • Legible: Human-readable traces in Phoenix UI")
-    print("     • Contemporaneous: Real-time trace generation") 
+    print("     • Contemporaneous: Real-time trace generation")
     print("     • Original: Source document preserved")
     print("     • Accurate: No fallback logic, genuine system behavior")
     print("   📋 21 CFR Part 11 Features:")
@@ -143,7 +144,7 @@ async def verify_phoenix_observability():
     print("     • Data Integrity: ChromaDB transactional operations")
     print("     • Access Control: Collection-based document organization")
     print()
-    
+
     # 7. Phoenix UI Access
     print("7️⃣ Phoenix UI Access Verification")
     print("-" * 35)
@@ -155,7 +156,7 @@ async def verify_phoenix_observability():
     print("     • Error diagnostics and performance metrics")
     print("     • GAMP-5 compliance attribute tracking")
     print()
-    
+
     # 8. Final Summary
     print("8️⃣ Observability Verification Summary")
     print("-" * 35)
@@ -175,14 +176,14 @@ async def verify_phoenix_observability():
     print("   • Use traces for performance optimization")
     print("   • Export trace data for compliance documentation")
     print()
-    
+
     # 9. Clean shutdown
     print("9️⃣ Graceful Shutdown with Trace Persistence")
     print("-" * 40)
     shutdown_phoenix(timeout_seconds=10)
     print("✅ Phoenix shutdown complete - traces preserved")
     print(f"🌐 Phoenix UI remains accessible: {phoenix_url}")
-    
+
     return True
 
 
@@ -190,9 +191,9 @@ async def main():
     """Main verification execution."""
     print("🚀 Starting Phoenix Observability Verification")
     print()
-    
+
     success = await verify_phoenix_observability()
-    
+
     if success:
         print()
         print("=" * 60)

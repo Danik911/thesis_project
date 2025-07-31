@@ -44,11 +44,11 @@ from src.core.events import (
     GAMPCategory,
     PlanningEvent,
 )
+from src.monitoring.phoenix_config import instrument_tool
 
 from .coordination import AgentCoordinationConfig, AgentCoordinator, CoordinationResult
 from .gamp_strategies import get_category_strategy, validate_strategy_compatibility
 from .strategy_generator import GAMPStrategyGenerator, TestStrategyResult
-from src.monitoring.phoenix_config import instrument_tool
 
 
 class PlannerAgent:
