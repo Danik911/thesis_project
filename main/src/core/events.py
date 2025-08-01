@@ -344,6 +344,20 @@ class WorkflowCompletionEvent(Event):
     triggering_step: str
 
 
+# OQ Test Generation Events - imported from OQ generator module
+try:
+    from src.agents.oq_generator.events import (
+        OQTestGenerationEvent,
+        OQTestSuiteEvent,
+        OQValidationEvent,
+        OQValidationResultEvent
+    )
+    _OQ_EVENTS_AVAILABLE = True
+except ImportError:
+    # OQ generator not yet available
+    _OQ_EVENTS_AVAILABLE = False
+
+
 # Export all event classes for workflow use
 __all__ = [
     "AgentRequestEvent",
@@ -364,3 +378,12 @@ __all__ = [
     "ValidationStatus",
     "WorkflowCompletionEvent",
 ]
+
+# Add OQ events if available
+if _OQ_EVENTS_AVAILABLE:
+    __all__.extend([
+        "OQTestGenerationEvent",
+        "OQTestSuiteEvent", 
+        "OQValidationEvent",
+        "OQValidationResultEvent"
+    ])
