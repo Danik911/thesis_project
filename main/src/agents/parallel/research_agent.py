@@ -26,6 +26,12 @@ from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai import OpenAI
 from pydantic import BaseModel, Field
+from src.agents.parallel.regulatory_data_sources import (
+    FDAAPIError,
+    RegulatoryAuditTrail,
+    create_document_processor,
+    create_fda_client,
+)
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 
 
@@ -76,7 +82,8 @@ class ResearchAgent:
         enable_phoenix: bool = True,
         max_research_items: int = 20,
         quality_threshold: float = 0.7,
-        research_sources: list[str] | None = None
+        research_sources: list[str] | None = None,
+        fda_api_key: str | None = None
     ):
         """
         Initialize the Research Agent.
@@ -88,6 +95,7 @@ class ResearchAgent:
             max_research_items: Maximum research items to return
             quality_threshold: Minimum quality threshold for research
             research_sources: List of research sources to prioritize
+            fda_api_key: FDA API key for enhanced rate limits
         """
         self.llm = llm or OpenAI(model="gpt-4.1-mini-2025-04-14")
         self.verbose = verbose
@@ -98,6 +106,11 @@ class ResearchAgent:
             "FDA", "EMA", "ICH", "ISPE", "PDA", "GAMP"
         ]
         self.logger = logging.getLogger(__name__)
+
+        # Initialize real data sources
+        self.audit_trail = RegulatoryAuditTrail()
+        self.fda_client = create_fda_client(api_key=fda_api_key)
+        self.document_processor = create_document_processor()
 
         # Initialize knowledge base
         self.regulatory_knowledge = self._initialize_regulatory_knowledge()
@@ -259,106 +272,40 @@ class ResearchAgent:
         return response
 
     async def _research_regulatory_updates(self, request: ResearchAgentRequest) -> list[dict[str, Any]]:
-        """Research current regulatory updates."""
+        """Research current regulatory updates using real data sources."""
         updates = []
 
-        # Simulate regulatory update research
-        # In a real implementation, this would query:
-        # - FDA databases and guidance documents
-        # - EMA regulatory updates
-        # - ICH harmonization guidelines
-        # - Industry regulatory news sources
+        try:
+            # Research FDA regulatory updates for relevant focus areas
+            for regulatory_body in request.regulatory_scope:
+                if regulatory_body.upper() in ["FDA", "US"]:
+                    fda_updates = await self._search_fda_regulatory_data(request.research_focus)
+                    updates.extend(fda_updates)
 
-        for regulatory_body in request.regulatory_scope:
-            if regulatory_body.upper() in ["FDA", "US"]:
-                updates.append({
-                    "source": "FDA",
-                    "title": "Computer Software Assurance for Production and Quality System Software",
-                    "type": "guidance",
-                    "date": "2022-09-01",
-                    "relevance_score": 0.95,
-                    "summary": "Updated guidance on software validation requirements for pharmaceutical manufacturing",
-                    "key_changes": [
-                        "Risk-based approach to software validation",
-                        "Emphasis on software assurance over validation",
-                        "Streamlined documentation requirements"
-                    ],
-                    "impact_assessment": "high",
-                    "implementation_timeline": "immediate"
-                })
+                # Note: EMA and ICH integration would be added here in future phases
+                # Currently implementing FDA as the primary real data source
+                if regulatory_body.upper() in ["EMA", "EU"]:
+                    # Future: Implement EMA database integration
+                    self.logger.warning("EMA integration not yet implemented - skipping EMA queries")
 
-                updates.append({
-                    "source": "FDA",
-                    "title": "Data Integrity and Compliance with Drug CGMP",
-                    "type": "guidance",
-                    "date": "2023-04-15",
-                    "relevance_score": 0.88,
-                    "summary": "Enhanced data integrity requirements for electronic records and systems",
-                    "key_changes": [
-                        "Strengthened ALCOA+ requirements",
-                        "Enhanced audit trail requirements",
-                        "Cloud-based system considerations"
-                    ],
-                    "impact_assessment": "high",
-                    "implementation_timeline": "phased"
-                })
+                if regulatory_body.upper() in ["ICH"]:
+                    # Future: Implement ICH document processing
+                    self.logger.warning("ICH integration not yet implemented - skipping ICH queries")
 
-            if regulatory_body.upper() in ["EMA", "EU"]:
-                updates.append({
-                    "source": "EMA",
-                    "title": "Computerised Systems and Electronic Data in Clinical Trials",
-                    "type": "reflection_paper",
-                    "date": "2023-06-01",
-                    "relevance_score": 0.92,
-                    "summary": "Guidelines for computerized systems validation in clinical trial environments",
-                    "key_changes": [
-                        "Enhanced requirements for electronic source data",
-                        "Risk-based validation approaches",
-                        "Real-world evidence system validation"
-                    ],
-                    "impact_assessment": "medium",
-                    "implementation_timeline": "future"
-                })
+            # If no specific regulatory scope, search FDA by default
+            if not request.regulatory_scope:
+                fda_updates = await self._search_fda_regulatory_data(request.research_focus)
+                updates.extend(fda_updates)
 
-            if regulatory_body.upper() in ["ICH"]:
-                updates.append({
-                    "source": "ICH",
-                    "title": "ICH M12: Electronic Submission Standards",
-                    "type": "guideline",
-                    "date": "2023-11-01",
-                    "relevance_score": 0.85,
-                    "summary": "Harmonized standards for electronic regulatory submissions",
-                    "key_changes": [
-                        "Standardized metadata requirements",
-                        "Enhanced validation requirements for submission systems",
-                        "Global harmonization of electronic standards"
-                    ],
-                    "impact_assessment": "medium",
-                    "implementation_timeline": "long_term"
-                })
+            # Sort by relevance and limit results
+            updates.sort(key=lambda x: x.get("relevance_score", 0.0), reverse=True)
+            return updates[:self.max_research_items // 3]
 
-        # Add focus area specific updates
-        for focus_area in request.research_focus:
-            if "gamp" in focus_area.lower():
-                updates.append({
-                    "source": "ISPE",
-                    "title": "GAMP 5 Good Practice Guide: Records and Data Integrity",
-                    "type": "good_practice_guide",
-                    "date": "2023-08-15",
-                    "relevance_score": 0.90,
-                    "summary": "Updated guidance on records and data integrity in GAMP 5 context",
-                    "key_changes": [
-                        "Enhanced data integrity lifecycle approach",
-                        "Risk-based data governance",
-                        "Cloud and hybrid system considerations"
-                    ],
-                    "impact_assessment": "high",
-                    "implementation_timeline": "immediate"
-                })
-
-        # Sort by relevance and limit results
-        updates.sort(key=lambda x: x["relevance_score"], reverse=True)
-        return updates[:self.max_research_items // 3]
+        except Exception as e:
+            error_msg = f"Failed to research regulatory updates: {e!s}"
+            self.logger.error(error_msg)
+            # NEVER FALLBACK - raise explicit error for GAMP-5 compliance
+            raise RuntimeError(error_msg) from e
 
     async def _research_best_practices(self, request: ResearchAgentRequest) -> list[dict[str, Any]]:
         """Research current best practices."""
@@ -898,14 +845,14 @@ Always maintain currency with evolving regulatory landscape."""
         )
 
     def _create_regulatory_search_tool(self) -> FunctionTool:
-        """Create regulatory search tool."""
-        def search_regulatory_updates(
+        """Create regulatory search tool using real FDA API."""
+        async def search_regulatory_updates(
             regulatory_bodies: list[str],
             time_horizon: str,
             focus_areas: list[str]
         ) -> dict[str, Any]:
             """
-            Search for regulatory updates from specified bodies.
+            Search for regulatory updates from specified bodies using real APIs.
             
             Args:
                 regulatory_bodies: List of regulatory bodies to search
@@ -915,13 +862,48 @@ Always maintain currency with evolving regulatory landscape."""
             Returns:
                 Search results with regulatory updates
             """
-            return {
-                "regulatory_bodies": regulatory_bodies,
-                "time_horizon": time_horizon,
-                "focus_areas": focus_areas,
-                "results_count": len(regulatory_bodies) * 3,
-                "search_quality": "high"
-            }
+            try:
+                results = []
+
+                # Search FDA data if requested
+                if any(body.upper() in ["FDA", "US"] for body in regulatory_bodies):
+                    for focus_area in focus_areas:
+                        try:
+                            # Search drug labels for regulatory guidance
+                            search_query = self._build_fda_search_query(focus_area)
+                            fda_data = await self.fda_client.search_drug_labels(
+                                search_query=search_query,
+                                limit=5
+                            )
+
+                            if fda_data.get("results"):
+                                results.extend(fda_data["results"])
+
+                        except FDAAPIError as e:
+                            self.logger.error(f"FDA API search failed for {focus_area}: {e}")
+                            # Continue with other searches - don't fail entire operation
+
+                return {
+                    "regulatory_bodies": regulatory_bodies,
+                    "time_horizon": time_horizon,
+                    "focus_areas": focus_areas,
+                    "results_count": len(results),
+                    "search_quality": "real_data" if results else "no_results",
+                    "results": results[:10]  # Limit for tool response
+                }
+
+            except Exception as e:
+                error_msg = f"Regulatory search failed: {e!s}"
+                self.logger.error(error_msg)
+                # NEVER FALLBACK - return error information
+                return {
+                    "regulatory_bodies": regulatory_bodies,
+                    "time_horizon": time_horizon,
+                    "focus_areas": focus_areas,
+                    "results_count": 0,
+                    "search_quality": "error",
+                    "error": error_msg
+                }
 
         return FunctionTool.from_defaults(fn=search_regulatory_updates)
 
@@ -981,6 +963,246 @@ Always maintain currency with evolving regulatory landscape."""
 
         return FunctionTool.from_defaults(fn=analyze_industry_trends)
 
+    async def _search_fda_regulatory_data(self, focus_areas: list[str]) -> list[dict[str, Any]]:
+        """Search FDA databases for regulatory updates based on focus areas."""
+        updates = []
+
+        try:
+            for focus_area in focus_areas:
+                # Build search query for FDA API
+                search_query = self._build_fda_search_query(focus_area)
+
+                # Search multiple FDA databases
+                try:
+                    # Search drug labels for guidance information
+                    drug_labels = await self.fda_client.search_drug_labels(
+                        search_query=search_query,
+                        limit=3
+                    )
+                    updates.extend(self._process_fda_drug_labels(drug_labels, focus_area))
+
+                    # Search enforcement reports for recent regulatory actions
+                    enforcement = await self.fda_client.search_enforcement_reports(
+                        search_query=search_query,
+                        limit=2
+                    )
+                    updates.extend(self._process_fda_enforcement_reports(enforcement, focus_area))
+
+                except FDAAPIError as e:
+                    self.logger.warning(f"FDA API search failed for {focus_area}: {e}")
+                    # Continue with other focus areas - don't fail entire search
+                    continue
+
+            return updates
+
+        except Exception as e:
+            error_msg = f"FDA regulatory data search failed: {e!s}"
+            self.logger.error(error_msg)
+            # NEVER FALLBACK - raise explicit error
+            raise RuntimeError(error_msg) from e
+
+    def _build_fda_search_query(self, focus_area: str) -> str:
+        """Build FDA API search query based on focus area."""
+        focus_area_lower = focus_area.lower()
+
+        # Map focus areas to FDA search terms
+        if "gamp" in focus_area_lower or "validation" in focus_area_lower:
+            return "computer software validation pharmaceutical"
+        if "data integrity" in focus_area_lower:
+            return "data integrity electronic records ALCOA"
+        if "security" in focus_area_lower or "cybersecurity" in focus_area_lower:
+            return "cybersecurity computer systems pharmaceutical"
+        if "quality" in focus_area_lower:
+            return "quality systems pharmaceutical manufacturing"
+        if "risk" in focus_area_lower:
+            return "risk assessment pharmaceutical systems"
+        # Generic pharmaceutical systems search
+        return f"pharmaceutical {focus_area}"
+
+    def _process_fda_drug_labels(
+        self,
+        fda_response: dict[str, Any],
+        focus_area: str
+    ) -> list[dict[str, Any]]:
+        """Process FDA drug labels response into regulatory updates format."""
+        updates = []
+
+        results = fda_response.get("results", [])
+        for result in results[:2]:  # Limit to 2 per focus area
+            # Extract relevant information from FDA drug label
+            update = {
+                "source": "FDA",
+                "title": self._extract_fda_title(result),
+                "type": "drug_label_guidance",
+                "date": self._extract_fda_date(result),
+                "relevance_score": self._calculate_fda_relevance(result, focus_area),
+                "summary": self._extract_fda_summary(result),
+                "key_changes": self._extract_fda_key_points(result),
+                "impact_assessment": "medium",
+                "implementation_timeline": "review_required",
+                "fda_metadata": {
+                    "audit_id": fda_response.get("_fda_api_metadata", {}).get("audit_id"),
+                    "application_number": result.get("application_number"),
+                    "product_ndc": result.get("product_ndc", []),
+                    "sponsor_name": result.get("sponsor_name")
+                }
+            }
+            updates.append(update)
+
+        return updates
+
+    def _process_fda_enforcement_reports(
+        self,
+        fda_response: dict[str, Any],
+        focus_area: str
+    ) -> list[dict[str, Any]]:
+        """Process FDA enforcement reports into regulatory updates format."""
+        updates = []
+
+        results = fda_response.get("results", [])
+        for result in results[:1]:  # Limit to 1 per focus area
+            update = {
+                "source": "FDA",
+                "title": f"Enforcement Action: {result.get('reason_for_recall', 'Regulatory Action')}",
+                "type": "enforcement_report",
+                "date": result.get("report_date", "unknown"),
+                "relevance_score": self._calculate_fda_relevance(result, focus_area),
+                "summary": result.get("reason_for_recall", "FDA enforcement action"),
+                "key_changes": [
+                    f"Classification: {result.get('classification', 'Unknown')}",
+                    f"Status: {result.get('status', 'Unknown')}",
+                    f"Recall Number: {result.get('recall_number', 'N/A')}"
+                ],
+                "impact_assessment": self._assess_enforcement_impact(result),
+                "implementation_timeline": "immediate",
+                "fda_metadata": {
+                    "audit_id": fda_response.get("_fda_api_metadata", {}).get("audit_id"),
+                    "recall_number": result.get("recall_number"),
+                    "classification": result.get("classification"),
+                    "company_name": result.get("recalling_firm")
+                }
+            }
+            updates.append(update)
+
+        return updates
+
+    def _extract_fda_title(self, fda_result: dict[str, Any]) -> str:
+        """Extract meaningful title from FDA result."""
+        # Try multiple fields for title
+        title_fields = [
+            "brand_name", "generic_name", "product_name",
+            "labeler_name", "application_number"
+        ]
+
+        for field in title_fields:
+            if fda_result.get(field):
+                value = fda_result[field]
+                if isinstance(value, list) and value:
+                    return f"FDA Guidance: {value[0]}"
+                if isinstance(value, str):
+                    return f"FDA Guidance: {value}"
+
+        return "FDA Regulatory Guidance"
+
+    def _extract_fda_date(self, fda_result: dict[str, Any]) -> str:
+        """Extract date from FDA result."""
+        date_fields = ["effective_time", "report_date", "submission_date"]
+
+        for field in date_fields:
+            if fda_result.get(field):
+                return fda_result[field]
+
+        return datetime.now(UTC).strftime("%Y-%m-%d")
+
+    def _extract_fda_summary(self, fda_result: dict[str, Any]) -> str:
+        """Extract summary from FDA result."""
+        summary_fields = [
+            "purpose", "description", "reason_for_recall",
+            "dosage_form", "route"
+        ]
+
+        summary_parts = []
+        for field in summary_fields:
+            if fda_result.get(field):
+                value = fda_result[field]
+                if isinstance(value, list):
+                    summary_parts.extend(value[:2])  # Limit list items
+                elif isinstance(value, str):
+                    summary_parts.append(value)
+
+        if summary_parts:
+            return " | ".join(summary_parts[:3])  # Limit to 3 parts
+
+        return "FDA regulatory information"
+
+    def _extract_fda_key_points(self, fda_result: dict[str, Any]) -> list[str]:
+        """Extract key points from FDA result."""
+        key_points = []
+
+        # Extract from various FDA fields that might contain important info
+        point_fields = [
+            "warnings", "contraindications", "adverse_reactions",
+            "dosage_and_administration", "mechanism_of_action"
+        ]
+
+        for field in point_fields:
+            if fda_result.get(field):
+                value = fda_result[field]
+                if isinstance(value, list):
+                    key_points.extend(value[:2])
+                elif isinstance(value, str) and len(value) > 10:
+                    key_points.append(value[:200])  # Truncate long strings
+
+        return key_points[:3]  # Limit to 3 key points
+
+    def _calculate_fda_relevance(self, fda_result: dict[str, Any], focus_area: str) -> float:
+        """Calculate relevance score for FDA result based on focus area."""
+        score = 0.5  # Base score
+
+        # Convert all text fields to lowercase for matching
+        text_content = ""
+        for key, value in fda_result.items():
+            if isinstance(value, str):
+                text_content += value.lower() + " "
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, str):
+                        text_content += item.lower() + " "
+
+        focus_area_lower = focus_area.lower()
+
+        # Increase score based on keyword matches
+        relevance_keywords = {
+            "gamp": ["computer", "software", "validation", "system"],
+            "validation": ["validation", "verify", "test", "qualify"],
+            "data integrity": ["data", "integrity", "record", "audit"],
+            "security": ["security", "cyber", "access", "authentication"],
+            "quality": ["quality", "cgmp", "manufacturing", "control"],
+            "risk": ["risk", "assessment", "analysis", "mitigation"]
+        }
+
+        # Match focus area keywords
+        for keyword_set in relevance_keywords.values():
+            for keyword in keyword_set:
+                if keyword in text_content:
+                    score += 0.1
+
+        # Boost score if focus area terms found directly
+        if focus_area_lower in text_content:
+            score += 0.2
+
+        return min(score, 1.0)  # Cap at 1.0
+
+    def _assess_enforcement_impact(self, enforcement_result: dict[str, Any]) -> str:
+        """Assess impact level of FDA enforcement action."""
+        classification = enforcement_result.get("classification", "").lower()
+
+        if "class i" in classification or "class 1" in classification:
+            return "high"
+        if "class ii" in classification or "class 2" in classification:
+            return "medium"
+        return "low"
+
     def _update_performance_stats(self, processing_time: float) -> None:
         """Update performance statistics."""
         current_avg = self._research_stats["avg_processing_time"]
@@ -1001,10 +1223,11 @@ def create_research_agent(
     enable_phoenix: bool = True,
     max_research_items: int = 20,
     quality_threshold: float = 0.7,
-    research_sources: list[str] | None = None
+    research_sources: list[str] | None = None,
+    fda_api_key: str | None = None
 ) -> ResearchAgent:
     """
-    Create a Research Agent instance.
+    Create a Research Agent instance with real regulatory data sources.
     
     Args:
         llm: Language model for research analysis
@@ -1013,9 +1236,10 @@ def create_research_agent(
         max_research_items: Maximum research items to return
         quality_threshold: Minimum quality threshold
         research_sources: List of research sources to prioritize
+        fda_api_key: FDA API key for enhanced rate limits (120k/hour vs 240/hour)
     
     Returns:
-        Configured ResearchAgent instance
+        Configured ResearchAgent instance with real data source integration
     """
     return ResearchAgent(
         llm=llm,
@@ -1023,5 +1247,6 @@ def create_research_agent(
         enable_phoenix=enable_phoenix,
         max_research_items=max_research_items,
         quality_threshold=quality_threshold,
-        research_sources=research_sources
+        research_sources=research_sources,
+        fda_api_key=fda_api_key
     )

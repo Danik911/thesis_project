@@ -9,42 +9,40 @@ This test validates the OQ generator in a real workflow execution with:
 - NO fallback mechanisms
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 from datetime import UTC, datetime
 from uuid import uuid4
 
 # Add the src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-from llama_index.llms.openai import OpenAI
 from llama_index.core.workflow import Context
-
-from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
+from llama_index.llms.openai import OpenAI
 from src.agents.oq_generator.events import OQTestGenerationEvent, OQTestSuiteEvent
-from src.agents.oq_generator.models import OQTestSuite
-from src.core.events import GAMPCategory, ConsultationRequiredEvent
+from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
+from src.core.events import ConsultationRequiredEvent, GAMPCategory
 
 
 async def test_oq_mock_workflow():
     """Test OQ generation with mock LLM (no API key required)."""
     from unittest.mock import MagicMock
-    
+
     print("=== OQ Test Generation Mock Workflow Test ===\n")
-    
+
     # Create mock LLM
     mock_llm = MagicMock()
-    
+
     # Initialize OQ generation workflow with mock
     oq_workflow = OQTestGenerationWorkflow(
         llm=mock_llm,
         verbose=True,
         enable_validation=True
     )
-    
+
     print("Mock OQ Generation Workflow initialized")
-    
+
     # Create simple test event
     generation_event = OQTestGenerationEvent(
         gamp_category=GAMPCategory.CATEGORY_3,
@@ -58,19 +56,19 @@ async def test_oq_mock_workflow():
         },
         correlation_id=uuid4()
     )
-    
+
     print("Mock OQ Generation Event created")
-    
-    # Create mock context  
+
+    # Create mock context
     context = Context()
-    
+
     try:
         # This will test the workflow structure and validation logic
         # without requiring actual LLM calls
         result = await oq_workflow.generate_oq_tests(context, generation_event)
         print("Mock workflow execution completed")
         return True
-        
+
     except Exception as e:
         print(f"Mock workflow test completed with expected error: {type(e).__name__}")
         # Expected since we're using mock LLM
@@ -79,31 +77,31 @@ async def test_oq_mock_workflow():
 
 async def test_oq_real_workflow():
     """Test OQ generation with real workflow execution."""
-    
+
     print("=== OQ Test Generation Real Workflow Test ===\n")
-    
+
     # Initialize OpenAI LLM with API key
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("X OPENAI_API_KEY environment variable not set - using mock test")
         return await test_oq_mock_workflow()
-    
+
     llm = OpenAI(
         model="gpt-4o-mini",
         temperature=0.1,
         max_tokens=4000,
         api_key=api_key
     )
-    
+
     # Initialize OQ generation workflow
     oq_workflow = OQTestGenerationWorkflow(
         llm=llm,
         verbose=True,
         enable_validation=True
     )
-    
+
     print("✅ OQ Generation Workflow initialized")
-    
+
     # Create test URS content (pharmaceutical system)
     test_urs_content = """
     User Requirements Specification (URS) - Laboratory Information Management System (LIMS)
@@ -169,7 +167,7 @@ async def test_oq_real_workflow():
     - 99.5% system availability during business hours
     - Data backup completion within 30 minutes
     """
-    
+
     # Create OQ generation event (Category 4 - Configured Products)
     generation_event = OQTestGenerationEvent(
         gamp_category=GAMPCategory.CATEGORY_4,
@@ -245,7 +243,7 @@ async def test_oq_real_workflow():
         complexity_level="comprehensive",
         focus_areas=[
             "sample_management_validation",
-            "data_integrity_verification", 
+            "data_integrity_verification",
             "audit_trail_testing",
             "integration_validation",
             "security_testing"
@@ -254,80 +252,80 @@ async def test_oq_real_workflow():
         correlation_id=uuid4(),
         triggering_step="oq_generation_requested"
     )
-    
+
     print("✅ OQ Generation Event created")
     print(f"   - GAMP Category: {generation_event.gamp_category.value}")
     print(f"   - Required Tests: {generation_event.required_test_count}")
     print(f"   - Document: {generation_event.document_metadata['name']}")
     print(f"   - Context Quality: {generation_event.aggregated_context['context_provider_result']['confidence_score']:.1%}")
-    
+
     # Create mock context
     context = Context()
-    
+
     # Execute OQ generation workflow step
     print("\n🚀 Executing OQ test generation workflow...")
     start_time = datetime.now(UTC)
-    
+
     try:
         result = await oq_workflow.generate_oq_tests(context, generation_event)
         generation_time = (datetime.now(UTC) - start_time).total_seconds()
-        
+
         print(f"✅ OQ generation completed in {generation_time:.2f} seconds")
-        
+
         # Analyze results
         if isinstance(result, OQTestSuiteEvent):
             print("\n=== OQ TEST SUITE GENERATION SUCCESS ===")
-            
+
             test_suite = result.test_suite
             print(f"✅ Suite ID: {test_suite.suite_id}")
             print(f"✅ GAMP Category: {test_suite.gamp_category}")
             print(f"✅ Total Tests: {test_suite.total_test_count}")
             print(f"✅ Document: {test_suite.document_name}")
             print(f"✅ Estimated Execution Time: {test_suite.estimated_execution_time} minutes")
-            
+
             # Coverage Analysis
             coverage = result.coverage_analysis
-            print(f"\n📊 COVERAGE ANALYSIS:")
+            print("\n📊 COVERAGE ANALYSIS:")
             print(f"   - Requirements Coverage: {coverage.get('requirements_coverage_percentage', 0):.1f}%")
             print(f"   - Tests with Traceability: {coverage.get('tests_with_traceability', 0)}")
             print(f"   - Total Test Steps: {sum(len(test.test_steps) for test in test_suite.test_cases)}")
-            
+
             # Test Category Distribution
-            if 'category_distribution' in coverage:
+            if "category_distribution" in coverage:
                 print(f"   - Test Categories: {coverage['category_distribution']}")
-            
+
             # Quality Metrics
             quality = result.quality_metrics
-            print(f"\n📈 QUALITY METRICS:")
+            print("\n📈 QUALITY METRICS:")
             print(f"   - Average Test Complexity: {quality.get('average_test_complexity', 0):.1f}")
             print(f"   - Risk Distribution: {quality.get('risk_distribution', {})}")
             print(f"   - Requirements Traced: {quality.get('requirements_traced', 0)}")
-            
+
             # Compliance Validation
             compliance = result.compliance_validation
-            print(f"\n🔒 COMPLIANCE VALIDATION:")
+            print("\n🔒 COMPLIANCE VALIDATION:")
             for requirement, status in compliance.items():
                 status_icon = "✅" if status else "❌"
                 print(f"   {status_icon} {requirement}: {status}")
-            
+
             # Regulatory Basis
             print(f"\n📋 REGULATORY BASIS: {', '.join(result.regulatory_basis)}")
-            
+
             # Validation Issues
             if result.validation_issues:
-                print(f"\n⚠️  VALIDATION ISSUES FOUND:")
+                print("\n⚠️  VALIDATION ISSUES FOUND:")
                 for issue in result.validation_issues:
                     print(f"   - {issue}")
             else:
-                print(f"\n✅ NO VALIDATION ISSUES")
-            
+                print("\n✅ NO VALIDATION ISSUES")
+
             # Human Review Requirements
-            print(f"\n👥 HUMAN REVIEW:")  
+            print("\n👥 HUMAN REVIEW:")
             print(f"   - Required: {result.human_review_required}")
             print(f"   - Priority: {result.review_priority}")
-            
+
             # Sample Test Cases (first 3)
-            print(f"\n📝 SAMPLE TEST CASES (first 3):")
+            print("\n📝 SAMPLE TEST CASES (first 3):")
             for i, test_case in enumerate(test_suite.test_cases[:3]):
                 print(f"\n   [{i+1}] {test_case.test_id}: {test_case.test_name}")
                 print(f"       Category: {test_case.test_category}")
@@ -337,45 +335,43 @@ async def test_oq_real_workflow():
                 print(f"       Risk Level: {test_case.risk_level}")
                 if test_case.urs_requirements:
                     print(f"       URS Traceability: {', '.join(test_case.urs_requirements)}")
-            
+
             # Validate NO fallback mechanisms
-            print(f"\n🚨 FALLBACK VALIDATION:")
+            print("\n🚨 FALLBACK VALIDATION:")
             print(f"   - Generation Method: {result.generation_method}")
             print(f"   - Context Quality: {result.context_quality:.1%}")
             print(f"   - GMP Compliant: {result.gmp_compliant}")
             print(f"   - Audit Trail Complete: {result.audit_trail_complete}")
-            
+
             # CRITICAL: Verify no 0% confidence with success reporting
             if result.context_quality == 0.0 and result.generation_successful:
                 print("❌ CRITICAL ISSUE: 0% confidence with success reporting (fallback detected)")
                 return False
-            
+
             return True
-            
-        elif isinstance(result, ConsultationRequiredEvent):
+
+        if isinstance(result, ConsultationRequiredEvent):
             print("\n=== CONSULTATION REQUIRED ===")
             print(f"🔍 Consultation Type: {result.consultation_type}")
             print(f"🚨 Urgency: {result.urgency}")
             print(f"👥 Required Expertise: {', '.join(result.required_expertise)}")
             print(f"📍 Triggering Step: {result.triggering_step}")
-            
+
             # Display context
-            print(f"\n📋 CONSULTATION CONTEXT:")
+            print("\n📋 CONSULTATION CONTEXT:")
             for key, value in result.context.items():
                 print(f"   - {key}: {value}")
-            
+
             # This is acceptable - system properly requested human intervention
             if result.context.get("no_fallback_available"):
                 print("✅ PROPER ERROR HANDLING: No fallbacks used, human intervention requested")
                 return True
-            else:
-                print("❌ FALLBACK DETECTED: Should have no_fallback_available = True")
-                return False
-                
-        else:
-            print(f"❌ Unexpected result type: {type(result)}")
+            print("❌ FALLBACK DETECTED: Should have no_fallback_available = True")
             return False
-            
+
+        print(f"❌ Unexpected result type: {type(result)}")
+        return False
+
     except Exception as e:
         print(f"❌ OQ generation failed with exception: {e}")
         print(f"   Exception type: {type(e).__name__}")
@@ -386,9 +382,9 @@ async def test_oq_real_workflow():
 async def main():
     """Main test execution."""
     print("Starting OQ Test Generation Real Workflow Test...")
-    
+
     success = await test_oq_real_workflow()
-    
+
     if success:
         print("\n🎉 OQ GENERATION REAL WORKFLOW TEST: PASSED")
         print("✅ No fallback mechanisms detected")
@@ -397,7 +393,7 @@ async def main():
     else:
         print("\n❌ OQ GENERATION REAL WORKFLOW TEST: FAILED")
         print("⚠️  Fallback mechanisms or compliance issues detected")
-    
+
     return success
 
 

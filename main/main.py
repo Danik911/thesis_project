@@ -18,6 +18,7 @@ load_dotenv()
 
 # Initialize Phoenix observability before any other imports to ensure proper instrumentation
 import os
+
 if os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true":
     try:
         from src.monitoring.phoenix_config import setup_phoenix

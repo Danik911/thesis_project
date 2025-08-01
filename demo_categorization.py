@@ -14,7 +14,10 @@ import sys
 
 sys.path.append(".")
 
-from main.src.agents.categorization.agent import create_gamp_categorization_agent, categorize_with_structured_output
+from main.src.agents.categorization.agent import (
+    categorize_with_structured_output,
+    create_gamp_categorization_agent,
+)
 
 
 def main():
@@ -28,8 +31,8 @@ def main():
     agent = create_gamp_categorization_agent()
     print("📊 Agent Configuration:")
     print(f"   Agent Type: {type(agent).__name__}")
-    print(f"   Max Iterations: 10 (reduced to prevent timeouts)")
-    print(f"   Using structured output approach (bypasses LLM parsing)")
+    print("   Max Iterations: 10 (reduced to prevent timeouts)")
+    print("   Using structured output approach (bypasses LLM parsing)")
     print()
 
     # Test cases representing each GAMP category

@@ -22,7 +22,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(LOG_FILE, encoding='utf-8'),
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
@@ -227,15 +227,14 @@ class AudioManager:
                 f"$mediaPlayer.Stop(); "
                 f"$mediaPlayer.Close()"
             ]
-            
+
             result = subprocess.run(cmd, check=False, capture_output=True, timeout=10, text=True)
             if result.returncode == 0:
                 logger.info(f"Windows Media Player successfully played: {sound_path}")
                 return True
-            else:
-                logger.debug(f"Windows Media Player failed: {result.stderr}")
-                return False
-                
+            logger.debug(f"Windows Media Player failed: {result.stderr}")
+            return False
+
         except Exception as e:
             logger.debug(f"Windows Media Player method failed: {e}")
             return False

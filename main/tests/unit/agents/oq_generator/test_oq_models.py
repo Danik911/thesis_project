@@ -5,12 +5,14 @@ Tests the schema correctness, validation logic, and compliance requirements
 of OQ test generation data models.
 """
 
-import pytest
-from datetime import datetime, UTC
-from pydantic import ValidationError
 
+import pytest
+from pydantic import ValidationError
 from src.agents.oq_generator.models import (
-    TestStep, OQTestCase, OQTestSuite, OQGenerationConfig
+    OQGenerationConfig,
+    OQTestCase,
+    OQTestSuite,
+    TestStep,
 )
 
 
@@ -27,7 +29,7 @@ class TestTestStep:
             verification_method="visual_inspection",
             acceptance_criteria="All widgets visible and functional"
         )
-        
+
         assert step.step_number == 1
         assert len(step.action) >= 10
         assert len(step.expected_result) >= 10
@@ -41,7 +43,7 @@ class TestTestStep:
                 action="Click",  # Too short
                 expected_result="System responds correctly"
             )
-        
+
         assert "Test steps must contain detailed pharmaceutical procedures" in str(exc_info.value)
 
     def test_invalid_short_expected_result(self):
@@ -52,7 +54,7 @@ class TestTestStep:
                 action="Navigate to the main dashboard",
                 expected_result="OK"  # Too short
             )
-        
+
         assert "Test steps must contain detailed pharmaceutical procedures" in str(exc_info.value)
 
 
@@ -87,7 +89,7 @@ class TestOQTestCase:
             regulatory_basis=["GAMP-5", "21 CFR Part 11"],
             urs_requirements=["REQ-001", "REQ-002"]
         )
-        
+
         assert test_case.test_id == "OQ-001"
         assert test_case.gamp_category == 4
         assert len(test_case.test_steps) == 2
@@ -105,7 +107,7 @@ class TestOQTestCase:
                 test_steps=self.create_valid_test_steps(),
                 acceptance_criteria=["Success criteria"]
             )
-        
+
         assert "Test ID must follow format 'OQ-XXX'" in str(exc_info.value)
 
     def test_test_steps_sequential_validation(self):
@@ -114,7 +116,7 @@ class TestOQTestCase:
             TestStep(step_number=1, action="First step action", expected_result="First result"),
             TestStep(step_number=3, action="Third step action", expected_result="Third result")  # Skip 2
         ]
-        
+
         with pytest.raises(ValidationError) as exc_info:
             OQTestCase(
                 test_id="OQ-002",
@@ -125,7 +127,7 @@ class TestOQTestCase:
                 test_steps=invalid_steps,
                 acceptance_criteria=["Steps execute in order"]
             )
-        
+
         assert "Test steps must be sequentially numbered" in str(exc_info.value)
 
     def test_empty_test_steps_validation(self):
@@ -140,7 +142,7 @@ class TestOQTestCase:
                 test_steps=[],  # Empty list
                 acceptance_criteria=["Some criteria"]
             )
-        
+
         assert "Test case must contain at least one test step" in str(exc_info.value)
 
 
@@ -173,7 +175,7 @@ class TestOQTestSuite:
     def test_valid_gamp_category_3_suite(self):
         """Test creating valid Category 3 test suite."""
         test_cases = self.create_valid_test_cases(7, 3)  # Valid range 5-10
-        
+
         suite = OQTestSuite(
             suite_id="OQ-SUITE-0001",
             gamp_category=3,
@@ -182,7 +184,7 @@ class TestOQTestSuite:
             total_test_count=7,
             estimated_execution_time=180  # Required field
         )
-        
+
         assert suite.gamp_category == 3
         assert suite.total_test_count == 7
         assert len(suite.test_cases) == 7
@@ -190,7 +192,7 @@ class TestOQTestSuite:
     def test_valid_gamp_category_4_suite(self):
         """Test creating valid Category 4 test suite."""
         test_cases = self.create_valid_test_cases(18, 4)  # Valid range 15-20
-        
+
         suite = OQTestSuite(
             suite_id="OQ-SUITE-0002",
             gamp_category=4,
@@ -199,7 +201,7 @@ class TestOQTestSuite:
             total_test_count=18,
             estimated_execution_time=540  # Required field
         )
-        
+
         assert suite.gamp_category == 4
         assert suite.total_test_count == 18
         assert len(suite.test_cases) == 18
@@ -207,7 +209,7 @@ class TestOQTestSuite:
     def test_valid_gamp_category_5_suite(self):
         """Test creating valid Category 5 test suite."""
         test_cases = self.create_valid_test_cases(27, 5)  # Valid range 25-30
-        
+
         suite = OQTestSuite(
             suite_id="OQ-SUITE-0003",
             gamp_category=5,
@@ -216,7 +218,7 @@ class TestOQTestSuite:
             total_test_count=27,
             estimated_execution_time=810  # Required field
         )
-        
+
         assert suite.gamp_category == 5
         assert suite.total_test_count == 27
         assert len(suite.test_cases) == 27
@@ -224,7 +226,7 @@ class TestOQTestSuite:
     def test_insufficient_tests_category_3(self):
         """Test validation fails for insufficient tests in Category 3."""
         test_cases = self.create_valid_test_cases(3, 3)  # Below minimum of 5
-        
+
         with pytest.raises(ValidationError) as exc_info:
             OQTestSuite(
                 suite_id="OQ-SUITE-0004",
@@ -234,7 +236,7 @@ class TestOQTestSuite:
                 total_test_count=3,
                 estimated_execution_time=90
             )
-        
+
         error_msg = str(exc_info.value)
         assert "requires minimum 5 tests" in error_msg
         assert "NO fallback values available" in error_msg
@@ -242,7 +244,7 @@ class TestOQTestSuite:
     def test_excessive_tests_category_4(self):
         """Test validation fails for excessive tests in Category 4."""
         test_cases = self.create_valid_test_cases(25, 4)  # Above maximum of 20
-        
+
         with pytest.raises(ValidationError) as exc_info:
             OQTestSuite(
                 suite_id="OQ-SUITE-0005",
@@ -252,7 +254,7 @@ class TestOQTestSuite:
                 total_test_count=25,
                 estimated_execution_time=750
             )
-        
+
         error_msg = str(exc_info.value)
         assert "allows maximum 20 tests" in error_msg
         assert "NO fallback values available" in error_msg
@@ -260,7 +262,7 @@ class TestOQTestSuite:
     def test_invalid_gamp_category(self):
         """Test validation fails for invalid GAMP category."""
         test_cases = self.create_valid_test_cases(10, 6)  # Invalid category 6
-        
+
         with pytest.raises(ValidationError) as exc_info:
             OQTestSuite(
                 suite_id="OQ-SUITE-0006",
@@ -270,7 +272,7 @@ class TestOQTestSuite:
                 total_test_count=10,
                 estimated_execution_time=300
             )
-        
+
         error_msg = str(exc_info.value)
         assert "Invalid GAMP category 6" in error_msg
         assert "Valid categories: [1, 3, 4, 5]" in error_msg
@@ -278,7 +280,7 @@ class TestOQTestSuite:
     def test_pharmaceutical_compliance_validation(self):
         """Test pharmaceutical compliance requirements validation."""
         test_cases = self.create_valid_test_cases(7, 3)
-        
+
         suite = OQTestSuite(
             suite_id="OQ-SUITE-0007",
             gamp_category=3,
@@ -287,16 +289,16 @@ class TestOQTestSuite:
             total_test_count=7,
             estimated_execution_time=210
         )
-        
+
         # Should initialize required compliance flags as False
         required_flags = [
             "alcoa_plus_compliant",
-            "cfr_part11_compliant", 
+            "cfr_part11_compliant",
             "gamp5_compliant",
             "audit_trail_verified",
             "data_integrity_validated"
         ]
-        
+
         for flag in required_flags:
             assert flag in suite.pharmaceutical_compliance
             assert suite.pharmaceutical_compliance[flag] is False
@@ -304,14 +306,14 @@ class TestOQTestSuite:
     def test_coverage_metrics_calculation(self):
         """Test coverage metrics calculation functionality."""
         test_cases = self.create_valid_test_cases(5, 3)
-        
+
         # Add some variety to test categories and risk levels
         test_cases[0].test_category = "installation"
         test_cases[0].risk_level = "high"
         test_cases[1].test_category = "security"
         test_cases[1].risk_level = "critical"
         test_cases[2].estimated_duration_minutes = 45
-        
+
         suite = OQTestSuite(
             suite_id="OQ-SUITE-0008",
             gamp_category=3,
@@ -320,9 +322,9 @@ class TestOQTestSuite:
             total_test_count=5,
             estimated_execution_time=150
         )
-        
+
         metrics = suite.calculate_coverage_metrics()
-        
+
         assert "category_distribution" in metrics
         assert "risk_distribution" in metrics
         assert "total_execution_time_minutes" in metrics
@@ -342,7 +344,7 @@ class TestOQGenerationConfig:
             complexity_level="standard",
             focus_areas=["functional_testing", "data_integrity"]
         )
-        
+
         assert config.gamp_category == 3
         assert config.target_test_count == 8
         assert config.complexity_level == "standard"
@@ -355,7 +357,7 @@ class TestOQGenerationConfig:
                 document_name="Test Document",
                 target_test_count=25  # Above maximum of 20 for Category 4
             )
-        
+
         error_msg = str(exc_info.value)
         assert "requires 15-20 tests" in error_msg
         assert "NO automatic adjustment available" in error_msg
@@ -373,7 +375,7 @@ class TestOQGenerationConfig:
             include_negative_testing=True,
             validate_data_integrity=True
         )
-        
+
         assert config.max_steps_per_test == 15
         assert config.min_execution_time == 20
         assert config.max_execution_time == 90

@@ -1,7 +1,6 @@
 """
 Clear ChromaDB database to fix dimension conflicts
 """
-import os
 import shutil
 from pathlib import Path
 

@@ -241,7 +241,7 @@ class PhoenixDiagnosticTool:
 
                         self.log_test_result(test_name, True, details)
                         return True
-                    if "errors" in json_response and json_response["errors"]:
+                    if json_response.get("errors"):
                         # This is where "Something went wrong" errors typically appear
                         details["error"] = "GraphQL errors accessing trace data"
                         details["graphql_errors"] = json_response["errors"]

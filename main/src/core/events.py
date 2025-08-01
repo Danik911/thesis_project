@@ -350,7 +350,7 @@ try:
         OQTestGenerationEvent,
         OQTestSuiteEvent,
         OQValidationEvent,
-        OQValidationResultEvent
+        OQValidationResultEvent,
     )
     _OQ_EVENTS_AVAILABLE = True
 except ImportError:
@@ -383,7 +383,7 @@ __all__ = [
 if _OQ_EVENTS_AVAILABLE:
     __all__.extend([
         "OQTestGenerationEvent",
-        "OQTestSuiteEvent", 
+        "OQTestSuiteEvent",
         "OQValidationEvent",
         "OQValidationResultEvent"
     ])

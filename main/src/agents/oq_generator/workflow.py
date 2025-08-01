@@ -85,7 +85,7 @@ class OQTestGenerationWorkflow(Workflow):
             ConsultationRequiredEvent if generation fails
         """
         self.logger.info("Starting OQ test generation workflow")
-        
+
         # Get the event from constructor
         if not self.oq_generation_event:
             raise OQTestGenerationError(
@@ -95,9 +95,9 @@ class OQTestGenerationWorkflow(Workflow):
                     "workflow_state": "initialization_failed"
                 }
             )
-        
+
         ev = self.oq_generation_event
-        
+
         # Store correlation ID for traceability
         await ctx.set("correlation_id", ev.correlation_id)
         await ctx.set("gamp_category", ev.gamp_category)
@@ -445,21 +445,21 @@ class OQTestGenerationWorkflow(Workflow):
         correlation_id = await ctx.get("correlation_id", default="unknown")
         gamp_category = await ctx.get("gamp_category", default=None)
         generation_event = await ctx.get("generation_event", default=None)
-        
+
         if isinstance(ev, OQTestSuiteEvent):
             # Successful test generation
             self.logger.info(
                 f"OQ test generation completed successfully: {ev.test_suite.suite_id} "
                 f"({ev.test_suite.total_test_count} tests)"
             )
-            
+
             # Create comprehensive success result
             final_result = {
                 "workflow_type": "oq_test_generation",
-                "status": "completed_successfully", 
+                "status": "completed_successfully",
                 "correlation_id": correlation_id,
                 "gamp_category": gamp_category.value if gamp_category else None,
-                
+
                 # Test suite details
                 "test_suite": {
                     "suite_id": ev.test_suite.suite_id,
@@ -469,7 +469,7 @@ class OQTestGenerationWorkflow(Workflow):
                     "pharmaceutical_compliance": ev.test_suite.pharmaceutical_compliance,
                     "review_required": ev.test_suite.review_required
                 },
-                
+
                 # Generation metadata
                 "generation_metadata": {
                     "generation_successful": ev.generation_successful,
@@ -479,7 +479,7 @@ class OQTestGenerationWorkflow(Workflow):
                     "human_review_required": ev.human_review_required,
                     "review_priority": ev.review_priority
                 },
-                
+
                 # Quality metrics
                 "quality_analysis": {
                     "coverage_analysis": ev.coverage_analysis,
@@ -487,32 +487,32 @@ class OQTestGenerationWorkflow(Workflow):
                     "validation_issues": ev.validation_issues,
                     "compliance_validation": ev.compliance_validation
                 },
-                
+
                 # Regulatory compliance
                 "regulatory_compliance": {
                     "gmp_compliant": ev.gmp_compliant,
                     "regulatory_basis": ev.regulatory_basis,
                     "audit_trail_complete": ev.audit_trail_complete
                 },
-                
+
                 # Full event for detailed analysis
                 "full_event": ev
             }
-            
+
         elif isinstance(ev, ConsultationRequiredEvent):
             # Consultation required
             self.logger.info(
                 f"OQ test generation requires consultation: {ev.consultation_type} "
                 f"(urgency: {ev.urgency})"
             )
-            
+
             # Create consultation result - NO FALLBACKS
             final_result = {
                 "workflow_type": "oq_test_generation",
                 "status": "consultation_required",
                 "correlation_id": correlation_id,
                 "gamp_category": gamp_category.value if gamp_category else None,
-                
+
                 # Consultation details
                 "consultation": {
                     "consultation_type": ev.consultation_type,
@@ -524,7 +524,7 @@ class OQTestGenerationWorkflow(Workflow):
                     "no_automated_fallback": True,
                     "requires_human_intervention": True
                 },
-                
+
                 # Failure analysis
                 "failure_analysis": {
                     "workflow_phase": "oq_test_generation",
@@ -533,7 +533,7 @@ class OQTestGenerationWorkflow(Workflow):
                     "can_proceed_automatically": False,
                     "regulatory_impact": "HIGH - Cannot generate tests without consultation"
                 },
-                
+
                 # Next steps
                 "next_steps": {
                     "action_required": "human_consultation",
@@ -541,22 +541,22 @@ class OQTestGenerationWorkflow(Workflow):
                     "escalation_available": True,
                     "timeout_handling": "no_defaults_applied"
                 },
-                
+
                 # Full event for detailed analysis
                 "full_event": ev
             }
-            
+
         else:
             # Unexpected event type - this should not happen
             self.logger.error(f"Unexpected event type in complete_oq_generation: {type(ev)}")
-            
+
             # Create explicit error result - NO FALLBACKS
             final_result = {
                 "workflow_type": "oq_test_generation",
                 "status": "system_error",
                 "correlation_id": correlation_id,
                 "gamp_category": gamp_category.value if gamp_category else None,
-                
+
                 # Error details
                 "error": {
                     "error_type": "unexpected_event_type",
@@ -565,7 +565,7 @@ class OQTestGenerationWorkflow(Workflow):
                     "system_error": True,
                     "requires_investigation": True
                 },
-                
+
                 # System state
                 "system_state": {
                     "workflow_phase": "completion",
@@ -573,17 +573,17 @@ class OQTestGenerationWorkflow(Workflow):
                     "can_recover": False,
                     "regulatory_impact": "HIGH - System integrity compromised"
                 },
-                
+
                 # Full event for debugging
                 "received_event": ev
             }
-        
+
         # Store final results in context
         await ctx.set("final_results", final_result)
-        
+
         self.logger.info(
             f"OQ generation workflow completed with status: {final_result['status']} "
             f"(correlation: {correlation_id})"
         )
-        
+
         return StopEvent(result=final_result)

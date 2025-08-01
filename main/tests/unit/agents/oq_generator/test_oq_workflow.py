@@ -5,18 +5,17 @@ Tests the event-driven orchestration, context aggregation, and error handling
 of the OQ test generation workflow.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
+import pytest
 from llama_index.core.workflow import Context
 from llama_index.llms.openai import OpenAI
-
-from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
 from src.agents.oq_generator.events import OQTestGenerationEvent, OQTestSuiteEvent
-from src.agents.oq_generator.models import OQTestSuite, OQTestCase, TestStep
 from src.agents.oq_generator.generator import OQTestGenerationError
-from src.core.events import GAMPCategory, ConsultationRequiredEvent
+from src.agents.oq_generator.models import OQTestCase, OQTestSuite, TestStep
+from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
+from src.core.events import ConsultationRequiredEvent, GAMPCategory
 
 
 class TestOQTestGenerationWorkflow:
@@ -65,7 +64,7 @@ class TestOQTestGenerationWorkflow:
                 expected_result="System initializes successfully"
             )
         ]
-        
+
         test_cases = []
         for i in range(18):  # Category 4 test count
             test_case = OQTestCase(
@@ -78,7 +77,7 @@ class TestOQTestGenerationWorkflow:
                 acceptance_criteria=[f"Configuration {i+1} verified"]
             )
             test_cases.append(test_case)
-        
+
         return OQTestSuite(
             suite_id="OQ-SUITE-0001",
             gamp_category=4,
@@ -91,18 +90,18 @@ class TestOQTestGenerationWorkflow:
     async def test_successful_generation(self, workflow, mock_context, valid_generation_event, valid_test_suite):
         """Test successful OQ test generation."""
         # Mock the test generator
-        with patch.object(workflow, '_test_generator') as mock_generator:
+        with patch.object(workflow, "_test_generator") as mock_generator:
             mock_generator.generate_oq_test_suite.return_value = valid_test_suite
-            
+
             # Execute workflow step
             result = await workflow.generate_oq_tests(mock_context, valid_generation_event)
-            
+
             # Verify result
             assert isinstance(result, OQTestSuiteEvent)
             assert result.generation_successful is True
             assert result.test_suite == valid_test_suite
             assert result.correlation_id == valid_generation_event.correlation_id
-            
+
             # Verify context was set
             mock_context.set.assert_called()
 
@@ -117,10 +116,10 @@ class TestOQTestGenerationWorkflow:
             required_test_count=0,  # Invalid count
             correlation_id=uuid4()
         )
-        
+
         # Execute workflow step
         result = await workflow.generate_oq_tests(mock_context, invalid_event)
-        
+
         # Should return consultation request
         assert isinstance(result, ConsultationRequiredEvent)
         assert result.consultation_type == "oq_test_generation_failure"
@@ -133,14 +132,14 @@ class TestOQTestGenerationWorkflow:
         # Mock generator to raise error
         mock_generator = MagicMock()
         mock_generator.generate_oq_test_suite.side_effect = OQTestGenerationError(
-            "Test generation failed", 
+            "Test generation failed",
             {"error_type": "LLMGenerationError"}
         )
-        
-        with patch.object(workflow, '_test_generator', mock_generator):
+
+        with patch.object(workflow, "_test_generator", mock_generator):
             # Execute workflow step
             result = await workflow.generate_oq_tests(mock_context, valid_generation_event)
-            
+
             # Should return consultation request, NO fallbacks
             assert isinstance(result, ConsultationRequiredEvent)
             assert result.consultation_type == "oq_test_generation_failure"
@@ -158,15 +157,15 @@ class TestOQTestGenerationWorkflow:
             test_cases=[],  # Empty test cases - quality issue
             total_test_count=0
         )
-        
+
         # Mock generator to return invalid suite
         mock_generator = MagicMock()
         mock_generator.generate_oq_test_suite.return_value = invalid_test_suite
-        
-        with patch.object(workflow, '_test_generator', mock_generator):
+
+        with patch.object(workflow, "_test_generator", mock_generator):
             # Execute workflow step
             result = await workflow.generate_oq_tests(mock_context, valid_generation_event)
-            
+
             # Should request consultation for quality issues
             assert isinstance(result, ConsultationRequiredEvent)
             assert result.consultation_type == "oq_test_suite_quality_review"
@@ -178,11 +177,11 @@ class TestOQTestGenerationWorkflow:
         # Mock generator
         mock_generator = MagicMock()
         mock_generator.generate_oq_test_suite.return_value = valid_test_suite
-        
-        with patch.object(workflow, '_test_generator', mock_generator):
+
+        with patch.object(workflow, "_test_generator", mock_generator):
             # Execute workflow step
             result = await workflow.generate_oq_tests(mock_context, valid_generation_event)
-            
+
             # Verify context quality was assessed
             assert isinstance(result, OQTestSuiteEvent)
             assert 0.0 <= result.context_quality <= 1.0
@@ -193,15 +192,15 @@ class TestOQTestGenerationWorkflow:
         # Add traceability to some test cases
         valid_test_suite.test_cases[0].urs_requirements = ["REQ-001", "REQ-002"]
         valid_test_suite.test_cases[1].urs_requirements = ["REQ-003"]
-        
+
         # Mock generator
         mock_generator = MagicMock()
         mock_generator.generate_oq_test_suite.return_value = valid_test_suite
-        
-        with patch.object(workflow, '_test_generator', mock_generator):
+
+        with patch.object(workflow, "_test_generator", mock_generator):
             # Execute workflow step
             result = await workflow.generate_oq_tests(mock_context, valid_generation_event)
-            
+
             # Verify coverage analysis
             assert isinstance(result, OQTestSuiteEvent)
             coverage = result.coverage_analysis
@@ -215,11 +214,11 @@ class TestOQTestGenerationWorkflow:
         # Mock generator
         mock_generator = MagicMock()
         mock_generator.generate_oq_test_suite.return_value = valid_test_suite
-        
-        with patch.object(workflow, '_test_generator', mock_generator):
+
+        with patch.object(workflow, "_test_generator", mock_generator):
             # Execute workflow step
             result = await workflow.generate_oq_tests(mock_context, valid_generation_event)
-            
+
             # Verify regulatory basis for Category 4
             assert isinstance(result, OQTestSuiteEvent)
             regulatory_basis = result.regulatory_basis
@@ -238,20 +237,20 @@ class TestOQTestGenerationWorkflow:
             required_test_count=27,
             correlation_id=uuid4()
         )
-        
+
         # Update test suite for Category 5
         valid_test_suite.gamp_category = 5
         for test_case in valid_test_suite.test_cases:
             test_case.gamp_category = 5
-        
+
         # Mock generator
         mock_generator = MagicMock()
         mock_generator.generate_oq_test_suite.return_value = valid_test_suite
-        
-        with patch.object(workflow, '_test_generator', mock_generator):
+
+        with patch.object(workflow, "_test_generator", mock_generator):
             # Execute workflow step
             result = await workflow.generate_oq_tests(mock_context, category_5_event)
-            
+
             # Verify additional requirements for Category 5
             assert isinstance(result, OQTestSuiteEvent)
             regulatory_basis = result.regulatory_basis
@@ -263,21 +262,21 @@ class TestOQTestGenerationWorkflow:
         """Test workflow timeout configuration."""
         # Verify timeout is set appropriately for OQ generation
         assert workflow.timeout == 600  # 10 minutes
-        
+
         # Verify verbose mode
         assert workflow.verbose is True
 
     def test_workflow_initialization(self):
         """Test workflow initialization with custom parameters."""
         custom_llm = OpenAI(model="gpt-4", temperature=0.2)
-        
+
         workflow = OQTestGenerationWorkflow(
             llm=custom_llm,
             timeout=900,  # 15 minutes
             verbose=False,
             enable_validation=False
         )
-        
+
         assert workflow.llm == custom_llm
         assert workflow.timeout == 900
         assert workflow.verbose is False
@@ -286,7 +285,7 @@ class TestOQTestGenerationWorkflow:
     def test_default_llm_initialization(self):
         """Test workflow with default LLM initialization."""
         workflow = OQTestGenerationWorkflow()
-        
+
         # Should create default OpenAI LLM
         assert workflow.llm is not None
         assert isinstance(workflow.llm, OpenAI)

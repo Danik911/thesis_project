@@ -5,7 +5,6 @@ Simple Phoenix test script to generate traces without Unicode issues
 
 import asyncio
 import sys
-import os
 from pathlib import Path
 
 # Add the main directory to Python path
@@ -16,10 +15,10 @@ async def test_phoenix_traces():
     """Test Phoenix trace generation with minimal setup"""
     try:
         print("=== Phoenix Trace Generation Test ===")
-        
+
         # Import Phoenix setup
-        from src.monitoring.phoenix_config import setup_phoenix, PhoenixConfig
-        
+        from src.monitoring.phoenix_config import PhoenixConfig, setup_phoenix
+
         # Setup Phoenix
         config = PhoenixConfig(
             phoenix_host="localhost",
@@ -28,13 +27,13 @@ async def test_phoenix_traces():
             service_name="simple_test",
             project_name="test_generation_thesis"
         )
-        
+
         phoenix_manager = setup_phoenix(config)
         print("Phoenix manager initialized:", phoenix_manager._initialized if phoenix_manager else False)
-        
+
         # Import categorization workflow
         from src.core.categorization_workflow import GAMPCategorizationWorkflow
-        
+
         # Create test document content
         test_content = """
 PHARMACEUTICAL SYSTEM REQUIREMENTS
@@ -53,27 +52,27 @@ Testing Requirements:
 - Performance testing required
 - Security testing required
 """
-        
+
         print("Creating categorization workflow...")
         workflow = GAMPCategorizationWorkflow(timeout=30.0, verbose=True)
-        
+
         print("Starting categorization...")
         result = await workflow.run(content=test_content)
-        
+
         print("Categorization completed!")
         print(f"Category: {result.get('category', 'Unknown')}")
         print(f"Confidence: {result.get('confidence', 'Unknown')}")
-        
+
         # Give traces time to be sent
         await asyncio.sleep(2)
-        
+
         if phoenix_manager:
             phoenix_manager.shutdown()
             print("Phoenix manager shut down")
-        
+
         print("=== Test completed successfully ===")
         return True
-        
+
     except Exception as e:
         print(f"Error during test: {e}")
         import traceback
