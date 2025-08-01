@@ -59,6 +59,7 @@ Error Handling:
 Based on Task 2 implementation replacing fragile regex parsing with Pydantic structured output.
 """
 
+import asyncio
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
@@ -74,7 +75,11 @@ from src.agents.categorization.error_handler import (
     ErrorSeverity,
     ErrorType,
 )
-from src.core.events import GAMPCategorizationEvent, GAMPCategory
+from src.agents.parallel.context_provider import (
+    ContextProviderRequest,
+    create_context_provider_agent,
+)
+from src.core.events import AgentRequestEvent, GAMPCategorizationEvent, GAMPCategory
 from src.monitoring.phoenix_config import instrument_tool
 
 
@@ -318,6 +323,229 @@ def confidence_tool(category_data: dict[str, Any]) -> float:
     return final_confidence
 
 
+@instrument_tool("context_provider_integration", "categorization", critical=True, regulatory_impact=True)
+def context_provider_tool(
+    gamp_category: int,
+    urs_content: str,
+    document_name: str = "Unknown"
+) -> dict[str, Any]:
+    """
+    Query the Context Provider Agent to enhance categorization confidence.
+    
+    This tool integrates the Context Provider Agent to retrieve regulatory
+    context and documentation that can enhance GAMP categorization confidence.
+    
+    Args:
+        gamp_category: Initial GAMP category from analysis (1, 3, 4, or 5)
+        urs_content: Original URS document content for context
+        document_name: Document identifier for audit trail
+        
+    Returns:
+        Dictionary with context data including quality assessment and confidence boost
+    """
+    try:
+        # Create context provider instance
+        context_provider = create_context_provider_agent(
+            verbose=True,
+            enable_phoenix=True,
+            max_documents=20,  # Reasonable limit for categorization context
+            quality_threshold=0.6  # Lower threshold for broader context coverage
+        )
+
+        # Determine test strategy based on GAMP category
+        test_strategy = {
+            "test_types": {
+                1: ["installation_qualification", "operational_procedures"],
+                3: ["operational_qualification", "functional_testing"],
+                4: ["configuration_verification", "business_process_testing", "operational_qualification"],
+                5: ["unit_testing", "integration_testing", "system_testing", "acceptance_testing"]
+            }.get(gamp_category, ["functional_testing"]),
+            "validation_approach": {
+                1: "infrastructure_validation",
+                3: "standard_application_validation",
+                4: "configured_system_validation",
+                5: "custom_application_validation"
+            }.get(gamp_category, "standard_validation")
+        }
+
+        # Extract potential document sections from URS content
+        # Look for common pharmaceutical document sections
+        content_lower = urs_content.lower()
+        potential_sections = []
+
+        section_keywords = {
+            "functional_requirements": ["functional", "function", "requirement"],
+            "technical_specifications": ["technical", "specification", "architecture"],
+            "validation_requirements": ["validation", "qualify", "verify"],
+            "regulatory_compliance": ["regulatory", "compliance", "gxp", "cfr", "gamp"],
+            "security_requirements": ["security", "access", "authentication"],
+            "data_integrity": ["data integrity", "alcoa", "audit trail"],
+            "user_requirements": ["user", "stakeholder", "business"]
+        }
+
+        for section, keywords in section_keywords.items():
+            if any(keyword in content_lower for keyword in keywords):
+                potential_sections.append(section)
+
+        # Default sections if none found
+        if not potential_sections:
+            potential_sections = ["functional_requirements", "validation_requirements"]
+
+        # Create search scope based on GAMP category
+        search_scope = {
+            "focus_areas": [
+                f"gamp_category_{gamp_category}",
+                "pharmaceutical_validation",
+                "regulatory_compliance"
+            ],
+            "include_best_practices": True,
+            "filters": {
+                "compliance_level": ["regulatory", "mandatory", "recommended"]
+            }
+        }
+
+        # Create context provider request
+        context_request = ContextProviderRequest(
+            gamp_category=str(gamp_category),
+            test_strategy=test_strategy,
+            document_sections=potential_sections,
+            search_scope=search_scope,
+            context_depth="standard",
+            correlation_id=uuid4(),
+            timeout_seconds=120  # Reasonable timeout for categorization
+        )
+
+        # Create agent request event
+        agent_request = AgentRequestEvent(
+            agent_type="context_provider",
+            request_data=context_request.model_dump(),
+            correlation_id=context_request.correlation_id,
+            timestamp=datetime.now(UTC)
+        )
+
+        # Execute context provider query with async-to-sync bridge
+        # Use asyncio.run() to handle the async call
+        try:
+            context_result = asyncio.run(context_provider.process_request(agent_request))
+        except RuntimeError as e:
+            if "asyncio.run() cannot be called from a running event loop" in str(e):
+                # Alternative approach for nested event loops
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(
+                        lambda: asyncio.run(context_provider.process_request(agent_request))
+                    )
+                    context_result = future.result(timeout=120)
+            else:
+                raise
+
+        # Check if context retrieval was successful
+        if not context_result.success:
+            error_msg = f"Context provider failed: {context_result.error_message}"
+            raise RuntimeError(error_msg)
+
+        # Extract context data
+        result_data = context_result.result_data
+
+        # Calculate confidence enhancement based on context quality
+        context_quality = result_data.get("context_quality", "poor")
+        search_coverage = result_data.get("search_coverage", 0.0)
+        retrieved_docs_count = len(result_data.get("retrieved_documents", []))
+        context_confidence = result_data.get("confidence_score", 0.0)
+
+        # Quality-based confidence boost
+        quality_boost = {
+            "high": 0.20,
+            "medium": 0.15,
+            "low": 0.10,
+            "poor": 0.05
+        }.get(context_quality, 0.05)
+
+        # Coverage factor (multiply boost by coverage)
+        coverage_factor = max(0.5, search_coverage)  # Minimum 50% factor
+
+        # Document count factor (more documents = better support)
+        doc_count_factor = min(1.0, retrieved_docs_count / 10)  # Normalize to 10 docs
+
+        # Final confidence boost calculation
+        final_boost = quality_boost * coverage_factor * (0.7 + 0.3 * doc_count_factor)
+
+        # Return comprehensive context data
+        return {
+            "context_available": True,
+            "context_quality": context_quality,
+            "search_coverage": search_coverage,
+            "retrieved_documents_count": retrieved_docs_count,
+            "context_confidence_score": context_confidence,
+            "confidence_boost": final_boost,
+            "processing_time": context_result.processing_time,
+            "regulatory_documents_found": len([
+                doc for doc in result_data.get("retrieved_documents", [])
+                if doc.get("type") in ["regulatory_requirement", "regulatory_guidance"]
+            ]),
+            "validation_context": {
+                "test_strategy_alignment": result_data.get("assembled_context", {}).get("test_strategy_alignment", {}),
+                "regulatory_requirements": len(result_data.get("assembled_context", {}).get("regulatory_requirements", [])),
+                "best_practices_found": len(result_data.get("assembled_context", {}).get("best_practices", []))
+            },
+            "audit_trail": {
+                "correlation_id": str(context_request.correlation_id),
+                "timestamp": datetime.now(UTC).isoformat(),
+                "document_name": document_name,
+                "gamp_category": gamp_category,
+                "context_sections_searched": potential_sections,
+                "search_scope": search_scope
+            }
+        }
+
+    except Exception as e:
+        # NO FALLBACKS: Fail explicitly with full diagnostic information
+        error_msg = f"Context provider integration failed: {e!s}"
+        raise RuntimeError(
+            f"{error_msg}\n"
+            f"GAMP Category: {gamp_category}\n"
+            f"Document: {document_name}\n"
+            f"URS Content Length: {len(urs_content)} chars\n"
+            f"Error Type: {type(e).__name__}"
+        ) from e
+
+
+def enhanced_confidence_tool(
+    category_data: dict[str, Any],
+    context_data: dict[str, Any] | None = None
+) -> float:
+    """
+    Enhanced confidence calculation that incorporates context provider data.
+    
+    Combines the original confidence scoring with context quality assessment
+    to provide more accurate confidence levels for GAMP categorization.
+    
+    Args:
+        category_data: Output from gamp_analysis_tool
+        context_data: Optional output from context_provider_tool
+        
+    Returns:
+        Enhanced confidence score between 0.0 and 1.0
+    """
+    # Calculate base confidence using original algorithm
+    base_confidence = confidence_tool(category_data)
+
+    # If no context data available, return base confidence
+    if not context_data or not context_data.get("context_available", False):
+        return base_confidence
+
+    # Apply context-based confidence enhancement
+    confidence_boost = context_data.get("confidence_boost", 0.0)
+
+    # Enhanced confidence calculation
+    enhanced_confidence = base_confidence + confidence_boost
+
+    # Ensure confidence stays within bounds [0.0, 1.0]
+    final_confidence = max(0.0, min(1.0, enhanced_confidence))
+
+    return final_confidence
+
+
 def gamp_analysis_tool_with_error_handling(
     urs_content: str,
     error_handler: CategorizationErrorHandler | None = None
@@ -433,7 +661,8 @@ def create_gamp_categorization_agent(
     enable_error_handling: bool = True,
     confidence_threshold: float = 0.50,  # Reduced from 0.60 to 0.50 for more realistic threshold
     verbose: bool = False,
-    use_structured_output: bool = True  # New parameter to enable Pydantic structured output
+    use_structured_output: bool = True,  # New parameter to enable Pydantic structured output
+    enable_context_provider: bool = True  # New parameter to enable context provider integration
 ) -> FunctionAgent:
     """
     Create GAMP-5 categorization agent with enhanced error handling.
@@ -447,6 +676,7 @@ def create_gamp_categorization_agent(
         confidence_threshold: Minimum confidence threshold for categorization
         verbose: Enable verbose logging
         use_structured_output: Whether to use Pydantic structured output (recommended)
+        enable_context_provider: Whether to enable context provider integration for confidence enhancement
         
     Returns:
         FunctionAgent configured for GAMP-5 categorization with error handling
@@ -455,6 +685,9 @@ def create_gamp_categorization_agent(
         When use_structured_output=True, the agent should be used with
         categorize_with_pydantic_structured_output() instead of the regular
         categorize_with_error_handling() function for optimal results.
+        
+        When enable_context_provider=True, the agent gains access to regulatory
+        context that can boost confidence scores by 0.15-0.20 points.
     """
     if llm is None:
         # Use OpenAI LLM without JSON mode for FunctionAgent compatibility
@@ -476,12 +709,16 @@ def create_gamp_categorization_agent(
         )
 
     # Create function tools with or without error handling
+    tools = []
+
     if enable_error_handling and error_handler:
         # Create wrapped tools with error handling
         def gamp_tool_wrapper(urs_content: str) -> dict[str, Any]:
             return gamp_analysis_tool_with_error_handling(urs_content, error_handler)
 
-        def confidence_tool_wrapper(category_data: dict[str, Any]) -> float:
+        def confidence_tool_wrapper(category_data: dict[str, Any], context_data: dict[str, Any] = None) -> float:
+            if enable_context_provider and context_data:
+                return enhanced_confidence_tool(category_data, context_data)
             return confidence_tool_with_error_handling(category_data, error_handler)
 
         gamp_analysis_function_tool = FunctionTool.from_defaults(
@@ -490,11 +727,18 @@ def create_gamp_categorization_agent(
             description="Analyze URS content to determine GAMP category. Input: URS content string. Returns: dictionary with predicted_category, evidence, and analysis."
         )
 
-        confidence_function_tool = FunctionTool.from_defaults(
-            fn=confidence_tool_wrapper,
-            name="confidence_tool",
-            description="Calculate confidence score for categorization. Input: category_data dictionary from gamp_analysis_tool. Returns: confidence score (0.0-1.0)."
-        )
+        if enable_context_provider:
+            confidence_function_tool = FunctionTool.from_defaults(
+                fn=confidence_tool_wrapper,
+                name="enhanced_confidence_tool",
+                description="Calculate enhanced confidence score using context data. Input: category_data dictionary from gamp_analysis_tool, optional context_data from context_provider_tool. Returns: enhanced confidence score (0.0-1.0)."
+            )
+        else:
+            confidence_function_tool = FunctionTool.from_defaults(
+                fn=lambda category_data: confidence_tool_with_error_handling(category_data, error_handler),
+                name="confidence_tool",
+                description="Calculate confidence score for categorization. Input: category_data dictionary from gamp_analysis_tool. Returns: confidence score (0.0-1.0)."
+            )
     else:
         # Use original tools without error handling
         gamp_analysis_function_tool = FunctionTool.from_defaults(
@@ -503,14 +747,62 @@ def create_gamp_categorization_agent(
             description="Analyze URS content to determine GAMP category. Input: URS content string. Returns: dictionary with predicted_category, evidence, and analysis."
         )
 
-        confidence_function_tool = FunctionTool.from_defaults(
-            fn=confidence_tool,
-            name="confidence_tool",
-            description="Calculate confidence score for categorization. Input: category_data dictionary from gamp_analysis_tool. Returns: confidence score (0.0-1.0)."
-        )
+        if enable_context_provider:
+            confidence_function_tool = FunctionTool.from_defaults(
+                fn=lambda category_data, context_data=None: enhanced_confidence_tool(category_data, context_data),
+                name="enhanced_confidence_tool",
+                description="Calculate enhanced confidence score using context data. Input: category_data dictionary from gamp_analysis_tool, optional context_data from context_provider_tool. Returns: enhanced confidence score (0.0-1.0)."
+            )
+        else:
+            confidence_function_tool = FunctionTool.from_defaults(
+                fn=confidence_tool,
+                name="confidence_tool",
+                description="Calculate confidence score for categorization. Input: category_data dictionary from gamp_analysis_tool. Returns: confidence score (0.0-1.0)."
+            )
 
-    # Enhanced system prompt with error handling guidance
-    system_prompt = """You are a GAMP-5 categorization expert. Your task is to analyze URS documents and determine the GAMP category.
+    # Add core tools
+    tools.extend([gamp_analysis_function_tool, confidence_function_tool])
+
+    # Add context provider tool if enabled
+    if enable_context_provider:
+        context_provider_function_tool = FunctionTool.from_defaults(
+            fn=context_provider_tool,
+            name="context_provider_tool",
+            description="Query regulatory context to enhance categorization confidence. Input: gamp_category (int), urs_content (str), document_name (str). Returns: context data with quality assessment and confidence boost."
+        )
+        tools.append(context_provider_function_tool)
+
+    # Enhanced system prompt with error handling and context provider guidance
+    if enable_context_provider:
+        system_prompt = """You are a GAMP-5 categorization expert with access to regulatory context. Your task is to analyze URS documents and determine the GAMP category with enhanced confidence.
+
+Categories:
+- Category 1: Infrastructure (OS, databases, middleware)
+- Category 3: Non-configured COTS (used as supplied)
+- Category 4: Configured products (user parameters)
+- Category 5: Custom applications (bespoke code)
+
+IMPORTANT INSTRUCTIONS:
+1. First, call the gamp_analysis_tool with the URS content to analyze categorization indicators
+2. Then, call the context_provider_tool with the predicted category, URS content, and document name to get regulatory context
+3. Finally, call the enhanced_confidence_tool with both the analysis results AND context data
+4. After calling ALL THREE tools EXACTLY ONCE, provide your final answer
+
+Your final answer MUST include:
+- The determined category number (1, 3, 4, or 5)
+- The enhanced confidence score as a percentage (e.g., 82%)
+- A brief justification mentioning both analysis and regulatory context (2-3 sentences)
+- Context quality assessment (high/medium/low/poor)
+
+DO NOT call any tool more than once. The context provider enhances confidence by 0.15-0.20 points when regulatory context is available.
+
+Error Handling:
+- All analysis failures are reported explicitly with full diagnostic information
+- All errors are logged for regulatory compliance with complete stack traces
+- Low confidence results require human review
+- NO FALLBACK ASSIGNMENTS - failures must be addressed explicitly"""
+    else:
+        system_prompt = """You are a GAMP-5 categorization expert. Your task is to analyze URS documents and determine the GAMP category.
 
 Categories:
 - Category 1: Infrastructure (OS, databases, middleware)
@@ -537,10 +829,10 @@ Error Handling:
 - NO FALLBACK ASSIGNMENTS - failures must be addressed explicitly"""
 
     agent = FunctionAgent(
-        tools=[gamp_analysis_function_tool, confidence_function_tool],
+        tools=tools,
         llm=llm,
         verbose=verbose,
-        max_iterations=15,  # Balanced: enough for both tools but prevents infinite loops
+        max_iterations=20 if enable_context_provider else 15,  # More iterations for context provider workflow
         system_prompt=system_prompt
     )
 
