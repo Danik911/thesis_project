@@ -16,6 +16,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Initialize Phoenix observability before any other imports to ensure proper instrumentation
+import os
+if os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true":
+    try:
+        from src.monitoring.phoenix_config import setup_phoenix
+        phoenix_manager = setup_phoenix()
+        print("🔭 Phoenix observability initialized - LLM calls will be traced")
+    except Exception as e:
+        print(f"⚠️  Phoenix initialization failed: {e}")
+        # Continue without Phoenix - don't fail the application
+
 def setup_unicode_support():
     """
     Configure proper Unicode support for Windows console to prevent encoding crashes.
@@ -313,7 +324,9 @@ async def run_with_event_logging(document_path: Path, args):
         workflow,
         event_handler,
         urs_content=document_content,
-        document_name=document_path.name
+        document_name=document_path.name,
+        document_version="1.0",
+        author="system"
     )
 
     # Display results
