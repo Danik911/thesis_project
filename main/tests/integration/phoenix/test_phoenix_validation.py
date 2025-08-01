@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """Validation test for Phoenix observability fix."""
 
 import asyncio

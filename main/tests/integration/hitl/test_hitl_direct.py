@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Direct test of HITL consultation system.
 This bypasses the workflow to test consultation directly.

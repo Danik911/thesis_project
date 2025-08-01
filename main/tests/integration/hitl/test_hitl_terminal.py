@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Test HITL consultation with a pseudo-terminal to simulate true interactive mode.
 """

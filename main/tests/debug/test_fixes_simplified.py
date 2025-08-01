@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Simplified test to verify critical fixes in the pharmaceutical workflow.
 """

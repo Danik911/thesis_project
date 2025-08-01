@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 FDA Part 11 Q&A Questions for Context Provider Agent Testing
 

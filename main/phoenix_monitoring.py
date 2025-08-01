@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Phoenix Monitoring Script
 Programmatic access to Phoenix traces for workflow monitoring and analysis

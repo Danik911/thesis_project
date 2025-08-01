@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Complete integration test for Task 15 event logging with real workflow.
 """

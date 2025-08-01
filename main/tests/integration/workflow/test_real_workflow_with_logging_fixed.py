@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Fixed test for the real GAMP-5 categorization workflow with Task 15 event logging integration.
 

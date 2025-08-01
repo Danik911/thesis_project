@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 GAMP-5 Categorization Workflow Test Script - PDF Data
 ====================================================

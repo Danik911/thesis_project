@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Simple test for safe output management integration (Task 4)
 
@@ -208,8 +208,8 @@ if __name__ == "__main__":
         print("   ✅ GAMP-5 compliance maintained")
 
         print("\n🚀 Ready for end-to-end testing with:")
-        print("   python main/main.py --no-logging")
-        print("   python main/main.py --categorization-only --no-logging")
+        print("   uv run python main/main.py --no-logging")
+        print("   uv run python main/main.py --categorization-only --no-logging")
 
         sys.exit(0)
     else:

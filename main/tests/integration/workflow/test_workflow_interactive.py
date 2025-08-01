@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """Interactive test script for workflow with HITL consultation."""
 
 import subprocess

@@ -32,5 +32,5 @@ uv pip show openinference-instrumentation-llama-index | grep Version || echo "No
 echo ""
 echo "📝 Next steps:"
 echo "1. Set environment variables in .env file"
-echo "2. Run: python main/examples/test_phoenix_integration.py"
+echo "2. Run: uv run python main/examples/test_phoenix_integration.py"
 echo "3. Check Phoenix UI at http://localhost:6006"

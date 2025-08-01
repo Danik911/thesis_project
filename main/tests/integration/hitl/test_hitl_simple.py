@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Simple HITL Integration Test
 Tests core HITL functionality without complex workflow integration.

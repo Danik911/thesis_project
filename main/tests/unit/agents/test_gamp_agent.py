@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Test script for GAMP-5 Categorization Agent with Phoenix Observability
 

@@ -93,12 +93,16 @@ document.querySelectorAll('[data-testid=\"trace-row\"]').length
 
 ### Phase 3: Trace Collection Analysis
 ```bash
-# Analyze trace volume and coverage via API
-echo "=== API Trace Analysis ==="
-curl -s "http://localhost:6006/v1/traces" | jq '.traces | length' 2>/dev/null && echo "Trace count retrieved" || echo "Failed to get trace count"
+# Analyze trace volume and coverage via GraphQL API (CORRECTED)
+echo "=== GraphQL Trace Analysis ==="
+curl -X POST http://localhost:6006/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"query { projects { id name tracesCount } }"}' | jq '.data.projects' 2>/dev/null && echo "Trace count retrieved" || echo "Failed to get trace count"
 
-# Check for specific instrumentation patterns
-curl -s "http://localhost:6006/v1/traces" | grep -E "(openai|llama_index|chromadb|gamp_categorization)" | wc -l
+# Get detailed trace information via GraphQL
+curl -X POST http://localhost:6006/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"query { projects { id name traces(first: 10) { edges { node { spanId traceId } } } } }"}' | jq '.data.projects[0].traces.edges | length' 2>/dev/null
 ```
 
 ### Phase 4: Instrumentation Coverage Assessment
@@ -420,13 +424,17 @@ ls -la main/docs/reports/ >/dev/null 2>&1 && echo "✅ Reports directory exists"
 
 ### Trace Analysis Execution
 ```bash
-# Comprehensive trace analysis
+# Comprehensive trace analysis via GraphQL (CORRECTED)
 echo "=== Analyzing Phoenix Traces ==="
-curl -s "http://localhost:6006/v1/traces" > trace_data.json
-echo "Trace data collected: $(wc -l < trace_data.json) lines"
+curl -X POST http://localhost:6006/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"query { projects { id name traces(first: 100) { edges { node { spanId traceId startTime statusCode } } } } }"}' > trace_data.json
+echo "Trace data collected: $(jq '.data.projects[0].traces.edges | length' trace_data.json 2>/dev/null || echo '0') traces"
 
-# Instrumentation verification
-grep -E "(openai|llama_index|chromadb|gamp)" trace_data.json | wc -l
+# Instrumentation verification via GraphQL spans query  
+curl -X POST http://localhost:6006/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"query { projects { id spans(first: 50) { edges { node { name attributes { name value } } } } } }"}' | jq '.data.projects[0].spans.edges[].node | select(.name | test("openai|llama|chroma|gamp"; "i"))' | wc -l
 ```
 
 ### Report Generation

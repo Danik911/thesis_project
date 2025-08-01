@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Launch the real GAMP-5 categorization workflow for testing.
 This script runs the actual workflow implementation, not a test.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 GAMP-5 Categorization Agent Demo
 
@@ -7,7 +7,7 @@ categorization system. Run this to test the categorization logic independently.
 
 Usage:
     source venv/bin/activate
-    python3 demo_categorization.py
+    uv run python demo_categorization.py
 """
 
 import sys

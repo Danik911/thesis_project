@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Simple Context Provider Integration Test - ASCII Only
 """

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Test script for new Claude Code hooks features
 Tests both PermissionDecision and UserPromptSubmit with additionalContext
@@ -195,7 +195,7 @@ def show_configuration_example():
                     "hooks": [
                         {
                             "type": "command",
-                            "command": "python3 /home/anteb/thesis_project/.claude/permission_decision_example.py"
+                            "command": "uv run python /home/anteb/thesis_project/.claude/permission_decision_example.py"
                         }
                     ]
                 }
@@ -206,7 +206,7 @@ def show_configuration_example():
                     "hooks": [
                         {
                             "type": "command",
-                            "command": "python3 /home/anteb/thesis_project/.claude/user_prompt_submit_example.py"
+                            "command": "uv run python /home/anteb/thesis_project/.claude/user_prompt_submit_example.py"
                         }
                     ]
                 }
@@ -218,7 +218,7 @@ def show_configuration_example():
                     "hooks": [
                         {
                             "type": "command",
-                            "command": "python3 /home/anteb/thesis_project/.claude/audio_hooks.py"
+                            "command": "uv run python /home/anteb/thesis_project/.claude/audio_hooks.py"
                         }
                     ]
                 }

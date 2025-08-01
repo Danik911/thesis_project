@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Simple Phoenix test script to generate traces without Unicode issues
 """

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Debug script to test Context Provider Agent and examine detailed results.
 """

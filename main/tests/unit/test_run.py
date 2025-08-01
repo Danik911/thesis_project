@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 import os
 
 os.chdir("/home/anteb/thesis_project/main")

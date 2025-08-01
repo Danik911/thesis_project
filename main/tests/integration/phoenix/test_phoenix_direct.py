@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """Direct test of Phoenix observability to isolate the issue."""
 
 import asyncio

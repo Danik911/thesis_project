@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Ingest FDA Part 11 document into ChromaDB for testing.
 """

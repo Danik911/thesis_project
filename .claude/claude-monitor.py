@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Claude Code Audio Monitor - Advanced real-time permission detection
 Monitors Claude output and triggers audio notifications BEFORE permission prompts

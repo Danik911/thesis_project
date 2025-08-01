@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Example: UserPromptSubmit Hook with additionalContext in Advanced JSON
 Demonstrates the new Claude Code capability to add rich context to user prompts

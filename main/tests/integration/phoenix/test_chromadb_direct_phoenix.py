@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Direct ChromaDB Phoenix Integration Test
 Tests ChromaDB operations with Phoenix observability without complex event system

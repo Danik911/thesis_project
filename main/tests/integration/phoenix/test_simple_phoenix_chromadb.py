@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Simplified Phoenix ChromaDB Integration Test
 Focus on core observability functionality with FDA Part-11 document

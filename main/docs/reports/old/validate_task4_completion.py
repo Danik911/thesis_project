@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Task 4 Completion Validation Script
 
@@ -331,8 +331,8 @@ def main():
         print("   • Comprehensive error handling and recovery")
 
         print("\n💡 To test the complete workflow:")
-        print("   cd main && python main.py --no-logging")
-        print("   cd main && python main.py --categorization-only --no-logging")
+        print("   cd main && uv run python main.py --no-logging")
+        print("   cd main && uv run python main.py --categorization-only --no-logging")
 
         return 0
     print(f"\n❌ Task 4 validation failed: {total - passed} issues found")

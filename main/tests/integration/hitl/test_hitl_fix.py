@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Test HITL Fix Implementation
 Validates that the HITL consultation system now works with workflow execution.
@@ -33,7 +33,7 @@ async def test_hitl_workflow_execution():
     safe_print("4. Automatic HumanResponseEvent creation and injection")
 
     safe_print("\n📋 Manual Test Instructions:")
-    safe_print("Run: uv run python main.py test_urs_hitl.txt --verbose")
+    safe_print("Run: uv run uv run python main.py test_urs_hitl.txt --verbose")
     safe_print("When consultation prompt appears:")
     safe_print("  - Enter GAMP category: 3")
     safe_print("  - Enter rationale: This is a category 3 system")
@@ -91,7 +91,7 @@ async def main():
             safe_print("✅ All components properly imported")
 
             safe_print("\n🔄 Next Steps:")
-            safe_print("1. Run manual test with: uv run python main.py test_urs_hitl.txt --verbose")
+            safe_print("1. Run manual test with: uv run uv run python main.py test_urs_hitl.txt --verbose")
             safe_print("2. Verify workflow waits for human input")
             safe_print("3. Confirm workflow continues after human response")
             safe_print("4. Check audit trail captures human decisions")

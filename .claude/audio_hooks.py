@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Claude Code Audio Hooks Handler
 Comprehensive audio notification system with multiple fallback methods

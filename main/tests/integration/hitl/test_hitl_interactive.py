@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Interactive test of HITL consultation system.
 This script will simulate an interactive terminal to test the consultation properly.

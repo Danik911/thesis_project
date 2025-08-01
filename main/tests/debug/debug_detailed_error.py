@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Detailed error debugging for Context Provider Agent failures.
 """

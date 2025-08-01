@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Debug script to test collection search process in Context Provider Agent.
 """

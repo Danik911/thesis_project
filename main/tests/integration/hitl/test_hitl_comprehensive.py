@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Comprehensive HITL System Integration Test
 Tests the complete Human-in-the-Loop consultation workflow end-to-end.

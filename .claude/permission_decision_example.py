@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Example: PermissionDecision Hook with "ask" functionality
 Demonstrates the new Claude Code hook capability to interact with permission decisions

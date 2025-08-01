@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Test Critical Confidence and SME Agent Integration Fixes
 
@@ -7,7 +7,7 @@ This script tests the fixes for:
 2. Missing SME agent implementation (NotImplementedError)
 3. Confidence threshold adjustment (from 0.60 to 0.50)
 
-Run with: python test_critical_fixes.py
+Run with: uv run python test_critical_fixes.py
 """
 
 import logging

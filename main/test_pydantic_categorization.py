@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Quick validation test for Task 2: Pydantic Structured Output Implementation
 

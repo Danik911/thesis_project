@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Comprehensive End-to-End Test for Pharmaceutical Test Generation Workflow
 Tests all critical fixes and captures comprehensive metrics

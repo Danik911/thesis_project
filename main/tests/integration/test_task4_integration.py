@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Test script for Task 4 - Unified Workflow Integration with Safe Output Management
 

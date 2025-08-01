@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Clear ChromaDB and re-ingest FDA Part 11 with consistent embedding model.
 """

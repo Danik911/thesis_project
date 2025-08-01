@@ -6,12 +6,12 @@ echo "=================================="
 cd /home/anteb/thesis_project/main
 
 echo "📋 Running validation test..."
-python3 test_hitl_fix.py
+uv run python test_hitl_fix.py
 
 echo ""
 echo "🔍 Testing actual workflow execution (manual test required)..."
 echo "Run this command manually and provide input when prompted:"
-echo "python3 main.py test_urs_hitl.txt --verbose"
+echo "uv run python main.py test_urs_hitl.txt --verbose"
 echo ""
 echo "Expected prompts:"
 echo "1. HUMAN CONSULTATION REQUIRED dialog"

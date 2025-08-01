@@ -712,7 +712,7 @@ async def main():
         document_path = Path(__file__).parent.parent / "simple_test_data.md"
         if not document_path.exists():
             safe_print("❌ No document specified and default test document not found")
-            safe_print("Usage: python main.py <document_path>")
+            safe_print("Usage: uv run python main.py <document_path>")
             return 1
 
     try:

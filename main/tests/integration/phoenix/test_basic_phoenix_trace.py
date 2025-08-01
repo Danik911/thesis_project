@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Basic Phoenix Trace Test for ChromaDB Integration
 Tests the core tracing functionality with minimal dependencies

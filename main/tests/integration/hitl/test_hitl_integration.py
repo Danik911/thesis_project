@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Comprehensive integration test for HITL consultation system fixes.
 Tests all the debugging fixes together to ensure they work in harmony.

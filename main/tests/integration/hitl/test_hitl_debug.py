@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Debug runner for HITL consultation system tests.
 Captures and analyzes test failures to identify root causes.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Phoenix Observability Diagnostic Tool
 
@@ -241,11 +241,11 @@ class PhoenixDiagnosticTool:
 
                         self.log_test_result(test_name, True, details)
                         return True
-                    if "errors" in json_response:
+                    if "errors" in json_response and json_response["errors"]:
                         # This is where "Something went wrong" errors typically appear
                         details["error"] = "GraphQL errors accessing trace data"
                         details["graphql_errors"] = json_response["errors"]
-                        details["error_messages"] = [err.get("message", "Unknown error") for err in json_response["errors"]]
+                        details["error_messages"] = [err.get("message", "Unknown error") for err in json_response["errors"] if err]
 
                         # Check for specific error patterns
                         error_text = str(json_response["errors"]).lower()
@@ -332,7 +332,7 @@ class PhoenixDiagnosticTool:
         if not test_results.get("Basic HTTP Connectivity", {}).get("success", False):
             recommendations.extend([
                 "🚨 CRITICAL: Phoenix server is not running or not accessible",
-                "📋 ACTION: Start Phoenix server with: python -m phoenix.server.main serve",
+                "📋 ACTION: Start Phoenix server with: uv run python -m phoenix.server.main serve",
                 "🐳 OR: Start Phoenix Docker container: docker run -p 6006:6006 arizephoenix/phoenix",
                 "🔧 OR: Check PHOENIX_HOST and PHOENIX_PORT environment variables"
             ])

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """
 Test script for FDA Part 11 document ingestion with Phoenix observability.
 
@@ -10,7 +10,7 @@ This script demonstrates comprehensive testing of:
 5. Error handling with full diagnostics
 
 Usage:
-    uv run python main/tests/regulatory/fda_part11/test_fda_part11_phoenix_ingestion.py
+    uv run uv run python main/tests/regulatory/fda_part11/test_fda_part11_phoenix_ingestion.py
 """
 
 import asyncio
