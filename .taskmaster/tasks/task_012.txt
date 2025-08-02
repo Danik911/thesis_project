@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Fix Categorization Accuracy
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Fix false ambiguity detection in categorization agent for clear Category 5 cases like URS-003
+# Details:
+High priority issue: URS-003 incorrectly detected as ambiguous despite clear Category 5 indicators. Need to implement dominance gap analysis (>0.20 gap = clear winner), adjust ambiguity thresholds to 0.65, and ensure Category 5 custom development is properly detected.
+
+# Test Strategy:
+1. Test ambiguity logic with various confidence scenarios 2. Validate URS-003 as Category 5 3. Test all URS cases (001-005) 4. Verify no false positives 5. Check regulatory compliance

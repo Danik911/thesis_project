@@ -343,7 +343,7 @@ class AgentResultsEvent(Event):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     success_count: int = Field(default=0)
     total_count: int = Field(default=0)
-    
+
     def __init__(self, **data: Any) -> None:
         """Initialize and calculate success metrics."""
         super().__init__(**data)

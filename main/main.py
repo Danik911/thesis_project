@@ -101,14 +101,14 @@ def setup_unicode_support():
         test_unicode = "GAMP-5 Test: OK"  # Use safe ASCII characters for verification
         try:
             # Test if we can actually print to stdout without errors
-            print(test_unicode)  
+            print(test_unicode)
             # If we get here, basic output is working
-            
+
             # Now test if Unicode characters work
             unicode_test = "🧑‍⚕️✅📋"  # Test characters that were causing crashes
             print(unicode_test)
             return True
-            
+
         except UnicodeEncodeError as e:
             # Unicode failed but basic ASCII works - provide detailed error info
             error_msg = (
@@ -664,12 +664,12 @@ async def main():
 
     # Setup safe output management after Unicode is configured
     output_manager = setup_safe_output_management()
-    
+
     # Now that Unicode is configured, show Phoenix initialization status
     if os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true":
-        if 'phoenix_initialized' in globals() and phoenix_initialized:
+        if "phoenix_initialized" in globals() and phoenix_initialized:
             safe_print("🔭 Phoenix observability initialized - LLM calls will be traced")
-        elif 'phoenix_error' in globals():
+        elif "phoenix_error" in globals():
             safe_print(f"⚠️  Phoenix initialization failed: {phoenix_error}")
 
     # Setup logging with reduced verbosity

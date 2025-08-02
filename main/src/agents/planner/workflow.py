@@ -125,23 +125,23 @@ class PlannerAgentWorkflow(Workflow):
         """
         # Extract categorization event from StartEvent parameters
         categorization_event = ev.get("categorization_event")
-        
+
         if not categorization_event:
             raise ValueError(
                 "PlannerAgentWorkflow requires 'categorization_event' parameter. "
                 "Call workflow.run(categorization_event=your_event)"
             )
-        
+
         if not isinstance(categorization_event, GAMPCategorizationEvent):
             raise TypeError(
                 f"Expected GAMPCategorizationEvent, got {type(categorization_event)}. "
                 "Ensure the categorization_event parameter is a valid GAMPCategorizationEvent instance."
             )
-        
+
         self.logger.info(
             f"Initialized planner workflow with GAMP Category {categorization_event.gamp_category.value}"
         )
-        
+
         return categorization_event
 
     @step

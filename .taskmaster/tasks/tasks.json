@@ -272,8 +272,106 @@
       "description": "Redesign event flow to prevent loops and ensure proper event production/consumption in LlamaIndex workflows",
       "details": "Critical issue: LlamaIndex workflow creating infinite loops due to same event types being consumed and produced. Must redesign event flow with unique event types for each transition. Fix WorkflowCompletionEvent usage that causes premature termination. Ensure AgentResultEvent is properly produced in planning workflow.",
       "testStrategy": "1. Unit test event flow transitions 2. Integration test workflow paths 3. Verify no infinite loops 4. Test AgentResultEvent production 5. Validate workflow completion",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Analyze event flow and identify loop patterns",
+          "description": "Map all event consumers and producers in the workflow",
+          "details": "Identify where same event types are consumed and produced, document the GAMPCategorizationEvent loop issue, create event flow diagram",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 10
+        },
+        {
+          "id": 2,
+          "title": "Redesign event types for unique transitions",
+          "description": "Create distinct event types for each workflow transition",
+          "details": "Ensure no step consumes and produces the same event type, separate input/output events for each step",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 10
+        },
+        {
+          "id": 3,
+          "title": "Fix WorkflowCompletionEvent usage",
+          "description": "Remove WorkflowCompletionEvent from intermediate steps",
+          "details": "Only use WorkflowCompletionEvent for final workflow completion, replace with proper intermediate events",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 10
+        },
+        {
+          "id": 4,
+          "title": "Ensure AgentResultEvent production",
+          "description": "Fix planning workflow to produce AgentResultEvent",
+          "details": "Add logic to return StopEvent when no agents need coordination, ensure all consumed events are produced",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 10
+        },
+        {
+          "id": 5,
+          "title": "Test event flow with all workflow paths",
+          "description": "Comprehensive testing of redesigned event flow",
+          "details": "Test no infinite loops occur, verify all events are properly produced/consumed, test error paths",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 10
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Fix Workflow State Management",
+      "description": "Fix LlamaIndex context storage and retrieval mechanisms that are causing 'planning_event not found in state' errors",
+      "details": "Critical issue: ctx.set() and ctx.get() operations failing for planning_event storage. Need to debug state management, implement proper error handling, add state validation at each workflow step, create fallback mechanisms for state recovery, and add comprehensive state tracing.",
+      "testStrategy": "1. Test context storage operations 2. Verify state persistence across steps 3. Test error recovery mechanisms 4. Validate state tracing 5. End-to-end state management test",
       "status": "pending",
       "dependencies": [],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 12,
+      "title": "Fix Categorization Accuracy",
+      "description": "Fix false ambiguity detection in categorization agent for clear Category 5 cases like URS-003",
+      "details": "High priority issue: URS-003 incorrectly detected as ambiguous despite clear Category 5 indicators. Need to implement dominance gap analysis (>0.20 gap = clear winner), adjust ambiguity thresholds to 0.65, and ensure Category 5 custom development is properly detected.",
+      "testStrategy": "1. Test ambiguity logic with various confidence scenarios 2. Validate URS-003 as Category 5 3. Test all URS cases (001-005) 4. Verify no false positives 5. Check regulatory compliance",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 13,
+      "title": "Enhance Phoenix Observability",
+      "description": "Improve monitoring to aid debugging and compliance with better Phoenix API access and instrumentation",
+      "details": "Medium priority: Fix Phoenix API access for programmatic analysis, add workflow state instrumentation, implement event flow visualization, create compliance dashboard, set up automated trace analysis. Currently limited to UI access only.",
+      "testStrategy": "1. Test Phoenix API access 2. Verify state instrumentation 3. Test event flow tracking 4. Validate compliance dashboard 5. Test automated analysis",
+      "status": "pending",
+      "dependencies": [
+        10,
+        11,
+        12
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 14,
+      "title": "Comprehensive Integration Testing",
+      "description": "Validate all fixes with end-to-end testing on complete pharmaceutical test generation workflow",
+      "details": "High priority: Test all URS cases (001-005), validate GAMP-5 compliance, verify Phoenix observability, test error recovery mechanisms, create performance benchmarks. Must ensure system is production-ready after all critical fixes.",
+      "testStrategy": "1. End-to-end test all URS cases 2. Validate GAMP-5 compliance 3. Test Phoenix monitoring 4. Verify error recovery 5. Performance benchmarking",
+      "status": "pending",
+      "dependencies": [
+        10,
+        11,
+        12
+      ],
       "priority": "high",
       "subtasks": []
     }

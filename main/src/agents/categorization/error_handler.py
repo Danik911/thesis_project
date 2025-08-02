@@ -221,14 +221,14 @@ class CategorizationErrorHandler:
         """
         if not confidence_scores:
             return None
-            
+
         # Sort confidence scores in descending order
         sorted_scores = sorted(confidence_scores.values(), reverse=True)
-        
+
         # Check for multiple high-confidence categories with improved logic
         # Use higher threshold for ambiguity detection (0.65 vs base 0.50)
         ambiguity_threshold = max(0.65, self.confidence_threshold + 0.15)
-        
+
         high_confidence_categories = [
             cat for cat, score in confidence_scores.items()
             if score > ambiguity_threshold
@@ -238,16 +238,16 @@ class CategorizationErrorHandler:
             # Check for dominance - if top score is significantly higher, not ambiguous
             if len(sorted_scores) >= 2:
                 dominance_gap = sorted_scores[0] - sorted_scores[1]
-                
+
                 # If there's a clear dominant category (gap > 0.20), not ambiguous
                 if dominance_gap > 0.20:
                     return None
-                    
+
                 # If gap is moderate (0.10-0.20), only ambiguous if both are very high
                 if 0.10 <= dominance_gap <= 0.20:
                     if sorted_scores[0] < 0.75:  # Not high enough to be concerning
                         return None
-            
+
             return CategorizationError(
                 error_type=ErrorType.AMBIGUITY_ERROR,
                 severity=ErrorSeverity.MEDIUM,
