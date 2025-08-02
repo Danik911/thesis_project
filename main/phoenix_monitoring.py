@@ -120,9 +120,9 @@ class PhoenixMonitor:
         """Monitor Phoenix traces in real-time."""
         import time
 
-        print("🔍 Starting real-time Phoenix monitoring...")
-        print(f"📊 Phoenix UI: {self.phoenix_url}")
-        print(f"⏱️ Monitoring for {duration_minutes} minutes, checking every {interval_seconds} seconds")
+        print("Starting real-time Phoenix monitoring...")
+        print(f"Phoenix UI: {self.phoenix_url}")
+        print(f"Monitoring for {duration_minutes} minutes, checking every {interval_seconds} seconds")
         print("="*60)
 
         end_time = datetime.now() + timedelta(minutes=duration_minutes)
@@ -135,24 +135,24 @@ class PhoenixMonitor:
                 new_spans = current_span_count - last_span_count
 
                 timestamp = datetime.now().strftime("%H:%M:%S")
-                print(f"[{timestamp}] 📊 Spans: {current_span_count} (+{new_spans})")
+                print(f"[{timestamp}] Spans: {current_span_count} (+{new_spans})")
 
                 if new_spans > 0:
                     recent_operations = summary.get("span_breakdown", {})
                     top_operations = list(recent_operations.items())[:3]
-                    print(f"  🔸 Recent operations: {top_operations}")
+                    print(f"  Recent operations: {top_operations}")
 
                 last_span_count = current_span_count
                 time.sleep(interval_seconds)
 
             except KeyboardInterrupt:
-                print("\n👋 Monitoring stopped by user")
+                print("\nMonitoring stopped by user")
                 break
             except Exception as e:
-                print(f"❌ Error during monitoring: {e}")
+                print(f"Error during monitoring: {e}")
                 time.sleep(interval_seconds)
 
-        print("✅ Monitoring completed")
+        print("Monitoring completed")
 
     def export_traces_report(self, output_file: str = "phoenix_traces_report.json"):
         """Export comprehensive traces report to JSON file."""
@@ -169,11 +169,11 @@ class PhoenixMonitor:
             with open(output_file, "w") as f:
                 json.dump(report, f, indent=2, default=str)
 
-            print(f"📁 Report exported to: {output_file}")
+            print(f"Report exported to: {output_file}")
             return output_file
 
         except Exception as e:
-            print(f"❌ Error exporting report: {e}")
+            print(f"Error exporting report: {e}")
             return None
 
 
@@ -201,13 +201,13 @@ def main():
 
     if args.summary:
         summary = monitor.get_trace_summary(hours_back=args.hours)
-        print("🔍 Phoenix Trace Summary")
+        print("Phoenix Trace Summary")
         print("="*50)
         print(json.dumps(summary, indent=2, default=str))
 
     if args.workflow:
         details = monitor.get_workflow_execution_details(args.workflow)
-        print(f"🏥 {args.workflow} Workflow Details")
+        print(f"{args.workflow} Workflow Details")
         print("="*50)
         print(json.dumps(details, indent=2, default=str))
 
