@@ -4,7 +4,6 @@ Simple test runner to execute the event flow validation test
 """
 
 import sys
-import asyncio
 from pathlib import Path
 
 # Add the main directory to path

@@ -166,10 +166,10 @@ class PlannerAgentWorkflow(Workflow):
         # Initialize workflow session
         self._workflow_session_id = f"planning_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
 
-        # Store categorization event in context
-        await ctx.set("categorization_event", ev)
-        await ctx.set("workflow_start_time", datetime.now(UTC))
-        await ctx.set("session_id", self._workflow_session_id)
+        # Store categorization event in persistent context
+        await ctx.store.set("categorization_event", ev)
+        await ctx.store.set("workflow_start_time", datetime.now(UTC))
+        await ctx.store.set("session_id", self._workflow_session_id)
 
         # Log planning start
         self.logger.info(
@@ -178,8 +178,8 @@ class PlannerAgentWorkflow(Workflow):
         )
 
         # Extract URS context if available
-        urs_context = await ctx.get("urs_context", None)
-        constraints = await ctx.get("planning_constraints", None)
+        urs_context = await ctx.store.get("urs_context")
+        constraints = await ctx.store.get("planning_constraints")
 
         # Generate test strategy
         test_strategy = self.planner_agent.generate_test_strategy(
@@ -188,8 +188,8 @@ class PlannerAgentWorkflow(Workflow):
             constraints=constraints
         )
 
-        # Store strategy in context
-        await ctx.set("test_strategy", test_strategy)
+        # Store strategy in persistent context
+        await ctx.store.set("test_strategy", test_strategy)
 
         # Create planning event
         planning_event = self.planner_agent.create_planning_event(
@@ -197,8 +197,8 @@ class PlannerAgentWorkflow(Workflow):
             gamp_category=ev.gamp_category
         )
 
-        # Store planning event
-        await ctx.set("planning_event", planning_event)
+        # Store planning event in persistent context
+        await ctx.store.set("planning_event", planning_event)
 
         self.logger.info(
             f"Generated test strategy: {test_strategy.estimated_count} tests, "
@@ -237,10 +237,10 @@ class PlannerAgentWorkflow(Workflow):
                 triggering_step="planner_coordination"
             )
 
-        # Get context data
-        categorization_event = await ctx.get("categorization_event")
-        test_strategy = await ctx.get("test_strategy")
-        urs_context = await ctx.get("urs_context", None)
+        # Get context data from persistent store
+        categorization_event = await ctx.store.get("categorization_event")
+        test_strategy = await ctx.store.get("test_strategy")
+        urs_context = await ctx.store.get("urs_context")
 
         # Generate coordination requests
         try:
@@ -259,8 +259,8 @@ class PlannerAgentWorkflow(Workflow):
             self._coordination_requests = coordination_requests
             self._expected_agent_results = len(coordination_requests)
 
-            await ctx.set("coordination_requests", coordination_requests)
-            await ctx.set("expected_agent_count", len(coordination_requests))
+            await ctx.store.set("coordination_requests", coordination_requests)
+            await ctx.store.set("expected_agent_count", len(coordination_requests))
 
             # Check if no agents need coordination - complete immediately
             if len(coordination_requests) == 0:
@@ -313,8 +313,8 @@ class PlannerAgentWorkflow(Workflow):
         Returns:
             StopEvent when all results collected, None while waiting
         """
-        # Get expected count
-        expected_count = await ctx.get("expected_agent_count", 0)
+        # Get expected count from persistent store
+        expected_count = await ctx.store.get("expected_agent_count") or 0
 
         if expected_count == 0:
             # No agents were coordinated, skip collection
@@ -335,8 +335,8 @@ class PlannerAgentWorkflow(Workflow):
                 expected_correlations=expected_correlations
             )
 
-            # Store coordination results
-            await ctx.set("coordination_result", coordination_result)
+            # Store coordination results in persistent context
+            await ctx.store.set("coordination_result", coordination_result)
 
             # Handle coordination errors if needed
             error_response = self.planner_agent.handle_coordination_errors(coordination_result)
@@ -346,7 +346,7 @@ class PlannerAgentWorkflow(Workflow):
                     self.logger.warning("Agent failures detected, but retries not implemented in this workflow")
                 else:
                     # Consultation required
-                    await ctx.set("consultation_required", error_response)
+                    await ctx.store.set("consultation_required", error_response)
 
             return await self._finalize_planning(ctx, ready)
 
@@ -377,13 +377,19 @@ class PlannerAgentWorkflow(Workflow):
         """
         self.logger.info(f"Human consultation required: {ev.consultation_type}")
 
-        # Store consultation event
-        await ctx.set("consultation_required", ev)
+        # Store consultation event using persistent storage
+        await ctx.store.set("consultation_required", ev)
 
-        # Get existing planning data
-        planning_event = await ctx.get("planning_event")
-        test_strategy = await ctx.get("test_strategy")
-        workflow_start = await ctx.get("workflow_start_time")
+        # Get existing planning data from persistent store with validation
+        planning_event = await ctx.store.get("planning_event")
+        test_strategy = await ctx.store.get("test_strategy")
+        workflow_start = await ctx.store.get("workflow_start_time")
+
+        # Validate critical state exists - NO FALLBACKS allowed
+        if planning_event is None:
+            raise RuntimeError("GAMP-5 Compliance Violation: planning_event not found during consultation - workflow state corrupted")
+        if workflow_start is None:
+            raise RuntimeError("GAMP-5 Compliance Violation: workflow_start_time not found during consultation - workflow state corrupted")
 
         # Calculate workflow duration
         duration = (datetime.now(UTC) - workflow_start).total_seconds()
@@ -424,13 +430,21 @@ class PlannerAgentWorkflow(Workflow):
         Returns:
             StopEvent with complete planning results
         """
-        # Get all workflow data
-        planning_event = await ctx.get("planning_event")
-        test_strategy = await ctx.get("test_strategy")
-        categorization_event = await ctx.get("categorization_event")
-        coordination_result = await ctx.get("coordination_result", None)
-        consultation_event = await ctx.get("consultation_required", None)
-        workflow_start = await ctx.get("workflow_start_time")
+        # Get all workflow data from persistent store with explicit error handling
+        planning_event = await ctx.store.get("planning_event")
+        test_strategy = await ctx.store.get("test_strategy")
+        categorization_event = await ctx.store.get("categorization_event")
+        coordination_result = await ctx.store.get("coordination_result")
+        consultation_event = await ctx.store.get("consultation_required")
+        workflow_start = await ctx.store.get("workflow_start_time")
+
+        # Validate critical state exists - NO FALLBACKS allowed
+        if planning_event is None:
+            raise RuntimeError("GAMP-5 Compliance Violation: planning_event not found in persistent store - workflow state corrupted")
+        if test_strategy is None:
+            raise RuntimeError("GAMP-5 Compliance Violation: test_strategy not found in persistent store - workflow state corrupted")
+        if workflow_start is None:
+            raise RuntimeError("GAMP-5 Compliance Violation: workflow_start_time not found in persistent store - workflow state corrupted")
 
         # Calculate workflow duration
         duration = (datetime.now(UTC) - workflow_start).total_seconds()

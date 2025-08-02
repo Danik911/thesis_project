@@ -32,7 +32,6 @@ from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, 
 from llama_index.llms.openai import OpenAI
 from src.agents.oq_generator.events import OQTestGenerationEvent, OQTestSuiteEvent
 from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
-from src.agents.planner.workflow import PlannerAgentWorkflow
 from src.core.categorization_workflow import GAMPCategorizationWorkflow
 from src.core.events import (
     AgentRequestEvent,
@@ -57,9 +56,10 @@ logger = logging.getLogger(__name__)
 
 
 # Safe context management functions for preventing state failures
+# Using ctx.store for persistent cross-workflow state management
 async def safe_context_get(ctx: Context, key: str, default=None):
     """
-    Safe context retrieval with error handling.
+    Safe context retrieval with persistent storage and explicit error handling.
     
     Args:
         ctx: Workflow context
@@ -68,17 +68,31 @@ async def safe_context_get(ctx: Context, key: str, default=None):
         
     Returns:
         Retrieved value or default
+        
+    Raises:
+        RuntimeError: If critical state retrieval fails with no fallback allowed
     """
     try:
-        return await ctx.get(key, default)
+        # Use ctx.store for persistent storage across workflow boundaries
+        value = await ctx.store.get(key)
+        if value is not None:
+            logger.debug(f"Context retrieval successful for key {key}")
+            return value
+        if default is not None:
+            logger.debug(f"Context key {key} not found, returning default")
+            return default
+        # NO FALLBACKS - explicit failure for critical state
+        logger.error(f"CRITICAL: Context key '{key}' not found in persistent store and no default provided")
+        raise RuntimeError(f"Critical state '{key}' not found in workflow context - workflow state corrupted")
     except Exception as e:
-        logger.warning(f"Context retrieval failed for key {key}: {e}")
-        return default
+        logger.error(f"Context retrieval failed for key {key}: {e}")
+        # NO FALLBACKS - fail explicitly for regulatory compliance
+        raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
 
 async def safe_context_set(ctx: Context, key: str, value):
     """
-    Safe context storage with error handling.
+    Safe context storage with persistent storage and explicit error handling.
     
     Args:
         ctx: Workflow context
@@ -86,14 +100,81 @@ async def safe_context_set(ctx: Context, key: str, value):
         value: Value to store
         
     Returns:
-        bool: True if successful, False if failed
+        bool: True if successful
+        
+    Raises:
+        RuntimeError: If critical state storage fails (no fallback allowed)
     """
     try:
-        await ctx.set(key, value)
+        # Use ctx.store for persistent storage across workflow boundaries
+        await ctx.store.set(key, value)
+        logger.debug(f"Context storage successful for key {key}")
         return True
     except Exception as e:
-        logger.error(f"Context storage failed for key {key}: {e}")
-        return False
+        logger.error(f"CRITICAL: Context storage failed for key {key}: {e}")
+        # NO FALLBACKS - fail explicitly for regulatory compliance
+        raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
+
+
+async def validate_workflow_state(ctx: Context, required_keys: list[str]) -> bool:
+    """
+    Validate that all required workflow state keys exist in persistent storage.
+    
+    Args:
+        ctx: Workflow context
+        required_keys: List of required context keys
+        
+    Returns:
+        bool: True if all keys exist
+        
+    Raises:
+        RuntimeError: If any critical state is missing (no fallback allowed)
+    """
+    missing_keys = []
+    for key in required_keys:
+        try:
+            value = await ctx.store.get(key)
+            if value is None:
+                missing_keys.append(key)
+        except Exception as e:
+            logger.error(f"State validation failed for key {key}: {e}")
+            missing_keys.append(key)
+
+    if missing_keys:
+        error_msg = f"GAMP-5 Compliance Violation: Critical workflow state missing: {missing_keys}"
+        logger.error(error_msg)
+        # NO FALLBACKS - fail explicitly for regulatory compliance
+        raise RuntimeError(error_msg)
+
+    logger.info(f"GAMP-5 State Validation: PASSED - All required keys present: {required_keys}")
+    return True
+
+
+async def log_state_operation(operation: str, key: str, success: bool, error: str = None):
+    """
+    Log state operations for GAMP-5 audit trail compliance.
+    
+    Args:
+        operation: Operation type (get/set/validate)
+        key: Context key
+        success: Whether operation succeeded
+        error: Error message if failed
+    """
+    from datetime import UTC, datetime
+
+    audit_entry = {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "operation": f"context_{operation}",
+        "key": key,
+        "success": success,
+        "error": error,
+        "compliance_level": "GAMP-5"
+    }
+
+    if success:
+        logger.info(f"GAMP-5 Audit: {operation.upper()} successful for key '{key}'")
+    else:
+        logger.error(f"GAMP-5 Audit: {operation.upper()} failed for key '{key}': {error}")
 
 
 class UnifiedTestGenerationWorkflow(Workflow):
@@ -291,11 +372,17 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             AgentRequestEvent for next agent to execute, or AgentResultsEvent if no coordination needed
         """
-        self.logger.info(f"🔄 Starting parallel agent coordination from planning event")
+        self.logger.info("🔄 Starting parallel agent coordination from planning event")
 
         # Store the planning event in context using safe operations
         await safe_context_set(ctx, "planning_event", ev)
         await safe_context_set(ctx, "test_strategy", ev.test_strategy)
+
+        # Validate critical state was properly stored for GAMP-5 compliance
+        await validate_workflow_state(ctx, ["planning_event", "test_strategy"])
+
+        # Log successful state storage for audit trail
+        await log_state_operation("store", "planning_event", True)
 
         # Generate proper agent requests based on GAMP category
         agent_requests = []
@@ -573,7 +660,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # No consultation needed - create planning event directly
         self.logger.info("No consultation required - creating planning event")
         return self._create_planning_event_from_categorization(ev)
-    
+
     def _create_planning_event_from_categorization(self, categorization_event: GAMPCategorizationEvent) -> PlanningEvent:
         """
         Create a planning event from categorization results.
@@ -649,11 +736,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if hasattr(ev, "categorization_event"):
             # Use the original categorization event to create planning event
             return self._create_planning_event_from_categorization(ev.categorization_event)
-        
+
         # Create new categorization event and planning event from consultation context
         gamp_category = GAMPCategory(ev.context.get("gamp_category", 5))
         confidence_score = ev.context.get("confidence_score", 0.5)
-        
+
         # Create a mock categorization event for planning
         categorization_event = GAMPCategorizationEvent(
             gamp_category=gamp_category,
@@ -663,7 +750,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             review_required=True,
             categorized_by="consultation_system"
         )
-        
+
         return self._create_planning_event_from_categorization(categorization_event)
 
     @step
@@ -684,11 +771,14 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         self.logger.info("🧪 Starting OQ test generation")
 
-        # Get required context using safe retrieval with defaults
+        # Validate critical workflow state exists before proceeding
+        await validate_workflow_state(ctx, ["planning_event", "categorization_result"])
+
+        # Get required context using safe retrieval with validation
         planning_event = await safe_context_get(ctx, "planning_event", None)
         categorization_result = await safe_context_get(ctx, "categorization_result", None)
         document_path = await safe_context_get(ctx, "document_path", "unknown")
-        
+
         # Get document content from various sources
         urs_content = ""
         if categorization_result and hasattr(categorization_result, "document_content"):

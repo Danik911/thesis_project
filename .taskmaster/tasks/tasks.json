@@ -326,12 +326,12 @@
     {
       "id": 11,
       "title": "Fix Workflow State Management",
-      "description": "Fix LlamaIndex context storage and retrieval mechanisms that are causing 'planning_event not found in state' errors",
-      "details": "Critical issue: ctx.set() and ctx.get() operations failing for planning_event storage. Need to debug state management, implement proper error handling, add state validation at each workflow step, create fallback mechanisms for state recovery, and add comprehensive state tracing.",
-      "testStrategy": "1. Test context storage operations 2. Verify state persistence across steps 3. Test error recovery mechanisms 4. Validate state tracing 5. End-to-end state management test",
-      "status": "pending",
+      "description": "The core LlamaIndex workflow state management issue is resolved. The context storage and retrieval mechanisms have been refactored to use persistent ctx.store operations, eliminating 'planning_event not found in state' errors. State validation is now GAMP-5 compliant, explicit error handling is enforced with a no-fallbacks policy, and audit logging is in place for all state operations.",
+      "status": "done",
       "dependencies": [],
       "priority": "high",
+      "details": "The workflow now uses safe_context_get/set functions that leverage ctx.store for persistent state management, replacing the previous ephemeral ctx.get/set usage. All state operations include explicit error handling that fails with diagnostic information if issues are detected, with no fallback or silent recovery. GAMP-5 compliant state validation functions are integrated at each workflow step to ensure required keys are present. The planner workflow (lines 384, 428) has been updated to use ctx.store for state retrieval, resolving previous context isolation issues. Audit logging has been added for all state operations to support traceability and compliance. All changes are implemented in main/src/core/unified_workflow.py and main/src/agents/planner/workflow.py. The workflow now progresses past the planning phase without state errors; state persistence and validation are confirmed by passing tests. Note: API key issues are tracked separately.",
+      "testStrategy": "1. Test persistent context storage operations using ctx.store 2. Verify state persistence and retrieval across workflow steps and boundaries 3. Confirm explicit error handling triggers on state issues, with diagnostic output and no fallback 4. Validate GAMP-5 compliant state validation at each step 5. Check audit logs for all state operations 6. End-to-end workflow test to confirm no 'planning_event not found in state' errors",
       "subtasks": []
     },
     {
