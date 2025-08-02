@@ -170,11 +170,23 @@ class ContextProviderAgent:
         current_span = trace.get_current_span()
 
         try:
-            # Parse request data
-            request_data = ContextProviderRequest(
-                **request_event.request_data,
-                correlation_id=request_event.correlation_id
-            )
+            # Parse request data with explicit validation
+            request_data_dict = request_event.request_data.copy()
+            
+            # CRITICAL FIX: Ensure GAMP category is string and add missing fields
+            if "gamp_category" in request_data_dict:
+                request_data_dict["gamp_category"] = str(request_data_dict["gamp_category"])
+            
+            # Add required search_scope if missing
+            if "search_scope" not in request_data_dict:
+                request_data_dict["search_scope"] = {}
+            
+            # Add correlation_id if not in request_data
+            request_data_dict["correlation_id"] = request_event.correlation_id
+            
+            self.logger.info(f"🔧 Context Provider request validation: gamp_category={request_data_dict.get('gamp_category')} (type: {type(request_data_dict.get('gamp_category'))})")
+            
+            request_data = ContextProviderRequest(**request_data_dict)
 
             # Add request attributes to span
             if current_span and current_span.is_recording():

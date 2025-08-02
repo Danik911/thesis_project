@@ -152,23 +152,45 @@ class PhoenixManager:
             self._instrument_llamaindex()
 
             # Instrument OpenAI if enabled
+            openai_instrumented = False
             if self.config.enable_openai_instrumentation:
-                self._instrument_openai()
+                try:
+                    self._instrument_openai()
+                    openai_instrumented = True
+                except Exception as openai_error:
+                    logger.error(f"❌ OpenAI instrumentation failed: {openai_error}")
+                    # For pharmaceutical systems, this is critical
+                    if self.config.deployment_environment == "production":
+                        raise RuntimeError("OpenAI instrumentation required for production pharmaceutical compliance") from openai_error
 
             # Instrument ChromaDB if enabled
+            chromadb_instrumented = False
             if self.config.enable_chromadb_instrumentation:
-                self._instrument_chromadb()
+                try:
+                    self._instrument_chromadb()
+                    chromadb_instrumented = True
+                except Exception as chromadb_error:
+                    logger.error(f"❌ ChromaDB instrumentation failed: {chromadb_error}")
 
             self._initialized = True
             logger.info(
-                f"Phoenix observability initialized for {self.config.deployment_environment} "
-                f"environment with endpoint: {self.config.otlp_endpoint}"
+                f"✅ Phoenix observability initialized for {self.config.deployment_environment} environment\n"
+                f"   - Endpoint: {self.config.otlp_endpoint}\n"
+                f"   - OpenAI instrumented: {openai_instrumented}\n"
+                f"   - ChromaDB instrumented: {chromadb_instrumented}"
             )
 
         except Exception as e:
-            logger.error(f"Failed to initialize Phoenix: {e}")
-            # Graceful degradation - don't fail the application
-            self._initialized = False
+            logger.error(f"❌ Failed to initialize Phoenix: {e}")
+            # ENHANCED: More specific error handling
+            if self.config.deployment_environment == "production":
+                # In production, Phoenix is required for compliance
+                logger.error("Production pharmaceutical system requires Phoenix observability")
+                raise RuntimeError("Phoenix initialization failure in production environment") from e
+            else:
+                # In development, allow graceful degradation with warning
+                logger.warning("Continuing without Phoenix in development mode - observability will be limited")
+                self._initialized = False
 
         return self
 
@@ -266,22 +288,25 @@ class PhoenixManager:
         try:
             from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 
+            # ENHANCED: Add more detailed logging for debugging
+            logger.info("🔧 Attempting LlamaIndex instrumentation with OpenInference...")
+            
             # Instrument with our tracer provider
             LlamaIndexInstrumentor().instrument(
                 skip_dep_check=True,
                 tracer_provider=self.tracer_provider
             )
 
-            logger.debug("LlamaIndex instrumented successfully with OpenInference")
+            logger.info("✅ LlamaIndex instrumented successfully with OpenInference")
 
-        except ImportError:
-            logger.warning(
-                "OpenInference LlamaIndex instrumentation not available. "
+        except ImportError as e:
+            logger.error(
+                f"❌ OpenInference LlamaIndex instrumentation not available: {e}\n"
                 "Install with: pip install openinference-instrumentation-llama-index"
             )
             self._try_fallback_instrumentation()
         except Exception as e:
-            logger.error(f"OpenInference instrumentation failed: {e}")
+            logger.error(f"❌ OpenInference instrumentation failed: {e}")
             self._try_fallback_instrumentation()
 
     def _try_fallback_instrumentation(self) -> None:
@@ -299,18 +324,25 @@ class PhoenixManager:
         try:
             from openinference.instrumentation.openai import OpenAIInstrumentor
 
+            # ENHANCED: Add more detailed logging
+            logger.info("🔧 Attempting OpenAI instrumentation with OpenInference...")
+            
             # Instrument OpenAI with our tracer provider
             OpenAIInstrumentor().instrument(tracer_provider=self.tracer_provider)
 
             logger.info("✅ OpenAI instrumented successfully - LLM calls will be traced with token usage and costs")
 
-        except ImportError:
-            logger.warning(
-                "OpenAI instrumentation not available. "
+        except ImportError as e:
+            logger.error(
+                f"❌ OpenAI instrumentation not available: {e}\n"
                 "Install with: pip install openinference-instrumentation-openai"
             )
+            # NO FALLBACK - fail explicitly to identify missing dependencies
+            raise RuntimeError("OpenAI instrumentation required for pharmaceutical compliance tracing") from e
         except Exception as e:
-            logger.error(f"OpenAI instrumentation failed: {e}")
+            logger.error(f"❌ OpenAI instrumentation failed: {e}")
+            # NO FALLBACK - fail explicitly for regulatory compliance
+            raise RuntimeError(f"OpenAI instrumentation failure: {e}") from e
 
     def _instrument_chromadb(self) -> None:
         """

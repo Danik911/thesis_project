@@ -79,19 +79,39 @@ async def safe_context_get(ctx: Context, key: str, default=None):
         RuntimeError: If critical state retrieval fails with no fallback allowed
     """
     try:
+        # ENHANCED: Add detailed logging for debugging
+        logger.debug(f"🔍 Attempting to retrieve context key: {key}")
+        
         # Use ctx.store for persistent storage across workflow boundaries
         value = await ctx.store.get(key)
         if value is not None:
-            logger.debug(f"Context retrieval successful for key {key}")
+            # ENHANCED: Log value type for debugging complex objects
+            logger.debug(f"✅ Context retrieval successful for key {key}, type: {type(value)}")
             return value
         if default is not None:
-            logger.debug(f"Context key {key} not found, returning default")
+            logger.debug(f"⚠️ Context key {key} not found, returning default: {default}")
             return default
         # NO FALLBACKS - explicit failure for critical state
-        logger.error(f"CRITICAL: Context key '{key}' not found in persistent store and no default provided")
+        logger.error(f"❌ CRITICAL: Context key '{key}' not found in persistent store and no default provided")
+        
+        # ENHANCED: Add context diagnosis for debugging
+        all_keys = []
+        try:
+            # Try to get all available keys for debugging
+            for test_key in ['workflow_start_time', 'categorization_result', 'planning_event', 'gamp_category']:
+                try:
+                    test_value = await ctx.store.get(test_key)
+                    if test_value is not None:
+                        all_keys.append(test_key)
+                except:
+                    pass
+            logger.error(f"🔍 Available context keys: {all_keys}")
+        except Exception as diag_error:
+            logger.error(f"Context diagnosis failed: {diag_error}")
+            
         raise RuntimeError(f"Critical state '{key}' not found in workflow context - workflow state corrupted")
     except Exception as e:
-        logger.error(f"Context retrieval failed for key {key}: {e}")
+        logger.error(f"❌ Context retrieval failed for key {key}: {e}")
         # NO FALLBACKS - fail explicitly for regulatory compliance
         raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
@@ -112,12 +132,33 @@ async def safe_context_set(ctx: Context, key: str, value):
         RuntimeError: If critical state storage fails (no fallback allowed)
     """
     try:
+        # ENHANCED: Add detailed logging for debugging
+        logger.debug(f"💾 Attempting to store context key: {key}, type: {type(value)}")
+        
+        # ENHANCED: Handle complex objects that might need special serialization
+        if hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool, list, dict)):
+            logger.debug(f"🔧 Storing complex object {key}: {type(value)}")
+            # For GAMPCategory enum, store both value and type info
+            if hasattr(value, 'value') and hasattr(value, '__class__'):
+                logger.debug(f"📝 Enum detected for {key}: {value.value}")
+        
         # Use ctx.store for persistent storage across workflow boundaries
         await ctx.store.set(key, value)
-        logger.debug(f"Context storage successful for key {key}")
+        logger.debug(f"✅ Context storage successful for key {key}")
+        
+        # ENHANCED: Verify storage by reading back
+        try:
+            verification = await ctx.store.get(key)
+            if verification is None:
+                logger.warning(f"⚠️ Verification failed: {key} was stored but read back as None")
+            else:
+                logger.debug(f"✅ Storage verification successful for {key}")
+        except Exception as verify_error:
+            logger.warning(f"⚠️ Storage verification failed for {key}: {verify_error}")
+        
         return True
     except Exception as e:
-        logger.error(f"CRITICAL: Context storage failed for key {key}: {e}")
+        logger.error(f"❌ CRITICAL: Context storage failed for key {key}: {e}")
         # NO FALLBACKS - fail explicitly for regulatory compliance
         raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
@@ -397,9 +438,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
             agent_requests.append({
                 "agent_type": "context_provider",
                 "request_data": {
-                    "gamp_category": ev.gamp_category.value,
+                    "gamp_category": str(ev.gamp_category.value),  # CRITICAL FIX: Explicit string conversion
                     "test_strategy": ev.test_strategy,
-                    "document_sections": ["functional_requirements", "validation_requirements"]
+                    "document_sections": ["functional_requirements", "validation_requirements"],
+                    "search_scope": {}  # Add required field for ContextProviderRequest
                 },
                 "correlation_id": f"ctx_{self._workflow_session_id}"
             })
@@ -456,6 +498,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         await safe_context_set(ctx, "coordination_requests", agent_request_events)
         await safe_context_set(ctx, "expected_results_count", len(agent_request_events))
         await safe_context_set(ctx, "current_request_index", 0)
+        await safe_context_set(ctx, "collected_results", [])  # Initialize collected results
 
         # Emit the first request
         if agent_request_events:
@@ -527,7 +570,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 from src.agents.parallel.research_agent import create_research_agent
 
                 agent = create_research_agent(
-                    research_focus=ev.request_data.get("research_focus", ["GAMP-5"]),
+                    # research_focus parameter doesn't exist in create_research_agent
                     verbose=self.verbose
                 )
 
@@ -548,7 +591,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "supported_types": ["context_provider", "sme", "research"]
                 },
                 success=False,
-                session_id=self._workflow_session_id
+                session_id=self._workflow_session_id,
+                processing_time=0.0
             )
 
         except Exception as e:
@@ -562,7 +606,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "agent_type": ev.agent_type
                 },
                 success=False,
-                session_id=self._workflow_session_id
+                session_id=self._workflow_session_id,
+                processing_time=0.0
             )
 
     @step
