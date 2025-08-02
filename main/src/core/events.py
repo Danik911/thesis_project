@@ -330,6 +330,27 @@ class ErrorRecoveryEvent(Event):
     auto_recoverable: bool = False
 
 
+class AgentResultsEvent(Event):
+    """
+    Event containing a collection of agent result events.
+    
+    This event wraps multiple AgentResultEvent instances to comply with
+    LlamaIndex workflow validation that requires single Event parameters.
+    """
+    agent_results: list[AgentResultEvent]
+    session_id: str
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    success_count: int = Field(default=0)
+    total_count: int = Field(default=0)
+    
+    def __init__(self, **data: Any) -> None:
+        """Initialize and calculate success metrics."""
+        super().__init__(**data)
+        self.total_count = len(self.agent_results)
+        self.success_count = sum(1 for result in self.agent_results if result.success)
+
+
 class WorkflowCompletionEvent(Event):
     """
     Event indicating workflow completion readiness.
@@ -362,6 +383,7 @@ except ImportError:
 __all__ = [
     "AgentRequestEvent",
     "AgentResultEvent",
+    "AgentResultsEvent",
     "ConsultationRequiredEvent",
     "ConsultationSessionEvent",
     "ConsultationTimeoutEvent",

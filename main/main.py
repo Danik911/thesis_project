@@ -23,51 +23,15 @@ if os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true":
     try:
         from src.monitoring.phoenix_config import setup_phoenix
         phoenix_manager = setup_phoenix()
-        print("🔭 Phoenix observability initialized - LLM calls will be traced")
+        # Use safe_print to avoid Unicode issues during initialization
+        # Will be imported after Unicode configuration
+        phoenix_initialized = True
     except Exception as e:
-        print(f"⚠️  Phoenix initialization failed: {e}")
+        phoenix_initialized = False
+        phoenix_error = str(e)
         # Continue without Phoenix - don't fail the application
 
-def setup_unicode_support():
-    """
-    Configure proper Unicode support for Windows console to prevent encoding crashes.
-    
-    This is critical for pharmaceutical systems that must handle Unicode characters
-    in documentation and user interfaces without fallback masking.
-    """
-    try:
-        import os
-
-        # Set UTF-8 environment variable (Python 3.7+)
-        os.environ.setdefault("PYTHONUTF8", "1")
-
-        # Reconfigure stdout and stderr for UTF-8 on Windows
-        if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(encoding="utf-8", errors="strict")
-        if hasattr(sys.stderr, "reconfigure"):
-            sys.stderr.reconfigure(encoding="utf-8", errors="strict")
-
-        # Verify Unicode support
-        test_unicode = "🧑‍⚕️ GAMP-5 Test: ✅ ❌ 📋 🔍 ⚡"
-
-        # Test print capability - fail explicitly if Unicode not supported
-        try:
-            print(test_unicode)
-            return True
-        except UnicodeEncodeError as e:
-            raise UnicodeEncodeError(
-                e.encoding, e.object, e.start, e.end,
-                f"Console does not support Unicode characters required for pharmaceutical UI. "
-                f"Configure PYTHONUTF8=1 environment variable or use a UTF-8 capable terminal. "
-                f"Error: {e.reason}"
-            ) from e
-
-    except Exception as e:
-        # NO FALLBACKS - pharmaceutical systems must handle Unicode properly
-        raise RuntimeError(
-            f"Failed to configure Unicode support for pharmaceutical compliance system. "
-            f"Unicode characters are required for regulatory interface. Error: {e}"
-        ) from e
+# Unicode support will be configured by the enhanced function below
 
 # Add the main directory to the path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -134,21 +98,28 @@ def setup_unicode_support():
                 # Note: stdin reconfiguration can cause issues, so we skip it
 
         # Verify configuration with actual test characters
-        test_unicode = "🧑‍⚕️✅📋"  # Test characters that were causing crashes
+        test_unicode = "GAMP-5 Test: OK"  # Use safe ASCII characters for verification
         try:
-            # Test if we can actually print unicode to stdout
-            print(test_unicode)  # Direct test without safe_print to avoid recursion
-            # If we get here, Unicode is working
+            # Test if we can actually print to stdout without errors
+            print(test_unicode)  
+            # If we get here, basic output is working
+            
+            # Now test if Unicode characters work
+            unicode_test = "🧑‍⚕️✅📋"  # Test characters that were causing crashes
+            print(unicode_test)
+            return True
+            
         except UnicodeEncodeError as e:
+            # Unicode failed but basic ASCII works - provide detailed error info
             error_msg = (
                 f"CRITICAL: Unicode configuration failed verification.\n"
-                f"Test characters: {test_unicode!r}\n"
                 f"Current stdout encoding: {getattr(sys.stdout, 'encoding', 'unknown')}\n"
                 f"Error: {e}\n"
                 f"Platform: {sys.platform}\n"
-                f"SOLUTION: Ensure Windows Terminal or configure system for UTF-8 support"
+                f"SOLUTION: Use Windows Terminal (supports UTF-8) or configure system for UTF-8 support"
             )
-            safe_print(error_msg)
+            # Use basic print since safe_print may not be available yet
+            print(error_msg)
             raise RuntimeError("Unicode configuration verification failed - system cannot handle required characters") from e
 
     except Exception as e:
@@ -159,7 +130,8 @@ def setup_unicode_support():
             f"This will cause crashes when consultation workflow runs.\n"
             f"SOLUTION: Use Windows Terminal or configure PYTHONUTF8=1 environment variable"
         )
-        safe_print(error_msg)
+        # Use basic print since safe_print may not be available yet
+        print(error_msg)
         raise RuntimeError("Unicode configuration failed - pharmaceutical system requires Unicode support") from e
 
 
@@ -297,9 +269,6 @@ async def run_with_event_logging(document_path: Path, args):
         workflow = UnifiedTestGenerationWorkflow(
             timeout=900,  # 15 minutes for complete workflow
             verbose=args.verbose,
-            enable_error_handling=True,
-            confidence_threshold=args.confidence_threshold,
-            enable_document_processing=args.enable_document_processing,
             enable_parallel_coordination=not args.disable_parallel_coordination
         )
         workflow_type = "unified"
@@ -319,16 +288,21 @@ async def run_with_event_logging(document_path: Path, args):
     # Run workflow with event logging
     if workflow_type == "categorization":
         safe_print("\n🚀 Running GAMP-5 categorization with event logging...")
+        result, events = await run_workflow_with_event_logging(
+            workflow,
+            event_handler,
+            urs_content=document_content,
+            document_name=document_path.name,
+            document_version="1.0",
+            author="system"
+        )
     else:
         safe_print("\n🚀 Running unified test generation workflow with event logging...")
-    result, events = await run_workflow_with_event_logging(
-        workflow,
-        event_handler,
-        urs_content=document_content,
-        document_name=document_path.name,
-        document_version="1.0",
-        author="system"
-    )
+        result, events = await run_workflow_with_event_logging(
+            workflow,
+            event_handler,
+            document_path=str(document_path)  # Pass document path for unified workflow
+        )
 
     # Display results
     if result:
@@ -441,7 +415,8 @@ async def run_without_logging(document_path: Path, args):
             enable_error_handling=True,
             confidence_threshold=args.confidence_threshold,
             enable_document_processing=args.enable_document_processing,
-            enable_parallel_coordination=not args.disable_parallel_coordination
+            enable_parallel_coordination=not args.disable_parallel_coordination,
+            document_path=str(document_path)  # CRITICAL FIX: Pass document path
         )
 
     # Display results
@@ -689,6 +664,13 @@ async def main():
 
     # Setup safe output management after Unicode is configured
     output_manager = setup_safe_output_management()
+    
+    # Now that Unicode is configured, show Phoenix initialization status
+    if os.getenv("PHOENIX_ENABLE_TRACING", "true").lower() == "true":
+        if 'phoenix_initialized' in globals() and phoenix_initialized:
+            safe_print("🔭 Phoenix observability initialized - LLM calls will be traced")
+        elif 'phoenix_error' in globals():
+            safe_print(f"⚠️  Phoenix initialization failed: {phoenix_error}")
 
     # Setup logging with reduced verbosity
     log_level = "WARNING" if not args.verbose else "INFO"  # Reduced default verbosity

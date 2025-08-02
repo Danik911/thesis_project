@@ -27,7 +27,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from llama_index.core.llms import LLM
-from llama_index.core.workflow import Context, StopEvent, Workflow, step
+from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
 from llama_index.llms.openai import OpenAI
 from src.core.events import (
     AgentRequestEvent,
@@ -103,6 +103,46 @@ class PlannerAgentWorkflow(Workflow):
         self._workflow_session_id = None
         self._coordination_requests = []
         self._expected_agent_results = 0
+
+    @step
+    async def initialize_from_start_event(
+        self,
+        ctx: Context,
+        ev: StartEvent
+    ) -> GAMPCategorizationEvent:
+        """
+        Initialize planning workflow from StartEvent.
+        
+        This step handles the workflow.run() call and extracts the 
+        categorization_event parameter to begin planning.
+        
+        Args:
+            ctx: Workflow context
+            ev: StartEvent containing workflow parameters
+            
+        Returns:
+            GAMPCategorizationEvent to start planning process
+        """
+        # Extract categorization event from StartEvent parameters
+        categorization_event = ev.get("categorization_event")
+        
+        if not categorization_event:
+            raise ValueError(
+                "PlannerAgentWorkflow requires 'categorization_event' parameter. "
+                "Call workflow.run(categorization_event=your_event)"
+            )
+        
+        if not isinstance(categorization_event, GAMPCategorizationEvent):
+            raise TypeError(
+                f"Expected GAMPCategorizationEvent, got {type(categorization_event)}. "
+                "Ensure the categorization_event parameter is a valid GAMPCategorizationEvent instance."
+            )
+        
+        self.logger.info(
+            f"Initialized planner workflow with GAMP Category {categorization_event.gamp_category.value}"
+        )
+        
+        return categorization_event
 
     @step
     async def start_planning(
