@@ -23,6 +23,7 @@ Workflow Flow:
 
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -253,52 +254,158 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         self.logger.info(f"📋 Starting test planning for GAMP Category {ev.gamp_category.value}")
 
-        # For now, skip the planner workflow to test end-to-end
-        # TODO: Fix PlannerAgentWorkflow event validation issues
-        planning_result = {
-            "test_strategy": {
-                "approach": "basic",
-                "category": ev.gamp_category.value,
-                "test_types": ["unit", "integration", "validation"]
-            },
-            "estimated_test_count": 5,
-            "agent_requests": [] if not self.enable_parallel_coordination else [
-                {
-                    "agent_type": "research",
-                    "request_data": {"research_focus": ["GAMP-5", "regulatory"]},
-                    "correlation_id": "req_0"
-                }
-            ]
+        # Import and run the actual planner workflow
+        from src.agents.planner.workflow import PlannerAgentWorkflow
+        
+        # Create planner workflow instance
+        planner_workflow = PlannerAgentWorkflow(
+            timeout=300,  # 5 minutes for planning
+            verbose=self.verbose,
+            enable_coordination=self.enable_parallel_coordination,
+            enable_risk_assessment=True,
+            enable_llm_enhancement=True,
+            llm=self.llm
+        )
+        
+        # Extract document content for URS context
+        urs_context = {
+            "document_content": ev.document_content if hasattr(ev, 'document_content') else "",
+            "risk_assessment": ev.risk_assessment,
+            "confidence_score": ev.confidence_score,
+            "justification": ev.justification
         }
-
-        # Handle different result formats
-        if hasattr(planning_result, "result"):
-            planning_data = planning_result.result
-        else:
-            planning_data = planning_result
-
-        # Store planning results
-        await ctx.set("planning_result", planning_data)
-        await ctx.set("test_strategy", planning_data.get("test_strategy"))
-
-        # Extract or create planning event
-        if planning_data:
+        
+        # Run planner workflow with categorization event
+        try:
+            self.logger.info("Running PlannerAgentWorkflow...")
+            planning_result = await planner_workflow.run(categorization_event=ev)
+            
+            # Extract planning result
+            if hasattr(planning_result, "result"):
+                planning_data = planning_result.result
+            else:
+                planning_data = planning_result
+                
+            # Get the planning event from the result
+            planning_event = planning_data.get("planning_event")
+            
+            if not planning_event:
+                # Create planning event from result data
+                test_strategy = planning_data.get("test_strategy", {})
+                
+                # Get test types and compliance requirements based on category
+                test_types_map = {
+                    1: ["installation", "configuration"],
+                    3: ["installation", "configuration", "functional"],
+                    4: ["installation", "configuration", "functional", "performance"],
+                    5: ["installation", "configuration", "functional", "performance", "integration"]
+                }
+                
+                compliance_map = {
+                    1: ["GAMP-5"],
+                    3: ["GAMP-5", "ALCOA+"],
+                    4: ["GAMP-5", "ALCOA+", "21 CFR Part 11"],
+                    5: ["GAMP-5", "ALCOA+", "21 CFR Part 11", "CSV"]
+                }
+                
+                # Generate proper agent requests based on GAMP category
+                agent_requests = []
+                if self.enable_parallel_coordination:
+                    # Always include context provider
+                    agent_requests.append({
+                        "agent_type": "context_provider",
+                        "request_data": {
+                            "gamp_category": ev.gamp_category.value,
+                            "test_strategy": test_strategy,
+                            "document_sections": ["functional_requirements", "validation_requirements"]
+                        },
+                        "correlation_id": f"ctx_{self._workflow_session_id}"
+                    })
+                    
+                    # Add research agent for regulatory updates
+                    agent_requests.append({
+                        "agent_type": "research",
+                        "request_data": {
+                            "research_focus": ["GAMP-5", f"Category {ev.gamp_category.value}", "OQ testing"],
+                            "regulatory_scope": ["FDA", "EMA", "ICH"]
+                        },
+                        "correlation_id": f"res_{self._workflow_session_id}"
+                    })
+                    
+                    # Add SME agent for category-specific expertise
+                    agent_requests.append({
+                        "agent_type": "sme",
+                        "request_data": {
+                            "expertise_area": f"GAMP Category {ev.gamp_category.value}",
+                            "validation_focus": test_strategy.get("validation_rigor", "standard")
+                        },
+                        "correlation_id": f"sme_{self._workflow_session_id}"
+                    })
+                
+                planning_event = PlanningEvent(
+                    test_strategy=test_strategy,
+                    required_test_types=test_types_map.get(ev.gamp_category.value, ["basic"]),
+                    compliance_requirements=compliance_map.get(ev.gamp_category.value, ["GAMP-5"]),
+                    estimated_test_count=test_strategy.get("estimated_count", 5),
+                    planner_agent_id=f"planner_{self._workflow_session_id}",
+                    gamp_category=ev.gamp_category
+                )
+                
+                # Store agent requests separately
+                await ctx.set("agent_requests", agent_requests)
+            
+            # Store planning results
+            await ctx.set("planning_result", planning_data)
+            await ctx.set("test_strategy", planning_event.test_strategy)
+            await ctx.set("planning_event", planning_event)
+            
+            self.logger.info(
+                f"✅ Planning complete - {planning_event.estimated_test_count} tests estimated, "
+                f"{len(planning_event.agent_requests)} agents to coordinate"
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Planning workflow failed: {e}")
+            # Create minimal planning event to continue workflow
+            # Get test types and compliance requirements based on category
+            test_types_map = {
+                1: ["installation", "configuration"],
+                3: ["installation", "configuration", "functional"],
+                4: ["installation", "configuration", "functional", "performance"],
+                5: ["installation", "configuration", "functional", "performance", "integration"]
+            }
+            
+            compliance_map = {
+                1: ["GAMP-5"],
+                3: ["GAMP-5", "ALCOA+"],
+                4: ["GAMP-5", "ALCOA+", "21 CFR Part 11"],
+                5: ["GAMP-5", "ALCOA+", "21 CFR Part 11", "CSV"]
+            }
+            
             planning_event = PlanningEvent(
-                test_strategy=planning_data.get("test_strategy", {}),
-                estimated_test_count=planning_data.get("estimated_test_count", 5),
-                agent_requests=planning_data.get("agent_requests", []),
+                test_strategy={
+                    "approach": "basic",
+                    "category": ev.gamp_category.value,
+                    "error": str(e)
+                },
+                required_test_types=test_types_map.get(ev.gamp_category.value, ["basic"]),
+                compliance_requirements=compliance_map.get(ev.gamp_category.value, ["GAMP-5"]),
+                estimated_test_count=5,  # Default based on category
+                planner_agent_id=f"planner_{self._workflow_session_id}",
+                gamp_category=ev.gamp_category,
+                agent_requests=[],  # No coordination on error
                 session_id=self._workflow_session_id
             )
-        else:
-            # Fallback planning event
-            planning_event = PlanningEvent(
-                test_strategy={"approach": "basic", "category": ev.gamp_category.value},
-                estimated_test_count=3,
-                agent_requests=[],
-                session_id=self._workflow_session_id
+            
+            # CRITICAL FIX: Store planning_event in context even on error
+            await ctx.set("planning_error", str(e))
+            await ctx.set("planning_event", planning_event)
+            await ctx.set("test_strategy", planning_event.test_strategy)
+            
+            self.logger.info(
+                f"⚠️ Planning failed but minimal event created - continuing with basic strategy"
             )
-
-        self.logger.info(f"✅ Planning complete - {planning_event.estimated_test_count} tests estimated")
+            
         return planning_event
 
     @step
@@ -317,27 +424,27 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             AgentRequestEvent or WorkflowCompletionEvent if no coordination needed
         """
-        if not self.enable_parallel_coordination or not ev.agent_requests:
-            self.logger.info("⏭️ Skipping parallel coordination - proceeding to completion")
-            return WorkflowCompletionEvent(
-                session_id=self._workflow_session_id,
-                workflow_results={
-                    "test_strategy": ev.test_strategy,
-                    "estimated_test_count": ev.estimated_test_count,
-                    "coordination_skipped": True
-                },
-                triggering_step="coordinate_parallel_agents"
+        # Get agent requests from context
+        agent_requests_data = await ctx.get("agent_requests", [])
+        
+        if not self.enable_parallel_coordination or not agent_requests_data:
+            self.logger.info("⏭️ Skipping parallel coordination - creating empty results")
+            # Create empty agent results to proceed to OQ generation
+            return AgentResultsEvent(
+                agent_results=[],
+                session_id=self._workflow_session_id
             )
         
-        self.logger.info(f"🔄 Coordinating {len(ev.agent_requests)} parallel agents")
+        self.logger.info(f"🔄 Coordinating {len(agent_requests_data)} parallel agents")
         
         # Convert planning requests to agent request events
         agent_requests = []
-        for i, request in enumerate(ev.agent_requests):
+        for i, request in enumerate(agent_requests_data):
             agent_request = AgentRequestEvent(
                 agent_type=request.get("agent_type", "unknown"),
                 request_data=request.get("request_data", {}),
-                correlation_id=request.get("correlation_id", f"req_{i}"),
+                correlation_id=uuid4(),  # Generate proper UUID
+                requesting_step="coordinate_parallel_agents",
                 session_id=self._workflow_session_id
             )
             agent_requests.append(agent_request)
@@ -351,15 +458,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if agent_requests:
             return agent_requests[0]
         else:
-            # No requests to process
-            return WorkflowCompletionEvent(
-                session_id=self._workflow_session_id,
-                workflow_results={
-                    "test_strategy": ev.test_strategy,
-                    "estimated_test_count": ev.estimated_test_count,
-                    "coordination_skipped": True
-                },
-                triggering_step="coordinate_parallel_agents"
+            # No requests to process - return empty results
+            return AgentResultsEvent(
+                agent_results=[],
+                session_id=self._workflow_session_id
             )
 
     @step(num_workers=3)  # Allow parallel processing
@@ -380,50 +482,81 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         self.logger.info(f"🤖 Executing {ev.agent_type} agent request")
         
-        # Simulate agent execution - in real implementation, this would
-        # dispatch to actual agent implementations
         try:
-            # Mock execution based on agent type
-            if ev.agent_type.lower() == "context":
-                result_data = {
-                    "context_provided": True,
-                    "regulatory_context": "GAMP-5 compliant context generated",
-                    "execution_time": 2.5
-                }
+            # Execute actual agents based on type
+            if ev.agent_type.lower() == "context_provider":
+                # Use the actual context provider agent
+                from src.agents.parallel.context_provider import create_context_provider_agent
+                
+                agent = create_context_provider_agent(
+                    verbose=self.verbose,
+                    enable_phoenix=self.enable_phoenix,
+                    max_documents=10
+                )
+                
+                # Process the request
+                result_event = await agent.process_request(ev)
+                
+                # Return the result event with session ID
+                result_event.session_id = self._workflow_session_id
+                return result_event
+                
             elif ev.agent_type.lower() == "sme":
-                result_data = {
-                    "sme_analysis": True,
-                    "expert_recommendations": "SME analysis completed",
-                    "execution_time": 3.2
-                }
+                # Use the actual SME agent
+                from src.agents.parallel.sme_agent import create_sme_agent
+                
+                agent = create_sme_agent(
+                    specialty=ev.request_data.get("expertise_area", "general_validation"),
+                    verbose=self.verbose
+                )
+                
+                # Process the request
+                result_event = await agent.process_request(ev)
+                
+                # Return the result event with session ID
+                result_event.session_id = self._workflow_session_id
+                return result_event
+                
             elif ev.agent_type.lower() == "research":
-                result_data = {
-                    "research_completed": True,
-                    "findings": "Research agent executed successfully",
-                    "fda_api_calls": 2,
-                    "execution_time": 4.1
-                }
+                # Use the actual research agent
+                from src.agents.parallel.research_agent import create_research_agent
+                
+                agent = create_research_agent(
+                    research_focus=ev.request_data.get("research_focus", ["GAMP-5"]),
+                    verbose=self.verbose
+                )
+                
+                # Process the request
+                result_event = await agent.process_request(ev)
+                
+                # Return the result event with session ID
+                result_event.session_id = self._workflow_session_id
+                return result_event
+                
             else:
-                result_data = {
-                    "agent_executed": True,
-                    "status": f"{ev.agent_type} agent completed",
-                    "execution_time": 1.8
-                }
-            
-            return AgentResultEvent(
-                agent_type=ev.agent_type,
-                correlation_id=ev.correlation_id,
-                result_data=result_data,
-                success=True,
-                session_id=self._workflow_session_id
-            )
+                # Unknown agent type
+                self.logger.warning(f"Unknown agent type: {ev.agent_type}")
+                return AgentResultEvent(
+                    agent_type=ev.agent_type,
+                    correlation_id=ev.correlation_id,
+                    result_data={
+                        "error": f"Unknown agent type: {ev.agent_type}",
+                        "supported_types": ["context_provider", "sme", "research"]
+                    },
+                    success=False,
+                    session_id=self._workflow_session_id
+                )
             
         except Exception as e:
             self.logger.error(f"❌ Agent {ev.agent_type} execution failed: {e}")
             return AgentResultEvent(
                 agent_type=ev.agent_type,
                 correlation_id=ev.correlation_id,
-                result_data={"error": str(e)},
+                result_data={
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "agent_type": ev.agent_type
+                },
                 success=False,
                 session_id=self._workflow_session_id
             )
@@ -478,16 +611,18 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self,
         ctx: Context,
         ev: AgentResultsEvent
-    ) -> WorkflowCompletionEvent:
+    ) -> AgentResultsEvent:
         """
         Process the results from parallel agent execution.
+        
+        This step aggregates agent results and passes them to OQ generation.
         
         Args:
             ctx: Workflow context
             ev: AgentResultsEvent containing list of agent result events
             
         Returns:
-            WorkflowCompletionEvent to continue to completion
+            AgentResultsEvent to trigger OQ generation
         """
         # Aggregate agent results from the event
         agent_results = ev.agent_results
@@ -510,45 +645,19 @@ class UnifiedTestGenerationWorkflow(Workflow):
         await ctx.set("agent_results", aggregated_results)
         await ctx.set("successful_agents", successful_agents)
         await ctx.set("failed_agents", failed_agents)
+        await ctx.set("collected_results", agent_results)  # Store for final workflow
         
-        # Get planning and categorization context
-        planning_result = await ctx.get("planning_result", {})
-        categorization_result = await ctx.get("categorization_result")
+        self.logger.info(f"✅ Agent processing complete - {len(successful_agents)} succeeded, {len(failed_agents)} failed")
         
-        # Create comprehensive workflow results
-        workflow_results = {
-            "categorization": {
-                "gamp_category": categorization_result.gamp_category.value if categorization_result else "unknown",
-                "confidence_score": categorization_result.confidence_score if categorization_result else 0.0
-            },
-            "planning": planning_result,
-            "agent_coordination": {
-                "successful_agents": successful_agents,
-                "failed_agents": failed_agents,
-                "results": aggregated_results
-            },
-            "session_metadata": {
-                "session_id": self._workflow_session_id,
-                "workflow_start_time": await ctx.get("workflow_start_time"),
-                "processing_time": datetime.now(UTC),
-                "phoenix_enabled": self.enable_phoenix
-            }
-        }
-        
-        self.logger.info(f"✅ Workflow processing complete - {len(successful_agents)} agents succeeded")
-        
-        return WorkflowCompletionEvent(
-            session_id=self._workflow_session_id,
-            workflow_results=workflow_results,
-            triggering_step="process_agent_results"
-        )
+        # Return the same event to trigger OQ generation
+        return ev
 
     @step
     async def check_consultation_required(
         self,
         ctx: Context,
         ev: GAMPCategorizationEvent
-    ) -> ConsultationRequiredEvent | WorkflowCompletionEvent:
+    ) -> ConsultationRequiredEvent | PlanningEvent:
         """
         Check if human consultation is required based on categorization results.
         
@@ -557,19 +666,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
             ev: GAMP categorization event
             
         Returns:
-            ConsultationRequiredEvent if consultation needed, otherwise WorkflowCompletionEvent
+            ConsultationRequiredEvent if consultation needed, otherwise trigger planning
         """
         if not self.enable_human_consultation:
-            # Skip consultation - proceed to completion
-            return WorkflowCompletionEvent(
-                session_id=self._workflow_session_id,
-                workflow_results={
-                    "gamp_category": ev.gamp_category.value,
-                    "confidence_score": ev.confidence_score,
-                    "consultation_skipped": True
-                },
-                triggering_step="check_consultation_required"
-            )
+            # Skip consultation - trigger planning directly
+            self.logger.info("Skipping consultation check - triggering planning")
+            # This will trigger run_planning_workflow step
+            return await self.run_planning_workflow(ctx, ev)
         
         # Check if consultation is required
         requires_consultation = (
@@ -597,16 +700,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
             consultation_event.categorization_event = ev  # Add as dynamic attribute
             return consultation_event
         else:
-            # No consultation needed - proceed to completion
-            return WorkflowCompletionEvent(
-                session_id=self._workflow_session_id,
-                workflow_results={
-                    "gamp_category": ev.gamp_category.value,
-                    "confidence_score": ev.confidence_score,
-                    "consultation_not_required": True
-                },
-                triggering_step="check_consultation_required"
-            )
+            # No consultation needed - trigger planning
+            self.logger.info("No consultation required - triggering planning")
+            return await self.run_planning_workflow(ctx, ev)
 
     @step
     async def handle_consultation(
@@ -646,29 +742,134 @@ class UnifiedTestGenerationWorkflow(Workflow):
             gamp_category = ev.categorization_event.gamp_category.value
             confidence_score = ev.categorization_event.confidence_score
         
-        return WorkflowCompletionEvent(
-            session_id=self._workflow_session_id,
-            workflow_results={
-                "gamp_category": gamp_category,
-                "confidence_score": confidence_score,
-                "consultation_completed": True,
-                "consultation_result": consultation_result
+        # Create a categorization event to continue the workflow
+        if hasattr(ev, 'categorization_event'):
+            # Use the original event
+            return ev.categorization_event
+        else:
+            # Create new categorization event
+            from src.shared.models import GAMPCategory
+            return GAMPCategorizationEvent(
+                gamp_category=GAMPCategory(gamp_category),
+                confidence_score=confidence_score,
+                justification="Categorization after human consultation",
+                risk_assessment={"consultation_required": True},
+                document_content="",  # Will be filled from context
+                review_required=True,
+                session_id=self._workflow_session_id
+            )
+
+    @step
+    async def generate_oq_tests(
+        self,
+        ctx: Context,
+        ev: AgentResultsEvent
+    ) -> OQTestSuiteEvent:
+        """
+        Generate OQ test suite based on planning and agent results.
+        
+        Args:
+            ctx: Workflow context
+            ev: Agent results event with context data
+            
+        Returns:
+            OQTestSuiteEvent with generated test suite
+        """
+        self.logger.info("🧪 Starting OQ test generation")
+        
+        # Get required context
+        planning_event = await ctx.get("planning_event")
+        categorization_result = await ctx.get("categorization_result")
+        document_path = await ctx.get("document_path")
+        
+        # Aggregate context from agent results
+        aggregated_context = {
+            "agent_results": {}
+        }
+        
+        for result in ev.agent_results:
+            if result.success:
+                aggregated_context["agent_results"][result.agent_type] = result.result_data
+        
+        # Add planning context
+        aggregated_context["planning_context"] = {
+            "test_strategy": planning_event.test_strategy,
+            "estimated_test_count": planning_event.estimated_test_count
+        }
+        
+        # Create OQ generation event
+        oq_generation_event = OQTestGenerationEvent(
+            gamp_category=categorization_result.gamp_category,
+            urs_content=categorization_result.document_content if hasattr(categorization_result, 'document_content') else "",
+            document_metadata={
+                "name": Path(document_path).name if document_path else "Unknown",
+                "path": document_path,
+                "version": "1.0"
             },
-            triggering_step="handle_consultation"
+            aggregated_context=aggregated_context,
+            required_test_count=planning_event.estimated_test_count,
+            test_strategy=planning_event.test_strategy,
+            correlation_id=uuid4(),
+            session_id=self._workflow_session_id
         )
+        
+        # Run OQ generation workflow
+        from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
+        
+        oq_workflow = OQTestGenerationWorkflow(
+            llm=self.llm,
+            timeout=600,  # 10 minutes
+            verbose=self.verbose,
+            enable_validation=True,
+            oq_generation_event=oq_generation_event
+        )
+        
+        try:
+            self.logger.info("Running OQ test generation workflow...")
+            oq_result = await oq_workflow.run()
+            
+            # Extract result
+            if hasattr(oq_result, "result"):
+                oq_data = oq_result.result
+            else:
+                oq_data = oq_result
+            
+            # Check if generation was successful
+            if oq_data.get("status") == "completed_successfully":
+                # Extract the OQ test suite event
+                oq_event = oq_data.get("full_event")
+                if oq_event and isinstance(oq_event, OQTestSuiteEvent):
+                    self.logger.info(
+                        f"✅ Generated {oq_event.test_suite.total_test_count} OQ tests successfully"
+                    )
+                    return oq_event
+                else:
+                    # Create event from data
+                    raise ValueError("OQ generation completed but no valid event returned")
+            else:
+                # Handle consultation required or error
+                consultation = oq_data.get("consultation", {})
+                raise RuntimeError(
+                    f"OQ generation requires consultation: {consultation.get('consultation_type', 'unknown')}"
+                )
+                
+        except Exception as e:
+            self.logger.error(f"OQ generation failed: {e}")
+            # Re-raise to trigger consultation
+            raise
 
     @step
     async def complete_workflow(
         self,
         ctx: Context,
-        ev: WorkflowCompletionEvent
+        ev: WorkflowCompletionEvent | OQTestSuiteEvent
     ) -> StopEvent:
         """
         Complete the unified workflow and return final results.
         
         Args:
             ctx: Workflow context
-            ev: Workflow completion event
+            ev: Either WorkflowCompletionEvent or OQTestSuiteEvent
             
         Returns:
             StopEvent with comprehensive workflow results
@@ -680,6 +881,27 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # Calculate total processing time
         total_time = datetime.now(UTC) - workflow_start_time if workflow_start_time else None
         
+        # Determine if we have OQ results
+        if isinstance(ev, OQTestSuiteEvent):
+            # Successful OQ generation
+            status = "completed_with_oq_tests"
+            oq_results = {
+                "test_suite_id": ev.test_suite.suite_id,
+                "total_tests": ev.test_suite.total_test_count,
+                "coverage_percentage": ev.test_suite.coverage_percentage,
+                "review_required": ev.test_suite.review_required,
+                "generation_successful": ev.generation_successful
+            }
+        else:
+            # Workflow completion without OQ (consultation or partial completion)
+            status = "completed_partial"
+            oq_results = None
+        
+        # Get all context data with safe defaults
+        categorization_result = await ctx.get("categorization_result", default=None)
+        planning_event = await ctx.get("planning_event", default=None)
+        agent_results = await ctx.get("collected_results", default=[])
+        
         # Compile final results
         final_results = {
             "workflow_metadata": {
@@ -690,11 +912,27 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "total_processing_time": total_time.total_seconds() if total_time else None,
                 "phoenix_enabled": self.enable_phoenix
             },
-            "workflow_results": ev.workflow_results,
-            "status": "completed"
+            "status": status,
+            "categorization": {
+                "gamp_category": categorization_result.gamp_category.value if categorization_result else None,
+                "confidence_score": categorization_result.confidence_score if categorization_result else 0.0,
+                "review_required": categorization_result.review_required if categorization_result else False
+            } if categorization_result else None,
+            "planning": {
+                "estimated_test_count": planning_event.estimated_test_count if planning_event else 0,
+                "test_strategy": planning_event.test_strategy if planning_event else None,
+                "agent_requests": len(planning_event.agent_requests) if planning_event else 0
+            } if planning_event else None,
+            "agent_coordination": {
+                "total_agents": len(agent_results),
+                "successful_agents": len([r for r in agent_results if r.success]),
+                "failed_agents": len([r for r in agent_results if not r.success])
+            },
+            "oq_generation": oq_results,
+            "workflow_results": ev.workflow_results if hasattr(ev, 'workflow_results') else None
         }
         
-        self.logger.info(f"🎉 Unified workflow completed successfully")
+        self.logger.info(f"🎉 Unified workflow completed with status: {status}")
         if total_time:
             self.logger.info(f"⏱️ Total processing time: {total_time.total_seconds():.2f} seconds")
         

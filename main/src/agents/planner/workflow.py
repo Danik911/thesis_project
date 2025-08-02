@@ -88,7 +88,7 @@ class PlannerAgentWorkflow(Workflow):
         self.logger = logging.getLogger(__name__)
 
         # Initialize LLM
-        self.llm = llm or OpenAI(model="gpt-4.1-mini-2025-04-14")
+        self.llm = llm or OpenAI(model="gpt-4o-mini")
 
         # Initialize planner agent
         self.planner_agent = create_planner_agent(
@@ -213,7 +213,7 @@ class PlannerAgentWorkflow(Workflow):
         self,
         ctx: Context,
         ev: PlanningEvent
-    ) -> list[AgentRequestEvent] | ConsultationRequiredEvent:
+    ) -> list[AgentRequestEvent] | ConsultationRequiredEvent | StopEvent:
         """
         Coordinate parallel agent execution based on planning context.
         
@@ -261,6 +261,11 @@ class PlannerAgentWorkflow(Workflow):
 
             await ctx.set("coordination_requests", coordination_requests)
             await ctx.set("expected_agent_count", len(coordination_requests))
+
+            # Check if no agents need coordination - complete immediately
+            if len(coordination_requests) == 0:
+                self.logger.info("No parallel agents required - completing planning immediately")
+                return await self._finalize_planning(ctx, [])
 
             # Log coordination
             agent_types = [req.agent_type for req in coordination_requests]
