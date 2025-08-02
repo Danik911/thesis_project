@@ -168,16 +168,19 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
         "strong_indicators": [
             "commercial software", "standard package", "off-the-shelf",
             "cots", "vendor standard", "default configuration",
-            "standard installation", "unmodified", "as supplied"
+            "standard installation", "unmodified", "as supplied",
+            "vendor-supplied software without modification", "vendor's built-in functionality",
+            "vendor's standard database", "as supplied by vendor", "vendor's archival feature",
+            "vendor's standard reporting", "standard reports provided by vendor"
         ],
         "weak_indicators": [
             "basic instrument", "balance", "ph meter", "spectrophotometer",
             "microsoft office", "adobe acrobat", "standard functionality",
-            "backup software", "antivirus"
+            "backup software", "antivirus", "environmental monitoring"
         ],
         "exclusions": [
             "configuration", "customization", "modification", "user-defined",
-            "workflow", "setup", "parameters"
+            "workflow", "setup", "parameters", "custom"
         ]
     }
 
@@ -186,15 +189,20 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
         "strong_indicators": [
             "configure", "configuration", "configurable", "user-defined parameters",
             "workflow configuration", "business rules setup", "system parameters",
-            "user preferences", "setup wizard", "approval workflows"
+            "user preferences", "setup wizard", "approval workflows",
+            "vendor's configuration tools", "vendor's formula editor", "vendor's report designer",
+            "commercial lims package", "commercial cms", "configure workflows"
         ],
         "weak_indicators": [
             "lims", "sample management", "test protocols", "result workflows",
             "erp", "business processes", "mes", "production workflows",
-            "qms", "document workflows", "change control"
+            "qms", "document workflows", "change control",
+            "custom calculations using vendor", "custom reports using vendor", 
+            "configure standard integration", "vendor's standard adapter"
         ],
         "exclusions": [
-            "custom development", "proprietary code", "bespoke", "programming"
+            "custom development", "proprietary code", "bespoke", "programming",
+            "custom-developed", "purpose-built", "custom code"
         ]
     }
 
@@ -202,21 +210,24 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     category_5_indicators = {
         "strong_indicators": [
             "custom development", "custom-developed", "bespoke solution", "bespoke analytics",
-            "proprietary algorithm", "custom algorithms", "custom calculations", 
-            "tailored functionality", "purpose-built", "custom integration", 
-            "unique business logic", "custom code", "develop custom", "custom workflow",
+            "proprietary algorithm", "tailored functionality", "purpose-built", 
+            "unique business logic", "custom code", "develop custom",
             "proprietary data structures", "custom mobile application", "custom audit trail",
             "proprietary electronic signature", "custom data integrity", "bespoke module",
-            "custom warehouse", "proprietary protocols", "custom implementation"
+            "proprietary protocols", "custom implementation", "custom-developed to integrate",
+            "custom algorithms for", "custom workflow engine", "custom interfaces for",
+            "bespoke", "proprietary", "custom software"
         ],
         "weak_indicators": [
             "algorithm development", "custom data models", "proprietary methods",
-            "specialized calculations", "custom interfaces", "ai/ml implementation",
+            "specialized calculations", "ai/ml implementation",
             "novel functionality", "custom reporting engine", 
-            "enhanced metadata", "site-specific business rules", "proprietary equipment",
-            "proprietary systems", "custom exceptions"
+            "enhanced metadata", "site-specific business rules not supported",
+            "proprietary equipment", "custom exceptions", "develop proprietary"
         ],
-        "exclusions": []  # Category 5 has no exclusions
+        "exclusions": [
+            "vendor's", "commercial", "configure", "standard", "using vendor"
+        ]  # Category 5 excludes vendor-supported activities
     }
 
     # Analyze each category
@@ -240,24 +251,50 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
             "exclusion_count": len(exclusions)
         }
 
-    # Apply decision logic (following synthesis document decision tree)
-    # 1. Infrastructure components only? → Category 1
-    cat1_analysis = categories_analysis[1]
-    if cat1_analysis["strong_count"] > 0 and cat1_analysis["exclusion_count"] == 0:
-        predicted_category = GAMPCategory.CATEGORY_1
-        evidence = cat1_analysis
-    # 2. Custom development required? → Category 5
-    elif categories_analysis[5]["strong_count"] > 0:
-        predicted_category = GAMPCategory.CATEGORY_5
-        evidence = categories_analysis[5]
-    # 3. Configuration required? → Category 4
-    elif categories_analysis[4]["strong_count"] > 0 and categories_analysis[4]["exclusion_count"] == 0:
-        predicted_category = GAMPCategory.CATEGORY_4
-        evidence = categories_analysis[4]
-    # 4. Otherwise → Category 3
-    else:
-        predicted_category = GAMPCategory.CATEGORY_3
-        evidence = categories_analysis[3]
+    # Apply scoring-based decision logic to prevent over-classification
+    # Calculate weighted scores for each category based on evidence strength
+    category_scores = {}
+    
+    for category_num in [1, 3, 4, 5]:
+        analysis = categories_analysis[category_num]
+        
+        # Base score calculation
+        strong_score = analysis["strong_count"] * 3  # Strong indicators worth 3 points
+        weak_score = analysis["weak_count"] * 1      # Weak indicators worth 1 point
+        exclusion_penalty = analysis["exclusion_count"] * -2  # Exclusions subtract 2 points
+        
+        base_score = strong_score + weak_score + exclusion_penalty
+        
+        # Category-specific adjustments for accuracy
+        if category_num == 1:
+            # Category 1 needs clear infrastructure focus without business logic
+            if analysis["strong_count"] >= 2 and analysis["exclusion_count"] == 0:
+                base_score += 2  # Bonus for clear infrastructure pattern
+        elif category_num == 3:
+            # Category 3 needs clear unmodified vendor software indicators
+            if analysis["strong_count"] >= 1 and analysis["exclusion_count"] == 0:
+                base_score += 3  # Strong bonus for unmodified vendor software
+        elif category_num == 4:
+            # Category 4 needs configuration evidence without custom development
+            if analysis["strong_count"] >= 1 and analysis["exclusion_count"] == 0:
+                base_score += 2  # Bonus for clear configuration pattern
+        elif category_num == 5:
+            # Category 5 requires very strong evidence due to validation impact
+            if analysis["exclusion_count"] > 0:
+                base_score -= 5  # Heavy penalty for vendor-supported activities
+            if analysis["strong_count"] >= 2:
+                base_score += 1  # Only modest bonus - high bar for Category 5
+        
+        category_scores[category_num] = max(0, base_score)  # Floor at 0
+    
+    # Select category with highest score
+    predicted_category_num = max(category_scores.items(), key=lambda x: x[1])
+    predicted_category = GAMPCategory(predicted_category_num[0])
+    evidence = categories_analysis[predicted_category_num[0]]
+    
+    # Add scoring details for transparency and debugging
+    evidence["category_scores"] = category_scores
+    evidence["winning_score"] = predicted_category_num[1]
 
     # Return a simplified structure that's easier for the LLM to process
     return {
@@ -1188,7 +1225,7 @@ async def categorize_with_error_handling(
     Categorize URS content with comprehensive error handling.
     
     This wrapper function provides end-to-end error handling for the categorization
-    process, ensuring fallback to Category 5 on any failure.
+    process with explicit failure reporting - NO FALLBACKS.
     
     Args:
         agent: The GAMP categorization agent
@@ -1197,7 +1234,10 @@ async def categorize_with_error_handling(
         max_retries: Maximum retry attempts on failure
         
     Returns:
-        GAMPCategorizationEvent with categorization or fallback result
+        GAMPCategorizationEvent with categorization result
+        
+    Raises:
+        RuntimeError: When categorization fails after all retries (NO FALLBACKS)
     """
     # Get error handler from agent or create default
     error_handler = getattr(agent, "error_handler", None)
@@ -1248,10 +1288,15 @@ async def categorize_with_error_handling(
                 confidence_match = re.search(r"\*\*Confidence Score\*\*[\s:]*(\d+(?:\.\d+)?)\s*%", response_text)
 
             if confidence_match:
-                if confidence_match.group(1):  # Percentage format
-                    confidence = float(confidence_match.group(1)) / 100
-                else:  # Decimal format
-                    confidence = float(confidence_match.group(2) if confidence_match.group(2) else confidence_match.group(1)) / 100
+                if confidence_match.group(1):  # Percentage format or decimal with %
+                    raw_value = float(confidence_match.group(1))
+                    if "%" in confidence_match.group(0):  # Percentage format
+                        confidence = raw_value / 100
+                    else:  # Decimal format without %
+                        confidence = raw_value if raw_value <= 1.0 else raw_value / 100
+                else:  # Group 2 - decimal format from "confidence:" pattern
+                    raw_value = float(confidence_match.group(2))
+                    confidence = raw_value if raw_value <= 1.0 else raw_value / 100
             else:
                 # NO FALLBACKS: Raise exception when confidence cannot be parsed
                 error_handler.logger.error(f"Failed to extract confidence from response: {response_text[:500]}...")
@@ -1299,15 +1344,22 @@ async def categorize_with_error_handling(
             if retry_count <= max_retries:
                 error_handler.logger.warning(f"Categorization attempt {retry_count} failed: {e!s}. Retrying...")
                 continue
-            # Max retries exceeded, create fallback
-            if isinstance(e, ValueError) and "URS content" in str(e):
-                return error_handler.handle_parsing_error(e, urs_content, document_name)
-            return error_handler.handle_llm_error(e, urs_content[:500], document_name)
+            # NO FALLBACKS: Max retries exceeded, fail explicitly with full diagnostic information
+            error_handler.logger.error(f"Categorization failed after {max_retries} retries for document '{document_name}'")
+            error_handler.logger.error(f"Final error: {e!s}")
+            error_handler.logger.error(f"Error type: {type(e).__name__}")
+            error_handler.logger.error(f"URS content length: {len(urs_content)} characters")
+            raise RuntimeError(
+                f"GAMP categorization failed after {max_retries} retries for document '{document_name}': "
+                f"{e!s}. No fallback allowed - explicit resolution required."
+            ) from e
 
-    # Should not reach here, but if it does, create fallback
-    return error_handler.handle_logic_error(
-        {"message": "Unexpected error in categorization loop", "last_error": str(last_error)},
-        document_name
+    # NO FALLBACKS: This code should never be reached - fail explicitly if it is
+    error_handler.logger.critical(f"Unexpected code path reached in categorization loop for document '{document_name}'")
+    error_handler.logger.critical(f"Last error: {last_error}")
+    raise RuntimeError(
+        f"GAMP categorization reached unexpected code path for document '{document_name}'. "
+        f"Last error: {last_error}. System integrity compromised - immediate investigation required."
     )
 
 

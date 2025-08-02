@@ -133,17 +133,17 @@ class CategorizationErrorHandler:
         exception: Exception,
         document_content: str,
         document_name: str = "Unknown"
-    ) -> GAMPCategorizationEvent:
+    ) -> None:
         """
-        Handle document parsing errors.
+        Handle document parsing errors - NO FALLBACKS.
         
         Args:
             exception: The parsing exception
             document_content: Original document content
             document_name: Document identifier
             
-        Returns:
-            GAMPCategorizationEvent with human consultation request or explicit failure
+        Raises:
+            RuntimeError: Always raises with full diagnostic information
         """
         error = CategorizationError(
             error_type=ErrorType.PARSING_ERROR,
@@ -158,28 +158,35 @@ class CategorizationErrorHandler:
             stack_trace=traceback.format_exc()
         )
 
-        # Only request human consultation for categorization ambiguity
-        if self._should_request_human_consultation(error):
-            return self._create_human_consultation_request(error, document_name)
-        # For system errors, raise an exception to be handled by the calling code
-        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # Store error for audit trail
+        self.error_history.append(error)
+        self.stats["total_errors"] += 1
+        self.stats["error_types"][error.error_type.value] = \
+            self.stats["error_types"].get(error.error_type.value, 0) + 1
+
+        # NO FALLBACKS: Always raise exception with full diagnostic information
+        self.logger.error(f"Parsing error in GAMP categorization: {error.message}")
+        self.logger.error(f"Error details: {error.details}")
+        if error.stack_trace:
+            self.logger.error(f"Stack trace: {error.stack_trace}")
+        raise RuntimeError(f"GAMP categorization parsing failed: {error.message}") from exception
 
     def handle_logic_error(
         self,
         error_details: dict[str, Any],
         document_name: str = "Unknown",
         partial_results: dict[str, Any] | None = None
-    ) -> GAMPCategorizationEvent:
+    ) -> None:
         """
-        Handle categorization logic failures.
+        Handle categorization logic failures - NO FALLBACKS.
         
         Args:
             error_details: Details about the logic failure
             document_name: Document identifier
             partial_results: Any partial results before failure
             
-        Returns:
-            GAMPCategorizationEvent with human consultation request or explicit failure
+        Raises:
+            RuntimeError: Always raises with full diagnostic information
         """
         error = CategorizationError(
             error_type=ErrorType.LOGIC_ERROR,
@@ -193,11 +200,16 @@ class CategorizationErrorHandler:
             }
         )
 
-        # Only request human consultation for categorization ambiguity
-        if self._should_request_human_consultation(error):
-            return self._create_human_consultation_request(error, document_name)
-        # For system errors, raise an exception to be handled by the calling code
-        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # Store error for audit trail
+        self.error_history.append(error)
+        self.stats["total_errors"] += 1
+        self.stats["error_types"][error.error_type.value] = \
+            self.stats["error_types"].get(error.error_type.value, 0) + 1
+
+        # NO FALLBACKS: Always raise exception with full diagnostic information
+        self.logger.error(f"Logic error in GAMP categorization: {error.message}")
+        self.logger.error(f"Error details: {error.details}")
+        raise RuntimeError(f"GAMP categorization logic failed: {error.message}")
 
     def check_ambiguity(
         self,
@@ -283,12 +295,9 @@ class CategorizationErrorHandler:
         exception: Exception,
         tool_input: Any,
         document_name: str = "Unknown"
-    ) -> GAMPCategorizationEvent:
+    ) -> None:
         """
-        Handle errors from categorization tools.
-        
-        Tool validation errors should be fixed, not sent to human consultation.
-        Only genuine categorization ambiguity should trigger human consultation.
+        Handle errors from categorization tools - NO FALLBACKS.
         
         Args:
             tool_name: Name of the failed tool
@@ -296,8 +305,8 @@ class CategorizationErrorHandler:
             tool_input: Input that caused the error
             document_name: Document identifier
             
-        Returns:
-            GAMPCategorizationEvent with error details
+        Raises:
+            RuntimeError: Always raises with full diagnostic information
         """
         error = CategorizationError(
             error_type=ErrorType.TOOL_ERROR,
@@ -312,28 +321,35 @@ class CategorizationErrorHandler:
             stack_trace=traceback.format_exc()
         )
 
-        # Only request human consultation for categorization ambiguity
-        if self._should_request_human_consultation(error):
-            return self._create_human_consultation_request(error, document_name)
-        # For system errors, raise an exception to be handled by the calling code
-        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # Store error for audit trail
+        self.error_history.append(error)
+        self.stats["total_errors"] += 1
+        self.stats["error_types"][error.error_type.value] = \
+            self.stats["error_types"].get(error.error_type.value, 0) + 1
+
+        # NO FALLBACKS: Always raise exception with full diagnostic information
+        self.logger.error(f"Tool error in GAMP categorization: {error.message}")
+        self.logger.error(f"Error details: {error.details}")
+        if error.stack_trace:
+            self.logger.error(f"Stack trace: {error.stack_trace}")
+        raise RuntimeError(f"GAMP categorization tool '{tool_name}' failed: {error.message}") from exception
 
     def handle_llm_error(
         self,
         exception: Exception,
         prompt: str,
         document_name: str = "Unknown"
-    ) -> GAMPCategorizationEvent:
+    ) -> None:
         """
-        Handle LLM-related errors.
+        Handle LLM-related errors - NO FALLBACKS.
         
         Args:
             exception: The LLM exception
             prompt: Prompt that caused the error
             document_name: Document identifier
             
-        Returns:
-            GAMPCategorizationEvent with human consultation request or explicit failure
+        Raises:
+            RuntimeError: Always raises with full diagnostic information
         """
         error = CategorizationError(
             error_type=ErrorType.LLM_ERROR,
@@ -348,11 +364,18 @@ class CategorizationErrorHandler:
             stack_trace=traceback.format_exc()
         )
 
-        # Only request human consultation for categorization ambiguity
-        if self._should_request_human_consultation(error):
-            return self._create_human_consultation_request(error, document_name)
-        # For system errors, raise an exception to be handled by the calling code
-        raise RuntimeError(f"System error in GAMP categorization: {error.message}")
+        # Store error for audit trail
+        self.error_history.append(error)
+        self.stats["total_errors"] += 1
+        self.stats["error_types"][error.error_type.value] = \
+            self.stats["error_types"].get(error.error_type.value, 0) + 1
+
+        # NO FALLBACKS: Always raise exception with full diagnostic information
+        self.logger.error(f"LLM error in GAMP categorization: {error.message}")
+        self.logger.error(f"Error details: {error.details}")
+        if error.stack_trace:
+            self.logger.error(f"Stack trace: {error.stack_trace}")
+        raise RuntimeError(f"GAMP categorization LLM failed: {error.message}") from exception
 
     def validate_categorization_result(
         self,
