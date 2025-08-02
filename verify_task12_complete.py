@@ -2,8 +2,13 @@
 Final verification that Task 12 is complete - test categorization accuracy fix.
 """
 
+import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables first
+load_dotenv()
 
 # Add project root to path
 project_root = Path(__file__).parent
