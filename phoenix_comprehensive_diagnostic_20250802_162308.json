@@ -1,0 +1,220 @@
+{
+  "test_timestamp": 1754148149.597536,
+  "phoenix_host": "localhost",
+  "phoenix_port": 6006,
+  "base_url": "http://localhost:6006",
+  "environment": {
+    "python_executable": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.venv\\Scripts\\python.exe",
+    "python_version": "3.12.10",
+    "working_directory": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project",
+    "phoenix_version": "11.10.1",
+    "phoenix_location": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.venv\\Lib\\site-packages\\phoenix\\__init__.py",
+    "numpy_version": "1.26.4",
+    "numpy_location": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.venv\\Lib\\site-packages\\numpy\\__init__.py",
+    "opentelemetry_version": "unknown",
+    "opentelemetry_location": null,
+    "requests_version": "2.32.4",
+    "requests_location": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\.venv\\Lib\\site-packages\\requests\\__init__.py"
+  },
+  "test_results": {
+    "Basic HTTP Connectivity": {
+      "success": true,
+      "details": {
+        "status_code": 200,
+        "response_time_ms": 2084.3219999999997,
+        "content_length": 2686,
+        "headers": {
+          "date": "Sat, 02 Aug 2025 15:22:48 GMT",
+          "server": "uvicorn",
+          "content-type": "text/html; charset=utf-8",
+          "x-colab-notebook-cache-control": "no-cache",
+          "x-phoenix-server-version": "11.10.1",
+          "vary": "Accept-Encoding",
+          "content-encoding": "gzip",
+          "transfer-encoding": "chunked"
+        },
+        "server_accessible": true
+      },
+      "timestamp": 1754148168.7820761
+    },
+    "GraphQL Endpoint Connectivity": {
+      "success": true,
+      "details": {
+        "status_code": 200,
+        "response_time_ms": 2133.272,
+        "content_type": "application/json",
+        "response_data": {
+          "data": {
+            "__schema": {
+              "queryType": {
+                "name": "Query"
+              }
+            }
+          }
+        }
+      },
+      "timestamp": 1754148170.9178097
+    },
+    "GraphQL Data Access": {
+      "success": false,
+      "details": {
+        "Projects Query": {
+          "success": false,
+          "status_code": 200,
+          "response_data": {
+            "data": null,
+            "errors": [
+              {
+                "message": "an unexpected error occurred",
+                "locations": [
+                  {
+                    "line": 1,
+                    "column": 14
+                  }
+                ]
+              },
+              {
+                "message": "an unexpected error occurred",
+                "locations": [
+                  {
+                    "line": 1,
+                    "column": 17
+                  }
+                ]
+              }
+            ]
+          },
+          "error_info": [
+            {
+              "message": "an unexpected error occurred",
+              "locations": [
+                {
+                  "line": 1,
+                  "column": 14
+                }
+              ]
+            },
+            {
+              "message": "an unexpected error occurred",
+              "locations": [
+                {
+                  "line": 1,
+                  "column": 17
+                }
+              ]
+            }
+          ]
+        },
+        "Spans Query": {
+          "success": false,
+          "status_code": 200,
+          "response_data": {
+            "data": null,
+            "errors": [
+              {
+                "message": "an unexpected error occurred",
+                "locations": [
+                  {
+                    "line": 1,
+                    "column": 3
+                  }
+                ]
+              }
+            ]
+          },
+          "error_info": [
+            {
+              "message": "an unexpected error occurred",
+              "locations": [
+                {
+                  "line": 1,
+                  "column": 3
+                }
+              ]
+            }
+          ]
+        },
+        "Traces Query": {
+          "success": false,
+          "status_code": 200,
+          "response_data": {
+            "data": null,
+            "errors": [
+              {
+                "message": "an unexpected error occurred",
+                "locations": [
+                  {
+                    "line": 1,
+                    "column": 3
+                  }
+                ]
+              }
+            ]
+          },
+          "error_info": [
+            {
+              "message": "an unexpected error occurred",
+              "locations": [
+                {
+                  "line": 1,
+                  "column": 3
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "timestamp": 1754148177.078636
+    },
+    "OTLP Traces Endpoint": {
+      "success": true,
+      "details": {
+        "status_code": 200,
+        "response_time_ms": 2045.779,
+        "headers": {
+          "date": "Sat, 02 Aug 2025 15:22:58 GMT",
+          "server": "uvicorn",
+          "content-type": "text/html; charset=utf-8",
+          "x-colab-notebook-cache-control": "no-cache",
+          "x-phoenix-server-version": "11.10.1",
+          "vary": "Accept-Encoding",
+          "content-encoding": "gzip",
+          "transfer-encoding": "chunked"
+        },
+        "endpoint_accessible": true,
+        "expected_415_for_get": false
+      },
+      "timestamp": 1754148179.1258266
+    },
+    "Trace Generation and Export": {
+      "success": true,
+      "details": {
+        "flush_successful": true,
+        "traces_generated": 2,
+        "export_timeout": "5 seconds",
+        "attributes_set": 5
+      },
+      "timestamp": 1754148183.3004458
+    },
+    "Phoenix Data Retrieval Verification": {
+      "success": false,
+      "details": {
+        "status_code": 200,
+        "traces_found": 0,
+        "diagnostic_traces_found": 0,
+        "data_accessible": false
+      },
+      "timestamp": 1754148188.345648
+    }
+  },
+  "recommendations": [
+    "\ud83d\udea8 CRITICAL: GraphQL data queries failing - this is the main issue",
+    "\ud83d\udd27 ACTION: Check Phoenix server logs for GraphQL errors",
+    "\ud83d\udd27 ACTION: Consider restarting Phoenix server",
+    "\ud83d\udd27 ACTION: Verify Phoenix version compatibility",
+    "\ud83d\udea8 CRITICAL: Traces exported but not retrievable via GraphQL",
+    "\ud83d\udd27 ACTION: This confirms GraphQL API is broken",
+    "\ud83d\udd27 ACTION: Phoenix server restart required"
+  ],
+  "overall_success": false
+}

@@ -47,10 +47,9 @@ from src.core.human_consultation import HumanConsultationManager
 from src.monitoring.phoenix_config import setup_phoenix
 # Enhanced Phoenix Observability
 from src.monitoring.phoenix_enhanced import (
-    PhoenixGraphQLClient,
-    WorkflowEventFlowVisualizer,
+    PhoenixEnhancedClient,
     AutomatedTraceAnalyzer,
-    setup_enhanced_phoenix_observability
+    WorkflowEventFlowVisualizer
 )
 from src.shared.config import get_config
 
@@ -955,28 +954,20 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 self.logger.info("🔍 Running enhanced Phoenix observability analysis...")
                 
                 # Initialize enhanced observability components
-                graphql_client = PhoenixGraphQLClient()
-                analyzer = AutomatedTraceAnalyzer(graphql_client)
-                visualizer = WorkflowEventFlowVisualizer(graphql_client)
+                phoenix_client = PhoenixEnhancedClient()
+                analyzer = AutomatedTraceAnalyzer(phoenix_client)
                 
                 # Query recent traces for this workflow session
-                import asyncio
-                traces = await graphql_client.query_workflow_traces(
+                traces = await phoenix_client.query_workflow_traces(
                     workflow_type="UnifiedTestGenerationWorkflow",
-                    hours_back=1
+                    hours=1  # Fixed parameter name
                 )
                 
                 # Analyze traces for compliance violations
-                violations = []
-                for trace in traces:
-                    trace_violations = await analyzer.analyze_trace(trace)
-                    violations.extend(trace_violations)
+                violations = await analyzer.analyze_compliance_violations(hours=24)
                 
                 # Generate compliance dashboard
-                dashboard_path = await analyzer.generate_compliance_dashboard(
-                    workflow_type="UnifiedTestGenerationWorkflow",
-                    hours_back=24
-                )
+                dashboard_path = await analyzer.generate_compliance_dashboard(hours=24)
                 
                 # Add enhanced observability results to final results
                 final_results["enhanced_observability"] = {
