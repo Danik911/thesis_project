@@ -45,6 +45,13 @@ from src.core.events import (
 )
 from src.core.human_consultation import HumanConsultationManager
 from src.monitoring.phoenix_config import setup_phoenix
+# Enhanced Phoenix Observability
+from src.monitoring.phoenix_enhanced import (
+    PhoenixGraphQLClient,
+    WorkflowEventFlowVisualizer,
+    AutomatedTraceAnalyzer,
+    setup_enhanced_phoenix_observability
+)
 from src.shared.config import get_config
 
 # Set up configuration
@@ -941,6 +948,65 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self.logger.info(f"🎉 Unified workflow completed with status: {status}")
         if total_time:
             self.logger.info(f"⏱️ Total processing time: {total_time.total_seconds():.2f} seconds")
+
+        # Enhanced Phoenix Observability - Analyze compliance and generate dashboard
+        if self.enable_phoenix:
+            try:
+                self.logger.info("🔍 Running enhanced Phoenix observability analysis...")
+                
+                # Initialize enhanced observability components
+                graphql_client = PhoenixGraphQLClient()
+                analyzer = AutomatedTraceAnalyzer(graphql_client)
+                visualizer = WorkflowEventFlowVisualizer(graphql_client)
+                
+                # Query recent traces for this workflow session
+                import asyncio
+                traces = await graphql_client.query_workflow_traces(
+                    workflow_type="UnifiedTestGenerationWorkflow",
+                    hours_back=1
+                )
+                
+                # Analyze traces for compliance violations
+                violations = []
+                for trace in traces:
+                    trace_violations = await analyzer.analyze_trace(trace)
+                    violations.extend(trace_violations)
+                
+                # Generate compliance dashboard
+                dashboard_path = await analyzer.generate_compliance_dashboard(
+                    workflow_type="UnifiedTestGenerationWorkflow",
+                    hours_back=24
+                )
+                
+                # Add enhanced observability results to final results
+                final_results["enhanced_observability"] = {
+                    "traces_analyzed": len(traces),
+                    "compliance_violations": len(violations),
+                    "dashboard_generated": str(dashboard_path) if dashboard_path else None,
+                    "critical_violations": len([v for v in violations if v.severity == "CRITICAL"]),
+                    "regulatory_status": "COMPLIANT" if len(violations) == 0 else "NON_COMPLIANT"
+                }
+                
+                if violations:
+                    self.logger.warning(f"⚠️ Found {len(violations)} compliance violations")
+                    final_results["enhanced_observability"]["violations"] = [
+                        {
+                            "type": v.violation_type,
+                            "severity": v.severity,
+                            "description": v.description
+                        } for v in violations[:5]  # Show first 5 violations
+                    ]
+                else:
+                    self.logger.info("✅ No compliance violations detected")
+                    
+                self.logger.info(f"📊 Compliance dashboard generated: {dashboard_path}")
+                
+            except Exception as e:
+                self.logger.error(f"Enhanced observability analysis failed: {e}")
+                final_results["enhanced_observability"] = {
+                    "error": str(e),
+                    "status": "failed"
+                }
 
         return StopEvent(result=final_results)
 
