@@ -201,14 +201,20 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     # Category 5: Custom Applications
     category_5_indicators = {
         "strong_indicators": [
-            "custom development", "bespoke solution", "proprietary algorithm",
-            "custom calculations", "tailored functionality", "purpose-built",
-            "custom integration", "unique business logic", "custom code"
+            "custom development", "custom-developed", "bespoke solution", "bespoke analytics",
+            "proprietary algorithm", "custom algorithms", "custom calculations", 
+            "tailored functionality", "purpose-built", "custom integration", 
+            "unique business logic", "custom code", "develop custom", "custom workflow",
+            "proprietary data structures", "custom mobile application", "custom audit trail",
+            "proprietary electronic signature", "custom data integrity", "bespoke module",
+            "custom warehouse", "proprietary protocols", "custom implementation"
         ],
         "weak_indicators": [
             "algorithm development", "custom data models", "proprietary methods",
             "specialized calculations", "custom interfaces", "ai/ml implementation",
-            "novel functionality", "custom reporting engine"
+            "novel functionality", "custom reporting engine", 
+            "enhanced metadata", "site-specific business rules", "proprietary equipment",
+            "proprietary systems", "custom exceptions"
         ],
         "exclusions": []  # Category 5 has no exclusions
     }
@@ -629,18 +635,15 @@ def confidence_tool_with_error_handling(
         # Call original confidence tool
         confidence = confidence_tool(category_data)
 
-        # Check for ambiguity
-        all_analysis = category_data.get("all_categories_analysis", {})
-        confidence_scores = {}
+        # Check for ambiguity using actual confidence score
+        # Only use the actual confidence score for the predicted category
+        # This prevents false ambiguity detection from artificial scores
+        predicted_category = category_data.get("predicted_category")
+        confidence_scores = {predicted_category: confidence}
 
-        for cat_id, analysis in all_analysis.items():
-            # Simple confidence calculation for each category
-            cat_confidence = (
-                0.4 * analysis.get("strong_count", 0) +
-                0.2 * analysis.get("weak_count", 0) -
-                0.3 * analysis.get("exclusion_count", 0)
-            )
-            confidence_scores[int(cat_id)] = max(0.0, min(1.0, 0.5 + cat_confidence))
+        # Log for audit trail
+        error_handler.logger.debug(f"Using actual confidence score {confidence} for category {predicted_category}")
+        error_handler.logger.debug(f"Confidence scores for ambiguity check: {confidence_scores}")
 
         ambiguity_error = error_handler.check_ambiguity(category_data, confidence_scores)
         if ambiguity_error:

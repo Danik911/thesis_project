@@ -337,12 +337,12 @@
     {
       "id": 12,
       "title": "Fix Categorization Accuracy",
-      "description": "Fix false ambiguity detection in categorization agent for clear Category 5 cases like URS-003",
-      "details": "High priority issue: URS-003 incorrectly detected as ambiguous despite clear Category 5 indicators. Need to implement dominance gap analysis (>0.20 gap = clear winner), adjust ambiguity thresholds to 0.65, and ensure Category 5 custom development is properly detected.",
-      "testStrategy": "1. Test ambiguity logic with various confidence scenarios 2. Validate URS-003 as Category 5 3. Test all URS cases (001-005) 4. Verify no false positives 5. Check regulatory compliance",
-      "status": "pending",
+      "description": "Resolved false ambiguity detection in categorization agent for clear Category 5 cases like URS-003 by using only the actual confidence score for the predicted category and removing artificial confidence calculations.",
+      "status": "in-progress",
       "dependencies": [],
       "priority": "high",
+      "details": "High priority issue addressed: URS-003 and similar clear Category 5 cases were incorrectly detected as ambiguous due to artificial confidence calculations. The implementation modified `confidence_tool_with_error_handling()` in `main/src/agents/categorization/agent.py` (lines 632-642) to use only the real confidence score for the predicted category (`confidence_scores = {predicted_category: confidence}`), eliminating the artificial confidence calculation loop. Dominance gap analysis (>0.20 gap = clear winner) is now based on real scores. Ambiguity thresholds are set to 0.65. Audit trail logging was added for regulatory compliance. The fix prevents false ambiguity detection, maintains proper error handling, and ensures Category 5 custom development is properly detected.",
+      "testStrategy": "1. Test ambiguity logic with various confidence scenarios using real confidence scores only 2. Validate URS-003 and similar cases as Category 5 without false ambiguity 3. Test all URS cases (001-005) for correct categorization 4. Verify no false positives or false ambiguity errors 5. Check regulatory compliance and audit trail logging 6. Confirm low confidence cases trigger CONFIDENCE_ERROR, not ambiguity 7. Perform before/after comparison to ensure fix effectiveness",
       "subtasks": []
     },
     {

@@ -30,11 +30,22 @@ C:\ClaudeCLI\claude.bat
 
 ## ✅ SOLUTION FOUND: SSH-Compatible Claude CLI
 
-**IMPORTANT**: The regular `claude.bat` doesn't work properly over SSH due to Windows terminal limitations. Use the SSH-compatible version instead:
+**✅ SUCCESS CONFIRMED**: Claude Code is now working via SSH! The SSH-compatible version successfully launches the interactive mode.
 
 ### **Use This Command for SSH:**
 ```cmd
 C:\ClaudeCLI\claude-ssh.bat
+```
+
+### **What You Should See:**
+```
+╭───────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                         │
+│                                                   │
+│   /help for help, /status for your current setup  │
+│                                                   │
+│   cwd: C:\ClaudeCLI                               │
+╰───────────────────────────────────────────────────╯
 ```
 
 ### **Why This Works:**
@@ -42,20 +53,63 @@ C:\ClaudeCLI\claude-ssh.bat
 - The SSH version uses Git Bash internally for proper output handling
 - All Claude CLI features work normally through this wrapper
 
-## Testing Access
-To verify Claude CLI is working via SSH, try these commands:
+## 🚀 Your Next Steps in Claude Code
 
-### Step 1: Test SSH-compatible version
-```cmd
-C:\ClaudeCLI\claude-ssh.bat --help
-```
-Expected: Full help output should appear
+Now that Claude Code is running, here's how to start developing your thesis project:
 
-### Step 2: Test with print command
-```cmd
-C:\ClaudeCLI\claude-ssh.bat --print "Hello Claude!"
+### **1. IMPORTANT: Navigate to Your Project BEFORE Starting Claude:**
 ```
-Expected: Claude should respond with a greeting
+cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project
+```
+
+### **2. THEN Start Claude from Your Project Directory:**
+```
+C:\ClaudeCLI\claude-ssh.bat
+```
+**⚠️ CRITICAL**: You must navigate to your project directory FIRST, then start Claude. Otherwise Claude will be restricted to the C:\ClaudeCLI directory for security reasons.
+
+**✅ PERMISSIONS FIXED**: sshuser now has full access to your thesis project directory!
+
+### **3. Test That Claude Can See Your Files:**
+```
+Read test_claude_access.md and confirm you can see this file
+```
+
+### **4. Read Your Project Guidelines:**
+```
+Read CLAUDE.md and understand the project rules
+```
+
+### **5. Work on Task 12:**
+```
+Read .taskmaster/tasks/task_012.txt and help me fix the categorization accuracy issue
+```
+
+### **3. Get Project Overview:**
+```
+Show me the structure of this pharmaceutical compliance project
+```
+
+### **4. Work on the Critical Fallback Issue:**
+```
+Read and analyze main/src/shared/config.py - I need to fix the conservative_gamp_category fallback mechanism
+```
+
+### **5. Useful Claude Commands:**
+- `/help` - Show all available commands
+- `/status` - Check your current setup  
+- `/terminal-setup` - Set up terminal integration
+- `/edit filename.py` - Edit specific files
+- `/read filename.py` - Read and analyze files
+
+### **6. Example Development Session:**
+```
+Read the monitoring report: main/docs/reports/monitoring/phoenix_fallback_detection_analysis_20250731_183214.md
+
+Help me understand the fallback violation issue and create a plan to fix it
+
+Edit main/src/shared/config.py to remove the conservative defaults
+```
 
 ## Troubleshooting
 - **CRITICAL**: Always use `C:\ClaudeCLI\claude-ssh.bat` for SSH sessions, NOT `claude.bat`
@@ -69,10 +123,10 @@ Expected: Claude should respond with a greeting
 
 **Option A: Interactive Mode (best for extended sessions)**
 ```cmd
-# Navigate to your project
+# ⚠️ CRITICAL: Navigate to your project FIRST
 cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project
 
-# Start interactive session (SSH-compatible)
+# THEN start interactive session (SSH-compatible)
 C:\ClaudeCLI\claude-ssh.bat
 # Claude prompt should appear - start typing your requests!
 ```
