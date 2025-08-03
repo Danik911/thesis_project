@@ -111,11 +111,16 @@ class OQTestGenerationWorkflow(Workflow):
             # Validate prerequisites - NO fallbacks
             self._validate_prerequisites(ev)
 
-            # Initialize test generator
+            # Initialize test generator with timeout configuration
             if not self._test_generator:
+                # Use 80% of workflow timeout for LLM generation (8 minutes out of 10)
+                # Use default if timeout attribute not available
+                workflow_timeout = getattr(self, 'timeout', 600)  # Default 10 minutes
+                generation_timeout = int(workflow_timeout * 0.8)
                 self._test_generator = OQTestGenerator(
                     llm=self.llm,
-                    verbose=self.verbose
+                    verbose=self.verbose,
+                    generation_timeout=generation_timeout
                 )
 
             # Store generation context

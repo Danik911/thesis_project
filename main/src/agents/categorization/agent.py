@@ -359,9 +359,20 @@ def confidence_tool(category_data: dict[str, Any]) -> float:
     elif predicted_category in [3, 4] and evidence["strong_count"] >= 1:
         category_adjustment = 0.05
 
-    # Final confidence calculation
+    # Final confidence calculation - NO FALLBACKS: explicit bounds checking without baseline
     raw_confidence = base_score + ambiguity_penalty + category_adjustment
-    final_confidence = max(0.0, min(1.0, 0.5 + raw_confidence))
+    
+    # NO FALLBACKS: Fail explicitly if confidence calculation produces invalid results
+    if raw_confidence < -0.5:  # Sanity check for severely negative confidence
+        raise RuntimeError(
+            f"CRITICAL: Confidence calculation failed - severely negative raw score {raw_confidence:.3f}. "
+            f"This indicates systematic categorization failure requiring explicit resolution. "
+            f"Evidence: base_score={base_score:.3f}, ambiguity_penalty={ambiguity_penalty:.3f}, "
+            f"category_adjustment={category_adjustment:.3f}"
+        )
+    
+    # Apply bounds without artificial baseline - use actual computed confidence
+    final_confidence = max(0.0, min(1.0, raw_confidence))
 
     return final_confidence
 
@@ -573,9 +584,14 @@ def enhanced_confidence_tool(
     # Calculate base confidence using original algorithm
     base_confidence = confidence_tool(category_data)
 
-    # If no context data available, return base confidence
+    # NO FALLBACKS: If no context data available, fail explicitly rather than falling back
     if not context_data or not context_data.get("context_available", False):
-        return base_confidence
+        raise RuntimeError(
+            f"CRITICAL: Enhanced confidence calculation requires context data but none available. "
+            f"Base confidence: {base_confidence:.3f}. "
+            f"Context availability: {context_data.get('context_available', 'not provided') if context_data else 'no context data'}. "
+            f"This violates pharmaceutical system requirements for enhanced confidence validation."
+        )
 
     # Apply context-based confidence enhancement
     confidence_boost = context_data.get("confidence_boost", 0.0)

@@ -45,6 +45,7 @@ from src.core.events import (
 )
 from src.core.human_consultation import HumanConsultationManager
 from src.monitoring.phoenix_config import setup_phoenix
+from src.monitoring.simple_tracer import get_tracer
 # Enhanced Phoenix Observability - temporarily disabled for testing
 # from src.monitoring.phoenix_enhanced import (
 #     PhoenixEnhancedClient,
@@ -242,7 +243,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
     def __init__(
         self,
-        timeout: int = 1800,  # 30 minutes for complete workflow
+        timeout: int = 1800,  # 30 minutes for complete workflow (increased for FDA API latency)
         verbose: bool = False,
         enable_phoenix: bool = True,
         enable_parallel_coordination: bool = True,
@@ -277,6 +278,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         # Initialize workflow session
         self._workflow_session_id = f"unified_workflow_{datetime.now(UTC).isoformat()}"
+
+        # Initialize tracer for monitoring and error logging
+        self.tracer = get_tracer()
+        self.logger.info("📊 Tracer initialized for workflow monitoring")
 
         # Initialize human consultation manager
         if enable_human_consultation:
@@ -536,6 +541,15 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # Import asyncio for timeout protection
             import asyncio
             
+            # Dynamic timeout configuration based on agent type and operation
+            timeout_mapping = {
+                "research": 300.0,           # 5 minutes for regulatory APIs (FDA can take 14+ seconds)
+                "sme": 120.0,               # 2 minutes for LLM calls
+                "context_provider": 60.0,   # 1 minute for document processing
+            }
+            
+            agent_timeout = timeout_mapping.get(ev.agent_type.lower(), 60.0)  # Default 1 minute
+            
             # Execute actual agents based on type with timeout protection
             if ev.agent_type.lower() == "context_provider":
                 # Use the actual context provider agent
@@ -553,21 +567,22 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 try:
                     result_event = await asyncio.wait_for(
                         agent.process_request(ev),
-                        timeout=30.0  # 30 second timeout
+                        timeout=agent_timeout
                     )
                 except asyncio.TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout", Exception("Agent execution timed out after 30s"))
-                    self.logger.error(f"❌ {ev.agent_type} agent timed out after 30 seconds")
+                    self.tracer.log_error(f"{ev.agent_type}_timeout", 
+                                        Exception(f"Agent execution timed out after {agent_timeout}s"))
+                    self.logger.error(f"❌ {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
                         result_data={
-                            "error": "Agent execution timed out after 30 seconds",
+                            "error": f"Agent execution timed out after {agent_timeout} seconds",
                             "error_type": "TimeoutError"
                         },
                         success=False,
                         session_id=self._workflow_session_id,
-                        processing_time=30.0
+                        processing_time=agent_timeout
                     )
 
                 # Return the result event with session ID
@@ -587,21 +602,22 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 try:
                     result_event = await asyncio.wait_for(
                         agent.process_request(ev),
-                        timeout=30.0  # 30 second timeout
+                        timeout=agent_timeout
                     )
                 except asyncio.TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout", Exception("Agent execution timed out after 30s"))
-                    self.logger.error(f"❌ {ev.agent_type} agent timed out after 30 seconds")
+                    self.tracer.log_error(f"{ev.agent_type}_timeout", 
+                                        Exception(f"Agent execution timed out after {agent_timeout}s"))
+                    self.logger.error(f"❌ {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
                         result_data={
-                            "error": "Agent execution timed out after 30 seconds",
+                            "error": f"Agent execution timed out after {agent_timeout} seconds",
                             "error_type": "TimeoutError"
                         },
                         success=False,
                         session_id=self._workflow_session_id,
-                        processing_time=30.0
+                        processing_time=agent_timeout
                     )
 
                 # Return the result event with session ID
@@ -621,21 +637,22 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 try:
                     result_event = await asyncio.wait_for(
                         agent.process_request(ev),
-                        timeout=30.0  # 30 second timeout
+                        timeout=agent_timeout
                     )
                 except asyncio.TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout", Exception("Agent execution timed out after 30s"))
-                    self.logger.error(f"❌ {ev.agent_type} agent timed out after 30 seconds")
+                    self.tracer.log_error(f"{ev.agent_type}_timeout", 
+                                        Exception(f"Agent execution timed out after {agent_timeout}s"))
+                    self.logger.error(f"❌ {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
                         result_data={
-                            "error": "Agent execution timed out after 30 seconds",
+                            "error": f"Agent execution timed out after {agent_timeout} seconds",
                             "error_type": "TimeoutError"
                         },
                         success=False,
                         session_id=self._workflow_session_id,
-                        processing_time=30.0
+                        processing_time=agent_timeout
                     )
 
                 # Return the result event with session ID

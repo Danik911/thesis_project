@@ -17,9 +17,11 @@ Key Features:
 
 import asyncio
 import logging
+import re
+import json
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from llama_index.core.agent.workflow import FunctionAgent
@@ -29,6 +31,272 @@ from llama_index.llms.openai import OpenAI
 from pydantic import BaseModel, Field
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.simple_tracer import get_tracer
+
+
+def clean_unicode_characters(text: str) -> str:
+    """
+    Clean invisible Unicode characters that can break JSON parsing.
+    
+    Handles:
+    - BOM markers (UTF-8 BOM: \ufeff)
+    - Zero-width spaces (\u200b)
+    - Zero-width non-joiner (\u200c)
+    - Zero-width joiner (\u200d)
+    - Line/paragraph separators (\u2028, \u2029)
+    
+    Args:
+        text: Raw text that may contain invisible characters
+        
+    Returns:
+        Cleaned text suitable for JSON parsing
+    """
+    # Remove BOM marker
+    if text.startswith('\ufeff'):
+        text = text[1:]
+    
+    # Remove various invisible Unicode characters
+    invisible_chars = [
+        '\u200b',  # Zero-width space
+        '\u200c',  # Zero-width non-joiner
+        '\u200d',  # Zero-width joiner
+        '\u2028',  # Line separator
+        '\u2029',  # Paragraph separator
+        '\ufeff',  # Additional BOM occurrences
+    ]
+    
+    for char in invisible_chars:
+        text = text.replace(char, '')
+    
+    return text
+
+
+def find_balanced_json_array(text: str) -> Optional[str]:
+    """
+    Find a balanced JSON array using bracket counting.
+    
+    This handles nested arrays and objects correctly by counting
+    opening and closing brackets while respecting string contexts.
+    
+    Args:
+        text: Text containing potential JSON array
+        
+    Returns:
+        Complete JSON array string or None if not found
+    """
+    start = text.find('[')
+    if start == -1:
+        return None
+    
+    bracket_count = 0
+    in_string = False
+    escape_next = False
+    
+    for i in range(start, len(text)):
+        char = text[i]
+        
+        if escape_next:
+            escape_next = False
+            continue
+            
+        if char == '\\':
+            escape_next = True
+            continue
+            
+        if char == '"' and not escape_next:
+            in_string = not in_string
+            continue
+            
+        if not in_string:
+            if char == '[':
+                bracket_count += 1
+            elif char == ']':
+                bracket_count -= 1
+                if bracket_count == 0:
+                    return text[start:i+1]
+    
+    return None
+
+
+def find_balanced_json_object(text: str) -> Optional[str]:
+    """
+    Find a balanced JSON object using brace counting.
+    
+    This handles nested objects and arrays correctly by counting
+    opening and closing braces while respecting string contexts.
+    
+    Args:
+        text: Text containing potential JSON object
+        
+    Returns:
+        Complete JSON object string or None if not found
+    """
+    start = text.find('{')
+    if start == -1:
+        return None
+    
+    brace_count = 0
+    in_string = False
+    escape_next = False
+    
+    for i in range(start, len(text)):
+        char = text[i]
+        
+        if escape_next:
+            escape_next = False
+            continue
+            
+        if char == '\\':
+            escape_next = True
+            continue
+            
+        if char == '"' and not escape_next:
+            in_string = not in_string
+            continue
+            
+        if not in_string:
+            if char == '{':
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    return text[start:i+1]
+    
+    return None
+
+
+def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List[Any]]:
+    """
+    Extract JSON from markdown code blocks using balanced bracket parsing.
+    
+    This function uses sophisticated parsing techniques to handle nested JSON
+    structures that break simple regex patterns. It supports both arrays and
+    objects and handles Unicode contamination issues.
+    
+    Supports formats:
+    - ```json\n{...}\n``` or ```json\n[...]\n```
+    - ```\n{...}\n``` or ```\n[...]\n```
+    - {...} or [...] (plain JSON)
+    
+    Args:
+        response_text: The text response that may contain JSON in markdown blocks
+        
+    Returns:
+        Parsed JSON dictionary or list
+        
+    Raises:
+        ValueError: If no valid JSON found in response (NO FALLBACK for GAMP-5 compliance)
+    """
+    logger = logging.getLogger(__name__)
+    
+    # Clean invisible Unicode characters that can break JSON parsing
+    cleaned_text = clean_unicode_characters(response_text)
+    
+    # Strategy 1: Extract from markdown code blocks (```json or ```)
+    # Use balanced parsing to extract content from code blocks
+    code_block_patterns = [
+        r'```json\s*(.*?)\s*```',  # Explicit JSON blocks
+        r'```\s*(.*?)\s*```',      # Generic code blocks
+    ]
+    
+    for pattern in code_block_patterns:
+        matches = re.finditer(pattern, cleaned_text, re.DOTALL | re.IGNORECASE)
+        for match in matches:
+            block_content = match.group(1).strip()
+            
+            # Check what type of JSON we have by looking at the first non-whitespace character
+            first_char_match = re.search(r'[^\s]', block_content)
+            if first_char_match:
+                first_char = first_char_match.group(0)
+                
+                # Use balanced parsing for objects (check first since objects can contain arrays)
+                if first_char == '{':
+                    balanced_json = find_balanced_json_object(block_content)
+                    if balanced_json:
+                        try:
+                            parsed_data = json.loads(balanced_json)
+                            logger.debug(f"Successfully parsed JSON object from code block: {len(parsed_data) if isinstance(parsed_data, dict) else 'N/A'} keys")
+                            return parsed_data
+                        except json.JSONDecodeError as e:
+                            logger.warning(f"Balanced JSON object failed parsing: {e}")
+                            
+                # Use balanced parsing for arrays
+                elif first_char == '[':
+                    balanced_json = find_balanced_json_array(block_content)
+                    if balanced_json:
+                        try:
+                            parsed_data = json.loads(balanced_json)
+                            logger.debug(f"Successfully parsed JSON array from code block: {len(parsed_data) if isinstance(parsed_data, list) else 'N/A'} items")
+                            return parsed_data
+                        except json.JSONDecodeError as e:
+                            logger.warning(f"Balanced JSON array failed parsing: {e}")
+    
+    # Strategy 2: Check for raw JSON - determine order based on first character
+    # This prevents extracting objects from inside arrays
+    first_char_match = re.search(r'[^\s]', cleaned_text)
+    if first_char_match:
+        first_char = first_char_match.group(0)
+        
+        if first_char == '[':
+            # For arrays, check arrays first to avoid extracting nested objects
+            balanced_array = find_balanced_json_array(cleaned_text)
+            if balanced_array:
+                try:
+                    parsed_data = json.loads(balanced_array)
+                    logger.debug(f"Successfully parsed raw JSON array: {len(parsed_data) if isinstance(parsed_data, list) else 'N/A'} items")
+                    return parsed_data
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Raw JSON array failed parsing: {e}")
+            
+            # If array parsing failed, try object as fallback
+            balanced_object = find_balanced_json_object(cleaned_text)
+            if balanced_object:
+                try:
+                    parsed_data = json.loads(balanced_object)
+                    logger.debug(f"Successfully parsed raw JSON object: {len(parsed_data) if isinstance(parsed_data, dict) else 'N/A'} keys")
+                    return parsed_data
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Raw JSON object failed parsing: {e}")
+        else:
+            # For non-arrays, check objects first
+            balanced_object = find_balanced_json_object(cleaned_text)
+            if balanced_object:
+                try:
+                    parsed_data = json.loads(balanced_object)
+                    logger.debug(f"Successfully parsed raw JSON object: {len(parsed_data) if isinstance(parsed_data, dict) else 'N/A'} keys")
+                    return parsed_data
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Raw JSON object failed parsing: {e}")
+            
+            # Then try arrays as fallback
+            balanced_array = find_balanced_json_array(cleaned_text)
+            if balanced_array:
+                try:
+                    parsed_data = json.loads(balanced_array)
+                    logger.debug(f"Successfully parsed raw JSON array: {len(parsed_data) if isinstance(parsed_data, list) else 'N/A'} items")
+                    return parsed_data
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Raw JSON array failed parsing: {e}")
+    
+    # NO FALLBACK - Explicit failure for GAMP-5 compliance
+    logger.error(f"No valid JSON found in response: {cleaned_text[:200]}...")
+    logger.error(f"Original response length: {len(response_text)}, cleaned length: {len(cleaned_text)}")
+    
+    # Provide diagnostic information for troubleshooting
+    has_arrays = '[' in cleaned_text and ']' in cleaned_text
+    has_objects = '{' in cleaned_text and '}' in cleaned_text
+    has_code_blocks = '```' in cleaned_text
+    
+    diagnostic_info = {
+        "has_potential_arrays": has_arrays,
+        "has_potential_objects": has_objects, 
+        "has_code_blocks": has_code_blocks,
+        "cleaned_length": len(cleaned_text),
+        "original_length": len(response_text),
+        "unicode_cleaning_applied": len(response_text) != len(cleaned_text)
+    }
+    
+    logger.error(f"JSON extraction diagnostic info: {diagnostic_info}")
+    raise ValueError(f"No valid JSON found in response. Diagnostic info: {diagnostic_info}. Preview: {cleaned_text[:200]}...")
 
 
 class SMEAgentRequest(BaseModel):
@@ -296,13 +564,13 @@ class SMEAgent:
         4. Certainty score (0.0-1.0) for this assessment
         
         Respond with valid JSON in this exact format:
-        {
+        {{
             "level": "compliance_level",
             "applicable_standards": ["standard1", "standard2"],
-            "compliance_gaps": [{"gap": "description", "impact": "high/medium/low", "recommendation": "action"}],
+            "compliance_gaps": [{{"gap": "description", "impact": "high/medium/low", "recommendation": "action"}}],
             "required_controls": ["control1", "control2"],
             "certainty_score": 0.0
-        }
+        }}
         """
         
         try:
@@ -310,10 +578,17 @@ class SMEAgent:
             response = await self.llm.acomplete(compliance_prompt)
             response_text = response.text.strip()
             
-            # Parse JSON response
-            import json
+            # Parse JSON response using robust extraction
             try:
-                compliance_assessment = json.loads(response_text)
+                compliance_assessment = extract_json_from_markdown(response_text)
+                
+                # Debug logging
+                self.logger.debug(f"Parsed compliance assessment type: {type(compliance_assessment)}")
+                self.logger.debug(f"Parsed compliance assessment keys: {list(compliance_assessment.keys()) if isinstance(compliance_assessment, dict) else 'Not a dict'}")
+                
+                # Ensure we have a dictionary
+                if not isinstance(compliance_assessment, dict):
+                    raise ValueError(f"Expected dictionary, got {type(compliance_assessment).__name__}")
                 
                 # Validate required fields are present
                 required_fields = ["level", "applicable_standards", "compliance_gaps", "required_controls", "certainty_score"]
@@ -328,7 +603,7 @@ class SMEAgent:
                 raise RuntimeError(
                     f"CRITICAL: LLM compliance assessment failed to return valid JSON.\n"
                     f"Parse Error: {parse_error}\n"
-                    f"LLM Response: {response_text[:500]}...\n"
+                    f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
                 
@@ -370,27 +645,27 @@ class SMEAgent:
         - Change control and configuration management
         
         Respond with valid JSON in this exact format:
-        {
+        {{
             "identified_risks": [
-                {
+                {{
                     "category": "category_name",
                     "risk": "risk_description", 
                     "probability": "low/medium/high",
                     "impact": "low/medium/high/critical",
                     "mitigation": "mitigation_strategy"
-                }
+                }}
             ],
             "risk_level": "low/medium/high",
             "mitigation_strategies": [
-                {
+                {{
                     "strategy": "strategy_description",
                     "priority": "low/medium/high", 
                     "timeline": "immediate/planned/future"
-                }
+                }}
             ],
             "critical_concerns": ["concern1", "concern2"],
             "clarity_score": 0.0
-        }
+        }}
         """
         
         try:
@@ -398,10 +673,9 @@ class SMEAgent:
             response = await self.llm.acomplete(risk_prompt)
             response_text = response.text.strip()
             
-            # Parse JSON response
-            import json
+            # Parse JSON response using robust extraction
             try:
-                risk_analysis = json.loads(response_text)
+                risk_analysis = extract_json_from_markdown(response_text)
                 
                 # Validate required fields are present
                 required_fields = ["identified_risks", "risk_level", "mitigation_strategies", "critical_concerns", "clarity_score"]
@@ -420,7 +694,7 @@ class SMEAgent:
                 raise RuntimeError(
                     f"CRITICAL: LLM risk analysis failed to return valid JSON.\n"
                     f"Parse Error: {parse_error}\n"
-                    f"LLM Response: {response_text[:500]}...\n"
+                    f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
                 
@@ -473,14 +747,14 @@ class SMEAgent:
         
         Respond with valid JSON in this exact format:
         [
-            {
+            {{
                 "category": "category_name",
                 "priority": "high/medium/low",
                 "recommendation": "specific_actionable_recommendation",
                 "rationale": "clear_justification",
                 "implementation_effort": "low/medium/high",
                 "expected_benefit": "benefit_category"
-            }
+            }}
         ]
         """
         
@@ -489,10 +763,15 @@ class SMEAgent:
             response = await self.llm.acomplete(recommendations_prompt)
             response_text = response.text.strip()
             
-            # Parse JSON response
-            import json
+            # Parse JSON response using robust extraction
             try:
-                recommendations = json.loads(response_text)
+                recommendations = extract_json_from_markdown(response_text)
+                
+                # Debug logging for recommendations parsing
+                self.logger.debug(f"Parsed recommendations type: {type(recommendations)}")
+                self.logger.debug(f"Is list: {isinstance(recommendations, list)}")
+                if isinstance(recommendations, list) and len(recommendations) > 0:
+                    self.logger.debug(f"First item type: {type(recommendations[0])}")
                 
                 # Validate response structure
                 if not isinstance(recommendations, list):
@@ -519,7 +798,7 @@ class SMEAgent:
                 raise RuntimeError(
                     f"CRITICAL: LLM recommendations generation failed to return valid JSON.\n"
                     f"Parse Error: {parse_error}\n"
-                    f"LLM Response: {response_text[:500]}...\n"
+                    f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
                 
@@ -568,12 +847,12 @@ class SMEAgent:
         
         Respond with valid JSON in this exact format:
         [
-            {
+            {{
                 "area": "area_name",
                 "guidance": "specific_guidance_instructions",
                 "key_considerations": ["consideration1", "consideration2"],
                 "success_criteria": "clear_success_criteria"
-            }
+            }}
         ]
         """
         
@@ -582,10 +861,9 @@ class SMEAgent:
             response = await self.llm.acomplete(guidance_prompt)
             response_text = response.text.strip()
             
-            # Parse JSON response
-            import json
+            # Parse JSON response using robust extraction
             try:
-                guidance = json.loads(response_text)
+                guidance = extract_json_from_markdown(response_text)
                 
                 # Validate response structure
                 if not isinstance(guidance, list):
@@ -609,7 +887,7 @@ class SMEAgent:
                 raise RuntimeError(
                     f"CRITICAL: LLM validation guidance failed to return valid JSON.\n"
                     f"Parse Error: {parse_error}\n"
-                    f"LLM Response: {response_text[:500]}...\n"
+                    f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
                 
@@ -645,7 +923,7 @@ class SMEAgent:
         Focus on practical, actionable insights that can improve validation outcomes.
         
         Respond with valid JSON in this exact format:
-        {
+        {{
             "specialty_focus": "specialty_name",
             "key_expertise_areas": ["area1", "area2"],
             "industry_trends": ["trend1", "trend2"],
@@ -653,7 +931,7 @@ class SMEAgent:
             "common_pitfalls": ["pitfall1", "pitfall2"],
             "emerging_challenges": ["challenge1", "challenge2"],
             "opportunities": ["opportunity1", "opportunity2"]
-        }
+        }}
         """
         
         try:
@@ -661,10 +939,9 @@ class SMEAgent:
             response = await self.llm.acomplete(insights_prompt)
             response_text = response.text.strip()
             
-            # Parse JSON response
-            import json
+            # Parse JSON response using robust extraction
             try:
-                insights = json.loads(response_text)
+                insights = extract_json_from_markdown(response_text)
                 
                 # Validate required fields are present
                 required_fields = ["specialty_focus", "key_expertise_areas", "industry_trends", "best_practices", "common_pitfalls"]
@@ -685,7 +962,7 @@ class SMEAgent:
                 raise RuntimeError(
                     f"CRITICAL: LLM domain insights generation failed to return valid JSON.\n"
                     f"Parse Error: {parse_error}\n"
-                    f"LLM Response: {response_text[:500]}...\n"
+                    f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
                 
@@ -728,13 +1005,13 @@ class SMEAgent:
         
         Respond with valid JSON in this exact format:
         [
-            {
+            {{
                 "regulation": "regulation_name",
                 "consideration": "specific_consideration_or_requirement",
                 "impact": "low/medium/high/critical",
                 "action_required": "specific_action_needed",
                 "timeline": "design_phase/implementation_phase/validation_phase/ongoing"
-            }
+            }}
         ]
         """
         
@@ -743,10 +1020,9 @@ class SMEAgent:
             response = await self.llm.acomplete(regulatory_prompt)
             response_text = response.text.strip()
             
-            # Parse JSON response
-            import json
+            # Parse JSON response using robust extraction
             try:
-                considerations = json.loads(response_text)
+                considerations = extract_json_from_markdown(response_text)
                 
                 # Validate response structure
                 if not isinstance(considerations, list):
@@ -775,7 +1051,7 @@ class SMEAgent:
                 raise RuntimeError(
                     f"CRITICAL: LLM regulatory considerations assessment failed to return valid JSON.\n"
                     f"Parse Error: {parse_error}\n"
-                    f"LLM Response: {response_text[:500]}...\n"
+                    f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
                 

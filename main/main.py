@@ -267,7 +267,7 @@ async def run_with_event_logging(document_path: Path, args):
     else:
         # Create unified workflow
         workflow = UnifiedTestGenerationWorkflow(
-            timeout=900,  # 15 minutes for complete workflow
+            timeout=1200,  # 20 minutes for complete workflow (increased for FDA API latency)
             verbose=args.verbose,
             enable_parallel_coordination=not args.disable_parallel_coordination
         )
@@ -410,7 +410,7 @@ async def run_without_logging(document_path: Path, args):
             document_name=document_path.name,
             document_version="1.0",
             author="system",
-            timeout=900,
+            timeout=1200,  # 20 minutes for complete workflow (increased for FDA API latency)
             verbose=args.verbose,
             enable_error_handling=True,
             confidence_threshold=args.confidence_threshold,

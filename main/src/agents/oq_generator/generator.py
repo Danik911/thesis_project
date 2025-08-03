@@ -53,21 +53,33 @@ class OQTestGenerator:
     from LLMs while ensuring pharmaceutical compliance and avoiding fallback logic.
     """
 
-    def __init__(self, llm: LLM, verbose: bool = False):
+    def __init__(self, llm: LLM, verbose: bool = False, generation_timeout: int = 480):
         """
         Initialize OQ test generator.
         
         Args:
             llm: LlamaIndex LLM instance for generation
             verbose: Enable verbose logging
+            generation_timeout: Timeout for LLM generation in seconds (default 8 minutes)
         """
         self.llm = llm
         self.verbose = verbose
+        self.generation_timeout = generation_timeout
         self.logger = logging.getLogger(__name__)
 
         # Critical: NO fallback values or default behaviors
         self._generation_program = None
         self._last_generation_context = None
+        
+        # Configure LLM timeout if it's OpenAI
+        if hasattr(self.llm, 'request_timeout'):
+            # Set request timeout to our generation timeout
+            self.llm.request_timeout = generation_timeout
+            self.logger.info(f"Set LLM request timeout to {generation_timeout}s")
+        elif hasattr(self.llm, '_client') and hasattr(self.llm._client, 'timeout'):
+            # For newer OpenAI client versions
+            self.llm._client.timeout = generation_timeout
+            self.logger.info(f"Set LLM client timeout to {generation_timeout}s")
 
     def generate_oq_test_suite(
         self,
