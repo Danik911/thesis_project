@@ -1,10 +1,38 @@
 # Unified Test Generation Workflow - Usage Guide
 
-⚠️ **MVP Status**: This guide covers current basic functionality. See [`mvp_implementation_plan.md`](../mvp_implementation_plan.md) for development roadmap.
+> **Last Updated**: August 3, 2025  
+> **System Status**: ⚠️ Partially Operational (~75% functional)
+
+## 🚨 CRITICAL STATUS UPDATE
+
+The pharmaceutical test generation workflow is **partially functional** with significant observability and agent issues:
+
+### ✅ Working:
+- GAMP-5 Categorization (confidence threshold 0.4)
+- OQ Test Generation with o3 model (30 tests for Category 5)
+- Basic file-based audit logging
+- JSON test suite file generation
+
+### ❌ Not Working:
+- Phoenix observability (missing dependencies)
+- Research Agent (requires pdfplumber)
+- SME Agent (requires pdfplumber)
+- Complete workflow tracing
+- Audit trail details (shows "unknown")
+
+### 🔧 To Restore Full Functionality:
+```bash
+# Install missing dependencies
+pip install pdfplumber
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
+```
 
 ## Overview
 
-The Unified Test Generation Workflow provides basic pharmaceutical test generation components. **Under active development** transitioning to full MVP implementation with OQ test generation focus.
+The Unified Test Generation Workflow provides pharmaceutical test generation with GAMP-5 compliance. Currently generates OQ tests successfully but lacks full observability.
 
 ## Quick Start
 
@@ -31,18 +59,20 @@ python main.py sample_urs.md --disable-parallel-coordination
 
 ## Workflow Architecture
 
-### Complete Flow (Default Mode)
+### Current Flow (Partially Working)
 ```
-URS Input → GAMP-5 Categorization → Test Planning → Parallel Agent Coordination → Results
+URS Input → GAMP-5 Categorization → OQ Test Generation → Results
+                                           ↓
+                              [Research & SME Agents FAIL]
 ```
 
-1. **GAMP-5 Categorization**: Determines software category and validation approach
-2. **Test Planning**: Generates comprehensive test strategy based on GAMP category
+1. **GAMP-5 Categorization**: ✅ Working (reduced confidence threshold to 0.4)
+2. **OQ Test Generation**: ✅ Working with o3 model for Category 5
 3. **Parallel Agent Coordination**: 
-   - Context Provider Agent (RAG/CAG operations)
-   - SME Agent (Pharmaceutical domain expertise)
-   - Research Agent (Regulatory updates)
-4. **Result Compilation**: Complete test generation results with audit trail
+   - Context Provider Agent: ⚠️ Code exists but not integrated
+   - SME Agent: ❌ FAILS - missing pdfplumber
+   - Research Agent: ❌ FAILS - missing pdfplumber
+4. **Result Compilation**: ⚠️ Partial - generates test file but audit trail incomplete
 
 ### Categorization-Only Flow
 ```
@@ -64,34 +94,42 @@ URS Input → GAMP-5 Categorization → Results
 
 ## Output Structure
 
-### Unified Workflow Results
+### Current Workflow Results (What Actually Works)
 ```python
 {
     "workflow_metadata": {
-        "session_id": "unified_20250729_143022",
-        "status": "completed",
-        "duration_seconds": 45.2,
+        "session_id": "unified_20250803_143022",
+        "status": "SUCCESS",  # But shows "Unknown" in audit trail
+        "duration_seconds": 300.5,  # o3 model is slow
         "workflow_type": "unified_test_generation"
     },
     "categorization": {
-        "category": 4,
-        "confidence": 0.85,
-        "review_required": False
+        "category": 5,
+        "confidence": 0.42,  # Low due to reduced threshold
+        "review_required": False  # Threshold is 0.4 now
     },
-    "planning": {
-        "test_strategy": {...},
-        "agent_coordination": {...}
+    "oq_generation": {
+        "tests_generated": 30,  # Fixed from 15-20 to 25-30
+        "model_used": "o3-2025-04-16",
+        "output_file": "test_generation_CATEGORY_5_timestamp.json"
+    },
+    "agents": {
+        "research_agent": "FAILED - missing pdfplumber",
+        "sme_agent": "FAILED - missing pdfplumber",
+        "context_provider": "NOT INTEGRATED"
     },
     "compliance": {
         "gamp5_compliant": True,
-        "alcoa_plus_compliant": True,
-        "audit_trail_complete": True
+        "alcoa_plus_compliant": False,  # Audit trail incomplete
+        "audit_trail_complete": False,  # Shows "unknown" for steps
+        "phoenix_traces": "NOT AVAILABLE"  # Missing dependencies
     },
     "summary": {
-        "status": "Completed Successfully",
-        "estimated_test_count": 15,
-        "agents_coordinated": 3,
-        "coordination_success_rate": 1.0
+        "status": "SUCCESS",
+        "actual_functionality": "75%",
+        "tests_generated": 30,
+        "agents_working": "1 of 3",
+        "observability": "BROKEN"
     }
 }
 ```
@@ -112,11 +150,16 @@ The unified workflow implements pharmaceutical-grade error handling:
 
 ## Integration with Existing Systems
 
-### Phoenix Observability
-The unified workflow integrates seamlessly with Arize Phoenix for observability:
+### Phoenix Observability (Currently BROKEN)
+⚠️ **Phoenix is NOT WORKING** due to missing dependencies:
 ```bash
-# Run with Phoenix tracing (if configured)
+# This will show GraphQL errors even if Phoenix is running
 PHOENIX_ENABLE_TRACING=true python main.py sample_urs.md
+
+# Current status:
+# - Only 3 embedding traces captured
+# - No workflow visibility
+# - GraphQL API returns "unexpected error occurred"
 ```
 
 ### Event Logging
@@ -162,10 +205,11 @@ The unified workflow maintains full regulatory compliance:
 
 ### Common Issues
 
-1. **Import Errors**: Ensure all dependencies are installed and Python path includes the main directory
-2. **Timeout Issues**: Increase timeout for complex documents using workflow configuration
-3. **Agent Coordination Failures**: Use `--disable-parallel-coordination` flag to isolate issues
-4. **Low Confidence Results**: Review results manually or adjust `--confidence-threshold`
+1. **Phoenix Not Working**: Missing arize-phoenix and related packages
+2. **Research Agent Fails**: Missing pdfplumber package
+3. **SME Agent Fails**: Missing pdfplumber package  
+4. **Audit Trail Shows "Unknown"**: Workflow context not properly tracked
+5. **Low Confidence Results**: Threshold reduced to 0.4 (was 0.6)
 
 ### Debug Mode
 ```bash
@@ -187,10 +231,32 @@ python main.py sample_urs.md --verbose --log-dir debug_logs
 
 ## Next Steps
 
-1. **Run the integration test**: `python test_unified_workflow.py`
-2. **Test with your documents**: Try the unified workflow with your URS documents
-3. **Review results**: Examine the comprehensive output structure
-4. **Configure Phoenix**: Set up observability if needed
-5. **Provide feedback**: Report any issues or suggestions for improvement
+### To Fix the System:
+1. **Install missing packages**:
+   ```bash
+   pip install pdfplumber
+   pip install arize-phoenix
+   pip install openinference-instrumentation-llama-index
+   pip install openinference-instrumentation-openai
+   pip install llama-index-callbacks-arize-phoenix
+   ```
 
-The unified workflow system now provides the complete pharmaceutical test generation capability you requested, with all agents working together in a single cohesive workflow chain.
+2. **Test the workflow**: `python main.py test_urs.txt`
+
+3. **Check Phoenix**: Access http://localhost:6006 after installing packages
+
+4. **Verify agents**: Research and SME agents should work after pdfplumber installation
+
+### Current Reality:
+- **System generates OQ tests successfully** (30 tests for Category 5)
+- **Observability is completely broken** (missing Phoenix packages)
+- **2 of 3 agents fail** (missing pdfplumber)
+- **Audit trail is incomplete** (shows "unknown" for workflow steps)
+- **Overall functionality: ~75%**
+
+### Recent Fixes Applied (August 3, 2025):
+1. Configuration alignment (Category 5: 25-30 tests)
+2. JSON datetime serialization fixed
+3. Phantom success status fixed
+4. o3-2025-04-16 model integration
+5. Confidence threshold reduced to 0.4

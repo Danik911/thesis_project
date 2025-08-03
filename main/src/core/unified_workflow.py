@@ -1039,8 +1039,22 @@ class UnifiedTestGenerationWorkflow(Workflow):
         planning_event = await safe_context_get(ctx, "planning_event", None)
         agent_results = await safe_context_get(ctx, "collected_results", [])
 
-        # Compile final results
+        # Compile final results with main.py compatible structure
         final_results = {
+            # Summary section for main.py display compatibility
+            "summary": {
+                "status": status,
+                "workflow_duration_seconds": total_time.total_seconds() if total_time else 0.0,
+                "category": categorization_result.gamp_category.value if categorization_result else None,
+                "confidence": categorization_result.confidence_score if categorization_result else 0.0,
+                "review_required": categorization_result.review_required if categorization_result else False,
+                "estimated_test_count": planning_event.estimated_test_count if planning_event else 0,
+                "timeline_estimate_days": ((planning_event.estimated_test_count * 0.5) / 8.0) if planning_event else 0,
+                "agents_coordinated": len(agent_results),
+                "coordination_success_rate": (len([r for r in agent_results if r.success]) / len(agent_results)) if agent_results else 0.0
+            },
+            
+            # Detailed workflow metadata
             "workflow_metadata": {
                 "session_id": self._workflow_session_id,
                 "document_path": document_path,
@@ -1049,23 +1063,37 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "total_processing_time": total_time.total_seconds() if total_time else None,
                 "phoenix_enabled": self.enable_phoenix
             },
+            
+            # Top-level status for backward compatibility
             "status": status,
+            
+            # Categorization results
             "categorization": {
+                "category": categorization_result.gamp_category.value if categorization_result else None,
                 "gamp_category": categorization_result.gamp_category.value if categorization_result else None,
+                "confidence": categorization_result.confidence_score if categorization_result else 0.0,
                 "confidence_score": categorization_result.confidence_score if categorization_result else 0.0,
                 "review_required": categorization_result.review_required if categorization_result else False
             } if categorization_result else None,
+            
+            # Planning results
             "planning": {
                 "estimated_test_count": planning_event.estimated_test_count if planning_event else 0,
                 "test_strategy": planning_event.test_strategy if planning_event else None,
                 "agent_requests_processed": len(agent_results)
             } if planning_event else None,
+            
+            # Agent coordination results
             "agent_coordination": {
                 "total_agents": len(agent_results),
                 "successful_agents": len([r for r in agent_results if r.success]),
                 "failed_agents": len([r for r in agent_results if not r.success])
             },
+            
+            # OQ generation results
             "oq_generation": oq_results,
+            
+            # Additional workflow results
             "workflow_results": ev.workflow_results if hasattr(ev, "workflow_results") else None
         }
 

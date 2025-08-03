@@ -1,19 +1,56 @@
 # Quick Start Guide - Current System Status
 
-⚠️ **MVP Status**: Basic workflow available, full features under development
+> **Last Updated**: August 3, 2025  
+> **System Status**: ⚠️ Partially Operational (~75% functional)
+
+## 🚨 CRITICAL STATUS UPDATE
+
+The pharmaceutical test generation workflow is **partially functional** with significant issues:
+
+### ✅ Working Components:
+- GAMP-5 Categorization Agent
+- OQ Test Generation (with o3 model)
+- Basic file-based audit logging
+- Test file generation (30 tests for Category 5)
+
+### ❌ Non-functional Components:
+- Phoenix observability (missing dependencies)
+- Research Agent (requires pdfplumber)
+- SME Agent (requires pdfplumber)
+- Complete workflow tracing
+- Audit trail shows "unknown" for all steps
+
+### 🔧 To Restore Full Functionality:
+```bash
+# Install missing dependencies
+pip install pdfplumber
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
+```
+
+---
 
 ## 🚀 Current System (3 Steps)
 
-### Step 1: Start Phoenix (Docker)
+### Step 1: Set Environment Variables
 ```bash
-docker run -d -p 6006:6006 --name phoenix-observability arizephoenix/phoenix:latest
+# Required for workflow to function
+export OPENAI_API_KEY=your_key_here
+export PYTHONUTF8=1  # Required on Windows
 ```
 
-### Step 2: Run Current Workflow
+### Step 2: Create Test Document
 ```bash
-# Execute basic workflow
-cd main
-python main.py
+# Create a simple test URS document
+cat > test_urs.txt << EOF
+User Requirements Specification
+
+System: Pharmaceutical Manufacturing System
+Category: Custom Application
+Requirements:
+1. Real-time monitoring
 2. Data integrity (ALCOA+ compliance)
 3. Audit trail logging
 4. Electronic signatures
@@ -25,9 +62,10 @@ Testing Requirements:
 EOF
 ```
 
-### Step 3: Launch the End-to-End Workflow
+### Step 3: Launch the Workflow
 ```bash
-uv run python main/main.py my_urs.txt --verbose
+# Run the workflow (Phoenix not required as it's broken)
+uv run python main/main.py test_urs.txt --verbose
 ```
 
 ## ✅ Expected Results
@@ -38,25 +76,30 @@ uv run python main/main.py my_urs.txt --verbose
 🚀 Running Unified Test Generation Workflow
 ============================================================
 📊 Setting up event logging system...
-✅ Connected to existing Phoenix instance at: http://localhost:6006
-🔭 OpenTelemetry Tracing Details 🔭
-|  Phoenix Project: test_generation_thesis
-|  Collector Endpoint: http://localhost:6006/v1/traces
+WARNING - Failed to initialize Phoenix: No module named 'arize'
+⚠️  Phoenix observability not available - continuing without tracing
 
-✅ Unified Test Generation Complete!
-  - Status: Completed Successfully
-  - Duration: ~20s
+Processing document: test_urs.txt
+Starting GAMP categorization...
+Categorization complete: Category 5 (confidence: 0.42)
+
+Starting OQ test generation...
+Using o3-2025-04-16 model for Category 5
+Generated 30 OQ tests
+
+✅ Workflow completed!
+  - Status: SUCCESS
+  - Duration: ~300s (o3 model is slow)
   - GAMP Category: 5
-  - Estimated Tests: 65
-  - Timeline: 195 days
-  - Active Agents: 2 (Categorization + Planner)
-  - Parallel Agents: Not integrated (coordination requests generated only)
+  - Tests Generated: 30
+  - Output File: test_generation_CATEGORY_5_2025-08-03_timestamp.json
 ```
 
-### Phoenix UI:
-- **URL**: http://localhost:6006
-- **Project**: test_generation_thesis
-- **Traces**: Full workflow execution visible
+### What's Actually Happening:
+- **Phoenix**: NOT working (GraphQL errors)
+- **Tracing**: NOT captured (only 3 embedding calls)
+- **Audit Trail**: Shows "unknown" for all steps
+- **Agents**: Only 1 of 3 agents functional (OQ Generator)
 
 ## 🎯 What Just Happened?
 
@@ -82,31 +125,29 @@ The **single command** `uv run python main/main.py my_urs.txt` executed:
 main.py → UnifiedTestGenerationWorkflow → 
   ├── ✅ GAMP Categorization Agent (ACTIVE)
   │   └── Determines software category (1, 3, 4, 5)
-  ├── ✅ Planner Agent (ACTIVE) 
-  │   ├── Generates test strategies
-  │   └── Creates coordination requests for parallel agents
-  └── ❌ Parallel Agents (CODE EXISTS BUT NOT INTEGRATED)
-      ├── Research Agent (regulatory updates, not executed)
-      ├── SME Agent (domain expertise, not executed)
-      └── Context Provider Agent (RAG/CAG with ChromaDB + Phoenix, not executed)
+  ├── ✅ OQ Test Generation Agent (ACTIVE)
+  │   ├── Uses o3 model for Category 5
+  │   └── Generates 30 OQ tests
+  └── ❌ Parallel Agents (BROKEN - Missing Dependencies)
+      ├── Research Agent (requires pdfplumber)
+      ├── SME Agent (requires pdfplumber)
+      └── Context Provider Agent (functional but not integrated)
 ```
 
 ### 🚨 **Important: Current Agent Status**
 
-**ACTIVE AGENTS (2):**
-- **Categorization Agent**: ✅ Fully integrated and executed
-- **Planner Agent**: ✅ Fully integrated and executed
+**WORKING AGENTS (1):**
+- **Categorization Agent**: ✅ Fully functional
+- **OQ Generator Agent**: ✅ Fully functional with o3 model support
 
-**PHANTOM AGENTS (3):**
-- **Research Agent**: ❌ Code exists in `/agents/parallel/research_agent.py` but NOT executed
-- **SME Agent**: ❌ Code exists in `/agents/parallel/sme_agent.py` but NOT executed  
-- **Context Provider**: ✅ Code exists in `/agents/parallel/context_provider.py` with **ChromaDB integration and Phoenix observability** but NOT executed in main workflow
+**BROKEN AGENTS (2):**
+- **Research Agent**: ❌ Fails due to missing pdfplumber
+- **SME Agent**: ❌ Fails due to missing pdfplumber
 
-**Agent Status Now Shows Reality:**
-- **Active Agents: 2** - Only these agents actually execute (Categorization + Planner)
-- **Parallel Agents: Not integrated** - Code exists but agents are not executed
-- No more misleading "Agent Success Rate: 100.0%" 
-- Coordination requests are generated but no longer falsely reported as successful execution
+**OBSERVABILITY STATUS:**
+- **Phoenix**: ❌ NOT WORKING (missing arize-phoenix and related packages)
+- **Audit Trail**: ⚠️ Basic file logging only, shows "unknown" for workflow steps
+- **Traces**: ❌ Only 3 embedding calls captured, no workflow visibility
 
 ### Required Dependencies
 
@@ -222,10 +263,25 @@ The parallel agents (`research_agent.py`, `sme_agent.py`, `context_provider.py`)
 
 ## 📊 **Current Status Summary**
 
-- **✅ Working**: GAMP-5 categorization and test planning
-- **✅ Working**: Phoenix observability for active agents
-- **⚠️ Misleading**: Agent coordination statistics  
-- **❌ Missing**: Actual parallel agent execution
-- **📈 Potential**: 3 additional agents ready for integration
+### ✅ Working:
+- GAMP-5 categorization (reduced confidence threshold 0.4)
+- OQ test generation with o3 model (30 tests for Category 5)
+- Basic file-based audit logging
+- Test suite JSON file generation
 
-**Current system provides solid foundation with 2 active agents and framework for 3 more.**
+### ❌ Not Working:
+- Phoenix observability (missing dependencies)
+- Research Agent (missing pdfplumber)
+- SME Agent (missing pdfplumber)
+- Complete workflow tracing
+- Audit trail details (shows "unknown")
+
+### 🔧 Recent Fixes (August 3, 2025):
+1. Fixed configuration mismatch (Category 5 now 25-30 tests)
+2. Fixed JSON datetime serialization
+3. Fixed "phantom success" status reporting
+4. Added o3-2025-04-16 model support
+5. Reduced confidence threshold from 0.6 to 0.4
+
+### 📈 System Functionality: ~75%
+**The workflow generates OQ tests successfully but lacks observability and two agents are broken.**

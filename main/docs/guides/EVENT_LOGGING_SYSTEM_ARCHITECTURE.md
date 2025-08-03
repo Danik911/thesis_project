@@ -1,8 +1,28 @@
 # GAMP-5 Compliant Event Streaming Logging System Architecture
 
+> **Last Updated**: 2025-08-03  
+> **System Status**: Partially Operational (Core functionality working, monitoring infrastructure needs attention)
+
 ## Overview
 
 This document describes the comprehensive event streaming logging system implemented for the pharmaceutical test generation multi-agent system. The system ensures GAMP-5 compliance, ALCOA+ principles adherence, and 21 CFR Part 11 regulatory requirements.
+
+### Current Status
+
+✅ **Working Components**:
+- Basic event logging to files
+- GAMP-5 compliant audit trail generation
+- Workflow event capture for successful operations
+
+⚠️ **Known Issues**:
+- Audit trail shows "unknown" for workflow steps and agent IDs
+- Phoenix observability integration is non-functional (missing dependencies)
+- Limited event streaming capabilities due to missing instrumentation
+
+❌ **Non-functional Components**:
+- Real-time Phoenix monitoring
+- Complete workflow trace visibility
+- Agent-level event tracking
 
 ## System Architecture
 
@@ -204,10 +224,15 @@ self.log_agent_interaction(
 
 The system automatically categorizes and handles events based on GAMP-5 software categories:
 
-- **Category 1**: Infrastructure software logging
-- **Category 3**: Non-configured product events
-- **Category 4**: Configured product validation events
-- **Category 5**: Custom application comprehensive logging
+- **Category 1**: Infrastructure software logging (3-5 tests)
+- **Category 3**: Non-configured product events (5-10 tests)
+- **Category 4**: Configured product validation events (15-20 tests)
+- **Category 5**: Custom application comprehensive logging (25-30 tests)
+
+**Current Implementation Notes**:
+- Category 5 test requirements were updated from 15-20 to 25-30 tests
+- Configuration alignment fixed between templates.py and models.py
+- o3 model successfully generates required test counts
 
 ## File Structure and Storage
 
@@ -402,6 +427,26 @@ stats = event_handler.get_statistics()
 print(f"Events processed: {stats['events_processed']}")
 ```
 
+## Required Fixes
+
+### Critical Issues to Address
+1. **Audit Trail Step/Agent Tracking**:
+   - Fix workflow context to properly track step names
+   - Ensure agent IDs are captured correctly
+   - Remove "unknown" values from audit entries
+
+2. **Missing Dependencies**:
+   ```bash
+   pip install arize-phoenix
+   pip install openinference-instrumentation-llama-index
+   pip install openinference-instrumentation-openai
+   ```
+
+3. **Phoenix Integration**:
+   - Fix GraphQL API connectivity issues
+   - Enable proper workflow trace capture
+   - Restore full observability capabilities
+
 ## Future Enhancements
 
 ### Planned Features
@@ -413,7 +458,7 @@ print(f"Events processed: {stats['events_processed']}")
 - Blockchain-based immutable audit trails
 
 ### Integration Opportunities
-- Phoenix AI monitoring integration
+- Phoenix AI monitoring integration (currently broken)
 - ChromaDB event indexing
 - External SIEM system integration
 - Regulatory reporting automation

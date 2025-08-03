@@ -1,13 +1,45 @@
 # Phoenix Observability Guide for AI Agents
 ## GAMP-5 Pharmaceutical Test Generation System
 
+> **Last Updated**: August 3, 2025  
+> **Status**: ❌ Phoenix Observability is currently **NON-FUNCTIONAL**
+
 This guide provides comprehensive instructions for AI agents working with the Phoenix observability system in the pharmaceutical test generation workflow.
 
 ---
 
-## 🎯 Overview
+## 🚨 CRITICAL STATUS UPDATE
 
-The GAMP-5 Pharmaceutical Test Generation System includes production-grade Phoenix observability for monitoring multi-agent workflows, LLM interactions, and compliance tracking. This system provides real-time visibility into:
+Phoenix observability is currently broken due to missing dependencies. This guide documents the intended functionality, but **the observability features described below are NOT currently working**.
+
+### Current Issues:
+1. **Missing Phoenix Packages**:
+   ```
+   arize-phoenix
+   openinference-instrumentation-llama-index
+   openinference-instrumentation-openai
+   llama-index-callbacks-arize-phoenix
+   ```
+
+2. **GraphQL API Error**: "unexpected error occurred" when accessing Phoenix UI
+3. **No Workflow Traces**: Only 3 OpenAI embedding calls captured (no workflow visibility)
+4. **Complete Observability Blackout**: Zero visibility into workflow execution
+5. **Audit Trail Shows "Unknown"**: All workflow steps and agent IDs not tracked
+
+### To Restore Functionality:
+```bash
+# Install required packages
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
+```
+
+---
+
+## 🎯 Overview (When Working)
+
+The GAMP-5 Pharmaceutical Test Generation System includes production-grade Phoenix observability for monitoring multi-agent workflows, LLM interactions, and compliance tracking. This system would provide real-time visibility into:
 
 - Multi-agent workflow execution (GAMP categorization → Planning → Execution)
 - LLM API calls with token usage and cost tracking
@@ -747,48 +779,57 @@ export PHOENIX_API_KEY=your_secure_api_key
 
 ---
 
-## 🔄 Recent Updates (2025-07-30)
+## 🔄 Recent Updates
 
-### ✅ Enhanced Phoenix Implementation (2025-07-29)
-- **Docker Integration**: Added automatic Docker Phoenix detection and connection
-- **Improved Reliability**: Multi-level fallback mechanisms for production stability
-- **Trace Persistence**: Force flush functionality ensures traces are saved
-- **Better Error Handling**: Graceful degradation when Phoenix is unavailable
-- **Production Optimized**: BatchSpanProcessor settings for high-throughput scenarios
+### 🔴 Current Status (August 3, 2025)
+- **❌ Phoenix Integration BROKEN**: Missing critical dependencies
+- **❌ Workflow Tracing NON-FUNCTIONAL**: Only 3 embedding traces captured
+- **❌ Audit Trail INCOMPLETE**: Shows "unknown" for all workflow steps
+- **⚠️ System ~75% Functional**: Core workflow works but without observability
 
-### 🧪 Context Provider Agent Phoenix Validation (2025-07-30)
-- **✅ Comprehensive Q&A Testing**: 6 FDA Part 11 questions tested with 100% technical success
-- **✅ Phoenix Trace Capture**: Complete span hierarchy for all RAG operations
-- **✅ ChromaDB Integration**: Document retrieval, search, and confidence scoring fully traced
-- **✅ Docker Phoenix Compatibility**: Validated with Docker Phoenix server on port 6006
-- **✅ Embedding Consistency**: Resolved dimension mismatch issues (1536 dimensions)
-- **✅ Real-time Observability**: Phoenix UI accessible throughout testing with live traces
-- **✅ Audit Trail Generation**: Complete regulatory compliance tracing for GAMP-5
+### Previous Working Features (Now Non-functional)
+The following features were previously validated but are now broken due to missing dependencies:
 
-### 🔍 Key Validation Results
-- **Test Execution**: 6/6 questions completed successfully (14.6 seconds total)
-- **Phoenix Traces**: All traces captured with full context and metadata
-- **System Reliability**: No crashes, timeouts, or connection failures
-- **Processing Performance**: Average 1.43 seconds per query with consistent retrieval
-- **Quality Insights**: Identified areas for retrieval quality improvement via Phoenix analysis
+- ~~Docker Phoenix connection~~ (GraphQL errors)
+- ~~OpenTelemetry traces~~ (Not being sent)
+- ~~LlamaIndex workflow instrumentation~~ (Not active)
+- ~~GAMP-5 pharmaceutical workflow tracing~~ (No traces)
+- ~~Context Provider Agent RAG operations~~ (Not observable)
+- ~~ChromaDB search operations~~ (No tracing)
+- ~~Confidence score calculation breakdowns~~ (Not captured)
+- ~~FDA Part 11 regulatory document retrieval tracing~~ (Missing)
 
-### 🧪 Verified Functionality
-- ✅ Docker Phoenix connection working
-- ✅ OpenTelemetry traces successfully sent to Phoenix
-- ✅ LlamaIndex workflow instrumentation active
-- ✅ GAMP-5 pharmaceutical workflow tracing end-to-end
-- ✅ Context Provider Agent RAG operations fully observable
-- ✅ ChromaDB search operations with chunk-level tracing
-- ✅ Confidence score calculation breakdowns
-- ✅ FDA Part 11 regulatory document retrieval tracing
-- ✅ Proper shutdown with trace persistence
-- ✅ UI accessibility maintained post-workflow
+### Critical Fixes Applied (August 3, 2025)
+Despite observability being broken, the following workflow fixes were implemented:
+1. **Configuration Alignment**: Fixed Category 5 test requirements (25-30 tests)
+2. **JSON Serialization**: Fixed datetime objects in test suite files
+3. **Phantom Success**: Fixed workflow status reporting structure
+4. **Model Support**: Added o3-2025-04-16 model for complex Category 5
+5. **Confidence Threshold**: Reduced from 0.6 to 0.4 for better detection
+
+### Known Issues
+1. **Missing Dependencies**:
+   - arize-phoenix
+   - openinference-instrumentation-llama-index
+   - openinference-instrumentation-openai
+   - llama-index-callbacks-arize-phoenix
+   - pdfplumber (for Research/SME agents)
+
+2. **Observability Issues**:
+   - Phoenix UI returns GraphQL errors
+   - No workflow traces captured
+   - Audit trail shows "unknown" values
+   - Complete observability blackout
+
+3. **Agent Failures**:
+   - Research Agent fails (missing pdfplumber)
+   - SME Agent fails (missing pdfplumber)
+   - Only OQ Generator Agent functional
 
 ---
 
-*Last Updated: 2025-07-30*  
-*System Status: Production Ready with RAG Validation*  
-*Phoenix Version: 4.0.0+*  
-*LlamaIndex Version: 0.12.0+*  
-*Docker Support: Active and Validated*  
-*Context Provider Agent: Phoenix Integration Complete*
+*Last Updated: August 3, 2025*  
+*System Status: ❌ Observability NON-FUNCTIONAL*  
+*Workflow Status: ⚠️ Partially Operational (~75%)*  
+*Phoenix Version: NOT INSTALLED*  
+*Missing Critical Dependencies: 5 packages*

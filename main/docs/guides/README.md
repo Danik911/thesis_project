@@ -2,14 +2,36 @@
 
 **Project**: GAMP-5 Pharmaceutical Test Generation System  
 **Version**: 1.1 - MVP Implementation  
-**Last Updated**: July 31, 2025  
-**Status**: ⚠️ **Under Active Development** - MVP in progress
+**Last Updated**: August 3, 2025  
+**Status**: ⚠️ **Partially Operational** (~75% functional)
 
 ## 🏥 **CRITICAL** Documentation Overview
 
-⚠️ **Current Status**: MVP implementation focusing on OQ test generation with 9 critical tasks.
+### 🚨 Current System Status
 
-This documentation suite provides guidance for the pharmaceutical multi-agent workflow system transitioning from legacy implementation to **MVP architecture** with **Phoenix observability** and **regulatory compliance** (GAMP-5, ALCOA+, 21 CFR Part 11).
+**✅ Working Components**:
+- GAMP-5 Categorization (confidence threshold 0.4)
+- OQ Test Generation with o3 model (30 tests for Category 5)
+- Basic file-based audit logging
+- Test suite JSON file generation
+
+**❌ Non-functional Components**:
+- Phoenix observability (missing arize-phoenix packages)
+- Research Agent (requires pdfplumber)
+- SME Agent (requires pdfplumber)
+- Complete workflow tracing
+- Audit trail details (shows "unknown")
+
+**🔧 To Restore Full Functionality**:
+```bash
+pip install pdfplumber
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
+```
+
+This documentation suite reflects the current partially functional state of the pharmaceutical multi-agent workflow system.
 
 ## 🚨 **ABSOLUTE RULE: NO FUCKING FALLBACKS** 🚨
 
@@ -75,16 +97,16 @@ All system components follow **ZERO TOLERANCE FOR FALLBACK LOGIC**:
 ## 🎯 **Quick Start Workflow**
 
 ### **For MVP Development** (Current):
-1. **Read**: [`mvp_implementation_plan.md`](../mvp_implementation_plan.md) (Current priorities)
-2. **Execute**: `mcp__task-master-ai__next_task` (Get next MVP task)
-3. **Implement**: Focus on Task 1 (categorization agent fixes) first
-4. **Test**: Use `main/tests/test_data/gamp5_test_data/testing_data.md`
+1. **Read**: Current system status at top of this document
+2. **Install**: Missing dependencies listed above
+3. **Test**: `uv run python main/main.py test_urs.txt`
+4. **Verify**: Check if test file generated with 30 OQ tests
 
-### **For System Testing** (Current capabilities):
-1. **Setup**: `python -m phoenix.server.main serve &`
-2. **Execute**: `python main/main.py`
-3. **Monitor**: Check Phoenix UI at http://localhost:6006
-4. **Validate**: Basic workflow execution and event logging
+### **For System Testing** (Current Reality):
+1. **Phoenix**: ❌ NOT WORKING (GraphQL errors even if running)
+2. **Execute**: `uv run python main/main.py test_urs.txt`
+3. **Output**: Test JSON file generated successfully
+4. **Issues**: No observability, 2 of 3 agents fail
 
 ---
 
@@ -116,20 +138,20 @@ Task(subagent_type="task-analyzer", prompt="...")
 
 ## 📊 **Phoenix Observability Integration**
 
-### **Monitor-Agent Features** (NEW):
-- **Phoenix UI Analysis**: Puppeteer-based interaction
-- **Screenshot Evidence**: Visual validation for regulatory compliance
-- **API Cross-Validation**: UI vs API data consistency
-- **Performance Monitoring**: Response times & trace collection efficiency
-- **Compliance Validation**: GAMP-5, ALCOA+, 21 CFR Part 11 attributes
+### ❌ **CURRENTLY NON-FUNCTIONAL**
 
-### **Usage Pattern**:
+Phoenix monitoring is broken due to missing dependencies. When working, it would provide:
+
+- **Phoenix UI Analysis**: Currently returns GraphQL errors
+- **Screenshot Evidence**: Not available
+- **API Cross-Validation**: No traces to validate
+- **Performance Monitoring**: Only 3 embedding calls captured
+- **Compliance Validation**: Audit trail shows "unknown"
+
+### **To Fix Phoenix**:
 ```bash
-# 1. Execute workflow
-Task(subagent_type="end-to-end-tester", prompt="...")
-
-# 2. Analyze observability  
-Task(subagent_type="monitor-agent", context="[test results]", prompt="...")
+# Install all missing packages first
+pip install arize-phoenix openinference-instrumentation-llama-index openinference-instrumentation-openai llama-index-callbacks-arize-phoenix
 ```
 
 ---
@@ -179,13 +201,24 @@ CLAUDE.md                         # Core system instructions
 ## 📋 **Document Maintenance**
 
 ### **Update Schedule**:
-- **Weekly**: Quick reference commands and troubleshooting patterns
-- **Monthly**: Agent descriptions and workflow sequences  
-- **Quarterly**: Compliance requirements and regulatory updates
+- **Immediate**: Install missing dependencies to restore functionality
+- **Critical**: Fix audit trail to show actual workflow steps
+- **Next**: Restore Phoenix observability for compliance
 
 ### **Version History**:
-- **v1.0** (July 31, 2025): Initial release with 6-agent system and monitor-agent integration
-- **Next**: Enhanced Puppeteer capabilities and additional compliance validations
+- **v1.0** (July 31, 2025): Initial release with 6-agent system
+- **v1.1** (August 3, 2025): Updated to reflect current broken state
+  - Phoenix non-functional
+  - 2 of 3 agents fail
+  - Audit trail incomplete
+  - System ~75% functional
+
+### **Recent Fixes** (August 3, 2025):
+1. Configuration alignment (Category 5: 25-30 tests)
+2. JSON datetime serialization
+3. Phantom success status reporting
+4. o3-2025-04-16 model integration
+5. Confidence threshold reduced to 0.4
 
 ---
 

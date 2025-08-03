@@ -1,12 +1,30 @@
 # Multi-Agent Pharmaceutical Workflow System Guide
 
-**Version**: 1.0  
-**Date**: July 31, 2025  
+**Version**: 1.1  
+**Date**: August 3, 2025 (Updated)  
 **Project**: GAMP-5 Pharmaceutical Test Generation System  
 
 ## 🏥 **CRITICAL** Overview
 
 This guide provides comprehensive instructions for using the pharmaceutical multi-agent workflow system with **GAMP-5 compliance**, **Phoenix observability**, and **regulatory audit trails**. The system coordinates 6 specialized agents to deliver complete pharmaceutical software validation workflows.
+
+### ⚠️ Current System Status
+
+✅ **Working Components**:
+- Core workflow execution (categorization → OQ generation)
+- Test generation with o3 model (30 tests for Category 5)
+- Basic file-based audit logging
+- Task coordination with Task-Master AI
+
+⚠️ **Partially Working**:
+- Research Agent (fails - missing pdfplumber)
+- SME Agent (fails - missing pdfplumber)
+- Agent success rate: ~33% (1 of 3 agents functional)
+
+❌ **Non-functional**:
+- Phoenix observability (missing dependencies)
+- Complete workflow tracing
+- Real-time monitoring dashboards
 
 ## 🚨 **ABSOLUTE RULE: NO FUCKING FALLBACKS** 🚨
 
@@ -164,8 +182,8 @@ Task(subagent_type="workflow-coordinator",
 
 1. **System Setup**:
    ```bash
-   # Ensure Phoenix is running
-   curl -f http://localhost:6006 && echo "✅ Phoenix ready" || echo "❌ Start Phoenix first"
+   # Check Phoenix status (currently non-functional)
+   curl -f http://localhost:6006 && echo "✅ Phoenix ready" || echo "❌ Phoenix not available"
    
    # Check Task-Master AI integration
    mcp__task-master-ai__get_tasks --status=pending | head -3
@@ -180,9 +198,17 @@ Task(subagent_type="workflow-coordinator",
    uv run python -c "import openai; print('✅ OpenAI available')"
    uv run python -c "import chromadb; print('✅ ChromaDB available')"
    
-   # Phoenix observability check
-   curl -s http://localhost:6006/health
+   # Missing dependencies (install these to fix agents):
+   # pip install pdfplumber
+   # pip install arize-phoenix
+   # pip install openinference-instrumentation-llama-index
+   # pip install openinference-instrumentation-openai
    ```
+
+3. **Known Issues**:
+   - Phoenix monitoring requires package installation
+   - Research/SME agents need pdfplumber
+   - Audit trail shows "unknown" for workflow steps
 
 ### **IMPORTANT** First Workflow Execution
 
@@ -566,8 +592,34 @@ main/logs/               # System logs
 
 ---
 
-**Last Updated**: July 31, 2025  
-**Version**: 1.0  
+### Recent Updates (August 3, 2025)
+
+#### ✅ Fixed Issues:
+1. **Configuration Alignment**: GAMP Category 5 now requires 25-30 tests (was 15-20)
+2. **JSON Serialization**: Fixed datetime serialization in test suite files
+3. **Phantom Success**: Fixed workflow status reporting (was showing "Unknown")
+
+#### ⚠️ Pending Issues:
+1. **Missing Dependencies**:
+   - pdfplumber (required for Research/SME agents)
+   - Phoenix monitoring packages
+2. **Audit Trail**: Still shows "unknown" for workflow steps
+3. **Agent Failures**: 2 of 3 agents fail due to missing dependencies
+
+#### 🔧 To Restore Full Functionality:
+```bash
+# Install missing dependencies
+pip install pdfplumber
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
+```
+
+---
+
+**Last Updated**: August 3, 2025  
+**Version**: 1.1  
 **Next Review**: August 15, 2025  
 
 **REMEMBER**: This system prioritizes **pharmaceutical compliance over speed**, **complete context sharing over efficiency**, and **systematic coordination over ad-hoc delegation**. Every coordination decision impacts patient safety and regulatory compliance.

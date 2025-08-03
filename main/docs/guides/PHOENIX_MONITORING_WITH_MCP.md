@@ -1,6 +1,37 @@
 # Phoenix Monitoring with MCP Integration Guide
 
-## 🎯 Overview
+> **Last Updated**: August 3, 2025  
+> **Status**: ❌ Phoenix Monitoring is currently **NON-FUNCTIONAL**
+
+## 🚨 CRITICAL STATUS UPDATE
+
+Phoenix observability is currently broken due to missing dependencies. This guide documents the intended functionality, but **NONE of these features are currently working**.
+
+### Current Issues:
+1. **Missing Phoenix Packages**:
+   ```
+   arize-phoenix
+   openinference-instrumentation-llama-index
+   openinference-instrumentation-openai
+   llama-index-callbacks-arize-phoenix
+   ```
+
+2. **GraphQL API Error**: "unexpected error occurred"
+3. **No Workflow Traces**: Only 3 OpenAI embedding calls captured
+4. **Complete Observability Blackout**: Zero visibility into workflow execution
+
+### To Restore Functionality:
+```bash
+# Install required packages
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
+```
+
+---
+
+## 🎯 Overview (When Working)
 
 This guide demonstrates how to access and monitor Phoenix traces for the pharmaceutical test generation workflow using programmatic access instead of browser automation MCP tools.
 
@@ -8,16 +39,16 @@ This guide demonstrates how to access and monitor Phoenix traces for the pharmac
 
 ## 🚀 Setup Summary
 
-### Current Configuration
-- **Phoenix Server**: Running on `localhost:6006` (Docker or Python)
-- **Phoenix Client**: Version 11.10.1 (compatible with server 11.13.2)
+### Expected Configuration (Not Currently Functional)
+- **Phoenix Server**: Should run on `localhost:6006` (Docker or Python)
+- **Phoenix Client**: Version compatibility required
 - **MCP Integration**: Available but not required for monitoring
 - **Trace Access**: Programmatic via Phoenix Python client
 
 ### Browser MCP Status
 - **Playwright MCP**: Available but requires `sudo npx playwright install chrome`
 - **Puppeteer MCP**: Available but has dependency issues in WSL environment
-- **Alternative**: Direct Phoenix client access (recommended)
+- **Alternative**: Direct Phoenix client access (recommended when working)
 
 ## 📊 Phoenix Monitoring Script
 
@@ -26,21 +57,21 @@ This guide demonstrates how to access and monitor Phoenix traces for the pharmac
 /home/anteb/thesis_project/main/phoenix_monitoring.py
 ```
 
-### Core Features
+### Core Features (When Functional)
 1. **Real-time trace analysis** with comprehensive breakdowns
 2. **Workflow execution tracking** for GAMP categorization
 3. **Performance metrics** and latency analysis
 4. **Export functionality** for compliance reporting
 5. **Real-time monitoring** with configurable intervals
 
-### Usage Examples
+### Usage Examples (Currently Non-Functional)
 
 #### 1. Get Trace Summary
 ```bash
 uv run python main/phoenix_monitoring.py --summary --hours 1
 ```
 
-**Sample Output**:
+**Expected Output** (Not Available):
 ```json
 {
   "phoenix_url": "http://localhost:6006",
@@ -61,115 +92,62 @@ uv run python main/phoenix_monitoring.py --summary --hours 1
 }
 ```
 
-#### 2. Export Comprehensive Report
-```bash
-uv run python main/phoenix_monitoring.py --export phoenix_traces_report.json
-```
+## 🔍 What Should Be Captured (Currently Missing)
 
-**Generated Report Includes**:
-- 24-hour trace summary
-- 1-hour recent activity
-- GAMP workflow execution details
-- Context provider operation traces
-- ChromaDB search operations
+### Workflow Traces
+- `GAMPCategorizationWorkflow.*` operations
+- `UnifiedTestGenerationWorkflow.*` operations
+- `OQTestGenerationWorkflow.*` operations
+- Agent coordination events
+- Error handling and recovery
 
-#### 3. Real-time Monitoring
-```bash
-uv run python main/phoenix_monitoring.py --monitor
-```
-
-**Features**:
-- Live span count updates
-- New operation detection
-- Configurable monitoring intervals
-- Keyboard interrupt support
-
-## 🔍 Captured Trace Types
-
-### Workflow Traces (Recent Execution)
-- `GAMPCategorizationWorkflow.start`
-- `GAMPCategorizationWorkflow.process_document`
-- `GAMPCategorizationWorkflow.categorize_document`
-- `GAMPCategorizationWorkflow.handle_error_recovery`
-- `GAMPCategorizationWorkflow.check_consultation_required`
-- `GAMPCategorizationWorkflow.complete_workflow`
-
-### RAG System Traces (Historical)
-- `OpenAIEmbedding._get_query_embedding` (23 spans)
-- `VectorIndexRetriever._retrieve` (23 spans)
-- `context_provider.process_request` (6 spans)
-- `chromadb.search_documents` (6 spans)
-- `chromadb.chunk.*` operations (per document chunk)
-
-### ChromaDB Operations
-- `chromadb.search_collection.regulatory`
-- `chromadb.search_collection.gamp5`
-- `chromadb.search_collection.best_practices`
-- `chromadb.search_collection.sops`
+### Current Reality
+- **Only 3 traces**: OpenAI embedding calls
+- **No workflow visibility**
+- **No agent traces**
+- **No error tracking**
 
 ## 🌐 Phoenix UI Access
 
-### Direct Browser Access
+### Current Status
 ```
-http://localhost:6006
+http://localhost:6006 - Returns GraphQL errors
 ```
 
-**Available without MCP browser tools**:
+### What's Broken:
 - Trace visualization
 - Span hierarchy analysis
 - Performance metrics
 - Token usage tracking
 - Export capabilities
 
-### Manual Browser Navigation
-Since MCP browser tools require additional setup, you can:
-1. Open browser manually to `http://localhost:6006`
-2. Use Phoenix UI for visual trace analysis
-3. Export data programmatically via monitoring script
-
 ## 🔧 Troubleshooting
 
-### MCP Browser Tools (Optional)
-If you want to set up browser automation:
+### Primary Issue: Missing Dependencies
+The root cause is missing Python packages. Without these, Phoenix cannot instrument the LlamaIndex workflows.
 
-#### Playwright MCP Setup
-```bash
-# Install browser (requires sudo)
-sudo npx playwright install chrome
-
-# Test connection
-uv run python -c "
-from mcp__playwright__browser_navigate import browser_navigate
-browser_navigate('http://localhost:6006')
-"
-```
-
-#### Puppeteer MCP Issues
-- **Error**: `qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2'`
-- **Cause**: WSL/Docker environment compatibility
-- **Solution**: Use Playwright or direct Phoenix client access
-
-### Phoenix Client Issues
-- **Version Warning**: Phoenix server (11.13.2) vs client (11.10.1)
-- **Impact**: Minor compatibility warnings, functionality works
-- **Solution**: Warnings are safe to ignore
+### Steps to Fix:
+1. Install missing packages (see top of document)
+2. Restart Phoenix server
+3. Re-run workflow with instrumentation enabled
+4. Verify traces appear in Phoenix UI
 
 ## 📈 Integration with Pharmaceutical Workflow
 
-### GAMP-5 Compliance Monitoring
-The monitoring script captures:
-- **Complete workflow execution** traces
-- **Error handling** and recovery operations  
-- **Decision audit trails** for regulatory compliance
-- **Performance metrics** for validation
+### Current Impact on Compliance
+⚠️ **CRITICAL**: Without Phoenix monitoring, we have:
+- **No audit trail** of workflow execution details
+- **No performance metrics** for validation
+- **No error tracking** for debugging
+- **Limited compliance documentation**
 
-### Real-world Usage
+### What Should Work (But Doesn't):
 ```bash
 # Before running workflow
 uv run python main/phoenix_monitoring.py --export pre_workflow_baseline.json
 
 # Run pharmaceutical workflow
-uv run python main/main.py test_document.txt --categorization-only
+uv run python main/main.py test_document.txt
 
 # Analyze workflow traces
 uv run python main/phoenix_monitoring.py --summary --hours 1
@@ -178,68 +156,61 @@ uv run python main/phoenix_monitoring.py --summary --hours 1
 uv run python main/phoenix_monitoring.py --export post_workflow_traces.json
 ```
 
-## 🎯 Key Benefits Achieved
+## 🎯 Key Benefits (Currently Unavailable)
 
-### ✅ No Browser Dependencies
-- Direct Phoenix client access eliminates MCP browser setup complexity
-- Works in WSL, Docker, and restricted environments
+### ❌ No Browser Dependencies
+- Would eliminate MCP browser setup complexity
+- Would work in WSL, Docker, and restricted environments
 - No `sudo` permissions required for monitoring
 
-### ✅ Comprehensive Trace Access
-- **176 total spans** captured across workflow executions
-- **Real-time monitoring** capabilities
-- **Export functionality** for compliance documentation
+### ❌ Comprehensive Trace Access
+- Should capture hundreds of spans across workflow executions
+- Real-time monitoring capabilities missing
+- Export functionality non-operational
 
-### ✅ Pharmaceutical Compliance
-- Complete GAMP-5 workflow trace capture
-- Error handling and recovery documentation
-- Audit trail generation for regulatory requirements
+### ❌ Pharmaceutical Compliance
+- Cannot capture GAMP-5 workflow traces
+- No error handling documentation
+- Missing audit trail for regulatory requirements
 
-### ✅ Performance Insights
-- Latency tracking for optimization
-- Operation breakdown analysis
-- Historical trend monitoring
+### ❌ Performance Insights
+- No latency tracking
+- No operation breakdown analysis
+- No historical trend monitoring
 
-## 🔄 Workflow Integration
+## 📚 Resources for Fixing
 
-### 1. Pre-execution Setup
-```bash
-# Ensure Phoenix is running
-curl -f http://localhost:6006 && echo "Phoenix ready"
+### Required Actions:
+1. **Install Dependencies**:
+   ```bash
+   pip install arize-phoenix
+   pip install openinference-instrumentation-llama-index
+   pip install openinference-instrumentation-openai
+   pip install llama-index-callbacks-arize-phoenix
+   ```
 
-# Clear previous monitoring data if needed
-uv run python main/phoenix_monitoring.py --export baseline.json
-```
+2. **Verify Phoenix Server**:
+   ```bash
+   docker ps | grep phoenix
+   # or
+   ps aux | grep phoenix
+   ```
 
-### 2. Workflow Execution with Monitoring
-```bash
-# Start real-time monitoring in background
-uv run python main/phoenix_monitoring.py --monitor &
+3. **Check Instrumentation**:
+   ```python
+   # In main.py or workflow files
+   from phoenix.otel import register
+   tracer_provider = register()
+   ```
 
-# Run pharmaceutical workflow
-uv run python main/main.py your_document.txt
-
-# Stop monitoring (Ctrl+C)
-```
-
-### 3. Post-execution Analysis
-```bash
-# Generate comprehensive report
-uv run python main/phoenix_monitoring.py --export final_report.json
-
-# Review workflow-specific traces
-uv run python main/phoenix_monitoring.py --workflow GAMP
-```
-
-## 📚 Additional Resources
-
-- **Phoenix UI**: http://localhost:6006 (manual browser access)
-- **Monitoring Script**: `/home/anteb/thesis_project/main/phoenix_monitoring.py`
-- **Export Reports**: Generated in project root directory
+### Documentation:
 - **Phoenix Documentation**: https://arize.com/docs/phoenix
+- **OpenInference**: https://github.com/Arize-ai/openinference
+- **LlamaIndex Integration**: https://docs.llamaindex.ai/en/stable/module_guides/observability/
 
 ---
 
-**Status**: ✅ Phoenix monitoring fully operational without MCP browser dependencies  
-**Alternative**: Browser automation available with additional setup  
-**Recommendation**: Use programmatic access for reliable, permission-free monitoring
+**Status**: ❌ Phoenix monitoring is **NON-FUNCTIONAL**  
+**Root Cause**: Missing Python dependencies  
+**Resolution**: Install required packages and restart services  
+**Impact**: Complete observability blackout affecting compliance and debugging capabilities

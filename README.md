@@ -81,26 +81,47 @@ cp .env.example .env
 
 ### Current MVP Status
 
-⚠️ **Under Active Development** - MVP implementation in progress:
+⚠️ **Partially Operational** - System ~75% functional:
 
-**Completed**: Event system, Phoenix observability, human-in-loop consultation  
-**In Progress**: Categorization agent fixes, OQ test generation  
-**Next**: Full workflow integration and testing
+**✅ Working**: 
+- GAMP-5 Categorization (confidence threshold 0.4)
+- OQ Test Generation with o3 model (30 tests for Category 5)
+- Basic file-based audit logging
+- Test suite JSON file generation
+
+**❌ Not Working**:
+- Phoenix observability (missing arize-phoenix packages)
+- Research Agent (requires pdfplumber)
+- SME Agent (requires pdfplumber)
+- Complete workflow tracing
+- Audit trail details (shows "unknown")
+
+**🔧 To Restore Full Functionality**:
+```bash
+pip install pdfplumber
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
+```
 
 See [`main/docs/mvp_implementation_plan.md`](main/docs/mvp_implementation_plan.md) for detailed roadmap.
 
 ### Basic Usage
 
 ```bash
-# Current: Run unified workflow (basic functionality)
-python main/main.py
+# Current: Run unified workflow (generates OQ tests)
+cd main
+uv run python main.py test_urs.txt
 
-# Future: Full test generation workflow
-python -m src.main --urs-file path/to/urs.txt
+# Expected output:
+# - Categorization: Category 5 (confidence ~0.42)
+# - OQ Tests: 30 tests generated
+# - Output: test_generation_CATEGORY_5_[timestamp].json
+# - Duration: ~300s (o3 model is slow)
 
-# Interactive mode with monitoring
-python -m phoenix.server.main serve &
-python main/main.py --enable-monitoring
+# Note: Phoenix monitoring is currently broken
+# Even if you start Phoenix, it will show GraphQL errors
 ```
 
 ### Task Management (Claude Code)
@@ -127,12 +148,12 @@ mcp__task-master-ai__research --query="LlamaIndex workflow patterns" --taskIds="
 mcp__task-master-ai__set_task_status --id=1.1 --status=done
 ```
 
-**Current MVP Tasks (9 main tasks):**
-- **Phase 1**: Fix categorization agent fallback violations (Task 1)
-- **Phase 2**: Implement Pydantic structured output (Task 2)
-- **Phase 3**: Context provider integration (Task 3)
-- **Phase 4**: OQ test generation agent (Task 5)
-- **Phase 5**: Complete parallel agents and integration (Tasks 6-9)
+**Recent Fixes Applied (August 3, 2025):**
+- ✅ Fixed configuration alignment (Category 5: 25-30 tests)
+- ✅ Fixed JSON datetime serialization
+- ✅ Fixed "phantom success" status reporting
+- ✅ Added o3-2025-04-16 model support for Category 5
+- ✅ Reduced confidence threshold from 0.6 to 0.4
 
 See task details: `mcp__task-master-ai__get_tasks`
 
@@ -198,10 +219,11 @@ uv run python -m src.main test # Level 3: Integration
 
 | Metric | Target | Current |
 |--------|---------|---------|
-| Generation Time | -70% | TBD |
-| Requirements Coverage | ≥90% | TBD |
+| Generation Time | -70% | ~300s for Category 5 |
+| Requirements Coverage | ≥90% | 30 tests generated |
 | False Positive Rate | <5% | TBD |
-| ALCOA+ Compliance | 100% | TBD |
+| ALCOA+ Compliance | 100% | Partial (audit trail incomplete) |
+| System Functionality | 100% | ~75% (missing deps) |
 
 ## 🔒 Security & Compliance
 
@@ -251,15 +273,17 @@ thesis_project/
 
 ## 📈 Monitoring & Observability
 
+⚠️ **Currently NON-FUNCTIONAL** due to missing dependencies
+
 ```bash
-# Start Phoenix monitoring
-docker-compose -f phoenix/docker-compose.yml up -d
+# Phoenix returns GraphQL errors even if running:
+docker run -d -p 6006:6006 arizephoenix/phoenix:latest
 
-# View traces
-open http://localhost:6006
-
-# Export metrics
-python -m src.monitoring.export --format csv
+# To fix monitoring, install missing packages:
+pip install arize-phoenix
+pip install openinference-instrumentation-llama-index
+pip install openinference-instrumentation-openai
+pip install llama-index-callbacks-arize-phoenix
 ```
 
 ## 🤝 Contributing
