@@ -50,7 +50,7 @@ class SimpleTracer:
             "details": details or {}
         }
         self._write_event("api_call", api_data)
-        print(f"🌐 API Call: {service} - {endpoint} - {duration:.2f}s - {'✅' if success else '❌'}")
+        print(f"[API] {service} - {endpoint} - {duration:.2f}s - {'OK' if success else 'FAIL'}")
         
     def log_agent_execution(self, agent_type: str, start_time: float, result: Any, error: Optional[str] = None):
         """Log agent execution details."""
@@ -64,8 +64,8 @@ class SimpleTracer:
             "timestamp": time.time()
         }
         self._write_event("agent", agent_data)
-        status = "✅" if error is None else "❌"
-        print(f"🤖 Agent: {agent_type} - {duration:.2f}s - {status}")
+        status = "OK" if error is None else "FAIL"
+        print(f"[AGENT] {agent_type} - {duration:.2f}s - {status}")
         
     def log_error(self, component: str, error: Exception):
         """Log error with full stack trace."""
@@ -77,7 +77,7 @@ class SimpleTracer:
             "timestamp": time.time()
         }
         self._write_event("error", error_data)
-        print(f"❌ Error in {component}: {error}")
+        print(f"[ERROR] {component}: {error}")
         
     def end_workflow(self, success: bool, results: Optional[Dict] = None):
         """End workflow trace."""

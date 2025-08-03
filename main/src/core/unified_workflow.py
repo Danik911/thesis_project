@@ -81,19 +81,19 @@ async def safe_context_get(ctx: Context, key: str, default=None):
     """
     try:
         # ENHANCED: Add detailed logging for debugging
-        logger.debug(f"🔍 Attempting to retrieve context key: {key}")
+        logger.debug(f"[CTX] Attempting to retrieve context key: {key}")
         
         # Use ctx.store for persistent storage across workflow boundaries
         value = await ctx.store.get(key)
         if value is not None:
             # ENHANCED: Log value type for debugging complex objects
-            logger.debug(f"✅ Context retrieval successful for key {key}, type: {type(value)}")
+            logger.debug(f"[CTX] Context retrieval successful for key {key}, type: {type(value)}")
             return value
         if default is not None:
-            logger.debug(f"⚠️ Context key {key} not found, returning default: {default}")
+            logger.debug(f"[CTX] Context key {key} not found, returning default: {default}")
             return default
         # NO FALLBACKS - explicit failure for critical state
-        logger.error(f"❌ CRITICAL: Context key '{key}' not found in persistent store and no default provided")
+        logger.error(f"[CRITICAL] Context key '{key}' not found in persistent store and no default provided")
         
         # ENHANCED: Add context diagnosis for debugging
         all_keys = []
@@ -106,13 +106,13 @@ async def safe_context_get(ctx: Context, key: str, default=None):
                         all_keys.append(test_key)
                 except:
                     pass
-            logger.error(f"🔍 Available context keys: {all_keys}")
+            logger.error(f"[CTX] Available context keys: {all_keys}")
         except Exception as diag_error:
             logger.error(f"Context diagnosis failed: {diag_error}")
             
         raise RuntimeError(f"Critical state '{key}' not found in workflow context - workflow state corrupted")
     except Exception as e:
-        logger.error(f"❌ Context retrieval failed for key {key}: {e}")
+        logger.error(f"[ERROR] Context retrieval failed for key {key}: {e}")
         # NO FALLBACKS - fail explicitly for regulatory compliance
         raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
@@ -134,32 +134,32 @@ async def safe_context_set(ctx: Context, key: str, value):
     """
     try:
         # ENHANCED: Add detailed logging for debugging
-        logger.debug(f"💾 Attempting to store context key: {key}, type: {type(value)}")
+        logger.debug(f"[CTX] Attempting to store context key: {key}, type: {type(value)}")
         
         # ENHANCED: Handle complex objects that might need special serialization
         if hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool, list, dict)):
-            logger.debug(f"🔧 Storing complex object {key}: {type(value)}")
+            logger.debug(f"[CTX] Storing complex object {key}: {type(value)}")
             # For GAMPCategory enum, store both value and type info
             if hasattr(value, 'value') and hasattr(value, '__class__'):
-                logger.debug(f"📝 Enum detected for {key}: {value.value}")
+                logger.debug(f"[CTX] Enum detected for {key}: {value.value}")
         
         # Use ctx.store for persistent storage across workflow boundaries
         await ctx.store.set(key, value)
-        logger.debug(f"✅ Context storage successful for key {key}")
+        logger.debug(f"[CTX] Context storage successful for key {key}")
         
         # ENHANCED: Verify storage by reading back
         try:
             verification = await ctx.store.get(key)
             if verification is None:
-                logger.warning(f"⚠️ Verification failed: {key} was stored but read back as None")
+                logger.warning(f"[WARNING] Verification failed: {key} was stored but read back as None")
             else:
-                logger.debug(f"✅ Storage verification successful for {key}")
+                logger.debug(f"[CTX] Storage verification successful for {key}")
         except Exception as verify_error:
-            logger.warning(f"⚠️ Storage verification failed for {key}: {verify_error}")
+            logger.warning(f"[WARNING] Storage verification failed for {key}: {verify_error}")
         
         return True
     except Exception as e:
-        logger.error(f"❌ CRITICAL: Context storage failed for key {key}: {e}")
+        logger.error(f"[CRITICAL] Context storage failed for key {key}: {e}")
         # NO FALLBACKS - fail explicitly for regulatory compliance
         raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
@@ -281,7 +281,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         # Initialize tracer for monitoring and error logging
         self.tracer = get_tracer()
-        self.logger.info("📊 Tracer initialized for workflow monitoring")
+        self.logger.info("[TRACER] Tracer initialized for workflow monitoring")
 
         # Initialize human consultation manager
         if enable_human_consultation:
@@ -290,7 +290,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # Setup Phoenix if enabled
         if enable_phoenix:
             setup_phoenix()
-            self.logger.info("🔭 Phoenix observability enabled")
+            self.logger.info("[PHOENIX] Phoenix observability enabled")
 
     @step
     async def start_unified_workflow(
@@ -308,7 +308,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             URSIngestionEvent to begin document processing
         """
-        self.logger.info("🚀 Starting unified test generation workflow")
+        self.logger.info("[WORKFLOW] Starting unified test generation workflow")
 
         # Extract document path from start event
         document_path = ev.get("document_path") or getattr(ev, "document_path", None)
@@ -352,7 +352,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             GAMPCategorizationEvent with categorization results
         """
-        self.logger.info(f"📊 Starting GAMP-5 categorization for {ev.document_name}")
+        self.logger.info(f"[GAMP5] Starting GAMP-5 categorization for {ev.document_name}")
 
         # Initialize categorization workflow
         categorization_workflow = GAMPCategorizationWorkflow(
@@ -383,7 +383,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if isinstance(categorization_data, GAMPCategorizationEvent):
             categorization_event = categorization_data
             await safe_context_set(ctx, "gamp_category", categorization_data.gamp_category)
-            self.logger.info(f"✅ GAMP-5 Category: {categorization_data.gamp_category.value}")
+            self.logger.info(f"[GAMP5] GAMP-5 Category: {categorization_data.gamp_category.value}")
         # Handle dict or other formats
         elif isinstance(categorization_data, dict):
             await safe_context_set(ctx, "gamp_category", categorization_data.get("gamp_category"))
@@ -405,7 +405,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 document_content=categorization_data.document_content,
                 session_id=self._workflow_session_id
             )
-            self.logger.info(f"✅ GAMP-5 Category: {categorization_data.gamp_category.value}")
+            self.logger.info(f"[GAMP5] GAMP-5 Category: {categorization_data.gamp_category.value}")
         return categorization_event
 
     @step
@@ -424,7 +424,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             AgentRequestEvent for next agent to execute, or AgentResultsEvent if no coordination needed
         """
-        self.logger.info("🔄 Starting parallel agent coordination from planning event")
+        self.logger.info("[PARALLEL] Starting parallel agent coordination from planning event")
 
         # Store the planning event in context using safe operations
         await safe_context_set(ctx, "planning_event", ev)
@@ -477,12 +477,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
         await safe_context_set(ctx, "agent_requests", agent_requests)
 
         self.logger.info(
-            f"✅ Planning processed - {ev.estimated_test_count} tests estimated, "
+            f"[PLANNING] Planning processed - {ev.estimated_test_count} tests estimated, "
             f"{len(agent_requests)} agents to coordinate"
         )
 
         if not self.enable_parallel_coordination or not agent_requests:
-            self.logger.info("⏭️ Skipping parallel coordination - creating empty results")
+            self.logger.info("[PARALLEL] Skipping parallel coordination - creating empty results")
             # Create empty agent results to proceed to OQ generation
             return AgentResultsEvent(
                 agent_results=[],
@@ -535,7 +535,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         import time
         start_time = time.time()
-        self.logger.info(f"🤖 Executing {ev.agent_type} agent request")
+        self.logger.info(f"[AGENT] Executing {ev.agent_type} agent request")
 
         try:
             # Import asyncio for timeout protection
@@ -572,7 +572,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 except asyncio.TimeoutError:
                     self.tracer.log_error(f"{ev.agent_type}_timeout", 
                                         Exception(f"Agent execution timed out after {agent_timeout}s"))
-                    self.logger.error(f"❌ {ev.agent_type} agent timed out after {agent_timeout} seconds")
+                    self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -607,7 +607,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 except asyncio.TimeoutError:
                     self.tracer.log_error(f"{ev.agent_type}_timeout", 
                                         Exception(f"Agent execution timed out after {agent_timeout}s"))
-                    self.logger.error(f"❌ {ev.agent_type} agent timed out after {agent_timeout} seconds")
+                    self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -642,7 +642,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 except asyncio.TimeoutError:
                     self.tracer.log_error(f"{ev.agent_type}_timeout", 
                                         Exception(f"Agent execution timed out after {agent_timeout}s"))
-                    self.logger.error(f"❌ {ev.agent_type} agent timed out after {agent_timeout} seconds")
+                    self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -674,7 +674,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             )
 
         except Exception as e:
-            self.logger.error(f"❌ Agent {ev.agent_type} execution failed: {e}")
+            self.logger.error(f"[ERROR] Agent {ev.agent_type} execution failed: {e}")
             return AgentResultEvent(
                 agent_type=ev.agent_type,
                 correlation_id=ev.correlation_id,
@@ -718,13 +718,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if next_index < len(coordination_requests):
             # Emit the next request using safe context operations
             await safe_context_set(ctx, "current_request_index", next_index)
-            self.logger.info(f"📤 Emitting agent request {next_index + 1}/{len(coordination_requests)}")
+            self.logger.info(f"[PARALLEL] Emitting agent request {next_index + 1}/{len(coordination_requests)}")
             return coordination_requests[next_index]
 
         # All requests have been processed, check if we have all results
         expected_count = await safe_context_get(ctx, "expected_results_count", 0)
         if len(results) >= expected_count:
-            self.logger.info(f"✅ Collected all {len(results)} agent results")
+            self.logger.info(f"[RESULTS] Collected all {len(results)} agent results")
             return AgentResultsEvent(
                 agent_results=results,
                 session_id=self._workflow_session_id
@@ -769,7 +769,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         )
 
         if requires_consultation:
-            self.logger.info("🤔 Human consultation required")
+            self.logger.info("[CONSULT] Human consultation required")
             consultation_event = ConsultationRequiredEvent(
                 consultation_type="categorization_review",
                 context={
@@ -848,7 +848,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             PlanningEvent to continue workflow after consultation
         """
-        self.logger.info(f"👥 Processing consultation: {ev.context.get('reason', 'Unknown reason')}")
+        self.logger.info(f"[CONSULT] Processing consultation: {ev.context.get('reason', 'Unknown reason')}")
 
         # In a real implementation, this would trigger human consultation UI
         # For now, we'll simulate consultation completion
@@ -898,7 +898,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             OQTestSuiteEvent with generated test suite
         """
-        self.logger.info("🧪 Starting OQ test generation")
+        self.logger.info("[OQ] Starting OQ test generation")
 
         # Validate critical workflow state exists before proceeding
         await validate_workflow_state(ctx, ["planning_event", "categorization_result"])
@@ -983,7 +983,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 oq_event = oq_data.get("full_event")
                 if oq_event and isinstance(oq_event, OQTestSuiteEvent):
                     self.logger.info(
-                        f"✅ Generated {oq_event.test_suite.total_test_count} OQ tests successfully"
+                        f"[OQ] Generated {oq_event.test_suite.total_test_count} OQ tests successfully"
                     )
                     return oq_event
                 # Create event from data
@@ -1067,9 +1067,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
             "workflow_results": ev.workflow_results if hasattr(ev, "workflow_results") else None
         }
 
-        self.logger.info(f"🎉 Unified workflow completed with status: {status}")
+        self.logger.info(f"[COMPLETE] Unified workflow completed with status: {status}")
         if total_time:
-            self.logger.info(f"⏱️ Total processing time: {total_time.total_seconds():.2f} seconds")
+            self.logger.info(f"[TIMING] Total processing time: {total_time.total_seconds():.2f} seconds")
 
         # Enhanced Phoenix Observability - temporarily disabled for testing
         # if self.enable_phoenix:

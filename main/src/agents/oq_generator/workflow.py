@@ -6,7 +6,10 @@ LlamaIndex event-driven architecture with pharmaceutical compliance
 and regulatory validation requirements.
 """
 
+import json
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from llama_index.core.llms import LLM
@@ -427,6 +430,71 @@ class OQTestGenerationWorkflow(Workflow):
 
         return base_requirements
 
+    async def _save_test_suite_to_file(self, test_suite: OQTestSuite) -> str:
+        """
+        Save test suite to JSON file with GAMP-5 compliance metadata.
+        
+        Args:
+            test_suite: Generated OQ test suite
+            
+        Returns:
+            Path to saved file
+            
+        Raises:
+            RuntimeError: If file saving fails (NO FALLBACKS)
+        """
+        try:
+            # Create output directory
+            output_dir = Path("output/test_suites")
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"test_suite_{test_suite.suite_id}_{timestamp}.json"
+            output_file = output_dir / filename
+            
+            # Prepare comprehensive output data
+            output_data = {
+                "metadata": {
+                    "generated_at": datetime.now().isoformat(),
+                    "suite_id": test_suite.suite_id,
+                    "gamp_category": test_suite.gamp_category,
+                    "total_test_count": test_suite.total_test_count,
+                    "file_version": "1.0",
+                    "compliance_standards": ["GAMP-5", "ALCOA+", "21 CFR Part 11"],
+                    "generator_version": "OQTestGenerationWorkflow v1.0"
+                },
+                "test_suite": test_suite.model_dump(),
+                "audit_trail": {
+                    "created_by": "OQTestGenerationWorkflow",
+                    "creation_timestamp": datetime.now().isoformat(),
+                    "validation_status": "generated",
+                    "review_required": test_suite.review_required,
+                    "pharmaceutical_compliance": test_suite.pharmaceutical_compliance
+                }
+            }
+            
+            # Write file with proper error handling - NO FALLBACKS
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(output_data, f, indent=2, ensure_ascii=False)
+            
+            # Verify file was written correctly
+            if not output_file.exists():
+                raise RuntimeError(f"File write verification failed: {output_file} does not exist")
+                
+            file_size = output_file.stat().st_size
+            if file_size == 0:
+                raise RuntimeError(f"File write verification failed: {output_file} is empty")
+            
+            self.logger.info(f"Test suite file written successfully: {file_size} bytes")
+            return str(output_file)
+            
+        except Exception as e:
+            # File saving failed - NO FALLBACKS for GAMP-5 compliance
+            error_msg = f"CRITICAL: Test suite file save failed: {e}"
+            self.logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
+
     @step
     async def complete_oq_generation(
         self,
@@ -457,6 +525,10 @@ class OQTestGenerationWorkflow(Workflow):
                 f"OQ test generation completed successfully: {ev.test_suite.suite_id} "
                 f"({ev.test_suite.total_test_count} tests)"
             )
+            
+            # Save test suite to JSON file
+            output_file = await self._save_test_suite_to_file(ev.test_suite)
+            self.logger.info(f"Test suite saved to: {output_file}")
 
             # Create comprehensive success result
             final_result = {
@@ -474,6 +546,9 @@ class OQTestGenerationWorkflow(Workflow):
                     "pharmaceutical_compliance": ev.test_suite.pharmaceutical_compliance,
                     "review_required": ev.test_suite.review_required
                 },
+
+                # File output information
+                "output_file": output_file,
 
                 # Generation metadata
                 "generation_metadata": {
