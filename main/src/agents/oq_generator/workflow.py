@@ -19,6 +19,7 @@ from src.core.events import ConsultationRequiredEvent
 
 from .events import OQTestGenerationEvent, OQTestSuiteEvent
 from .generator import OQTestGenerationError, OQTestGenerator
+from .generator_v2 import OQTestGeneratorV2, create_oq_test_generator_v2
 from .models import OQTestSuite
 
 
@@ -116,12 +117,13 @@ class OQTestGenerationWorkflow(Workflow):
 
             # Initialize test generator with timeout configuration
             if not self._test_generator:
-                # Use 80% of workflow timeout for LLM generation (8 minutes out of 10)
+                # Use enhanced V2 generator with o1 model support
                 # Use default if timeout attribute not available
                 workflow_timeout = getattr(self, 'timeout', 600)  # Default 10 minutes
                 generation_timeout = int(workflow_timeout * 0.8)
-                self._test_generator = OQTestGenerator(
-                    llm=self.llm,
+                
+                # Use V2 generator for better model support
+                self._test_generator = create_oq_test_generator_v2(
                     verbose=self.verbose,
                     generation_timeout=generation_timeout
                 )
@@ -134,7 +136,7 @@ class OQTestGenerationWorkflow(Workflow):
                 f"Generating {ev.required_test_count} OQ tests for {ev.document_metadata.get('name', 'Unknown')}"
             )
 
-            test_suite = self._test_generator.generate_oq_test_suite(
+            test_suite = await self._test_generator.generate_oq_test_suite(
                 gamp_category=ev.gamp_category,
                 urs_content=ev.urs_content,
                 document_name=ev.document_metadata.get("name", "Unknown Document"),
@@ -475,8 +477,18 @@ class OQTestGenerationWorkflow(Workflow):
             }
             
             # Write file with proper error handling - NO FALLBACKS
+            # Use custom JSON encoder to handle datetime objects
+            import json as json_module
+            from datetime import datetime as dt
+            
+            class DateTimeEncoder(json_module.JSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, dt):
+                        return obj.isoformat()
+                    return super().default(obj)
+            
             with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(output_data, f, indent=2, ensure_ascii=False)
+                json_module.dump(output_data, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
             
             # Verify file was written correctly
             if not output_file.exists():

@@ -72,10 +72,10 @@ class OQTestGenerator:
         self._last_generation_context = None
         
         # Configure LLM timeout if it's OpenAI
-        if hasattr(self.llm, 'request_timeout'):
-            # Set request timeout to our generation timeout
-            self.llm.request_timeout = generation_timeout
-            self.logger.info(f"Set LLM request timeout to {generation_timeout}s")
+        if hasattr(self.llm, 'timeout'):
+            # Set timeout to our generation timeout (OpenAI SDK v1.0.0+)
+            self.llm.timeout = generation_timeout
+            self.logger.info(f"Set LLM timeout to {generation_timeout}s")
         elif hasattr(self.llm, '_client') and hasattr(self.llm._client, 'timeout'):
             # For newer OpenAI client versions
             self.llm._client.timeout = generation_timeout

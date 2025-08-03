@@ -186,7 +186,7 @@ class ContextProviderAgent:
             # Add correlation_id if not in request_data
             request_data_dict["correlation_id"] = request_event.correlation_id
             
-            self.logger.info(f"🔧 Context Provider request validation: gamp_category={request_data_dict.get('gamp_category')} (type: {type(request_data_dict.get('gamp_category'))})")
+            self.logger.info(f"[CONFIG] Context Provider request validation: gamp_category={request_data_dict.get('gamp_category')} (type: {type(request_data_dict.get('gamp_category'))})")
             
             request_data = ContextProviderRequest(**request_data_dict)
 
@@ -573,7 +573,7 @@ class ContextProviderAgent:
 
                 # Log detailed search information
                 self.logger.info(
-                    f"🔍 Starting ChromaDB search:\n"
+                    f"[SEARCH] Starting ChromaDB search:\n"
                     f"   - Query: {query}\n"
                     f"   - Collections: {collection_names}\n"
                     f"   - GAMP Category: {request.gamp_category}\n"
@@ -597,7 +597,7 @@ class ContextProviderAgent:
                         # Log collection info
                         collection_count = self.collections[collection_name].count()
                         collection_span.set_attribute("collection.document_count", collection_count)
-                        self.logger.info(f"   📁 Searching collection '{collection_name}' ({collection_count} documents)")
+                        self.logger.info(f"   [FILE] Searching collection '{collection_name}' ({collection_count} documents)")
 
                         # Create index and retriever
                         storage_context = StorageContext.from_defaults(
@@ -736,7 +736,7 @@ class ContextProviderAgent:
 
                 if self.verbose:
                     self.logger.info(
-                        f"✅ ChromaDB search completed:\n"
+                        f"[SUCCESS] ChromaDB search completed:\n"
                         f"   - {len(final_results)} documents retrieved\n"
                         f"   - Collections searched: {collection_names}\n"
                         f"   - Average relevance: {avg_score:.3f}" if final_results else "   - No results found"
@@ -893,7 +893,7 @@ class ContextProviderAgent:
     def _assess_context_quality(self, documents: list[dict[str, Any]], request: ContextProviderRequest) -> str:
         """Assess the quality of retrieved context with detailed logging."""
         if not documents:
-            self.logger.info("📊 Context quality assessment: No documents, quality = 'poor'")
+            self.logger.info("[DATA] Context quality assessment: No documents, quality = 'poor'")
             return "poor"
 
         # Calculate average relevance
@@ -918,7 +918,7 @@ class ContextProviderAgent:
 
         # Log quality assessment details
         self.logger.info(
-            f"📊 Context quality assessment:\n"
+            f"[DATA] Context quality assessment:\n"
             f"   - Average relevance: {avg_relevance:.3f}\n"
             f"   - Required sections: {list(required_sections)}\n"
             f"   - Covered sections: {list(covered_sections.intersection(required_sections))}\n"
@@ -1324,7 +1324,7 @@ Always maintain regulatory compliance and provide complete audit trails."""
             # Clear cache if force reprocessing
             if force_reprocess:
                 self.ingestion_cache.clear()
-                self.logger.info("   🗑️  Cleared ingestion cache for reprocessing")
+                self.logger.info("   [CLEAN]  Cleared ingestion cache for reprocessing")
                 if current_span and current_span.is_recording():
                     current_span.add_event("cache_cleared")
 
@@ -1388,7 +1388,7 @@ Always maintain regulatory compliance and provide complete audit trails."""
                 )
 
             self.logger.info(
-                f"✅ Document ingestion completed:\n"
+                f"[SUCCESS] Document ingestion completed:\n"
                 f"   - Status: {stats['status']}\n"
                 f"   - Documents: {stats['processed_documents']}\n"
                 f"   - Nodes: {stats['processed_nodes']}\n"

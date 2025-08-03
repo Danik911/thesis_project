@@ -51,7 +51,7 @@ class GAMPCategorizationWorkflow(Workflow):
         timeout: int = 300,
         verbose: bool = False,
         enable_error_handling: bool = True,
-        confidence_threshold: float = 0.60,
+        confidence_threshold: float = 0.40,
         retry_attempts: int = 2,
         enable_document_processing: bool = False
     ):

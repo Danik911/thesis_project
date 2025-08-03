@@ -224,7 +224,7 @@ GENERATION PARAMETERS:
 - Complexity Level: {category_config['complexity']}
 
 URS CONTENT:
-{urs_content[:8000]}  # Truncate for token limits
+{urs_content[:3000]}  # Reduced truncation for prompt size optimization
 
 CONTEXT INFORMATION:
 {context_summary if context_summary else 'Standard pharmaceutical validation approach recommended'}

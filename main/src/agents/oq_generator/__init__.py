@@ -29,6 +29,7 @@ from .events import (
     OQValidationResultEvent,
 )
 from .generator import OQTestGenerationError, OQTestGenerator
+from .generator_v2 import OQTestGeneratorV2, create_oq_test_generator_v2
 from .models import OQGenerationConfig, OQTestCase, OQTestSuite, TestStep
 from .templates import (
     ComplianceRequirements,
@@ -50,6 +51,8 @@ __all__ = [
 
     # Generator engine
     "OQTestGenerator",
+    "OQTestGeneratorV2", 
+    "create_oq_test_generator_v2",
     "OQTestGenerationError",
 
     # Data models

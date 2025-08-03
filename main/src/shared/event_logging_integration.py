@@ -393,11 +393,11 @@ async def handle_hitl_consultation(
 
     # Check if running in interactive terminal
     if not sys.stdin.isatty():
-        safe_print("⚠️  Non-interactive terminal detected - HITL consultation will timeout")
+        safe_print("[WARNING]  Non-interactive terminal detected - HITL consultation will timeout")
         return False
 
     safe_print("\n" + "="*60)
-    safe_print("🧑‍⚕️ HUMAN CONSULTATION REQUIRED")
+    safe_print("[HUMAN] HUMAN CONSULTATION REQUIRED")
     safe_print("="*60)
     safe_print(f"Consultation Type: {event.consultation_type}")
     safe_print(f"Urgency: {event.urgency}")
@@ -416,7 +416,7 @@ async def handle_hitl_consultation(
 
             user_input = input("Enter GAMP category (1, 3, 4, 5): ").strip()
             if user_input not in ["1", "3", "4", "5"]:
-                safe_print("❌ Invalid category. Using conservative default (Category 5)")
+                safe_print("[ERROR] Invalid category. Using conservative default (Category 5)")
                 gamp_category = 5
             else:
                 gamp_category = int(user_input)
@@ -447,7 +447,7 @@ async def handle_hitl_consultation(
             rationale = input("Enter decision rationale: ").strip()
 
             if not user_input:
-                safe_print("❌ No input provided - consultation will timeout")
+                safe_print("[ERROR] No input provided - consultation will timeout")
                 return False
 
             if not rationale:
@@ -482,7 +482,7 @@ async def handle_hitl_consultation(
         # Send the response event to the workflow
         handler.ctx.send_event(human_response)
 
-        safe_print("✅ Human response recorded and sent to workflow")
+        safe_print("[SUCCESS] Human response recorded and sent to workflow")
         safe_print("="*60)
 
         return True
@@ -491,7 +491,7 @@ async def handle_hitl_consultation(
         safe_print("\n👋 Consultation cancelled by user - workflow will timeout")
         return False
     except Exception as e:
-        safe_print(f"❌ Error processing consultation: {e}")
+        safe_print(f"[ERROR] Error processing consultation: {e}")
         return False
 
 
@@ -570,7 +570,7 @@ async def demonstrate_event_logging_integration():
     This function shows how to use the GAMP-5 compliant event logging
     system in a real workflow scenario.
     """
-    print("🔬 GAMP-5 Event Logging System Demonstration")
+    print("[TEST] GAMP-5 Event Logging System Demonstration")
     print("=" * 60)
 
     # Setup configuration
@@ -594,15 +594,15 @@ async def demonstrate_event_logging_integration():
     }
 
     try:
-        print("🚀 Running workflow with event logging...")
+        print("[START] Running workflow with event logging...")
         result = await workflow.run(data=start_data)
-        print("✅ Workflow completed successfully")
+        print("[SUCCESS] Workflow completed successfully")
         print(f"Result: {result}")
 
         # Get event handler statistics
         if workflow.event_handler:
             stats = workflow.event_handler.get_statistics()
-            print("\n📊 Event Processing Statistics:")
+            print("\n[DATA] Event Processing Statistics:")
             print(f"  - Events Processed: {stats['events_processed']}")
             print(f"  - Events Filtered: {stats['events_filtered']}")
             print(f"  - Runtime: {stats['runtime_seconds']:.2f}s")
@@ -619,7 +619,7 @@ async def demonstrate_event_logging_integration():
         return result
 
     except Exception as e:
-        print(f"❌ Workflow failed: {e}")
+        print(f"[ERROR] Workflow failed: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -649,10 +649,10 @@ async def main():
     result = await demonstrate_event_logging_integration()
     
     if result:
-        print("\\n✅ Event logging test completed successfully")
-        print("📁 Check logs/ directory for generated audit files")
+        print("\\n[SUCCESS] Event logging test completed successfully")
+        print("[FILE] Check logs/ directory for generated audit files")
     else:
-        print("\\n❌ Event logging test failed")
+        print("\\n[ERROR] Event logging test failed")
         sys.exit(1)
 
 if __name__ == "__main__":

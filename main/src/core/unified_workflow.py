@@ -270,10 +270,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self.enable_human_consultation = enable_human_consultation
         self.logger = logging.getLogger(__name__)
 
-        # Initialize LLM
+        # Initialize LLM with environment configuration
+        import os
         self.llm = llm or OpenAI(
-            model="gpt-4o-mini",  # Fixed model name
-            temperature=0.1
+            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),  # Use environment variable
+            temperature=0.1,
+            timeout=int(os.getenv("OPENAI_TIMEOUT", "600"))  # Configure timeout
         )
 
         # Initialize workflow session
@@ -961,7 +963,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         oq_workflow = OQTestGenerationWorkflow(
             llm=self.llm,
-            timeout=600,  # 10 minutes
+            timeout=1500,  # 25 minutes (to accommodate o3 model)
             verbose=self.verbose,
             enable_validation=True,
             oq_generation_event=oq_generation_event

@@ -662,7 +662,7 @@ def setup_event_logging(config: Config | None = None) -> EventStreamHandler:
                 # Try simple Phoenix global handler as fallback
                 import llama_index.core
                 llama_index.core.set_global_handler("arize_phoenix")
-                logger.info("✅ Successfully initialized Phoenix fallback global handler")
+                logger.info("[SUCCESS] Successfully initialized Phoenix fallback global handler")
             except Exception as fallback_error:
                 logger.warning(f"Phoenix fallback also failed: {fallback_error}")
 

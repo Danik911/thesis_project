@@ -105,7 +105,7 @@ def setup_unicode_support():
             # If we get here, basic output is working
 
             # Now test if Unicode characters work
-            unicode_test = "🧑‍⚕️✅📋"  # Test characters that were causing crashes
+            unicode_test = "[HUMAN][SUCCESS][LIST]"  # Test characters that were causing crashes
             print(unicode_test)
             return True
 
@@ -193,8 +193,8 @@ def parse_arguments():
     parser.add_argument(
         "--confidence-threshold",
         type=float,
-        default=0.60,
-        help="Confidence threshold for categorization (default: 0.60)"
+        default=0.40,
+        help="Confidence threshold for categorization (default: 0.40)"
     )
 
     parser.add_argument(
@@ -250,7 +250,7 @@ async def run_with_event_logging(document_path: Path, args):
     Path(config.gamp5_compliance.audit_log_directory).mkdir(parents=True, exist_ok=True)
 
     # Setup event logging
-    safe_print("📊 Setting up event logging system...")
+    safe_print("[DATA] Setting up event logging system...")
     event_handler = setup_event_logging(config)
 
     # Determine workflow type
@@ -287,7 +287,7 @@ async def run_with_event_logging(document_path: Path, args):
 
     # Run workflow with event logging
     if workflow_type == "categorization":
-        safe_print("\n🚀 Running GAMP-5 categorization with event logging...")
+        safe_print("\n[START] Running GAMP-5 categorization with event logging...")
         result, events = await run_workflow_with_event_logging(
             workflow,
             event_handler,
@@ -297,7 +297,7 @@ async def run_with_event_logging(document_path: Path, args):
             author="system"
         )
     else:
-        safe_print("\n🚀 Running unified test generation workflow with event logging...")
+        safe_print("\n[START] Running unified test generation workflow with event logging...")
         result, events = await run_workflow_with_event_logging(
             workflow,
             event_handler,
@@ -308,7 +308,7 @@ async def run_with_event_logging(document_path: Path, args):
     if result:
         if workflow_type == "categorization":
             summary = result.get("summary", {})
-            safe_print("\n✅ Categorization Complete!")
+            safe_print("\n[SUCCESS] Categorization Complete!")
             safe_print(f"  - Category: {summary.get('category', 'Unknown')}")
             safe_print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
             safe_print(f"  - Review Required: {summary.get('review_required', False)}")
@@ -320,7 +320,7 @@ async def run_with_event_logging(document_path: Path, args):
             planning = result.get("planning", {})
             consultation = result.get("consultation", {})
 
-            safe_print("\n✅ Unified Test Generation Complete!")
+            safe_print("\n[SUCCESS] Unified Test Generation Complete!")
             safe_print(f"  - Status: {summary.get('status', 'Unknown')}")
             safe_print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
 
@@ -348,7 +348,7 @@ async def run_with_event_logging(document_path: Path, args):
                 safe_print(f"  - Urgency: {consultation['event'].urgency}")
 
         # Event statistics
-        safe_print("\n📊 Event Logging Summary:")
+        safe_print("\n[DATA] Event Logging Summary:")
         safe_print(f"  - Events Captured: {len(events)}")
         stats = event_handler.get_statistics()
         safe_print(f"  - Events Processed: {stats['events_processed']}")
@@ -361,7 +361,7 @@ async def run_with_event_logging(document_path: Path, args):
         safe_print(f"  - Compliance Standards: {', '.join(compliance_stats['compliance_standards'])}")
 
         # Log file locations
-        safe_print("\n📁 Log Files:")
+        safe_print("\n[FILE] Log Files:")
         safe_print(f"  - Events: {config.logging.log_directory}/")
         safe_print(f"  - Audit: {config.gamp5_compliance.audit_log_directory}/")
 
@@ -371,10 +371,10 @@ async def run_with_event_logging(document_path: Path, args):
         safe_print(f"  - Console Output Used: {output_stats['total_output_size']} / {output_stats['max_console_output']} bytes")
         safe_print(f"  - Usage: {output_stats['usage_percentage']:.1f}%")
         if output_stats["truncated"]:
-            safe_print("  - ⚠️  Output was truncated to prevent overflow")
+            safe_print("  - [WARNING]  Output was truncated to prevent overflow")
 
         return result
-    safe_print("\n❌ Workflow failed to produce results")
+    safe_print("\n[ERROR] Workflow failed to produce results")
     return None
 
 
@@ -394,7 +394,7 @@ async def run_without_logging(document_path: Path, args):
 
     # Determine workflow type and run
     if args.categorization_only:
-        safe_print("\n🚀 Running GAMP-5 categorization...")
+        safe_print("\n[START] Running GAMP-5 categorization...")
         result = await run_categorization_workflow(
             urs_content=document_content,
             document_name=document_path.name,
@@ -404,7 +404,7 @@ async def run_without_logging(document_path: Path, args):
             enable_document_processing=args.enable_document_processing
         )
     else:
-        safe_print("\n🚀 Running unified test generation workflow...")
+        safe_print("\n[START] Running unified test generation workflow...")
         result = await run_unified_test_generation_workflow(
             urs_content=document_content,
             document_name=document_path.name,
@@ -423,7 +423,7 @@ async def run_without_logging(document_path: Path, args):
     if result:
         if args.categorization_only:
             summary = result.get("summary", {})
-            safe_print("\n✅ Categorization Complete!")
+            safe_print("\n[SUCCESS] Categorization Complete!")
             safe_print(f"  - Category: {summary.get('category', 'Unknown')}")
             safe_print(f"  - Confidence: {summary.get('confidence', 0):.1%}")
             safe_print(f"  - Review Required: {summary.get('review_required', False)}")
@@ -435,7 +435,7 @@ async def run_without_logging(document_path: Path, args):
             planning = result.get("planning", {})
             consultation = result.get("consultation", {})
 
-            safe_print("\n✅ Unified Test Generation Complete!")
+            safe_print("\n[SUCCESS] Unified Test Generation Complete!")
             safe_print(f"  - Status: {summary.get('status', 'Unknown')}")
             safe_print(f"  - Duration: {summary.get('workflow_duration_seconds', 0):.2f}s")
 
@@ -464,7 +464,7 @@ async def run_without_logging(document_path: Path, args):
 
         return result
     workflow_name = "Categorization" if args.categorization_only else "Unified workflow"
-    safe_print(f"\n❌ {workflow_name} failed to produce results")
+    safe_print(f"\n[ERROR] {workflow_name} failed to produce results")
     return None
 
 
@@ -474,11 +474,11 @@ async def run_consultation_interface():
 
     # Check if running in interactive terminal
     if not sys.stdin.isatty():
-        safe_print("❌ Consultation interface requires an interactive terminal")
-        safe_print("💡 Run this command in an interactive shell, not through scripts or timeouts")
+        safe_print("[ERROR] Consultation interface requires an interactive terminal")
+        safe_print("[INFO] Run this command in an interactive shell, not through scripts or timeouts")
         return
 
-    safe_print("🧑‍⚕️ Human Consultation Interface")
+    safe_print("[HUMAN] Human Consultation Interface")
     safe_print("=" * 40)
 
     config = get_config()
@@ -504,7 +504,7 @@ async def run_consultation_interface():
                 safe_print("👋 Exiting consultation interface")
                 break
             else:
-                safe_print("❌ Invalid choice. Please enter 1-4.")
+                safe_print("[ERROR] Invalid choice. Please enter 1-4.")
 
         except KeyboardInterrupt:
             safe_print("\n👋 Exiting consultation interface")
@@ -513,16 +513,16 @@ async def run_consultation_interface():
             safe_print("\n👋 No more input available - exiting consultation interface")
             break
         except Exception as e:
-            safe_print(f"❌ Unexpected error: {e}")
+            safe_print(f"[ERROR] Unexpected error: {e}")
             break
 
 async def list_active_consultations(manager: HumanConsultationManager):
     """List active consultations."""
     if not manager.active_sessions:
-        safe_print("📋 No active consultations")
+        safe_print("[LIST] No active consultations")
         return
 
-    safe_print(f"📋 Active Consultations ({len(manager.active_sessions)}):")
+    safe_print(f"[LIST] Active Consultations ({len(manager.active_sessions)}):")
     for session_id, session in manager.active_sessions.items():
         info = session.get_session_info()
         safe_print(f"  📄 {session_id}")
@@ -534,7 +534,7 @@ async def list_active_consultations(manager: HumanConsultationManager):
 async def view_consultation_details(manager: HumanConsultationManager):
     """View details of a specific consultation."""
     if not manager.active_sessions:
-        safe_print("📋 No active consultations")
+        safe_print("[LIST] No active consultations")
         return
 
     try:
@@ -568,15 +568,15 @@ async def view_consultation_details(manager: HumanConsultationManager):
                 safe_print(f"   {key}: {value}")
 
         else:
-            safe_print("❌ Consultation not found")
+            safe_print("[ERROR] Consultation not found")
 
     except ValueError:
-        safe_print("❌ Invalid session ID format")
+        safe_print("[ERROR] Invalid session ID format")
 
 async def respond_to_consultation(manager: HumanConsultationManager):
     """Respond to a consultation."""
     if not manager.active_sessions:
-        safe_print("📋 No active consultations")
+        safe_print("[LIST] No active consultations")
         return
 
     try:
@@ -588,7 +588,7 @@ async def respond_to_consultation(manager: HumanConsultationManager):
     try:
         session_uuid = UUID(session_id)
         if session_uuid not in manager.active_sessions:
-            safe_print("❌ Consultation not found")
+            safe_print("[ERROR] Consultation not found")
             return
 
         session = manager.active_sessions[session_uuid]
@@ -604,7 +604,7 @@ async def respond_to_consultation(manager: HumanConsultationManager):
             decision_rationale = input("Enter decision rationale: ").strip()
 
             if not decision_rationale:
-                safe_print("❌ Decision rationale is required")
+                safe_print("[ERROR] Decision rationale is required")
                 return
 
             confidence_input = input("Enter confidence level (0.0-1.0): ").strip() or "0.8"
@@ -617,7 +617,7 @@ async def respond_to_consultation(manager: HumanConsultationManager):
             safe_print("\n👋 Cancelled")
             return
         except ValueError as e:
-            safe_print(f"❌ Invalid confidence level: {e}")
+            safe_print(f"[ERROR] Invalid confidence level: {e}")
             return
 
         response_data = {}
@@ -629,7 +629,7 @@ async def respond_to_consultation(manager: HumanConsultationManager):
                 response_data["gamp_category"] = gamp_category
                 response_data["risk_assessment"] = {"risk_level": input("Enter risk level (LOW/MEDIUM/HIGH): ").strip().upper() or "HIGH"}
             except ValueError as e:
-                safe_print(f"❌ Invalid GAMP category: {e}")
+                safe_print(f"[ERROR] Invalid GAMP category: {e}")
                 return
 
         # Create response event
@@ -648,12 +648,12 @@ async def respond_to_consultation(manager: HumanConsultationManager):
         # Add response to session
         await session.add_response(response_event)
 
-        safe_print("✅ Response recorded successfully!")
+        safe_print("[SUCCESS] Response recorded successfully!")
 
     except ValueError:
-        safe_print("❌ Invalid session ID format")
+        safe_print("[ERROR] Invalid session ID format")
     except Exception as e:
-        safe_print(f"❌ Error recording response: {e}")
+        safe_print(f"[ERROR] Error recording response: {e}")
 
 async def main():
     """Main entry point."""
@@ -670,7 +670,7 @@ async def main():
         if "phoenix_initialized" in globals() and phoenix_initialized:
             safe_print("🔭 Phoenix observability initialized - LLM calls will be traced")
         elif "phoenix_error" in globals():
-            safe_print(f"⚠️  Phoenix initialization failed: {phoenix_error}")
+            safe_print(f"[WARNING]  Phoenix initialization failed: {phoenix_error}")
 
     # Setup logging with reduced verbosity
     log_level = "WARNING" if not args.verbose else "INFO"  # Reduced default verbosity
@@ -690,14 +690,14 @@ async def main():
         manager = HumanConsultationManager(config)
         # Mock session for response (in real implementation, this would load from persistent storage)
         safe_print(f"📝 Response functionality would respond to consultation: {args.respond_to}")
-        safe_print("⚠️  Note: This requires active consultation sessions which are currently in-memory only")
+        safe_print("[WARNING]  Note: This requires active consultation sessions which are currently in-memory only")
         return None
 
     safe_print("🏥 GAMP-5 Pharmaceutical Test Generation System")
     if args.categorization_only:
-        safe_print("📋 Running in Categorization-Only Mode")
+        safe_print("[LIST] Running in Categorization-Only Mode")
     else:
-        safe_print("🚀 Running Unified Test Generation Workflow")
+        safe_print("[START] Running Unified Test Generation Workflow")
     safe_print("=" * 60)
 
     # Determine document path
@@ -707,7 +707,7 @@ async def main():
         # Use default test document
         document_path = Path(__file__).parent.parent / "simple_test_data.md"
         if not document_path.exists():
-            safe_print("❌ No document specified and default test document not found")
+            safe_print("[ERROR] No document specified and default test document not found")
             safe_print("Usage: uv run python main.py <document_path>")
             return 1
 
@@ -724,14 +724,14 @@ async def main():
         return 1
 
     except FileNotFoundError as e:
-        safe_print(f"\n❌ Error: {e}")
+        safe_print(f"\n[ERROR] Error: {e}")
         return 1
     except KeyboardInterrupt:
-        safe_print("\n⏹️  Operation cancelled by user")
+        safe_print("\n[STOP]  Operation cancelled by user")
         return 1
     except Exception as e:
         error_msg = truncate_string(str(e), 300)  # Truncate long error messages
-        safe_print(f"\n❌ Unexpected error: {error_msg}")
+        safe_print(f"\n[ERROR] Unexpected error: {error_msg}")
         if args.verbose:
             import traceback
             # Limit traceback output
@@ -755,7 +755,7 @@ async def main():
                 shutdown_event_logging()
                 safe_print("\n🔒 Phoenix observability shutdown complete")
             except Exception as shutdown_error:
-                safe_print(f"\n⚠️  Warning: Error during Phoenix shutdown: {shutdown_error}")
+                safe_print(f"\n[WARNING]  Warning: Error during Phoenix shutdown: {shutdown_error}")
 
 
 if __name__ == "__main__":

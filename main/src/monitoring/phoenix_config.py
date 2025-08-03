@@ -158,7 +158,7 @@ class PhoenixManager:
                     self._instrument_openai()
                     openai_instrumented = True
                 except Exception as openai_error:
-                    logger.error(f"❌ OpenAI instrumentation failed: {openai_error}")
+                    logger.error(f"[ERROR] OpenAI instrumentation failed: {openai_error}")
                     # For pharmaceutical systems, this is critical
                     if self.config.deployment_environment == "production":
                         raise RuntimeError("OpenAI instrumentation required for production pharmaceutical compliance") from openai_error
@@ -170,18 +170,18 @@ class PhoenixManager:
                     self._instrument_chromadb()
                     chromadb_instrumented = True
                 except Exception as chromadb_error:
-                    logger.error(f"❌ ChromaDB instrumentation failed: {chromadb_error}")
+                    logger.error(f"[ERROR] ChromaDB instrumentation failed: {chromadb_error}")
 
             self._initialized = True
             logger.info(
-                f"✅ Phoenix observability initialized for {self.config.deployment_environment} environment\n"
+                f"[SUCCESS] Phoenix observability initialized for {self.config.deployment_environment} environment\n"
                 f"   - Endpoint: {self.config.otlp_endpoint}\n"
                 f"   - OpenAI instrumented: {openai_instrumented}\n"
                 f"   - ChromaDB instrumented: {chromadb_instrumented}"
             )
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Phoenix: {e}")
+            logger.error(f"[ERROR] Failed to initialize Phoenix: {e}")
             # ENHANCED: More specific error handling
             if self.config.deployment_environment == "production":
                 # In production, Phoenix is required for compliance
@@ -205,7 +205,7 @@ class PhoenixManager:
                 health_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
                 response = requests.get(health_url, timeout=2)
                 if response.status_code == 200:
-                    logger.info(f"✅ Connected to existing Phoenix instance at: {health_url}")
+                    logger.info(f"[SUCCESS] Connected to existing Phoenix instance at: {health_url}")
                     # Create a mock session object for compatibility
                     class MockSession:
                         def __init__(self, url):
@@ -242,7 +242,7 @@ class PhoenixManager:
                         self.url = url
                 docker_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
                 self.phoenix_session = MockSession(docker_url)
-                logger.info(f"✅ Using Docker Phoenix instance at: {docker_url}")
+                logger.info(f"[SUCCESS] Using Docker Phoenix instance at: {docker_url}")
             except Exception as mock_error:
                 logger.warning(f"Failed to connect to Docker Phoenix: {mock_error}")
 
@@ -289,7 +289,7 @@ class PhoenixManager:
             from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 
             # ENHANCED: Add more detailed logging for debugging
-            logger.info("🔧 Attempting LlamaIndex instrumentation with OpenInference...")
+            logger.info("[CONFIG] Attempting LlamaIndex instrumentation with OpenInference...")
             
             # Instrument with our tracer provider
             LlamaIndexInstrumentor().instrument(
@@ -297,16 +297,16 @@ class PhoenixManager:
                 tracer_provider=self.tracer_provider
             )
 
-            logger.info("✅ LlamaIndex instrumented successfully with OpenInference")
+            logger.info("[SUCCESS] LlamaIndex instrumented successfully with OpenInference")
 
         except ImportError as e:
             logger.error(
-                f"❌ OpenInference LlamaIndex instrumentation not available: {e}\n"
+                f"[ERROR] OpenInference LlamaIndex instrumentation not available: {e}\n"
                 "Install with: pip install openinference-instrumentation-llama-index"
             )
             self._try_fallback_instrumentation()
         except Exception as e:
-            logger.error(f"❌ OpenInference instrumentation failed: {e}")
+            logger.error(f"[ERROR] OpenInference instrumentation failed: {e}")
             self._try_fallback_instrumentation()
 
     def _try_fallback_instrumentation(self) -> None:
@@ -314,9 +314,9 @@ class PhoenixManager:
         try:
             import llama_index.core
             llama_index.core.set_global_handler("arize_phoenix")
-            logger.info("✅ Fallback to simple Phoenix global handler successful")
+            logger.info("[SUCCESS] Fallback to simple Phoenix global handler successful")
         except Exception as fallback_error:
-            logger.warning(f"❌ Fallback instrumentation also failed: {fallback_error}")
+            logger.warning(f"[ERROR] Fallback instrumentation also failed: {fallback_error}")
             logger.info("Continuing without Phoenix instrumentation")
 
     def _instrument_openai(self) -> None:
@@ -325,22 +325,22 @@ class PhoenixManager:
             from openinference.instrumentation.openai import OpenAIInstrumentor
 
             # ENHANCED: Add more detailed logging
-            logger.info("🔧 Attempting OpenAI instrumentation with OpenInference...")
+            logger.info("[CONFIG] Attempting OpenAI instrumentation with OpenInference...")
             
             # Instrument OpenAI with our tracer provider
             OpenAIInstrumentor().instrument(tracer_provider=self.tracer_provider)
 
-            logger.info("✅ OpenAI instrumented successfully - LLM calls will be traced with token usage and costs")
+            logger.info("[SUCCESS] OpenAI instrumented successfully - LLM calls will be traced with token usage and costs")
 
         except ImportError as e:
             logger.error(
-                f"❌ OpenAI instrumentation not available: {e}\n"
+                f"[ERROR] OpenAI instrumentation not available: {e}\n"
                 "Install with: pip install openinference-instrumentation-openai"
             )
             # NO FALLBACK - fail explicitly to identify missing dependencies
             raise RuntimeError("OpenAI instrumentation required for pharmaceutical compliance tracing") from e
         except Exception as e:
-            logger.error(f"❌ OpenAI instrumentation failed: {e}")
+            logger.error(f"[ERROR] OpenAI instrumentation failed: {e}")
             # NO FALLBACK - fail explicitly for regulatory compliance
             raise RuntimeError(f"OpenAI instrumentation failure: {e}") from e
 
@@ -461,7 +461,7 @@ class PhoenixManager:
                 if original_delete:
                     collection_class.delete = instrumented_delete
 
-                logger.info("✅ ChromaDB custom instrumentation applied - Vector operations will be traced with pharmaceutical compliance")
+                logger.info("[SUCCESS] ChromaDB custom instrumentation applied - Vector operations will be traced with pharmaceutical compliance")
 
             except AttributeError as e:
                 logger.warning(f"ChromaDB class structure changed - custom instrumentation may not work: {e}")
@@ -532,9 +532,9 @@ class PhoenixManager:
                 flush_success = self.tracer_provider.force_flush(timeout_millis=timeout_millis)
 
                 if flush_success:
-                    logger.info("✅ Successfully flushed all pending traces")
+                    logger.info("[SUCCESS] Successfully flushed all pending traces")
                 else:
-                    logger.warning(f"⚠️  Trace flush may have timed out after {timeout_seconds}s")
+                    logger.warning(f"[WARNING]  Trace flush may have timed out after {timeout_seconds}s")
 
                 # Now shutdown the tracer provider
                 self.tracer_provider.shutdown()
