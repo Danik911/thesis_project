@@ -46,7 +46,7 @@ This file provides guidance to Claude Code when working with this thesis project
 
 - **Development Model**: `gpt-4.1-mini-2025-04-14` (cost-efficient)
 - **Task-Master AI**: Claude Sonnet 4.0 (via MCP)
-- **🚨 Critical Issue**: NEVER use `response_format={"type": "json_object"}` with LlamaIndex `FunctionAgent` - causes infinite loops
+
 
 ## 🎯 Task-Master AI Integration
 

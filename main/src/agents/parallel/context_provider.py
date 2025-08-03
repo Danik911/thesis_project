@@ -19,6 +19,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 import traceback
 from datetime import UTC, datetime
 from pathlib import Path
@@ -43,6 +44,7 @@ from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field, field_validator
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.agent_instrumentation import trace_agent_method
+from src.monitoring.simple_tracer import get_tracer
 
 
 class ContextProviderRequest(BaseModel):
@@ -530,10 +532,20 @@ class ContextProviderAgent:
 
                 # Create query embedding for observability
                 query_embedding_start = datetime.now(UTC)
+                
+                # Log API call to tracer
+                tracer = get_tracer()
+                api_start = time.time()
+                
                 query_embedding = await asyncio.to_thread(
                     self.embedding_model.get_text_embedding,
                     query
                 )
+                
+                # Log successful API call
+                api_duration = time.time() - api_start
+                tracer.log_api_call("openai", "embeddings", api_duration, True, {"model": self.embedding_model_name})
+                
                 query_embedding_time = (datetime.now(UTC) - query_embedding_start).total_seconds() * 1000
 
                 # Add comprehensive span attributes

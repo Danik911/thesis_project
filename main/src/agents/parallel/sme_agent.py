@@ -17,6 +17,7 @@ Key Features:
 
 import asyncio
 import logging
+import time
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -27,6 +28,7 @@ from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai import OpenAI
 from pydantic import BaseModel, Field
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
+from src.monitoring.simple_tracer import get_tracer
 
 
 class SMEAgentRequest(BaseModel):
@@ -140,6 +142,15 @@ class SMEAgent:
                 )
 
             # Execute SME analysis with timeout
+            tracer = get_tracer()
+            
+            # Log the analysis start
+            tracer.log_step("sme_analysis_start", {
+                "specialty": request_data.specialty,
+                "compliance_level": request_data.compliance_level,
+                "test_focus": request_data.test_focus
+            })
+            
             sme_response = await asyncio.wait_for(
                 self._execute_sme_analysis(request_data),
                 timeout=request_data.timeout_seconds
@@ -152,6 +163,14 @@ class SMEAgent:
             if sme_response.confidence_score >= self.confidence_threshold:
                 self._expertise_stats["high_confidence_recommendations"] += 1
             self._update_performance_stats(processing_time)
+            
+            # Log the analysis completion
+            tracer.log_step("sme_analysis_complete", {
+                "recommendations_count": len(sme_response.recommendations),
+                "confidence_score": sme_response.confidence_score,
+                "risk_level": sme_response.risk_analysis.get("risk_level", "unknown"),
+                "processing_time": processing_time
+            })
 
             if self.verbose:
                 self.logger.info(
@@ -256,120 +275,163 @@ class SMEAgent:
         return response
 
     async def _assess_compliance(self, request: SMEAgentRequest) -> dict[str, Any]:
-        """Assess compliance requirements and gaps."""
-        compliance_assessment = {
-            "level": request.compliance_level,
-            "applicable_standards": [],
-            "compliance_gaps": [],
-            "required_controls": [],
+        """Assess compliance requirements and gaps using LLM expertise."""
+        
+        # NO FALLBACKS: Use actual LLM analysis instead of static logic
+        compliance_prompt = f"""
+        As a pharmaceutical validation expert specializing in {request.specialty}, assess the compliance requirements for a system with the following characteristics:
+        
+        - Specialty: {request.specialty}
+        - Compliance Level: {request.compliance_level}
+        - Test Focus: {request.test_focus}
+        - GAMP Category: {request.categorization_context.get('gamp_category', 'unknown')}
+        - Confidence Score: {request.categorization_context.get('confidence_score', 0.0)}
+        - Domain Knowledge Areas: {', '.join(request.domain_knowledge)}
+        - Validation Focus: {', '.join(request.validation_focus)}
+        
+        Provide a comprehensive compliance assessment including:
+        1. Applicable regulatory standards
+        2. Compliance gaps that need attention
+        3. Required controls for this GAMP category
+        4. Certainty score (0.0-1.0) for this assessment
+        
+        Respond with valid JSON in this exact format:
+        {
+            "level": "compliance_level",
+            "applicable_standards": ["standard1", "standard2"],
+            "compliance_gaps": [{"gap": "description", "impact": "high/medium/low", "recommendation": "action"}],
+            "required_controls": ["control1", "control2"],
             "certainty_score": 0.0
         }
-
-        # Determine applicable standards based on specialty and compliance level
-        if request.specialty in ["pharmaceutical_validation", "quality_assurance"]:
-            compliance_assessment["applicable_standards"].extend([
-                "GAMP-5", "21 CFR Part 11", "ICH Q7", "EU GMP Annex 11"
-            ])
-
-        if request.compliance_level in ["enhanced", "comprehensive"]:
-            compliance_assessment["applicable_standards"].extend([
-                "ISO 27001", "NIST Cybersecurity Framework", "FDA Data Integrity Guidance"
-            ])
-
-        # Assess compliance gaps based on categorization context
-        gamp_category = request.categorization_context.get("gamp_category", "unknown")
-        confidence_score = request.categorization_context.get("confidence_score", 1.0)
-
-        if confidence_score < 0.8:
-            compliance_assessment["compliance_gaps"].append({
-                "gap": "Categorization uncertainty",
-                "impact": "high",
-                "recommendation": "Conduct additional categorization review with SME input"
-            })
-
-        if gamp_category == "5":
-            compliance_assessment["required_controls"].extend([
-                "Custom software validation",
-                "Source code review",
-                "Configuration management",
-                "Change control procedures"
-            ])
-
-        # Calculate certainty score
-        certainty_factors = [
-            len(compliance_assessment["applicable_standards"]) / 5,  # Normalize to 5 standards
-            1.0 - len(compliance_assessment["compliance_gaps"]) / 3,  # Penalize gaps
-            confidence_score  # Use categorization confidence
-        ]
-        compliance_assessment["certainty_score"] = sum(certainty_factors) / len(certainty_factors)
-
-        return compliance_assessment
+        """
+        
+        try:
+            # Make actual LLM call - NO FALLBACKS ALLOWED
+            response = await self.llm.acomplete(compliance_prompt)
+            response_text = response.text.strip()
+            
+            # Parse JSON response
+            import json
+            try:
+                compliance_assessment = json.loads(response_text)
+                
+                # Validate required fields are present
+                required_fields = ["level", "applicable_standards", "compliance_gaps", "required_controls", "certainty_score"]
+                for field in required_fields:
+                    if field not in compliance_assessment:
+                        raise ValueError(f"Missing required field: {field}")
+                
+                return compliance_assessment
+                
+            except (json.JSONDecodeError, ValueError) as parse_error:
+                # NO FALLBACKS: Fail explicitly with full diagnostic information
+                raise RuntimeError(
+                    f"CRITICAL: LLM compliance assessment failed to return valid JSON.\n"
+                    f"Parse Error: {parse_error}\n"
+                    f"LLM Response: {response_text[:500]}...\n"
+                    f"This violates pharmaceutical system requirements for explicit failure handling."
+                ) from parse_error
+                
+        except Exception as llm_error:
+            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            raise RuntimeError(
+                f"CRITICAL: Compliance assessment LLM call failed.\n"
+                f"Error: {llm_error}\n"
+                f"Request: {request.specialty}, {request.compliance_level}\n"
+                f"This violates pharmaceutical system requirements - compliance assessment cannot use fallback logic."
+            ) from llm_error
 
     async def _analyze_risks(self, request: SMEAgentRequest) -> dict[str, Any]:
-        """Analyze risks and provide mitigation strategies."""
-        risk_analysis = {
-            "identified_risks": [],
-            "risk_level": "medium",
-            "mitigation_strategies": [],
-            "critical_concerns": [],
+        """Analyze risks and provide mitigation strategies using LLM expertise."""
+        
+        # NO FALLBACKS: Use actual LLM analysis instead of static logic
+        risk_prompt = f"""
+        As a pharmaceutical validation expert, analyze the validation risks for a system with these characteristics:
+        
+        - Specialty: {request.specialty}
+        - Compliance Level: {request.compliance_level}
+        - Test Focus: {request.test_focus}
+        - Risk Factors: {request.risk_factors}
+        - Validation Focus: {', '.join(request.validation_focus)}
+        - GAMP Category: {request.categorization_context.get('gamp_category', 'unknown')}
+        
+        Provide a comprehensive risk analysis including:
+        1. Identified risks with categories, probability, and impact
+        2. Overall risk level assessment
+        3. Specific mitigation strategies
+        4. Critical concerns requiring immediate attention
+        5. Clarity score (0.0-1.0) for the risk assessment
+        
+        Consider pharmaceutical validation risks including:
+        - Technical complexity and integration risks
+        - Regulatory compliance gaps
+        - Data integrity concerns (ALCOA+ principles)
+        - Validation lifecycle risks
+        - Change control and configuration management
+        
+        Respond with valid JSON in this exact format:
+        {
+            "identified_risks": [
+                {
+                    "category": "category_name",
+                    "risk": "risk_description", 
+                    "probability": "low/medium/high",
+                    "impact": "low/medium/high/critical",
+                    "mitigation": "mitigation_strategy"
+                }
+            ],
+            "risk_level": "low/medium/high",
+            "mitigation_strategies": [
+                {
+                    "strategy": "strategy_description",
+                    "priority": "low/medium/high", 
+                    "timeline": "immediate/planned/future"
+                }
+            ],
+            "critical_concerns": ["concern1", "concern2"],
             "clarity_score": 0.0
         }
-
-        # Analyze risks from request context
-        risk_factors = request.risk_factors
-
-        # Technical risks
-        if "integrations" in risk_factors.get("technical_factors", []):
-            risk_analysis["identified_risks"].append({
-                "category": "technical",
-                "risk": "Integration complexity",
-                "probability": "medium",
-                "impact": "high",
-                "mitigation": "Comprehensive integration testing strategy"
-            })
-
-        # Regulatory risks
-        if request.compliance_level == "comprehensive":
-            risk_analysis["identified_risks"].append({
-                "category": "regulatory",
-                "risk": "Regulatory compliance gaps",
-                "probability": "low",
-                "impact": "critical",
-                "mitigation": "Enhanced validation and documentation procedures"
-            })
-
-        # Data integrity risks
-        if "data_handling" in request.validation_focus:
-            risk_analysis["identified_risks"].append({
-                "category": "data_integrity",
-                "risk": "ALCOA+ compliance concerns",
-                "probability": "medium",
-                "impact": "high",
-                "mitigation": "Implement comprehensive audit trail and data validation"
-            })
-
-        # Determine overall risk level
-        high_impact_risks = [r for r in risk_analysis["identified_risks"] if r["impact"] in ["high", "critical"]]
-        if len(high_impact_risks) > 2:
-            risk_analysis["risk_level"] = "high"
-        elif len(high_impact_risks) > 0:
-            risk_analysis["risk_level"] = "medium"
-        else:
-            risk_analysis["risk_level"] = "low"
-
-        # Generate mitigation strategies
-        for risk in risk_analysis["identified_risks"]:
-            if risk["impact"] in ["high", "critical"]:
-                risk_analysis["mitigation_strategies"].append({
-                    "strategy": risk["mitigation"],
-                    "priority": "high" if risk["impact"] == "critical" else "medium",
-                    "timeline": "immediate" if risk["probability"] == "high" else "planned"
-                })
-
-        # Calculate clarity score
-        risk_analysis["clarity_score"] = min(len(risk_analysis["identified_risks"]) / 5, 1.0)
-
-        return risk_analysis
+        """
+        
+        try:
+            # Make actual LLM call - NO FALLBACKS ALLOWED
+            response = await self.llm.acomplete(risk_prompt)
+            response_text = response.text.strip()
+            
+            # Parse JSON response
+            import json
+            try:
+                risk_analysis = json.loads(response_text)
+                
+                # Validate required fields are present
+                required_fields = ["identified_risks", "risk_level", "mitigation_strategies", "critical_concerns", "clarity_score"]
+                for field in required_fields:
+                    if field not in risk_analysis:
+                        raise ValueError(f"Missing required field: {field}")
+                
+                # Validate risk_level is valid
+                if risk_analysis["risk_level"] not in ["low", "medium", "high"]:
+                    raise ValueError(f"Invalid risk_level: {risk_analysis['risk_level']}")
+                
+                return risk_analysis
+                
+            except (json.JSONDecodeError, ValueError) as parse_error:
+                # NO FALLBACKS: Fail explicitly with full diagnostic information
+                raise RuntimeError(
+                    f"CRITICAL: LLM risk analysis failed to return valid JSON.\n"
+                    f"Parse Error: {parse_error}\n"
+                    f"LLM Response: {response_text[:500]}...\n"
+                    f"This violates pharmaceutical system requirements for explicit failure handling."
+                ) from parse_error
+                
+        except Exception as llm_error:
+            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            raise RuntimeError(
+                f"CRITICAL: Risk analysis LLM call failed.\n"
+                f"Error: {llm_error}\n"
+                f"Request: {request.specialty}, {request.compliance_level}\n"
+                f"This violates pharmaceutical system requirements - risk analysis cannot use fallback logic."
+            ) from llm_error
 
     async def _generate_recommendations(
         self,
@@ -377,183 +439,354 @@ class SMEAgent:
         compliance_assessment: dict[str, Any],
         risk_analysis: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Generate expert recommendations."""
-        recommendations = []
-
-        # Compliance-based recommendations
-        if compliance_assessment["compliance_gaps"]:
-            for gap in compliance_assessment["compliance_gaps"]:
-                recommendations.append({
-                    "category": "compliance",
-                    "priority": "high",
-                    "recommendation": gap["recommendation"],
-                    "rationale": f"Address {gap['gap']} to ensure regulatory compliance",
-                    "implementation_effort": "medium",
-                    "expected_benefit": "regulatory_compliance"
-                })
-
-        # Risk-based recommendations
-        for strategy in risk_analysis["mitigation_strategies"]:
-            recommendations.append({
-                "category": "risk_mitigation",
-                "priority": strategy["priority"],
-                "recommendation": strategy["strategy"],
-                "rationale": "Mitigate identified risk factors",
-                "implementation_effort": "medium",
-                "expected_benefit": "risk_reduction"
-            })
-
-        # Domain-specific recommendations based on specialty
-        if request.specialty == "pharmaceutical_validation":
-            recommendations.extend([
-                {
-                    "category": "validation",
-                    "priority": "high",
-                    "recommendation": "Implement risk-based validation approach following GAMP-5 principles",
-                    "rationale": "Ensure validation effort is proportional to system complexity and risk",
-                    "implementation_effort": "high",
-                    "expected_benefit": "regulatory_acceptance"
-                },
-                {
-                    "category": "documentation",
-                    "priority": "medium",
-                    "recommendation": "Establish comprehensive traceability matrix linking requirements to tests",
-                    "rationale": "Demonstrate complete validation coverage for regulatory review",
-                    "implementation_effort": "medium",
-                    "expected_benefit": "audit_readiness"
-                }
-            ])
-
-        elif request.specialty == "quality_assurance":
-            recommendations.extend([
-                {
-                    "category": "quality",
-                    "priority": "high",
-                    "recommendation": "Implement continuous quality monitoring throughout validation lifecycle",
-                    "rationale": "Early detection and correction of quality issues",
-                    "implementation_effort": "medium",
-                    "expected_benefit": "quality_improvement"
-                }
-            ])
-
-        # Limit recommendations and sort by priority
-        priority_order = {"high": 3, "medium": 2, "low": 1}
-        recommendations.sort(key=lambda x: priority_order.get(x["priority"], 0), reverse=True)
-
-        return recommendations[:self.max_recommendations]
+        """Generate expert recommendations using LLM expertise."""
+        
+        # NO FALLBACKS: Use actual LLM analysis instead of static logic
+        recommendations_prompt = f"""
+        As a pharmaceutical validation expert specializing in {request.specialty}, generate specific recommendations based on this analysis:
+        
+        COMPLIANCE ASSESSMENT:
+        {compliance_assessment}
+        
+        RISK ANALYSIS:
+        {risk_analysis}
+        
+        SYSTEM CONTEXT:
+        - Specialty: {request.specialty}
+        - Compliance Level: {request.compliance_level}
+        - Test Focus: {request.test_focus}
+        - GAMP Category: {request.categorization_context.get('gamp_category', 'unknown')}
+        
+        Generate up to {self.max_recommendations} prioritized recommendations that address:
+        1. Compliance gaps identified in the assessment
+        2. Risk mitigation strategies
+        3. Domain-specific best practices for {request.specialty}
+        4. Validation approach recommendations
+        5. Implementation guidance
+        
+        Each recommendation must include:
+        - Specific, actionable recommendation
+        - Clear rationale tied to compliance/risk analysis
+        - Priority level (high/medium/low)
+        - Implementation effort estimate
+        - Expected benefit category
+        
+        Respond with valid JSON in this exact format:
+        [
+            {
+                "category": "category_name",
+                "priority": "high/medium/low",
+                "recommendation": "specific_actionable_recommendation",
+                "rationale": "clear_justification",
+                "implementation_effort": "low/medium/high",
+                "expected_benefit": "benefit_category"
+            }
+        ]
+        """
+        
+        try:
+            # Make actual LLM call - NO FALLBACKS ALLOWED
+            response = await self.llm.acomplete(recommendations_prompt)
+            response_text = response.text.strip()
+            
+            # Parse JSON response
+            import json
+            try:
+                recommendations = json.loads(response_text)
+                
+                # Validate response structure
+                if not isinstance(recommendations, list):
+                    raise ValueError("Response must be a list of recommendations")
+                
+                # Validate each recommendation
+                required_fields = ["category", "priority", "recommendation", "rationale", "implementation_effort", "expected_benefit"]
+                for i, rec in enumerate(recommendations):
+                    if not isinstance(rec, dict):
+                        raise ValueError(f"Recommendation {i} must be a dictionary")
+                    for field in required_fields:
+                        if field not in rec:
+                            raise ValueError(f"Recommendation {i} missing required field: {field}")
+                    if rec["priority"] not in ["low", "medium", "high"]:
+                        raise ValueError(f"Recommendation {i} has invalid priority: {rec['priority']}")
+                    if rec["implementation_effort"] not in ["low", "medium", "high"]:
+                        raise ValueError(f"Recommendation {i} has invalid implementation_effort: {rec['implementation_effort']}")
+                
+                # Limit to max recommendations
+                return recommendations[:self.max_recommendations]
+                
+            except (json.JSONDecodeError, ValueError) as parse_error:
+                # NO FALLBACKS: Fail explicitly with full diagnostic information
+                raise RuntimeError(
+                    f"CRITICAL: LLM recommendations generation failed to return valid JSON.\n"
+                    f"Parse Error: {parse_error}\n"
+                    f"LLM Response: {response_text[:500]}...\n"
+                    f"This violates pharmaceutical system requirements for explicit failure handling."
+                ) from parse_error
+                
+        except Exception as llm_error:
+            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            raise RuntimeError(
+                f"CRITICAL: Recommendations generation LLM call failed.\n"
+                f"Error: {llm_error}\n"
+                f"Request: {request.specialty}, {request.compliance_level}\n"
+                f"This violates pharmaceutical system requirements - recommendations cannot use fallback logic."
+            ) from llm_error
 
     async def _provide_validation_guidance(
         self,
         request: SMEAgentRequest,
         recommendations: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Provide specific validation guidance."""
-        guidance = []
-
-        # Test strategy guidance
-        if request.test_focus in ["functional_testing", "integration_testing"]:
-            guidance.append({
-                "area": "test_strategy",
-                "guidance": f"Focus on {request.test_focus} with emphasis on user scenarios and business processes",
-                "key_considerations": [
-                    "User acceptance criteria validation",
-                    "Business process workflow testing",
-                    "Data flow validation"
-                ],
-                "success_criteria": "All critical user scenarios validated successfully"
-            })
-
-        # Compliance guidance
-        if request.compliance_level in ["enhanced", "comprehensive"]:
-            guidance.append({
-                "area": "compliance_validation",
-                "guidance": "Implement enhanced compliance validation procedures",
-                "key_considerations": [
-                    "Audit trail completeness verification",
-                    "Electronic signature validation",
-                    "Data integrity controls testing"
-                ],
-                "success_criteria": "Full compliance with applicable regulatory standards"
-            })
-
-        # Risk-based guidance
-        for rec in recommendations:
-            if rec["category"] == "risk_mitigation":
-                guidance.append({
-                    "area": "risk_management",
-                    "guidance": rec["recommendation"],
-                    "key_considerations": [rec["rationale"]],
-                    "success_criteria": f"Achieve {rec['expected_benefit']}"
-                })
-
-        return guidance
+        """Provide specific validation guidance using LLM expertise."""
+        
+        # NO FALLBACKS: Use actual LLM analysis instead of static logic
+        guidance_prompt = f"""
+        As a pharmaceutical validation expert specializing in {request.specialty}, provide specific validation guidance based on:
+        
+        CONTEXT:
+        - Specialty: {request.specialty}
+        - Test Focus: {request.test_focus}
+        - Compliance Level: {request.compliance_level}
+        - GAMP Category: {request.categorization_context.get('gamp_category', 'unknown')}
+        - Validation Focus Areas: {', '.join(request.validation_focus)}
+        
+        RECOMMENDATIONS TO IMPLEMENT:
+        {recommendations}
+        
+        Provide specific, actionable validation guidance covering:
+        1. Test strategy approach tailored to the test focus
+        2. Compliance validation procedures for the compliance level
+        3. Risk management guidance based on recommendations
+        4. Domain-specific validation approaches
+        5. Quality assurance considerations
+        
+        Each guidance item should include:
+        - Area of focus
+        - Specific guidance instructions
+        - Key considerations/checkpoints
+        - Clear success criteria
+        
+        Respond with valid JSON in this exact format:
+        [
+            {
+                "area": "area_name",
+                "guidance": "specific_guidance_instructions",
+                "key_considerations": ["consideration1", "consideration2"],
+                "success_criteria": "clear_success_criteria"
+            }
+        ]
+        """
+        
+        try:
+            # Make actual LLM call - NO FALLBACKS ALLOWED
+            response = await self.llm.acomplete(guidance_prompt)
+            response_text = response.text.strip()
+            
+            # Parse JSON response
+            import json
+            try:
+                guidance = json.loads(response_text)
+                
+                # Validate response structure
+                if not isinstance(guidance, list):
+                    raise ValueError("Response must be a list of guidance items")
+                
+                # Validate each guidance item
+                required_fields = ["area", "guidance", "key_considerations", "success_criteria"]
+                for i, item in enumerate(guidance):
+                    if not isinstance(item, dict):
+                        raise ValueError(f"Guidance item {i} must be a dictionary")
+                    for field in required_fields:
+                        if field not in item:
+                            raise ValueError(f"Guidance item {i} missing required field: {field}")
+                    if not isinstance(item["key_considerations"], list):
+                        raise ValueError(f"Guidance item {i} key_considerations must be a list")
+                
+                return guidance
+                
+            except (json.JSONDecodeError, ValueError) as parse_error:
+                # NO FALLBACKS: Fail explicitly with full diagnostic information
+                raise RuntimeError(
+                    f"CRITICAL: LLM validation guidance failed to return valid JSON.\n"
+                    f"Parse Error: {parse_error}\n"
+                    f"LLM Response: {response_text[:500]}...\n"
+                    f"This violates pharmaceutical system requirements for explicit failure handling."
+                ) from parse_error
+                
+        except Exception as llm_error:
+            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            raise RuntimeError(
+                f"CRITICAL: Validation guidance LLM call failed.\n"
+                f"Error: {llm_error}\n"
+                f"Request: {request.specialty}, {request.test_focus}\n"
+                f"This violates pharmaceutical system requirements - validation guidance cannot use fallback logic."
+            ) from llm_error
 
     async def _generate_domain_insights(self, request: SMEAgentRequest) -> dict[str, Any]:
-        """Generate domain-specific insights."""
-        insights = {
-            "specialty_focus": request.specialty,
-            "key_expertise_areas": self.domain_knowledge.get(request.specialty, {}).get("expertise_areas", []),
-            "industry_trends": [],
-            "best_practices": [],
-            "common_pitfalls": []
+        """Generate domain-specific insights using LLM expertise."""
+        
+        # NO FALLBACKS: Use actual LLM analysis instead of static logic
+        insights_prompt = f"""
+        As a pharmaceutical validation expert specializing in {request.specialty}, provide domain-specific insights for a validation project with these characteristics:
+        
+        - Specialty: {request.specialty}
+        - Compliance Level: {request.compliance_level}
+        - Test Focus: {request.test_focus}
+        - Domain Knowledge Areas: {', '.join(request.domain_knowledge)}
+        - GAMP Category: {request.categorization_context.get('gamp_category', 'unknown')}
+        
+        Provide comprehensive domain insights including:
+        1. Current industry trends affecting {request.specialty}
+        2. Best practices specific to this specialty and compliance level
+        3. Common pitfalls to avoid in {request.specialty} projects
+        4. Key expertise areas that are critical for success
+        5. Emerging challenges and opportunities
+        
+        Focus on practical, actionable insights that can improve validation outcomes.
+        
+        Respond with valid JSON in this exact format:
+        {
+            "specialty_focus": "specialty_name",
+            "key_expertise_areas": ["area1", "area2"],
+            "industry_trends": ["trend1", "trend2"],
+            "best_practices": ["practice1", "practice2"],
+            "common_pitfalls": ["pitfall1", "pitfall2"],
+            "emerging_challenges": ["challenge1", "challenge2"],
+            "opportunities": ["opportunity1", "opportunity2"]
         }
-
-        # Add specialty-specific insights
-        if request.specialty == "pharmaceutical_validation":
-            insights["industry_trends"] = [
-                "Increased focus on continuous validation",
-                "AI/ML validation framework development",
-                "Risk-based validation approach adoption"
-            ]
-            insights["best_practices"] = [
-                "Implement automated validation where possible",
-                "Maintain comprehensive validation master plans",
-                "Regular validation effectiveness reviews"
-            ]
-            insights["common_pitfalls"] = [
-                "Over-validation of low-risk systems",
-                "Inadequate change control procedures",
-                "Insufficient documentation of validation rationale"
-            ]
-
-        return insights
+        """
+        
+        try:
+            # Make actual LLM call - NO FALLBACKS ALLOWED
+            response = await self.llm.acomplete(insights_prompt)
+            response_text = response.text.strip()
+            
+            # Parse JSON response
+            import json
+            try:
+                insights = json.loads(response_text)
+                
+                # Validate required fields are present
+                required_fields = ["specialty_focus", "key_expertise_areas", "industry_trends", "best_practices", "common_pitfalls"]
+                for field in required_fields:
+                    if field not in insights:
+                        raise ValueError(f"Missing required field: {field}")
+                
+                # Validate field types
+                list_fields = ["key_expertise_areas", "industry_trends", "best_practices", "common_pitfalls"]
+                for field in list_fields:
+                    if not isinstance(insights[field], list):
+                        raise ValueError(f"Field {field} must be a list")
+                
+                return insights
+                
+            except (json.JSONDecodeError, ValueError) as parse_error:
+                # NO FALLBACKS: Fail explicitly with full diagnostic information
+                raise RuntimeError(
+                    f"CRITICAL: LLM domain insights generation failed to return valid JSON.\n"
+                    f"Parse Error: {parse_error}\n"
+                    f"LLM Response: {response_text[:500]}...\n"
+                    f"This violates pharmaceutical system requirements for explicit failure handling."
+                ) from parse_error
+                
+        except Exception as llm_error:
+            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            raise RuntimeError(
+                f"CRITICAL: Domain insights LLM call failed.\n"
+                f"Error: {llm_error}\n"
+                f"Request: {request.specialty}\n"
+                f"This violates pharmaceutical system requirements - domain insights cannot use fallback logic."
+            ) from llm_error
 
     async def _assess_regulatory_considerations(self, request: SMEAgentRequest) -> list[dict[str, Any]]:
-        """Assess regulatory considerations."""
-        considerations = []
-
-        # GAMP-5 considerations
-        gamp_category = request.categorization_context.get("gamp_category", "unknown")
-        if gamp_category != "unknown":
-            considerations.append({
-                "regulation": "GAMP-5",
-                "consideration": f"Category {gamp_category} validation requirements",
-                "impact": "high",
-                "action_required": f"Implement Category {gamp_category} validation approach",
-                "timeline": "validation_phase"
-            })
-
-        # 21 CFR Part 11 considerations
-        if request.compliance_level in ["enhanced", "comprehensive"]:
-            considerations.append({
-                "regulation": "21 CFR Part 11",
-                "consideration": "Electronic records and signatures compliance",
-                "impact": "high",
-                "action_required": "Validate electronic record controls and audit trail",
-                "timeline": "implementation_phase"
-            })
-
-        # Data integrity considerations
-        if "data_handling" in request.validation_focus:
-            considerations.append({
-                "regulation": "FDA Data Integrity Guidance",
-                "consideration": "ALCOA+ data integrity principles",
-                "impact": "medium",
-                "action_required": "Implement data integrity controls and validation",
-                "timeline": "design_phase"
-            })
-
-        return considerations
+        """Assess regulatory considerations using LLM expertise."""
+        
+        # NO FALLBACKS: Use actual LLM analysis instead of static logic
+        regulatory_prompt = f"""
+        As a pharmaceutical regulatory expert specializing in {request.specialty}, assess the regulatory considerations for a validation project with these characteristics:
+        
+        - Specialty: {request.specialty}
+        - Compliance Level: {request.compliance_level}
+        - GAMP Category: {request.categorization_context.get('gamp_category', 'unknown')}
+        - Validation Focus: {', '.join(request.validation_focus)}
+        - Test Focus: {request.test_focus}
+        
+        Assess regulatory considerations including:
+        1. GAMP-5 category-specific requirements
+        2. 21 CFR Part 11 electronic records compliance
+        3. FDA Data Integrity Guidance (ALCOA+ principles)
+        4. ICH guidelines applicable to the specialty
+        5. EU GMP Annex 11 requirements
+        6. Any specialty-specific regulatory requirements
+        
+        For each consideration, provide:
+        - Specific regulation/guideline
+        - Key consideration or requirement
+        - Impact level (low/medium/high/critical)
+        - Required actions
+        - Implementation timeline phase
+        
+        Respond with valid JSON in this exact format:
+        [
+            {
+                "regulation": "regulation_name",
+                "consideration": "specific_consideration_or_requirement",
+                "impact": "low/medium/high/critical",
+                "action_required": "specific_action_needed",
+                "timeline": "design_phase/implementation_phase/validation_phase/ongoing"
+            }
+        ]
+        """
+        
+        try:
+            # Make actual LLM call - NO FALLBACKS ALLOWED
+            response = await self.llm.acomplete(regulatory_prompt)
+            response_text = response.text.strip()
+            
+            # Parse JSON response
+            import json
+            try:
+                considerations = json.loads(response_text)
+                
+                # Validate response structure
+                if not isinstance(considerations, list):
+                    raise ValueError("Response must be a list of regulatory considerations")
+                
+                # Validate each consideration
+                required_fields = ["regulation", "consideration", "impact", "action_required", "timeline"]
+                valid_impacts = ["low", "medium", "high", "critical"]
+                valid_timelines = ["design_phase", "implementation_phase", "validation_phase", "ongoing"]
+                
+                for i, item in enumerate(considerations):
+                    if not isinstance(item, dict):
+                        raise ValueError(f"Consideration {i} must be a dictionary")
+                    for field in required_fields:
+                        if field not in item:
+                            raise ValueError(f"Consideration {i} missing required field: {field}")
+                    if item["impact"] not in valid_impacts:
+                        raise ValueError(f"Consideration {i} has invalid impact: {item['impact']}")
+                    if item["timeline"] not in valid_timelines:
+                        raise ValueError(f"Consideration {i} has invalid timeline: {item['timeline']}")
+                
+                return considerations
+                
+            except (json.JSONDecodeError, ValueError) as parse_error:
+                # NO FALLBACKS: Fail explicitly with full diagnostic information
+                raise RuntimeError(
+                    f"CRITICAL: LLM regulatory considerations assessment failed to return valid JSON.\n"
+                    f"Parse Error: {parse_error}\n"
+                    f"LLM Response: {response_text[:500]}...\n"
+                    f"This violates pharmaceutical system requirements for explicit failure handling."
+                ) from parse_error
+                
+        except Exception as llm_error:
+            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            raise RuntimeError(
+                f"CRITICAL: Regulatory considerations LLM call failed.\n"
+                f"Error: {llm_error}\n"
+                f"Request: {request.specialty}, {request.compliance_level}\n"
+                f"This violates pharmaceutical system requirements - regulatory assessment cannot use fallback logic."
+            ) from llm_error
 
     async def _formulate_expert_opinion(
         self,
@@ -561,38 +794,59 @@ class SMEAgent:
         recommendations: list[dict[str, Any]],
         risk_analysis: dict[str, Any]
     ) -> str:
-        """Formulate expert opinion summary."""
-        high_priority_recs = len([r for r in recommendations if r["priority"] == "high"])
-        risk_level = risk_analysis["risk_level"]
-
-        opinion_parts = []
-
-        # Risk assessment opinion
-        if risk_level == "high":
-            opinion_parts.append("The system presents elevated validation risks requiring comprehensive mitigation strategies.")
-        elif risk_level == "medium":
-            opinion_parts.append("The system has manageable validation risks with appropriate controls.")
-        else:
-            opinion_parts.append("The system presents low validation risk with standard controls sufficient.")
-
-        # Recommendation urgency
-        if high_priority_recs > 3:
-            opinion_parts.append("Multiple high-priority recommendations require immediate attention.")
-        elif high_priority_recs > 0:
-            opinion_parts.append("Key recommendations should be addressed during validation planning.")
-
-        # Compliance opinion
-        compliance_level = request.compliance_level
-        if compliance_level == "comprehensive":
-            opinion_parts.append("Enhanced compliance validation procedures are essential for regulatory acceptance.")
-
-        # Overall recommendation
-        if risk_level == "high" or high_priority_recs > 3:
-            opinion_parts.append("Recommend phased validation approach with early risk mitigation focus.")
-        else:
-            opinion_parts.append("Standard validation approach should be sufficient with recommended enhancements.")
-
-        return " ".join(opinion_parts)
+        """Formulate expert opinion summary using LLM expertise."""
+        
+        # NO FALLBACKS: Use actual LLM analysis instead of static logic
+        opinion_prompt = f"""
+        As a pharmaceutical validation expert specializing in {request.specialty}, formulate a comprehensive expert opinion based on the complete analysis conducted:
+        
+        SYSTEM CONTEXT:
+        - Specialty: {request.specialty}
+        - Compliance Level: {request.compliance_level}
+        - Test Focus: {request.test_focus}
+        - GAMP Category: {request.categorization_context.get('gamp_category', 'unknown')}
+        
+        ANALYSIS RESULTS:
+        Risk Analysis: {risk_analysis}
+        
+        Recommendations Generated: {len(recommendations)} recommendations
+        High Priority Recommendations: {len([r for r in recommendations if r.get("priority") == "high"])}
+        
+        Formulate a concise expert opinion that:
+        1. Summarizes the overall validation approach recommended
+        2. Highlights key risk considerations and mitigation strategies
+        3. Provides guidance on implementation priorities
+        4. Addresses compliance and regulatory considerations
+        5. Offers professional judgment on success likelihood
+        
+        Write in a professional, authoritative tone appropriate for pharmaceutical validation documentation.
+        Keep the opinion concise but comprehensive (2-4 sentences).
+        
+        Respond with just the expert opinion text, no JSON formatting needed.
+        """
+        
+        try:
+            # Make actual LLM call - NO FALLBACKS ALLOWED
+            response = await self.llm.acomplete(opinion_prompt)
+            expert_opinion = response.text.strip()
+            
+            # Basic validation - ensure we got a reasonable response
+            if not expert_opinion or len(expert_opinion) < 50:
+                raise ValueError("Expert opinion is too short or empty")
+            
+            if len(expert_opinion) > 1000:
+                raise ValueError("Expert opinion is too long")
+            
+            return expert_opinion
+                
+        except Exception as llm_error:
+            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            raise RuntimeError(
+                f"CRITICAL: Expert opinion formulation LLM call failed.\n"
+                f"Error: {llm_error}\n"
+                f"Request: {request.specialty}, {request.compliance_level}\n"
+                f"This violates pharmaceutical system requirements - expert opinion cannot use fallback logic."
+            ) from llm_error
 
     def _calculate_confidence_score(
         self,

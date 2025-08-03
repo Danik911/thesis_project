@@ -17,6 +17,7 @@ Key Features:
 
 import asyncio
 import logging
+import time
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -33,6 +34,7 @@ from src.agents.parallel.regulatory_data_sources import (
     create_fda_client,
 )
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
+from src.monitoring.simple_tracer import get_tracer
 
 
 class ResearchAgentRequest(BaseModel):
@@ -154,6 +156,16 @@ class ResearchAgent:
                 )
 
             # Execute research with timeout
+            tracer = get_tracer()
+            
+            # Log research start
+            tracer.log_step("research_analysis_start", {
+                "research_focus": request_data.research_focus,
+                "regulatory_scope": request_data.regulatory_scope,
+                "depth_level": request_data.depth_level,
+                "time_horizon": request_data.time_horizon
+            })
+            
             research_response = await asyncio.wait_for(
                 self._execute_research(request_data),
                 timeout=request_data.timeout_seconds
@@ -167,6 +179,16 @@ class ResearchAgent:
             if research_response.confidence_score >= self.quality_threshold:
                 self._research_stats["high_quality_results"] += 1
             self._update_performance_stats(processing_time)
+            
+            # Log research completion
+            tracer.log_step("research_analysis_complete", {
+                "results_count": len(research_response.research_results),
+                "regulatory_updates_count": len(research_response.regulatory_updates),
+                "best_practices_count": len(research_response.best_practices),
+                "confidence_score": research_response.confidence_score,
+                "research_quality": research_response.research_quality,
+                "processing_time": processing_time
+            })
 
             if self.verbose:
                 self.logger.info(
@@ -975,17 +997,40 @@ Always maintain currency with evolving regulatory landscape."""
                 # Search multiple FDA databases
                 try:
                     # Search drug labels for guidance information
+                    tracer = get_tracer()
+                    api_start = time.time()
+                    
                     drug_labels = await self.fda_client.search_drug_labels(
                         search_query=search_query,
                         limit=3
                     )
+                    
+                    # Log FDA API call
+                    api_duration = time.time() - api_start
+                    tracer.log_api_call("fda", "drug_labels_search", api_duration, True, {
+                        "query": search_query,
+                        "limit": 3,
+                        "results_count": len(drug_labels.get("results", []))
+                    })
+                    
                     updates.extend(self._process_fda_drug_labels(drug_labels, focus_area))
 
                     # Search enforcement reports for recent regulatory actions
+                    api_start = time.time()
+                    
                     enforcement = await self.fda_client.search_enforcement_reports(
                         search_query=search_query,
                         limit=2
                     )
+                    
+                    # Log FDA enforcement API call
+                    api_duration = time.time() - api_start
+                    tracer.log_api_call("fda", "enforcement_search", api_duration, True, {
+                        "query": search_query,
+                        "limit": 2,
+                        "results_count": len(enforcement.get("results", []))
+                    })
+                    
                     updates.extend(self._process_fda_enforcement_reports(enforcement, focus_area))
 
                 except FDAAPIError as e:
