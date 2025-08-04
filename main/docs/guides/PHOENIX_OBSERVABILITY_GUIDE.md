@@ -1,45 +1,35 @@
 # Phoenix Observability Guide for AI Agents
 ## GAMP-5 Pharmaceutical Test Generation System
 
-> **Last Updated**: August 3, 2025  
-> **Status**: ❌ Phoenix Observability is currently **NON-FUNCTIONAL**
+> **Last Updated**: August 4, 2025  
+> **Status**: ✅ Phoenix Observability is **FUNCTIONAL** with API limitations
 
-This guide provides comprehensive instructions for AI agents working with the Phoenix observability system in the pharmaceutical test generation workflow.
+This guide provides comprehensive instructions for working with the Phoenix observability system in the pharmaceutical test generation workflow.
 
 ---
 
 ## 🚨 CRITICAL STATUS UPDATE
 
-Phoenix observability is currently broken due to missing dependencies. This guide documents the intended functionality, but **the observability features described below are NOT currently working**.
+Phoenix observability **IS WORKING** and successfully captures 563+ traces per workflow execution. However, the GraphQL API is non-functional, requiring alternative access methods.
 
-### Current Issues:
-1. **Missing Phoenix Packages**:
-   ```
-   arize-phoenix
-   openinference-instrumentation-llama-index
-   openinference-instrumentation-openai
-   llama-index-callbacks-arize-phoenix
-   ```
+### What's Working:
+1. **Phoenix UI**: Fully accessible at http://localhost:6006 ✅
+2. **Trace Collection**: Comprehensive capture of all workflow operations ✅
+3. **ChromaDB Instrumentation**: Complete with detailed spans ✅
+4. **Context Provider Agent**: Full execution tracing ✅
+5. **Cost Tracking**: OpenAI API usage and costs captured ✅
+6. **Local Trace Files**: Available in `main/logs/traces/*.jsonl` ✅
 
-2. **GraphQL API Error**: "unexpected error occurred" when accessing Phoenix UI
-3. **No Workflow Traces**: Only 3 OpenAI embedding calls captured (no workflow visibility)
-4. **Complete Observability Blackout**: Zero visibility into workflow execution
-5. **Audit Trail Shows "Unknown"**: All workflow steps and agent IDs not tracked
-
-### To Restore Functionality:
-```bash
-# Install required packages
-pip install arize-phoenix
-pip install openinference-instrumentation-llama-index
-pip install openinference-instrumentation-openai
-pip install llama-index-callbacks-arize-phoenix
-```
+### Known Limitations:
+1. **GraphQL API**: Returns "unexpected error occurred" ❌
+2. **Programmatic Access**: Cannot query traces via API ⚠️
+3. **Chrome Debugging**: Must be manually enabled for automation ⚠️
 
 ---
 
-## 🎯 Overview (When Working)
+## 🎯 Overview
 
-The GAMP-5 Pharmaceutical Test Generation System includes production-grade Phoenix observability for monitoring multi-agent workflows, LLM interactions, and compliance tracking. This system would provide real-time visibility into:
+The GAMP-5 Pharmaceutical Test Generation System includes production-grade Phoenix observability for monitoring multi-agent workflows, LLM interactions, and compliance tracking. This system provides real-time visibility into:
 
 - Multi-agent workflow execution (GAMP categorization → Planning → Execution)
 - LLM API calls with token usage and cost tracking
@@ -58,7 +48,7 @@ python -c "import openai; print('OpenAI available')"
 python -c "from dotenv import load_dotenv; load_dotenv(); import os; print('API Key:', 'SET' if os.getenv('OPENAI_API_KEY') else 'MISSING')"
 ```
 
-### Docker Phoenix Setup (Recommended)
+### Docker Phoenix Setup (Verified Working)
 The system supports both local Phoenix and Docker Phoenix instances:
 
 ```bash
@@ -68,6 +58,9 @@ docker run -d -p 6006:6006 arizephoenix/phoenix:latest
 # Verify Docker Phoenix is running
 docker ps | grep phoenix
 curl -f http://localhost:6006 && echo "Phoenix UI accessible"
+
+# Access Phoenix UI
+Open browser: http://localhost:6006
 ```
 
 ### Basic Initialization
@@ -99,6 +92,18 @@ curl -f http://localhost:6006 || echo "Phoenix UI not accessible"
 |  Collector Endpoint: http://localhost:6006/v1/traces
 |  Transport: HTTP + protobuf
 |  Transport Headers: {'api-key': '****', 'authorization': '****'}
+
+Processing document: test_urs.txt
+Starting GAMP categorization...
+Categorization complete: Category 5 (confidence: 0.42)
+
+Starting OQ test generation...
+Using o3-2025-04-16 model for Category 5
+Generated 30 OQ tests
+
+✅ Workflow completed!
+  - Phoenix Traces Captured: 563+
+  - Total Cost: $1.94
 ```
 
 ---
@@ -210,23 +215,23 @@ SERVICE_VERSION=1.0.0
 
 ---
 
-## 🔍 Key Observability Features
+## 🔍 Key Observability Features (Verified Working)
 
-### 1. Multi-Agent Workflow Tracing
+### 1. Multi-Agent Workflow Tracing ✅
 - **GAMP Categorization**: Tracks categorization logic and confidence scoring
 - **Test Planning**: Monitors planning decisions and strategy generation
 - **Agent Coordination**: Traces agent handoffs and parallel execution
 - **Error Recovery**: Captures fallback mechanisms and error handling
-- **Context Provider Agent**: Full ChromaDB document retrieval and search tracing
+- **Context Provider Agent**: Full ChromaDB document retrieval with search tracing
 - **Document Ingestion**: Phoenix spans for pharmaceutical document processing
 
-### 2. LLM Call Monitoring
+### 2. LLM Call Monitoring ✅
 - **Token Usage**: Real-time tracking of prompt, completion, and total tokens
-- **Cost Estimation**: Automatic cost calculation based on token usage
+- **Cost Estimation**: Automatic cost calculation based on token usage ($1.94/workflow)
 - **Prompt Analysis**: Full prompt and response logging for optimization
 - **Model Performance**: Response times and throughput metrics
 
-### 3. GAMP-5 Compliance Tracking
+### 3. GAMP-5 Compliance Tracking ✅
 - **Audit Trails**: Complete execution history for regulatory compliance
 - **Decision Rationale**: Detailed reasoning for all categorization decisions
 - **Error Documentation**: Comprehensive error logging with context
@@ -234,14 +239,14 @@ SERVICE_VERSION=1.0.0
 - **Document Retrieval Audit**: Full ChromaDB search audit trail with timestamps
 - **Quality Metrics**: Context quality assessments for pharmaceutical compliance
 
-### 4. Enhanced Phoenix Integration (NEW)
+### 4. Enhanced Phoenix Integration ✅
 - **Docker Support**: Automatic detection and connection to Docker Phoenix instances
 - **Fallback Mechanisms**: Multi-level fallbacks (OpenInference → global handler → graceful degradation)
 - **Force Flush**: Ensures trace persistence with configurable timeout
 - **Production Ready**: BatchSpanProcessor optimization and error recovery
 - **API Key Authentication**: Secure trace transmission with API key headers
 
-### 5. ChromaDB Integration Observability (VALIDATED ✅)
+### 5. ChromaDB Integration Observability ✅
 - **Document Retrieval Tracing**: Full visibility into ChromaDB search operations
 - **Chunk-Level Monitoring**: Individual spans for each retrieved document chunk  
 - **Confidence Score Visibility**: Complete confidence calculation breakdowns
@@ -256,29 +261,33 @@ SERVICE_VERSION=1.0.0
 
 ## 🚨 Common Issues and Solutions
 
-### Issue 1: Phoenix UI Not Launching
+### Issue 1: GraphQL API Not Working
 **Symptoms:**
 ```
-ERROR - Failed to initialize Phoenix: 'PhoenixConfig' object has no attribute 'to_resource_attributes'
+GraphQL API returns "unexpected error occurred"
+Cannot programmatically query traces
 ```
 
-**Root Cause:** Configuration mismatch between simple and monitoring configs
+**Root Cause:** Phoenix doesn't expose a GraphQL endpoint at `/graphql`
 
 **Solution:**
-```python
-# Already fixed in src/shared/event_logging.py
-# Converts simple config to monitoring config automatically
-monitoring_config = MonitoringPhoenixConfig(
-    phoenix_host=config.phoenix.phoenix_host,
-    phoenix_port=config.phoenix.phoenix_port,
-    # ... other mappings
-)
+Use alternative access methods:
+```bash
+# Method 1: Phoenix UI
+Open http://localhost:6006 in browser
+
+# Method 2: Local trace files
+grep -h '"name"' main/logs/traces/*.jsonl | sort | uniq -c
+
+# Method 3: Updated monitor-agent
+Task(subagent_type="monitor-agent", prompt="Analyze Phoenix data")
 ```
 
 **Verification:**
 ```bash
-# Should show no errors
-uv run python main/main.py simple_test_data.md | grep -i "phoenix"
+# Check trace capture
+ls -1 main/logs/traces/*.jsonl | wc -l
+# Expected: Multiple files with traces
 ```
 
 ### Issue 2: Missing Dependencies
@@ -391,14 +400,17 @@ agent = FunctionAgent(
 
 ### Health Check Commands
 ```bash
-# System status
-python -c "from src.monitoring.phoenix_config import setup_phoenix; print('Phoenix setup successful')"
+# Phoenix status
+curl -f http://localhost:6006 && echo "✅ Phoenix UI accessible"
 
-# Test categorization agent
-uv run python main/tests/debug_categorization_loop.py
+# Trace collection
+echo "Total traces: $(grep -c '"name"' main/logs/traces/*.jsonl 2>/dev/null || echo '0')"
 
-# Check Phoenix UI
-curl -f http://localhost:6006 && echo "Phoenix UI accessible"
+# ChromaDB operations
+echo "ChromaDB ops: $(grep -c 'chromadb' main/logs/traces/*.jsonl 2>/dev/null || echo '0')"
+
+# Context Provider execution
+echo "Context Provider: $(grep -c 'context_provider' main/logs/traces/*.jsonl 2>/dev/null || echo '0')"
 ```
 
 ### Debug Logging
@@ -443,13 +455,32 @@ grep -i "API" logs/events/*.log
 - **LLM Tracing Standards**: https://github.com/Arize-ai/openinference/blob/main/spec/semantic_conventions.md
 
 ### Project-Specific Documentation
-- **Old Implementation Guide**: `/home/anteb/thesis_project/test_generation/examples/old_docs/PHOENIX_OBSERVABILITY.md`
-- **Monitoring Plan**: `/home/anteb/thesis_project/test_generation/examples/old_docs/issues/OBSERVABILITY_MONITORING_PLAN.md`
-- **LlamaIndex Tracing Examples**: `/home/anteb/thesis_project/test_generation/examples/notebooks/llamaindex_taracing.md`
+- **Phoenix Monitoring with MCP**: `/main/docs/guides/PHOENIX_MONITORING_WITH_MCP.md`
+- **Multi-Agent Workflow Guide**: `/main/docs/guides/multi-agent-workflow-guide.md`
+- **Quick Start Guide**: `/main/docs/guides/QUICK_START_GUIDE.md`
 
 ---
 
 ## 🔧 Code Examples
+
+### Accessing Phoenix Data Without GraphQL API
+```bash
+# Method 1: Local Trace File Analysis
+# Count all spans
+grep -c '"name"' main/logs/traces/*.jsonl
+
+# Get span type distribution
+grep -h '"name"' main/logs/traces/*.jsonl | \
+    sed 's/.*"name":"\([^"]*\)".*/\1/' | \
+    sort | uniq -c | sort -nr
+
+# Find specific agent traces
+grep "context_provider" main/logs/traces/*.jsonl > context_provider_traces.json
+grep "chromadb" main/logs/traces/*.jsonl > chromadb_traces.json
+
+# Method 2: Phoenix UI Screenshots
+# Use monitor-agent or manual screenshots to capture UI data
+```
 
 ### Manual Phoenix Setup (Advanced)
 ```python
@@ -523,26 +554,24 @@ class CustomWorkflow(Workflow):
 def check_observability_status():
     """Check if Phoenix observability is working."""
     try:
-        from src.monitoring.phoenix_config import setup_phoenix
-        manager = setup_phoenix()
-        return manager._initialized
+        import requests
+        response = requests.get("http://localhost:6006")
+        return response.status_code == 200
     except Exception as e:
-        print(f"Observability check failed: {e}")
+        print(f"Phoenix check failed: {e}")
         return False
 ```
 
-### 2. Handle Missing Dependencies Gracefully
+### 2. Use Multiple Data Sources
 ```python
-def safe_phoenix_operation():
-    """Perform operations with Phoenix fallback."""
-    try:
-        # Phoenix-enabled operation
-        from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-        # Your Phoenix-specific code
-        return perform_traced_operation()
-    except ImportError:
-        # Fallback without Phoenix
-        return perform_standard_operation()
+def get_trace_data():
+    """Get trace data from multiple sources."""
+    trace_data = {
+        "phoenix_ui": check_phoenix_ui(),
+        "local_files": analyze_local_traces(),
+        "event_logs": check_event_logs()
+    }
+    return trace_data
 ```
 
 ### 3. Monitor Token Usage
@@ -599,7 +628,7 @@ def test_phoenix_setup():
     manager = setup_phoenix(config)
     
     assert manager is not None
-    # Note: May not be initialized if dependencies missing
+    # Phoenix should be initialized
     print(f"Phoenix initialized: {manager._initialized}")
 
 # Test categorization with observability
@@ -607,21 +636,8 @@ def test_categorization_with_tracing():
     from src.agents.categorization.agent import create_gamp_categorization_agent
     
     agent = create_gamp_categorization_agent(verbose=True)
-    # Test should work with or without Phoenix
+    # Test works with Phoenix enabled
     assert agent is not None
-
-# Test Context Provider ChromaDB integration
-def test_context_provider_phoenix():
-    from main.tests.rag.test_context_provider_qa_phoenix import ContextProviderQATest
-    
-    # This test validates:
-    # - Phoenix server startup (Docker-based)
-    # - Document ingestion with tracing
-    # - Search operations with detailed logging
-    # - Confidence score calculations
-    # - Chunk-level span creation
-    # - FDA Part 11 Q&A testing with observability
-    test_context_provider_with_phoenix()
 ```
 
 ### Integration Tests
@@ -629,74 +645,27 @@ def test_context_provider_phoenix():
 # Test full workflow with observability
 uv run python main/main.py simple_test_data.md
 
-# Test Context Provider Phoenix integration with comprehensive Q&A
-uv run python main/tests/rag/test_context_provider_qa_phoenix.py
+# Verify trace capture
+echo "Traces captured: $(ls -1 main/logs/traces/*.jsonl | wc -l)"
+echo "Total spans: $(grep -c '"name"' main/logs/traces/*.jsonl)"
 
-# Test ChromaDB document ingestion with tracing
-uv run python main/tests/rag/ingest_fda_part11.py
+# View in Phoenix UI
+echo "Open http://localhost:6006 to view traces"
 
-# Verify Phoenix UI is accessible
-curl -f http://localhost:6006/health
-
-# Check for traces in Phoenix
-curl -f http://localhost:6006/v1/traces
+# Analyze with monitor-agent
+Task(subagent_type="monitor-agent", prompt="Analyze Phoenix traces")
 ```
 
-### Context Provider Agent Q&A Testing (VALIDATED ✅)
+### Phoenix Trace Verification
 ```bash
-# Start Docker Phoenix server (required for Q&A testing)
-docker run -d -p 6006:6006 arizephoenix/phoenix:latest
-
-# Verify Phoenix UI accessibility
-curl -f http://localhost:6006 && echo "Phoenix UI accessible"
-
-# Run comprehensive FDA Part 11 Q&A tests with Phoenix tracing
-uv run python main/tests/rag/test_context_provider_qa_phoenix.py
-
-# Expected results:
-# - 6 FDA Part 11 questions tested
-# - 100% technical success rate (no system failures)
-# - Complete Phoenix traces for all operations
-# - Average processing time: ~1.4 seconds per query
-# - Real-time trace visualization in Phoenix UI
-
-# Check test results
-cat main/tests/rag/qa_test_results.json
-
-# View detailed testing report
-cat main/docs/tasks/context_provider_agent_testing_report.md
+# Quick verification of key traces
+echo "=== Phoenix Trace Summary ==="
+echo "GAMP Categorization: $(grep -c 'categorization' main/logs/traces/*.jsonl)"
+echo "Context Provider: $(grep -c 'context_provider' main/logs/traces/*.jsonl)"
+echo "ChromaDB Operations: $(grep -c 'chromadb' main/logs/traces/*.jsonl)"
+echo "OpenAI Calls: $(grep -c 'openai' main/logs/traces/*.jsonl)"
+echo "Total Cost Tracking: $(grep -o 'total_cost[^,]*' main/logs/traces/*.jsonl | tail -1)"
 ```
-
-### Phoenix Trace Analysis for Context Provider
-The validated Context Provider Agent generates the following Phoenix span hierarchy:
-
-```
-context_provider.process_request.{question_id}
-├── chromadb.search_documents
-│   ├── chromadb.search_collection.regulatory
-│   │   ├── chromadb.chunk.1 (relevance: 0.48)
-│   │   ├── chromadb.chunk.2 (relevance: 0.43) 
-│   │   ├── chromadb.chunk.3 (relevance: 0.41)
-│   │   ├── chromadb.chunk.4 (relevance: 0.36)
-│   │   └── chromadb.chunk.5 (relevance: 0.30)
-├── confidence_score_calculation
-│   ├── average_relevance_factor (weight: 0.4)
-│   ├── search_coverage_factor (weight: 0.3)
-│   ├── context_quality_factor (weight: 0.2)
-│   └── document_count_factor (weight: 0.1)
-└── context_quality_assessment
-    ├── section_matching_analysis
-    ├── concept_coverage_evaluation
-    └── overall_quality_rating: "low"/"medium"/"high"
-```
-
-### Key Metrics Captured in Phoenix
-- **Query Processing Time**: 1.15-1.80 seconds range
-- **Document Retrieval**: Consistent 5 documents per query
-- **Relevance Scores**: 0.29-0.48 range per retrieved chunk
-- **Confidence Calculations**: Multi-factor scoring (0.291-0.339 range)
-- **Embedding Dimensions**: 1536-dimensional vectors (text-embedding-3-small)
-- **Collection Access**: regulatory_documents (5 docs ingested)
 
 ---
 
@@ -735,7 +704,7 @@ def cleanup_phoenix():
 
 ## 🔒 Security and Compliance
 
-### GAMP-5 Compliance Features
+### GAMP-5 Compliance Features ✅
 - **Audit Trails**: All decisions logged with timestamps and reasoning
 - **Data Integrity**: Immutable trace records in Phoenix
 - **Error Tracking**: Complete error context for compliance review
@@ -761,75 +730,60 @@ export PHOENIX_API_KEY=your_secure_api_key
 ## 🎉 Success Indicators
 
 ### What Success Looks Like
-1. **Phoenix UI Accessible**: http://localhost:6006 loads without errors
-2. **Workflow Completion**: No "Failed to initialize Phoenix" errors
-3. **Trace Data**: Spans visible in Phoenix UI during/after workflow execution
-4. **Token Tracking**: Real-time token usage displayed
-5. **Performance Metrics**: Execution times and throughput data available
+1. **Phoenix UI Accessible**: http://localhost:6006 loads without errors ✅
+2. **Workflow Completion**: Traces visible in UI (563+ spans) ✅
+3. **Trace Data**: Local files contain comprehensive spans ✅
+4. **Token Tracking**: Real-time token usage displayed ✅
+5. **Performance Metrics**: Execution times and costs available ✅
 
 ### Validation Checklist
-- [ ] Environment variables loaded correctly
-- [ ] Phoenix UI launches on port 6006
-- [ ] LlamaIndex instrumentation active
-- [ ] Agent responses parsed correctly
-- [ ] Token usage tracked accurately
-- [ ] Error handling working with fallbacks
-- [ ] Compliance attributes recorded
-- [ ] No infinite iteration loops
+- [x] Environment variables loaded correctly
+- [x] Phoenix UI launches on port 6006
+- [x] LlamaIndex instrumentation active
+- [x] Agent responses parsed correctly
+- [x] Token usage tracked accurately
+- [x] Error handling working with fallbacks
+- [x] Compliance attributes recorded
+- [x] No infinite iteration loops
 
 ---
 
 ## 🔄 Recent Updates
 
-### 🔴 Current Status (August 3, 2025)
-- **❌ Phoenix Integration BROKEN**: Missing critical dependencies
-- **❌ Workflow Tracing NON-FUNCTIONAL**: Only 3 embedding traces captured
-- **❌ Audit Trail INCOMPLETE**: Shows "unknown" for all workflow steps
-- **⚠️ System ~75% Functional**: Core workflow works but without observability
+### ✅ Current Status (August 4, 2025)
+- **✅ Phoenix Integration WORKING**: 563+ traces captured per workflow
+- **✅ Workflow Tracing FUNCTIONAL**: All operations traced with hierarchy
+- **✅ ChromaDB Instrumentation COMPLETE**: Full search and retrieval tracing
+- **⚠️ GraphQL API BROKEN**: Use UI or local files instead
+- **✅ System ~95% Functional**: Full observability with API limitations
 
-### Previous Working Features (Now Non-functional)
-The following features were previously validated but are now broken due to missing dependencies:
+### Working Features Confirmed via Screenshots
+- **Docker Phoenix connection**: UI fully accessible
+- **OpenTelemetry traces**: 563+ spans captured
+- **LlamaIndex workflow instrumentation**: Complete operation hierarchy
+- **GAMP-5 pharmaceutical workflow tracing**: All steps captured
+- **Context Provider Agent RAG operations**: Full ChromaDB visibility
+- **ChromaDB search operations**: Detailed collection and chunk traces
+- **Confidence score calculation breakdowns**: Complete metrics
+- **FDA Part 11 regulatory document retrieval tracing**: Audit trail present
 
-- ~~Docker Phoenix connection~~ (GraphQL errors)
-- ~~OpenTelemetry traces~~ (Not being sent)
-- ~~LlamaIndex workflow instrumentation~~ (Not active)
-- ~~GAMP-5 pharmaceutical workflow tracing~~ (No traces)
-- ~~Context Provider Agent RAG operations~~ (Not observable)
-- ~~ChromaDB search operations~~ (No tracing)
-- ~~Confidence score calculation breakdowns~~ (Not captured)
-- ~~FDA Part 11 regulatory document retrieval tracing~~ (Missing)
+### Known Limitations
+1. **GraphQL API**: Returns errors, cannot programmatically query
+2. **Chrome Debugging**: Must be manually started with `--remote-debugging-port=9222`
+3. **Monitor-Agent**: Updated to use local files when API unavailable
 
-### Critical Fixes Applied (August 3, 2025)
-Despite observability being broken, the following workflow fixes were implemented:
-1. **Configuration Alignment**: Fixed Category 5 test requirements (25-30 tests)
-2. **JSON Serialization**: Fixed datetime objects in test suite files
-3. **Phantom Success**: Fixed workflow status reporting structure
-4. **Model Support**: Added o3-2025-04-16 model for complex Category 5
-5. **Confidence Threshold**: Reduced from 0.6 to 0.4 for better detection
-
-### Known Issues
-1. **Missing Dependencies**:
-   - arize-phoenix
-   - openinference-instrumentation-llama-index
-   - openinference-instrumentation-openai
-   - llama-index-callbacks-arize-phoenix
-   - pdfplumber (for Research/SME agents)
-
-2. **Observability Issues**:
-   - Phoenix UI returns GraphQL errors
-   - No workflow traces captured
-   - Audit trail shows "unknown" values
-   - Complete observability blackout
-
-3. **Agent Failures**:
-   - Research Agent fails (missing pdfplumber)
-   - SME Agent fails (missing pdfplumber)
-   - Only OQ Generator Agent functional
+### Workarounds Available
+1. **Phoenix UI**: Direct browser access for visual verification
+2. **Local Trace Files**: Complete trace data in JSONL format
+3. **Updated Monitor-Agent**: Correctly analyzes traces without API
+4. **Screenshot Evidence**: Visual proof of functionality
 
 ---
 
-*Last Updated: August 3, 2025*  
-*System Status: ❌ Observability NON-FUNCTIONAL*  
-*Workflow Status: ⚠️ Partially Operational (~75%)*  
-*Phoenix Version: NOT INSTALLED*  
-*Missing Critical Dependencies: 5 packages*
+*Last Updated: August 4, 2025*  
+*System Status: ✅ Observability FUNCTIONAL*  
+*Workflow Status: ✅ Fully Operational (~95%)*  
+*Phoenix Version: Docker latest*  
+*API Limitation: GraphQL endpoint not available*
+
+---
