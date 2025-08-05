@@ -28,8 +28,11 @@ from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai import OpenAI
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
+from src.monitoring.agent_instrumentation import trace_agent_method
 from src.monitoring.simple_tracer import get_tracer
 
 
@@ -369,6 +372,9 @@ class SMEAgent:
         self.max_recommendations = max_recommendations
         self.logger = logging.getLogger(__name__)
 
+        # Initialize OpenTelemetry tracer for observability
+        self.tracer = trace.get_tracer(__name__)
+
         # Initialize domain knowledge base
         self.domain_knowledge = self._initialize_domain_knowledge()
 
@@ -383,9 +389,13 @@ class SMEAgent:
             "specialty_focus": specialty
         }
 
+    @trace_agent_method(
+        span_name="sme_agent.process_request",
+        attributes={"agent.type": "sme_agent", "operation": "process_request"}
+    )
     async def process_request(self, request_event: AgentRequestEvent) -> AgentResultEvent:
         """
-        Process an SME consultation request.
+        Process an SME consultation request with comprehensive Phoenix observability.
         
         Args:
             request_event: Agent request event containing domain consultation requirements
@@ -396,6 +406,9 @@ class SMEAgent:
         start_time = datetime.now(UTC)
         self._expertise_stats["total_consultations"] += 1
 
+        # Get current span for detailed tracing
+        current_span = trace.get_current_span()
+
         try:
             # Parse request data
             request_data = SMEAgentRequest(
@@ -403,21 +416,33 @@ class SMEAgent:
                 correlation_id=request_event.correlation_id
             )
 
+            # Add request attributes to span
+            if current_span and current_span.is_recording():
+                current_span.set_attribute("request.correlation_id", str(request_data.correlation_id))
+                current_span.set_attribute("request.specialty", request_data.specialty)
+                current_span.set_attribute("request.compliance_level", request_data.compliance_level)
+                current_span.set_attribute("request.test_focus", request_data.test_focus)
+                current_span.set_attribute("request.risk_factors", str(request_data.risk_factors))
+                current_span.set_attribute("request.timeout_seconds", request_data.timeout_seconds)
+                
+                # Add compliance attributes
+                current_span.set_attribute("compliance.gamp5.sme", True)
+                current_span.set_attribute("compliance.pharmaceutical", True)
+                current_span.set_attribute("sme.specialty", self.specialty)
+
             if self.verbose:
                 self.logger.info(
                     f"Processing SME consultation for {request_data.specialty} specialty "
                     f"with {request_data.compliance_level} compliance level"
                 )
 
-            # Execute SME analysis with timeout
-            tracer = get_tracer()
-            
-            # Log the analysis start
-            tracer.log_step("sme_analysis_start", {
-                "specialty": request_data.specialty,
-                "compliance_level": request_data.compliance_level,
-                "test_focus": request_data.test_focus
-            })
+            # Add event for SME analysis start
+            if current_span and current_span.is_recording():
+                current_span.add_event("sme_analysis_start", {
+                    "specialty": request_data.specialty,
+                    "compliance_level": request_data.compliance_level,
+                    "test_focus": request_data.test_focus
+                })
             
             sme_response = await asyncio.wait_for(
                 self._execute_sme_analysis(request_data),
@@ -432,13 +457,23 @@ class SMEAgent:
                 self._expertise_stats["high_confidence_recommendations"] += 1
             self._update_performance_stats(processing_time)
             
-            # Log the analysis completion
-            tracer.log_step("sme_analysis_complete", {
-                "recommendations_count": len(sme_response.recommendations),
-                "confidence_score": sme_response.confidence_score,
-                "risk_level": sme_response.risk_analysis.get("risk_level", "unknown"),
-                "processing_time": processing_time
-            })
+            # Add completion event and result attributes to span
+            if current_span and current_span.is_recording():
+                current_span.add_event("sme_analysis_complete", {
+                    "recommendations_count": len(sme_response.recommendations),
+                    "confidence_score": sme_response.confidence_score,
+                    "risk_level": sme_response.risk_analysis.get("risk_level", "unknown"),
+                    "processing_time": processing_time
+                })
+                
+                # Set result attributes
+                current_span.set_attribute("result.recommendations_count", len(sme_response.recommendations))
+                current_span.set_attribute("result.confidence_score", sme_response.confidence_score)
+                current_span.set_attribute("result.risk_level", sme_response.risk_analysis.get("risk_level", "unknown"))
+                current_span.set_attribute("result.validation_points_count", len(sme_response.validation_points))
+                current_span.set_attribute("result.assessment_details_count", len(sme_response.assessment_details))
+                current_span.set_attribute("result.processing_time_seconds", processing_time)
+                current_span.set_attribute("result.success", True)
 
             if self.verbose:
                 self.logger.info(
@@ -489,58 +524,79 @@ class SMEAgent:
             )
 
     async def _execute_sme_analysis(self, request: SMEAgentRequest) -> SMEAgentResponse:
-        """Execute the SME analysis process."""
-        # Initialize response
-        response = SMEAgentResponse(specialty=request.specialty)
+        """Execute the SME analysis process with OpenTelemetry instrumentation."""
+        # Create span for SME analysis execution
+        with self.tracer.start_as_current_span("sme.execute") as span:
+            span.set_attribute("sme.request_id", str(request.correlation_id))
+            span.set_attribute("sme.specialty", request.specialty)
+            span.set_attribute("sme.compliance_level", request.compliance_level)
+            
+            # Initialize response
+            response = SMEAgentResponse(specialty=request.specialty)
 
-        # Step 1: Compliance Assessment
-        compliance_assessment = await self._assess_compliance(request)
-        response.compliance_assessment = compliance_assessment
+            # Step 1: Compliance Assessment
+            with self.tracer.start_as_current_span("sme.compliance_assessment"):
+                compliance_assessment = await self._assess_compliance(request)
+                response.compliance_assessment = compliance_assessment
+                span.set_attribute("sme.compliance_status", compliance_assessment.get("status", "unknown"))
 
-        # Step 2: Risk Analysis
-        risk_analysis = await self._analyze_risks(request)
-        response.risk_analysis = risk_analysis
+            # Step 2: Risk Analysis
+            with self.tracer.start_as_current_span("sme.risk_analysis"):
+                risk_analysis = await self._analyze_risks(request)
+                response.risk_analysis = risk_analysis
+                span.set_attribute("sme.risk_level", risk_analysis.get("risk_level", "unknown"))
 
-        # Step 3: Generate Recommendations
-        recommendations = await self._generate_recommendations(request, compliance_assessment, risk_analysis)
-        response.recommendations = recommendations
+            # Step 3: Generate Recommendations
+            with self.tracer.start_as_current_span("sme.generate_recommendations"):
+                recommendations = await self._generate_recommendations(request, compliance_assessment, risk_analysis)
+                response.recommendations = recommendations
+                span.set_attribute("sme.recommendations_count", len(recommendations))
 
-        # Step 4: Validation Guidance
-        validation_guidance = await self._provide_validation_guidance(request, recommendations)
-        response.validation_guidance = validation_guidance
+            # Step 4: Validation Guidance
+            with self.tracer.start_as_current_span("sme.validation_guidance"):
+                validation_guidance = await self._provide_validation_guidance(request, recommendations)
+                response.validation_guidance = validation_guidance
 
-        # Step 5: Domain Insights
-        domain_insights = await self._generate_domain_insights(request)
-        response.domain_insights = domain_insights
+            # Step 5: Domain Insights
+            with self.tracer.start_as_current_span("sme.domain_insights"):
+                domain_insights = await self._generate_domain_insights(request)
+                response.domain_insights = domain_insights
 
-        # Step 6: Regulatory Considerations
-        regulatory_considerations = await self._assess_regulatory_considerations(request)
-        response.regulatory_considerations = regulatory_considerations
+            # Step 6: Regulatory Considerations
+            with self.tracer.start_as_current_span("sme.regulatory_considerations"):
+                regulatory_considerations = await self._assess_regulatory_considerations(request)
+                response.regulatory_considerations = regulatory_considerations
 
-        # Step 7: Expert Opinion
-        expert_opinion = await self._formulate_expert_opinion(request, recommendations, risk_analysis)
-        response.expert_opinion = expert_opinion
+            # Step 7: Expert Opinion
+            with self.tracer.start_as_current_span("sme.expert_opinion"):
+                expert_opinion = await self._formulate_expert_opinion(request, recommendations, risk_analysis)
+                response.expert_opinion = expert_opinion
 
-        # Step 8: Calculate Confidence Score
-        confidence_score = self._calculate_confidence_score(
-            recommendations, compliance_assessment, risk_analysis
-        )
-        response.confidence_score = confidence_score
+            # Step 8: Calculate Confidence Score
+            confidence_score = self._calculate_confidence_score(
+                recommendations, compliance_assessment, risk_analysis
+            )
+            response.confidence_score = confidence_score
+            span.set_attribute("sme.confidence_score", confidence_score)
 
-        # Step 9: Add Processing Metadata
-        response.processing_metadata = {
-            "specialty_applied": request.specialty,
-            "analysis_depth": request.compliance_level,
-            "domain_knowledge_used": len(request.domain_knowledge),
-            "confidence_factors": {
-                "recommendation_strength": len(recommendations),
-                "risk_clarity": risk_analysis.get("clarity_score", 0.5),
-                "compliance_certainty": compliance_assessment.get("certainty_score", 0.5)
-            },
-            "processing_timestamp": datetime.now(UTC).isoformat()
-        }
+            # Step 9: Add Processing Metadata
+            response.processing_metadata = {
+                "specialty_applied": request.specialty,
+                "analysis_depth": request.compliance_level,
+                "domain_knowledge_used": len(request.domain_knowledge),
+                "confidence_factors": {
+                    "recommendation_strength": len(recommendations),
+                    "risk_clarity": risk_analysis.get("clarity_score", 0.5),
+                    "compliance_certainty": compliance_assessment.get("certainty_score", 0.5)
+                },
+                "processing_timestamp": datetime.now(UTC).isoformat()
+            }
 
-        return response
+            # Add final span attributes
+            span.set_attribute("sme.final_confidence", confidence_score)
+            span.set_attribute("sme.recommendations_final", len(recommendations))
+
+            return response
 
     async def _assess_compliance(self, request: SMEAgentRequest) -> dict[str, Any]:
         """Assess compliance requirements and gaps using LLM expertise."""
