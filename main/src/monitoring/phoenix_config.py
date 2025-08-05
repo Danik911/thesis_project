@@ -21,6 +21,13 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 logger = logging.getLogger(__name__)
 
+# Import custom span exporter after logger setup
+try:
+    from .custom_span_exporter import add_local_span_exporter
+except ImportError:
+    add_local_span_exporter = None
+    logger.warning("Custom span exporter not available")
+
 
 @dataclass
 class PhoenixConfig:
@@ -282,6 +289,14 @@ class PhoenixManager:
         trace.set_tracer_provider(self.tracer_provider)
 
         logger.debug(f"Manual tracer configured with endpoint: {self.config.otlp_endpoint}")
+        
+        # Add local file exporter to capture ALL spans including ChromaDB
+        if add_local_span_exporter:
+            try:
+                add_local_span_exporter(self.tracer_provider)
+                logger.info("✅ Local span exporter added - ALL spans will be captured to files")
+            except Exception as e:
+                logger.warning(f"Failed to add local span exporter: {e}")
 
     def _instrument_llamaindex(self) -> None:
         """Instrument LlamaIndex with OpenInference and fallback options."""

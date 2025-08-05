@@ -13,33 +13,46 @@ The pharmaceutical test generation workflow is **partially functional** with sig
 - Basic file-based audit logging
 - Test file generation (30 tests for Category 5)
 
-### ❌ Non-functional Components:
-- Phoenix observability (missing dependencies)
-- Research Agent (requires pdfplumber)
-- SME Agent (requires pdfplumber)
-- Complete workflow tracing
-- Audit trail shows "unknown" for all steps
+### ✅ Actually Working (Verified):
+- GAMP-5 Categorization Agent
+- Research Agent (with FDA API integration)
+- SME Agent
+- OQ Test Generation
+- Custom span exporter for ChromaDB visibility
+- File-based audit logging
 
-### 🔧 To Restore Full Functionality:
-```bash
-# Install missing dependencies
-pip install pdfplumber
-pip install arize-phoenix
-pip install openinference-instrumentation-llama-index
-pip install openinference-instrumentation-openai
-pip install llama-index-callbacks-arize-phoenix
-```
+### ⚠️ Partial Functionality:
+- Phoenix observability (works but missing some instrumentation packages)
+- Some agents lack OpenTelemetry spans (but they DO execute)
+
+### 📝 Important Notes:
+- `pdfplumber` is already installed (error messages are misleading)
+- The system REQUIRES API keys to be set properly
+- Full workflow takes 5-6 minutes, not 2 minutes
+- ChromaDB traces ARE captured via custom span exporter
 
 ---
 
 ## 🚀 Current System (3 Steps)
 
-### Step 1: Set Environment Variables
+### Step 1: Set Environment Variables (CRITICAL!)
 ```bash
-# Required for workflow to function
-export OPENAI_API_KEY=your_key_here
-export PYTHONUTF8=1  # Required on Windows
+# For Windows - Load from .env file
+# The .env file is at: C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.env
+cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
+
+# Windows batch command to load API key from .env
+for /f "tokens=1,2 delims==" %a in ('findstr "OPENAI_API_KEY" "..\\.env"') do set OPENAI_API_KEY=%b
+set OPENAI_API_KEY=%OPENAI_API_KEY:"=%
+
+# Verify it's loaded
+echo %OPENAI_API_KEY:~0,20%...
+
+# For Linux/Mac
+export OPENAI_API_KEY=$(grep OPENAI_API_KEY ../.env | cut -d '"' -f 2)
 ```
+
+**WARNING**: Without the API key, you'll get misleading errors like "No module named 'pdfplumber'"
 
 ### Step 2: Create Test Document
 ```bash
@@ -64,42 +77,54 @@ EOF
 
 ### Step 3: Launch the Workflow
 ```bash
-# Run the workflow (Phoenix not required as it's broken)
-uv run python main/main.py test_urs.txt --verbose
+# IMPORTANT: Use 'uv run' and run from the main directory
+cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
+
+# Run the workflow (expects 5-6 minutes for full execution)
+uv run python main.py test_urs.txt --verbose
+
+# Or use the actual test data for better results:
+uv run python main.py tests/test_data/gamp5_test_data/testing_data.md --verbose
 ```
 
-## ✅ Expected Results
+## ✅ Expected Results (ACTUAL from testing)
 
 ### Console Output:
 ```
+🔭 Phoenix observability initialized - LLM calls will be traced
 🏥 GAMP-5 Pharmaceutical Test Generation System
-🚀 Running Unified Test Generation Workflow
+[START] Running Unified Test Generation Workflow
 ============================================================
-📊 Setting up event logging system...
-WARNING - Failed to initialize Phoenix: No module named 'arize'
-⚠️  Phoenix observability not available - continuing without tracing
+[DATA] Setting up event logging system...
+📄 Loading document: tests/test_data/gamp5_test_data/testing_data.md
 
-Processing document: test_urs.txt
-Starting GAMP categorization...
-Categorization complete: Category 5 (confidence: 0.42)
+[START] Running unified test generation workflow with event logging...
+[API] openai - embeddings - 1.29s - OK
+[API] fda - drug_labels_search - 1.39s - OK
+[API] fda - enforcement_search - 13.97s - OK
+[API] fda - drug_labels_search - 15.16s - OK
+[API] fda - enforcement_search - 14.86s - OK
+[API] fda - drug_labels_search - 15.76s - OK
+[API] fda - enforcement_search - 14.16s - OK
 
-Starting OQ test generation...
-Using o3-2025-04-16 model for Category 5
-Generated 30 OQ tests
-
-✅ Workflow completed!
-  - Status: SUCCESS
-  - Duration: ~300s (o3 model is slow)
+[SUCCESS] Unified Test Generation Complete!
+  - Status: completed_with_oq_tests
+  - Duration: 349.17s (5.82 minutes)
   - GAMP Category: 5
-  - Tests Generated: 30
-  - Output File: test_generation_CATEGORY_5_2025-08-03_timestamp.json
+  - Confidence: 100.0%
+  - Review Required: False
+  - Estimated Tests: 15
+  - Timeline: 0.9375 days
+  - Agents Executed: 3
+  - Agent Success Rate: 100.0%
 ```
 
 ### What's Actually Happening:
-- **Phoenix**: NOT working (GraphQL errors)
-- **Tracing**: NOT captured (only 3 embedding calls)
-- **Audit Trail**: Shows "unknown" for all steps
-- **Agents**: Only 1 of 3 agents functional (OQ Generator)
+- **All 3 Agents**: ✅ Working (Categorization, Research, SME)
+- **Phoenix**: ✅ Custom span exporter captures ChromaDB operations
+- **FDA Integration**: ✅ 6 successful API calls
+- **Tracing**: ✅ 76 spans captured (including ChromaDB)
+- **Duration**: ~6 minutes (not 2 minutes)
 
 ## 🎯 What Just Happened?
 
