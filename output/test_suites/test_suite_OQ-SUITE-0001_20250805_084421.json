@@ -1,0 +1,2145 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-05T08:44:21.550668",
+    "suite_id": "OQ-SUITE-0001",
+    "gamp_category": 5,
+    "total_test_count": 30,
+    "file_version": "1.0",
+    "compliance_standards": [
+      "GAMP-5",
+      "ALCOA+",
+      "21 CFR Part 11"
+    ],
+    "generator_version": "OQTestGenerationWorkflow v1.0"
+  },
+  "test_suite": {
+    "suite_id": "OQ-SUITE-0001",
+    "gamp_category": 5,
+    "document_name": "test_urs_category5.txt",
+    "test_cases": [
+      {
+        "test_id": "OQ-001",
+        "test_name": "Verify Microservices Deployment on Validated Servers",
+        "test_category": "installation",
+        "gamp_category": 5,
+        "objective": "Ensure that all custom microservices are correctly deployed, version-controlled, and operational within the validated server environment.",
+        "prerequisites": [
+          "Qualified hardware and OS installed",
+          "Deployment package v1.0 available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Deploy all microservice containers using approved CI/CD pipeline to the validation environment.",
+            "expected_result": "Deployment completes without error and returns success status codes.",
+            "data_to_capture": [
+              "Deployment logs",
+              "Container image SHA"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Execute health-check endpoint for each microservice.",
+            "expected_result": "Each health-check returns HTTP 200 with expected JSON payload.",
+            "data_to_capture": [
+              "Health-check responses"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Verify service mesh registers all microservices with correct metadata.",
+            "expected_result": "Service mesh UI shows all microservices in 'Running' state with correct version tags.",
+            "data_to_capture": [
+              "Service mesh status screen-shot"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All microservices deployed, healthy, and registered without errors."
+        ],
+        "regulatory_basis": [
+          "GAMP-5 Category 5",
+          "21 CFR Part 11 §11.10(a)"
+        ],
+        "risk_level": "low",
+        "data_integrity_requirements": [
+          "ALCOA+ - Accurate deployment records",
+          "ALCOA+ - Attributable to pipeline user"
+        ],
+        "urs_requirements": [
+          "URS-MES-017"
+        ],
+        "related_tests": [
+          "OQ-002",
+          "OQ-003"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "DevOps Engineer",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-002",
+        "test_name": "Validate Custom Data Lake Installation and Configuration",
+        "test_category": "installation",
+        "gamp_category": 5,
+        "objective": "Confirm that the custom data lake platform is installed, configured with correct security policies, and ready to store GMP data.",
+        "prerequisites": [
+          "Validated operating system",
+          "Installation media checksum verified"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Install data lake services using vendor-approved scripts.",
+            "expected_result": "Installer finishes with zero errors and generates completion report.",
+            "data_to_capture": [
+              "Installer report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Configure storage buckets with GMP retention policies.",
+            "expected_result": "Buckets created with immutable retention period per SOP.",
+            "data_to_capture": [
+              "Bucket policy JSON"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Execute validation query to confirm write/read operations.",
+            "expected_result": "Test file written and read back with byte-for-byte accuracy.",
+            "data_to_capture": [
+              "Checksum values"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Installation completes successfully and data lake passes functional write/read test."
+        ],
+        "regulatory_basis": [
+          "GAMP-5 Category 5",
+          "21 CFR Part 11 §11.10(b)"
+        ],
+        "risk_level": "low",
+        "data_integrity_requirements": [
+          "ALCOA+ - Legible installation logs",
+          "ALCOA+ - Contemporaneous execution records"
+        ],
+        "urs_requirements": [
+          "URS-MES-018"
+        ],
+        "related_tests": [
+          "OQ-026"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "System Administrator",
+          "CSV Lead"
+        ]
+      },
+      {
+        "test_id": "OQ-003",
+        "test_name": "Verify Custom Encryption Service Installation and Key Rotation",
+        "test_category": "installation",
+        "gamp_category": 5,
+        "objective": "Validate that proprietary encryption modules are installed and that automated key rotation functions per design specifications.",
+        "prerequisites": [
+          "Encryption license keys available",
+          "Security policies approved"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Install encryption service and enable FIPS-level cryptographic modules.",
+            "expected_result": "Service installs without critical errors and registers in OS services list.",
+            "data_to_capture": [
+              "Installation log",
+              "Service registry entry"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Generate initial encryption keys and store in HSM.",
+            "expected_result": "Key generation succeeds and keys are stored securely with correct metadata.",
+            "data_to_capture": [
+              "Key IDs",
+              "HSM log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Trigger scheduled key rotation job manually.",
+            "expected_result": "Old keys archived, new keys active, and system continues to encrypt/decrypt data transparently.",
+            "data_to_capture": [
+              "Rotation job log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Encryption service operational and key rotation executes without data loss."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.30",
+          "GAMP-5"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete cryptographic logs",
+          "ALCOA+ - Available for review"
+        ],
+        "urs_requirements": [
+          "URS-MES-019"
+        ],
+        "related_tests": [
+          "OQ-020"
+        ],
+        "estimated_duration_minutes": 40,
+        "required_expertise": [
+          "Security Engineer",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-004",
+        "test_name": "Validate Custom Disaster Recovery Replication and Failover",
+        "test_category": "installation",
+        "gamp_category": 5,
+        "objective": "Demonstrate that the disaster recovery subsystem replicates data with zero loss and supports seamless failover between primary and secondary sites.",
+        "prerequisites": [
+          "Primary and secondary data centers operational",
+          "Network bandwidth verified"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate baseline full replication from primary to secondary.",
+            "expected_result": "Replication completes and checksums match between sites.",
+            "data_to_capture": [
+              "Replication log",
+              "Checksum report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Simulate primary site failure by shutting down core services.",
+            "expected_result": "Secondary site becomes primary within RTO and services remain available.",
+            "data_to_capture": [
+              "Failover timestamps"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Restore original primary site and perform failback.",
+            "expected_result": "Data re-synchronizes with zero loss and system returns to normal operation.",
+            "data_to_capture": [
+              "Failback log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Replication integrity maintained and failover/failback executed within SLA."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.10(c)",
+          "GAMP-5"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete, consistent replication logs"
+        ],
+        "urs_requirements": [
+          "URS-MES-020"
+        ],
+        "related_tests": [
+          "OQ-027"
+        ],
+        "estimated_duration_minutes": 50,
+        "required_expertise": [
+          "Disaster Recovery Specialist",
+          "CSV Lead"
+        ]
+      },
+      {
+        "test_id": "OQ-005",
+        "test_name": "Functional Test of Proprietary Batch Scheduling Algorithm Accuracy",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify that the custom batch scheduling engine produces optimized schedules matching expected results for multi-product scenarios.",
+        "prerequisites": [
+          "Validated master data for products",
+          "Algorithm reference output available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Load test dataset of 20 concurrent product orders into the scheduling engine.",
+            "expected_result": "Engine accepts dataset without errors.",
+            "data_to_capture": [
+              "Input dataset hash"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Execute scheduling run and export generated schedule.",
+            "expected_result": "Schedule generated within 60 seconds.",
+            "data_to_capture": [
+              "Schedule ID",
+              "Execution time"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Compare generated schedule to reference optimized schedule.",
+            "expected_result": "Deviation ≤1% on total production time and resource utilization.",
+            "data_to_capture": [
+              "Deviation percentage"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Scheduling deviation ≤1% from reference for all KPIs."
+        ],
+        "regulatory_basis": [
+          "GAMP-5 Category 5",
+          "21 CFR Part 11 §11.10(e)"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Accurate algorithm output",
+          "ALCOA+ - Traceable to dataset"
+        ],
+        "urs_requirements": [
+          "URS-MES-001"
+        ],
+        "related_tests": [
+          "OQ-017"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Process Engineer",
+          "Data Scientist"
+        ]
+      },
+      {
+        "test_id": "OQ-006",
+        "test_name": "Real-Time Process Monitoring Data Acquisition Functional Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Confirm that the system captures sub-second process data reliably and displays accurate real-time trends.",
+        "prerequisites": [
+          "Simulated equipment signals available",
+          "Time-synchronized system clocks"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Inject simulated high-frequency sensor data at 1000 Hz.",
+            "expected_result": "System ingests data without loss or backlog.",
+            "data_to_capture": [
+              "Ingestion rate",
+              "Dropped packet count"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Display real-time trend on operator dashboard.",
+            "expected_result": "Graph updates within 200 ms latency.",
+            "data_to_capture": [
+              "Dashboard latency"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Export captured dataset after 10 minutes.",
+            "expected_result": "Exported file size and checksum match calculated expectation.",
+            "data_to_capture": [
+              "Export file checksum"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "No data loss, latency ≤200 ms, checksum integrity confirmed."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11 §11.50(a)"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete continuous data",
+          "ALCOA+ - Accurate timestamps"
+        ],
+        "urs_requirements": [
+          "URS-MES-002"
+        ],
+        "related_tests": [
+          "OQ-016"
+        ],
+        "estimated_duration_minutes": 50,
+        "required_expertise": [
+          "Automation Engineer",
+          "CSV Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-007",
+        "test_name": "Machine Learning Deviation Detection Correctness and Robustness Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Evaluate that the ML model accurately detects process deviations with predefined sensitivity and specificity thresholds.",
+        "prerequisites": [
+          "Validated training model version",
+          "Labeled test dataset with known deviations"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Run ML model on 10,000 historical data points containing 150 known deviations.",
+            "expected_result": "Model processes dataset without error.",
+            "data_to_capture": [
+              "True positive count",
+              "False positive count"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Calculate sensitivity and specificity metrics.",
+            "expected_result": "Sensitivity ≥95% and specificity ≥93%.",
+            "data_to_capture": [
+              "Sensitivity value",
+              "Specificity value"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Inject 50 novel edge-case deviations and re-run analysis.",
+            "expected_result": "Model flags ≥48 of 50 edge cases.",
+            "data_to_capture": [
+              "Edge case detection rate"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Sensitivity and specificity thresholds met for both historical and edge-case datasets."
+        ],
+        "regulatory_basis": [
+          "GAMP-5 Annex on AI",
+          "21 CFR Part 11 §11.10(a)"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "ALCOA+ - Traceable training data",
+          "ALCOA+ - Integrity of inference results"
+        ],
+        "urs_requirements": [
+          "URS-MES-003"
+        ],
+        "related_tests": [
+          "OQ-006",
+          "OQ-008"
+        ],
+        "estimated_duration_minutes": 70,
+        "required_expertise": [
+          "Data Scientist",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-008",
+        "test_name": "Workflow Engine Material Genealogy Tracking Functional Verification",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify that the custom workflow engine tracks material genealogy across complex parent-child relationships without loss of traceability.",
+        "prerequisites": [
+          "Genealogy test batch master data created"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Create parent batch and five child batches through workflow engine.",
+            "expected_result": "All batches created with unique, sequential genealogy IDs.",
+            "data_to_capture": [
+              "Batch IDs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Perform split and merge operations per SOP.",
+            "expected_result": "System updates genealogy tree correctly in real time.",
+            "data_to_capture": [
+              "Updated genealogy tree"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Generate genealogy report and verify lineage accuracy.",
+            "expected_result": "Report shows complete lineage without gaps.",
+            "data_to_capture": [
+              "Report checksum"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Genealogy accuracy 100% for all operations."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11 §11.10(k)"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Attributable lineage IDs",
+          "ALCOA+ - Complete history"
+        ],
+        "urs_requirements": [
+          "URS-MES-004"
+        ],
+        "related_tests": [
+          "OQ-024"
+        ],
+        "estimated_duration_minutes": 55,
+        "required_expertise": [
+          "MES Specialist",
+          "QA Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-009",
+        "test_name": "Dynamic Electronic Batch Record Form Generation Functional Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Confirm that the eBR module dynamically generates forms based on product recipe and regulatory rules.",
+        "prerequisites": [
+          "eBR template library loaded",
+          "Recipe definitions approved"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Select product recipe A and initiate batch record creation.",
+            "expected_result": "System prompts correct dynamic form fields.",
+            "data_to_capture": [
+              "Generated form ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Validate that mandatory regulatory fields are locked for editing.",
+            "expected_result": "Locked fields are non-editable and pre-populated.",
+            "data_to_capture": [
+              "Field attributes"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Submit form and check audit trail entry.",
+            "expected_result": "Audit trail captures user, timestamp, and hash of form.",
+            "data_to_capture": [
+              "Audit trail record"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Forms generated correctly, mandatory fields enforced, audit trail created."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.100",
+          "GAMP-5"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Legible form layout",
+          "ALCOA+ - Original maintained in system"
+        ],
+        "urs_requirements": [
+          "URS-MES-005"
+        ],
+        "related_tests": [
+          "OQ-010"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "QA Specialist",
+          "MES Developer"
+        ]
+      },
+      {
+        "test_id": "OQ-010",
+        "test_name": "Audit Trail Event Logging and Retrieval Functional Verification",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Validate the proprietary audit trail implementation captures all required elements and supports reliable retrieval and review.",
+        "prerequisites": [
+          "Audit trail module enabled",
+          "User roles configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform create, modify, and delete actions on a test record.",
+            "expected_result": "Audit trail captures user ID, timestamp, action, and before/after values.",
+            "data_to_capture": [
+              "Audit trail entries"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Export audit trail for selected period.",
+            "expected_result": "Export completes and hash matches system stored hash.",
+            "data_to_capture": [
+              "Export file hash"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Attempt to tamper with exported audit file and re-import.",
+            "expected_result": "System rejects tampered file and logs security event.",
+            "data_to_capture": [
+              "Rejection message"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All actions recorded, export integrity verified, tampering detected."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.10(e)",
+          "GAMP-5"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Immutable audit trail",
+          "ALCOA+ - Complete chronological order"
+        ],
+        "urs_requirements": [
+          "URS-MES-006"
+        ],
+        "related_tests": [
+          "OQ-024"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "IT Compliance",
+          "Security Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-011",
+        "test_name": "Electronic Signature with Biometric Authentication Functional Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify that electronic signatures require biometric authentication and meet FDA requirements for signing critical GMP records.",
+        "prerequisites": [
+          "Biometric devices calibrated",
+          "Signature roles assigned"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate signature request on critical batch step.",
+            "expected_result": "System prompts biometric scan for the logged-in user.",
+            "data_to_capture": [
+              "Prompt screenshot"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Provide mismatched biometric data.",
+            "expected_result": "System denies signature and logs failed attempt.",
+            "data_to_capture": [
+              "Failure log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Provide correct biometric data and complete signature.",
+            "expected_result": "Signature applied, audit trail records biometric hash and user details.",
+            "data_to_capture": [
+              "Signature ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Incorrect biometrics rejected; correct biometrics accepted with full audit trail."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.200",
+          "GAMP-5"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "ALCOA+ - Attributable signature",
+          "ALCOA+ - Non-repudiation"
+        ],
+        "urs_requirements": [
+          "URS-MES-007"
+        ],
+        "related_tests": [
+          "OQ-021"
+        ],
+        "estimated_duration_minutes": 40,
+        "required_expertise": [
+          "QA",
+          "Security Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-012",
+        "test_name": "Real-Time Data Integrity Monitoring with Blockchain Functional Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Ensure blockchain integration records immutable hashes of GMP data streams in real time and triggers alerts for integrity breaches.",
+        "prerequisites": [
+          "Blockchain node cluster running",
+          "Alerting service configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Generate GMP data and observe blockchain transaction creation.",
+            "expected_result": "Hash transactions appear within 5 seconds of data creation.",
+            "data_to_capture": [
+              "Transaction IDs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Attempt unauthorized alteration of stored data.",
+            "expected_result": "Alteration detected and integrity alert generated within 30 seconds.",
+            "data_to_capture": [
+              "Alert ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Verify blockchain ledger remains untampered.",
+            "expected_result": "Ledger integrity check passes with zero discrepancies.",
+            "data_to_capture": [
+              "Ledger hash"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Blockchain entries created timely, breach alert triggered, ledger remains immutable."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.300",
+          "GAMP-5"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Immutable record",
+          "ALCOA+ - Auditability"
+        ],
+        "urs_requirements": [
+          "URS-MES-008"
+        ],
+        "related_tests": [
+          "OQ-023",
+          "OQ-024"
+        ],
+        "estimated_duration_minutes": 50,
+        "required_expertise": [
+          "Blockchain Specialist",
+          "CSV Lead"
+        ]
+      },
+      {
+        "test_id": "OQ-013",
+        "test_name": "Quality Event Management Automated CAPA Generation Functional Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Validate that the quality event module automatically generates CAPA records when predefined thresholds are exceeded.",
+        "prerequisites": [
+          "Quality event thresholds configured",
+          "Email server configured for notifications"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Create a simulated deviation that exceeds critical limit.",
+            "expected_result": "System generates quality event record automatically.",
+            "data_to_capture": [
+              "Event ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Verify CAPA record linked to the event.",
+            "expected_result": "CAPA created with correct root cause category pre-selected.",
+            "data_to_capture": [
+              "CAPA ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Check notification email delivery to QA lead.",
+            "expected_result": "Email received with event and CAPA details.",
+            "data_to_capture": [
+              "Email header"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Event, CAPA, and notification generated as per configuration."
+        ],
+        "regulatory_basis": [
+          "FDA 21 CFR 820.100",
+          "GAMP-5"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete CAPA linkage",
+          "ALCOA+ - Attributable notifications"
+        ],
+        "urs_requirements": [
+          "URS-MES-010"
+        ],
+        "related_tests": [
+          "OQ-025"
+        ],
+        "estimated_duration_minutes": 40,
+        "required_expertise": [
+          "Quality Engineer",
+          "CSV Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-014",
+        "test_name": "Statistical Process Control Trend Analysis Algorithm Verification",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify that the SPC module calculates control limits and trends accurately for process parameters.",
+        "prerequisites": [
+          "Historical process data loaded"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Run SPC analysis on 1000 data points for parameter X.",
+            "expected_result": "System calculates X-bar and R control limits without error.",
+            "data_to_capture": [
+              "Control limit values"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Manually calculate limits using validated spreadsheet.",
+            "expected_result": "Difference between system and manual calculation ≤0.5%.",
+            "data_to_capture": [
+              "Manual calculation sheet"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Trigger rule violations to ensure alerts fire.",
+            "expected_result": "Alerts generated for Western Electric rule breaches.",
+            "data_to_capture": [
+              "Alert log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Calculated limits match manual reference within tolerance and alerts fire appropriately."
+        ],
+        "regulatory_basis": [
+          "ICH Q9",
+          "GAMP-5"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Accurate calculations",
+          "ALCOA+ - Original data preserved"
+        ],
+        "urs_requirements": [
+          "URS-MES-011"
+        ],
+        "related_tests": [
+          "OQ-015"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "Statistician",
+          "MES Developer"
+        ]
+      },
+      {
+        "test_id": "OQ-015",
+        "test_name": "Predictive Quality Analytics Machine Learning Model Validation",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Demonstrate that predictive analytics accurately forecasts out-of-spec trends at least 2 hours before occurrence.",
+        "prerequisites": [
+          "Model retrained with latest data",
+          "Monitoring dashboard configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Feed live process data with artificially injected drift.",
+            "expected_result": "Model flags impending OOS within 10 minutes of drift start.",
+            "data_to_capture": [
+              "Alert timestamp"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Confirm alert appears on dashboard and email.",
+            "expected_result": "Both channels receive alert with same identifier.",
+            "data_to_capture": [
+              "Dashboard alert ID",
+              "Email alert ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Verify accuracy of prediction against actual OOS occurrence time.",
+            "expected_result": "Prediction within ±15 minutes of actual.",
+            "data_to_capture": [
+              "Prediction vs actual delta"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Prediction accuracy within limits and alerts issued through all channels."
+        ],
+        "regulatory_basis": [
+          "GAMP-5 AI Annex",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete prediction logs",
+          "ALCOA+ - Traceable to input data"
+        ],
+        "urs_requirements": [
+          "URS-MES-012"
+        ],
+        "related_tests": [
+          "OQ-014"
+        ],
+        "estimated_duration_minutes": 50,
+        "required_expertise": [
+          "Data Scientist",
+          "Process Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-016",
+        "test_name": "Performance Test for Sub-Second Data Acquisition Under Load",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Assess the system's capacity to handle 10,000 sensor inputs at 1000 Hz while maintaining sub-second latency.",
+        "prerequisites": [
+          "Load testing tools configured",
+          "Baseline performance metrics recorded"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Generate concurrent sensor data streams totaling 10,000 signals.",
+            "expected_result": "System CPU and memory utilization remain below 80%.",
+            "data_to_capture": [
+              "CPU utilization",
+              "Memory utilization"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Measure ingestion latency for randomly sampled signals.",
+            "expected_result": "Latency ≤800 ms for 99th percentile.",
+            "data_to_capture": [
+              "Latency distribution"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Record any data loss or backlog events.",
+            "expected_result": "No data loss or backlog recorded.",
+            "data_to_capture": [
+              "Backlog metrics"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All KPIs within specified thresholds."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "FDA Guidance on Computerized Systems"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete data capture",
+          "ALCOA+ - Accurate timestamps"
+        ],
+        "urs_requirements": [
+          "URS-MES-002"
+        ],
+        "related_tests": [
+          "OQ-006"
+        ],
+        "estimated_duration_minutes": 40,
+        "required_expertise": [
+          "Performance Engineer",
+          "CSV Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-017",
+        "test_name": "Performance Test of Batch Scheduling Engine at Peak Demand",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Ensure scheduling engine meets performance SLA of 60 seconds under peak demand of 100 simultaneous product orders.",
+        "prerequisites": [
+          "Stress test dataset prepared"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Inject 100 concurrent product orders via API.",
+            "expected_result": "Orders accepted without queue overflow.",
+            "data_to_capture": [
+              "Queue size"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Record total time to generate complete schedule.",
+            "expected_result": "Total time ≤60 seconds.",
+            "data_to_capture": [
+              "Execution time"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Verify CPU and memory within 85% of capacity.",
+            "expected_result": "Resource utilization within limits.",
+            "data_to_capture": [
+              "CPU",
+              "Memory"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Schedule completed within SLA with resources within limits."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Performance logs retained"
+        ],
+        "urs_requirements": [
+          "URS-MES-001"
+        ],
+        "related_tests": [
+          "OQ-005"
+        ],
+        "estimated_duration_minutes": 50,
+        "required_expertise": [
+          "Performance Engineer",
+          "MES Developer"
+        ]
+      },
+      {
+        "test_id": "OQ-018",
+        "test_name": "Performance Test of LIMS API Throughput and Stability",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Validate that the custom API to multiple LIMS systems sustains 500 requests per second without errors.",
+        "prerequisites": [
+          "Test LIMS endpoints reachable"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Execute load test at 500 requests/second for 30 minutes.",
+            "expected_result": "Error rate <0.1%.",
+            "data_to_capture": [
+              "Error count"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Monitor response time distribution.",
+            "expected_result": "95th percentile response time ≤300 ms.",
+            "data_to_capture": [
+              "Response times"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Validate data integrity of 100 sampled responses.",
+            "expected_result": "Sampled responses match source LIMS data exactly.",
+            "data_to_capture": [
+              "Sample comparison report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Throughput, error rate, and response time within limits; data integrity preserved."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Accurate API logs",
+          "ALCOA+ - Complete transaction records"
+        ],
+        "urs_requirements": [
+          "URS-MES-009"
+        ],
+        "related_tests": [
+          "OQ-028"
+        ],
+        "estimated_duration_minutes": 35,
+        "required_expertise": [
+          "Integration Engineer",
+          "Performance Tester"
+        ]
+      },
+      {
+        "test_id": "OQ-019",
+        "test_name": "Mobile Application Latency and Offline Functionality Performance Test",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Verify mobile applications maintain ≤2-second latency and proper offline data caching on the shop floor.",
+        "prerequisites": [
+          "Validated mobile devices",
+          "Wi-Fi signal mapping complete"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Measure average latency for 100 data capture actions online.",
+            "expected_result": "Average latency ≤2 seconds.",
+            "data_to_capture": [
+              "Latency log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Disable network and perform 50 actions offline.",
+            "expected_result": "Offline actions cached without error.",
+            "data_to_capture": [
+              "Offline queue size"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Reconnect network and synchronize cached actions.",
+            "expected_result": "All cached data synchronized and timestamps preserved.",
+            "data_to_capture": [
+              "Sync report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Latency, caching, and sync requirements met."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "low",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete offline cache",
+          "ALCOA+ - Accurate timestamps"
+        ],
+        "urs_requirements": [
+          "URS-MES-015"
+        ],
+        "related_tests": [
+          "OQ-029"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Mobile Developer",
+          "CSV Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-020",
+        "test_name": "Security Penetration Test of Proprietary Encryption Algorithms",
+        "test_category": "security",
+        "gamp_category": 5,
+        "objective": "Assess the resilience of the custom encryption implementation against common cryptographic attacks.",
+        "prerequisites": [
+          "Pen-testing tools validated",
+          "Test environment isolated"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform brute-force attack on encrypted dataset.",
+            "expected_result": "System detects attack and locks access after threshold.",
+            "data_to_capture": [
+              "Lockout event log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Attempt known-plaintext attack using captured traffic.",
+            "expected_result": "Decryption unsuccessful; no plaintext revealed.",
+            "data_to_capture": [
+              "Attack report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Scan for weak cipher suites.",
+            "expected_result": "No weak ciphers enabled.",
+            "data_to_capture": [
+              "Cipher suite list"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All attacks unsuccessful and detected where applicable."
+        ],
+        "regulatory_basis": [
+          "ISO/IEC 27001",
+          "21 CFR Part 11 §11.300"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Secure encryption keys",
+          "ALCOA+ - Audit of security events"
+        ],
+        "urs_requirements": [
+          "URS-MES-019"
+        ],
+        "related_tests": [
+          "OQ-003"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Security Tester",
+          "Cryptography Specialist"
+        ]
+      },
+      {
+        "test_id": "OQ-021",
+        "test_name": "Biometric Authentication Spoof Resistance Security Test",
+        "test_category": "security",
+        "gamp_category": 5,
+        "objective": "Ensure biometric authentication framework resists spoofing attempts using synthetic fingerprints and photographs.",
+        "prerequisites": [
+          "Biometric test kit ready"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Present synthetic fingerprint to scanner.",
+            "expected_result": "System rejects authentication and logs attempt.",
+            "data_to_capture": [
+              "Rejection log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Present high-resolution photograph for facial recognition.",
+            "expected_result": "System rejects and records security event.",
+            "data_to_capture": [
+              "Security event ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Attempt genuine biometric authentication.",
+            "expected_result": "System grants access within 3 seconds.",
+            "data_to_capture": [
+              "Successful auth log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All spoof attempts rejected; genuine authentication succeeds."
+        ],
+        "regulatory_basis": [
+          "NIST SP 800-63B",
+          "21 CFR Part 11 §11.200"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Secure biometric hashes",
+          "ALCOA+ - Attributable authentication records"
+        ],
+        "urs_requirements": [
+          "URS-MES-007"
+        ],
+        "related_tests": [
+          "OQ-011"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "Security Tester",
+          "QA"
+        ]
+      },
+      {
+        "test_id": "OQ-022",
+        "test_name": "Role-Based Access Control Enforcement Security Test",
+        "test_category": "security",
+        "gamp_category": 5,
+        "objective": "Verify that RBAC prevents unauthorized access to restricted MES functions and data.",
+        "prerequisites": [
+          "User roles configured per SOP"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Login as Operator and attempt to access admin console.",
+            "expected_result": "Access denied and event logged.",
+            "data_to_capture": [
+              "Access denied log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Login as QA and attempt to modify system configuration.",
+            "expected_result": "Modification blocked and logged.",
+            "data_to_capture": [
+              "Block log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Login as Admin and perform configuration change.",
+            "expected_result": "Change allowed and audited.",
+            "data_to_capture": [
+              "Audit record"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Only authorized roles can perform restricted actions; all attempts logged."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.10(d)",
+          "GAMP-5"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Attributable access logs",
+          "ALCOA+ - Complete access history"
+        ],
+        "urs_requirements": [
+          "URS-MES-006"
+        ],
+        "related_tests": [
+          "OQ-020"
+        ],
+        "estimated_duration_minutes": 40,
+        "required_expertise": [
+          "Security Tester",
+          "System Administrator"
+        ]
+      },
+      {
+        "test_id": "OQ-023",
+        "test_name": "Blockchain Tamper Resistance Security Validation",
+        "test_category": "security",
+        "gamp_category": 5,
+        "objective": "Evaluate blockchain ledger resistance to tampering by attempting unauthorized block modifications.",
+        "prerequisites": [
+          "Blockchain test node access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Attempt to alter historical block data directly in the database.",
+            "expected_result": "Integrity check fails and node quarantines altered block.",
+            "data_to_capture": [
+              "Integrity check log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Inject forged transaction into pending block.",
+            "expected_result": "Consensus mechanism rejects forged transaction.",
+            "data_to_capture": [
+              "Consensus log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Verify overall ledger integrity post-attack.",
+            "expected_result": "No unauthorized changes present.",
+            "data_to_capture": [
+              "Post-attack hash"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All tamper attempts detected and prevented; ledger remains intact."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.300",
+          "GAMP-5"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ - Immutable ledger",
+          "ALCOA+ - Complete tamper evidence"
+        ],
+        "urs_requirements": [
+          "URS-MES-008",
+          "URS-MES-022"
+        ],
+        "related_tests": [
+          "OQ-012"
+        ],
+        "estimated_duration_minutes": 50,
+        "required_expertise": [
+          "Blockchain Specialist",
+          "Security Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-024",
+        "test_name": "ALCOA+ Audit Trail Integrity and Review Data Integrity Test",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Verify that audit trails satisfy all ALCOA+ principles and can be reviewed, filtered, and reported accurately.",
+        "prerequisites": [
+          "Audit trail populated with at least 5000 events"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Run automated ALCOA+ compliance checker on audit trail.",
+            "expected_result": "No violations detected.",
+            "data_to_capture": [
+              "Compliance report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Filter audit trail by user and date range.",
+            "expected_result": "Filter returns correct subset of records.",
+            "data_to_capture": [
+              "Filtered record count"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Generate PDF audit report and verify digital signature.",
+            "expected_result": "Report signature valid; contents match database records.",
+            "data_to_capture": [
+              "Report hash"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All ALCOA+ checks pass; filtered data accurate; report integrity verified."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.10(e)",
+          "GAMP-5"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete, Consistent, Enduring"
+        ],
+        "urs_requirements": [
+          "URS-MES-006",
+          "URS-MES-023"
+        ],
+        "related_tests": [
+          "OQ-010",
+          "OQ-012"
+        ],
+        "estimated_duration_minutes": 35,
+        "required_expertise": [
+          "Data Integrity Specialist",
+          "QA"
+        ]
+      },
+      {
+        "test_id": "OQ-025",
+        "test_name": "Real-Time Data Integrity Alert Efficacy Validation",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Ensure that automated compliance monitoring generates timely alerts when data integrity rules are breached.",
+        "prerequisites": [
+          "Integrity rules configured",
+          "Alert channels active"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate timestamp manipulation in process data.",
+            "expected_result": "Integrity rule triggers alert within 1 minute.",
+            "data_to_capture": [
+              "Alert timestamp"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Acknowledge alert and document corrective action.",
+            "expected_result": "Alert status updates to acknowledged with user attribution.",
+            "data_to_capture": [
+              "Acknowledgement log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Review audit trail for alert lifecycle.",
+            "expected_result": "Lifecycle events complete and unaltered.",
+            "data_to_capture": [
+              "Lifecycle report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Alert generated within SLA, acknowledged properly, lifecycle intact."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "EU Annex 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Timely alerts",
+          "ALCOA+ - Contemporaneous acknowledgement"
+        ],
+        "urs_requirements": [
+          "URS-MES-021",
+          "URS-MES-024"
+        ],
+        "related_tests": [
+          "OQ-013"
+        ],
+        "estimated_duration_minutes": 40,
+        "required_expertise": [
+          "Data Integrity Specialist",
+          "Automation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-026",
+        "test_name": "Data Lake Write and Read Fidelity Data Integrity Test",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Validate that data written to the data lake is retrieved without alteration across storage tiers.",
+        "prerequisites": [
+          "Data lake operational",
+          "Checksum tool validated"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Write 10 GB test file to data lake hot tier.",
+            "expected_result": "Write completes and checksum recorded.",
+            "data_to_capture": [
+              "Write checksum"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Migrate file to cold tier using lifecycle policy.",
+            "expected_result": "Migration completes without error.",
+            "data_to_capture": [
+              "Migration log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Read file from cold tier and recalculate checksum.",
+            "expected_result": "Checksum matches original.",
+            "data_to_capture": [
+              "Read checksum"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Checksums match; no data alteration detected."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11 §11.10(c)"
+        ],
+        "risk_level": "low",
+        "data_integrity_requirements": [
+          "ALCOA+ - Accurate data storage",
+          "ALCOA+ - Enduring across tiers"
+        ],
+        "urs_requirements": [
+          "URS-MES-018"
+        ],
+        "related_tests": [
+          "OQ-002"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "Storage Engineer",
+          "CSV Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-027",
+        "test_name": "Zero Data Loss Verification in Disaster Recovery Scenario",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Confirm disaster recovery system achieves zero data loss objective during unplanned outage.",
+        "prerequisites": [
+          "Replication active",
+          "Failover procedures approved"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Insert unique record set immediately before simulated outage.",
+            "expected_result": "Records replicated to secondary site.",
+            "data_to_capture": [
+              "Record IDs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Trigger unplanned outage by disconnecting primary storage.",
+            "expected_result": "Failover occurs automatically.",
+            "data_to_capture": [
+              "Failover time"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Verify existence and integrity of record set on secondary site.",
+            "expected_result": "All records present with identical checksums.",
+            "data_to_capture": [
+              "Checksum comparison"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "No data loss; records identical post-failover."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 §11.10(c)",
+          "GAMP-5"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete replication",
+          "ALCOA+ - Enduring during outage"
+        ],
+        "urs_requirements": [
+          "URS-MES-020"
+        ],
+        "related_tests": [
+          "OQ-004"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "DR Specialist",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-028",
+        "test_name": "End-to-End LIMS Integration Data Flow Test",
+        "test_category": "integration",
+        "gamp_category": 5,
+        "objective": "Ensure that test results created in LIMS flow through API into MES without modification and trigger appropriate workflow steps.",
+        "prerequisites": [
+          "LIMS test environment ready",
+          "API credentials configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Create test result in LIMS with unique identifier.",
+            "expected_result": "Result accepted by LIMS.",
+            "data_to_capture": [
+              "LIMS result ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Monitor MES for inbound API transaction.",
+            "expected_result": "Result appears in MES within 60 seconds.",
+            "data_to_capture": [
+              "MES transaction ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Compare data fields between LIMS and MES records.",
+            "expected_result": "All fields match exactly.",
+            "data_to_capture": [
+              "Comparison report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Data flows within SLA and remains unaltered."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Accurate data transfer",
+          "ALCOA+ - Complete transactional record"
+        ],
+        "urs_requirements": [
+          "URS-MES-009"
+        ],
+        "related_tests": [
+          "OQ-018"
+        ],
+        "estimated_duration_minutes": 35,
+        "required_expertise": [
+          "Integration Engineer",
+          "QA"
+        ]
+      },
+      {
+        "test_id": "OQ-029",
+        "test_name": "IoT Equipment Connectivity Integration Test",
+        "test_category": "integration",
+        "gamp_category": 5,
+        "objective": "Validate that IoT framework connects to equipment PLCs and transmits data securely into MES.",
+        "prerequisites": [
+          "PLC simulators configured",
+          "IoT gateway online"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Connect IoT gateway to PLC simulator and publish tag data.",
+            "expected_result": "Gateway establishes secure MQTT connection.",
+            "data_to_capture": [
+              "Connection log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Verify data received in MES real-time dashboard.",
+            "expected_result": "Dashboard updates with correct tag values.",
+            "data_to_capture": [
+              "Tag values"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Disconnect network and observe reconnection behavior.",
+            "expected_result": "Gateway buffers data and resends upon reconnection without loss.",
+            "data_to_capture": [
+              "Buffer size",
+              "Resent count"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Secure connectivity established, data received accurately, and reconnection manages buffered data."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "IEC 62443"
+        ],
+        "risk_level": "low",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete buffered data",
+          "ALCOA+ - Accurate timestamps"
+        ],
+        "urs_requirements": [
+          "URS-MES-014"
+        ],
+        "related_tests": [
+          "OQ-019"
+        ],
+        "estimated_duration_minutes": 40,
+        "required_expertise": [
+          "Automation Engineer",
+          "IT Security"
+        ]
+      },
+      {
+        "test_id": "OQ-030",
+        "test_name": "Real-Time Supply Chain Predictive Analytics Integration Test",
+        "test_category": "integration",
+        "gamp_category": 5,
+        "objective": "Validate integration of supply chain data feeds and predictive analytics dashboard for material availability forecasting.",
+        "prerequisites": [
+          "External supply chain feed active",
+          "Predictive dashboard deployed"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Ingest live supply chain feed containing 500 material SKUs.",
+            "expected_result": "System processes feed without error.",
+            "data_to_capture": [
+              "Feed processing log"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Generate forecast report for next 30 days.",
+            "expected_result": "Report generated within 2 minutes with no missing SKUs.",
+            "data_to_capture": [
+              "Report ID"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 3,
+            "action": "Cross-verify forecast accuracy against benchmark dataset.",
+            "expected_result": "Forecast accuracy ≥90%.",
+            "data_to_capture": [
+              "Accuracy percentage"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Feed processed, report generated timely, accuracy threshold met."
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "ALCOA+ - Complete input feed logs",
+          "ALCOA+ - Accurate forecast data"
+        ],
+        "urs_requirements": [
+          "URS-MES-016"
+        ],
+        "related_tests": [
+          "OQ-028"
+        ],
+        "estimated_duration_minutes": 50,
+        "required_expertise": [
+          "Supply Chain Analyst",
+          "Data Scientist"
+        ]
+      }
+    ],
+    "test_categories": {
+      "installation": 4,
+      "functional": 11,
+      "performance": 4,
+      "security": 4,
+      "data_integrity": 4,
+      "integration": 3
+    },
+    "requirements_coverage": {
+      "URS-MES-001": [
+        "OQ-005",
+        "OQ-017"
+      ],
+      "URS-MES-002": [
+        "OQ-006",
+        "OQ-016"
+      ],
+      "URS-MES-003": [
+        "OQ-007"
+      ],
+      "URS-MES-004": [
+        "OQ-008"
+      ],
+      "URS-MES-005": [
+        "OQ-009"
+      ],
+      "URS-MES-006": [
+        "OQ-010",
+        "OQ-024",
+        "OQ-022"
+      ],
+      "URS-MES-007": [
+        "OQ-011",
+        "OQ-021"
+      ],
+      "URS-MES-008": [
+        "OQ-012",
+        "OQ-023"
+      ],
+      "URS-MES-009": [
+        "OQ-018",
+        "OQ-028"
+      ],
+      "URS-MES-010": [
+        "OQ-013"
+      ],
+      "URS-MES-011": [
+        "OQ-014"
+      ],
+      "URS-MES-012": [
+        "OQ-015"
+      ],
+      "URS-MES-013": [
+        "OQ-019"
+      ],
+      "URS-MES-014": [
+        "OQ-029"
+      ],
+      "URS-MES-015": [
+        "OQ-019"
+      ],
+      "URS-MES-016": [
+        "OQ-030"
+      ],
+      "URS-MES-017": [
+        "OQ-001"
+      ],
+      "URS-MES-018": [
+        "OQ-002",
+        "OQ-026"
+      ],
+      "URS-MES-019": [
+        "OQ-003",
+        "OQ-020"
+      ],
+      "URS-MES-020": [
+        "OQ-004",
+        "OQ-027"
+      ],
+      "URS-MES-021": [
+        "OQ-025"
+      ],
+      "URS-MES-022": [
+        "OQ-023"
+      ],
+      "URS-MES-023": [
+        "OQ-024"
+      ],
+      "URS-MES-024": [
+        "OQ-025"
+      ]
+    },
+    "risk_coverage": {
+      "low": 5,
+      "medium": 14,
+      "high": 9,
+      "critical": 2
+    },
+    "compliance_coverage": {
+      "21_cfr_part_11": true,
+      "gamp5": true,
+      "alcoa_plus": true
+    },
+    "total_test_count": 30,
+    "estimated_execution_time": 1415,
+    "coverage_percentage": 0.0,
+    "generation_timestamp": "2025-08-06T10:00:00+00:00",
+    "generation_method": "LLMTextCompletionProgram_o3-2025-04-16",
+    "validation_approach": "",
+    "created_by": "oq_generation_agent_v2",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  },
+  "audit_trail": {
+    "created_by": "OQTestGenerationWorkflow",
+    "creation_timestamp": "2025-08-05T08:44:21.550668",
+    "validation_status": "generated",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  }
+}

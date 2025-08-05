@@ -1,0 +1,14 @@
+To create a working shortcut for Chrome Debug Mode:
+
+1. Right-click on desktop → New → Shortcut
+2. In the location field, enter:
+   C:\Program Files\Google\Chrome\Application\chrome.exe
+3. Click Next, name it "Chrome Debug Mode", click Finish
+4. Right-click the new shortcut → Properties
+5. In the Target field, ADD to the end (with a space before):
+   --remote-debugging-port=9222 --new-window http://localhost:6006/projects/UHJvamVjdDox/traces
+6. So the full Target should be:
+   "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --new-window http://localhost:6006/projects/UHJvamVjdDox/traces
+7. Click OK
+
+The shortcut will now work properly!
