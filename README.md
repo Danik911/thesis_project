@@ -34,7 +34,7 @@ graph TD
 ### Key Components
 
 - **GAMP-5 Categorizer Agent**: Analyzes the URS to determine the GAMP 5 software category (e.g., Category 3, 4, or 5). This critical first step defines the scope and rigor of the entire validation process.
-- **Planner Agent**: Orchestrates workflow using frontier model (GPT-4), informed by the software category
+- **Planner Agent**: Orchestrates workflow using frontier model (GPT-o3), informed by the software category
 - **Context Agent**: Provides relevant documentation via RAG/CAG
 - **Specialist Agents**: Domain-specific expertise (fine-tuned models)
 - **Research Agent**: Fetches latest regulatory updates

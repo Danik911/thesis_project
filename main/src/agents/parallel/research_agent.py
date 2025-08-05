@@ -26,6 +26,8 @@ from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai import OpenAI
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field
 from src.agents.parallel.regulatory_data_sources import (
     FDAAPIError,
@@ -34,6 +36,7 @@ from src.agents.parallel.regulatory_data_sources import (
     create_fda_client,
 )
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
+from src.monitoring.agent_instrumentation import trace_agent_method
 from src.monitoring.simple_tracer import get_tracer
 
 
@@ -109,6 +112,9 @@ class ResearchAgent:
         ]
         self.logger = logging.getLogger(__name__)
 
+        # Initialize OpenTelemetry tracer for observability
+        self.tracer = trace.get_tracer(__name__)
+
         # Initialize real data sources
         self.audit_trail = RegulatoryAuditTrail()
         self.fda_client = create_fda_client(api_key=fda_api_key)
@@ -129,9 +135,13 @@ class ResearchAgent:
             "research_coverage": {}
         }
 
+    @trace_agent_method(
+        span_name="research_agent.process_request",
+        attributes={"agent.type": "research_agent", "operation": "process_request"}
+    )
     async def process_request(self, request_event: AgentRequestEvent) -> AgentResultEvent:
         """
-        Process a research request.
+        Process a research request with comprehensive Phoenix observability.
         
         Args:
             request_event: Agent request event containing research requirements
@@ -142,6 +152,9 @@ class ResearchAgent:
         start_time = datetime.now(UTC)
         self._research_stats["total_queries"] += 1
 
+        # Get current span for detailed tracing
+        current_span = trace.get_current_span()
+
         try:
             # Parse request data
             request_data = ResearchAgentRequest(
@@ -149,22 +162,34 @@ class ResearchAgent:
                 correlation_id=request_event.correlation_id
             )
 
+            # Add request attributes to span
+            if current_span and current_span.is_recording():
+                current_span.set_attribute("request.correlation_id", str(request_data.correlation_id))
+                current_span.set_attribute("request.research_focus", str(request_data.research_focus))
+                current_span.set_attribute("request.regulatory_scope", str(request_data.regulatory_scope))
+                current_span.set_attribute("request.depth_level", request_data.depth_level)
+                current_span.set_attribute("request.time_horizon", request_data.time_horizon)
+                current_span.set_attribute("request.include_trends", request_data.include_trends)
+                current_span.set_attribute("request.timeout_seconds", request_data.timeout_seconds)
+                
+                # Add compliance attributes
+                current_span.set_attribute("compliance.gamp5.research", True)
+                current_span.set_attribute("compliance.pharmaceutical", True)
+
             if self.verbose:
                 self.logger.info(
                     f"Processing research request for {len(request_data.research_focus)} focus areas "
                     f"with {request_data.depth_level} depth level"
                 )
 
-            # Execute research with timeout
-            tracer = get_tracer()
-            
-            # Log research start
-            tracer.log_step("research_analysis_start", {
-                "research_focus": request_data.research_focus,
-                "regulatory_scope": request_data.regulatory_scope,
-                "depth_level": request_data.depth_level,
-                "time_horizon": request_data.time_horizon
-            })
+            # Add event for research start
+            if current_span and current_span.is_recording():
+                current_span.add_event("research_analysis_start", {
+                    "research_focus_count": len(request_data.research_focus),
+                    "regulatory_scope_count": len(request_data.regulatory_scope),
+                    "depth_level": request_data.depth_level,
+                    "time_horizon": request_data.time_horizon
+                })
             
             research_response = await asyncio.wait_for(
                 self._execute_research(request_data),
@@ -180,15 +205,26 @@ class ResearchAgent:
                 self._research_stats["high_quality_results"] += 1
             self._update_performance_stats(processing_time)
             
-            # Log research completion
-            tracer.log_step("research_analysis_complete", {
-                "results_count": len(research_response.research_results),
-                "regulatory_updates_count": len(research_response.regulatory_updates),
-                "best_practices_count": len(research_response.best_practices),
-                "confidence_score": research_response.confidence_score,
-                "research_quality": research_response.research_quality,
-                "processing_time": processing_time
-            })
+            # Add completion event and result attributes to span
+            if current_span and current_span.is_recording():
+                current_span.add_event("research_analysis_complete", {
+                    "results_count": len(research_response.research_results),
+                    "regulatory_updates_count": len(research_response.regulatory_updates),
+                    "best_practices_count": len(research_response.best_practices),
+                    "confidence_score": research_response.confidence_score,
+                    "research_quality": research_response.research_quality,
+                    "processing_time": processing_time
+                })
+                
+                # Set result attributes
+                current_span.set_attribute("result.results_count", len(research_response.research_results))
+                current_span.set_attribute("result.regulatory_updates_count", len(research_response.regulatory_updates))
+                current_span.set_attribute("result.best_practices_count", len(research_response.best_practices))
+                current_span.set_attribute("result.industry_trends_count", len(research_response.industry_trends))
+                current_span.set_attribute("result.confidence_score", research_response.confidence_score)
+                current_span.set_attribute("result.research_quality", research_response.research_quality)
+                current_span.set_attribute("result.processing_time_seconds", processing_time)
+                current_span.set_attribute("result.success", True)
 
             if self.verbose:
                 self.logger.info(
@@ -240,58 +276,80 @@ class ResearchAgent:
             )
 
     async def _execute_research(self, request: ResearchAgentRequest) -> ResearchAgentResponse:
-        """Execute the research process."""
-        # Initialize response
-        response = ResearchAgentResponse()
+        """Execute the research process with OpenTelemetry instrumentation."""
+        # Create span for research execution
+        with self.tracer.start_as_current_span("research.execute") as span:
+            span.set_attribute("research.request_id", str(request.correlation_id))
+            span.set_attribute("research.depth_level", request.depth_level)
+            
+            # Initialize response
+            response = ResearchAgentResponse()
 
-        # Step 1: Regulatory Updates Research
-        regulatory_updates = await self._research_regulatory_updates(request)
-        response.regulatory_updates = regulatory_updates
+            # Step 1: Regulatory Updates Research
+            with self.tracer.start_as_current_span("research.regulatory_updates"):
+                regulatory_updates = await self._research_regulatory_updates(request)
+                response.regulatory_updates = regulatory_updates
+                span.set_attribute("research.regulatory_updates_count", len(regulatory_updates))
 
-        # Step 2: Best Practices Research
-        best_practices = await self._research_best_practices(request)
-        response.best_practices = best_practices
+            # Step 2: Best Practices Research
+            with self.tracer.start_as_current_span("research.best_practices"):
+                best_practices = await self._research_best_practices(request)
+                response.best_practices = best_practices
+                span.set_attribute("research.best_practices_count", len(best_practices))
 
-        # Step 3: Industry Trends Research
-        if request.include_trends:
-            industry_trends = await self._research_industry_trends(request)
-            response.industry_trends = industry_trends
+            # Step 3: Industry Trends Research
+            if request.include_trends:
+                with self.tracer.start_as_current_span("research.industry_trends"):
+                    industry_trends = await self._research_industry_trends(request)
+                    response.industry_trends = industry_trends
+                    span.set_attribute("research.industry_trends_count", len(industry_trends))
 
-        # Step 4: Compile Research Results
-        research_results = self._compile_research_results(
-            regulatory_updates, best_practices, response.industry_trends
-        )
-        response.research_results = research_results
+            # Step 4: Compile Research Results
+            with self.tracer.start_as_current_span("research.compile_results"):
+                research_results = self._compile_research_results(
+                    regulatory_updates, best_practices, response.industry_trends
+                )
+                response.research_results = research_results
+                span.set_attribute("research.total_results", len(research_results))
 
-        # Step 5: Generate Guidance Summaries
-        guidance_summaries = await self._generate_guidance_summaries(research_results, request)
-        response.guidance_summaries = guidance_summaries
+            # Step 5: Generate Guidance Summaries
+            with self.tracer.start_as_current_span("research.generate_guidance"):
+                guidance_summaries = await self._generate_guidance_summaries(research_results, request)
+                response.guidance_summaries = guidance_summaries
+                span.set_attribute("research.guidance_summaries_count", len(guidance_summaries))
 
-        # Step 6: Compliance Insights
-        compliance_insights = await self._analyze_compliance_insights(research_results, request)
-        response.compliance_insights = compliance_insights
+            # Step 6: Compliance Insights
+            with self.tracer.start_as_current_span("research.analyze_compliance"):
+                compliance_insights = await self._analyze_compliance_insights(research_results, request)
+                response.compliance_insights = compliance_insights
 
-        # Step 7: Assess Research Quality
-        research_quality = self._assess_research_quality(research_results, request)
-        response.research_quality = research_quality
+            # Step 7: Assess Research Quality
+            research_quality = self._assess_research_quality(research_results, request)
+            response.research_quality = research_quality
+            span.set_attribute("research.quality", research_quality)
 
-        # Step 8: Calculate Confidence Score
-        confidence_score = self._calculate_confidence_score(research_results, research_quality)
-        response.confidence_score = confidence_score
+            # Step 8: Calculate Confidence Score
+            confidence_score = self._calculate_confidence_score(research_results, research_quality)
+            response.confidence_score = confidence_score
+            span.set_attribute("research.confidence_score", confidence_score)
 
-        # Step 9: Add Processing Metadata
-        response.processing_metadata = {
-            "research_strategy": self._determine_research_strategy(request),
-            "sources_consulted": self.research_sources,
-            "coverage_analysis": {
-                "focus_areas_covered": len(request.research_focus),
-                "regulatory_scope_coverage": len(request.regulatory_scope),
-                "quality_assessment": research_quality
-            },
-            "processing_timestamp": datetime.now(UTC).isoformat()
-        }
+            # Step 9: Add Processing Metadata
+            response.processing_metadata = {
+                "research_strategy": self._determine_research_strategy(request),
+                "sources_consulted": self.research_sources,
+                "coverage_analysis": {
+                    "focus_areas_covered": len(request.research_focus),
+                    "regulatory_scope_coverage": len(request.regulatory_scope),
+                    "quality_assessment": research_quality
+                },
+                "processing_timestamp": datetime.now(UTC).isoformat()
+            }
 
-        return response
+            # Add final span attributes
+            span.set_attribute("research.strategy", response.processing_metadata["research_strategy"])
+            span.set_attribute("research.sources_count", len(self.research_sources))
+
+            return response
 
     async def _research_regulatory_updates(self, request: ResearchAgentRequest) -> list[dict[str, Any]]:
         """Research current regulatory updates using real data sources."""
@@ -997,39 +1055,48 @@ Always maintain currency with evolving regulatory landscape."""
                 # Search multiple FDA databases
                 try:
                     # Search drug labels for guidance information
-                    tracer = get_tracer()
                     api_start = time.time()
                     
-                    drug_labels = await self.fda_client.search_drug_labels(
-                        search_query=search_query,
-                        limit=3
-                    )
-                    
-                    # Log FDA API call
-                    api_duration = time.time() - api_start
-                    tracer.log_api_call("fda", "drug_labels_search", api_duration, True, {
-                        "query": search_query,
-                        "limit": 3,
-                        "results_count": len(drug_labels.get("results", []))
-                    })
+                    # Create span for FDA API call
+                    with self.tracer.start_as_current_span("fda.drug_labels_search") as api_span:
+                        api_span.set_attribute("api.service", "fda")
+                        api_span.set_attribute("api.endpoint", "drug_labels_search")
+                        api_span.set_attribute("api.query", search_query)
+                        api_span.set_attribute("api.limit", 3)
+                        
+                        drug_labels = await self.fda_client.search_drug_labels(
+                            search_query=search_query,
+                            limit=3
+                        )
+                        
+                        # Add API result attributes
+                        api_duration = time.time() - api_start
+                        api_span.set_attribute("api.duration_seconds", api_duration)
+                        api_span.set_attribute("api.success", True)
+                        api_span.set_attribute("api.results_count", len(drug_labels.get("results", [])))
                     
                     updates.extend(self._process_fda_drug_labels(drug_labels, focus_area))
 
                     # Search enforcement reports for recent regulatory actions
                     api_start = time.time()
                     
-                    enforcement = await self.fda_client.search_enforcement_reports(
-                        search_query=search_query,
-                        limit=2
-                    )
-                    
-                    # Log FDA enforcement API call
-                    api_duration = time.time() - api_start
-                    tracer.log_api_call("fda", "enforcement_search", api_duration, True, {
-                        "query": search_query,
-                        "limit": 2,
-                        "results_count": len(enforcement.get("results", []))
-                    })
+                    # Create span for FDA enforcement API call
+                    with self.tracer.start_as_current_span("fda.enforcement_search") as api_span:
+                        api_span.set_attribute("api.service", "fda")
+                        api_span.set_attribute("api.endpoint", "enforcement_search")
+                        api_span.set_attribute("api.query", search_query)
+                        api_span.set_attribute("api.limit", 2)
+                        
+                        enforcement = await self.fda_client.search_enforcement_reports(
+                            search_query=search_query,
+                            limit=2
+                        )
+                        
+                        # Add API result attributes
+                        api_duration = time.time() - api_start
+                        api_span.set_attribute("api.duration_seconds", api_duration)
+                        api_span.set_attribute("api.success", True)
+                        api_span.set_attribute("api.results_count", len(enforcement.get("results", [])))
                     
                     updates.extend(self._process_fda_enforcement_reports(enforcement, focus_area))
 
