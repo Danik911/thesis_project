@@ -104,7 +104,39 @@ set OPENAI_API_KEY=%OPENAI_API_KEY:"=%
 echo "API Key Status: %OPENAI_API_KEY:~0,20%..."
 ```
 
-### Phase 2: Workflow Execution
+### Phase 2: ChromaDB Document Embedding (CRITICAL!)
+```bash
+cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
+
+# CRITICAL: Embed GAMP-5 documents BEFORE running workflow
+echo "=== Embedding GAMP-5 Documents in ChromaDB ==="
+
+# Check if embedding script exists
+if exist "scripts\embed_gamp5_docs.py" (
+    echo "Running GAMP-5 document embedding..."
+    uv run python scripts\embed_gamp5_docs.py
+) else (
+    echo "Embedding script not found, using test to embed documents..."
+    # Alternative: Run context provider test to embed documents
+    uv run python tests\test_context_provider_phoenix.py
+)
+
+# Verify ChromaDB has documents
+uv run python -c "
+from src.agents.parallel.context_provider import ContextProviderAgent
+agent = ContextProviderAgent()
+try:
+    result = agent.search_context('GAMP-5 categories')
+    if result['total_results'] > 0:
+        print(f'✅ ChromaDB has {result[\"total_results\"]} documents embedded')
+    else:
+        print('❌ WARNING: ChromaDB has no documents - workflow will fail!')
+except Exception as e:
+    print(f'❌ ChromaDB check failed: {e}')
+"
+```
+
+### Phase 3: Workflow Execution
 ```bash
 cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
 
@@ -134,7 +166,7 @@ uv run python main.py tests/test_data/gamp5_test_data/testing_data.md --verbose
 # IMPORTANT: Do NOT add timeout - the workflow needs 5-6 minutes to complete
 ```
 
-### Phase 3: Trace Analysis
+### Phase 4: Trace Analysis
 ```bash
 # Check for custom span exporter files (CRITICAL for ChromaDB visibility)
 dir logs\traces\all_spans_*.jsonl
@@ -161,7 +193,7 @@ with open('logs/traces/trace_20250805_191633.jsonl', 'r') as f:
 "
 ```
 
-### Phase 4: Critical Validation
+### Phase 5: Critical Validation
 ```bash
 # Verify ChromaDB operations are actually ChromaDB (not just embeddings)
 python -c "

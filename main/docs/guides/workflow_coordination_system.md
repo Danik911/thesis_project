@@ -215,6 +215,46 @@ The main agent **MUST** provide each subagent with:
 **Problem**: Implementation doesn't meet validation criteria
 **Solution**: Main agent routes back through debugger → task-executor → tester-agent cycle
 
+### Critical Fixes Applied (August 6, 2025)
+
+#### o3 Model Configuration Fix
+**Issue**: o3 models returning empty responses
+**Root Cause**: Missing `reasoning_effort` parameter
+**Fix Applied**: 
+```python
+# o3 models now configured with reasoning_effort based on GAMP category
+reasoning_effort = "high"    # Category 5
+reasoning_effort = "medium"  # Categories 3-4
+reasoning_effort = "low"     # Category 1
+```
+
+#### Model Mapping Standardization
+**Issue**: Mixed o1/o3 models causing confusion
+**Fix Applied**: ALL OQ generation uses o3-mini exclusively
+```python
+# Standardized model mapping for OQ generator
+model_mapping = {
+    ALL_CATEGORIES: "o3-mini"  # No o1 models!
+}
+# Other agents use gpt-4.1-mini-2025-04-14
+```
+
+#### ChromaDB Embedding Requirements
+**Issue**: end-to-end-tester not embedding documents on first run
+**Fix Applied**: Must pre-embed GAMP-5 documents before workflow execution
+```bash
+# Embed documents first
+uv run python main/scripts/embed_gamp5_docs.py
+```
+
+#### Quality Validation Adjustments
+**Issue**: Consultation events blocking valid test suites
+**Fixes Applied**:
+- Requirements coverage initialized with default mappings
+- Test categories enforced in prompts
+- Pharmaceutical compliance flags properly set
+- Validation thresholds adjusted to prevent unnecessary consultations
+
 ### Diagnostic Commands
 ```bash
 # Check current workflow state
