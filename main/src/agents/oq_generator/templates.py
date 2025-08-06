@@ -232,8 +232,8 @@ CONTEXT INFORMATION:
 SPECIFIC REQUIREMENTS:
 1. Generate exactly {test_count} test cases within the range {category_config['min_tests']}-{category_config['max_tests']}
 2. Each test must have a unique ID following the pattern OQ-XXX
-3. Include at least {len(category_config['test_categories'])} different test categories
-4. Ensure all tests are traceable to URS requirements
+3. MANDATORY: Include at least 1 test from EACH of these categories: {', '.join(category_config['test_categories'])}
+4. Ensure all tests are traceable to URS requirements (populate requirements_coverage field)
 5. Include proper ALCOA+ compliance measures
 6. Add appropriate regulatory references (21 CFR Part 11, GAMP-5, etc.)
 

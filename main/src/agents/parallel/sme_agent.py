@@ -321,6 +321,10 @@ class SMEAgentResponse(BaseModel):
     recommendations: list[dict[str, Any]] = Field(default_factory=list)
     compliance_assessment: dict[str, Any] = Field(default_factory=dict)
     risk_analysis: dict[str, Any] = Field(default_factory=dict)
+    validation_points: list[str] = Field(
+        default_factory=list,
+        description="Key validation points identified by SME analysis"
+    )
     validation_guidance: list[dict[str, Any]] = Field(default_factory=list)
     domain_insights: dict[str, Any] = Field(default_factory=dict)
     confidence_score: float = 0.0
@@ -471,7 +475,7 @@ class SMEAgent:
                 current_span.set_attribute("result.confidence_score", sme_response.confidence_score)
                 current_span.set_attribute("result.risk_level", sme_response.risk_analysis.get("risk_level", "unknown"))
                 current_span.set_attribute("result.validation_points_count", len(sme_response.validation_points))
-                current_span.set_attribute("result.assessment_details_count", len(sme_response.assessment_details))
+                # Note: assessment_details not in SMEAgentResponse model, removed
                 current_span.set_attribute("result.processing_time_seconds", processing_time)
                 current_span.set_attribute("result.success", True)
 

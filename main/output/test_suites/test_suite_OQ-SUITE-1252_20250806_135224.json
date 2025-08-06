@@ -1,0 +1,1014 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-06T13:52:24.830672",
+    "suite_id": "OQ-SUITE-1252",
+    "gamp_category": 4,
+    "total_test_count": 20,
+    "file_version": "1.0",
+    "compliance_standards": [
+      "GAMP-5",
+      "ALCOA+",
+      "21 CFR Part 11"
+    ],
+    "generator_version": "OQTestGenerationWorkflow v1.0"
+  },
+  "test_suite": {
+    "suite_id": "OQ-SUITE-1252",
+    "gamp_category": 4,
+    "document_name": "test_pharmaceutical_urs.txt",
+    "test_cases": [
+      {
+        "test_id": "OQ-001",
+        "test_name": "Installation of LIMS Base Module",
+        "test_category": "installation",
+        "gamp_category": 4,
+        "objective": "Verify proper installation and configuration of the LIMS installer package on the designated environment.",
+        "prerequisites": [
+          "Installation package available",
+          "Server environment prepared"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Run the installation script on the target server.",
+            "expected_result": "LIMS installation starts without errors and configuration files are generated.",
+            "data_to_capture": [
+              "installation log",
+              "error messages"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Installation log confirms successful configuration."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 compliance requirement"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Installation logs must be retained and protected from alteration."
+        ],
+        "urs_requirements": [
+          "System installation must support high availability configurations."
+        ],
+        "related_tests": [
+          "OQ-005"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "System administrator",
+          "Validation engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-002",
+        "test_name": "Functional Test for Sample Registration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Verify that the sample registration functionality meets the defined business requirements by allowing proper sample entry.",
+        "prerequisites": [
+          "LIMS module installed",
+          "Sample data dictionary loaded"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Enter valid sample data into the registration form.",
+            "expected_result": "New sample is registered with a unique barcode and recorded in the system.",
+            "data_to_capture": [
+              "Sample ID",
+              "Barcode output"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Sample registration is accurately recorded and barcode is generated."
+        ],
+        "regulatory_basis": [
+          "FDA guidelines on data integrity"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure that sample data is accurately captured without corruption."
+        ],
+        "urs_requirements": [
+          "System must support traceability of registered samples."
+        ],
+        "related_tests": [
+          "OQ-003"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Lab technician",
+          "Validation engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-003",
+        "test_name": "Performance Validation of Test Execution Workflow",
+        "test_category": "performance",
+        "gamp_category": 4,
+        "objective": "Assess the performance of test execution workflows ensuring response times meet the required performance standards.",
+        "prerequisites": [
+          "Functional tests passed",
+          "Load simulation tool available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Trigger simultaneous execution of multiple test workflows.",
+            "expected_result": "All critical operations respond in less than 2 seconds under load.",
+            "data_to_capture": [
+              "Response time logs",
+              "Performance metrics"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All critical operations meet the benchmark response time under simulated load."
+        ],
+        "regulatory_basis": [
+          "Performance criteria defined in the URS."
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Performance logs must be stored securely to ensure data is unaltered."
+        ],
+        "urs_requirements": [
+          "System must support concurrent users with acceptable response times."
+        ],
+        "related_tests": [
+          "OQ-004"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Performance tester",
+          "System analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-004",
+        "test_name": "Security Validation for Electronic Signatures",
+        "test_category": "security",
+        "gamp_category": 4,
+        "objective": "Confirm that the electronic signature feature meets security and regulatory standards, preventing unauthorized access.",
+        "prerequisites": [
+          "User accounts configured",
+          "Electronic signature module enabled"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Attempt an electronic signature using unauthorized credentials.",
+            "expected_result": "The system rejects the signature attempt and creates an audit log entry.",
+            "data_to_capture": [
+              "Audit trail details",
+              "Access log records"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Unauthorized electronic signature attempts are blocked with proper logging."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 electronic signature guidelines"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Audit logs must be complete and tamper-evident."
+        ],
+        "urs_requirements": [
+          "System must enforce stringent electronic signature security controls."
+        ],
+        "related_tests": [
+          "OQ-002"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Security specialist",
+          "Compliance officer"
+        ]
+      },
+      {
+        "test_id": "OQ-005",
+        "test_name": "Data Integrity Check During Data Migration",
+        "test_category": "data_integrity",
+        "gamp_category": 4,
+        "objective": "Ensure data migration between legacy systems and LIMS retains complete accuracy and integrity.",
+        "prerequisites": [
+          "Legacy data backup available",
+          "Data migration procedure documented"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Migrate a sample dataset and compare source records with target records.",
+            "expected_result": "Migrated data exactly matches the source data with no discrepancies.",
+            "data_to_capture": [
+              "Data comparison report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "No data discrepancies are observed after migration."
+        ],
+        "regulatory_basis": [
+          "ALCOA+ data integrity principles"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Data comparison reports must be archived securely."
+        ],
+        "urs_requirements": [
+          "Migration must preserve data integrity as defined in the URS."
+        ],
+        "related_tests": [
+          "OQ-003"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Data migration specialist",
+          "Validation engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-006",
+        "test_name": "Integration Testing with ERP System",
+        "test_category": "integration",
+        "gamp_category": 4,
+        "objective": "Validate that LIMS successfully exchanges data with the ERP system for accurate inventory management.",
+        "prerequisites": [
+          "ERP system accessible",
+          "Interface credentials configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate a data transfer from LIMS to the ERP system.",
+            "expected_result": "ERP system receives updated inventory data correctly and promptly.",
+            "data_to_capture": [
+              "Data exchange logs",
+              "Inventory update report"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Data transfer is confirmed by synchronized records between the systems."
+        ],
+        "regulatory_basis": [
+          "Industry integration standards"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Data exchange must be logged and transmitted securely."
+        ],
+        "urs_requirements": [
+          "Integration must support real-time data updates as per URS."
+        ],
+        "related_tests": [
+          "OQ-007"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Integration engineer",
+          "ERP specialist"
+        ]
+      },
+      {
+        "test_id": "OQ-007",
+        "test_name": "Functional Test for SOP Integration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Verify that Standard Operating Procedures (SOPs) are integrated and accessible within the LIMS for test method management.",
+        "prerequisites": [
+          "SOP documents loaded into the system",
+          "Functional module is active"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Access the SOP section and retrieve documentation linked to test methods.",
+            "expected_result": "All SOP documents are accessible and correctly linked to corresponding test workflows.",
+            "data_to_capture": [
+              "Document access logs",
+              "Retrieval timestamps"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All SOP documents are accessible with correct versioning information."
+        ],
+        "regulatory_basis": [
+          "FDA documentation requirements"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "SOP document versions must remain consistent and unaltered."
+        ],
+        "urs_requirements": [
+          "SOP integration functionality must comply with the URS."
+        ],
+        "related_tests": [
+          "OQ-002"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "QA specialist",
+          "Validation engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-008",
+        "test_name": "Performance Test for Concurrent User Transactions",
+        "test_category": "performance",
+        "gamp_category": 4,
+        "objective": "Evaluate LIMS performance by simulating over 200 concurrent user transactions to ensure system stability.",
+        "prerequisites": [
+          "Load test environment configured",
+          "User simulation tool available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate 250 concurrent users executing typical LIMS transactions.",
+            "expected_result": "System maintains a response time of less than 2 seconds for all critical operations.",
+            "data_to_capture": [
+              "Transaction logs",
+              "Response time metrics"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All simulated transactions meet the defined performance criteria without degradation."
+        ],
+        "regulatory_basis": [
+          "GAMP-5 performance guidelines"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Transaction logs must be complete and securely stored."
+        ],
+        "urs_requirements": [
+          "System must support scalable concurrent user activities as defined in the URS."
+        ],
+        "related_tests": [
+          "OQ-003"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Performance tester",
+          "System architect"
+        ]
+      },
+      {
+        "test_id": "OQ-009",
+        "test_name": "Security Vulnerability Assessment for Data Access",
+        "test_category": "security",
+        "gamp_category": 4,
+        "objective": "Evaluate the LIMS defense mechanisms against unauthorized data access and potential vulnerabilities.",
+        "prerequisites": [
+          "Security audit tools available",
+          "Test credentials for penetration testing enabled"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Conduct a vulnerability scan on the LIMS application using industry-standard tools.",
+            "expected_result": "No critical vulnerabilities are detected and unauthorized access attempts are blocked.",
+            "data_to_capture": [
+              "Security scan reports",
+              "Access log records"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Security scan reveals no exploitable vulnerabilities and proper audit records are maintained."
+        ],
+        "regulatory_basis": [
+          "FDA cybersecurity guidelines"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Audit trails must capture all security-related events accurately."
+        ],
+        "urs_requirements": [
+          "System must implement robust security controls in line with the URS."
+        ],
+        "related_tests": [
+          "OQ-004"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Security analyst",
+          "Penetration tester"
+        ]
+      },
+      {
+        "test_id": "OQ-010",
+        "test_name": "Integration Test with Manufacturing Execution System (MES)",
+        "test_category": "integration",
+        "gamp_category": 4,
+        "objective": "Validate the real-time data exchange between LIMS and MES, ensuring timely and accurate updates.",
+        "prerequisites": [
+          "MES system accessible",
+          "Interface configuration verified"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Trigger a sample test order in LIMS that should update the MES system.",
+            "expected_result": "MES system receives the correct test order data in real time with proper timestamping.",
+            "data_to_capture": [
+              "Data sync logs",
+              "Timestamp records"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Data exchange is validated with no delays or data loss between LIMS and MES."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11 and integration guidelines"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Data transmission logs must remain complete and secure."
+        ],
+        "urs_requirements": [
+          "MES integration must ensure real-time updates as specified in the URS."
+        ],
+        "related_tests": [
+          "OQ-006"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Integration specialist",
+          "MES expert"
+        ]
+      },
+      {
+        "test_id": "OQ-011",
+        "test_name": "LIMS Installation and Configuration Validation",
+        "test_category": "installation",
+        "gamp_category": 4,
+        "objective": "Verify proper installation and initial configuration of the LIMS system in a controlled environment.",
+        "prerequisites": [
+          "Approved installation procedures",
+          "Availability of system hardware"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Install LIMS application using the approved installation guide.",
+            "expected_result": "The system is installed without errors and initial configuration files are generated.",
+            "data_to_capture": [
+              "Installation logs",
+              "Configuration settings"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "System installed as per manufacturer guidelines",
+          "No installation errors detected"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Audit trails enabled during installation process"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Installation procedures must be validated"
+        ],
+        "related_tests": [
+          "OQ-012",
+          "OQ-020"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "System Administrator",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-012",
+        "test_name": "LIMS Functional Workflow Execution Validation",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure LIMS functional workflows work as designed for test execution and sample tracking processes.",
+        "prerequisites": [
+          "Functional specification approved",
+          "Access to test data sets"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Execute sample registration and test execution workflow under normal conditions.",
+            "expected_result": "Workflow executes successfully with correct sample tracking and data logging.",
+            "data_to_capture": [
+              "Workflow logs",
+              "Test data outputs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All functional modules perform as per requirements"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "GAMP-5"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Data entries must be verified for accuracy and traceability"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Functional workflows definition"
+        ],
+        "related_tests": [
+          "OQ-011",
+          "OQ-013"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Functional Tester",
+          "Pharmaceutical Subject Matter Expert"
+        ]
+      },
+      {
+        "test_id": "OQ-013",
+        "test_name": "LIMS Performance Under Load Validation",
+        "test_category": "performance",
+        "gamp_category": 4,
+        "objective": "Verify system performance under expected load conditions with 200+ concurrent users.",
+        "prerequisites": [
+          "Performance test environment setup",
+          "Simulated load test scripts"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate 200 concurrent users executing critical operations on LIMS.",
+            "expected_result": "System response time remains below 2 seconds during simultaneous operations.",
+            "data_to_capture": [
+              "Response time metrics",
+              "System logs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Response time < 2 sec under load",
+          "No system crashes observed"
+        ],
+        "regulatory_basis": [
+          "FDA guidelines",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Performance logs must be retained for audit"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Performance requirements specified"
+        ],
+        "related_tests": [
+          "OQ-012",
+          "OQ-014"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Performance Test Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-014",
+        "test_name": "LIMS Electronic Signature Security Validation",
+        "test_category": "security",
+        "gamp_category": 4,
+        "objective": "Assess the robustness of the electronic signature and security access controls within LIMS.",
+        "prerequisites": [
+          "Security policies review",
+          "Latest system update applied"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Attempt electronic signature operations using both authorized and unauthorized user credentials.",
+            "expected_result": "Only authorized users can perform electronic signatures and access control logs are generated.",
+            "data_to_capture": [
+              "User access logs",
+              "Signature audit trail records"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Unauthorized access is denied",
+          "Auditing is complete"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Security logs must be complete and unaltered"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Electronic signature and security requirements"
+        ],
+        "related_tests": [
+          "OQ-013",
+          "OQ-015"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Security Analyst",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-015",
+        "test_name": "LIMS Data Integrity and Audit Trail Verification",
+        "test_category": "data_integrity",
+        "gamp_category": 4,
+        "objective": "Ensure that all data modifications and transactions are logged with complete audit trails.",
+        "prerequisites": [
+          "System operational",
+          "Initial audit logs available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform a series of data entries, modifications, and deletions while monitoring audit logs.",
+            "expected_result": "Each transaction is recorded with timestamp, user, and change details, maintaining data integrity.",
+            "data_to_capture": [
+              "Audit logs",
+              "Transaction records"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Data audit trails are complete and securely stored"
+        ],
+        "regulatory_basis": [
+          "ALCOA+ principles",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Audit logs integrity must be verified for each transaction"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Data integrity requirements"
+        ],
+        "related_tests": [
+          "OQ-014",
+          "OQ-016"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Data Integrity Specialist",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-016",
+        "test_name": "LIMS Integration with MES and ERP Systems",
+        "test_category": "integration",
+        "gamp_category": 4,
+        "objective": "Validate the real-time data exchange between LIMS, MES, and ERP systems for inventory and process management.",
+        "prerequisites": [
+          "MES and ERP system connectivity established",
+          "Integration test scripts prepared"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Execute data exchange transactions between LIMS, MES, and ERP systems.",
+            "expected_result": "Data is accurately transferred and synchronized between systems with no loss.",
+            "data_to_capture": [
+              "Integration logs",
+              "Data validation reports"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All integration points function as per specifications"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "GAMP-5"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Integration data must maintain consistency and traceability"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Integration requirements for MES and ERP"
+        ],
+        "related_tests": [
+          "OQ-015",
+          "OQ-017"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Integration Engineer",
+          "LIMS Specialist"
+        ]
+      },
+      {
+        "test_id": "OQ-017",
+        "test_name": "LIMS Custom Workflow Configuration Validation",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure that customized workflows configured for pharmaceutical processes operate correctly and meet regulatory requirements.",
+        "prerequisites": [
+          "Approved custom workflow configurations",
+          "Access to customization interface"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Execute customized workflows for sample management and test approvals.",
+            "expected_result": "Custom workflows function as specified with correct process flow and audit trails.",
+            "data_to_capture": [
+              "Workflow execution logs",
+              "Customization audit trail"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Custom workflows validated per regulatory guidelines"
+        ],
+        "regulatory_basis": [
+          "GAMP-5",
+          "FDA audit trail requirements"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Workflow logs must be traceable and intact"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Customized workflow requirements"
+        ],
+        "related_tests": [
+          "OQ-016",
+          "OQ-018"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Functional Tester",
+          "Validation Engineer"
+        ]
+      },
+      {
+        "test_id": "OQ-018",
+        "test_name": "LIMS System Performance Under Stress Conditions",
+        "test_category": "performance",
+        "gamp_category": 4,
+        "objective": "Evaluate LIMS system performance under stress conditions beyond normal operation thresholds.",
+        "prerequisites": [
+          "Stress test environment ready",
+          "Monitoring tools in place"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate extreme load conditions exceeding normal user numbers and measure system response.",
+            "expected_result": "System degrades gracefully without data loss or crashes, response times measured.",
+            "data_to_capture": [
+              "Stress test metrics",
+              "Error logs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "System maintains critical operations under stress",
+          "No data loss observed"
+        ],
+        "regulatory_basis": [
+          "FDA guidelines",
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Stress logs maintained for audit purposes"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Performance requirements under stress conditions"
+        ],
+        "related_tests": [
+          "OQ-017",
+          "OQ-019"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Performance Test Engineer",
+          "System Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-019",
+        "test_name": "LIMS User Access Control and Privilege Verification",
+        "test_category": "security",
+        "gamp_category": 4,
+        "objective": "Verify that user access controls and privilege management enforce appropriate restrictions on system functionality.",
+        "prerequisites": [
+          "User roles defined",
+          "Access control matrix available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Test various user roles for access to sensitive operations, including signature and configuration changes.",
+            "expected_result": "Only appropriately authorized users have access to restricted operations.",
+            "data_to_capture": [
+              "User access test results",
+              "Audit logs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Access controls strictly enforced as per policies"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "FDA audit trail requirements"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "User access logs must remain unaltered"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: User access control requirements"
+        ],
+        "related_tests": [
+          "OQ-018",
+          "OQ-020"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Security Analyst",
+          "System Administrator"
+        ]
+      },
+      {
+        "test_id": "OQ-020",
+        "test_name": "LIMS Batch Release and Electronic Signature Validation",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Test the batch release process and electronic signature functionality during product approval workflows.",
+        "prerequisites": [
+          "Batch release SOP available",
+          "Electronic signature module configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Execute a simulated batch release process requiring electronic signature verification.",
+            "expected_result": "Batch release is approved only after successful electronic signature validation.",
+            "data_to_capture": [
+              "Batch release logs",
+              "Electronic signature records"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Batch not released without compliant electronic signature",
+          "Audit logs reflect accurate user actions"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "ALCOA+ guidelines"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Electronic signature records must match audit logs and be tamper-proof"
+        ],
+        "urs_requirements": [
+          "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Batch release and electronic signature requirements"
+        ],
+        "related_tests": [
+          "OQ-019",
+          "OQ-011"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Quality Assurance",
+          "Validation Engineer"
+        ]
+      }
+    ],
+    "test_categories": {},
+    "requirements_coverage": {
+      "URS-001": [
+        "OQ-001",
+        "OQ-002",
+        "OQ-003",
+        "OQ-004",
+        "OQ-005"
+      ],
+      "URS-002": [
+        "OQ-006",
+        "OQ-007",
+        "OQ-008",
+        "OQ-009",
+        "OQ-010"
+      ],
+      "URS-003": [
+        "OQ-011",
+        "OQ-012",
+        "OQ-013",
+        "OQ-014",
+        "OQ-015",
+        "OQ-016",
+        "OQ-017",
+        "OQ-018",
+        "OQ-019",
+        "OQ-020"
+      ]
+    },
+    "risk_coverage": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "compliance_coverage": {
+      "21_cfr_part_11": true,
+      "gamp5": true,
+      "alcoa_plus": true
+    },
+    "total_test_count": 20,
+    "estimated_execution_time": 600,
+    "coverage_percentage": 0.0,
+    "generation_timestamp": "2025-08-06T12:52:24.820739+00:00",
+    "generation_method": "LLMTextCompletionProgram_o3-mini",
+    "validation_approach": "",
+    "created_by": "oq_generation_agent_v2_progressive",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  },
+  "audit_trail": {
+    "created_by": "OQTestGenerationWorkflow",
+    "creation_timestamp": "2025-08-06T13:52:24.830672",
+    "validation_status": "generated",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  }
+}

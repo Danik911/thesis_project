@@ -973,27 +973,55 @@ class UnifiedTestGenerationWorkflow(Workflow):
             self.logger.info("Running OQ test generation workflow...")
             oq_result = await oq_workflow.run()
 
-            # Extract result
+            # CRITICAL FIX: Check result type first
+            if isinstance(oq_result, ConsultationRequiredEvent):
+                # Handle consultation event properly
+                self.logger.warning(
+                    f"OQ generation returned consultation request: {oq_result.consultation_type}"
+                )
+                
+                # Extract error details
+                error_context = oq_result.context
+                error_type = error_context.get('consultation_type', 'unknown') if error_context else 'unknown'
+                
+                # Re-raise with proper context
+                raise RuntimeError(
+                    f"OQ generation requires consultation: {error_type}",
+                    {"consultation_event": oq_result, "context": error_context}
+                )
+            
+            # Handle OQTestSuiteEvent directly
+            if isinstance(oq_result, OQTestSuiteEvent):
+                self.logger.info(
+                    f"[OQ] Generated {oq_result.test_suite.total_test_count} OQ tests successfully"
+                )
+                return oq_result
+            
+            # Handle dictionary result (legacy format)
             if hasattr(oq_result, "result"):
                 oq_data = oq_result.result
             else:
                 oq_data = oq_result
-
-            # Check if generation was successful
-            if oq_data.get("status") == "completed_successfully":
-                # Extract the OQ test suite event
-                oq_event = oq_data.get("full_event")
-                if oq_event and isinstance(oq_event, OQTestSuiteEvent):
-                    self.logger.info(
-                        f"[OQ] Generated {oq_event.test_suite.total_test_count} OQ tests successfully"
-                    )
-                    return oq_event
-                # Create event from data
-                raise ValueError("OQ generation completed but no valid event returned")
-            # Handle consultation required or error
-            consultation = oq_data.get("consultation", {})
-            raise RuntimeError(
-                f"OQ generation requires consultation: {consultation.get('consultation_type', 'unknown')}"
+                
+            # Process dictionary result
+            if isinstance(oq_data, dict):
+                if oq_data.get("status") == "completed_successfully":
+                    oq_event = oq_data.get("full_event")
+                    if oq_event and isinstance(oq_event, OQTestSuiteEvent):
+                        self.logger.info(
+                            f"[OQ] Generated {oq_event.test_suite.total_test_count} OQ tests successfully"
+                        )
+                        return oq_event
+                
+                # Handle consultation in dictionary format
+                consultation = oq_data.get("consultation", {})
+                raise RuntimeError(
+                    f"OQ generation failed: {consultation.get('consultation_type', 'unknown')}"
+                )
+            
+            # Unexpected result type
+            raise ValueError(
+                f"Unexpected OQ workflow result type: {type(oq_result)}"
             )
 
         except Exception as e:
