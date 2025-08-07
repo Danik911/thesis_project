@@ -1,0 +1,67 @@
+{
+  "timestamp": "2025-08-07T14:07:37.957577+00:00",
+  "test_suite": "categorization_oss",
+  "total_tests": 5,
+  "results": [
+    {
+      "test_case": "Category 1 - Infrastructure",
+      "provider": "openai",
+      "model": "default",
+      "category": 0,
+      "confidence": 0.0,
+      "expected_category": 1,
+      "passed": false,
+      "latency_ms": 4103.8031578063965,
+      "tokens_used": {},
+      "error": "Categorization failed: 'GAMPCategorizationEvent' object has no attribute 'category'"
+    },
+    {
+      "test_case": "Category 3 - Non-configured",
+      "provider": "openai",
+      "model": "default",
+      "category": 0,
+      "confidence": 0.0,
+      "expected_category": 3,
+      "passed": false,
+      "latency_ms": 2835.4766368865967,
+      "tokens_used": {},
+      "error": "Categorization failed: 'GAMPCategorizationEvent' object has no attribute 'category'"
+    },
+    {
+      "test_case": "Category 4 - Configured",
+      "provider": "openai",
+      "model": "default",
+      "category": 0,
+      "confidence": 0.0,
+      "expected_category": 4,
+      "passed": false,
+      "latency_ms": 2521.815061569214,
+      "tokens_used": {},
+      "error": "Categorization failed: 'GAMPCategorizationEvent' object has no attribute 'category'"
+    },
+    {
+      "test_case": "Category 5 - Custom",
+      "provider": "openai",
+      "model": "default",
+      "category": 0,
+      "confidence": 0.0,
+      "expected_category": 5,
+      "passed": false,
+      "latency_ms": 4053.7664890289307,
+      "tokens_used": {},
+      "error": "Categorization failed: 'GAMPCategorizationEvent' object has no attribute 'category'"
+    },
+    {
+      "test_case": "Category 4/5 Edge Case",
+      "provider": "openai",
+      "model": "default",
+      "category": 0,
+      "confidence": 0.0,
+      "expected_category": 5,
+      "passed": false,
+      "latency_ms": 2209.9790573120117,
+      "tokens_used": {},
+      "error": "Categorization failed: 'GAMPCategorizationEvent' object has no attribute 'category'"
+    }
+  ]
+}

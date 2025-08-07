@@ -1,0 +1,83 @@
+[
+  {
+    "model": "qwen/qwen-2.5-72b-instruct",
+    "test_case": "Oracle Database Infrastructure",
+    "expected": 1,
+    "actual": 1,
+    "confidence": 0.9,
+    "status": "PASS",
+    "reasoning": "The URS content indicates the deployment of Oracle Database 19c, which is a standard commercial off-the-shelf (COTS) software. The requirements focus on standard installation and configuration tasks, such as setting up backups, user authentication, and audit logging, all using Oracle's built-in features. This aligns with the definition of Category 1: Infrastructure software, as it involves the installation and configuration of a database system without any custom development or significant configuration beyond standard practices."
+  },
+  {
+    "model": "qwen/qwen-2.5-72b-instruct",
+    "test_case": "LabWare LIMS Configuration",
+    "expected": 4,
+    "actual": 4,
+    "confidence": 0.9,
+    "status": "PASS",
+    "reasoning": "The URS content indicates that LabWare LIMS version 7 will be implemented, which is a commercial off-the-shelf (COTS) software. However, it requires extensive configuration through LabWare's standard interfaces, including sample workflows, user roles and permissions, report templates, and integration with instruments. This configuration is necessary to tailor the software to the specific needs of the QC laboratory, but no custom programming or code modifications will be performed. Therefore, this aligns with GAMP Category 4, which involves configured products where commercial software is customized through configuration rather than coding."
+  },
+  {
+    "model": "qwen/qwen-2.5-72b-instruct",
+    "test_case": "Custom Clinical Analytics Platform",
+    "expected": 5,
+    "actual": 5,
+    "confidence": 1.0,
+    "status": "PASS",
+    "reasoning": "The URS content clearly indicates the development of a bespoke clinical trial analytics system. Key points include implementing proprietary statistical algorithms, creating custom visualizations, building a custom API, developing machine learning models specific to trial designs, and designing a custom database schema. All components are to be developed from scratch using Python and React, which strongly suggests that this is a custom application (Category 5) rather than a configured product or infrastructure software."
+  },
+  {
+    "model": "meta-llama/llama-3.1-70b-instruct",
+    "test_case": "Oracle Database Infrastructure",
+    "expected": 1,
+    "actual": 1,
+    "confidence": 1.0,
+    "status": "PASS",
+    "reasoning": "The URS content clearly indicates that the Oracle Database 19c is being used as infrastructure software, with no custom code or bespoke development. The requirements listed are all related to standard installation, configuration, and setup of the database, using built-in features only. This aligns perfectly with the definition of Category 1 in GAMP-5, which includes infrastructure software such as operating systems and databases."
+  },
+  {
+    "model": "meta-llama/llama-3.1-70b-instruct",
+    "test_case": "LabWare LIMS Configuration",
+    "expected": 4,
+    "actual": 4,
+    "confidence": 0.9,
+    "status": "PASS",
+    "reasoning": "The URS content indicates that the LabWare LIMS system requires user configuration through standard interfaces, including workflow setup, user role definition, report template creation, and instrument integration. This aligns with the characteristics of a Category 4 system, which involves commercial software that requires user configuration. The fact that no custom programming or code modifications are planned further supports this categorization. The confidence score is high due to the clear evidence of configuration requirements and the absence of any indicators suggesting custom development or infrastructure software."
+  },
+  {
+    "model": "meta-llama/llama-3.1-70b-instruct",
+    "test_case": "Custom Clinical Analytics Platform",
+    "expected": 5,
+    "actual": 5,
+    "confidence": 1.0,
+    "status": "PASS",
+    "reasoning": "The URS explicitly states that the system will be 'completely custom' and 'developed from scratch', indicating a bespoke software development project. The requirements include implementing proprietary algorithms, creating custom visualizations, building a custom API, developing machine learning models, and creating a custom database schema, all of which are strong indicators of a Category 5 custom application. The use of specific programming languages (Python and React) further supports this categorization."
+  },
+  {
+    "model": "mistralai/mistral-large",
+    "test_case": "Oracle Database Infrastructure",
+    "expected": 1,
+    "actual": 1,
+    "confidence": 0.9,
+    "status": "PASS",
+    "reasoning": "The URS describes the deployment of Oracle Database 19c, which is a standard database software. The requirements include installation on Linux servers, configuring standard backup procedures, setting up user authentication, and enabling audit logging. All these tasks are typical for infrastructure software, and there is no mention of custom code or configuration beyond standard setup. Therefore, it falls under GAMP Category 1: Infrastructure software."
+  },
+  {
+    "model": "mistralai/mistral-large",
+    "test_case": "LabWare LIMS Configuration",
+    "expected": 4,
+    "actual": 4,
+    "confidence": 0.9,
+    "status": "PASS",
+    "reasoning": "The URS describes the implementation of LabWare LIMS version 7, which is a commercial software product. The system requires configuration of sample workflows, user roles and permissions, report templates, and integration with instruments using LabWare's standard tools and interfaces. No custom programming or code modifications are mentioned, indicating that the software will be configured but not customized. This aligns with GAMP Category 4: Configured products."
+  },
+  {
+    "model": "mistralai/mistral-large",
+    "test_case": "Custom Clinical Analytics Platform",
+    "expected": 5,
+    "actual": 5,
+    "confidence": 1.0,
+    "status": "PASS",
+    "reasoning": "The URS content clearly specifies the development of a completely custom analytics platform with bespoke features such as proprietary statistical algorithms, custom visualizations, a custom API, machine learning models, and a custom database schema. All components are to be developed from scratch using Python and React, which aligns with the definition of Category 5: Custom applications (bespoke software development)."
+  }
+]

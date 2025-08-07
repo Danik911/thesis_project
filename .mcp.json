@@ -84,6 +84,16 @@
 			"env": {
 				"PERPLEXITY_API_KEY": "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"
 			}
+		},
+		"serena": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"serena-mcp"
+			]
 		}
 	}
 }

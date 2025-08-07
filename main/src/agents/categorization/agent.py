@@ -60,6 +60,8 @@ Based on Task 2 implementation replacing fragile regex parsing with Pydantic str
 """
 
 import asyncio
+import json
+import re
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
@@ -68,7 +70,7 @@ from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.core.tools import FunctionTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from src.agents.categorization.error_handler import (
     CategorizationError,
     CategorizationErrorHandler,
@@ -108,6 +110,115 @@ class GAMPCategorizationResult(BaseModel):
         """Validate that category is a valid GAMP category (1, 3, 4, or 5)."""
         if self.category not in [1, 3, 4, 5]:
             raise ValueError(f"Invalid GAMP category: {self.category}. Must be 1, 3, 4, or 5.")
+
+
+def parse_structured_response(response_text: str, output_cls=GAMPCategorizationResult) -> GAMPCategorizationResult:
+    """
+    Parse LLM response into structured Pydantic model.
+    
+    Supports both OpenAI and OpenRouter/OSS models by extracting JSON
+    from various response formats without relying on model-specific features.
+    
+    Args:
+        response_text: Raw LLM response text
+        output_cls: Pydantic model class to parse into (default: GAMPCategorizationResult)
+        
+    Returns:
+        Parsed GAMPCategorizationResult instance
+        
+    Raises:
+        RuntimeError: If parsing fails with full diagnostic information
+    """
+    # Strategy 1: Try to find and parse clean JSON
+    try:
+        # Look for JSON object in the response
+        json_patterns = [
+            r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)?\}',  # Nested JSON
+            r'\{.*?\}',  # Simple JSON
+        ]
+        
+        for pattern in json_patterns:
+            json_matches = re.findall(pattern, response_text, re.DOTALL)
+            for json_match in json_matches:
+                try:
+                    json_data = json.loads(json_match)
+                    # Check if this looks like our expected structure
+                    if 'category' in json_data:
+                        return output_cls(**json_data)
+                except (json.JSONDecodeError, ValidationError):
+                    continue
+    except Exception:
+        pass
+    
+    # Strategy 2: Extract fields using regex patterns
+    try:
+        # Extract category (various formats)
+        category_patterns = [
+            r'"?category"?\s*:\s*(\d+)',
+            r'Category\s*:\s*(\d+)',
+            r'GAMP\s+Category\s*:\s*(\d+)',
+            r'Category\s+(\d+)',
+        ]
+        
+        category = None
+        for pattern in category_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE)
+            if match:
+                category = int(match.group(1))
+                break
+        
+        # Extract confidence score (various formats)
+        confidence_patterns = [
+            r'"?confidence[_-]?score"?\s*:\s*([0-9.]+)',
+            r'Confidence\s*:\s*([0-9.]+)',
+            r'Score\s*:\s*([0-9.]+)',
+        ]
+        
+        confidence = None
+        for pattern in confidence_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE)
+            if match:
+                confidence = float(match.group(1))
+                # Handle percentage values
+                if confidence > 1.0:
+                    confidence = confidence / 100.0
+                break
+        
+        # Extract reasoning (various formats)
+        reasoning_patterns = [
+            r'"?reasoning"?\s*:\s*"([^"]+)"',
+            r'"?reasoning"?\s*:\s*\'([^\']+)\'',
+            r'Reasoning\s*:\s*(.+?)(?:\n|$)',
+            r'Justification\s*:\s*(.+?)(?:\n|$)',
+        ]
+        
+        reasoning = None
+        for pattern in reasoning_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                reasoning = match.group(1).strip()
+                break
+        
+        # If we have all required fields, create the result
+        if category is not None and confidence is not None and reasoning:
+            return output_cls(
+                category=category,
+                confidence_score=confidence,
+                reasoning=reasoning
+            )
+    except Exception as e:
+        # Continue to error reporting
+        pass
+    
+    # NO FALLBACKS: Fail explicitly with full diagnostic information
+    error_msg = (
+        f"Failed to parse structured response from LLM.\n"
+        f"Response text (first 500 chars): {response_text[:500]}...\n"
+        f"Expected format: JSON with 'category' (int), 'confidence_score' (float), 'reasoning' (str)\n"
+        f"This typically occurs with OSS models that don't follow strict JSON formatting.\n"
+        f"Consider prompting the model more explicitly for JSON output."
+    )
+    raise RuntimeError(error_msg)
 
 
 class CategorizationAgentWrapper:
@@ -1067,10 +1178,10 @@ def categorize_with_pydantic_structured_output(
     error_handler: CategorizationErrorHandler | None = None
 ) -> GAMPCategorizationEvent:
     """
-    Categorize URS using LLMTextCompletionProgram with Pydantic structured output.
+    Categorize URS using direct LLM calls with robust parsing for OSS model compatibility.
     
-    This approach uses LLMTextCompletionProgram for guaranteed structured output,
-    replacing fragile regex parsing with Pydantic models.
+    This approach bypasses LLMTextCompletionProgram's model validation to support
+    both OpenAI and OpenRouter/OSS models through direct LLM calls with JSON parsing.
     
     Args:
         llm: LLM instance to use for categorization
@@ -1085,7 +1196,7 @@ def categorize_with_pydantic_structured_output(
         error_handler = CategorizationErrorHandler()
 
     try:
-        # Create structured output program with Pydantic model
+        # Enhanced prompt that explicitly requests JSON format
         categorization_prompt = """You are a GAMP-5 categorization expert. Analyze the URS document content and determine the appropriate GAMP category.
 
 GAMP Categories:
@@ -1097,25 +1208,32 @@ GAMP Categories:
 IMPORTANT INSTRUCTIONS:
 1. First analyze the URS content for key indicators
 2. Apply GAMP-5 decision logic systematically
-3. Provide a confidence score based on evidence strength
+3. Provide a confidence score based on evidence strength (0.0 to 1.0)
 4. Give a clear reasoning for your decision
 
-CRITICAL: You must respond with a valid JSON object matching the required schema.
+CRITICAL: You MUST respond with a valid JSON object in the following format:
+{
+    "category": <number 1, 3, 4, or 5>,
+    "confidence_score": <decimal between 0.0 and 1.0>,
+    "reasoning": "<your detailed reasoning here>"
+}
 
 URS Content to analyze:
-{urs_content}
+""" + urs_content + """
 
-Provide your analysis in the required structured format."""
+Respond ONLY with the JSON object, no additional text."""
 
-        program = LLMTextCompletionProgram.from_defaults(
-            output_cls=GAMPCategorizationResult,
-            llm=llm,
-            prompt_template_str=categorization_prompt
-        )
-
-        # Execute structured categorization
+        # Use direct LLM call instead of LLMTextCompletionProgram
         error_handler.logger.info(f"Starting structured categorization for document: {document_name}")
-        result = program(urs_content=urs_content)
+        
+        # Call LLM directly
+        response = llm.complete(categorization_prompt)
+        response_text = response.text if hasattr(response, 'text') else str(response)
+        
+        error_handler.logger.debug(f"LLM response (first 200 chars): {response_text[:200]}")
+        
+        # Parse the response using our robust parser
+        result = parse_structured_response(response_text)
 
         # Validate the result
         result.validate_category()

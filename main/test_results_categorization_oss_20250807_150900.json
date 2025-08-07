@@ -1,0 +1,77 @@
+{
+  "timestamp": "2025-08-07T14:09:00.503783+00:00",
+  "test_suite": "categorization_oss",
+  "total_tests": 5,
+  "results": [
+    {
+      "test_case": "Category 1 - Infrastructure",
+      "provider": "openai",
+      "model": "default",
+      "category": 1,
+      "confidence": 0.95,
+      "expected_category": 1,
+      "passed": true,
+      "latency_ms": 3712.082624435425,
+      "tokens_used": {
+        "estimate": 124
+      },
+      "error": null
+    },
+    {
+      "test_case": "Category 3 - Non-configured",
+      "provider": "openai",
+      "model": "default",
+      "category": 3,
+      "confidence": 0.9,
+      "expected_category": 3,
+      "passed": true,
+      "latency_ms": 2399.2369174957275,
+      "tokens_used": {
+        "estimate": 137
+      },
+      "error": null
+    },
+    {
+      "test_case": "Category 4 - Configured",
+      "provider": "openai",
+      "model": "default",
+      "category": 4,
+      "confidence": 0.9,
+      "expected_category": 4,
+      "passed": true,
+      "latency_ms": 1919.1370010375977,
+      "tokens_used": {
+        "estimate": 161
+      },
+      "error": null
+    },
+    {
+      "test_case": "Category 5 - Custom",
+      "provider": "openai",
+      "model": "default",
+      "category": 5,
+      "confidence": 0.95,
+      "expected_category": 5,
+      "passed": true,
+      "latency_ms": 1857.9299449920654,
+      "tokens_used": {
+        "estimate": 189
+      },
+      "error": null
+    },
+    {
+      "test_case": "Category 4/5 Edge Case",
+      "provider": "openai",
+      "model": "default",
+      "category": 5,
+      "confidence": 0.9,
+      "expected_category": 5,
+      "passed": true,
+      "latency_ms": 1715.7881259918213,
+      "tokens_used": {
+        "estimate": 125
+      },
+      "error": null
+    }
+  ]
+}

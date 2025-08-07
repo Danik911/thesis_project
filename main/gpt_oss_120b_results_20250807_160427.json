@@ -1,0 +1,42 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2025-08-07T16:04:27.456940",
+  "accuracy": 80.0,
+  "results": [
+    {
+      "test": "Windows Server OS",
+      "expected": 1,
+      "actual": "ERROR",
+      "confidence": 0,
+      "success": false
+    },
+    {
+      "test": "Excel for Data Analysis",
+      "expected": 3,
+      "actual": 3,
+      "confidence": 0.95,
+      "success": true
+    },
+    {
+      "test": "SAP Configuration",
+      "expected": 4,
+      "actual": 4,
+      "confidence": 0.95,
+      "success": true
+    },
+    {
+      "test": "Custom Blockchain Platform",
+      "expected": 5,
+      "actual": 5,
+      "confidence": 0.99,
+      "success": true
+    },
+    {
+      "test": "Chromatography Software",
+      "expected": 4,
+      "actual": 4,
+      "confidence": 0.95,
+      "success": true
+    }
+  ]
+}
