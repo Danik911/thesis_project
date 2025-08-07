@@ -87,12 +87,12 @@
 		},
 		"serena": {
 			"type": "stdio",
-			"command": "cmd",
+			"command": "uvx",
 			"args": [
-				"/c",
-				"npx",
-				"-y",
-				"serena-mcp"
+				"--from",
+				"git+https://github.com/oraios/serena",
+				"serena",
+				"start-mcp-server"
 			]
 		}
 	}
