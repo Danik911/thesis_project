@@ -21,7 +21,7 @@ from llama_index.core.base.llms.types import (
     MessageRole,
 )
 from llama_index.core.callbacks import CallbackManager
-from llama_index.core.base.query_pipeline.query import QueryComponent
+# QueryComponent import removed - not needed for basic LLM functionality
 
 
 class OpenRouterLLM(BaseLLM):
@@ -181,7 +181,7 @@ class OpenRouterLLM(BaseLLM):
         """Async stream chat."""
         raise NotImplementedError("Async streaming not implemented")
     
-    def _as_query_component(self, **kwargs: Any) -> 'QueryComponent':
+    def _as_query_component(self, **kwargs: Any) -> Any:
         """Return as query component."""
         # This is required by LlamaIndex but not used in our implementation
         return self

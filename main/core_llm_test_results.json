@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-08-07T22:51:13.906433",
+  "model": "openai/gpt-oss-120b",
+  "provider": "openrouter",
+  "results": [
+    {
+      "test": "GAMP-5 Categorization",
+      "success": true,
+      "time": 3.0440866947174072,
+      "response_length": 142
+    },
+    {
+      "test": "Test Generation",
+      "success": true,
+      "time": 4.097915410995483,
+      "response_length": 1236
+    },
+    {
+      "test": "Regulatory Research",
+      "success": true,
+      "time": 3.62078595161438,
+      "response_length": 548
+    },
+    {
+      "test": "SME Analysis",
+      "success": true,
+      "time": 12.88478970527649,
+      "response_length": 7848
+    },
+    {
+      "test": "Planning",
+      "success": true,
+      "time": 6.686655521392822,
+      "response_length": 3466
+    }
+  ],
+  "summary": {
+    "success_rate": "5/5",
+    "average_time": 6.066846656799316,
+    "estimated_cost": 0.0002979
+  }
+}

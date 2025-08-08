@@ -14,7 +14,7 @@ from typing import Any
 
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
-from llama_index.llms.openai import OpenAI
+from src.config.llm_config import LLMConfig
 from src.core.events import ConsultationRequiredEvent
 
 from .events import OQTestGenerationEvent, OQTestSuiteEvent
@@ -52,10 +52,8 @@ class OQTestGenerationWorkflow(Workflow):
         """
         super().__init__(timeout=timeout, verbose=verbose)
 
-        # Initialize LLM
-        self.llm = llm or OpenAI(
-            model="gpt-4o-mini",
-            temperature=0.1,  # Low temperature for consistent generation
+        # Use centralized LLM configuration (NO FALLBACKS)
+        self.llm = llm or LLMConfig.get_llm(
             max_tokens=4000   # Sufficient for test suite generation
         )
 

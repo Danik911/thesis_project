@@ -15,7 +15,7 @@ Key Features:
 from typing import Any
 
 from llama_index.core.llms import LLM
-from llama_index.llms.openai import OpenAI
+from src.config.llm_config import LLMConfig
 
 from .context_provider import ContextProviderAgent, create_context_provider_agent
 from .research_agent import ResearchAgent, create_research_agent
@@ -33,7 +33,8 @@ class AgentRegistry:
             llm: Language model for agent intelligence
             verbose: Enable verbose logging
         """
-        self.llm = llm or OpenAI(model="gpt-4.1-mini-2025-04-14")
+        # Use centralized LLM configuration (NO FALLBACKS)
+        self.llm = llm or LLMConfig.get_llm()
         self.verbose = verbose
 
         # Agent instances
@@ -106,8 +107,9 @@ def create_agents_for_coordination(
     Returns:
         Dictionary mapping agent types to agent instances
     """
+    # Use centralized LLM configuration (NO FALLBACKS)
     if llm is None:
-        llm = OpenAI(model="gpt-4.1-mini-2025-04-14")
+        llm = LLMConfig.get_llm()
 
     agents = {
         "context_provider": create_context_provider_agent(

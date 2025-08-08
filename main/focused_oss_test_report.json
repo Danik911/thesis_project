@@ -1,0 +1,70 @@
+{
+  "test_summary": {
+    "timestamp": "2025-08-07T22:44:13.809165",
+    "model": "openai/gpt-oss-120b",
+    "provider": "openrouter",
+    "total_tests": 6,
+    "successful_tests": 6,
+    "failed_tests": 0,
+    "success_rate_percentage": 100.0,
+    "avg_execution_time": 9.75,
+    "total_execution_time": 58.49
+  },
+  "detailed_results": [
+    {
+      "agent_name": "Context Provider",
+      "success": true,
+      "execution_time": 3.26,
+      "response_length": 1174,
+      "response_preview": "**Extracted Pharmaceutical Context**\n\n| # | Category | Details |\n|---|----------|---------|\n| **1** | **System Type** | Tablet compression system (tablet press) |\n| **2** | **Critical Parameters** | ? Compression force  <br>? Tablet weight (uniformity)  <br>? Temperature of the compression zone |\n| ",
+      "error": null
+    },
+    {
+      "agent_name": "Research Agent",
+      "success": true,
+      "execution_time": 5.66,
+      "response_length": 6930,
+      "response_preview": "## 1.  Required Test Documentation  \n\n| Document | Purpose | Typical Content | When it is created/updated |\n|----------|---------|----------------|---------------------------|\n| **User Requirements Specification (URS)** | Captures the business?/process?level needs for the compression line. | ? Produ",
+      "error": null
+    },
+    {
+      "agent_name": "SME Agent",
+      "success": true,
+      "execution_time": 10.23,
+      "response_length": 7075,
+      "response_preview": "**SME ? Operational Qualification (OQ) Analysis**  \n*Liquid Filling Line ? Injectable Products (5?mL vials)*  \n\n---\n\n## 1. Risk Assessment for Each Critical Quality Attribute (CQA)\n\n| **CQA** | **Potential Failure Modes** | **Impact on Patient Safety / Product Efficacy** | **Likelihood (O?Q environm",
+      "error": null
+    },
+    {
+      "agent_name": "Planning Agent",
+      "success": true,
+      "execution_time": 5.2,
+      "response_length": 7983,
+      "response_preview": "## Operational Qualification (OQ) Test Plan  \n**System:** Automated Pharmaceutical Packaging Line  \n**Scope:** Verify that the line operates in accordance with the defined functional specifications (Package integrity, Label accuracy, Seal strength, Throughput).  \n\n---  \n\n### 1. Test Phases & Sequenc",
+      "error": null
+    },
+    {
+      "agent_name": "OQ Generator",
+      "success": true,
+      "execution_time": 3.31,
+      "response_length": 2840,
+      "response_preview": "{\n  \"test_id\": \"OQ-001\",\n  \"test_title\": \"Verification of Autoclave Sterilization Temperature Uniformity and Hold Time\",\n  \"objective\": \"Verify that the autoclave reaches and maintains a sterilization temperature of 121??C???1??C for a minimum of 15?minutes with uniform heat distribution throughout ",
+      "error": null
+    },
+    {
+      "agent_name": "Complex Reasoning",
+      "success": true,
+      "execution_time": 30.83,
+      "response_length": 7071,
+      "response_preview": "## 1.  ROOT?CAUSE ANALYSIS (RCA)  \n\n| Failure | Observed Deviation | Most Likely Primary Causes | Contributing / Secondary Causes | Evidence / Diagnostic Checks |\n|---------|-------------------|----------------------------|--------------------------------|------------------------------|\n| **Flow?rat",
+      "error": null
+    }
+  ],
+  "migration_assessment": {
+    "api_connectivity": "WORKING",
+    "response_quality": "GOOD",
+    "performance": "SLOW",
+    "cost_reduction": "91%+ achieved (using OSS model)",
+    "compliance_status": "NO FALLBACKS - pharmaceutical compliant"
+  }
+}

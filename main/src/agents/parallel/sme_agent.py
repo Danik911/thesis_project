@@ -27,7 +27,7 @@ from uuid import UUID
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
-from llama_index.llms.openai import OpenAI
+from src.config.llm_config import LLMConfig
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field
@@ -369,7 +369,8 @@ class SMEAgent:
             max_recommendations: Maximum number of recommendations
         """
         self.specialty = specialty
-        self.llm = llm or OpenAI(model="gpt-4.1-mini-2025-04-14")
+        # Use centralized LLM configuration (NO FALLBACKS)
+        self.llm = llm or LLMConfig.get_llm()
         self.verbose = verbose
         self.enable_phoenix = enable_phoenix
         self.confidence_threshold = confidence_threshold

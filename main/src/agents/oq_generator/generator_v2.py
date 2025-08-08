@@ -13,7 +13,7 @@ from typing import Any
 
 from llama_index.core.llms import LLM
 from llama_index.core.prompts import PromptTemplate
-from llama_index.llms.openai import OpenAI
+from src.config.llm_config import LLMConfig
 from llama_index.llms.openai.utils import to_openai_message_dicts
 from pydantic import ValidationError
 from src.core.events import GAMPCategory
@@ -148,34 +148,13 @@ class OQTestGeneratorV2:
                 f"(timeout: {timeout}s)"
             )
             
-            # Initialize LLM with appropriate model
-            # o3 models require different parameters (no temperature support)
-            if model_name.startswith("o3"):
-                # Get reasoning effort based on GAMP category complexity
-                reasoning_effort_mapping = {
-                    GAMPCategory.CATEGORY_1: "low",     # Simple infrastructure
-                    GAMPCategory.CATEGORY_3: "medium",  # Standard products  
-                    GAMPCategory.CATEGORY_4: "medium",  # Configured products
-                    GAMPCategory.CATEGORY_5: "high"     # Complex custom applications
-                }
-                reasoning_effort = reasoning_effort_mapping.get(gamp_category, "medium")
-                
-                llm = OpenAI(
-                    model=model_name,
-                    # temperature not supported by o3 models
-                    timeout=timeout,
-                    api_key=None,  # Uses environment variable
-                    max_completion_tokens=4000,  # o3 uses this instead of max_tokens
-                    reasoning_effort=reasoning_effort  # CRITICAL: Required for o3 models
-                )
-            else:
-                llm = OpenAI(
-                    model=model_name,
-                    temperature=0.1,
-                    timeout=timeout,
-                    api_key=None,  # Uses environment variable
-                    max_tokens=4000  # Standard models use max_tokens
-                )
+            # Use centralized LLM configuration (NO FALLBACKS)
+            # Note: o3 models are not currently in OSS migration scope
+            # Using standard LLM config for now
+            llm = LLMConfig.get_llm(
+                max_tokens=4000,
+                # Additional parameters can be passed as needed
+            )
             
             # Determine test count
             if config:
@@ -258,7 +237,7 @@ class OQTestGeneratorV2:
 
     async def _generate_with_o3_model_async(
         self,
-        llm: OpenAI,
+        llm: LLM,
         gamp_category: GAMPCategory,
         urs_content: str,
         document_name: str,
@@ -330,7 +309,7 @@ class OQTestGeneratorV2:
 
     async def _generate_with_o3_model(
         self,
-        llm: OpenAI,
+        llm: LLM,
         gamp_category: GAMPCategory,
         urs_content: str,
         document_name: str,
@@ -344,7 +323,7 @@ class OQTestGeneratorV2:
 
     async def _generate_with_progressive_o3_model(
         self,
-        llm: OpenAI,
+        llm: LLM,
         gamp_category: GAMPCategory,
         urs_content: str,
         document_name: str,
@@ -434,7 +413,7 @@ class OQTestGeneratorV2:
 
     def _generate_with_standard_model(
         self,
-        llm: OpenAI,
+        llm: LLM,
         gamp_category: GAMPCategory,
         urs_content: str,
         document_name: str,
@@ -1076,10 +1055,8 @@ EXACT JSON Schema for this batch:
         self.logger.info("Testing o3 model configuration...")
         
         try:
-            # Test with minimal configuration
-            test_llm = OpenAI(
-                model="o3-mini",
-                timeout=30,
+            # Use centralized LLM configuration (NO FALLBACKS)
+            test_llm = LLMConfig.get_llm(
                 api_key=None,
                 max_completion_tokens=100,
                 reasoning_effort="medium"  # Required for o3 models

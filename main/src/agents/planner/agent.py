@@ -35,7 +35,7 @@ from uuid import uuid4
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
-from llama_index.llms.openai import OpenAI
+from src.config.llm_config import LLMConfig
 from src.core.events import (
     AgentRequestEvent,
     AgentResultEvent,
@@ -80,7 +80,8 @@ class PlannerAgent:
             enable_risk_assessment: Enable risk-based planning
             verbose: Enable verbose logging
         """
-        self.llm = llm or OpenAI(model="gpt-4.1-mini-2025-04-14")
+        # Use centralized LLM configuration (NO FALLBACKS)
+        self.llm = llm or LLMConfig.get_llm()
         self.strategy_generator = strategy_generator or GAMPStrategyGenerator(verbose=verbose)
         self.agent_coordinator = agent_coordinator or AgentCoordinator(verbose=verbose)
         self.enable_coordination = enable_coordination

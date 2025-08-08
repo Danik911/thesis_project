@@ -37,7 +37,7 @@ from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.schema import NodeWithScore, QueryBundle
 from llama_index.core.tools import FunctionTool
 from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.llms.openai import OpenAI
+from src.config.llm_config import LLMConfig
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
@@ -114,7 +114,8 @@ class ContextProviderAgent:
             cache_dir: Directory for caching embeddings
             embedding_model: OpenAI embedding model to use
         """
-        self.llm = llm or OpenAI(model="gpt-4.1-mini-2025-04-14")
+        # Use centralized LLM configuration (NO FALLBACKS)
+        self.llm = llm or LLMConfig.get_llm()
         self.verbose = verbose
         self.enable_phoenix = enable_phoenix
         self.max_documents = max_documents
@@ -489,18 +490,16 @@ class ContextProviderAgent:
             # NO FALLBACK - fail explicitly
             raise RuntimeError(error_msg) from e
 
-    def _create_extractor_llm(self) -> OpenAI | None:
-        """Create optimized LLM for metadata extraction."""
+    def _create_extractor_llm(self) -> LLM | None:
+        """Create optimized LLM for metadata extraction using centralized config."""
         try:
-            extractor_model = os.getenv("RAG_EXTRACTOR_MODEL", "gpt-4.1-nano-2025-04-14")
+            # Use centralized LLM configuration with extractor-specific parameters
             extractor_temperature = float(os.getenv("RAG_EXTRACTOR_TEMPERATURE", "0.1"))
             extractor_max_tokens = int(os.getenv("RAG_EXTRACTOR_MAX_TOKENS", "500"))
 
-            return OpenAI(
-                model=extractor_model,
+            return LLMConfig.get_llm(
                 temperature=extractor_temperature,
-                max_tokens=extractor_max_tokens,
-                api_key=os.getenv("OPENAI_API_KEY")
+                max_tokens=extractor_max_tokens
             )
         except Exception as e:
             self.logger.warning(f"Could not create extractor LLM: {e!s}")

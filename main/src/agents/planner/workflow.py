@@ -28,7 +28,7 @@ from typing import Any
 
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
-from llama_index.llms.openai import OpenAI
+from src.config.llm_config import LLMConfig
 from src.core.events import (
     AgentRequestEvent,
     AgentResultEvent,
@@ -87,8 +87,8 @@ class PlannerAgentWorkflow(Workflow):
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
 
-        # Initialize LLM
-        self.llm = llm or OpenAI(model="gpt-4o-mini")
+        # Use centralized LLM configuration (NO FALLBACKS)
+        self.llm = llm or LLMConfig.get_llm()
 
         # Initialize planner agent
         self.planner_agent = create_planner_agent(
