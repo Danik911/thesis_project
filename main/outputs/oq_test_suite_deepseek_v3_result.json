@@ -1,0 +1,37 @@
+{
+  "suite_id": "OQ-SUITE-001-DEEPSEEK-V3",
+  "model": "deepseek/deepseek-chat (671B parameters)",
+  "generation_status": "COMPLETED_WITH_VALIDATION_ERROR",
+  "gamp_category": 5,
+  "total_tests_generated": 27,
+  "required_test_count": 25,
+  "validation_result": "CORRECTLY_REJECTED_NO_FALLBACKS",
+  "error_message": "Expected exactly 25 test cases, got 27. NO FALLBACKS - test count must be exact for GAMP-5 compliance.",
+  "timestamp": "2025-08-08T19:58:59.634999",
+  "execution_metrics": {
+    "total_time": "4 minutes",
+    "chromadb_documents": 36,
+    "spans_captured": 130,
+    "chromadb_spans": 50
+  },
+  "compliance_status": {
+    "gamp5_compliant": "System enforced compliance by rejecting non-compliant output",
+    "cfr_part11_compliant": true,
+    "alcoa_plus_compliant": true,
+    "audit_trail_complete": true
+  },
+  "next_steps": [
+    "Adjust DeepSeek V3 prompt to generate exactly 25 tests",
+    "Fine-tune temperature and max_tokens parameters",
+    "Consider using few-shot examples in prompt"
+  ],
+  "sample_test_ids_generated": [
+    "OQ-001",
+    "OQ-002",
+    "OQ-003",
+    "...",
+    "OQ-025",
+    "OQ-026",
+    "OQ-027"
+  ]
+}

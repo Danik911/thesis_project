@@ -1,0 +1,1620 @@
+{
+  "suite_id": "OQ-SUITE-0005",
+  "gamp_category": 5,
+  "document_name": "Pharmaceutical MES OQ Validation",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Installation Verification Test",
+      "test_category": "installation",
+      "gamp_category": 5,
+      "objective": "Verify system installation completed successfully and all components are properly configured",
+      "prerequisites": [
+        "System hardware requirements verified",
+        "Network connectivity established"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify system installation completed without errors",
+          "expected_result": "Installation log shows successful completion",
+          "data_to_capture": [
+            "Installation log",
+            "System version"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Check all required services are running",
+          "expected_result": "All critical services show active status",
+          "data_to_capture": [
+            "Service status list"
+          ],
+          "verification_method": "system_query",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify database connectivity and schema creation",
+          "expected_result": "Database connection established and schema complete",
+          "data_to_capture": [
+            "Connection test results",
+            "Schema validation"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Installation completed successfully",
+        "All services operational",
+        "Database accessible"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-001: System Installation",
+        "REQ-002: Component Verification"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "System Administrator",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "User Authentication and Authorization Test",
+      "test_category": "security",
+      "gamp_category": 5,
+      "objective": "Verify user authentication and authorization mechanisms comply with 21 CFR Part 11 requirements",
+      "prerequisites": [
+        "User accounts created with different access levels",
+        "Multi-factor authentication configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Attempt login with valid credentials",
+          "expected_result": "User successfully logs in",
+          "data_to_capture": [
+            "Login attempt result"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt login with invalid credentials",
+          "expected_result": "Login attempt fails",
+          "data_to_capture": [
+            "Login attempt result"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify user role-based access control",
+          "expected_result": "User can only access authorized functions",
+          "data_to_capture": [
+            "Access logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Valid users can authenticate successfully",
+        "Invalid login attempts are rejected",
+        "Role-based access control enforced"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-001: User Authentication and Access Control"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Security Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Core Functional Testing - Feature Set 1",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify core functionality of Feature Set 1 including data input and processing",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Input test data into Feature Set 1",
+          "expected_result": "Data accepted without errors",
+          "data_to_capture": [
+            "Input data",
+            "System response"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Process the input data",
+          "expected_result": "Data processed correctly",
+          "data_to_capture": [
+            "Processing logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify output data",
+          "expected_result": "Output data matches expected results",
+          "data_to_capture": [
+            "Output data"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data input accepted",
+        "Data processed correctly",
+        "Output data matches expected results"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-004: Batch Record Management"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Functional Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Core Functional Testing - Feature Set 2",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify core functionality of Feature Set 2 including data validation and reporting",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Input test data into Feature Set 2",
+          "expected_result": "Data accepted without errors",
+          "data_to_capture": [
+            "Input data",
+            "System response"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Validate the input data",
+          "expected_result": "Data validation rules applied correctly",
+          "data_to_capture": [
+            "Validation logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Generate report from processed data",
+          "expected_result": "Report generated correctly",
+          "data_to_capture": [
+            "Generated report"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data input accepted",
+        "Data validation rules applied",
+        "Report generated correctly"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-005: Reporting and Analytics"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Functional Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Data Input Validation and Processing Test",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Verify data input validation and processing comply with ALCOA+ principles",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Input valid test data",
+          "expected_result": "Data accepted without errors",
+          "data_to_capture": [
+            "Input data",
+            "System response"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Input invalid test data",
+          "expected_result": "Data rejected with appropriate error message",
+          "data_to_capture": [
+            "Input data",
+            "Error message"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Process valid test data",
+          "expected_result": "Data processed correctly",
+          "data_to_capture": [
+            "Processing logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Valid data accepted",
+        "Invalid data rejected",
+        "Data processed correctly"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-002: Data Integrity and Audit Trail"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Data Integrity Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Algorithm and Calculation Verification Test",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify algorithms and calculations used in the system are accurate and reliable",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Input test data for algorithm verification",
+          "expected_result": "Data accepted without errors",
+          "data_to_capture": [
+            "Input data",
+            "System response"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Run algorithm on input data",
+          "expected_result": "Algorithm runs without errors",
+          "data_to_capture": [
+            "Algorithm execution logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify calculation results",
+          "expected_result": "Calculation results match expected values",
+          "data_to_capture": [
+            "Calculation results"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data input accepted",
+        "Algorithm runs without errors",
+        "Calculation results match expected values"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-004: Batch Record Management"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Functional Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Database Operations and Data Integrity Test",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Verify database operations maintain data integrity and comply with ALCOA+ principles",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Insert test data into database",
+          "expected_result": "Data inserted successfully",
+          "data_to_capture": [
+            "Insertion logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Update test data in database",
+          "expected_result": "Data updated successfully",
+          "data_to_capture": [
+            "Update logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Delete test data from database",
+          "expected_result": "Data deleted successfully",
+          "data_to_capture": [
+            "Deletion logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data inserted successfully",
+        "Data updated successfully",
+        "Data deleted successfully"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-002: Data Integrity and Audit Trail"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Database Administrator",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Integration Testing - External System 1",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify integration with External System 1 functions correctly",
+      "prerequisites": [
+        "System installed and configured",
+        "External System 1 available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send test data to External System 1",
+          "expected_result": "Data sent successfully",
+          "data_to_capture": [
+            "Data transfer logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Receive response from External System 1",
+          "expected_result": "Response received successfully",
+          "data_to_capture": [
+            "Response data"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify data integrity in response",
+          "expected_result": "Data integrity maintained",
+          "data_to_capture": [
+            "Data validation results"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data sent successfully",
+        "Response received successfully",
+        "Data integrity maintained"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-006: Equipment Integration"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Integration Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Integration Testing - External System 2",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify integration with External System 2 functions correctly",
+      "prerequisites": [
+        "System installed and configured",
+        "External System 2 available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send test data to External System 2",
+          "expected_result": "Data sent successfully",
+          "data_to_capture": [
+            "Data transfer logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Receive response from External System 2",
+          "expected_result": "Response received successfully",
+          "data_to_capture": [
+            "Response data"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify data integrity in response",
+          "expected_result": "Data integrity maintained",
+          "data_to_capture": [
+            "Data validation results"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data sent successfully",
+        "Response received successfully",
+        "Data integrity maintained"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-008: Quality Control Integration"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Integration Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Performance Testing Under Normal Load",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Verify system performance under normal operational load",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate normal operational load",
+          "expected_result": "System handles load without errors",
+          "data_to_capture": [
+            "System performance metrics"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor system response times",
+          "expected_result": "Response times within acceptable limits",
+          "data_to_capture": [
+            "Response time logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify system stability",
+          "expected_result": "System remains stable under load",
+          "data_to_capture": [
+            "System stability logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "System handles normal load without errors",
+        "Response times within acceptable limits",
+        "System remains stable"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-005: Reporting and Analytics"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "Performance Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Performance Testing Under Stress Conditions",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Verify system performance under stress conditions",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate stress conditions",
+          "expected_result": "System handles stress without crashing",
+          "data_to_capture": [
+            "System performance metrics"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor system response times",
+          "expected_result": "Response times degrade gracefully",
+          "data_to_capture": [
+            "Response time logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify system recovery",
+          "expected_result": "System recovers to normal operation",
+          "data_to_capture": [
+            "System recovery logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "System handles stress without crashing",
+        "Response times degrade gracefully",
+        "System recovers to normal operation"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-005: Reporting and Analytics"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "Performance Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Security Testing - Access Controls",
+      "test_category": "security",
+      "gamp_category": 5,
+      "objective": "Verify access controls are enforced according to security policies",
+      "prerequisites": [
+        "System installed and configured",
+        "User accounts created with different access levels"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Attempt access to restricted functions",
+          "expected_result": "Access denied",
+          "data_to_capture": [
+            "Access attempt logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify role-based access control",
+          "expected_result": "Users can only access authorized functions",
+          "data_to_capture": [
+            "Access logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Check for unauthorized access attempts",
+          "expected_result": "Unauthorized access attempts logged",
+          "data_to_capture": [
+            "Security logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Access to restricted functions denied",
+        "Role-based access control enforced",
+        "Unauthorized access attempts logged"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-001: User Authentication and Access Control"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Security Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Security Testing - Data Protection",
+      "test_category": "security",
+      "gamp_category": 5,
+      "objective": "Verify data protection mechanisms are in place and effective",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify data encryption in transit",
+          "expected_result": "Data encrypted during transmission",
+          "data_to_capture": [
+            "Encryption verification logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify data encryption at rest",
+          "expected_result": "Data encrypted at rest",
+          "data_to_capture": [
+            "Encryption verification logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Check for data leakage",
+          "expected_result": "No data leakage detected",
+          "data_to_capture": [
+            "Security logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data encrypted in transit",
+        "Data encrypted at rest",
+        "No data leakage detected"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-001: User Authentication and Access Control"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Security Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Audit Trail Verification Test",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Verify audit trail functionality complies with 21 CFR Part 11 requirements",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform data modification",
+          "expected_result": "Modification logged in audit trail",
+          "data_to_capture": [
+            "Audit trail logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify audit trail entries",
+          "expected_result": "Entries include timestamp, user ID, and reason for change",
+          "data_to_capture": [
+            "Audit trail entries"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Check audit trail immutability",
+          "expected_result": "Audit trail cannot be modified",
+          "data_to_capture": [
+            "Audit trail modification attempts"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data modifications logged",
+        "Audit trail entries complete",
+        "Audit trail immutable"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-002: Data Integrity and Audit Trail"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Data Integrity Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Error Handling and Recovery Procedures Test",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify error handling and recovery procedures function correctly",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate error condition",
+          "expected_result": "Error detected and logged",
+          "data_to_capture": [
+            "Error logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify error message clarity",
+          "expected_result": "Error message clear and actionable",
+          "data_to_capture": [
+            "Error message"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Initiate recovery procedure",
+          "expected_result": "System recovers to normal operation",
+          "data_to_capture": [
+            "Recovery logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Error detected and logged",
+        "Error message clear and actionable",
+        "System recovers to normal operation"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-009: Deviation Management"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Functional Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "User Interface and Usability Testing",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify user interface is intuitive and meets usability requirements",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate through main menu",
+          "expected_result": "Menu items accessible and functional",
+          "data_to_capture": [
+            "Navigation logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Perform data entry tasks",
+          "expected_result": "Data entry fields functional and intuitive",
+          "data_to_capture": [
+            "Data entry logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify error messages and prompts",
+          "expected_result": "Error messages clear and helpful",
+          "data_to_capture": [
+            "Error messages"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Menu items accessible and functional",
+        "Data entry fields functional and intuitive",
+        "Error messages clear and helpful"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-005: Reporting and Analytics"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Usability Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Reporting Functionality Verification Test",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify reporting functionality generates accurate and compliant reports",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate standard report",
+          "expected_result": "Report generated successfully",
+          "data_to_capture": [
+            "Generated report"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify report content",
+          "expected_result": "Report content accurate and complete",
+          "data_to_capture": [
+            "Report content"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Check report format",
+          "expected_result": "Report format complies with GMP requirements",
+          "data_to_capture": [
+            "Report format"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Report generated successfully",
+        "Report content accurate and complete",
+        "Report format complies with GMP requirements"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-005: Reporting and Analytics"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Functional Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Data Export and Import Testing",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Verify data export and import functions maintain data integrity",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Export test data",
+          "expected_result": "Data exported successfully",
+          "data_to_capture": [
+            "Export logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Import test data",
+          "expected_result": "Data imported successfully",
+          "data_to_capture": [
+            "Import logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify data integrity after import",
+          "expected_result": "Data integrity maintained",
+          "data_to_capture": [
+            "Data validation results"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data exported successfully",
+        "Data imported successfully",
+        "Data integrity maintained"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-002: Data Integrity and Audit Trail"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Data Integrity Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Backup and Recovery Testing",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Verify backup and recovery procedures function correctly",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform system backup",
+          "expected_result": "Backup completed successfully",
+          "data_to_capture": [
+            "Backup logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate data loss",
+          "expected_result": "Data loss simulated successfully",
+          "data_to_capture": [
+            "Data loss simulation logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Perform system recovery",
+          "expected_result": "System recovered successfully",
+          "data_to_capture": [
+            "Recovery logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Backup completed successfully",
+        "Data loss simulated successfully",
+        "System recovered successfully"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-002: Data Integrity and Audit Trail"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "System Administrator",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Boundary and Edge Case Testing",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify system handles boundary and edge cases correctly",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Input minimum valid data",
+          "expected_result": "Data accepted without errors",
+          "data_to_capture": [
+            "Input data",
+            "System response"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Input maximum valid data",
+          "expected_result": "Data accepted without errors",
+          "data_to_capture": [
+            "Input data",
+            "System response"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Input data at boundary limits",
+          "expected_result": "Data handled correctly",
+          "data_to_capture": [
+            "Input data",
+            "System response"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Minimum valid data accepted",
+        "Maximum valid data accepted",
+        "Boundary limit data handled correctly"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-004: Batch Record Management"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Functional Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-021",
+      "test_name": "Negative Testing Scenarios",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify system handles negative test scenarios correctly",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Input invalid data format",
+          "expected_result": "Data rejected with appropriate error message",
+          "data_to_capture": [
+            "Input data",
+            "Error message"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Input out-of-range data",
+          "expected_result": "Data rejected with appropriate error message",
+          "data_to_capture": [
+            "Input data",
+            "Error message"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Input missing required data",
+          "expected_result": "Data rejected with appropriate error message",
+          "data_to_capture": [
+            "Input data",
+            "Error message"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Invalid data format rejected",
+        "Out-of-range data rejected",
+        "Missing required data rejected"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-004: Batch Record Management"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Functional Tester",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-022",
+      "test_name": "Compliance Verification (21 CFR Part 11)",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Verify system compliance with 21 CFR Part 11 requirements",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify electronic signatures",
+          "expected_result": "Electronic signatures comply with 21 CFR Part 11",
+          "data_to_capture": [
+            "Electronic signature logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Check audit trail functionality",
+          "expected_result": "Audit trail complies with 21 CFR Part 11",
+          "data_to_capture": [
+            "Audit trail logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Verify access controls",
+          "expected_result": "Access controls comply with 21 CFR Part 11",
+          "data_to_capture": [
+            "Access control logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Electronic signatures comply",
+        "Audit trail complies",
+        "Access controls comply"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-001: User Authentication and Access Control",
+        "REQ-002: Data Integrity and Audit Trail",
+        "REQ-003: Electronic Signatures"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "Compliance Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-023",
+      "test_name": "Full System Integration Testing",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify full system integration functions correctly",
+      "prerequisites": [
+        "System installed and configured",
+        "All external systems available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform end-to-end data flow test",
+          "expected_result": "Data flows through system without errors",
+          "data_to_capture": [
+            "Data flow logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify data integrity across systems",
+          "expected_result": "Data integrity maintained throughout system",
+          "data_to_capture": [
+            "Data validation results"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Check system response times",
+          "expected_result": "Response times within acceptable limits",
+          "data_to_capture": [
+            "Response time logs"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data flows through system without errors",
+        "Data integrity maintained",
+        "Response times within acceptable limits"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-006: Equipment Integration",
+        "REQ-008: Quality Control Integration"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Integration Specialist",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-024",
+      "test_name": "User Acceptance Testing Scenarios",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify system meets user acceptance criteria",
+      "prerequisites": [
+        "System installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform typical user workflow",
+          "expected_result": "Workflow completed successfully",
+          "data_to_capture": [
+            "Workflow logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify system usability",
+          "expected_result": "System meets usability requirements",
+          "data_to_capture": [
+            "Usability feedback"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Check user satisfaction",
+          "expected_result": "Users satisfied with system performance",
+          "data_to_capture": [
+            "User feedback"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Workflow completed successfully",
+        "System meets usability requirements",
+        "Users satisfied with system performance"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-005: Reporting and Analytics"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "User Representative",
+        "Validation Engineer"
+      ]
+    },
+    {
+      "test_id": "OQ-025",
+      "test_name": "Final Validation and Sign-off Testing",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Verify system is ready for final validation and sign-off",
+      "prerequisites": [
+        "All previous tests completed",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Review all test results",
+          "expected_result": "All tests passed successfully",
+          "data_to_capture": [
+            "Test result summary"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify all issues resolved",
+          "expected_result": "All issues resolved and closed",
+          "data_to_capture": [
+            "Issue tracking logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Obtain final sign-off",
+          "expected_result": "System approved for production use",
+          "data_to_capture": [
+            "Sign-off documentation"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "All tests passed successfully",
+        "All issues resolved and closed",
+        "System approved for production use"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "REQ-001: User Authentication and Access Control",
+        "REQ-002: Data Integrity and Audit Trail",
+        "REQ-003: Electronic Signatures"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Validation Engineer",
+        "Quality Assurance"
+      ]
+    }
+  ],
+  "test_categories": {},
+  "requirements_coverage": {},
+  "risk_coverage": {},
+  "compliance_coverage": {},
+  "total_test_count": 25,
+  "estimated_execution_time": 1650,
+  "coverage_percentage": 0.0,
+  "generation_timestamp": "2025-08-08 19:02:48.568455+00:00",
+  "generation_method": "LLMTextCompletionProgram",
+  "validation_approach": "",
+  "created_by": "oq_generation_agent",
+  "review_required": true,
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "cfr_part11_compliant": true,
+    "gamp5_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_validated": false
+  }
+}
