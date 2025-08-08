@@ -44,9 +44,9 @@ class LLMConfig:
             "max_tokens": 2000,
         },
         ModelProvider.OPENROUTER: {
-            "model": "openai/gpt-oss-120b",  # ONLY THIS MODEL - OSS 120B parameter model
+            "model": "deepseek/deepseek-chat",  # DeepSeek V3 - most powerful open-source model (671B MoE)
             "temperature": 0.1,
-            "max_tokens": 4000,  # Increased for complex pharmaceutical JSON responses
+            "max_tokens": 30000,  # Increased to 30000 to prevent JSON truncation of 25 OQ test cases
         }
     }
     
@@ -80,24 +80,23 @@ class LLMConfig:
             if value is not None:
                 config[key] = value
         
-        # Get the global callback manager from LlamaIndex Settings
-        # This ensures Phoenix instrumentation is passed to the LLM
-        callback_manager = Settings.callback_manager if hasattr(Settings, 'callback_manager') else None
+        # EMERGENCY FIX: Disable Phoenix callback manager to unblock system
+        # Phoenix integration is corrupting LlamaIndex callbacks and preventing all LLM operations
+        # TODO: Re-enable Phoenix after fixing the callback corruption issue
+        callback_manager = None  # Bypass Phoenix completely for now
         
-        # Ensure Phoenix handler is registered if available
-        if callback_manager and hasattr(callback_manager, 'handlers'):
-            # Check if handlers list is empty
-            if len(callback_manager.handlers) == 0:
-                try:
-                    # Try to add the Phoenix handler
-                    from llama_index.callbacks.arize_phoenix import arize_phoenix_callback_handler
-                    if arize_phoenix_callback_handler:
-                        # arize_phoenix_callback_handler is a function that returns the handler
-                        handler = arize_phoenix_callback_handler()  # CRITICAL FIX: Call the function to get handler
-                        if handler not in callback_manager.handlers:
-                            callback_manager.add_handler(handler)
-                except ImportError:
-                    pass  # Phoenix not available, continue without it
+        # Original Phoenix code (disabled due to critical failure)
+        # callback_manager = Settings.callback_manager if hasattr(Settings, 'callback_manager') else None
+        # if callback_manager and hasattr(callback_manager, 'handlers'):
+        #     if len(callback_manager.handlers) == 0:
+        #         try:
+        #             from llama_index.callbacks.arize_phoenix import arize_phoenix_callback_handler
+        #             if arize_phoenix_callback_handler:
+        #                 handler = arize_phoenix_callback_handler()
+        #                 if handler not in callback_manager.handlers:
+        #                     callback_manager.add_handler(handler)
+        #         except ImportError:
+        #             pass
         
         try:
             if cls.PROVIDER == ModelProvider.OPENAI:

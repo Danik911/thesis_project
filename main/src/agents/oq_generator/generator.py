@@ -18,9 +18,11 @@ from llama_index.core.llms import LLM
 from llama_index.core.program import LLMTextCompletionProgram
 from pydantic import ValidationError
 from src.core.events import GAMPCategory
+from src.config.timeout_config import TimeoutConfig
 
 from .models import OQGenerationConfig, OQTestSuite
 from .templates import GAMPCategoryConfig, OQPromptTemplates
+from .yaml_parser import extract_yaml_from_response, validate_yaml_data
 
 
 def clean_unicode_characters(text: str) -> str:
@@ -245,18 +247,19 @@ class OQTestGenerator:
     from LLMs while ensuring pharmaceutical compliance and avoiding fallback logic.
     """
 
-    def __init__(self, llm: LLM, verbose: bool = False, generation_timeout: int = 480):
+    def __init__(self, llm: LLM, verbose: bool = False, generation_timeout: int = None):
         """
         Initialize OQ test generator.
         
         Args:
             llm: LlamaIndex LLM instance for generation
             verbose: Enable verbose logging
-            generation_timeout: Timeout for LLM generation in seconds (default 8 minutes)
+            generation_timeout: Timeout for LLM generation in seconds (default from TimeoutConfig)
         """
         self.llm = llm
         self.verbose = verbose
-        self.generation_timeout = generation_timeout
+        # Use configurable timeout with fallback to OQ generator default
+        self.generation_timeout = generation_timeout or TimeoutConfig.get_timeout("oq_generator")
         self.logger = logging.getLogger(__name__)
 
         # Critical: NO fallback values or default behaviors
@@ -266,12 +269,12 @@ class OQTestGenerator:
         # Configure LLM timeout if it's OpenAI
         if hasattr(self.llm, 'timeout'):
             # Set timeout to our generation timeout (OpenAI SDK v1.0.0+)
-            self.llm.timeout = generation_timeout
-            self.logger.info(f"Set LLM timeout to {generation_timeout}s")
+            self.llm.timeout = self.generation_timeout
+            self.logger.info(f"Set LLM timeout to {self.generation_timeout}s")
         elif hasattr(self.llm, '_client') and hasattr(self.llm._client, 'timeout'):
             # For newer OpenAI client versions
-            self.llm._client.timeout = generation_timeout
-            self.logger.info(f"Set LLM client timeout to {generation_timeout}s")
+            self.llm._client.timeout = self.generation_timeout
+            self.logger.info(f"Set LLM client timeout to {self.generation_timeout}s")
 
     def generate_oq_test_suite(
         self,
@@ -478,26 +481,12 @@ class OQTestGenerator:
         category_config: dict[str, Any]
     ) -> OQTestSuite:
         """
-        Generate test suite using LLMTextCompletionProgram for structured output.
+        Generate test suite using YAML as primary format for OSS model compatibility.
         
-        Critical: Uses LLMTextCompletionProgram without JSON mode to avoid infinite loops.
+        Critical: NO FALLBACKS - Uses YAML generation directly with strict parsing.
         """
         try:
-            # Create structured output program
-            generation_program = LLMTextCompletionProgram.from_defaults(
-                output_cls=OQTestSuite,
-                llm=self.llm,
-                prompt_template_str=OQPromptTemplates.get_generation_prompt(
-                    gamp_category=gamp_category,
-                    urs_content=urs_content,
-                    document_name=document_name,
-                    test_count=test_count,
-                    context_summary=context_summary
-                )
-            )
-
-            # Store program for debugging
-            self._generation_program = generation_program
+            # Store generation context for debugging
             self._last_generation_context = {
                 "gamp_category": gamp_category.value,
                 "document_name": document_name,
@@ -505,76 +494,45 @@ class OQTestGenerator:
                 "context_summary": context_summary
             }
 
-            # Execute structured generation with OSS model fallback handling
+            # Get raw LLM response configured for YAML output
+            raw_response = self._get_raw_llm_response(
+                gamp_category=gamp_category,
+                urs_content=urs_content,
+                document_name=document_name,
+                test_count=test_count,
+                context_summary=context_summary
+            )
+            
+            # Parse YAML response - NO FALLBACKS
             try:
-                # First attempt: Standard LLMTextCompletionProgram approach
-                result = generation_program()
+                yaml_data = extract_yaml_from_response(raw_response)
+                validated_data = validate_yaml_data(yaml_data)
+                result = OQTestSuite(**validated_data)
                 
-                if not isinstance(result, OQTestSuite):
-                    raise TestGenerationFailure(
-                        f"LLMTextCompletionProgram returned invalid type: {type(result)}",
-                        {
-                            "expected_type": "OQTestSuite",
-                            "actual_type": str(type(result)),
-                            "generation_method": "LLMTextCompletionProgram",
-                            "attempting_fallback": "oss_json_extraction"
-                        }
-                    )
-
-                # Success with standard approach
-                self.logger.info("OQ generation successful with standard LLMTextCompletionProgram")
+                self.logger.info(
+                    f"OQ generation successful with YAML parsing: "
+                    f"{len(result.test_cases)} tests generated"
+                )
                 return result
                 
-            except Exception as e:
-                # Standard approach failed - try OSS-compatible JSON extraction
-                self.logger.warning(f"Standard structured output failed: {e}, attempting OSS model JSON extraction")
-                
-                # Get raw LLM response for JSON extraction
-                raw_response = self._get_raw_llm_response(
-                    gamp_category=gamp_category,
-                    urs_content=urs_content,
-                    document_name=document_name,
-                    test_count=test_count,
-                    context_summary=context_summary
+            except Exception as yaml_e:
+                # YAML parsing failed - provide diagnostic information and fail
+                raise TestGenerationFailure(
+                    f"YAML parsing failed: {yaml_e}",
+                    {
+                        "parsing_error": str(yaml_e),
+                        "raw_response_preview": raw_response[:500] + "..." if len(raw_response) > 500 else raw_response,
+                        "generation_method": "yaml_primary",
+                        "no_fallback_available": True,
+                        "requires_human_intervention": True,
+                        "suggested_actions": [
+                            "Review YAML format in model response",
+                            "Check for indentation and syntax issues",
+                            "Verify all required fields are present",
+                            "Consider model prompt adjustments for clearer YAML structure"
+                        ]
+                    }
                 )
-                
-                # Extract JSON from mixed response
-                json_string, diagnostic_context = extract_json_from_mixed_response(raw_response)
-                
-                # Parse and validate with Pydantic
-                try:
-                    json_data = json.loads(json_string)
-                    result = OQTestSuite(**json_data)
-                    
-                    self.logger.info(
-                        f"OQ generation successful with OSS JSON extraction "
-                        f"(method: {diagnostic_context.get('extraction_method', 'unknown')})"
-                    )
-                    return result
-                    
-                except json.JSONDecodeError as json_e:
-                    raise TestGenerationFailure(
-                        f"Extracted JSON failed to parse: {json_e}",
-                        {
-                            "extraction_diagnostics": diagnostic_context,
-                            "json_string_preview": json_string[:200] + "..." if len(json_string) > 200 else json_string,
-                            "json_parse_error": str(json_e),
-                            "generation_method": "oss_json_extraction",
-                            "original_error": str(e)
-                        }
-                    )
-                    
-                except ValidationError as val_e:
-                    raise TestGenerationFailure(
-                        f"Extracted JSON failed Pydantic validation: {val_e}",
-                        {
-                            "extraction_diagnostics": diagnostic_context,
-                            "validation_errors": str(val_e),
-                            "json_string_preview": json_string[:200] + "..." if len(json_string) > 200 else json_string,
-                            "generation_method": "oss_json_extraction",
-                            "original_error": str(e)
-                        }
-                    )
 
         except Exception as e:
             # Generation failed - NO fallbacks
@@ -584,14 +542,17 @@ class OQTestGenerator:
                 "document_name": document_name,
                 "test_count": test_count,
                 "error_message": str(e),
-                "generation_method": "LLMTextCompletionProgram"
+                "generation_method": "yaml_primary"
             }
 
             raise TestGenerationFailure(
-                f"LLM test generation failed: {e}",
+                f"YAML-based test generation failed: {e}",
                 error_context
             )
     
+    # Template-based extraction methods removed - NO FALLBACKS policy
+    # All generation must go through primary YAML path for GAMP-5 compliance
+
     def _get_raw_llm_response(
         self,
         gamp_category: GAMPCategory,
@@ -601,13 +562,14 @@ class OQTestGenerator:
         context_summary: str
     ) -> str:
         """
-        Get raw response from LLM for JSON extraction.
+        Get raw response from LLM optimized for YAML generation.
         
-        This bypasses LLMTextCompletionProgram and directly calls the LLM
-        to get the raw response that we can then parse for JSON content.
+        This directly calls the LLM with optimized parameters:
+        - max_tokens: 15000 (reduced from 30000 for better consistency)
+        - temperature: 0.1 (low for more deterministic output)
         """
         try:
-            # Create the same prompt that would be used by LLMTextCompletionProgram
+            # Create YAML-optimized prompt
             prompt = OQPromptTemplates.get_generation_prompt(
                 gamp_category=gamp_category,
                 urs_content=urs_content,
@@ -616,32 +578,56 @@ class OQTestGenerator:
                 context_summary=context_summary
             )
             
-            # Make direct LLM call to get raw response
+            # Configure LLM for OSS model optimization
+            generation_kwargs = {
+                "max_tokens": 15000,  # Reduced from 30000 for better parseability
+                "temperature": 0.1,   # Low temperature for consistent YAML format
+            }
+            
+            # Make direct LLM call with optimized parameters
             if hasattr(self.llm, 'complete'):
                 # Use complete method for direct text completion
-                response = self.llm.complete(prompt)
+                response = self.llm.complete(prompt, **generation_kwargs)
                 raw_response = response.text if hasattr(response, 'text') else str(response)
+            elif hasattr(self.llm, '_client'):
+                # For OpenRouter-compatible clients, try direct generation
+                try:
+                    # Try to use the client directly with proper parameters
+                    response = self.llm._client.completions.create(
+                        model=getattr(self.llm, 'model_name', 'llama-3.1-8b'),
+                        prompt=prompt,
+                        **generation_kwargs
+                    )
+                    raw_response = response.choices[0].text
+                except AttributeError:
+                    # Fallback to standard complete method
+                    response = self.llm.complete(prompt)
+                    raw_response = response.text if hasattr(response, 'text') else str(response)
             else:
-                # Fallback: try calling LLM directly
+                # Last resort: try calling LLM directly 
                 raw_response = str(self.llm(prompt))
             
-            self.logger.info(f"Raw LLM response received: {len(raw_response)} characters")
+            self.logger.info(
+                f"Raw LLM response received: {len(raw_response)} characters "
+                f"(max_tokens={generation_kwargs['max_tokens']}, temperature={generation_kwargs['temperature']})"
+            )
             
-            # Log response preview for debugging (first 500 chars)
-            response_preview = raw_response[:500] + "..." if len(raw_response) > 500 else raw_response
+            # Log response preview for debugging (first 300 chars to see YAML start)
+            response_preview = raw_response[:300] + "..." if len(raw_response) > 300 else raw_response
             self.logger.debug(f"Raw LLM response preview: {response_preview}")
             
             return raw_response
             
         except Exception as e:
             raise TestGenerationFailure(
-                f"Failed to get raw LLM response: {e}",
+                f"Failed to get raw LLM response for YAML generation: {e}",
                 {
-                    "error_type": "raw_llm_response_failure",
+                    "error_type": "yaml_llm_response_failure",
                     "llm_model": str(self.llm),
                     "gamp_category": gamp_category.value,
                     "document_name": document_name,
                     "test_count": test_count,
+                    "generation_params": generation_kwargs,
                     "no_fallback_available": True
                 }
             )

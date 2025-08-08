@@ -430,7 +430,7 @@ class ContextProviderAgent:
             self.embedding_model = OpenAIEmbedding(
                 model=self.embedding_model_name,
                 api_key=os.getenv("OPENAI_API_KEY"),
-                callback_manager=None  # Disable callback manager to avoid Phoenix issues
+                callback_manager=callback_mgr  # Use validated callback manager or None
             )
 
             if self.verbose:
@@ -548,22 +548,10 @@ class ContextProviderAgent:
                 tracer = get_tracer()
                 api_start = time.time()
                 
-                try:
-                    # Fix callback manager issue - ensure embedding model has valid callback manager
-                    if self.embedding_model.callback_manager is None:
-                        from llama_index.core.callbacks import CallbackManager
-                        self.embedding_model.callback_manager = CallbackManager([])
-                        self.logger.debug("Created empty CallbackManager for embedding model")
-                    
-                    query_embedding = await asyncio.to_thread(
-                        self.embedding_model.get_text_embedding,
-                        query
-                    )
-                except Exception as e:
-                    error_msg = f"ChromaDB embedding failed: {type(e).__name__}: {e}"
-                    self.logger.error(error_msg)
-                    # NO FALLBACKS - fail explicitly with full diagnostic information
-                    raise RuntimeError(f"Context provider embedding operation failed: {error_msg}") from e
+                query_embedding = await asyncio.to_thread(
+                    self.embedding_model.get_text_embedding,
+                    query
+                )
                 
                 # Log successful API call
                 api_duration = time.time() - api_start

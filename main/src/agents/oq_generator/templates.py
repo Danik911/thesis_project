@@ -82,7 +82,7 @@ Count them as you generate: Test 1, Test 2, Test 3... up to Test {test_count}
 
 You are an expert pharmaceutical validation engineer specializing in GAMP-5 OQ test generation.
 
-PRIMARY TASK: Generate EXACTLY {test_count} complete OQ test cases
+PRIMARY TASK: Generate EXACTLY {test_count} complete OQ test cases in YAML format
 
 MANDATORY REQUIREMENTS (NO EXCEPTIONS):
 1. EXACTLY {test_count} tests - count each one as you create it
@@ -90,6 +90,7 @@ MANDATORY REQUIREMENTS (NO EXCEPTIONS):
 3. Each test must have a unique ID: OQ-001, OQ-002, OQ-003, etc.
 4. Each test must have detailed test steps (minimum 3 steps per test)
 5. Each test must have clear acceptance criteria
+6. Output must be valid YAML format with proper indentation
 
 PHARMACEUTICAL COMPLIANCE:
 - Follow GAMP-5 regulatory requirements
@@ -101,11 +102,11 @@ PHARMACEUTICAL COMPLIANCE:
 CRITICAL SUCCESS CRITERIA:
 ✅ Generate ALL {test_count} tests (not 1, not 2, not 10 - exactly {test_count})
 ✅ Fill out ALL required fields for each test
-✅ Use proper JSON structure matching OQTestSuite schema
+✅ Use proper YAML structure with correct indentation and quotes
 ✅ Include unique test IDs for each test
 ✅ Make tests executable and verifiable
 
-REMEMBER: You must generate exactly {test_count} complete tests. This is not negotiable."""
+REMEMBER: You must generate exactly {test_count} complete tests in YAML format. This is not negotiable."""
 
     CATEGORY_SPECIFIC_PROMPTS = {
         GAMPCategory.CATEGORY_1: """
@@ -285,14 +286,16 @@ DO NOT STOP until you have generated ALL {test_count} tests!
 
 {formatted_category_prompt}
 
-📋 EXAMPLE TEST STRUCTURE (Follow this format for ALL {test_count} tests):
+📋 EXAMPLE TEST STRUCTURE (Follow this YAML format for ALL {test_count} tests):
 {example_test}
 
-🎯 GENERATION REQUIREMENTS:
+🎯 YAML GENERATION REQUIREMENTS:
 ✅ GAMP Category: {gamp_category.value} 
 ✅ Document: {document_name}
 ✅ REQUIRED TESTS: {test_count} (Generate ALL of them!)
 ✅ Test Categories Required: {', '.join(category_config['test_categories'])}
+✅ Use proper YAML syntax with correct indentation (2 spaces)
+✅ Quote all string values consistently
 
 📄 URS CONTENT TO USE:
 {urs_content[:2500]}
@@ -300,70 +303,79 @@ DO NOT STOP until you have generated ALL {test_count} tests!
 📊 CONTEXT INFORMATION:
 {context_summary if context_summary else 'Standard pharmaceutical validation approach recommended'}
 
-🚨 STEP-BY-STEP GENERATION INSTRUCTIONS:
-1. Create suite_id: "OQ-SUITE-{gamp_category.value:04d}"
+🚨 YAML GENERATION INSTRUCTIONS:
+1. Start with suite_id: "OQ-SUITE-{gamp_category.value:04d}"
 2. Set gamp_category: {gamp_category.value}
 3. Set document_name: "{document_name}"
-4. Generate Test 1 with ID "OQ-001"
-5. Generate Test 2 with ID "OQ-002" 
-6. Generate Test 3 with ID "OQ-003"
-7. Continue until Test {test_count} with ID "OQ-{test_count:03d}"
-8. Set total_test_count: {test_count}
-9. Fill in all required metadata fields
+4. Create test_cases array with {test_count} tests
+5. Generate Test 1 with test_id: "OQ-001"
+6. Generate Test 2 with test_id: "OQ-002" 
+7. Generate Test 3 with test_id: "OQ-003"
+8. Continue until Test {test_count} with test_id: "OQ-{test_count:03d}"
+9. Set total_test_count: {test_count}
+10. Include all required metadata fields
 
-🔍 VALIDATION CHECKLIST (Verify before responding):
+🔍 YAML VALIDATION CHECKLIST (Verify before responding):
 □ Generated exactly {test_count} tests?
-□ Each test has unique ID (OQ-001, OQ-002, etc.)?
+□ Each test has unique test_id (OQ-001, OQ-002, etc.)?
 □ Each test has all required fields?
-□ JSON structure matches OQTestSuite schema?
+□ Proper YAML indentation (2 spaces)?
+□ All strings properly quoted?
 □ All test categories represented?
 
 🚨 CRITICAL REMINDER: Generate exactly {test_count} complete tests - no more, no less!
 
-Return your response as a complete JSON object matching the OQTestSuite schema."""
+Return your response as a complete YAML document with proper formatting and indentation."""
 
         return prompt
     
     @classmethod
     def _get_example_test_structure(cls, gamp_category: GAMPCategory) -> str:
-        """Get example test structure for OSS model guidance."""
-        return '''{
-  "test_id": "OQ-001",
-  "test_name": "Installation Verification Test", 
-  "test_category": "installation",
-  "gamp_category": ''' + str(gamp_category.value) + ''',
-  "objective": "Verify system installation completed successfully and all components are properly configured",
-  "prerequisites": ["System hardware requirements verified", "Network connectivity established"],
-  "test_steps": [
-    {
-      "step_number": 1,
-      "action": "Verify system installation completed without errors",
-      "expected_result": "Installation log shows successful completion",
-      "data_to_capture": ["Installation log", "System version"],
-      "verification_method": "visual_inspection"
-    },
-    {
-      "step_number": 2, 
-      "action": "Check all required services are running",
-      "expected_result": "All critical services show active status",
-      "data_to_capture": ["Service status list"],
-      "verification_method": "system_query"
-    },
-    {
-      "step_number": 3,
-      "action": "Verify database connectivity and schema creation",
-      "expected_result": "Database connection established and schema complete",
-      "data_to_capture": ["Connection test results", "Schema validation"],
-      "verification_method": "automated_test"
-    }
-  ],
-  "acceptance_criteria": ["Installation completed successfully", "All services operational", "Database accessible"],
-  "regulatory_basis": ["GAMP-5 Category ''' + str(gamp_category.value) + '''", "21 CFR Part 11"],
-  "risk_level": "medium",
-  "urs_requirements": ["REQ-001: System Installation", "REQ-002: Component Verification"],
-  "estimated_duration_minutes": 45,
-  "required_expertise": ["System Administrator", "Validation Engineer"]
-}'''
+        """Get example test structure for OSS model guidance in YAML format."""
+        return '''test_id: "OQ-001"
+test_name: "Installation Verification Test"
+test_category: "installation"
+gamp_category: ''' + str(gamp_category.value) + '''
+objective: "Verify system installation completed successfully and all components are properly configured"
+prerequisites:
+  - "System hardware requirements verified"
+  - "Network connectivity established"
+test_steps:
+  - step_number: 1
+    action: "Verify system installation completed without errors"
+    expected_result: "Installation log shows successful completion"
+    data_to_capture:
+      - "Installation log"
+      - "System version"
+    verification_method: "visual_inspection"
+  - step_number: 2
+    action: "Check all required services are running"
+    expected_result: "All critical services show active status"
+    data_to_capture:
+      - "Service status list"
+    verification_method: "system_query"
+  - step_number: 3
+    action: "Verify database connectivity and schema creation"
+    expected_result: "Database connection established and schema complete"
+    data_to_capture:
+      - "Connection test results"
+      - "Schema validation"
+    verification_method: "automated_test"
+acceptance_criteria:
+  - "Installation completed successfully"
+  - "All services operational"
+  - "Database accessible"
+regulatory_basis:
+  - "GAMP-5 Category ''' + str(gamp_category.value) + '''"
+  - "21 CFR Part 11"
+risk_level: "medium"
+urs_requirements:
+  - "REQ-001: System Installation"
+  - "REQ-002: Component Verification"
+estimated_duration_minutes: 45
+required_expertise:
+  - "System Administrator"
+  - "Validation Engineer"'''
 
 
 class TestCategoryTemplates:

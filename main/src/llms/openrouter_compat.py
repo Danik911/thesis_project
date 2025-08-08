@@ -37,6 +37,9 @@ except ImportError:
     tracer = None
     OTEL_AVAILABLE = False
 
+# Import configurable timeout support
+from src.config.timeout_config import TimeoutConfig
+
 
 class OpenRouterCompatLLM(OpenAI):
     """
@@ -54,7 +57,7 @@ class OpenRouterCompatLLM(OpenAI):
         openrouter_api_key: Optional[str] = None,
         api_base: str = "https://openrouter.ai/api/v1",
         temperature: float = 0.1,
-        max_tokens: int = 4000,  # Increased for complex pharmaceutical responses
+        max_tokens: int = 30000,  # Increased to 30000 to prevent JSON truncation of 25 test cases
         callback_manager: Optional[CallbackManager] = None,
         **kwargs: Any,
     ):
@@ -169,18 +172,25 @@ class OpenRouterCompatLLM(OpenAI):
             "stream": stream
         }
         
+        # Get configurable timeout with logging
+        api_timeout = TimeoutConfig.get_timeout("openrouter_api")
+        
         try:
             response = requests.post(
                 f"{self._openrouter_api_base}/chat/completions",
                 headers=headers,
                 json=data,
-                timeout=120  # 2-minute timeout
+                timeout=api_timeout  # Now configurable via environment
             )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.Timeout as e:
             raise RuntimeError(
-                f"OpenRouter API request timed out after 120 seconds. "
+                f"OpenRouter API request timed out after {api_timeout} seconds. "
+                f"Configure with OPENROUTER_API_TIMEOUT environment variable. "
+                f"Current timeout hierarchy - API: {api_timeout}s, "
+                f"SME Agent: {TimeoutConfig.get_timeout('sme_agent')}s, "
+                f"OQ Generator: {TimeoutConfig.get_timeout('oq_generator')}s. "
                 f"NO FALLBACK ALLOWED - Human consultation required."
             ) from e
         except requests.exceptions.RequestException as e:
@@ -483,7 +493,7 @@ class OpenRouterCompatLLM(OpenAI):
 def create_openrouter_compat_llm(
     model: str = "openai/gpt-oss-120b",
     temperature: float = 0.1,
-    max_tokens: int = 4000,
+    max_tokens: int = 30000,
     **kwargs: Any
 ) -> OpenRouterCompatLLM:
     """

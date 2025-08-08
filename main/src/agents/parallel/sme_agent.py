@@ -34,6 +34,7 @@ from pydantic import BaseModel, Field
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.agent_instrumentation import trace_agent_method
 from src.monitoring.simple_tracer import get_tracer
+from src.config.timeout_config import TimeoutConfig
 
 
 def clean_unicode_characters(text: str) -> str:
@@ -312,7 +313,7 @@ class SMEAgentRequest(BaseModel):
     risk_factors: dict[str, Any] = Field(default_factory=dict)
     categorization_context: dict[str, Any] = Field(default_factory=dict)
     correlation_id: UUID
-    timeout_seconds: int = 180
+    timeout_seconds: int = Field(default_factory=lambda: TimeoutConfig.get_timeout("sme_agent"))
 
 
 class SMEAgentResponse(BaseModel):
