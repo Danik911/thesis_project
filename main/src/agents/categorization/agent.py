@@ -37,8 +37,8 @@ Usage Examples:
     )
     
     # Direct Pydantic structured output
-    from llama_index.llms.openai import OpenAI
-    llm = OpenAI(model="gpt-4o-mini")
+    # from llama_index.llms.openai import OpenAI  # Migrated to centralized config
+    llm = LLMConfig.get_llm()
     result = categorize_with_pydantic_structured_output(
         llm=llm,
         urs_content=urs_content,
@@ -71,6 +71,7 @@ from llama_index.core.llms import LLM
 from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.core.tools import FunctionTool
 from pydantic import BaseModel, Field, ValidationError
+from src.config.llm_config import LLMConfig
 from src.agents.categorization.error_handler import (
     CategorizationError,
     CategorizationErrorHandler,
@@ -883,12 +884,10 @@ def create_gamp_categorization_agent(
         context that can boost confidence scores by 0.15-0.20 points.
     """
     if llm is None:
-        # Use OpenAI LLM without JSON mode for FunctionAgent compatibility
-
-        from llama_index.llms.openai import OpenAI
-        llm = OpenAI(
-            model="gpt-4o-mini",
-            temperature=0.1,
+        # Use centralized LLM config - NO FALLBACKS
+        # Migrated from direct OpenAI to centralized configuration
+        llm = LLMConfig.get_llm(
+            temperature=0.1,  # Override default temperature for categorization
             max_tokens=2000
             # JSON mode NOT used - FunctionAgent requires natural language responses
         )
@@ -1558,10 +1557,10 @@ def categorize_urs_document(
         )
     """
     if llm is None:
-        from llama_index.llms.openai import OpenAI
-        llm = OpenAI(
-            model="gpt-4o-mini",
-            temperature=0.1,
+        # Use centralized LLM config - NO FALLBACKS
+        # Migrated from direct OpenAI to centralized configuration
+        llm = LLMConfig.get_llm(
+            temperature=0.1,  # Override default temperature for categorization
             max_tokens=2000
         )
 

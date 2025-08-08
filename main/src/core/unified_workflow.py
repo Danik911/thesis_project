@@ -29,7 +29,8 @@ from uuid import uuid4
 
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
-from llama_index.llms.openai import OpenAI
+# from llama_index.llms.openai import OpenAI  # Migrated to centralized LLM config
+from src.config.llm_config import LLMConfig
 from src.agents.oq_generator.events import OQTestGenerationEvent, OQTestSuiteEvent
 from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
 from src.core.categorization_workflow import GAMPCategorizationWorkflow
@@ -270,13 +271,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self.enable_human_consultation = enable_human_consultation
         self.logger = logging.getLogger(__name__)
 
-        # Initialize LLM with environment configuration
-        import os
-        self.llm = llm or OpenAI(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),  # Use environment variable
-            temperature=0.1,
-            timeout=int(os.getenv("OPENAI_TIMEOUT", "600"))  # Configure timeout
-        )
+        # Initialize LLM using centralized configuration
+        # NO FALLBACKS - LLMConfig handles all errors explicitly
+        self.llm = llm or LLMConfig.get_llm()
 
         # Initialize workflow session
         self._workflow_session_id = f"unified_workflow_{datetime.now(UTC).isoformat()}"

@@ -43,7 +43,7 @@ class LLMConfig:
             "max_tokens": 2000,
         },
         ModelProvider.OPENROUTER: {
-            "model": "openai/gpt-oss-120b",  # Primary OSS model, no fallback
+            "model": "openai/gpt-oss-120b",  # ONLY THIS MODEL - OSS 120B parameter model
             "temperature": 0.1,
             "max_tokens": 2000,
         }
