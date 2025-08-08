@@ -8,17 +8,34 @@ This guide provides comprehensive instructions for working with the Phoenix obse
 
 ---
 
-## 🚨 CRITICAL STATUS UPDATE
+## 🚨 CRITICAL STATUS UPDATE - UPDATED 2025-08-08
 
-Phoenix observability **IS WORKING** and successfully captures 563+ traces per workflow execution. However, the GraphQL API is non-functional, requiring alternative access methods.
+Phoenix observability **IS WORKING** but with significant Windows-specific issues and configuration requirements.
 
 ### What's Working:
-1. **Phoenix UI**: Fully accessible at http://localhost:6006 ✅
-2. **Trace Collection**: Comprehensive capture of all workflow operations ✅
-3. **ChromaDB Instrumentation**: Complete with detailed spans ✅
-4. **Context Provider Agent**: Full execution tracing ✅
-5. **Cost Tracking**: OpenAI API usage and costs captured ✅
-6. **Local Trace Files**: Available in `main/logs/traces/*.jsonl` ✅
+1. **Phoenix UI**: Accessible at http://localhost:6006 when properly configured ✅
+2. **Basic Trace Collection**: Captures workflow traces (9 traces confirmed) ✅
+3. **Local Trace Files**: Saved in `main/logs/traces/*.jsonl` via custom exporter ✅
+4. **Docker Deployment**: Works with proper port mapping (`-p 6006:6006`) ✅
+
+### Known Issues & Root Causes:
+
+#### 1. **Windows Unicode Encoding Failure** ❌
+**Root Cause**: Phoenix uses emoji characters in output that fail on Windows default CP1252 encoding
+- Error: `'charmap' codec can't encode characters in position 0-1`
+- **Solution**: Run Phoenix in Docker container instead of native Python
+- **Docker Command**: `docker run -d -p 6006:6006 --name phoenix arizephoenix/phoenix:latest`
+
+#### 2. **Port Mapping Issues** ❌
+**Root Cause**: Docker containers started without explicit port mapping don't expose Phoenix
+- **Wrong**: Container running but ports not accessible (6006/tcp instead of 0.0.0.0:6006->6006/tcp)
+- **Solution**: Always use `-p 6006:6006` flag when starting container
+
+#### 3. **Limited Trace Capture** ⚠️
+**Actual Performance**: Only 9 traces captured (not 116 as incorrectly reported)
+- Latency P50: 0.01s (good)
+- Latency P99: 131.23s (critically slow - OSS model issue)
+- Missing LLM spans due to instrumentation gaps
 
 ### Known Limitations:
 1. **GraphQL API**: Returns "unexpected error occurred" ❌

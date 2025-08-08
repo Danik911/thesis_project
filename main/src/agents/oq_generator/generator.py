@@ -4,9 +4,13 @@ OQ test generation engine with LLMTextCompletionProgram integration.
 This module implements the core test generation logic using LlamaIndex
 LLMTextCompletionProgram for structured output generation without JSON mode,
 ensuring pharmaceutical compliance and GAMP-5 validation requirements.
+
+Enhanced with robust JSON extraction for OSS model compatibility.
 """
 
+import json
 import logging
+import re
 from datetime import UTC, datetime
 from typing import Any
 
@@ -17,6 +21,194 @@ from src.core.events import GAMPCategory
 
 from .models import OQGenerationConfig, OQTestSuite
 from .templates import GAMPCategoryConfig, OQPromptTemplates
+
+
+def clean_unicode_characters(text: str) -> str:
+    """
+    Clean invisible Unicode characters that can break JSON parsing.
+    
+    Handles common issues from OSS model responses including:
+    - BOM markers (UTF-8 BOM: \ufeff)
+    - Zero-width spaces (\u200b)
+    - Zero-width non-joiner (\u200c)
+    - Zero-width joiner (\u200d)
+    - Line/paragraph separators (\u2028, \u2029)
+    
+    Args:
+        text: Raw text that may contain invisible characters
+        
+    Returns:
+        Cleaned text suitable for JSON parsing
+    """
+    # Remove BOM marker if present at start
+    if text.startswith('\ufeff'):
+        text = text[1:]
+    
+    # Remove various invisible Unicode characters that break JSON parsing
+    invisible_chars = [
+        '\u200b',  # Zero-width space
+        '\u200c',  # Zero-width non-joiner  
+        '\u200d',  # Zero-width joiner
+        '\u2028',  # Line separator
+        '\u2029',  # Paragraph separator
+        '\ufeff',  # Additional BOM occurrences
+    ]
+    
+    for char in invisible_chars:
+        text = text.replace(char, '')
+    
+    return text
+
+
+def extract_json_from_mixed_response(response_text: str) -> tuple[str, dict[str, Any]]:
+    """
+    Extract JSON from OSS model response that may contain explanatory text and markdown.
+    
+    OSS models often return responses like:
+    "Here's your OQ test suite:\n\n```json\n{...}\n```\n\nThis meets all requirements."
+    
+    Args:
+        response_text: Raw response from OSS model
+        
+    Returns:
+        Tuple of (extracted_json_string, diagnostic_context)
+        
+    Raises:
+        TestGenerationFailure: If JSON extraction fails with full diagnostic context
+    """
+    diagnostic_context = {
+        "raw_response_length": len(response_text),
+        "raw_response_preview": response_text[:200] + "..." if len(response_text) > 200 else response_text,
+        "unicode_issues_detected": False,
+        "extraction_method": None,
+        "json_found": False,
+        "parsing_stage": "initial_cleaning"
+    }
+    
+    try:
+        # Step 1: Clean unicode characters
+        original_text = response_text
+        cleaned_text = clean_unicode_characters(response_text)
+        
+        if cleaned_text != original_text:
+            diagnostic_context["unicode_issues_detected"] = True
+            diagnostic_context["unicode_chars_removed"] = len(original_text) - len(cleaned_text)
+        
+        diagnostic_context["parsing_stage"] = "markdown_extraction"
+        
+        # Step 2: Try to extract from markdown code blocks first
+        markdown_patterns = [
+            r'```json\s*\n(.*?)\n```',  # Standard ```json``` blocks
+            r'```\s*\n(\{.*?\})\s*\n```',  # Generic ``` blocks with JSON
+            r'`([^`]*\{.*?\}[^`]*)`',  # Single backticks with JSON
+        ]
+        
+        for pattern in markdown_patterns:
+            matches = re.findall(pattern, cleaned_text, re.DOTALL | re.MULTILINE)
+            if matches:
+                json_candidate = matches[0].strip()
+                diagnostic_context["extraction_method"] = f"markdown_pattern_{pattern[:20]}..."
+                diagnostic_context["json_found"] = True
+                diagnostic_context["parsing_stage"] = "json_validation"
+                
+                # Validate it's actually JSON
+                try:
+                    json.loads(json_candidate)
+                    return json_candidate, diagnostic_context
+                except json.JSONDecodeError as e:
+                    diagnostic_context["json_parse_error"] = str(e)
+                    continue
+        
+        # Step 3: Look for JSON object boundaries without markdown
+        diagnostic_context["parsing_stage"] = "boundary_detection"
+        
+        # Find JSON object boundaries (balanced braces)
+        brace_count = 0
+        start_idx = -1
+        
+        for i, char in enumerate(cleaned_text):
+            if char == '{':
+                if brace_count == 0:
+                    start_idx = i
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0 and start_idx != -1:
+                    # Found complete JSON object
+                    json_candidate = cleaned_text[start_idx:i+1]
+                    diagnostic_context["extraction_method"] = "boundary_detection"
+                    diagnostic_context["json_found"] = True
+                    diagnostic_context["parsing_stage"] = "json_validation"
+                    
+                    try:
+                        json.loads(json_candidate)
+                        return json_candidate, diagnostic_context
+                    except json.JSONDecodeError as e:
+                        diagnostic_context["json_parse_error"] = str(e)
+                        continue
+        
+        # Step 4: Last resort - try to find any JSON-like content
+        diagnostic_context["parsing_stage"] = "pattern_matching"
+        
+        # Look for patterns that start with { and contain typical JSON elements
+        json_patterns = [
+            r'(\{[^{}]*"suite_id"[^{}]*\})',  # Look for suite_id field
+            r'(\{.*?"gamp_category".*?\})',   # Look for gamp_category field
+            r'(\{.*?"test_cases".*?\})',      # Look for test_cases field
+        ]
+        
+        for pattern in json_patterns:
+            matches = re.findall(pattern, cleaned_text, re.DOTALL)
+            if matches:
+                json_candidate = matches[0].strip()
+                diagnostic_context["extraction_method"] = f"pattern_matching_{pattern[:30]}..."
+                diagnostic_context["json_found"] = True
+                diagnostic_context["parsing_stage"] = "json_validation"
+                
+                try:
+                    json.loads(json_candidate)
+                    return json_candidate, diagnostic_context
+                except json.JSONDecodeError as e:
+                    diagnostic_context["json_parse_error"] = str(e)
+                    continue
+        
+        # If we get here, no valid JSON was found
+        diagnostic_context["parsing_stage"] = "extraction_failed"
+        diagnostic_context["json_found"] = False
+        
+        raise TestGenerationFailure(
+            "No valid JSON found in OSS model response after trying all extraction methods",
+            {
+                "error_type": "json_extraction_failure",
+                "diagnostic_context": diagnostic_context,
+                "no_fallback_available": True,
+                "requires_human_intervention": True,
+                "suggested_actions": [
+                    "Check OSS model response format",
+                    "Verify model is returning structured output",
+                    "Consider adjusting prompt for clearer JSON formatting",
+                    "Review extraction patterns for new response formats"
+                ]
+            }
+        )
+        
+    except Exception as e:
+        if isinstance(e, TestGenerationFailure):
+            raise  # Re-raise our own exceptions
+        
+        # Unexpected error during extraction
+        diagnostic_context["parsing_stage"] = "unexpected_error"
+        diagnostic_context["unexpected_error"] = str(e)
+        
+        raise TestGenerationFailure(
+            f"Unexpected error during JSON extraction: {e}",
+            {
+                "error_type": "json_extraction_unexpected_error", 
+                "diagnostic_context": diagnostic_context,
+                "no_fallback_available": True,
+                "requires_human_intervention": True
+            }
+        )
 
 
 class OQTestGenerationError(Exception):
@@ -313,20 +505,76 @@ class OQTestGenerator:
                 "context_summary": context_summary
             }
 
-            # Execute structured generation - NO fallbacks on failure
-            result = generation_program()
+            # Execute structured generation with OSS model fallback handling
+            try:
+                # First attempt: Standard LLMTextCompletionProgram approach
+                result = generation_program()
+                
+                if not isinstance(result, OQTestSuite):
+                    raise TestGenerationFailure(
+                        f"LLMTextCompletionProgram returned invalid type: {type(result)}",
+                        {
+                            "expected_type": "OQTestSuite",
+                            "actual_type": str(type(result)),
+                            "generation_method": "LLMTextCompletionProgram",
+                            "attempting_fallback": "oss_json_extraction"
+                        }
+                    )
 
-            if not isinstance(result, OQTestSuite):
-                raise TestGenerationFailure(
-                    f"LLMTextCompletionProgram returned invalid type: {type(result)}",
-                    {
-                        "expected_type": "OQTestSuite",
-                        "actual_type": str(type(result)),
-                        "generation_method": "LLMTextCompletionProgram"
-                    }
+                # Success with standard approach
+                self.logger.info("OQ generation successful with standard LLMTextCompletionProgram")
+                return result
+                
+            except Exception as e:
+                # Standard approach failed - try OSS-compatible JSON extraction
+                self.logger.warning(f"Standard structured output failed: {e}, attempting OSS model JSON extraction")
+                
+                # Get raw LLM response for JSON extraction
+                raw_response = self._get_raw_llm_response(
+                    gamp_category=gamp_category,
+                    urs_content=urs_content,
+                    document_name=document_name,
+                    test_count=test_count,
+                    context_summary=context_summary
                 )
-
-            return result
+                
+                # Extract JSON from mixed response
+                json_string, diagnostic_context = extract_json_from_mixed_response(raw_response)
+                
+                # Parse and validate with Pydantic
+                try:
+                    json_data = json.loads(json_string)
+                    result = OQTestSuite(**json_data)
+                    
+                    self.logger.info(
+                        f"OQ generation successful with OSS JSON extraction "
+                        f"(method: {diagnostic_context.get('extraction_method', 'unknown')})"
+                    )
+                    return result
+                    
+                except json.JSONDecodeError as json_e:
+                    raise TestGenerationFailure(
+                        f"Extracted JSON failed to parse: {json_e}",
+                        {
+                            "extraction_diagnostics": diagnostic_context,
+                            "json_string_preview": json_string[:200] + "..." if len(json_string) > 200 else json_string,
+                            "json_parse_error": str(json_e),
+                            "generation_method": "oss_json_extraction",
+                            "original_error": str(e)
+                        }
+                    )
+                    
+                except ValidationError as val_e:
+                    raise TestGenerationFailure(
+                        f"Extracted JSON failed Pydantic validation: {val_e}",
+                        {
+                            "extraction_diagnostics": diagnostic_context,
+                            "validation_errors": str(val_e),
+                            "json_string_preview": json_string[:200] + "..." if len(json_string) > 200 else json_string,
+                            "generation_method": "oss_json_extraction",
+                            "original_error": str(e)
+                        }
+                    )
 
         except Exception as e:
             # Generation failed - NO fallbacks
@@ -342,6 +590,60 @@ class OQTestGenerator:
             raise TestGenerationFailure(
                 f"LLM test generation failed: {e}",
                 error_context
+            )
+    
+    def _get_raw_llm_response(
+        self,
+        gamp_category: GAMPCategory,
+        urs_content: str,
+        document_name: str,
+        test_count: int,
+        context_summary: str
+    ) -> str:
+        """
+        Get raw response from LLM for JSON extraction.
+        
+        This bypasses LLMTextCompletionProgram and directly calls the LLM
+        to get the raw response that we can then parse for JSON content.
+        """
+        try:
+            # Create the same prompt that would be used by LLMTextCompletionProgram
+            prompt = OQPromptTemplates.get_generation_prompt(
+                gamp_category=gamp_category,
+                urs_content=urs_content,
+                document_name=document_name,
+                test_count=test_count,
+                context_summary=context_summary
+            )
+            
+            # Make direct LLM call to get raw response
+            if hasattr(self.llm, 'complete'):
+                # Use complete method for direct text completion
+                response = self.llm.complete(prompt)
+                raw_response = response.text if hasattr(response, 'text') else str(response)
+            else:
+                # Fallback: try calling LLM directly
+                raw_response = str(self.llm(prompt))
+            
+            self.logger.info(f"Raw LLM response received: {len(raw_response)} characters")
+            
+            # Log response preview for debugging (first 500 chars)
+            response_preview = raw_response[:500] + "..." if len(raw_response) > 500 else raw_response
+            self.logger.debug(f"Raw LLM response preview: {response_preview}")
+            
+            return raw_response
+            
+        except Exception as e:
+            raise TestGenerationFailure(
+                f"Failed to get raw LLM response: {e}",
+                {
+                    "error_type": "raw_llm_response_failure",
+                    "llm_model": str(self.llm),
+                    "gamp_category": gamp_category.value,
+                    "document_name": document_name,
+                    "test_count": test_count,
+                    "no_fallback_available": True
+                }
             )
 
     def _validate_generated_suite(

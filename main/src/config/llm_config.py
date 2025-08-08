@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any
 
 from llama_index.core.llms import LLM
+from llama_index.core import Settings
 
 
 class ModelProvider(Enum):
@@ -45,7 +46,7 @@ class LLMConfig:
         ModelProvider.OPENROUTER: {
             "model": "openai/gpt-oss-120b",  # ONLY THIS MODEL - OSS 120B parameter model
             "temperature": 0.1,
-            "max_tokens": 2000,
+            "max_tokens": 4000,  # Increased for complex pharmaceutical JSON responses
         }
     }
     
@@ -79,6 +80,25 @@ class LLMConfig:
             if value is not None:
                 config[key] = value
         
+        # Get the global callback manager from LlamaIndex Settings
+        # This ensures Phoenix instrumentation is passed to the LLM
+        callback_manager = Settings.callback_manager if hasattr(Settings, 'callback_manager') else None
+        
+        # Ensure Phoenix handler is registered if available
+        if callback_manager and hasattr(callback_manager, 'handlers'):
+            # Check if handlers list is empty
+            if len(callback_manager.handlers) == 0:
+                try:
+                    # Try to add the Phoenix handler
+                    from llama_index.callbacks.arize_phoenix import arize_phoenix_callback_handler
+                    if arize_phoenix_callback_handler:
+                        # arize_phoenix_callback_handler is a function that returns the handler
+                        handler = arize_phoenix_callback_handler
+                        if handler not in callback_manager.handlers:
+                            callback_manager.add_handler(handler)
+                except ImportError:
+                    pass  # Phoenix not available, continue without it
+        
         try:
             if cls.PROVIDER == ModelProvider.OPENAI:
                 # Import and initialize OpenAI
@@ -96,11 +116,12 @@ class LLMConfig:
                     api_key=api_key,
                     temperature=config["temperature"],
                     max_tokens=config["max_tokens"],
+                    callback_manager=callback_manager,  # Pass global callback manager
                 )
                 
             elif cls.PROVIDER == ModelProvider.OPENROUTER:
-                # Import and initialize OpenRouter
-                from src.llms.openrouter_llm import OpenRouterLLM
+                # Import and initialize OpenRouter compatibility wrapper
+                from src.llms.openrouter_compat import OpenRouterCompatLLM
                 
                 api_key = os.getenv("OPENROUTER_API_KEY")
                 if not api_key:
@@ -109,11 +130,12 @@ class LLMConfig:
                         "NO FALLBACK ALLOWED - Human consultation required."
                     )
                 
-                return OpenRouterLLM(
+                return OpenRouterCompatLLM(
                     model=config["model"],
-                    api_key=api_key,
+                    openrouter_api_key=api_key,
                     temperature=config["temperature"],
                     max_tokens=config["max_tokens"],
+                    callback_manager=callback_manager,  # Pass global callback manager
                 )
                 
             else:
@@ -181,7 +203,7 @@ class LLMConfig:
             if cls.PROVIDER == ModelProvider.OPENAI:
                 from llama_index.llms.openai import OpenAI
             else:
-                from src.llms.openrouter_llm import OpenRouterLLM
+                from src.llms.openrouter_compat import OpenRouterCompatLLM
             
             return True, "Configuration valid"
             

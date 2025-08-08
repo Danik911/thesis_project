@@ -376,6 +376,11 @@ class SMEAgent:
         self.confidence_threshold = confidence_threshold
         self.max_recommendations = max_recommendations
         self.logger = logging.getLogger(__name__)
+        
+        # Detect OSS model for enhanced prompting strategies
+        self.is_oss_model = self._detect_oss_model()
+        if self.is_oss_model:
+            self.logger.info(f"[OSS MODEL] Detected OSS model: {self.llm.model}, enabling enhanced JSON prompting")
 
         # Initialize OpenTelemetry tracer for observability
         self.tracer = trace.get_tracer(__name__)
@@ -607,7 +612,7 @@ class SMEAgent:
         """Assess compliance requirements and gaps using LLM expertise."""
         
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
-        compliance_prompt = f"""
+        base_compliance_prompt = f"""
         As a pharmaceutical validation expert specializing in {request.specialty}, assess the compliance requirements for a system with the following characteristics:
         
         - Specialty: {request.specialty}
@@ -634,10 +639,16 @@ class SMEAgent:
         }}
         """
         
+        # Enhance prompt for OSS models
+        compliance_prompt = self._enhance_prompt_for_oss(base_compliance_prompt, "json")
+        
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(compliance_prompt)
             response_text = response.text.strip()
+            
+            # Enhanced debug logging for OSS model troubleshooting
+            self._log_llm_response_debug(response_text, "compliance_assessment")
             
             # Parse JSON response using robust extraction
             try:
@@ -777,7 +788,7 @@ class SMEAgent:
         """Generate expert recommendations using LLM expertise."""
         
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
-        recommendations_prompt = f"""
+        base_recommendations_prompt = f"""
         As a pharmaceutical validation expert specializing in {request.specialty}, generate specific recommendations based on this analysis:
         
         COMPLIANCE ASSESSMENT:
@@ -819,10 +830,16 @@ class SMEAgent:
         ]
         """
         
+        # Enhance prompt for OSS models
+        recommendations_prompt = self._enhance_prompt_for_oss(base_recommendations_prompt, "array")
+        
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(recommendations_prompt)
             response_text = response.text.strip()
+            
+            # Enhanced debug logging for OSS model troubleshooting
+            self._log_llm_response_debug(response_text, "recommendations_generation")
             
             # Parse JSON response using robust extraction
             try:
@@ -1369,6 +1386,91 @@ Always maintain pharmaceutical regulatory standards and provide evidence-based r
             return guidance
 
         return FunctionTool.from_defaults(fn=provide_validation_guidance)
+
+    def _detect_oss_model(self) -> bool:
+        """
+        Detect if we're using an OSS model that needs enhanced prompting.
+        
+        Returns:
+            bool: True if OSS model detected
+        """
+        if hasattr(self.llm, 'model'):
+            model_name = str(self.llm.model).lower()
+            return 'oss' in model_name or 'gpt-oss' in model_name
+        return False
+
+    def _enhance_prompt_for_oss(self, base_prompt: str, response_format: str = "json") -> str:
+        """
+        Enhance prompt for OSS models with explicit formatting instructions.
+        
+        Args:
+            base_prompt: Base prompt text
+            response_format: Expected response format (json, array, object)
+            
+        Returns:
+            Enhanced prompt with OSS-specific instructions
+        """
+        if not self.is_oss_model:
+            return base_prompt
+            
+        format_instructions = {
+            "json": """
+CRITICAL RESPONSE FORMAT REQUIREMENTS:
+1. You MUST respond with valid JSON only
+2. Do NOT include any text before or after the JSON
+3. Do NOT use markdown code blocks (no ```)  
+4. Do NOT include explanations or commentary
+5. Ensure all JSON is properly escaped and valid
+6. Double-check your JSON syntax before responding
+
+Example valid response:
+{"key": "value", "array": ["item1", "item2"]}
+            """,
+            "array": """
+CRITICAL RESPONSE FORMAT REQUIREMENTS:
+1. You MUST respond with a valid JSON ARRAY only
+2. Do NOT include any text before or after the JSON array
+3. Do NOT use markdown code blocks (no ```)
+4. Do NOT include explanations or commentary  
+5. Ensure all JSON is properly escaped and valid
+6. Double-check your JSON array syntax before responding
+
+Example valid response:
+[{"key": "value"}, {"key2": "value2"}]
+            """
+        }
+        
+        instruction = format_instructions.get(response_format, format_instructions["json"])
+        return f"{base_prompt}\n\n{instruction}"
+
+    def _log_llm_response_debug(self, response_text: str, parsing_context: str) -> None:
+        """
+        Log detailed debug information about LLM responses for OSS model troubleshooting.
+        
+        Args:
+            response_text: Raw LLM response text
+            parsing_context: Context of what was being parsed (e.g., "recommendations")
+        """
+        self.logger.info(f"[LLM DEBUG] {parsing_context} - Response length: {len(response_text)}")
+        self.logger.info(f"[LLM DEBUG] {parsing_context} - Response preview (first 500 chars): {response_text[:500]}...")
+        
+        # Check for common OSS model issues
+        has_markdown = '```' in response_text
+        has_json_start = '{' in response_text or '[' in response_text
+        has_json_end = '}' in response_text or ']' in response_text
+        starts_with_json = response_text.strip().startswith(('{', '['))
+        
+        self.logger.info(f"[LLM DEBUG] {parsing_context} - Format analysis:")
+        self.logger.info(f"  - Has markdown blocks: {has_markdown}")
+        self.logger.info(f"  - Has JSON start chars: {has_json_start}")
+        self.logger.info(f"  - Has JSON end chars: {has_json_end}")  
+        self.logger.info(f"  - Starts with JSON: {starts_with_json}")
+        
+        if self.is_oss_model:
+            self.logger.info(f"[OSS MODEL DEBUG] Model: {self.llm.model}")
+            
+        # Log the last 200 characters to see how it ends
+        self.logger.info(f"[LLM DEBUG] {parsing_context} - Response ending (last 200 chars): ...{response_text[-200:]}")
 
     def _update_performance_stats(self, processing_time: float) -> None:
         """Update performance statistics."""
