@@ -415,10 +415,13 @@ class ContextProviderAgent:
                 )
             }
 
-            # Initialize embedding model
+            # Initialize embedding model with callback_manager from Settings
+            from llama_index.core import Settings
+            
             self.embedding_model = OpenAIEmbedding(
                 model=self.embedding_model_name,
-                api_key=os.getenv("OPENAI_API_KEY")
+                api_key=os.getenv("OPENAI_API_KEY"),
+                callback_manager=Settings.callback_manager if hasattr(Settings, 'callback_manager') else None
             )
 
             if self.verbose:

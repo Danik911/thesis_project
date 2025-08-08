@@ -307,6 +307,24 @@ class GAMPCategorizationWorkflow(Workflow):
             document_name = ev.document_name
             author = ev.author
             self.logger.info(f"Categorizing raw document: {document_name}")
+        
+        # Validate URS content is not empty
+        if not urs_content or not urs_content.strip():
+            self.logger.error(f"Empty URS content for document: {document_name}")
+            # Log the event details for debugging
+            self.logger.error(f"Event type: {type(ev).__name__}")
+            if hasattr(ev, 'urs_content'):
+                self.logger.error(f"Event urs_content length: {len(ev.urs_content) if ev.urs_content else 0}")
+            
+            # Return error recovery event with Category 5 fallback
+            return ErrorRecoveryEvent(
+                error_type="empty_content",
+                error_message="URS content is empty or whitespace only",
+                recovery_strategy="default_to_category_5",
+                context={"document_name": document_name}
+            )
+        
+        self.logger.info(f"URS content length: {len(urs_content)} characters")
 
         # Attempt categorization with retries
         last_error = None

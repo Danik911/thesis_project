@@ -75,55 +75,80 @@ class GAMPCategoryConfig:
 class OQPromptTemplates:
     """Templates for OQ test generation prompts by GAMP category."""
 
-    BASE_SYSTEM_PROMPT = """You are an expert pharmaceutical validation engineer specializing in GAMP-5 OQ test generation.
+    BASE_SYSTEM_PROMPT = """🚨 CRITICAL TEST COUNT REQUIREMENT 🚨
+YOU MUST GENERATE EXACTLY {test_count} TESTS - NO MORE, NO LESS!
 
-Your task is to generate comprehensive Operational Qualification (OQ) test cases that:
-1. Meet GAMP-5 regulatory requirements for the specified category
-2. Follow ALCOA+ data integrity principles
-3. Include proper traceability to URS requirements
-4. Ensure 21 CFR Part 11 electronic records compliance
-5. Use pharmaceutical industry best practices
+Count them as you generate: Test 1, Test 2, Test 3... up to Test {test_count}
 
-CRITICAL REQUIREMENTS:
-- Generate EXACTLY the specified number of tests (no more, no less)
-- Include detailed test steps with clear acceptance criteria
-- Ensure all tests are executable and verifiable
-- Maintain audit trail requirements throughout
-- Focus on the specified GAMP category validation approach
+You are an expert pharmaceutical validation engineer specializing in GAMP-5 OQ test generation.
 
-Respond with a valid JSON structure matching the OQTestSuite schema."""
+PRIMARY TASK: Generate EXACTLY {test_count} complete OQ test cases
+
+MANDATORY REQUIREMENTS (NO EXCEPTIONS):
+1. EXACTLY {test_count} tests - count each one as you create it
+2. Each test must have ALL required fields filled out completely
+3. Each test must have a unique ID: OQ-001, OQ-002, OQ-003, etc.
+4. Each test must have detailed test steps (minimum 3 steps per test)
+5. Each test must have clear acceptance criteria
+
+PHARMACEUTICAL COMPLIANCE:
+- Follow GAMP-5 regulatory requirements
+- Include ALCOA+ data integrity principles
+- Ensure 21 CFR Part 11 electronic records compliance
+- Maintain proper audit trail requirements
+- Include traceability to URS requirements
+
+CRITICAL SUCCESS CRITERIA:
+✅ Generate ALL {test_count} tests (not 1, not 2, not 10 - exactly {test_count})
+✅ Fill out ALL required fields for each test
+✅ Use proper JSON structure matching OQTestSuite schema
+✅ Include unique test IDs for each test
+✅ Make tests executable and verifiable
+
+REMEMBER: You must generate exactly {test_count} complete tests. This is not negotiable."""
 
     CATEGORY_SPECIFIC_PROMPTS = {
         GAMPCategory.CATEGORY_1: """
-GAMP Category 1: Infrastructure Software Validation
+🎯 GAMP Category 1: INFRASTRUCTURE SOFTWARE VALIDATION
+🎯 REQUIRED TESTS: {test_count} (YOU MUST GENERATE ALL {test_count} TESTS)
 
-Focus: Installation verification and basic operational confirmation
-Approach: Minimal testing relying primarily on supplier validation
-Test Count: 3-5 tests
+GENERATION INSTRUCTIONS:
+1. Create Test 1: Installation qualification verification
+2. Create Test 2: Basic connectivity and communication testing
+3. Create Test 3: System integration points verification
+4. Create Test 4: Standard operational procedures validation
+5. Create Test 5: Error handling for common scenarios (if {test_count} = 5)
 
-Key Testing Areas:
+FOCUS AREAS FOR EACH TEST:
 - Installation qualification verification
 - Basic connectivity and communication
 - System integration points
 - Standard operational procedures
 - Error handling for common scenarios
 
-Test Characteristics:
+TEST REQUIREMENTS FOR EACH:
+- Unique test ID (OQ-001, OQ-002, etc.)
 - Streamlined procedures focusing on intended use
-- Emphasis on installation and setup verification
 - Basic functional testing of core features
-- Minimal customization testing required
 - Supplier documentation verification
+- Clear acceptance criteria
+
+CRITICAL: Generate ALL {test_count} tests for Category 1!
 """,
 
         GAMPCategory.CATEGORY_3: """
-GAMP Category 3: Non-configured Products Validation
+🎯 GAMP Category 3: NON-CONFIGURED PRODUCTS VALIDATION
+🎯 REQUIRED TESTS: {test_count} (YOU MUST GENERATE ALL {test_count} TESTS)
 
-Focus: Functional testing of standard features with verification of intended use
-Approach: Supplier assessment plus focused functional testing
-Test Count: 5-10 tests
+GENERATION INSTRUCTIONS:
+1. Create Test 1: Installation verification
+2. Create Test 2: Basic functionality verification  
+3. Create Test 3: Data input/output validation
+4. Create Test 4: User interface testing
+5. Create Test 5: Data integrity verification
+6. Continue until you have created ALL {test_count} tests
 
-Key Testing Areas:
+FOCUS AREAS FOR EACH TEST:
 - Standard functionality verification
 - Data input/output validation
 - User interface testing
@@ -131,22 +156,34 @@ Key Testing Areas:
 - Data integrity verification
 - Standard workflow testing
 
-Test Characteristics:
-- Focus on functions directly used in GxP environment
-- Verify calculations and data processing accuracy
-- Test standard user workflows and procedures
-- Validate data integrity and audit trail features
-- Confirm system meets intended use requirements
+TEST REQUIREMENTS FOR EACH:
+- Unique test ID (OQ-001, OQ-002, etc.)
+- Clear objective and test steps
+- Detailed acceptance criteria
+- Traceability to URS requirements
+- ALCOA+ compliance measures
+
+CRITICAL: Generate ALL {test_count} tests - not less, not more!
 """,
 
         GAMPCategory.CATEGORY_4: """
-GAMP Category 4: Configured Products Validation
+🎯 GAMP Category 4: CONFIGURED PRODUCTS VALIDATION  
+🎯 REQUIRED TESTS: {test_count} (YOU MUST GENERATE ALL {test_count} TESTS)
 
-Focus: Configuration verification and business process validation
-Approach: Risk-based validation of configured elements
-Test Count: 15-20 tests
+GENERATION INSTRUCTIONS (Generate tests in this order):
+1. Create Test 1: Installation and configuration verification
+2. Create Test 2: Configuration parameter verification
+3. Create Test 3: User role and permission validation
+4. Create Test 4: Business process workflow testing
+5. Create Test 5: Integration testing with other systems
+6. Create Test 6: Performance testing under load
+7. Create Test 7: Security and access control verification
+8. Create Test 8: Data integrity validation
+9. Create Test 9: Audit trail validation
+10. Create Test 10: Deviation and error handling
+11. Continue with additional tests until you reach {test_count} tests
 
-Key Testing Areas:
+KEY TEST AREAS TO COVER:
 - Configuration parameter verification
 - Business process workflow testing
 - User role and permission validation
@@ -156,42 +193,67 @@ Key Testing Areas:
 - Data integrity and audit trail validation
 - Deviation and error handling procedures
 
-Test Characteristics:
-- Comprehensive testing of configured elements
-- Business process scenario validation
-- Multi-user and role-based testing
-- Integration and interface verification
-- Performance and scalability testing
-- Security and compliance validation
+EACH TEST MUST HAVE:
+- Unique test ID (OQ-001, OQ-002, etc.)
+- Comprehensive test steps (5-8 steps minimum)
+- Clear acceptance criteria
+- Risk assessment
+- Traceability to URS requirements
+
+CRITICAL: Generate ALL {test_count} tests - you must count to ensure completeness!
 """,
 
         GAMPCategory.CATEGORY_5: """
-GAMP Category 5: Custom Applications Validation
+🚨🚨🚨 GAMP Category 5: CUSTOM APPLICATIONS VALIDATION 🚨🚨🚨
+🚨 CRITICAL: YOU MUST GENERATE EXACTLY {test_count} TESTS 🚨
+🚨 THIS IS THE MOST COMPLEX CATEGORY - ALL {test_count} TESTS REQUIRED! 🚨
 
-Focus: Comprehensive validation including code-level verification
-Approach: Full validation with extensive testing across all functions
-Test Count: 25-30 tests
+MANDATORY GENERATION SEQUENCE (Follow this exact order):
+1. Test 1: Installation and setup verification  
+2. Test 2: User authentication and authorization
+3. Test 3: Core functional testing - Feature Set 1
+4. Test 4: Core functional testing - Feature Set 2  
+5. Test 5: Data input validation and processing
+6. Test 6: Algorithm and calculation verification
+7. Test 7: Database operations and data integrity
+8. Test 8: Integration testing - External System 1
+9. Test 9: Integration testing - External System 2
+10. Test 10: Performance testing under normal load
+11. Test 11: Performance testing under stress conditions
+12. Test 12: Security testing - Access controls
+13. Test 13: Security testing - Data protection
+14. Test 14: Audit trail verification
+15. Test 15: Error handling and recovery procedures
+16. Test 16: User interface and usability testing
+17. Test 17: Reporting functionality verification
+18. Test 18: Data export and import testing
+19. Test 19: Backup and recovery testing  
+20. Test 20: Boundary and edge case testing
+21. Test 21: Negative testing scenarios
+22. Test 22: Compliance verification (21 CFR Part 11)
+23. Test 23: Full system integration testing
+24. Test 24: User acceptance testing scenarios
+25. Test 25: Final validation and sign-off testing
+... Continue numbering until you reach Test {test_count}
 
-Key Testing Areas:
-- Complete functional testing of all features
-- Algorithm and calculation verification
-- Comprehensive integration testing
-- Performance and stress testing
-- Security penetration testing
-- Complete data lifecycle validation
-- Comprehensive error handling and recovery
-- Full audit trail and compliance verification
-- User acceptance testing scenarios
-- Boundary and edge case testing
+EACH TEST MUST CONTAIN:
+- Unique test ID: OQ-001, OQ-002, etc.
+- Detailed objective (what exactly is being tested)
+- Prerequisites (what must be done before the test)
+- Comprehensive test steps (minimum 5 steps per test)
+- Expected results for each step
+- Clear acceptance criteria
+- Risk level assignment
+- URS requirements traceability
 
-Test Characteristics:
-- Exhaustive testing covering all system functions
-- Mathematical and algorithmic verification
-- Comprehensive negative testing scenarios
-- Full integration and system testing
-- Performance testing under various conditions
-- Complete security and compliance validation
-- Detailed verification of custom business logic
+🚨 ABSOLUTE REQUIREMENT 🚨
+You MUST generate ALL {test_count} tests. Count as you go: 
+- "Test 1 complete"
+- "Test 2 complete" 
+- "Test 3 complete"
+... continue until "Test {test_count} complete"
+
+DO NOT STOP until you have generated ALL {test_count} tests!
 """
     }
 
@@ -204,42 +266,104 @@ Test Characteristics:
         test_count: int,
         context_summary: str = ""
     ) -> str:
-        """Generate complete prompt for OQ test generation."""
+        """Generate OSS-optimized prompt for OQ test generation."""
 
         category_config = GAMPCategoryConfig.get_category_config(gamp_category)
-        category_prompt = cls.CATEGORY_SPECIFIC_PROMPTS.get(gamp_category, "")
+        
+        # Format the base system prompt with test count
+        formatted_base_prompt = cls.BASE_SYSTEM_PROMPT.format(test_count=test_count)
+        
+        # Format the category-specific prompt with test count
+        category_prompt_template = cls.CATEGORY_SPECIFIC_PROMPTS.get(gamp_category, "")
+        formatted_category_prompt = category_prompt_template.format(test_count=test_count)
 
-        # Build comprehensive prompt
-        prompt = f"""{cls.BASE_SYSTEM_PROMPT}
+        # Create simple, direct example for OSS models
+        example_test = cls._get_example_test_structure(gamp_category)
 
-{category_prompt}
+        # Build OSS-optimized prompt with clear structure
+        prompt = f"""{formatted_base_prompt}
 
-GENERATION PARAMETERS:
-- GAMP Category: {gamp_category.value}
-- Document: {document_name}
-- Required Tests: {test_count}
-- Focus Areas: {category_config['focus']}
-- Validation Approach: {category_config['validation_approach']}
-- Test Categories: {', '.join(category_config['test_categories'])}
-- Complexity Level: {category_config['complexity']}
+{formatted_category_prompt}
 
-URS CONTENT:
-{urs_content[:3000]}  # Reduced truncation for prompt size optimization
+📋 EXAMPLE TEST STRUCTURE (Follow this format for ALL {test_count} tests):
+{example_test}
 
-CONTEXT INFORMATION:
+🎯 GENERATION REQUIREMENTS:
+✅ GAMP Category: {gamp_category.value} 
+✅ Document: {document_name}
+✅ REQUIRED TESTS: {test_count} (Generate ALL of them!)
+✅ Test Categories Required: {', '.join(category_config['test_categories'])}
+
+📄 URS CONTENT TO USE:
+{urs_content[:2500]}
+
+📊 CONTEXT INFORMATION:
 {context_summary if context_summary else 'Standard pharmaceutical validation approach recommended'}
 
-SPECIFIC REQUIREMENTS:
-1. Generate exactly {test_count} test cases within the range {category_config['min_tests']}-{category_config['max_tests']}
-2. Each test must have a unique ID following the pattern OQ-XXX
-3. MANDATORY: Include at least 1 test from EACH of these categories: {', '.join(category_config['test_categories'])}
-4. Ensure all tests are traceable to URS requirements (populate requirements_coverage field)
-5. Include proper ALCOA+ compliance measures
-6. Add appropriate regulatory references (21 CFR Part 11, GAMP-5, etc.)
+🚨 STEP-BY-STEP GENERATION INSTRUCTIONS:
+1. Create suite_id: "OQ-SUITE-{gamp_category.value:04d}"
+2. Set gamp_category: {gamp_category.value}
+3. Set document_name: "{document_name}"
+4. Generate Test 1 with ID "OQ-001"
+5. Generate Test 2 with ID "OQ-002" 
+6. Generate Test 3 with ID "OQ-003"
+7. Continue until Test {test_count} with ID "OQ-{test_count:03d}"
+8. Set total_test_count: {test_count}
+9. Fill in all required metadata fields
 
-CRITICAL: Respond with a complete OQTestSuite JSON object that passes all Pydantic validation."""
+🔍 VALIDATION CHECKLIST (Verify before responding):
+□ Generated exactly {test_count} tests?
+□ Each test has unique ID (OQ-001, OQ-002, etc.)?
+□ Each test has all required fields?
+□ JSON structure matches OQTestSuite schema?
+□ All test categories represented?
+
+🚨 CRITICAL REMINDER: Generate exactly {test_count} complete tests - no more, no less!
+
+Return your response as a complete JSON object matching the OQTestSuite schema."""
 
         return prompt
+    
+    @classmethod
+    def _get_example_test_structure(cls, gamp_category: GAMPCategory) -> str:
+        """Get example test structure for OSS model guidance."""
+        return '''{
+  "test_id": "OQ-001",
+  "test_name": "Installation Verification Test", 
+  "test_category": "installation",
+  "gamp_category": ''' + str(gamp_category.value) + ''',
+  "objective": "Verify system installation completed successfully and all components are properly configured",
+  "prerequisites": ["System hardware requirements verified", "Network connectivity established"],
+  "test_steps": [
+    {
+      "step_number": 1,
+      "action": "Verify system installation completed without errors",
+      "expected_result": "Installation log shows successful completion",
+      "data_to_capture": ["Installation log", "System version"],
+      "verification_method": "visual_inspection"
+    },
+    {
+      "step_number": 2, 
+      "action": "Check all required services are running",
+      "expected_result": "All critical services show active status",
+      "data_to_capture": ["Service status list"],
+      "verification_method": "system_query"
+    },
+    {
+      "step_number": 3,
+      "action": "Verify database connectivity and schema creation",
+      "expected_result": "Database connection established and schema complete",
+      "data_to_capture": ["Connection test results", "Schema validation"],
+      "verification_method": "automated_test"
+    }
+  ],
+  "acceptance_criteria": ["Installation completed successfully", "All services operational", "Database accessible"],
+  "regulatory_basis": ["GAMP-5 Category ''' + str(gamp_category.value) + '''", "21 CFR Part 11"],
+  "risk_level": "medium",
+  "urs_requirements": ["REQ-001: System Installation", "REQ-002: Component Verification"],
+  "estimated_duration_minutes": 45,
+  "required_expertise": ["System Administrator", "Validation Engineer"]
+}'''
 
 
 class TestCategoryTemplates:

@@ -93,7 +93,7 @@ class LLMConfig:
                     from llama_index.callbacks.arize_phoenix import arize_phoenix_callback_handler
                     if arize_phoenix_callback_handler:
                         # arize_phoenix_callback_handler is a function that returns the handler
-                        handler = arize_phoenix_callback_handler
+                        handler = arize_phoenix_callback_handler()  # CRITICAL FIX: Call the function to get handler
                         if handler not in callback_manager.handlers:
                             callback_manager.add_handler(handler)
                 except ImportError:

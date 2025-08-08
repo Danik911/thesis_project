@@ -209,12 +209,15 @@ class OpenRouterCompatLLM(OpenAI):
             span.set_attribute(SpanAttributes.LLM_MODEL_NAME, self.model)
             span.set_attribute(SpanAttributes.LLM_PROVIDER, "openrouter")
             span.set_attribute(SpanAttributes.LLM_SYSTEM, "OpenRouter")
-            span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, "completion")
-            span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, self.model)
-            span.set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, self.temperature)
-            span.set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, self.max_tokens)
             span.set_attribute(SpanAttributes.LLM_PROMPTS, [prompt])
             span.set_attribute(SpanAttributes.INPUT_VALUE, prompt)
+            # Set invocation parameters as a JSON string (OpenInference convention)
+            span.set_attribute(SpanAttributes.LLM_INVOCATION_PARAMETERS, json.dumps({
+                "model": self.model,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
+                "provider": "openrouter"
+            }))
         
         # Emit start event for callbacks
         event_id = str(uuid.uuid4())
@@ -245,12 +248,10 @@ class OpenRouterCompatLLM(OpenAI):
             
             # Update OpenTelemetry span with response
             if span:
-                span.set_attribute(SpanAttributes.LLM_COMPLETIONS, [text])
                 span.set_attribute(SpanAttributes.OUTPUT_VALUE, text)
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_PROMPT, prompt_tokens)
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_COMPLETION, completion_tokens)
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_TOTAL, total_tokens)
-                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, self.model)
                 span.set_attribute("llm.latency_ms", latency * 1000)
                 span.set_status(Status(StatusCode.OK))
             
@@ -324,16 +325,19 @@ class OpenRouterCompatLLM(OpenAI):
             span.set_attribute(SpanAttributes.LLM_MODEL_NAME, self.model)
             span.set_attribute(SpanAttributes.LLM_PROVIDER, "openrouter")
             span.set_attribute(SpanAttributes.LLM_SYSTEM, "OpenRouter")
-            span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, "chat")
-            span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, self.model)
-            span.set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, self.temperature)
-            span.set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, self.max_tokens)
             
             # Set messages as input
             span.set_attribute(SpanAttributes.INPUT_VALUE, messages_text)
             # Set messages in OpenInference format
             span.set_attribute(SpanAttributes.LLM_INPUT_MESSAGES, 
                              [{"role": m["role"], "content": m["content"]} for m in message_dicts])
+            # Set invocation parameters as a JSON string (OpenInference convention)
+            span.set_attribute(SpanAttributes.LLM_INVOCATION_PARAMETERS, json.dumps({
+                "model": self.model,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
+                "provider": "openrouter"
+            }))
         
         # Emit start event for callbacks
         event_id = str(uuid.uuid4())
@@ -369,7 +373,6 @@ class OpenRouterCompatLLM(OpenAI):
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_PROMPT, input_tokens)
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_COMPLETION, output_tokens)
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_TOTAL, total_tokens)
-                span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, self.model)
                 span.set_attribute("llm.latency_ms", latency * 1000)
                 span.set_status(Status(StatusCode.OK))
             
