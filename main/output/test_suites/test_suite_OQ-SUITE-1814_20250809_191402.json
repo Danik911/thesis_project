@@ -1,0 +1,1540 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-09T19:14:02.257900",
+    "suite_id": "OQ-SUITE-1814",
+    "gamp_category": 5,
+    "total_test_count": 30,
+    "file_version": "1.0",
+    "compliance_standards": [
+      "GAMP-5",
+      "ALCOA+",
+      "21 CFR Part 11"
+    ],
+    "generator_version": "OQTestGenerationWorkflow v1.0"
+  },
+  "test_suite": {
+    "suite_id": "OQ-SUITE-1814",
+    "gamp_category": 5,
+    "document_name": "testing_data.md",
+    "test_cases": [
+      {
+        "test_id": "OQ-001",
+        "test_name": "Custom MES Installation Verification",
+        "test_category": "installation",
+        "gamp_category": 5,
+        "objective": "Verify successful installation of all custom MES components including servers, databases, and interfaces.",
+        "prerequisites": [
+          "Hardware infrastructure in place",
+          "Installation media available",
+          "Network configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Install MES application server using custom installation package",
+            "expected_result": "Installation completes without errors",
+            "data_to_capture": [
+              "Installation logs",
+              "System version"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All components installed successfully",
+          "No critical errors in installation logs"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Verify installation integrity checks"
+        ],
+        "urs_requirements": [
+          "URS-MES-001"
+        ],
+        "related_tests": [
+          "OQ-002",
+          "OQ-003"
+        ],
+        "estimated_duration_minutes": 120,
+        "required_expertise": [
+          "System administration",
+          "GxP compliance"
+        ]
+      },
+      {
+        "test_id": "OQ-002",
+        "test_name": "Custom Batch Genealogy Algorithm Verification",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the custom batch genealogy tracking algorithm handles complex manufacturing scenarios correctly.",
+        "prerequisites": [
+          "Test batch data loaded",
+          "System installed"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate batch splitting across multiple unit operations",
+            "expected_result": "System maintains accurate parent-child relationships",
+            "data_to_capture": [
+              "Genealogy report",
+              "Processing time"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All batch relationships maintained accurately",
+          "Performance within acceptable limits"
+        ],
+        "regulatory_basis": [
+          "EU GMP Annex 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Verify no data loss during complex operations"
+        ],
+        "urs_requirements": [
+          "URS-MES-002"
+        ],
+        "related_tests": [
+          "OQ-001",
+          "OQ-004"
+        ],
+        "estimated_duration_minutes": 90,
+        "required_expertise": [
+          "Manufacturing processes",
+          "Data modeling"
+        ]
+      },
+      {
+        "test_id": "OQ-003",
+        "test_name": "Proprietary Equipment Interface Validation",
+        "test_category": "integration",
+        "gamp_category": 5,
+        "objective": "Validate the custom interfaces to 12 different proprietary equipment types function as designed.",
+        "prerequisites": [
+          "Equipment available for testing",
+          "Interface specifications"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Send test commands to Equipment Type A and verify response",
+            "expected_result": "Commands executed correctly with proper data capture",
+            "data_to_capture": [
+              "Interface logs",
+              "Data timestamps"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All equipment interfaces function as specified",
+          "Data integrity maintained"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 210/211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Verify no data corruption during transfer"
+        ],
+        "urs_requirements": [
+          "URS-MES-003"
+        ],
+        "related_tests": [
+          "OQ-001",
+          "OQ-005"
+        ],
+        "estimated_duration_minutes": 180,
+        "required_expertise": [
+          "Equipment protocols",
+          "Interface development"
+        ]
+      },
+      {
+        "test_id": "OQ-004",
+        "test_name": "Custom Workflow Engine Exception Handling",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the custom workflow engine correctly handles complex exception scenarios per business rules.",
+        "prerequisites": [
+          "Test deviation scenarios defined",
+          "System installed"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate material shortage deviation during processing",
+            "expected_result": "System initiates correct exception workflow",
+            "data_to_capture": [
+              "Workflow state",
+              "Audit trail entries"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All exception scenarios handled correctly",
+          "Proper audit trail generated"
+        ],
+        "regulatory_basis": [
+          "EU GMP Annex 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Verify no workflow state corruption"
+        ],
+        "urs_requirements": [
+          "URS-MES-004"
+        ],
+        "related_tests": [
+          "OQ-002",
+          "OQ-006"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Business process knowledge",
+          "Workflow design"
+        ]
+      },
+      {
+        "test_id": "OQ-005",
+        "test_name": "Custom Mobile Application Data Entry Validation",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the bespoke mobile application correctly captures and transmits shop floor data.",
+        "prerequisites": [
+          "Mobile devices configured",
+          "Test environment available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Enter test batch record data via mobile interface",
+            "expected_result": "Data accurately transmitted to MES database",
+            "data_to_capture": [
+              "Transmission logs",
+              "Data timestamps"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All data fields transmitted correctly",
+          "Performance within acceptable limits"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Verify no data loss during transmission"
+        ],
+        "urs_requirements": [
+          "URS-MES-006"
+        ],
+        "related_tests": [
+          "OQ-003",
+          "OQ-007"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "Mobile development",
+          "GxP data requirements"
+        ]
+      },
+      {
+        "test_id": "OQ-006",
+        "test_name": "Custom Analytics Module Performance Testing",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Validate the bespoke analytics module can process real-time manufacturing data within required timeframes.",
+        "prerequisites": [
+          "Test data sets prepared",
+          "Performance benchmarks defined"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Load simulated production data at maximum expected volume",
+            "expected_result": "Analytics complete within defined time window",
+            "data_to_capture": [
+              "Processing time",
+              "System resource usage"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All calculations complete within SLA",
+          "System remains stable under load"
+        ],
+        "regulatory_basis": [
+          "EU GMP Annex 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Verify calculation accuracy under load"
+        ],
+        "urs_requirements": [
+          "URS-MES-007"
+        ],
+        "related_tests": [
+          "OQ-002",
+          "OQ-004"
+        ],
+        "estimated_duration_minutes": 90,
+        "required_expertise": [
+          "Performance testing",
+          "Data analytics"
+        ]
+      },
+      {
+        "test_id": "OQ-007",
+        "test_name": "Custom Audit Trail Implementation Verification",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Verify the custom audit trail captures all required metadata and maintains integrity.",
+        "prerequisites": [
+          "Test user accounts created",
+          "Audit trail specifications"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform series of data modifications by different users",
+            "expected_result": "Audit trail records all changes with complete metadata",
+            "data_to_capture": [
+              "Audit trail entries",
+              "User identification"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All changes recorded with complete context",
+          "No gaps in audit trail"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Verify audit trail cannot be modified"
+        ],
+        "urs_requirements": [
+          "URS-MES-008"
+        ],
+        "related_tests": [
+          "OQ-004",
+          "OQ-008"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Regulatory compliance",
+          "Data security"
+        ]
+      },
+      {
+        "test_id": "OQ-008",
+        "test_name": "Proprietary Electronic Signature Workflow Validation",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Validate the custom electronic signature workflow meets regulatory requirements.",
+        "prerequisites": [
+          "Test user roles configured",
+          "Signature workflow defined"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate batch approval process with test users",
+            "expected_result": "Signature workflow enforces proper sequencing and controls",
+            "data_to_capture": [
+              "Workflow state",
+              "Signature metadata"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All signature requirements enforced",
+          "Complete signature record maintained"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Verify signature binding to records"
+        ],
+        "urs_requirements": [
+          "URS-MES-009"
+        ],
+        "related_tests": [
+          "OQ-007",
+          "OQ-009"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "Electronic signatures",
+          "Regulatory requirements"
+        ]
+      },
+      {
+        "test_id": "OQ-009",
+        "test_name": "Custom Data Integrity Checks Verification",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Verify the custom data integrity checks function as designed to prevent data anomalies.",
+        "prerequisites": [
+          "Test data sets prepared",
+          "Integrity check specifications"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Attempt to enter invalid process parameter combinations",
+            "expected_result": "System prevents entry of invalid data",
+            "data_to_capture": [
+              "Error messages",
+              "System response"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All defined integrity checks function correctly",
+          "Proper error handling"
+        ],
+        "regulatory_basis": [
+          "EU GMP Annex 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Verify no invalid data can be stored"
+        ],
+        "urs_requirements": [
+          "URS-MES-010"
+        ],
+        "related_tests": [
+          "OQ-007",
+          "OQ-010"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Data validation",
+          "Regulatory compliance"
+        ]
+      },
+      {
+        "test_id": "OQ-010",
+        "test_name": "Multi-Level BOM Structure Validation",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the custom multi-level bill of materials structure handles conditional components correctly.",
+        "prerequisites": [
+          "Test BOMs loaded",
+          "System installed"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Create batch record with conditional component path",
+            "expected_result": "System correctly applies conditional component rules",
+            "data_to_capture": [
+              "BOM structure",
+              "Component usage"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All conditional component scenarios handled correctly",
+          "Data integrity maintained"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Verify no component substitution errors"
+        ],
+        "urs_requirements": [
+          "URS-MES-005"
+        ],
+        "related_tests": [
+          "OQ-002",
+          "OQ-004"
+        ],
+        "estimated_duration_minutes": 75,
+        "required_expertise": [
+          "Manufacturing processes",
+          "Data modeling"
+        ]
+      },
+      {
+        "test_id": "OQ-011",
+        "test_name": "Custom MES Integration with Proprietary Equipment",
+        "test_category": "integration",
+        "gamp_category": 5,
+        "objective": "Verify the custom MES successfully integrates with all 12 proprietary equipment types as specified in URS-MES-003",
+        "prerequisites": [
+          "MES installed",
+          "All equipment connected",
+          "Test protocols approved"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate data transfer from Equipment Type 1 to MES",
+            "expected_result": "Data appears in MES within 5 seconds with 100% accuracy",
+            "data_to_capture": [
+              "Transfer time",
+              "Data accuracy",
+              "Error logs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All 12 equipment types integrate successfully",
+          "Data transfer meets timing requirements",
+          "No data corruption occurs"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "EU Annex 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "ALCOA+ principles",
+          "Audit trail verification"
+        ],
+        "urs_requirements": [
+          "URS-MES-001",
+          "URS-MES-003"
+        ],
+        "related_tests": [
+          "OQ-012",
+          "OQ-015"
+        ],
+        "estimated_duration_minutes": 120,
+        "required_expertise": [
+          "MES configuration",
+          "Equipment protocols"
+        ]
+      },
+      {
+        "test_id": "OQ-012",
+        "test_name": "Custom Workflow Engine for Parallel Processing",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Validate the custom workflow engine handles parallel processing paths as specified in URS-MES-004",
+        "prerequisites": [
+          "MES installed",
+          "Test batch records created"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate batch with parallel processing paths",
+            "expected_result": "System correctly routes and manages parallel workflows without conflicts",
+            "data_to_capture": [
+              "Workflow execution time",
+              "Path synchronization",
+              "Error messages"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All parallel paths execute correctly",
+          "No deadlocks occur",
+          "Exception handling works as designed"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 210/211"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Process parameter integrity",
+          "Electronic signature verification"
+        ],
+        "urs_requirements": [
+          "URS-MES-004"
+        ],
+        "related_tests": [
+          "OQ-011",
+          "OQ-013"
+        ],
+        "estimated_duration_minutes": 90,
+        "required_expertise": [
+          "Workflow design",
+          "Batch processing"
+        ]
+      },
+      {
+        "test_id": "OQ-013",
+        "test_name": "Proprietary Yield Optimization Calculations",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the custom yield optimization algorithms perform as specified in URS-MES-002",
+        "prerequisites": [
+          "Test data sets prepared",
+          "Calculation formulas documented"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Input test batch data into yield calculation module",
+            "expected_result": "Calculations match pre-verified results within 0.1% tolerance",
+            "data_to_capture": [
+              "Input values",
+              "Calculation results",
+              "Processing time"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All calculations are accurate",
+          "Performance meets requirements",
+          "Edge cases handled appropriately"
+        ],
+        "regulatory_basis": [
+          "ICH Q7"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Calculation audit trail",
+          "Version control"
+        ],
+        "urs_requirements": [
+          "URS-MES-002"
+        ],
+        "related_tests": [
+          "OQ-012",
+          "OQ-014"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Pharmaceutical calculations",
+          "Algorithm validation"
+        ]
+      },
+      {
+        "test_id": "OQ-014",
+        "test_name": "Custom Mobile Application for Shop Floor Data Entry",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Validate the custom mobile application correctly captures and transmits shop floor data per URS-MES-006",
+        "prerequisites": [
+          "Mobile app installed",
+          "Test devices configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Enter test batch data via mobile interface",
+            "expected_result": "Data appears in MES database within 10 seconds with 100% accuracy",
+            "data_to_capture": [
+              "Transmission time",
+              "Data accuracy",
+              "Network performance"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All data fields captured correctly",
+          "Transmission meets timing requirements",
+          "Offline mode functions properly"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Data encryption",
+          "User authentication"
+        ],
+        "urs_requirements": [
+          "URS-MES-006"
+        ],
+        "related_tests": [
+          "OQ-011",
+          "OQ-015"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "Mobile development",
+          "Data validation"
+        ]
+      },
+      {
+        "test_id": "OQ-015",
+        "test_name": "Custom Audit Trail Implementation Verification",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Verify the custom audit trail captures all required metadata as specified in URS-MES-008",
+        "prerequisites": [
+          "Audit trail configuration complete",
+          "Test users created"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform series of test transactions in MES",
+            "expected_result": "Audit trail records all actions with complete metadata including timestamp, user, and before/after values",
+            "data_to_capture": [
+              "Audit trail entries",
+              "Metadata completeness",
+              "System performance impact"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All required events are logged",
+          "Metadata is complete and accurate",
+          "Performance impact is acceptable"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "EU Annex 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Immutable records",
+          "Time synchronization"
+        ],
+        "urs_requirements": [
+          "URS-MES-008"
+        ],
+        "related_tests": [
+          "OQ-016",
+          "OQ-017"
+        ],
+        "estimated_duration_minutes": 75,
+        "required_expertise": [
+          "Regulatory compliance",
+          "Audit trail design"
+        ]
+      },
+      {
+        "test_id": "OQ-016",
+        "test_name": "Proprietary Electronic Signature Workflow Validation",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Validate the custom electronic signature workflow meets all regulatory requirements per URS-MES-009",
+        "prerequisites": [
+          "Test users with appropriate roles created",
+          "Signature workflow configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate test batch record approval process",
+            "expected_result": "Signature workflow enforces all required steps and captures complete signature metadata",
+            "data_to_capture": [
+              "Workflow steps",
+              "Signature metadata",
+              "System behavior"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All required signatures are captured",
+          "Workflow cannot be bypassed",
+          "Signature metadata is complete"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Non-repudiation",
+          "Signature binding"
+        ],
+        "urs_requirements": [
+          "URS-MES-009"
+        ],
+        "related_tests": [
+          "OQ-015",
+          "OQ-018"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Electronic signatures",
+          "Regulatory compliance"
+        ]
+      },
+      {
+        "test_id": "OQ-017",
+        "test_name": "Custom Data Integrity Checks Verification",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Verify all custom data integrity checks function as specified in URS-MES-010",
+        "prerequisites": [
+          "Test data sets prepared",
+          "Validation protocols approved"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Attempt to enter invalid data that should trigger integrity checks",
+            "expected_result": "System prevents entry of invalid data and provides appropriate error messages",
+            "data_to_capture": [
+              "Error messages",
+              "System behavior",
+              "Data validation"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All specified checks are implemented",
+          "System prevents invalid data entry",
+          "Error messages are clear and actionable"
+        ],
+        "regulatory_basis": [
+          "FDA Data Integrity Guidance"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Input validation",
+          "Error handling"
+        ],
+        "urs_requirements": [
+          "URS-MES-010"
+        ],
+        "related_tests": [
+          "OQ-015",
+          "OQ-016"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "Data validation",
+          "Regulatory requirements"
+        ]
+      },
+      {
+        "test_id": "OQ-018",
+        "test_name": "Custom Analytics Module Performance Testing",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Validate the custom analytics module meets performance requirements for real-time process monitoring per URS-MES-007",
+        "prerequisites": [
+          "Test data sets prepared",
+          "Performance benchmarks defined"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Load system with maximum expected data volume",
+            "expected_result": "Analytics module processes data within specified time limits without errors",
+            "data_to_capture": [
+              "Processing time",
+              "System resources",
+              "Data accuracy"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All calculations complete within required time",
+          "System remains stable under load",
+          "No data loss occurs"
+        ],
+        "regulatory_basis": [
+          "ICH Q7"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Calculation accuracy",
+          "Data completeness"
+        ],
+        "urs_requirements": [
+          "URS-MES-007"
+        ],
+        "related_tests": [
+          "OQ-013",
+          "OQ-019"
+        ],
+        "estimated_duration_minutes": 90,
+        "required_expertise": [
+          "Performance testing",
+          "Data analytics"
+        ]
+      },
+      {
+        "test_id": "OQ-019",
+        "test_name": "Multi-level BOM Structure Validation",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the system correctly handles multi-level bill of materials with conditional components as specified in URS-MES-005",
+        "prerequisites": [
+          "Test BOMs created",
+          "Validation protocols approved"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Create test batch using complex BOM structure",
+            "expected_result": "System correctly interprets and applies all conditional components based on batch parameters",
+            "data_to_capture": [
+              "BOM interpretation",
+              "Component selection",
+              "System behavior"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All conditional components are correctly applied",
+          "BOM structure is accurately maintained",
+          "No calculation errors occur"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 210/211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "BOM version control",
+          "Component traceability"
+        ],
+        "urs_requirements": [
+          "URS-MES-005"
+        ],
+        "related_tests": [
+          "OQ-012",
+          "OQ-020"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "BOM management",
+          "Pharmaceutical manufacturing"
+        ]
+      },
+      {
+        "test_id": "OQ-020",
+        "test_name": "Custom MES Security Controls Verification",
+        "test_category": "security",
+        "gamp_category": 5,
+        "objective": "Validate all custom security controls implemented in the MES meet requirements",
+        "prerequisites": [
+          "Security test plan approved",
+          "Test user accounts created"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Attempt unauthorized access to restricted functions",
+            "expected_result": "System prevents access and logs security violation attempts",
+            "data_to_capture": [
+              "Access attempts",
+              "System response",
+              "Audit trail entries"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All security controls function as designed",
+          "Unauthorized access is prevented",
+          "Security events are properly logged"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11",
+          "EU Annex 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Access controls",
+          "Security logging"
+        ],
+        "urs_requirements": [
+          "URS-MES-008",
+          "URS-MES-009"
+        ],
+        "related_tests": [
+          "OQ-015",
+          "OQ-016"
+        ],
+        "estimated_duration_minutes": 75,
+        "required_expertise": [
+          "System security",
+          "Regulatory compliance"
+        ]
+      },
+      {
+        "test_id": "OQ-021",
+        "test_name": "Custom MES Batch Genealogy Tracking Verification",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the custom batch genealogy tracking functionality across multiple unit operations",
+        "prerequisites": [
+          "MES system installed",
+          "Test batch data loaded"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Initiate batch processing across multiple unit operations",
+            "expected_result": "Batch genealogy is tracked in real-time",
+            "data_to_capture": [
+              "Batch ID",
+              "Unit operation sequence"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Batch genealogy is accurately tracked across all unit operations"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Audit trail must capture all genealogy changes"
+        ],
+        "urs_requirements": [
+          "URS-MES-002"
+        ],
+        "related_tests": [
+          "OQ-022",
+          "OQ-023"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "MES system knowledge",
+          "Batch processing expertise"
+        ]
+      },
+      {
+        "test_id": "OQ-022",
+        "test_name": "Custom MES Yield Optimization Algorithm Validation",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Validate the proprietary yield optimization calculations in the custom MES",
+        "prerequisites": [
+          "Yield optimization algorithm configured",
+          "Historical batch data available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Run yield optimization algorithm with test batch data",
+            "expected_result": "Calculated yield matches expected values within acceptable tolerance",
+            "data_to_capture": [
+              "Input parameters",
+              "Calculated yield"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Yield calculations are accurate and consistent"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "All calculations must be reproducible"
+        ],
+        "urs_requirements": [
+          "URS-MES-002"
+        ],
+        "related_tests": [
+          "OQ-021",
+          "OQ-023"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Mathematical modeling",
+          "Process optimization"
+        ]
+      },
+      {
+        "test_id": "OQ-023",
+        "test_name": "Custom MES Mobile Application Functionality Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the functionality of the custom mobile application for shop floor data entry",
+        "prerequisites": [
+          "Mobile application installed",
+          "Test user credentials available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Enter test data using the mobile application",
+            "expected_result": "Data is accurately captured and transmitted to MES",
+            "data_to_capture": [
+              "Entered data",
+              "Transmission timestamp"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All data entries are accurately recorded in MES"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Data must be securely transmitted"
+        ],
+        "urs_requirements": [
+          "URS-MES-006"
+        ],
+        "related_tests": [
+          "OQ-021",
+          "OQ-022"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Mobile application testing",
+          "Data transmission protocols"
+        ]
+      },
+      {
+        "test_id": "OQ-024",
+        "test_name": "Custom MES Proprietary Data Structure Validation",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Validate the proprietary data structures for multi-level bill of materials",
+        "prerequisites": [
+          "Test BOM data loaded",
+          "System configuration completed"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Create test BOM with conditional components",
+            "expected_result": "BOM structure is correctly stored and retrievable",
+            "data_to_capture": [
+              "BOM structure",
+              "Component relationships"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All BOM data is accurately stored and retrievable"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Data relationships must be maintained"
+        ],
+        "urs_requirements": [
+          "URS-MES-005"
+        ],
+        "related_tests": [
+          "OQ-025",
+          "OQ-026"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Data modeling",
+          "BOM management"
+        ]
+      },
+      {
+        "test_id": "OQ-025",
+        "test_name": "Custom MES Process Parameter Interdependencies Test",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the handling of complex interdependencies between process parameters",
+        "prerequisites": [
+          "Test process parameters configured",
+          "System validation completed"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Modify interdependent process parameters",
+            "expected_result": "System correctly handles parameter relationships",
+            "data_to_capture": [
+              "Parameter values",
+              "System response"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All parameter interdependencies are correctly managed"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Parameter relationships must be maintained"
+        ],
+        "urs_requirements": [
+          "URS-MES-005"
+        ],
+        "related_tests": [
+          "OQ-024",
+          "OQ-026"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Process engineering",
+          "System validation"
+        ]
+      },
+      {
+        "test_id": "OQ-026",
+        "test_name": "Custom MES Real-Time Process Monitoring Verification",
+        "test_category": "performance",
+        "gamp_category": 5,
+        "objective": "Verify the real-time process monitoring capabilities of the custom analytics module",
+        "prerequisites": [
+          "Analytics module installed",
+          "Test process data available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Monitor test process data in real-time",
+            "expected_result": "Process data is accurately monitored and displayed",
+            "data_to_capture": [
+              "Process parameters",
+              "Monitoring alerts"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All process data is accurately monitored in real-time"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Real-time data must be accurate"
+        ],
+        "urs_requirements": [
+          "URS-MES-007"
+        ],
+        "related_tests": [
+          "OQ-024",
+          "OQ-025"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Real-time monitoring",
+          "Process analytics"
+        ]
+      },
+      {
+        "test_id": "OQ-027",
+        "test_name": "Custom MES Proprietary Electronic Signature Workflow Test",
+        "test_category": "security",
+        "gamp_category": 5,
+        "objective": "Verify the functionality of the proprietary electronic signature workflow",
+        "prerequisites": [
+          "Test user credentials available",
+          "Signature workflow configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Execute electronic signature workflow",
+            "expected_result": "Signature is correctly applied and recorded",
+            "data_to_capture": [
+              "Signature timestamp",
+              "User credentials"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Electronic signatures are correctly applied and recorded"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Signature data must be secure"
+        ],
+        "urs_requirements": [
+          "URS-MES-009"
+        ],
+        "related_tests": [
+          "OQ-028",
+          "OQ-029"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Electronic signatures",
+          "Security protocols"
+        ]
+      },
+      {
+        "test_id": "OQ-028",
+        "test_name": "Custom MES Enhanced Audit Trail Verification",
+        "test_category": "data_integrity",
+        "gamp_category": 5,
+        "objective": "Verify the enhanced audit trail implementation with additional metadata",
+        "prerequisites": [
+          "Audit trail configuration completed",
+          "Test transactions available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform test transactions and review audit trail",
+            "expected_result": "Audit trail captures all required metadata",
+            "data_to_capture": [
+              "Transaction details",
+              "Metadata captured"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Audit trail contains all required metadata"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Audit trail must be complete and accurate"
+        ],
+        "urs_requirements": [
+          "URS-MES-008"
+        ],
+        "related_tests": [
+          "OQ-027",
+          "OQ-029"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Audit trail management",
+          "Metadata standards"
+        ]
+      },
+      {
+        "test_id": "OQ-029",
+        "test_name": "Custom MES Proprietary Equipment Interface Validation",
+        "test_category": "integration",
+        "gamp_category": 5,
+        "objective": "Validate the custom interfaces for proprietary equipment types",
+        "prerequisites": [
+          "Equipment interfaces configured",
+          "Test equipment available"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Send test commands to proprietary equipment",
+            "expected_result": "Equipment responds correctly to commands",
+            "data_to_capture": [
+              "Command sent",
+              "Equipment response"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All equipment interfaces function correctly"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Data transmission must be accurate"
+        ],
+        "urs_requirements": [
+          "URS-MES-003"
+        ],
+        "related_tests": [
+          "OQ-027",
+          "OQ-028"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Equipment integration",
+          "Protocol testing"
+        ]
+      },
+      {
+        "test_id": "OQ-030",
+        "test_name": "Custom MES Complex Exception Handling Verification",
+        "test_category": "functional",
+        "gamp_category": 5,
+        "objective": "Verify the handling of complex exceptions in the custom workflow engine",
+        "prerequisites": [
+          "Test exception scenarios configured",
+          "System validation completed"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Trigger test exception scenarios",
+            "expected_result": "System handles exceptions according to configured rules",
+            "data_to_capture": [
+              "Exception type",
+              "System response"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All exceptions are handled according to configured rules"
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 211"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Exception handling must be consistent"
+        ],
+        "urs_requirements": [
+          "URS-MES-004"
+        ],
+        "related_tests": [
+          "OQ-029",
+          "OQ-028"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Exception handling",
+          "Workflow management"
+        ]
+      }
+    ],
+    "test_categories": {},
+    "requirements_coverage": {
+      "URS-001": [
+        "OQ-001",
+        "OQ-002",
+        "OQ-003",
+        "OQ-004",
+        "OQ-005"
+      ],
+      "URS-002": [
+        "OQ-006",
+        "OQ-007",
+        "OQ-008",
+        "OQ-009",
+        "OQ-010"
+      ],
+      "URS-003": [
+        "OQ-011",
+        "OQ-012",
+        "OQ-013",
+        "OQ-014",
+        "OQ-015",
+        "OQ-016",
+        "OQ-017",
+        "OQ-018",
+        "OQ-019",
+        "OQ-020",
+        "OQ-021",
+        "OQ-022",
+        "OQ-023",
+        "OQ-024",
+        "OQ-025",
+        "OQ-026",
+        "OQ-027",
+        "OQ-028",
+        "OQ-029",
+        "OQ-030"
+      ]
+    },
+    "risk_coverage": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "compliance_coverage": {
+      "21_cfr_part_11": true,
+      "gamp5": true,
+      "alcoa_plus": true
+    },
+    "total_test_count": 30,
+    "estimated_execution_time": 1845,
+    "coverage_percentage": 0.0,
+    "generation_timestamp": "2025-08-09T18:14:02.245936+00:00",
+    "generation_method": "LLMTextCompletionProgram_o3-mini",
+    "validation_approach": "",
+    "created_by": "oq_generation_agent_v2_progressive",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  },
+  "audit_trail": {
+    "created_by": "OQTestGenerationWorkflow",
+    "creation_timestamp": "2025-08-09T19:14:02.257900",
+    "validation_status": "generated",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  }
+}
