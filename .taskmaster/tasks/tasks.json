@@ -447,6 +447,68 @@
       ],
       "priority": "high",
       "subtasks": []
+    },
+    {
+      "id": 15,
+      "title": "Implement Priority 1 Prompt Improvements",
+      "description": "Implement immediate prompt engineering fixes for the pharmaceutical test generation system based on the improvement plan",
+      "details": "Week 1 quick wins to optimize prompts:\n1. Reduce OQ generator repetition (60% size reduction)\n2. Add structured JSON examples to categorization agent\n3. Implement basic Chain-of-Thought reasoning\n4. Clean verbose prompts across all agents\n5. Add DeepSeek V3 specific formatting\n\nTarget: 30-40% token reduction, >95% parsing success",
+      "testStrategy": "Test improved prompts with existing test data in main/tests/test_data/gamp5_test_data/testing_data.md. Measure token usage, parsing success rate, and generation time. Verify regulatory compliance maintained.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Reduce OQ Generator Repetition",
+          "description": "Refactor OQ generator prompts to eliminate excessive repetition of test_count",
+          "details": "Current prompt mentions {test_count} 20+ times. Reduce to 2-3 clear mentions. Streamline BASE_SYSTEM_PROMPT and CATEGORY_SPECIFIC_PROMPTS in main/src/agents/oq_generator/templates.py",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 15
+        },
+        {
+          "id": 2,
+          "title": "Add JSON Examples to Categorization",
+          "description": "Add structured JSON examples for few-shot learning in categorization agent",
+          "details": "Update prompts in main/src/agents/categorization/agent.py to include clear JSON output examples. Implement few-shot learning patterns for better OSS model compatibility.",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 15
+        },
+        {
+          "id": 3,
+          "title": "Implement Chain-of-Thought Reasoning",
+          "description": "Add CoT reasoning structure to categorization agent for improved accuracy",
+          "details": "Implement step-by-step reasoning: 1) Identify software type, 2) Check customization level, 3) Apply GAMP-5 criteria, 4) Determine category with confidence. Update system prompts in agent.py",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 15
+        },
+        {
+          "id": 4,
+          "title": "Optimize for DeepSeek V3",
+          "description": "Add DeepSeek V3 specific prompt formatting and optimizations",
+          "details": "Implement DeepSeek V3 optimizations: reduce verbosity by 40%, use clear instruction formatting, optimize for 671B MoE architecture. Update all agent prompts for OSS model compatibility.",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 15
+        },
+        {
+          "id": 5,
+          "title": "Test and Validate Improvements",
+          "description": "Test all prompt improvements with existing test data",
+          "details": "Run improved prompts against testing_data.md. Measure: token usage reduction (target: -40%), parsing success (target: >95%), generation time (target: <5min), compliance maintained (100%). Document results.",
+          "status": "done",
+          "dependencies": [
+            "15.1",
+            "15.2",
+            "15.3",
+            "15.4"
+          ],
+          "parentTaskId": 15
+        }
+      ]
     }
   ]
 }

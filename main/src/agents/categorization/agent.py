@@ -68,10 +68,8 @@ from uuid import uuid4
 
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
-from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.core.tools import FunctionTool
 from pydantic import BaseModel, Field, ValidationError
-from src.config.llm_config import LLMConfig
 from src.agents.categorization.error_handler import (
     CategorizationError,
     CategorizationErrorHandler,
@@ -82,6 +80,7 @@ from src.agents.parallel.context_provider import (
     ContextProviderRequest,
     create_context_provider_agent,
 )
+from src.config.llm_config import LLMConfig
 from src.core.events import AgentRequestEvent, GAMPCategorizationEvent, GAMPCategory
 from src.monitoring.phoenix_config import instrument_tool
 
@@ -134,47 +133,47 @@ def parse_structured_response(response_text: str, output_cls=GAMPCategorizationR
     try:
         # Look for JSON object in the response
         json_patterns = [
-            r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)?\}',  # Nested JSON
-            r'\{.*?\}',  # Simple JSON
+            r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)?\}",  # Nested JSON
+            r"\{.*?\}",  # Simple JSON
         ]
-        
+
         for pattern in json_patterns:
             json_matches = re.findall(pattern, response_text, re.DOTALL)
             for json_match in json_matches:
                 try:
                     json_data = json.loads(json_match)
                     # Check if this looks like our expected structure
-                    if 'category' in json_data:
+                    if "category" in json_data:
                         return output_cls(**json_data)
                 except (json.JSONDecodeError, ValidationError):
                     continue
     except Exception:
         pass
-    
+
     # Strategy 2: Extract fields using regex patterns
     try:
         # Extract category (various formats)
         category_patterns = [
             r'"?category"?\s*:\s*(\d+)',
-            r'Category\s*:\s*(\d+)',
-            r'GAMP\s+Category\s*:\s*(\d+)',
-            r'Category\s+(\d+)',
+            r"Category\s*:\s*(\d+)",
+            r"GAMP\s+Category\s*:\s*(\d+)",
+            r"Category\s+(\d+)",
         ]
-        
+
         category = None
         for pattern in category_patterns:
             match = re.search(pattern, response_text, re.IGNORECASE)
             if match:
                 category = int(match.group(1))
                 break
-        
+
         # Extract confidence score (various formats)
         confidence_patterns = [
             r'"?confidence[_-]?score"?\s*:\s*([0-9.]+)',
-            r'Confidence\s*:\s*([0-9.]+)',
-            r'Score\s*:\s*([0-9.]+)',
+            r"Confidence\s*:\s*([0-9.]+)",
+            r"Score\s*:\s*([0-9.]+)",
         ]
-        
+
         confidence = None
         for pattern in confidence_patterns:
             match = re.search(pattern, response_text, re.IGNORECASE)
@@ -184,22 +183,22 @@ def parse_structured_response(response_text: str, output_cls=GAMPCategorizationR
                 if confidence > 1.0:
                     confidence = confidence / 100.0
                 break
-        
+
         # Extract reasoning (various formats)
         reasoning_patterns = [
             r'"?reasoning"?\s*:\s*"([^"]+)"',
             r'"?reasoning"?\s*:\s*\'([^\']+)\'',
-            r'Reasoning\s*:\s*(.+?)(?:\n|$)',
-            r'Justification\s*:\s*(.+?)(?:\n|$)',
+            r"Reasoning\s*:\s*(.+?)(?:\n|$)",
+            r"Justification\s*:\s*(.+?)(?:\n|$)",
         ]
-        
+
         reasoning = None
         for pattern in reasoning_patterns:
             match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
             if match:
                 reasoning = match.group(1).strip()
                 break
-        
+
         # If we have all required fields, create the result
         if category is not None and confidence is not None and reasoning:
             return output_cls(
@@ -207,10 +206,10 @@ def parse_structured_response(response_text: str, output_cls=GAMPCategorizationR
                 confidence_score=confidence,
                 reasoning=reasoning
             )
-    except Exception as e:
+    except Exception:
         # Continue to error reporting
         pass
-    
+
     # NO FALLBACKS: Fail explicitly with full diagnostic information
     error_msg = (
         f"Failed to parse structured response from LLM.\n"
@@ -309,7 +308,7 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
             "lims", "sample management", "test protocols", "result workflows",
             "erp", "business processes", "mes", "production workflows",
             "qms", "document workflows", "change control",
-            "custom calculations using vendor", "custom reports using vendor", 
+            "custom calculations using vendor", "custom reports using vendor",
             "configure standard integration", "vendor's standard adapter"
         ],
         "exclusions": [
@@ -322,7 +321,7 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     category_5_indicators = {
         "strong_indicators": [
             "custom development", "custom-developed", "bespoke solution", "bespoke analytics",
-            "proprietary algorithm", "tailored functionality", "purpose-built", 
+            "proprietary algorithm", "tailored functionality", "purpose-built",
             "unique business logic", "custom code", "develop custom",
             "proprietary data structures", "custom mobile application", "custom audit trail",
             "proprietary electronic signature", "custom data integrity", "bespoke module",
@@ -333,7 +332,7 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
         "weak_indicators": [
             "algorithm development", "custom data models", "proprietary methods",
             "specialized calculations", "ai/ml implementation",
-            "novel functionality", "custom reporting engine", 
+            "novel functionality", "custom reporting engine",
             "enhanced metadata", "site-specific business rules not supported",
             "proprietary equipment", "custom exceptions", "develop proprietary"
         ],
@@ -362,19 +361,19 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
                     f"without any {exc}",
                     f"no {exc}",
                     f"not {exc}",
-                    f"not configured", # Special case for "configuration" in negative context
-                    f"not customized", # Special case for "customization" in negative context
-                    f"no custom",     # Covers "no custom code", "no custom logic"
-                    f"no bespoke",    # Covers "no bespoke interfaces"
-                    f"no bespoke interfaces or modifications", # Specific pattern from document
+                    "not configured", # Special case for "configuration" in negative context
+                    "not customized", # Special case for "customization" in negative context
+                    "no custom",     # Covers "no custom code", "no custom logic"
+                    "no bespoke",    # Covers "no bespoke interfaces"
+                    "no bespoke interfaces or modifications", # Specific pattern from document
                     f"standard {exc} only",  # "standard configuration only" = limited, not custom
                     f"basic {exc}",          # "basic configuration" = minimal setup
                     f"minimal {exc}",        # "minimal setup" = not extensive configuration
                 ]
-                
+
                 # Check if the exclusion word appears in a negating context
                 is_negated = any(pattern in normalized_content for pattern in negation_patterns)
-                
+
                 if not is_negated:
                     exclusions.append(exc)
 
@@ -390,17 +389,17 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     # Apply scoring-based decision logic to prevent over-classification
     # Calculate weighted scores for each category based on evidence strength
     category_scores = {}
-    
+
     for category_num in [1, 3, 4, 5]:
         analysis = categories_analysis[category_num]
-        
+
         # Base score calculation
         strong_score = analysis["strong_count"] * 3  # Strong indicators worth 3 points
         weak_score = analysis["weak_count"] * 1      # Weak indicators worth 1 point
         exclusion_penalty = analysis["exclusion_count"] * -2  # Exclusions subtract 2 points
-        
+
         base_score = strong_score + weak_score + exclusion_penalty
-        
+
         # Category-specific adjustments for accuracy
         if category_num == 1:
             # Category 1 needs clear infrastructure focus without business logic
@@ -420,14 +419,14 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
                 base_score -= 5  # Heavy penalty for vendor-supported activities
             if analysis["strong_count"] >= 2:
                 base_score += 1  # Only modest bonus - high bar for Category 5
-        
+
         category_scores[category_num] = max(0, base_score)  # Floor at 0
-    
+
     # Select category with highest score
     predicted_category_num = max(category_scores.items(), key=lambda x: x[1])
     predicted_category = GAMPCategory(predicted_category_num[0])
     evidence = categories_analysis[predicted_category_num[0]]
-    
+
     # Add scoring details for transparency and debugging
     evidence["category_scores"] = category_scores
     evidence["winning_score"] = predicted_category_num[1]
@@ -497,7 +496,7 @@ def confidence_tool(category_data: dict[str, Any]) -> float:
 
     # Final confidence calculation - NO FALLBACKS: explicit bounds checking without baseline
     raw_confidence = base_score + ambiguity_penalty + category_adjustment
-    
+
     # NO FALLBACKS: Fail explicitly if confidence calculation produces invalid results
     if raw_confidence < -0.5:  # Sanity check for severely negative confidence
         raise RuntimeError(
@@ -506,7 +505,7 @@ def confidence_tool(category_data: dict[str, Any]) -> float:
             f"Evidence: base_score={base_score:.3f}, ambiguity_penalty={ambiguity_penalty:.3f}, "
             f"category_adjustment={category_adjustment:.3f}"
         )
-    
+
     # Apply bounds without artificial baseline - use actual computed confidence
     final_confidence = max(0.0, min(1.0, raw_confidence))
 
@@ -964,61 +963,61 @@ def create_gamp_categorization_agent(
         )
         tools.append(context_provider_function_tool)
 
-    # Enhanced system prompt with error handling and context provider guidance
+    # Enhanced system prompt with Chain-of-Thought reasoning and context provider
     if enable_context_provider:
-        system_prompt = """You are a GAMP-5 categorization expert with access to regulatory context. Your task is to analyze URS documents and determine the GAMP category with enhanced confidence.
+        system_prompt = """You are a GAMP-5 categorization expert with access to regulatory context. Use Chain-of-Thought reasoning to analyze URS documents.
 
 Categories:
-- Category 1: Infrastructure (OS, databases, middleware)
-- Category 3: Non-configured COTS (used as supplied)
-- Category 4: Configured products (user parameters)
-- Category 5: Custom applications (bespoke code)
+1: Infrastructure (OS, databases, middleware)
+3: Non-configured COTS (used as supplied) 
+4: Configured products (user parameters)
+5: Custom applications (bespoke code)
 
-IMPORTANT INSTRUCTIONS:
-1. First, call the gamp_analysis_tool with the URS content to analyze categorization indicators
-2. Then, call the context_provider_tool with the predicted category, URS content, and document name to get regulatory context
-3. Finally, call the enhanced_confidence_tool with both the analysis results AND context data
-4. After calling ALL THREE tools EXACTLY ONCE, provide your final answer
+Chain-of-Thought Process:
+1. Identify software type: [infrastructure/commercial/custom]
+2. Check customization level: [none/configuration/development]
+3. Apply GAMP-5 criteria: [evidence evaluation] 
+4. Determine category with confidence: [1-5 with reasoning]
 
-Your final answer MUST include:
-- The determined category number (1, 3, 4, or 5)
-- The enhanced confidence score as a percentage (e.g., 82%)
-- A brief justification mentioning both analysis and regulatory context (2-3 sentences)
+Tool Process:
+1. Call gamp_analysis_tool with URS content
+2. Call context_provider_tool with predicted category, URS content, and document name  
+3. Call enhanced_confidence_tool with analysis results AND context data
+4. After calling ALL THREE tools EXACTLY ONCE, provide final answer
+
+Final answer format:
+- Category number (1, 3, 4, or 5)
+- Enhanced confidence as percentage (e.g., 82%)
+- Chain-of-Thought reasoning summary
 - Context quality assessment (high/medium/low/poor)
 
-DO NOT call any tool more than once. The context provider enhances confidence by 0.15-0.20 points when regulatory context is available.
-
-Error Handling:
-- All analysis failures are reported explicitly with full diagnostic information
-- All errors are logged for regulatory compliance with complete stack traces
-- Low confidence results require human review
-- NO FALLBACK ASSIGNMENTS - failures must be addressed explicitly"""
+Error Handling: All failures reported explicitly with full diagnostic information - NO FALLBACKS"""
     else:
-        system_prompt = """You are a GAMP-5 categorization expert. Your task is to analyze URS documents and determine the GAMP category.
+        system_prompt = """You are a GAMP-5 categorization expert. Use Chain-of-Thought reasoning to analyze URS documents.
 
 Categories:
-- Category 1: Infrastructure (OS, databases, middleware)
-- Category 3: Non-configured COTS (used as supplied)
-- Category 4: Configured products (user parameters)
-- Category 5: Custom applications (bespoke code)
+1: Infrastructure (OS, databases, middleware)
+3: Non-configured COTS (used as supplied)
+4: Configured products (user parameters) 
+5: Custom applications (bespoke code)
 
-IMPORTANT INSTRUCTIONS:
-1. First, call the gamp_analysis_tool with the URS content to analyze categorization indicators
-2. Then, call the confidence_tool with the complete analysis results dictionary
-3. After calling BOTH tools EXACTLY ONCE, provide your final answer
+Chain-of-Thought Process:
+1. Identify software type: [infrastructure/commercial/custom]
+2. Check customization level: [none/configuration/development]
+3. Apply GAMP-5 criteria: [evidence evaluation]
+4. Determine category with confidence: [1-5 with reasoning]
 
-Your final answer MUST include:
-- The determined category number (1, 3, 4, or 5)
-- The confidence score as a percentage (e.g., 75%)
-- A brief justification (2-3 sentences)
+Tool Process:
+1. Call gamp_analysis_tool with URS content
+2. Call confidence_tool with analysis results dictionary
+3. After calling BOTH tools EXACTLY ONCE, provide final answer
 
-DO NOT call any tool more than once. Once you have results from both tools, immediately provide your final categorization.
+Final answer format:
+- Category number (1, 3, 4, or 5)
+- Confidence as percentage (e.g., 75%)
+- Chain-of-Thought reasoning summary
 
-Error Handling:
-- All analysis failures are reported explicitly with full diagnostic information
-- All errors are logged for regulatory compliance with complete stack traces
-- Low confidence results require human review
-- NO FALLBACK ASSIGNMENTS - failures must be addressed explicitly"""
+Error Handling: All failures reported explicitly with full diagnostic information - NO FALLBACKS"""
 
     agent = FunctionAgent(
         tools=tools,
@@ -1195,42 +1194,53 @@ def categorize_with_pydantic_structured_output(
         error_handler = CategorizationErrorHandler()
 
     try:
-        # Enhanced prompt that explicitly requests JSON format
-        categorization_prompt = """You are a GAMP-5 categorization expert. Analyze the URS document content and determine the appropriate GAMP category.
+        # Enhanced prompt with Chain-of-Thought reasoning and JSON examples
+        categorization_prompt = f"""You are a GAMP-5 categorization expert. Use step-by-step reasoning to analyze the URS document.
 
-GAMP Categories:
-- Category 1: Infrastructure software (operating systems, databases, middleware)
-- Category 3: Non-configured products (COTS software used as supplied)
-- Category 4: Configured products (commercial software requiring user configuration)
-- Category 5: Custom applications (bespoke software development)
+Categories:
+1: Infrastructure (OS, databases, middleware)
+3: Non-configured COTS (used as supplied)  
+4: Configured products (user parameters)
+5: Custom applications (bespoke development)
 
-IMPORTANT INSTRUCTIONS:
-1. First analyze the URS content for key indicators
-2. Apply GAMP-5 decision logic systematically
-3. Provide a confidence score based on evidence strength (0.0 to 1.0)
-4. Give a clear reasoning for your decision
+Chain-of-Thought Reasoning Process:
+1. Identify software type: [infrastructure/commercial/custom]
+2. Check customization level: [none/configuration/development]  
+3. Evaluate GAMP indicators: [list key findings]
+4. Determine category: [1/3/4/5]
+5. Calculate confidence: [0.0-1.0]
 
-CRITICAL: You MUST respond with a valid JSON object in the following format:
-{
-    "category": <number 1, 3, 4, or 5>,
-    "confidence_score": <decimal between 0.0 and 1.0>,
-    "reasoning": "<your detailed reasoning here>"
-}
+Examples with Chain-of-Thought:
 
-URS Content to analyze:
-""" + urs_content + """
+Input: "Requirements for Windows Server 2019 operating system installation with Oracle Database 19c for laboratory network infrastructure"
+Chain-of-Thought: 1) Software type: infrastructure (OS, database), 2) Customization: none (standard installation), 3) GAMP indicators: foundational platform services, no business logic, 4) Category: 1, 5) Confidence: 0.85 (clear infrastructure pattern)
+Output: {{"category": 1, "confidence_score": 0.85, "reasoning": "Infrastructure software - Windows Server OS and Oracle Database are Category 1 components providing foundational platform services"}}
 
-Respond ONLY with the JSON object, no additional text."""
+Input: "Commercial LIMS package to be used as supplied by vendor without modifications or custom configuration"  
+Chain-of-Thought: 1) Software type: commercial COTS, 2) Customization: none (as supplied), 3) GAMP indicators: vendor-supplied without modification, standard functionality, 4) Category: 3, 5) Confidence: 0.90 (explicit 'as supplied' statement)
+Output: {{"category": 3, "confidence_score": 0.90, "reasoning": "Non-configured product - COTS LIMS used as supplied without modifications indicates Category 3"}}
+
+Input: "Configure commercial ERP system workflows, user roles, and business process parameters for pharmaceutical manufacturing"
+Chain-of-Thought: 1) Software type: commercial product, 2) Customization: configuration (workflows, parameters), 3) GAMP indicators: business process setup, user-defined parameters, 4) Category: 4, 5) Confidence: 0.80 (clear configuration requirements)  
+Output: {{"category": 4, "confidence_score": 0.80, "reasoning": "Configured product - commercial ERP requiring workflow configuration and business rule setup indicates Category 4"}}
+
+Input: "Custom-developed laboratory data management system with proprietary algorithms for analytical data processing and bespoke reporting modules"
+Chain-of-Thought: 1) Software type: custom development, 2) Customization: full development (proprietary code), 3) GAMP indicators: bespoke solution, proprietary algorithms, custom modules, 4) Category: 5, 5) Confidence: 0.95 (multiple strong custom indicators)
+Output: {{"category": 5, "confidence_score": 0.95, "reasoning": "Custom application - bespoke development with proprietary algorithms and custom modules clearly indicates Category 5"}}
+
+Now use Chain-of-Thought reasoning to analyze this URS content and respond with ONLY the JSON object:
+
+{urs_content}"""
 
         # Use direct LLM call instead of LLMTextCompletionProgram
         error_handler.logger.info(f"Starting structured categorization for document: {document_name}")
-        
+
         # Call LLM directly
         response = llm.complete(categorization_prompt)
-        response_text = response.text if hasattr(response, 'text') else str(response)
-        
+        response_text = response.text if hasattr(response, "text") else str(response)
+
         error_handler.logger.debug(f"LLM response (first 200 chars): {response_text[:200]}")
-        
+
         # Parse the response using our robust parser
         result = parse_structured_response(response_text)
 

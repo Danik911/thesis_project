@@ -12,13 +12,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 from llama_index.core.llms import LLM
-from llama_index.core.prompts import PromptTemplate
-from src.config.llm_config import LLMConfig
-from llama_index.llms.openai.utils import to_openai_message_dicts
 from pydantic import ValidationError
+from src.config.llm_config import LLMConfig
 from src.core.events import GAMPCategory
 
-from .models import OQGenerationConfig, OQTestSuite, OQTestCase
+from .models import OQGenerationConfig, OQTestSuite
 from .templates import GAMPCategoryConfig, OQPromptTemplates
 
 
@@ -40,28 +38,28 @@ def clean_unicode_characters(text: str) -> str:
         Cleaned text suitable for JSON parsing
     """
     # Remove BOM marker
-    if text.startswith('\ufeff'):
+    if text.startswith("\ufeff"):
         text = text[1:]
-    
+
     # Remove various invisible Unicode characters
     invisible_chars = [
-        '\u200b',  # Zero-width space
-        '\u200c',  # Zero-width non-joiner
-        '\u200d',  # Zero-width joiner
-        '\u2028',  # Line separator
-        '\u2029',  # Paragraph separator
-        '\ufeff',  # Additional BOM occurrences
+        "\u200b",  # Zero-width space
+        "\u200c",  # Zero-width non-joiner
+        "\u200d",  # Zero-width joiner
+        "\u2028",  # Line separator
+        "\u2029",  # Paragraph separator
+        "\ufeff",  # Additional BOM occurrences
     ]
-    
+
     for char in invisible_chars:
-        text = text.replace(char, '')
-    
+        text = text.replace(char, "")
+
     return text
 
 
 class OQTestGenerationError(Exception):
     """Base exception for OQ test generation failures."""
-    
+
     def __init__(self, message: str, context: dict[str, Any] | None = None):
         super().__init__(message)
         self.context = context or {}
@@ -69,7 +67,6 @@ class OQTestGenerationError(Exception):
 
 class TestGenerationFailure(OQTestGenerationError):
     """Test generation process failed - NO FALLBACK."""
-    pass
 
 
 class OQTestGeneratorV2:
@@ -94,15 +91,15 @@ class OQTestGeneratorV2:
         self.verbose = verbose
         self.generation_timeout = generation_timeout
         self.logger = logging.getLogger(__name__)
-        
+
         # Model selection - o3-mini for ALL OQ test generation
         self.model_mapping = {
             GAMPCategory.CATEGORY_1: "o3-mini",
-            GAMPCategory.CATEGORY_3: "o3-mini", 
+            GAMPCategory.CATEGORY_3: "o3-mini",
             GAMPCategory.CATEGORY_4: "o3-mini",
             GAMPCategory.CATEGORY_5: "o3-mini"  # o3 for ALL categories
         }
-        
+
         # Timeout mapping per category
         self.timeout_mapping = {
             GAMPCategory.CATEGORY_1: 120,   # 2 minutes
@@ -136,18 +133,18 @@ class OQTestGeneratorV2:
             TestGenerationFailure: Generation failed - NO FALLBACK
         """
         start_time = datetime.now(UTC)
-        
+
         try:
             # Get model and timeout for category
             model_name = self.model_mapping.get(gamp_category, "o3-mini")
             timeout = self.timeout_mapping.get(gamp_category, self.generation_timeout)
-            
+
             self.logger.info(
                 f"Starting OQ generation with model {model_name} "
                 f"for GAMP Category {gamp_category.value} "
                 f"(timeout: {timeout}s)"
             )
-            
+
             # Use centralized LLM configuration (NO FALLBACKS)
             # Note: o3 models are not currently in OSS migration scope
             # Using standard LLM config for now
@@ -155,7 +152,7 @@ class OQTestGeneratorV2:
                 max_tokens=4000,
                 # Additional parameters can be passed as needed
             )
-            
+
             # Determine test count
             if config:
                 test_count = config.target_test_count
@@ -163,7 +160,7 @@ class OQTestGeneratorV2:
                 category_config = GAMPCategoryConfig.get_category_config(gamp_category)
                 # Use max tests for the category
                 test_count = category_config["max_tests"]
-            
+
             # Generate tests based on model type
             if model_name.startswith("o3"):
                 # Check if progressive generation needed for o3 model with many tests
@@ -199,23 +196,23 @@ class OQTestGeneratorV2:
                     test_count=test_count,
                     context_data=context_data
                 )
-            
+
             # Validate test count - NO automatic adjustment
             self._validate_test_count(test_suite, gamp_category, test_count)
-            
+
             # Calculate generation time
             generation_time = (datetime.now(UTC) - start_time).total_seconds()
             # Store generation info in the existing fields
             test_suite.generation_method = f"LLMTextCompletionProgram_{model_name}"
-            
+
             if self.verbose:
                 self.logger.info(
                     f"Successfully generated {len(test_suite.test_cases)} tests "
                     f"in {generation_time:.2f}s using {model_name}"
                 )
-            
+
             return test_suite
-            
+
         except Exception as e:
             # NO FALLBACK - fail explicitly
             error_context = {
@@ -228,7 +225,7 @@ class OQTestGeneratorV2:
                 "no_fallback_available": True,
                 "requires_human_intervention": True
             }
-            
+
             self.logger.error(f"OQ generation failed: {e}")
             raise TestGenerationFailure(
                 f"Unexpected error during OQ test generation: {e}",
@@ -245,13 +242,12 @@ class OQTestGeneratorV2:
         context_data: dict[str, Any] = None
     ) -> OQTestSuite:
         """
-        Generate tests using o3 model with custom JSON parsing.
+        Generate tests using DeepSeek V3 model with custom JSON parsing.
         
-        o3 models don't support function calling, so we use direct prompting
-        with JSON output and manual parsing.
+        DeepSeek V3 models work well with direct prompting and JSON output.
         """
-        # Build enhanced prompt for o3 model
-        prompt = self._build_o3_prompt(
+        # Build enhanced prompt for DeepSeek V3 model
+        prompt = self._build_deepseek_prompt(
             gamp_category=gamp_category,
             urs_content=urs_content,
             document_name=document_name,
@@ -259,44 +255,44 @@ class OQTestGeneratorV2:
             context_data=context_data,
             model_name=llm.model
         )
-        
+
         try:
             # Use asyncio timeout for better control
             async with asyncio.timeout(self.timeout_mapping[gamp_category]):
                 # Direct API call for o3 models
                 response = await llm.acomplete(prompt)
                 response_text = response.text
-                
+
                 # Validate o3 model response (prevent empty responses)
                 if llm.model.startswith("o3"):
                     response_text = self._validate_o3_response(response_text, llm.model)
-                
+
                 # Extract JSON from response
                 json_start = response_text.find("{")
                 json_end = response_text.rfind("}") + 1
-                
+
                 if json_start == -1 or json_end == 0:
                     # Log first 500 chars of response for debugging
                     self.logger.error(f"No JSON in o3 response. First 500 chars: {response_text[:500]}")
                     raise ValueError("No JSON found in o3 model response")
-                
+
                 json_str = response_text[json_start:json_end]
-                
+
                 # Parse JSON and create OQTestSuite
                 raw_test_data = json.loads(json_str)
-                
-                # Apply flexible field mapping for o3 model variations
-                test_data = self._normalize_o3_json_fields(raw_test_data)
-                
+
+                # Apply flexible field mapping for DeepSeek V3 model variations
+                test_data = self._normalize_deepseek_json_fields(raw_test_data)
+
                 # Add pharmaceutical-compliant defaults for missing critical fields
                 test_data = self._add_pharmaceutical_defaults(test_data, gamp_category, document_name)
-                
+
                 # Validate and create test suite
                 test_suite = OQTestSuite(**test_data)
-                
+
                 return test_suite
-                
-        except asyncio.TimeoutError:
+
+        except TimeoutError:
             raise TestGenerationFailure(
                 f"o3 model generation timed out after {self.timeout_mapping[gamp_category]}s",
                 {"model": llm.model, "timeout": self.timeout_mapping[gamp_category]}
@@ -336,20 +332,20 @@ class OQTestGeneratorV2:
         """
         batch_size = 10  # O3 model limitation
         num_batches = (total_tests + batch_size - 1) // batch_size
-        
+
         all_test_cases = []
-        
+
         self.logger.info(
             f"Starting progressive generation: {total_tests} tests in {num_batches} batches"
         )
-        
+
         for batch_num in range(num_batches):
             batch_start = batch_num * batch_size
             batch_end = min(batch_start + batch_size, total_tests)
             batch_count = batch_end - batch_start
-            
+
             self.logger.info(f"Generating batch {batch_num + 1}/{num_batches}: Tests {batch_start + 1}-{batch_end}")
-            
+
             # Generate batch with context from previous batches
             batch_context = {
                 "batch_number": batch_num + 1,
@@ -359,40 +355,40 @@ class OQTestGeneratorV2:
                 "test_id_end": batch_end,
                 "original_context": context_data
             }
-            
+
             try:
                 # Build batch-specific prompt
-                batch_prompt = self._build_progressive_o3_prompt(
+                batch_prompt = self._build_progressive_deepseek_prompt(
                     gamp_category=gamp_category,
                     urs_content=urs_content,
                     document_name=document_name,
                     test_count=batch_count,
                     batch_context=batch_context
                 )
-                
+
                 # Execute batch generation with appropriate timeout
                 batch_timeout = self.timeout_mapping[gamp_category] // num_batches
                 async with asyncio.timeout(batch_timeout):
                     response = await llm.acomplete(batch_prompt)
-                    
+
                     # Validate o3 model response for batch generation
                     validated_response = self._validate_o3_response(response.text, llm.model)
-                    
+
                     # Parse batch response - returns list of test cases
                     batch_test_cases = self._parse_o3_batch_response(
-                        validated_response, 
+                        validated_response,
                         batch_num,
                         batch_start
                     )
-                    
+
                     # Add tests to collection
                     all_test_cases.extend(batch_test_cases)
-                    
+
                     # Brief delay between batches to avoid rate limits
                     if batch_num < num_batches - 1:
                         await asyncio.sleep(2)
-                        
-            except asyncio.TimeoutError:
+
+            except TimeoutError:
                 raise TestGenerationFailure(
                     f"Batch {batch_num + 1} timed out after {batch_timeout}s",
                     {"batch": batch_num + 1, "timeout": batch_timeout}
@@ -402,7 +398,7 @@ class OQTestGeneratorV2:
                     f"Batch {batch_num + 1} generation failed: {e}",
                     {"batch": batch_num + 1, "error": str(e)}
                 )
-        
+
         # Merge all batches into final test suite
         return self._merge_progressive_batches(
             all_test_cases,
@@ -426,7 +422,7 @@ class OQTestGeneratorV2:
         Uses OpenAI function calling for guaranteed structured output.
         """
         from llama_index.program.openai import OpenAIPydanticProgram
-        
+
         try:
             # Use OpenAIPydanticProgram for better reliability
             program = OpenAIPydanticProgram.from_defaults(
@@ -440,25 +436,25 @@ class OQTestGeneratorV2:
                     context_summary=self._build_context_summary(context_data)
                 )
             )
-            
+
             # Execute with timeout
             result = program()
-            
+
             if not isinstance(result, OQTestSuite):
                 raise TestGenerationFailure(
                     f"Structured output returned invalid type: {type(result)}",
                     {"expected": "OQTestSuite", "actual": str(type(result))}
                 )
-            
+
             return result
-            
+
         except Exception as e:
             raise TestGenerationFailure(
                 f"Standard model generation failed: {e}",
                 {"model": llm.model, "error": str(e)}
             )
 
-    def _build_o3_prompt(
+    def _build_deepseek_prompt(
         self,
         gamp_category: GAMPCategory,
         urs_content: str,
@@ -467,7 +463,7 @@ class OQTestGeneratorV2:
         context_data: dict[str, Any] = None,
         model_name: str = "o3"
     ) -> str:
-        """Build enhanced prompt specifically for o3 models."""
+        """Build enhanced prompt optimized for DeepSeek V3 model."""
         # Get base prompt
         base_prompt = OQPromptTemplates.get_generation_prompt(
             gamp_category=gamp_category,
@@ -476,22 +472,19 @@ class OQTestGeneratorV2:
             test_count=test_count,
             context_summary=self._build_context_summary(context_data)
         )
-        
-        # Add o3-specific instructions
-        o3_prompt = f"""{base_prompt}
 
-CRITICAL INSTRUCTIONS FOR REASONING MODEL:
-1. You MUST generate EXACTLY {test_count} tests - no more, no less
-2. Output MUST be valid JSON matching the OQTestSuite schema exactly
-3. Each test MUST have ALL required fields filled
-4. Test IDs MUST be sequential (OQ-001, OQ-002, etc.)
-5. risk_level MUST be lowercase: "low", "medium", "high", or "critical"
-6. test_category MUST be one of: "installation", "functional", "performance", "security", "data_integrity", "integration"
-7. NO explanations or text outside the JSON structure
+        # Add DeepSeek V3 optimized instructions
+        deepseek_prompt = f"""{base_prompt}
 
-Output ONLY the JSON, starting with {{ and ending with }}
+DeepSeek V3 Instructions:
+Generate {test_count} tests as JSON matching OQTestSuite schema.
+- Sequential test IDs: OQ-001, OQ-002, etc.
+- risk_level: "low", "medium", "high", or "critical"
+- test_category: "installation", "functional", "performance", "security", "data_integrity", "integration"
 
-EXACT JSON Schema for OQTestSuite:
+Return only JSON starting with {{ and ending with }}
+
+JSON Schema:
 {{
     "suite_id": "string (format: OQ-SUITE-XXXX)",
     "gamp_category": {gamp_category.value},
@@ -544,14 +537,14 @@ EXACT JSON Schema for OQTestSuite:
     }}
 }}
 """
-        
-        return o3_prompt
 
-    def _normalize_o3_json_fields(self, raw_data: dict[str, Any]) -> dict[str, Any]:
+        return deepseek_prompt
+
+    def _normalize_deepseek_json_fields(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
-        Normalize field names from o3 model variations to match Pydantic schema.
+        Normalize field names from DeepSeek V3 model variations to match Pydantic schema.
         
-        Common o3 variations:
+        Common DeepSeek V3 variations:
         - test_title -> test_name
         - description -> action  
         - UPPERCASE risk levels -> lowercase
@@ -559,7 +552,7 @@ EXACT JSON Schema for OQTestSuite:
         """
         if not isinstance(raw_data, dict):
             return raw_data
-        
+
         # Field mapping for common o3 variations
         field_mappings = {
             # Test case field mappings
@@ -570,7 +563,7 @@ EXACT JSON Schema for OQTestSuite:
             "expected_results": "expected_result",
             "expected_outcome": "expected_result",
             "step_description": "action",
-            
+
             # Suite level mappings
             "tests": "test_cases",
             "test_list": "test_cases",
@@ -578,7 +571,7 @@ EXACT JSON Schema for OQTestSuite:
             "execution_time": "estimated_execution_time",
             "total_time": "estimated_execution_time",
         }
-        
+
         # Risk level normalization (case insensitive)
         risk_level_mappings = {
             "LOW": "low", "Low": "low",
@@ -586,14 +579,14 @@ EXACT JSON Schema for OQTestSuite:
             "HIGH": "high", "High": "high",
             "CRITICAL": "critical", "Critical": "critical", "Crit": "critical"
         }
-        
+
         def normalize_dict(data: dict[str, Any]) -> dict[str, Any]:
             """Recursively normalize a dictionary."""
             normalized = {}
             for key, value in data.items():
                 # Apply field mappings
                 normalized_key = field_mappings.get(key, key)
-                
+
                 # Handle nested structures
                 if isinstance(value, dict):
                     normalized_value = normalize_dict(value)
@@ -604,18 +597,18 @@ EXACT JSON Schema for OQTestSuite:
                     ]
                 else:
                     normalized_value = value
-                
+
                 # Special handling for risk_level field
                 if normalized_key == "risk_level" and isinstance(normalized_value, str):
                     normalized_value = risk_level_mappings.get(normalized_value, normalized_value.lower())
-                
+
                 normalized[normalized_key] = normalized_value
-            
+
             return normalized
-        
+
         try:
             normalized_data = normalize_dict(raw_data)
-            
+
             # Additional validation for critical fields
             if "test_cases" in normalized_data:
                 test_cases = normalized_data["test_cases"]
@@ -625,7 +618,7 @@ EXACT JSON Schema for OQTestSuite:
                             # Ensure test_id format
                             if "test_id" not in test_case and "id" in test_case:
                                 test_case["test_id"] = test_case["id"]
-                            
+
                             # Ensure test_steps structure
                             if "test_steps" in test_case and isinstance(test_case["test_steps"], list):
                                 for j, step in enumerate(test_case["test_steps"]):
@@ -633,21 +626,21 @@ EXACT JSON Schema for OQTestSuite:
                                         # Apply field mappings to test steps
                                         step_normalized = normalize_dict(step)
                                         test_case["test_steps"][j] = step_normalized
-            
+
             self.logger.debug(f"Normalized o3 JSON fields - original keys: {list(raw_data.keys())}")
             self.logger.debug(f"Normalized o3 JSON fields - normalized keys: {list(normalized_data.keys())}")
-            
+
             return normalized_data
-            
+
         except Exception as e:
             self.logger.warning(f"Field normalization failed, using raw data: {e}")
             # Return raw data if normalization fails - better than complete failure
             return raw_data
 
     def _add_pharmaceutical_defaults(
-        self, 
-        test_data: dict[str, Any], 
-        gamp_category: GAMPCategory, 
+        self,
+        test_data: dict[str, Any],
+        gamp_category: GAMPCategory,
         document_name: str
     ) -> dict[str, Any]:
         """
@@ -660,17 +653,17 @@ EXACT JSON Schema for OQTestSuite:
         optional fields that o3 models may not always populate.
         """
         from datetime import UTC, datetime
-        
+
         # Generate suite_id if missing
         if not test_data.get("suite_id"):
             timestamp = datetime.now(UTC).strftime("%Y%m")
             test_data["suite_id"] = f"OQ-SUITE-{timestamp}"
-        
+
         # Ensure basic suite information
         test_data.setdefault("gamp_category", gamp_category.value)
         test_data.setdefault("document_name", document_name)
         test_data.setdefault("generation_timestamp", datetime.now(UTC).isoformat())
-        
+
         # Add pharmaceutical compliance defaults
         test_data.setdefault("pharmaceutical_compliance", {
             "alcoa_plus_compliant": True,
@@ -679,7 +672,7 @@ EXACT JSON Schema for OQTestSuite:
             "audit_trail_verified": True,
             "data_integrity_assured": True
         })
-        
+
         # Add validation status defaults
         test_data.setdefault("validation_status", {
             "structure_validated": True,
@@ -687,7 +680,7 @@ EXACT JSON Schema for OQTestSuite:
             "coverage_adequate": True,
             "ready_for_execution": True
         })
-        
+
         # Ensure test_cases structure
         if "test_cases" in test_data and isinstance(test_data["test_cases"], list):
             for i, test_case in enumerate(test_data["test_cases"]):
@@ -697,11 +690,11 @@ EXACT JSON Schema for OQTestSuite:
                     test_case.setdefault("gamp_category", gamp_category.value)
                     test_case.setdefault("risk_level", "medium")
                     test_case.setdefault("estimated_duration_minutes", 30)
-                    
+
                     # Ensure test_id format
                     if not test_case.get("test_id"):
                         test_case["test_id"] = f"OQ-{(i+1):03d}"
-                    
+
                     # Ensure required lists
                     test_case.setdefault("prerequisites", [])
                     test_case.setdefault("acceptance_criteria", ["Test passes successfully"])
@@ -710,7 +703,7 @@ EXACT JSON Schema for OQTestSuite:
                     test_case.setdefault("urs_requirements", [])
                     test_case.setdefault("related_tests", [])
                     test_case.setdefault("required_expertise", ["QA Tester"])
-                    
+
                     # Ensure test_steps structure
                     if "test_steps" not in test_case or not test_case["test_steps"]:
                         test_case["test_steps"] = [{
@@ -719,26 +712,26 @@ EXACT JSON Schema for OQTestSuite:
                             "expected_result": "Test completes successfully",
                             "data_to_capture": []
                         }]
-                    
+
                     # Validate test_steps structure
                     if isinstance(test_case["test_steps"], list):
                         for j, step in enumerate(test_case["test_steps"]):
                             if isinstance(step, dict):
                                 step.setdefault("step_number", j + 1)
                                 step.setdefault("data_to_capture", [])
-        
+
         # Calculate summary fields
         test_cases = test_data.get("test_cases", [])
         test_data.setdefault("total_test_count", len(test_cases))
-        
+
         # Calculate total execution time
         total_time = sum(
-            test.get("estimated_duration_minutes", 30) 
-            for test in test_cases 
+            test.get("estimated_duration_minutes", 30)
+            for test in test_cases
             if isinstance(test, dict)
         )
         test_data.setdefault("estimated_execution_time", total_time)
-        
+
         # Add default coverage metadata with proper initialization
         test_data.setdefault("test_categories", {})
         # Initialize requirements_coverage with at least one mapping to pass validation
@@ -756,16 +749,16 @@ EXACT JSON Schema for OQTestSuite:
             "gamp5": True,
             "alcoa_plus": True
         })
-        
+
         # Set generation method if not present
-        test_data.setdefault("generation_method", f"LLMTextCompletionProgram_o3")
-        
+        test_data.setdefault("generation_method", "LLMTextCompletionProgram_o3")
+
         # Audit trail
         test_data.setdefault("review_required", True)
         test_data.setdefault("created_by", "oq_generation_agent_v2")
-        
+
         self.logger.debug(f"Added pharmaceutical defaults to test suite with {len(test_cases)} test cases")
-        
+
         return test_data
 
     def _validate_o3_response(self, response_text: str, model_name: str) -> str:
@@ -777,7 +770,7 @@ EXACT JSON Schema for OQTestSuite:
         """
         if not response_text or len(response_text.strip()) == 0:
             raise TestGenerationFailure(
-                f"O3 model returned empty response - likely missing reasoning_effort parameter",
+                "O3 model returned empty response - likely missing reasoning_effort parameter",
                 {
                     "model": model_name,
                     "response_length": len(response_text),
@@ -786,19 +779,19 @@ EXACT JSON Schema for OQTestSuite:
                     "requires_human_intervention": True
                 }
             )
-        
+
         # Log successful o3 response for monitoring
         self.logger.info(f"O3 model {model_name} returned response of {len(response_text)} characters")
-        
+
         return response_text
 
     def _build_context_summary(self, context_data: dict[str, Any] | None) -> str:
         """Build context summary from aggregated data."""
         if not context_data:
             return ""
-        
+
         summary_parts = []
-        
+
         # Add categorization context
         if "categorization" in context_data:
             cat_data = context_data["categorization"]
@@ -806,19 +799,19 @@ EXACT JSON Schema for OQTestSuite:
                 f"Categorization: {cat_data.get('category', 'Unknown')} "
                 f"(Confidence: {cat_data.get('confidence', 0):.1%})"
             )
-        
+
         # Add research findings
         if "research" in context_data:
             research = context_data["research"]
             if research.get("fda_findings"):
                 summary_parts.append(f"FDA Research: {len(research['fda_findings'])} relevant findings")
-        
+
         # Add SME recommendations
         if "sme" in context_data:
             sme = context_data["sme"]
             if sme.get("recommendations"):
                 summary_parts.append(f"SME Input: {len(sme['recommendations'])} recommendations")
-        
+
         return "\n".join(summary_parts)
 
     def _validate_test_count(
@@ -837,7 +830,7 @@ EXACT JSON Schema for OQTestSuite:
         category_config = GAMPCategoryConfig.get_category_config(gamp_category)
         min_tests = category_config["min_tests"]
         max_tests = category_config["max_tests"]
-        
+
         if actual_count < min_tests:
             raise TestGenerationFailure(
                 f"Insufficient tests generated: {actual_count} < {min_tests} minimum",
@@ -848,7 +841,7 @@ EXACT JSON Schema for OQTestSuite:
                     "expected": expected_count
                 }
             )
-        
+
         if actual_count > max_tests:
             raise TestGenerationFailure(
                 f"Too many tests generated: {actual_count} > {max_tests} maximum",
@@ -859,13 +852,13 @@ EXACT JSON Schema for OQTestSuite:
                     "expected": expected_count
                 }
             )
-        
+
         if actual_count != expected_count:
             self.logger.warning(
                 f"Test count mismatch: generated {actual_count}, expected {expected_count}"
             )
 
-    def _build_progressive_o3_prompt(
+    def _build_progressive_deepseek_prompt(
         self,
         gamp_category: GAMPCategory,
         urs_content: str,
@@ -876,22 +869,21 @@ EXACT JSON Schema for OQTestSuite:
         """Build batch-specific prompt for progressive o3 generation."""
         # Get base context summary
         context_summary = self._build_context_summary(batch_context.get("original_context"))
-        
+
         # Build batch-specific context
         batch_number = batch_context["batch_number"]
         total_batches = batch_context["total_batches"]
         previous_tests = batch_context["previous_tests"]
         test_id_start = batch_context["test_id_start"]
         test_id_end = batch_context["test_id_end"]
-        
+
         previous_test_info = ""
         if previous_tests:
             previous_test_info = f"""
 PREVIOUS BATCH TESTS GENERATED:
 {', '.join(previous_tests)}
 
-CRITICAL: Your test IDs must start from OQ-{test_id_start:03d} and go up to OQ-{test_id_end:03d}.
-DO NOT duplicate any previous test IDs.
+Test IDs: OQ-{test_id_start:03d} through OQ-{test_id_end:03d} (no duplicates).
 """
 
         # Build progressive batch prompt
@@ -904,22 +896,19 @@ URS CONTENT: {urs_content}
 
 {previous_test_info}
 
-BATCH REQUIREMENTS:
-- Generate EXACTLY {test_count} tests for this batch
-- Test IDs MUST be: OQ-{test_id_start:03d} through OQ-{test_id_end:03d}
-- All tests must be unique and not overlap with previous batches
-- Focus on different test categories to ensure comprehensive coverage
-- Each test must have ALL required fields filled
+Batch Requirements:
+- Generate {test_count} tests for this batch
+- Test IDs: OQ-{test_id_start:03d} through OQ-{test_id_end:03d}
+- Unique tests with comprehensive coverage
+- Include all required fields
 
-CRITICAL INSTRUCTIONS FOR O3 MODEL:
-1. You MUST generate EXACTLY {test_count} tests - no more, no less
-2. Output MUST be valid JSON matching the OQTestSuite schema exactly
-3. Test IDs MUST be sequential: OQ-{test_id_start:03d}, OQ-{test_id_start+1:03d}, etc.
-4. risk_level MUST be lowercase: "low", "medium", "high", or "critical"
-5. test_category MUST be one of: "installation", "functional", "performance", "security", "data_integrity", "integration"
-6. NO explanations or text outside the JSON structure
+DeepSeek V3 Instructions:
+Generate JSON matching OQTestSuite schema.
+- Sequential test IDs: OQ-{test_id_start:03d}, OQ-{test_id_start+1:03d}, etc.
+- risk_level: "low", "medium", "high", or "critical" 
+- test_category: "installation", "functional", "performance", "security", "data_integrity", "integration"
 
-Output ONLY the JSON for this batch, starting with {{ and ending with }}
+Return only JSON starting with {{ and ending with }}
 
 EXACT JSON Schema for this batch:
 {{
@@ -964,33 +953,33 @@ EXACT JSON Schema for this batch:
         try:
             # Clean and extract JSON
             cleaned_text = clean_unicode_characters(response_text)
-            
+
             # Find JSON boundaries
             json_start = cleaned_text.find("{")
             json_end = cleaned_text.rfind("}") + 1
-            
+
             if json_start == -1 or json_end == 0:
                 raise ValueError(f"No JSON found in batch {batch_num + 1} response")
-            
+
             json_str = cleaned_text[json_start:json_end]
-            
+
             # Parse JSON
             batch_data = json.loads(json_str)
-            
+
             # Extract test cases from batch response
             test_cases = batch_data.get("test_cases", [])
             if not test_cases:
                 raise ValueError(f"No test_cases found in batch {batch_num + 1} response")
-            
+
             # Normalize test case fields if needed
             normalized_test_cases = []
             for test_case in test_cases:
-                normalized_case = self._normalize_o3_json_fields(test_case) if isinstance(test_case, dict) else test_case
+                normalized_case = self._normalize_deepseek_json_fields(test_case) if isinstance(test_case, dict) else test_case
                 normalized_test_cases.append(normalized_case)
-            
+
             self.logger.info(f"Successfully parsed batch {batch_num + 1} with {len(normalized_test_cases)} tests")
             return normalized_test_cases
-            
+
         except (json.JSONDecodeError, ValidationError) as e:
             raise TestGenerationFailure(
                 f"Failed to parse batch {batch_num + 1} response: {e}",
@@ -1006,7 +995,7 @@ EXACT JSON Schema for this batch:
     ) -> OQTestSuite:
         """Merge all batches into final comprehensive test suite."""
         from datetime import UTC, datetime
-        
+
         # Create merged test suite data
         merged_data = {
             "suite_id": f"OQ-SUITE-{datetime.now(UTC).strftime('%H%M')}",  # Use hour and minute for 4 digits
@@ -1032,17 +1021,17 @@ EXACT JSON Schema for this batch:
             "review_required": True,
             "created_by": "oq_generation_agent_v2_progressive"
         }
-        
+
         # Add pharmaceutical defaults and calculate metadata
         merged_data = self._add_pharmaceutical_defaults(merged_data, gamp_category, document_name)
-        
+
         # Validate and create final test suite
         final_suite = OQTestSuite(**merged_data)
-        
+
         self.logger.info(
             f"Successfully merged {len(all_test_cases)} tests from progressive generation"
         )
-        
+
         return final_suite
 
     async def test_o3_model_configuration(self) -> dict[str, Any]:
@@ -1053,7 +1042,7 @@ EXACT JSON Schema for this batch:
         with proper reasoning_effort parameter.
         """
         self.logger.info("Testing o3 model configuration...")
-        
+
         try:
             # Use centralized LLM configuration (NO FALLBACKS)
             test_llm = LLMConfig.get_llm(
@@ -1061,12 +1050,12 @@ EXACT JSON Schema for this batch:
                 max_completion_tokens=100,
                 reasoning_effort="medium"  # Required for o3 models
             )
-            
+
             test_prompt = "Generate a simple JSON object with one field 'test': 'success'. Respond with valid JSON only."
-            
+
             response = await test_llm.acomplete(test_prompt)
             response_text = response.text.strip()
-            
+
             # Validate response
             if len(response_text) == 0:
                 return {
@@ -1076,7 +1065,7 @@ EXACT JSON Schema for this batch:
                     "model_working": False,
                     "diagnosis": "O3 model returning empty responses - check API configuration"
                 }
-            
+
             return {
                 "status": "success",
                 "response_length": len(response_text),
@@ -1085,14 +1074,14 @@ EXACT JSON Schema for this batch:
                 "reasoning_effort": "medium",
                 "diagnosis": "O3 model working correctly with reasoning_effort parameter"
             }
-            
+
         except Exception as e:
             return {
                 "status": "failed",
                 "error": str(e),
                 "error_type": type(e).__name__,
                 "model_working": False,
-                "diagnosis": f"O3 model test failed: {str(e)}",
+                "diagnosis": f"O3 model test failed: {e!s}",
                 "requires_investigation": True
             }
 

@@ -1,0 +1,50 @@
+# Task ID: 15
+# Title: Implement Priority 1 Prompt Improvements
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Implement immediate prompt engineering fixes for the pharmaceutical test generation system based on the improvement plan
+# Details:
+Week 1 quick wins to optimize prompts:
+1. Reduce OQ generator repetition (60% size reduction)
+2. Add structured JSON examples to categorization agent
+3. Implement basic Chain-of-Thought reasoning
+4. Clean verbose prompts across all agents
+5. Add DeepSeek V3 specific formatting
+
+Target: 30-40% token reduction, >95% parsing success
+
+# Test Strategy:
+Test improved prompts with existing test data in main/tests/test_data/gamp5_test_data/testing_data.md. Measure token usage, parsing success rate, and generation time. Verify regulatory compliance maintained.
+
+# Subtasks:
+## 1. Reduce OQ Generator Repetition [done]
+### Dependencies: None
+### Description: Refactor OQ generator prompts to eliminate excessive repetition of test_count
+### Details:
+Current prompt mentions {test_count} 20+ times. Reduce to 2-3 clear mentions. Streamline BASE_SYSTEM_PROMPT and CATEGORY_SPECIFIC_PROMPTS in main/src/agents/oq_generator/templates.py
+
+## 2. Add JSON Examples to Categorization [done]
+### Dependencies: None
+### Description: Add structured JSON examples for few-shot learning in categorization agent
+### Details:
+Update prompts in main/src/agents/categorization/agent.py to include clear JSON output examples. Implement few-shot learning patterns for better OSS model compatibility.
+
+## 3. Implement Chain-of-Thought Reasoning [done]
+### Dependencies: None
+### Description: Add CoT reasoning structure to categorization agent for improved accuracy
+### Details:
+Implement step-by-step reasoning: 1) Identify software type, 2) Check customization level, 3) Apply GAMP-5 criteria, 4) Determine category with confidence. Update system prompts in agent.py
+
+## 4. Optimize for DeepSeek V3 [done]
+### Dependencies: None
+### Description: Add DeepSeek V3 specific prompt formatting and optimizations
+### Details:
+Implement DeepSeek V3 optimizations: reduce verbosity by 40%, use clear instruction formatting, optimize for 671B MoE architecture. Update all agent prompts for OSS model compatibility.
+
+## 5. Test and Validate Improvements [done]
+### Dependencies: 15.1, 15.2, 15.3, 15.4
+### Description: Test all prompt improvements with existing test data
+### Details:
+Run improved prompts against testing_data.md. Measure: token usage reduction (target: -40%), parsing success (target: >95%), generation time (target: <5min), compliance maintained (100%). Document results.
+
