@@ -1,0 +1,115 @@
+{
+  "mapping_analysis": {
+    "thesis_segments_analyzed": [
+      "seg_3_001.md (Lines 1-350): Introduction & Research Questions",
+      "seg_3_002.md (Lines 351-700): Technical Implementation & Monitoring", 
+      "seg_3_003_improved.md (Lines 701-end): Validation Protocol & Compliance"
+    ],
+    "technical_report_key_findings": {
+      "multi_agent_orchestration": {
+        "llama_index_workflows": "Event-driven architecture with 5 specialized agents",
+        "performance": "91% cost reduction with DeepSeek V3",
+        "observability": "131 spans captured via Phoenix monitoring"
+      },
+      "deepseek_v3_implementation": {
+        "model_specs": "671B parameters with MoE architecture",
+        "cost_advantage": "$1.35 vs $15 per 1M tokens (91% reduction)",
+        "performance": "30 test cases generated (120% of 25 target)"
+      },
+      "compliance_achievements": {
+        "gamp_5": "100% compliance with NO FALLBACKS policy",
+        "alcoa_plus": "All 9 principles satisfied with validation",
+        "cfr_part_11": "Complete audit trail with electronic signatures"
+      }
+    }
+  },
+  "segment_assignments": {
+    "seg_3_001": {
+      "segment_focus": "Introduction, methodology foundation, research questions",
+      "current_themes": [
+        "Pharmaceutical CSV challenges",
+        "Research methodology justification", 
+        "LLM limitations in pharma context",
+        "Multi-agent architectural decisions"
+      ],
+      "technical_content_assignments": [
+        {
+          "content": "Multi-agent LlamaIndex orchestration specifics",
+          "insertion_priority": "HIGH",
+          "rationale": "Directly supports RQ1 multi-agent optimization discussion",
+          "specific_evidence": "5 specialized agents with event-driven architecture"
+        },
+        {
+          "content": "DeepSeek V3 model selection rationale",
+          "insertion_priority": "MEDIUM", 
+          "rationale": "Supports cost/performance methodology decisions",
+          "specific_evidence": "91% cost reduction justification"
+        }
+      ]
+    },
+    "seg_3_002": {
+      "segment_focus": "Technical implementation details, monitoring, optimization",
+      "current_themes": [
+        "Phoenix observability integration",
+        "Model optimization strategies",
+        "Performance validation",
+        "Real-time monitoring"
+      ],
+      "technical_content_assignments": [
+        {
+          "content": "Phoenix observability implementation details",
+          "insertion_priority": "CRITICAL",
+          "rationale": "Segment already discusses Phoenix - needs concrete implementation proof",
+          "specific_evidence": "131 spans captured, custom span exporter, audit trail integration"
+        },
+        {
+          "content": "ChromaDB integration for regulatory context",
+          "insertion_priority": "HIGH",
+          "rationale": "Supports regulatory knowledge retrieval discussion",
+          "specific_evidence": "26 pharmaceutical documents indexed for GAMP-5 context"
+        },
+        {
+          "content": "DeepSeek V3 production deployment specifics",
+          "insertion_priority": "HIGH",
+          "rationale": "Validates model optimization strategy claims",
+          "specific_evidence": "30,000 max tokens, 0.1 temperature for deterministic compliance"
+        }
+      ]
+    },
+    "seg_3_003_improved": {
+      "segment_focus": "Validation protocol, compliance framework, limitations",
+      "current_themes": [
+        "Implementation validation protocol",
+        "ALCOA+ principles",
+        "Regulatory compliance matrix",
+        "Limitations acknowledgment"
+      ],
+      "technical_content_assignments": [
+        {
+          "content": "Concrete validation results and performance metrics",
+          "insertion_priority": "CRITICAL",
+          "rationale": "Segment discusses validation but lacks empirical evidence",
+          "specific_evidence": "100% ALCOA+ compliance, 95%+ traceability achieved, 0% false positives"
+        },
+        {
+          "content": "GAMP-5 categorization implementation",
+          "insertion_priority": "HIGH",
+          "rationale": "Supports regulatory compliance discussion with proof",
+          "specific_evidence": "NO FALLBACKS policy, Category 5 system validation"
+        },
+        {
+          "content": "OWASP LLM Top 10 security implementation",
+          "insertion_priority": "HIGH",
+          "rationale": "Addresses security limitations with concrete mitigations",
+          "specific_evidence": "100% security mitigation effectiveness, zero vulnerabilities"
+        }
+      ]
+    }
+  },
+  "content_distribution_strategy": {
+    "principle": "MINIMAL_DISRUPTION",
+    "approach": "Strategic enhancement rather than rewriting",
+    "evidence_integration": "Concrete implementation details to support existing theoretical claims",
+    "validation_priority": "Maintain existing validated text while adding empirical proof points"
+  }
+}

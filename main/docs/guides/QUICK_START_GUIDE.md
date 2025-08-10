@@ -1,33 +1,35 @@
-# Quick Start Guide - Current System Status
+# Quick Start Guide - Production System
 
-> **Last Updated**: August 6, 2025  
-> **System Status**: ✅ FULLY OPERATIONAL (100% functional)
+> **Last Updated**: August 9, 2025  
+> **System Status**: ✅ PRODUCTION READY with OSS Models
+> **Model**: DeepSeek V3 (671B MoE) via OpenRouter  
+> **Cost Reduction**: 91% achieved
 
-## 🎯 CRITICAL STATUS UPDATE
+## 🎯 PRODUCTION STATUS
 
-The pharmaceutical test generation workflow is **FULLY FUNCTIONAL** after critical fixes:
+The pharmaceutical test generation workflow is **PRODUCTION READY** with open-source models:
 
 ### ✅ All Components Working:
-- GAMP-5 Categorization Agent (100% confidence, no fallbacks)
-- Context Provider Agent (ChromaDB integration working)
-- Research Agent (with FDA API integration)
-- SME Agent (technical compliance assessment)
-- OQ Test Generation (o3-mini model for ALL categories)
-- Phoenix observability (101+ spans captured)
-- Complete audit trail logging
+- GAMP-5 Categorization Agent (100% confidence for Category 5)
+- Context Provider Agent (ChromaDB with 26 documents)
+- Research Agent (operational with context)
+- SME Agent (compliance assessment working)
+- OQ Test Generation (**DeepSeek V3** generating 30 tests)
+- Phoenix observability (131 spans captured)
+- Complete audit trail with NO FALLBACKS
 
-### 🔧 Critical Fixes Applied (Aug 6, 2025):
-- **o3 Model Configuration**: Added required `reasoning_effort` parameter
-- **Model Mapping**: Using o3-mini for ALL OQ generation (NOT o1 models)
-- **Requirements Coverage**: Properly initialized to pass validation
-- **Test Categories**: Enforced all required categories in prompts
-- **Quality Validation**: Adjusted to prevent unnecessary consultations
+### 🚀 Latest Achievement (Aug 9, 2025):
+- **OSS Migration Complete**: From OpenAI to DeepSeek V3
+- **Test Output**: 30 comprehensive OQ tests (exceeding target of 25)
+- **Performance**: 6 minutes 21 seconds execution time
+- **Cost**: $1.35 per 1M tokens (was $15 with GPT-4)
+- **Validation**: See [`../../HONEST_ASSESSMENT_REPORT.md`](../../HONEST_ASSESSMENT_REPORT.md)
 
 ### ⚠️ CRITICAL Requirements:
-- **API Keys MANDATORY**: System fails without proper OpenAI API key
-- **ChromaDB Embedding**: Must pre-embed GAMP-5 documents for context
-- **Model Configuration**: ONLY use o3-mini for OQ, gpt-4.1-mini-2025-04-14 for others
-- Full workflow takes 4-5 minutes (272 seconds typical)
+- **API Keys MANDATORY**: Both OPENAI_API_KEY and OPENROUTER_API_KEY required
+- **ChromaDB Embedding**: Documents must be ingested first
+- **Model Configuration**: DeepSeek V3 for OQ generation via OpenRouter
+- Full workflow takes ~6 minutes with DeepSeek V3
 
 ### 📝 Known Issues & Solutions:
 - **"No module named 'pdfplumber'"** → Actually means API key missing
@@ -37,17 +39,21 @@ The pharmaceutical test generation workflow is **FULLY FUNCTIONAL** after critic
 
 ---
 
-## 🚀 Current System (3 Steps)
+## 🚀 Production Workflow (3 Steps)
 
 ### Step 1: Set Environment Variables (CRITICAL!)
 ```bash
-# For Windows - Load from .env file
 # The .env file is at: C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.env
 cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
 
-# Windows batch command to load API key from .env
+# Load both API keys from .env file
+# For OPENAI_API_KEY (embeddings)
 for /f "tokens=1,2 delims==" %a in ('findstr "OPENAI_API_KEY" "..\\.env"') do set OPENAI_API_KEY=%b
 set OPENAI_API_KEY=%OPENAI_API_KEY:"=%
+
+# For OPENROUTER_API_KEY (DeepSeek V3)  
+for /f "tokens=1,2 delims==" %a in ('findstr "OPENROUTER_API_KEY" "..\\.env"') do set OPENROUTER_API_KEY=%b
+set OPENROUTER_API_KEY=%OPENROUTER_API_KEY:"=%
 
 # Verify it's loaded
 echo %OPENAI_API_KEY:~0,20%...
@@ -58,40 +64,32 @@ export OPENAI_API_KEY=$(grep OPENAI_API_KEY ../.env | cut -d '"' -f 2)
 
 **WARNING**: Without the API key, you'll get misleading errors like "No module named 'pdfplumber'"
 
-### Step 2: Create Test Document
+### Step 2: Ingest Documents into ChromaDB
 ```bash
-# Create a simple test URS document
-cat > test_urs.txt << EOF
-User Requirements Specification
-
-System: Pharmaceutical Manufacturing System
-Category: Custom Application
-Requirements:
-1. Real-time monitoring
-2. Data integrity (ALCOA+ compliance)
-3. Audit trail logging
-4. Electronic signatures
-
-Testing Requirements:
-- Validation testing required
-- Performance testing required
-- Security testing required
-EOF
-```
-
-### Step 3: Launch the Workflow
-```bash
-# IMPORTANT: Use 'uv run' and run from the main directory
+# CRITICAL: Must ingest regulatory documents first
 cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
 
-# Run the workflow (expects 5-6 minutes for full execution)
-uv run python main.py test_urs.txt --verbose
+# Run the ingestion script
+python ingest_chromadb.py
 
-# Or use the actual test data for better results:
-uv run python main.py tests/test_data/gamp5_test_data/testing_data.md --verbose
+# Expected output:
+# - 26 embeddings created
+# - Collection 'pharmaceutical_regulations' ready
 ```
 
-## ✅ Expected Results (ACTUAL from testing)
+### Step 3: Launch the Production Workflow
+```bash
+# Run with DeepSeek V3 and full observability
+cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
+
+# Use the validated test data
+python main.py tests/test_data/gamp5_test_data/testing_data.md --verbose
+
+# Output location:
+# output/test_suites/test_suite_OQ-SUITE-[ID]_[timestamp].json
+```
+
+## ✅ Expected Results (Production with DeepSeek V3)
 
 ### Console Output:
 ```
@@ -101,6 +99,7 @@ uv run python main.py tests/test_data/gamp5_test_data/testing_data.md --verbose
 ============================================================
 [DATA] Setting up event logging system...
 📄 Loading document: tests/test_data/gamp5_test_data/testing_data.md
+[INFO] Using DeepSeek V3 (deepseek/deepseek-chat) via OpenRouter
 
 [START] Running unified test generation workflow with event logging...
 [API] openai - embeddings - 1.29s - OK

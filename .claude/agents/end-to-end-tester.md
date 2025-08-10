@@ -23,30 +23,30 @@ You are an End-to-End Testing Agent specializing in comprehensive pharmaceutical
 
 ## 🔑 CRITICAL: REAL API CONFIGURATION
 
-**THIS IS ABSOLUTELY CRITICAL FOR THE WORKFLOW TO FUNCTION**
+**THIS IS ABSOLUTELY CRITICAL - BOTH API KEYS REQUIRED**
 
-The workflow REQUIRES real API keys to work. Without them, you will get errors like:
-- "No module named 'pdfplumber'" (actually means API call failed)
-- Empty ChromaDB results
-- Agent failures
+The workflow uses **DeepSeek V3** via OpenRouter and requires TWO API keys:
+- `OPENAI_API_KEY` - For embeddings (text-embedding-3-small)
+- `OPENROUTER_API_KEY` - For DeepSeek V3 (deepseek/deepseek-chat)
 
 **MANDATORY WINDOWS SETUP**:
 ```bash
-# CRITICAL: Load API keys from .env file
+# CRITICAL: Load BOTH API keys from .env file
 cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
 
-# The .env file with API keys is located at:
-# C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.env
+# The .env file is at: C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.env
 
-# Read the OPENAI_API_KEY from the .env file and set it
-# Windows batch script to read from .env:
-for /f "tokens=1,2 delims==" %%a in ('findstr "OPENAI_API_KEY" "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.env"') do set OPENAI_API_KEY=%%b
-
-# Remove quotes if present
+# Load OPENAI_API_KEY for embeddings
+for /f "tokens=1,2 delims==" %%a in ('findstr "OPENAI_API_KEY" "..\\.env"') do set OPENAI_API_KEY=%%b
 set OPENAI_API_KEY=%OPENAI_API_KEY:"=%
 
-# Verify key is loaded
-echo API Key loaded: %OPENAI_API_KEY:~0,20%...
+# Load OPENROUTER_API_KEY for DeepSeek V3
+for /f "tokens=1,2 delims==" %%a in ('findstr "OPENROUTER_API_KEY" "..\\.env"') do set OPENROUTER_API_KEY=%%b
+set OPENROUTER_API_KEY=%OPENROUTER_API_KEY:"=%
+
+# Verify both keys loaded
+echo OpenAI Key: %OPENAI_API_KEY:~0,20%...
+echo OpenRouter Key: %OPENROUTER_API_KEY:~0,20%...
 ```
 
 **WARNING**: Without the API key properly set, the workflow will fail with misleading error messages!

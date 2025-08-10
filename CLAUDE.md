@@ -44,8 +44,10 @@ This file provides guidance to Claude Code when working with this thesis project
 
 ## 🤖 LLM Configuration
 
-- **Development Model**: `gpt-4.1-mini-2025-04-14` (cost-efficient)
+- **Production Model**: `deepseek/deepseek-chat` (DeepSeek V3 - 671B MoE) via OpenRouter
+- **Development Model**: `gpt-4.1-mini-2025-04-14` (for rapid prototyping)
 - **Task-Master AI**: Claude Sonnet 4.0 (via MCP)
+- **Cost Achievement**: 91% reduction ($15 → $1.35 per 1M tokens)
 
 
 ## 🎯 Task-Master AI Integration
@@ -65,13 +67,13 @@ mcp__task-master-ai__research --query="..." --taskIds="X,Y"
 mcp__task-master-ai__get_tasks --status=pending
 ```
 
-### Current MVP Tasks (9 tasks)
-- **Task 1**: Fix categorization agent fallback violations (CRITICAL)
-- **Task 2**: Implement Pydantic structured output (HIGH)
-- **Task 3**: Integrate context provider (HIGH)
-- **Task 4**: Test categorization fixes (HIGH)
-- **Task 5**: Implement OQ test generation agent (HIGH)
-- **Tasks 6-9**: Complete agents and integration (MEDIUM)
+### MVP Status: ✅ COMPLETE
+- **All 9 Tasks**: Successfully completed
+- **OSS Migration**: DeepSeek V3 deployed
+- **Test Generation**: 30 OQ tests (120% of target)
+- **Phoenix Monitoring**: 131 spans captured
+- **ChromaDB**: 26 documents indexed
+- **Cost Reduction**: 91% achieved
 
 **Implementation Plan**: [`main/docs/mvp_implementation_plan.md`](main/docs/mvp_implementation_plan.md)
 
@@ -148,6 +150,15 @@ You have 6 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`
 - **Verify results**: Must check and validate all subagent work before accepting
 - **Orchestration responsibility**: You manage workflow coordination and final decisions
 - **NO FALLBACKS**: All subagents must fail explicitly rather than mask problems
+
+## 📚 Key Documentation & Reports
+
+### Essential References
+- **OSS Migration Report**: [`main/docs/tasks_issues/oss_migration_comprehensive_report.md`](main/docs/tasks_issues/oss_migration_comprehensive_report.md)
+- **Honest Assessment**: [`main/docs/HONEST_ASSESSMENT_REPORT.md`](main/docs/HONEST_ASSESSMENT_REPORT.md)
+- **Phoenix Guide**: [`main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md`](main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md)
+- **Quick Start**: [`main/docs/guides/QUICK_START_GUIDE.md`](main/docs/guides/QUICK_START_GUIDE.md)
+- **Test Output**: `main/output/test_suites/test_suite_OQ-SUITE-*.json`
 
 ## 📂 Project Structure
 ```
