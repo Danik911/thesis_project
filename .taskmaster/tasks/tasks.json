@@ -509,6 +509,331 @@
           "parentTaskId": 15
         }
       ]
+    },
+    {
+      "id": 16,
+      "title": "Week 1: Dataset Preparation for Cross-Validation",
+      "description": "Prepare 10-15 diverse URS documents for k-fold cross-validation testing of the LLM-driven test generation system",
+      "details": "Create/collect URS documents across three GAMP categories:\n- 5 GAMP Category 3 (standard software)\n- 5 GAMP Category 4 (configured products)  \n- 5 GAMP Category 5 (custom applications)\n\nEach document should include:\n- Clear functional requirements\n- Performance specifications\n- Regulatory requirements\n- Varying complexity levels\n\nDocument complexity metrics for each URS and establish manual baseline timings (40h average).",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Define URS corpus scope, templates, and selection criteria",
+          "description": "Establish the exact dataset size (10–15 URS docs), balanced GAMP distribution (5 Cat 3, 5 Cat 4, 5 Cat 5), and a standardized URS template covering functional requirements, performance specifications, and regulatory requirements across varying complexity levels. Define sourcing strategy (create vs. collect), anonymization rules, and acceptance criteria for each category.",
+          "dependencies": [],
+          "details": "- Create a URS master template with sections: Introduction/Scope, System Context, Functional Requirements, Performance/Non-functional Specifications, Regulatory/Compliance Requirements (e.g., GxP/GAMP-aligned language), Assumptions/Constraints, Traceability IDs.\n- Define per-GAMP-category guidance: examples of non-configurable features for Cat 3, configurable parameters/workflows for Cat 4, and custom modules/interfaces for Cat 5, aligning with GAMP definitions.\n- Specify target diversity axes: domain (manufacturing, QC lab, QMS), data types, integration needs, user roles, and risk profile.\n- Define anonymization guidelines: remove PII, vendor names, product codes; replace with neutral placeholders.\n- Define acceptance checklist: completeness of three requirement types, internal coherence, traceability IDs present, aligns to target GAMP category, and assigned draft complexity level (low/med/high).",
+          "status": "pending",
+          "testStrategy": "- Peer review the template using a checklist for section completeness.\n- Dry-run classify two sample URS drafts against the GAMP criteria to validate clarity of guidance."
+        },
+        {
+          "id": 2,
+          "title": "Create and/or collect 15 URS documents across GAMP 3/4/5",
+          "description": "Produce a balanced set of 15 URS documents (5 per GAMP category) using the template and criteria, mixing authored synthetic URS and curated/redacted real-world-like examples to ensure diversity and realism.",
+          "dependencies": [],
+          "details": "- For each GAMP category, define 3 authored synthetic URS and curate 2 adapted/redacted exemplars (if available), or author all 5 if sourcing is unavailable.\n- Ensure each URS includes: 12–30 functional requirements, 6–15 performance/non-functional specs, and 5–12 regulatory requirements; vary complexity and scope.\n- Include clear markers for configurable elements (Cat 4) and custom design considerations/APIs/integrations (Cat 5).\n- Apply anonymization and consistency edits; assign unique document IDs and requirement IDs for traceability.\n- Store in a structured repo: /dataset/URS/{cat}/URS_{cat}_{index}.md with front matter metadata (title, domain, version, author, date).",
+          "status": "pending",
+          "testStrategy": "- Run a content QA checklist per URS: required sections present, counts within target ranges, category alignment plausible.\n- Spot-check two URS per category via peer review."
+        },
+        {
+          "id": 3,
+          "title": "Define and compute URS complexity metrics",
+          "description": "Operationalize objective complexity metrics for each URS and calculate them to capture varying complexity levels needed for evaluation.",
+          "dependencies": [],
+          "details": "- Define metrics: requirement count (functional/performance/regulatory), average requirement length (tokens), readability (e.g., Flesch-Kincaid), dependency density (number of cross-references per requirement), integration count, configurability/custom-code indicators, ambiguity flags (TBD/optional/should), and domain criticality tags.\n- Implement a metrics script (e.g., Python) to parse URS markdown, extract requirement sections by heading markers, compute counts, readability, and cross-reference density.\n- Store results in dataset/metrics/metrics.csv with columns: doc_id, gamp_category, counts, readability, dependency_density, integrations, configurable_flags, custom_code_flags, ambiguity_rate, complexity_score (weighted composite).\n- Calibrate a composite complexity_score: e.g., z-score normalize features; weights: requirements(0.25), integrations(0.2), dependency_density(0.15), ambiguity(0.15), readability inverse(0.1), custom/config flags(0.15).",
+          "status": "pending",
+          "testStrategy": "- Unit test parser on three controlled mini-URS snippets.\n- Sanity-check distributions (histograms) to ensure scores spread across low/med/high.\n- Manually validate metrics for one URS per category vs. human judgment."
+        },
+        {
+          "id": 4,
+          "title": "Establish manual baseline timing protocol and measurements",
+          "description": "Design and execute a standardized manual test-generation task on a subset or all URS to establish baseline effort timings (target average ~40h), including task scope, environment, and data capture.",
+          "dependencies": [],
+          "details": "- Define the baseline task: manually derive test cases, traceability matrix, and acceptance criteria from a URS; document assumptions and coverage rationale.\n- Create a timing protocol: track elapsed hours by activity (requirements analysis, test design, review), with start/stop rules and interruptions logging.\n- Recruit 2–3 reviewers to perform baselines on at least 6 URS (2 per GAMP category) or all if capacity allows; ensure mix of complexity levels.\n- Use a standardized workbook to record timings, defects found in URS, and perceived difficulty (Likert scale).\n- Aggregate results into baseline_timings.csv with per-URS mean, median, std dev; record participants’ experience level.",
+          "status": "pending",
+          "testStrategy": "- Pilot the protocol on one URS, refine instructions.\n- Check inter-rater reliability via variance across reviewers; flag outliers (>2σ) for recheck.\n- Verify that average time approximates the 40h expectation or document deviations."
+        },
+        {
+          "id": 5,
+          "title": "Assemble cross-validation-ready dataset package and documentation",
+          "description": "Finalize a clean, labeled dataset with URS docs, per-doc metadata, complexity metrics, and baseline timings, packaged with splits and documentation for k-fold cross-validation.",
+          "dependencies": [],
+          "details": "- Create dataset index (dataset_manifest.json) including: doc_id, title, gamp_category, domain, complexity_score, metrics path, baseline_timing stats.\n- Generate k-fold assignments (e.g., k=5) with stratification by GAMP category and complexity tertiles; store in folds/fold_{k}.json with doc IDs per fold.\n- Validate no leakage: ensure each URS appears in exactly one fold per split; keep metrics and labels accessible to both train/test as needed, but isolate any human notes that could bias model outputs.\n- Write DATASET_README.md covering: purpose, GAMP categories, creation process, anonymization, metrics definitions, baseline protocol, and how to use folds.\n- Tag a version release in the repo (e.g., v1.0) and freeze artifacts.",
+          "status": "pending",
+          "testStrategy": "- Scripted validator checks: counts match, per-fold stratification preserved.\n- Reproduce metrics and manifest from source to ensure build determinism.\n- Spot-check 1 URS per fold for file integrity and correct metadata."
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Week 2: Execute Cross-Validation Testing",
+      "description": "Run 5-fold cross-validation across 15 URS documents to measure system performance and consistency",
+      "details": "Execute comprehensive testing protocol:\n- Implement k-fold cross-validation (k=5)\n- Measure time to generate for each URS (target: 70% reduction)\n- Track token consumption and costs\n- Calculate requirements coverage (target: ≥90%)\n- Measure false positive/negative rates (target: <5%)\n- Document variance across runs (target: <5%)\n- Perform statistical significance testing (p<0.05)\n\nCollect all performance metrics and generate test suites for analysis.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        16
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Set up 5-fold partitioning over 15 URS documents",
+          "description": "Create a deterministic 5-fold split of the 15 URS documents, ensuring each document appears exactly once in a validation fold and four times in training folds. Persist the split for reproducibility.",
+          "dependencies": [],
+          "details": "- Enumerate URS documents (IDs 1–15) and shuffle with a fixed random seed.\n- Partition into 5 folds of size 3 each; store as a JSON manifest listing train/validation document IDs per fold.\n- Ensure no data leakage by limiting any preprocessing or artifact generation for a fold to its training subset only.\n- Provide a fold iterator that yields (train_ids, val_ids) for k=5.",
+          "status": "pending",
+          "testStrategy": "Verify each document appears in validation exactly once and in training exactly 4 times. Check folds are disjoint and union to full set. Add a determinism test: repeated runs with same seed yield identical manifests."
+        },
+        {
+          "id": 2,
+          "title": "Implement cross-validation execution harness",
+          "description": "Build a runner that iterates over the 5 folds, executes the system on training and validation sets per fold, and captures run-level artifacts.",
+          "dependencies": [
+            1
+          ],
+          "details": "- Define interfaces: prepare_training(train_ids), evaluate_on_validation(val_ids).\n- For each fold: train or warm-start the system using only training URS; then run generation/evaluation on validation URS.\n- Wrap each URS processing in timing and token metering hooks; aggregate per-fold and per-URS results.\n- Emit structured logs (JSONL) per URS and a fold summary with raw predictions, labels, and metadata.\n- Include run IDs, fold index, seed, model/version, and config snapshot for reproducibility.",
+          "status": "pending",
+          "testStrategy": "Dry-run with a small subset (e.g., 2 folds, 2 URS) and a mock model to confirm control flow, artifact creation, and schema correctness. Add a guard that prevents validation data from being accessed during training."
+        },
+        {
+          "id": 3,
+          "title": "Instrument performance metrics: time, tokens, cost",
+          "description": "Integrate precise measurement of generation latency, token consumption, and cost at the per-URS and per-fold levels.",
+          "dependencies": [
+            2
+          ],
+          "details": "- Timing: measure wall-clock time per URS generation and per fold; compute mean, median, and percentiles. Compare to baseline times to compute % reduction; store both absolute and relative metrics.\n- Tokens: capture prompt and completion tokens per request via provider telemetry; sum per URS and per fold.\n- Cost: map token counts to cost using current pricing; store per-URS and aggregated totals.\n- Targets: compute whether mean time reduction meets 70% target; flag deviations.\n- Persist metrics in a metrics.json per fold and a consolidated metrics.csv.",
+          "status": "pending",
+          "testStrategy": "Unit-test token-to-cost mapping with known examples. Validate timers with a mock sleep. Cross-check totals equal the sum of per-request entries."
+        },
+        {
+          "id": 4,
+          "title": "Compute accuracy metrics: coverage, FP/FN, and variance",
+          "description": "From predictions vs. ground truth per URS, compute requirements coverage, false positive/negative rates, and variance across folds and repeated runs.",
+          "dependencies": [
+            2
+          ],
+          "details": "- Define ground truth mapping of requirements per URS and predicted coverage outputs.\n- Coverage: coverage = covered_requirements / total_requirements per URS and aggregated; check target ≥90%.\n- FP/FN: compute rates per URS and fold; check targets <5% each.\n- Variance: if multiple runs per fold, compute variance/standard deviation for each metric; otherwise, use across-fold variance. Flag metrics with variance >5%.\n- Store confusion counts, precision/recall/F1 where applicable, and per-requirement hit/miss tables.",
+          "status": "pending",
+          "testStrategy": "Use synthetic fixtures with known coverage/FP/FN to validate calculations. Sanity-check that TP+FP equals predicted positives and TP+FN equals actual positives."
+        },
+        {
+          "id": 5,
+          "title": "Aggregate results and perform statistical significance testing",
+          "description": "Consolidate all folds into a single report, compute confidence intervals, and run significance tests (p<0.05) comparing against baseline or alternative models.",
+          "dependencies": [
+            3,
+            4
+          ],
+          "details": "- Aggregation: merge per-fold metrics into a master table; compute means, standard deviations, and 95% CIs for key metrics (time reduction, cost, coverage, FP/FN).\n- Significance: select appropriate paired tests (e.g., paired t-test or Wilcoxon) per URS comparing current system vs. baseline across the same folds; report p-values and effect sizes.\n- Multiple metrics: control for multiple comparisons if needed (e.g., Holm-Bonferroni) and clearly state which metrics meet p<0.05.\n- Outputs: generate a summary report (JSON and CSV) and a human-readable test suite report with tables/plots; include targets pass/fail flags and recommendations.",
+          "status": "pending",
+          "testStrategy": "Run tests on mocked paired samples with known differences to verify p-value thresholds and correction methods. Validate CI computations with reference implementations."
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Week 3: Compliance and Quality Validation",
+      "description": "Validate system outputs against GAMP-5, 21 CFR Part 11, and ALCOA+ principles",
+      "details": "Perform comprehensive compliance assessment:\n\nGAMP-5 Compliance:\n- Category determination accuracy\n- Risk-based testing appropriateness\n- Lifecycle integration completeness\n- Documentation standards adherence\n\n21 CFR Part 11 Verification:\n- Audit trail completeness (100% target)\n- Electronic signature validation\n- Data integrity controls\n- Access control testing\n\nALCOA+ Assessment (0-1 scoring):\n- Attributable, Legible, Contemporaneous\n- Original, Accurate (2x weight)\n- Complete, Consistent, Enduring, Available\n- Target: >9/10 overall score\n\nDocument all compliance gaps and remediation strategies.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        17
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Define compliance scope, acceptance criteria, and evidence templates",
+          "description": "Establish the validation scope across GAMP-5, 21 CFR Part 11, and ALCOA+, define measurable acceptance criteria, and prepare standardized evidence templates and a traceability matrix to link requirements to tests and results.",
+          "dependencies": [],
+          "details": "- Inventory in-scope systems/modules, interfaces, and data flows.\n- For GAMP-5, enumerate checks for: correct software category assignment, risk-based testing rationale, lifecycle coverage (URS→FRS/DDS→IQ/OQ/PQ), and documentation artifacts per V-model and QMS controls.\n- For 21 CFR Part 11, define criteria for: complete audit trails, e-signature components (unique IDs, linking to records, meaning, time stamps), system access controls, and data integrity controls.\n- For ALCOA+, create a 0–1 scoring rubric for each attribute; apply 2x weight for Original and Accurate; define target overall score > 9/10.\n- Create standardized templates: URS/FRS/DDS checklists, risk assessment form, test plan/protocol, IQ/OQ/PQ scripts, audit trail review log, e-signature verification checklist, access control test scripts, ALCOA+ scoring sheet, gap log, and remediation plan.\n- Build a traceability matrix linking requirements to test cases and objective evidence.",
+          "status": "pending",
+          "testStrategy": "- Peer review acceptance criteria for completeness and clarity.\n- Dry-run the templates on a small module to confirm usability and coverage."
+        },
+        {
+          "id": 2,
+          "title": "GAMP-5 compliance assessment and lifecycle validation",
+          "description": "Assess system categorization, risk-based validation approach, lifecycle integration, and documentation against GAMP-5 guidance and produce objective evidence.",
+          "dependencies": [],
+          "details": "- Determine software and hardware categories and justify classification; ensure scaling of validation effort matches category and risk.\n- Verify lifecycle artifacts: URS, FRS, DDS, risk assessment, validation plan, test plan, IQ/OQ/PQ, reports, and traceability matrix.\n- Evaluate risk-based testing appropriateness: confirm critical thinking, patient/product/data risk focus, and proportionate testing depth.\n- Execute or review IQ/OQ/PQ: confirm installation/configuration baselines (IQ), operational functionality vs. specifications (OQ), and performance in intended use (PQ).\n- Check documentation standards: version control, approvals, objective evidence, deviations, and closure.\n- Record findings in the gap log and attach evidence to the traceability matrix.",
+          "status": "pending",
+          "testStrategy": "- Sampling audit: select representative URS→test evidence chains and verify end-to-end traceability.\n- Spot-check IQ/OQ/PQ objective evidence against acceptance criteria and category-driven expectations."
+        },
+        {
+          "id": 3,
+          "title": "21 CFR Part 11 verification: audit trails, e-signatures, access, and data integrity",
+          "description": "Verify electronic records and signatures, audit trail completeness, access controls, and data integrity controls meet 21 CFR Part 11 requirements with 100% audit trail completeness target.",
+          "dependencies": [],
+          "details": "- Audit trail: validate configuration covers create/read/update/delete, configuration changes, security events; verify time-synchronization, tamper-evidence, and reporting/export; sample end-to-end transactions for completeness and readability.\n- Electronic signatures: validate unique user IDs, signature components (username/password or biometric), meaning/intent captured, linkage to records, time/date stamps, and signer attribution; test signature manifestations on print/view/export.\n- Access control: test role-based access, least privilege, account provisioning/deprovisioning, password/2FA policies, session controls, lockouts, and logging of privileged actions.\n- Data integrity: verify controls for accuracy, record protection, versioning, secure storage, backup/restore, and data transfer integrity (hashes/secure protocols).\n- Document all test cases, objective evidence, deviations, and residual risks; update the gap log.",
+          "status": "pending",
+          "testStrategy": "- Positive/negative test sets for signatures and access controls.\n- Transaction walk-throughs tracing records from creation to archival with audit trail reconciliation.\n- Backup/restore drills and checksum verification for data integrity."
+        },
+        {
+          "id": 4,
+          "title": "ALCOA+ data integrity assessment and scoring",
+          "description": "Evaluate data lifecycle practices against ALCOA+ attributes using the defined rubric, compute weighted score, and identify gaps to meet >9/10 target.",
+          "dependencies": [],
+          "details": "- Assess each attribute across representative records and workflows:\n  - Attributable: unique user linkage and traceability.\n  - Legible: readability and durable formats.\n  - Contemporaneous: timely entries and time-stamps.\n  - Original (2x): source records preserved; validated copies traceable.\n  - Accurate (2x): correctness, controlled changes, reconciliations.\n  - Complete: inclusion of all data (including changes and metadata).\n  - Consistent: chronological order, formats, time sync.\n  - Enduring: protected storage and retention.\n  - Available: retrieval on demand within SLA.\n- Score each attribute 0–1, apply weights, and compute overall score; analyze by process area.\n- Capture objective evidence and populate the gap log for any attribute <1 or overall < target.",
+          "status": "pending",
+          "testStrategy": "- Evidence-based scoring with dual-reviewers to reduce bias.\n- Spot audits of record sets from creation to archival; verify availability via timed retrieval tests."
+        },
+        {
+          "id": 5,
+          "title": "Consolidated gaps log, risk-ranked remediation plan, and approvals",
+          "description": "Synthesize findings from GAMP-5, 21 CFR Part 11, and ALCOA+ into a single gaps log; prioritize remediation with owners, timelines, and re-test plans; obtain stakeholder approvals.",
+          "dependencies": [],
+          "details": "- Normalize gap entries: description, regulatory reference, severity (risk to patient/product/data, compliance exposure), root cause, impacted components.\n- Prioritize remediation using risk ranking; define corrective and preventive actions (CAPAs), owners, due dates, required configuration/process changes, and documentation updates.\n- Update validation deliverables as needed (risk assessment, test plan, SOPs) and plan re-tests/regression.\n- Produce a consolidated validation report summarizing results vs. acceptance criteria and attach traceability matrix and evidence index.\n- Route for QA/CSV/compliance approvals and archive per retention policy.",
+          "status": "pending",
+          "testStrategy": "- Review board meeting to challenge risk rankings and proposed CAPAs.\n- Verification of closure: evidence check and targeted re-testing for remediated items."
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Week 4: Security Assessment and Human-in-Loop Evaluation",
+      "description": "Conduct OWASP LLM Top 10 security testing and measure human oversight requirements",
+      "details": "Security Assessment:\n- LLM01: Test 20 prompt injection scenarios\n- LLM06: Validate insecure output handling\n- LLM09: Detect overreliance patterns\n- Penetration testing with canary tokens\n- Target: >90% mitigation effectiveness\n- Document all vulnerabilities and mitigations\n\nHuman-in-Loop Metrics:\n- Track consultation events per validation\n- Measure confidence score distributions\n- Document edge cases requiring intervention\n- Calculate total human hours vs automation\n- Target: <10h human review per cycle\n- Analyze optimal confidence thresholds (0.85 for Cat 3/4, 0.92 for Cat 5)",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        17
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Define OWASP LLM test plan and evaluation harness",
+          "description": "Design a concrete security test plan aligned to OWASP LLM Top 10 with explicit focus on LLM01, LLM06, and LLM09, and set up an evaluation harness to run scenarios against the current system with metrics collection.",
+          "dependencies": [],
+          "details": "• Translate OWASP LLM01 (Prompt Injection), LLM06 (Sensitive Information Disclosure/insecure output handling), and LLM09 (Overreliance) into app-specific threat scenarios and success criteria.\n• Specify 20 distinct prompt injection scenarios covering direct, indirect, multi-hop/tool-use, long-context, multilingual, and jailbreak transfer cases (e.g., instruction override, data exfiltration, tool redirection, system prompt extraction, prompt-leak via citations).\n• Define insecure output handling checks: HTML/script emission, command/code execution suggestions, unsafe file paths, secret echoes, PII leakage, tool/action execution without validation.\n• Define overreliance tests: acceptance of low-confidence outputs without escalation, hallucinated sources, missing uncertainty expression, failure to request human validation on risky categories.\n• Establish measurement: mitigation effectiveness = blocked_or_safe_responses / total attempts; set target > 90%. Capture confidence scores, category (Cat 3/4/5), and whether human validation was triggered.\n• Implement an evaluation harness (e.g., Python) that can run scenario suites against staging, capture full request/response, tool calls, confidence, safety flags, and audit logs.",
+          "status": "pending",
+          "testStrategy": "Dry-run the harness with 3 sample scenarios per category to validate logging and metric computation. Verify reproducibility and that metrics match manual tallies."
+        },
+        {
+          "id": 2,
+          "title": "Execute OWASP LLM01 prompt injection red-team suite (20 scenarios)",
+          "description": "Run the 20 defined prompt injection scenarios and record system behavior, defenses triggered, and outcomes to measure mitigation effectiveness.",
+          "dependencies": [
+            1
+          ],
+          "details": "• Implement scenarios as scripts or JSON cases consumable by the harness; randomize paraphrases to avoid caching.\n• For each case, log: input, model output, tool invocations, safety filters triggered, confidence score, and final decision.\n• Include indirect injection via retrieved documents, URLs, and tool responses; test system prompt extraction attempts; evaluate guardrails (prompt hardening, input filters, allow/deny lists) effectiveness.\n• Compute per-scenario and aggregate mitigation effectiveness and identify failure modes (e.g., partial compliance, leakage, action execution).\n• Tag vulnerable pathways for remediation.",
+          "status": "pending",
+          "testStrategy": "Use seeded runs for determinism. Manually review 10% of cases to confirm labels. Cross-validate with an external safety classifier to detect missed injections."
+        },
+        {
+          "id": 3,
+          "title": "Validate insecure output handling (LLM06) and sensitive data controls",
+          "description": "Probe for insecure output handling and sensitive information disclosure risks, including downstream execution risks, PII/secret leakage, and unsafe tool outputs.",
+          "dependencies": [
+            1
+          ],
+          "details": "• Create test prompts to elicit executable code, shell commands, SQL, and HTML/JS; verify outputs are neutralized (e.g., fenced, annotated, or blocked) and not auto-executed.\n• Plant synthetic secrets and canary tokens in retrievable corpora and tool responses; attempt exfiltration and monitor callbacks to confirm leakage paths.\n• Validate output post-processing: content sanitization, link and file validation, deny execution of untrusted outputs, and redaction of PII/secrets.\n• Assess path traversal, unsafe file operations, and tool command construction for injection sinks; verify parameterized calls and allowlists.\n• Record violations, affected components, and required mitigations; quantify mitigation effectiveness for LLM06.",
+          "status": "pending",
+          "testStrategy": "Instrument a canary token service and verify all callbacks are captured. Unit-test output renderer to ensure HTML/JS is escaped. Fuzz tool parameters with special characters to check sanitization."
+        },
+        {
+          "id": 4,
+          "title": "Detect overreliance patterns (LLM09) and configure human-in-the-loop thresholds",
+          "description": "Assess overreliance by analyzing when the system should defer to human review and optimize confidence thresholds for categories Cat 3/4 and Cat 5.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "• Log and analyze cases where the model proceeds despite low confidence, hallucinated citations, or conflicting sources; ensure escalation policies are enforced.\n• Track per-validation consultation events, human interventions, and rationales; compute confidence score distributions by category.\n• Run threshold sweeps to evaluate deferral policies with targets: 0.85 for Cat 3/4 and 0.92 for Cat 5; measure precision/recall of safe automation vs. escalations.\n• Identify edge cases requiring human intervention and codify detection rules (e.g., missing sources, contradiction flags, safety filter uncertainty).\n• Propose updated threshold and policy settings to minimize human hours while maintaining safety.",
+          "status": "pending",
+          "testStrategy": "Offline replay of the Week 4 scenario corpus under multiple thresholds; compute automation rate, error rate, and escalation rate. Manually adjudicate a stratified sample to verify label quality."
+        },
+        {
+          "id": 5,
+          "title": "Consolidate results, remediation plan, and targets vs. KPIs",
+          "description": "Document all vulnerabilities, mitigations, and human oversight metrics; finalize KPI attainment and remediation backlog.",
+          "dependencies": [
+            2,
+            3,
+            4
+          ],
+          "details": "• Produce a report: methodology, OWASP mappings (LLM01, LLM06, LLM09), scenario coverage, mitigation effectiveness (>90% target), and residual risks.\n• Summarize canary token findings, leakage vectors, and fixes; include before/after metrics where mitigations were prototyped.\n• Human-in-loop metrics: consultation events per validation, confidence distributions, total human hours vs. automation, and assessment against <10h per cycle target.\n• List edge cases requiring intervention and associated detection rules; finalize recommended confidence thresholds (0.85 Cat 3/4, 0.92 Cat 5) with projected impact.\n• Create a prioritized remediation backlog with owners and timelines; define ongoing monitoring dashboards to track regressions.",
+          "status": "pending",
+          "testStrategy": "Stakeholder review and sign-off. Verify reproducibility by re-running a subset of tests and matching reported metrics. Establish alerting on regression thresholds in CI."
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Week 5: Statistical Analysis and Chapter 4 Writing",
+      "description": "Analyze all collected data and write the complete Chapter 4: Results and Analysis (50 pages)",
+      "details": "Data Analysis:\n- Statistical significance testing (p<0.05)\n- Confidence interval calculations\n- Cross-validation variance analysis\n- ROI and cost-benefit calculations\n- Create all visualizations (charts, plots, matrices)\n\nChapter 4 Sections:\n1. Introduction (2 pages) - Research questions recap\n2. System Implementation Results (8 pages) - Architecture, performance, costs\n3. Efficiency Analysis (10 pages) - Cross-validation results, time metrics\n4. Compliance Validation (8 pages) - GAMP-5, Part 11, ALCOA+\n5. Security Assessment (6 pages) - OWASP results, mitigations\n6. Human-AI Collaboration (6 pages) - Confidence calibration, oversight\n7. Comparative Analysis (4 pages) - Manual vs automated benchmarks\n8. Discussion (6 pages) - Interpretation, limitations\n\nHighlight key achievements: 91% cost reduction, 30 tests generated, 6-minute generation time",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Consolidate and validate datasets for analysis",
+          "description": "Aggregate all collected raw data (system performance metrics, cost data, compliance audit results, security testing outputs, human-AI collaboration logs, manual vs automated benchmarks) into a single analysis workspace and perform data cleaning and validation.",
+          "dependencies": [],
+          "details": "- Create a centralized repository (e.g., project/data) with subfolders per domain: performance, cost, compliance, security, collaboration, benchmarks.\n- Define a data schema for each dataset (variables, units, expected ranges, missing value codes). Implement schema checks using a data validation tool (e.g., Great Expectations) to ensure type consistency, ranges, and uniqueness.\n- Normalize time units, currency, and IDs across datasets; join keys should include experiment_id, fold_id (for cross-validation), date_time, and system_version.\n- Handle missing data via predefined rules: listwise deletion for critical metrics, mean/median imputation for ancillary metrics, and document all imputations in a data_changes.log.\n- Create a data dictionary capturing variable definitions, derivations (e.g., ROI = (baseline_cost - system_cost)/baseline_cost), and calculation sources.\n- Snapshot the cleaned datasets as versioned artifacts for reproducibility.",
+          "status": "pending",
+          "testStrategy": "- Run validation suites to 100% pass; block progression on failed expectations.\n- Randomly sample 5% rows for manual spot-check against raw sources.\n- Recompute key aggregates (e.g., average latency, total costs) and match to known checkpoints from prior reports within ±1%."
+        },
+        {
+          "id": 2,
+          "title": "Perform statistical analyses and cost-effectiveness computations",
+          "description": "Execute all required statistical tests and calculations: significance testing (p<0.05), confidence intervals, cross-validation variance, ROI and cost-benefit, and produce analysis-ready summary tables.",
+          "dependencies": [
+            1
+          ],
+          "details": "- Implement scripts (Python/R) with a reproducible pipeline (e.g., Python: pandas, scipy, statsmodels; R: tidyverse, broom) and seed control.\n- Statistical significance: choose tests per metric type (t-test/Welch for means, Mann-Whitney if non-normal, paired tests where design applies). Report test statistic, df, p-value, effect size (Cohen's d/Cliff's delta) and 95% CI.\n- Confidence intervals: compute 95% CIs for primary metrics (accuracy, latency, throughput, cost) using parametric or bootstrap (BCa, 10k resamples) when assumptions fail.\n- Cross-validation analysis: compute per-fold means, variances, and overall mean ± SD; assess variance components and stability; include learning curves if available.\n- ROI/cost-benefit: quantify baseline vs system costs, compute ROI, payback period, and sensitivity analysis over key parameters (labor rate ±20%, volume ±20%). Highlight observed 91% cost reduction and 6-minute generation time; document calculation steps and assumptions.\n- Produce tidy summary tables (CSV/Parquet) for each section with metadata and units; store under analysis/outputs.",
+          "status": "pending",
+          "testStrategy": "- Unit-test each formula (ROI, payback) with controlled inputs.\n- Assumption checks: normality (Shapiro), variance homogeneity (Levene); auto-switch to robust/nonparametric when violated.\n- Cross-validate numbers with independent script/notebook to within rounding tolerance."
+        },
+        {
+          "id": 3,
+          "title": "Create publication-quality visualizations and appendix materials",
+          "description": "Generate all charts, plots, and matrices to support Chapter 4, with consistent styling, captions, alt-text, and export assets for inclusion.",
+          "dependencies": [
+            2
+          ],
+          "details": "- Define a visual style guide (fonts, colors, axis formats) and apply globally.\n- Visuals to produce: performance bar/violin plots with CIs; ROC/PR curves; cross-validation boxplots and variance heatmaps; time-to-generate distributions (highlight 6-minute median/mean); cost waterfall and tornado charts for sensitivity; compliance coverage matrices (GAMP-5, 21 CFR Part 11, ALCOA+); OWASP findings bar chart with severity; manual vs automated benchmark comparison; human-AI calibration reliability diagram.\n- For each figure: create a numbered caption, short interpretive takeaway, and alt-text; save as SVG/PNG at 300 DPI and provide data sources.\n- Create tables: statistical results table (p-values, CIs, effect sizes), ROI summary, compliance checklist mapping, security findings and mitigations, benchmark comparisons, achievements summary (91% cost reduction, 30 tests generated, 6-minute generation time).\n- Package a figures/ and tables/ directory with a manifest mapping to chapter sections.",
+          "status": "pending",
+          "testStrategy": "- Lint visuals for accessibility (color contrast, font size ≥9pt).\n- Verify numeric consistency between figures/tables and analysis outputs.\n- Peer review checklist: correctness, readability, and alignment with narrative claims."
+        },
+        {
+          "id": 4,
+          "title": "Draft Chapter 4: Results and Analysis (sections 1–7)",
+          "description": "Write Sections 1–7 of Chapter 4 using analysis outputs and visuals: Introduction; System Implementation Results; Efficiency Analysis; Compliance Validation; Security Assessment; Human-AI Collaboration; Comparative Analysis.",
+          "dependencies": [
+            3
+          ],
+          "details": "- Use a structured template with consistent headings, cross-references to figures/tables, and formal academic tone.\n- Section 1 (2 pages): restate research questions/hypotheses; brief methods reminder; chapter roadmap.\n- Section 2 (8 pages): architecture summary, performance metrics with CIs and significance; operational costs; include key achievement callouts (91% cost reduction; 6-minute generation time) and supporting figures/tables.\n- Section 3 (10 pages): cross-validation methodology, fold-wise results, variance analysis, time metrics; reliability and stability interpretation; include learning curves and distribution plots.\n- Section 4 (8 pages): map results to GAMP-5, 21 CFR Part 11, ALCOA+ controls; present compliance matrices and evidence; note any gaps and remediation.\n- Section 5 (6 pages): summarize OWASP testing results, severity, and implemented mitigations; include residual risk discussion and future work.\n- Section 6 (6 pages): human-AI collaboration workflows, confidence calibration outcomes, oversight mechanisms; reliability diagrams and calibration error metrics.\n- Section 7 (4 pages): manual vs automated benchmarks, significance/effect sizes, productivity impacts; include table and comparative plots.\n- Ensure all claims trace to analysis artifacts; embed achievements and exact figures from tables.",
+          "status": "pending",
+          "testStrategy": "- Editorial review for coherence, page targets, and citation of figures/tables.\n- Fact-check pass: every quantitative claim linked to an output file and timestamp.\n- Plagiarism and style checks; readability targets (e.g., Flesch-Kincaid for clarity within academic norms)."
+        },
+        {
+          "id": 5,
+          "title": "Write Discussion section (Section 8) and finalize Chapter 4 package",
+          "description": "Complete Section 8: Discussion, integrate limitations and interpretation, finalize the full 50-page chapter with references to achievements, and prepare submission-ready assets.",
+          "dependencies": [
+            4
+          ],
+          "details": "- Section 8 (6 pages): interpret key findings relative to research questions; discuss implications, limitations (data quality, external validity, threats to validity), and practical significance; align with compliance and security contexts; highlight achievements (91% cost reduction, 30 tests generated, 6-minute generation time) with caveats.\n- Add transitions and cross-references across sections; ensure numbering and captions match the manifest.\n- Compile the chapter with figure/table placement rules; ensure total length ≈50 pages (±10%).\n- Create an appendix for extended results and any secondary analyses; include methods for sensitivity and robustness.\n- Final QA: consistency of terms, acronym list, and adherence to institutional formatting.\n- Export PDF/Word with embedded fonts and include figures/, tables/, analysis/outputs as supplementary materials.",
+          "status": "pending",
+          "testStrategy": "- Completeness checklist against section requirements and page allocations.\n- Independent read-through for logical flow; resolve any contradictory statements.\n- Final numbers reconciliation script to re-validate all reported values against frozen outputs."
+        }
+      ]
     }
   ]
 }

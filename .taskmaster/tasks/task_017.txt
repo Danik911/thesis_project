@@ -1,0 +1,70 @@
+# Task ID: 17
+# Title: Week 2: Execute Cross-Validation Testing
+# Status: pending
+# Dependencies: 16
+# Priority: high
+# Description: Run 5-fold cross-validation across 15 URS documents to measure system performance and consistency
+# Details:
+Execute comprehensive testing protocol:
+- Implement k-fold cross-validation (k=5)
+- Measure time to generate for each URS (target: 70% reduction)
+- Track token consumption and costs
+- Calculate requirements coverage (target: ≥90%)
+- Measure false positive/negative rates (target: <5%)
+- Document variance across runs (target: <5%)
+- Perform statistical significance testing (p<0.05)
+
+Collect all performance metrics and generate test suites for analysis.
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Set up 5-fold partitioning over 15 URS documents [pending]
+### Dependencies: None
+### Description: Create a deterministic 5-fold split of the 15 URS documents, ensuring each document appears exactly once in a validation fold and four times in training folds. Persist the split for reproducibility.
+### Details:
+- Enumerate URS documents (IDs 1–15) and shuffle with a fixed random seed.
+- Partition into 5 folds of size 3 each; store as a JSON manifest listing train/validation document IDs per fold.
+- Ensure no data leakage by limiting any preprocessing or artifact generation for a fold to its training subset only.
+- Provide a fold iterator that yields (train_ids, val_ids) for k=5.
+
+## 2. Implement cross-validation execution harness [pending]
+### Dependencies: 17.1
+### Description: Build a runner that iterates over the 5 folds, executes the system on training and validation sets per fold, and captures run-level artifacts.
+### Details:
+- Define interfaces: prepare_training(train_ids), evaluate_on_validation(val_ids).
+- For each fold: train or warm-start the system using only training URS; then run generation/evaluation on validation URS.
+- Wrap each URS processing in timing and token metering hooks; aggregate per-fold and per-URS results.
+- Emit structured logs (JSONL) per URS and a fold summary with raw predictions, labels, and metadata.
+- Include run IDs, fold index, seed, model/version, and config snapshot for reproducibility.
+
+## 3. Instrument performance metrics: time, tokens, cost [pending]
+### Dependencies: 17.2
+### Description: Integrate precise measurement of generation latency, token consumption, and cost at the per-URS and per-fold levels.
+### Details:
+- Timing: measure wall-clock time per URS generation and per fold; compute mean, median, and percentiles. Compare to baseline times to compute % reduction; store both absolute and relative metrics.
+- Tokens: capture prompt and completion tokens per request via provider telemetry; sum per URS and per fold.
+- Cost: map token counts to cost using current pricing; store per-URS and aggregated totals.
+- Targets: compute whether mean time reduction meets 70% target; flag deviations.
+- Persist metrics in a metrics.json per fold and a consolidated metrics.csv.
+
+## 4. Compute accuracy metrics: coverage, FP/FN, and variance [pending]
+### Dependencies: 17.2
+### Description: From predictions vs. ground truth per URS, compute requirements coverage, false positive/negative rates, and variance across folds and repeated runs.
+### Details:
+- Define ground truth mapping of requirements per URS and predicted coverage outputs.
+- Coverage: coverage = covered_requirements / total_requirements per URS and aggregated; check target ≥90%.
+- FP/FN: compute rates per URS and fold; check targets <5% each.
+- Variance: if multiple runs per fold, compute variance/standard deviation for each metric; otherwise, use across-fold variance. Flag metrics with variance >5%.
+- Store confusion counts, precision/recall/F1 where applicable, and per-requirement hit/miss tables.
+
+## 5. Aggregate results and perform statistical significance testing [pending]
+### Dependencies: 17.3, 17.4
+### Description: Consolidate all folds into a single report, compute confidence intervals, and run significance tests (p<0.05) comparing against baseline or alternative models.
+### Details:
+- Aggregation: merge per-fold metrics into a master table; compute means, standard deviations, and 95% CIs for key metrics (time reduction, cost, coverage, FP/FN).
+- Significance: select appropriate paired tests (e.g., paired t-test or Wilcoxon) per URS comparing current system vs. baseline across the same folds; report p-values and effect sizes.
+- Multiple metrics: control for multiple comparisons if needed (e.g., Holm-Bonferroni) and clearly state which metrics meet p<0.05.
+- Outputs: generate a summary report (JSON and CSV) and a human-readable test suite report with tables/plots; include targets pass/fail flags and recommendations.
+

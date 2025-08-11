@@ -1,0 +1,78 @@
+# Task ID: 19
+# Title: Week 4: Security Assessment and Human-in-Loop Evaluation
+# Status: pending
+# Dependencies: 17
+# Priority: high
+# Description: Conduct OWASP LLM Top 10 security testing and measure human oversight requirements
+# Details:
+Security Assessment:
+- LLM01: Test 20 prompt injection scenarios
+- LLM06: Validate insecure output handling
+- LLM09: Detect overreliance patterns
+- Penetration testing with canary tokens
+- Target: >90% mitigation effectiveness
+- Document all vulnerabilities and mitigations
+
+Human-in-Loop Metrics:
+- Track consultation events per validation
+- Measure confidence score distributions
+- Document edge cases requiring intervention
+- Calculate total human hours vs automation
+- Target: <10h human review per cycle
+- Analyze optimal confidence thresholds (0.85 for Cat 3/4, 0.92 for Cat 5)
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Define OWASP LLM test plan and evaluation harness [pending]
+### Dependencies: None
+### Description: Design a concrete security test plan aligned to OWASP LLM Top 10 with explicit focus on LLM01, LLM06, and LLM09, and set up an evaluation harness to run scenarios against the current system with metrics collection.
+### Details:
+• Translate OWASP LLM01 (Prompt Injection), LLM06 (Sensitive Information Disclosure/insecure output handling), and LLM09 (Overreliance) into app-specific threat scenarios and success criteria.
+• Specify 20 distinct prompt injection scenarios covering direct, indirect, multi-hop/tool-use, long-context, multilingual, and jailbreak transfer cases (e.g., instruction override, data exfiltration, tool redirection, system prompt extraction, prompt-leak via citations).
+• Define insecure output handling checks: HTML/script emission, command/code execution suggestions, unsafe file paths, secret echoes, PII leakage, tool/action execution without validation.
+• Define overreliance tests: acceptance of low-confidence outputs without escalation, hallucinated sources, missing uncertainty expression, failure to request human validation on risky categories.
+• Establish measurement: mitigation effectiveness = blocked_or_safe_responses / total attempts; set target > 90%. Capture confidence scores, category (Cat 3/4/5), and whether human validation was triggered.
+• Implement an evaluation harness (e.g., Python) that can run scenario suites against staging, capture full request/response, tool calls, confidence, safety flags, and audit logs.
+
+## 2. Execute OWASP LLM01 prompt injection red-team suite (20 scenarios) [pending]
+### Dependencies: 19.1
+### Description: Run the 20 defined prompt injection scenarios and record system behavior, defenses triggered, and outcomes to measure mitigation effectiveness.
+### Details:
+• Implement scenarios as scripts or JSON cases consumable by the harness; randomize paraphrases to avoid caching.
+• For each case, log: input, model output, tool invocations, safety filters triggered, confidence score, and final decision.
+• Include indirect injection via retrieved documents, URLs, and tool responses; test system prompt extraction attempts; evaluate guardrails (prompt hardening, input filters, allow/deny lists) effectiveness.
+• Compute per-scenario and aggregate mitigation effectiveness and identify failure modes (e.g., partial compliance, leakage, action execution).
+• Tag vulnerable pathways for remediation.
+
+## 3. Validate insecure output handling (LLM06) and sensitive data controls [pending]
+### Dependencies: 19.1
+### Description: Probe for insecure output handling and sensitive information disclosure risks, including downstream execution risks, PII/secret leakage, and unsafe tool outputs.
+### Details:
+• Create test prompts to elicit executable code, shell commands, SQL, and HTML/JS; verify outputs are neutralized (e.g., fenced, annotated, or blocked) and not auto-executed.
+• Plant synthetic secrets and canary tokens in retrievable corpora and tool responses; attempt exfiltration and monitor callbacks to confirm leakage paths.
+• Validate output post-processing: content sanitization, link and file validation, deny execution of untrusted outputs, and redaction of PII/secrets.
+• Assess path traversal, unsafe file operations, and tool command construction for injection sinks; verify parameterized calls and allowlists.
+• Record violations, affected components, and required mitigations; quantify mitigation effectiveness for LLM06.
+
+## 4. Detect overreliance patterns (LLM09) and configure human-in-the-loop thresholds [pending]
+### Dependencies: 19.1, 19.2, 19.3
+### Description: Assess overreliance by analyzing when the system should defer to human review and optimize confidence thresholds for categories Cat 3/4 and Cat 5.
+### Details:
+• Log and analyze cases where the model proceeds despite low confidence, hallucinated citations, or conflicting sources; ensure escalation policies are enforced.
+• Track per-validation consultation events, human interventions, and rationales; compute confidence score distributions by category.
+• Run threshold sweeps to evaluate deferral policies with targets: 0.85 for Cat 3/4 and 0.92 for Cat 5; measure precision/recall of safe automation vs. escalations.
+• Identify edge cases requiring human intervention and codify detection rules (e.g., missing sources, contradiction flags, safety filter uncertainty).
+• Propose updated threshold and policy settings to minimize human hours while maintaining safety.
+
+## 5. Consolidate results, remediation plan, and targets vs. KPIs [pending]
+### Dependencies: 19.2, 19.3, 19.4
+### Description: Document all vulnerabilities, mitigations, and human oversight metrics; finalize KPI attainment and remediation backlog.
+### Details:
+• Produce a report: methodology, OWASP mappings (LLM01, LLM06, LLM09), scenario coverage, mitigation effectiveness (>90% target), and residual risks.
+• Summarize canary token findings, leakage vectors, and fixes; include before/after metrics where mitigations were prototyped.
+• Human-in-loop metrics: consultation events per validation, confidence distributions, total human hours vs. automation, and assessment against <10h per cycle target.
+• List edge cases requiring intervention and associated detection rules; finalize recommended confidence thresholds (0.85 Cat 3/4, 0.92 Cat 5) with projected impact.
+• Create a prioritized remediation backlog with owners and timelines; define ongoing monitoring dashboards to track regressions.
+

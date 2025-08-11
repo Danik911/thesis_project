@@ -1,0 +1,73 @@
+# Task ID: 16
+# Title: Week 1: Dataset Preparation for Cross-Validation
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Prepare 10-15 diverse URS documents for k-fold cross-validation testing of the LLM-driven test generation system
+# Details:
+Create/collect URS documents across three GAMP categories:
+- 5 GAMP Category 3 (standard software)
+- 5 GAMP Category 4 (configured products)  
+- 5 GAMP Category 5 (custom applications)
+
+Each document should include:
+- Clear functional requirements
+- Performance specifications
+- Regulatory requirements
+- Varying complexity levels
+
+Document complexity metrics for each URS and establish manual baseline timings (40h average).
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Define URS corpus scope, templates, and selection criteria [pending]
+### Dependencies: None
+### Description: Establish the exact dataset size (10–15 URS docs), balanced GAMP distribution (5 Cat 3, 5 Cat 4, 5 Cat 5), and a standardized URS template covering functional requirements, performance specifications, and regulatory requirements across varying complexity levels. Define sourcing strategy (create vs. collect), anonymization rules, and acceptance criteria for each category.
+### Details:
+- Create a URS master template with sections: Introduction/Scope, System Context, Functional Requirements, Performance/Non-functional Specifications, Regulatory/Compliance Requirements (e.g., GxP/GAMP-aligned language), Assumptions/Constraints, Traceability IDs.
+- Define per-GAMP-category guidance: examples of non-configurable features for Cat 3, configurable parameters/workflows for Cat 4, and custom modules/interfaces for Cat 5, aligning with GAMP definitions.
+- Specify target diversity axes: domain (manufacturing, QC lab, QMS), data types, integration needs, user roles, and risk profile.
+- Define anonymization guidelines: remove PII, vendor names, product codes; replace with neutral placeholders.
+- Define acceptance checklist: completeness of three requirement types, internal coherence, traceability IDs present, aligns to target GAMP category, and assigned draft complexity level (low/med/high).
+
+## 2. Create and/or collect 15 URS documents across GAMP 3/4/5 [pending]
+### Dependencies: None
+### Description: Produce a balanced set of 15 URS documents (5 per GAMP category) using the template and criteria, mixing authored synthetic URS and curated/redacted real-world-like examples to ensure diversity and realism.
+### Details:
+- For each GAMP category, define 3 authored synthetic URS and curate 2 adapted/redacted exemplars (if available), or author all 5 if sourcing is unavailable.
+- Ensure each URS includes: 12–30 functional requirements, 6–15 performance/non-functional specs, and 5–12 regulatory requirements; vary complexity and scope.
+- Include clear markers for configurable elements (Cat 4) and custom design considerations/APIs/integrations (Cat 5).
+- Apply anonymization and consistency edits; assign unique document IDs and requirement IDs for traceability.
+- Store in a structured repo: /dataset/URS/{cat}/URS_{cat}_{index}.md with front matter metadata (title, domain, version, author, date).
+
+## 3. Define and compute URS complexity metrics [pending]
+### Dependencies: None
+### Description: Operationalize objective complexity metrics for each URS and calculate them to capture varying complexity levels needed for evaluation.
+### Details:
+- Define metrics: requirement count (functional/performance/regulatory), average requirement length (tokens), readability (e.g., Flesch-Kincaid), dependency density (number of cross-references per requirement), integration count, configurability/custom-code indicators, ambiguity flags (TBD/optional/should), and domain criticality tags.
+- Implement a metrics script (e.g., Python) to parse URS markdown, extract requirement sections by heading markers, compute counts, readability, and cross-reference density.
+- Store results in dataset/metrics/metrics.csv with columns: doc_id, gamp_category, counts, readability, dependency_density, integrations, configurable_flags, custom_code_flags, ambiguity_rate, complexity_score (weighted composite).
+- Calibrate a composite complexity_score: e.g., z-score normalize features; weights: requirements(0.25), integrations(0.2), dependency_density(0.15), ambiguity(0.15), readability inverse(0.1), custom/config flags(0.15).
+
+## 4. Establish manual baseline timing protocol and measurements [pending]
+### Dependencies: None
+### Description: Design and execute a standardized manual test-generation task on a subset or all URS to establish baseline effort timings (target average ~40h), including task scope, environment, and data capture.
+### Details:
+- Define the baseline task: manually derive test cases, traceability matrix, and acceptance criteria from a URS; document assumptions and coverage rationale.
+- Create a timing protocol: track elapsed hours by activity (requirements analysis, test design, review), with start/stop rules and interruptions logging.
+- Recruit 2–3 reviewers to perform baselines on at least 6 URS (2 per GAMP category) or all if capacity allows; ensure mix of complexity levels.
+- Use a standardized workbook to record timings, defects found in URS, and perceived difficulty (Likert scale).
+- Aggregate results into baseline_timings.csv with per-URS mean, median, std dev; record participants’ experience level.
+
+## 5. Assemble cross-validation-ready dataset package and documentation [pending]
+### Dependencies: None
+### Description: Finalize a clean, labeled dataset with URS docs, per-doc metadata, complexity metrics, and baseline timings, packaged with splits and documentation for k-fold cross-validation.
+### Details:
+- Create dataset index (dataset_manifest.json) including: doc_id, title, gamp_category, domain, complexity_score, metrics path, baseline_timing stats.
+- Generate k-fold assignments (e.g., k=5) with stratification by GAMP category and complexity tertiles; store in folds/fold_{k}.json with doc IDs per fold.
+- Validate no leakage: ensure each URS appears in exactly one fold per split; keep metrics and labels accessible to both train/test as needed, but isolate any human notes that could bias model outputs.
+- Write DATASET_README.md covering: purpose, GAMP categories, creation process, anonymization, metrics definitions, baseline protocol, and how to use folds.
+- Tag a version release in the repo (e.g., v1.0) and freeze artifacts.
+
