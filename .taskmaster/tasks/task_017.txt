@@ -1,6 +1,6 @@
 # Task ID: 17
 # Title: Week 2: Execute Cross-Validation Testing
-# Status: pending
+# Status: in-progress
 # Dependencies: 16
 # Priority: high
 # Description: Run 5-fold cross-validation across 15 URS documents to measure system performance and consistency

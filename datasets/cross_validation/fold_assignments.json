@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "description": "5-fold cross-validation assignments for URS corpus",
+    "total_documents": 17,
+    "folds": 5,
+    "stratification": "Sequential assignment ensuring no duplicates",
+    "created_date": "2025-08-11",
+    "validation_strategy": "K-Fold with balanced distribution"
+  },
+  "document_inventory": [
+    "URS-001", "URS-002", "URS-003", "URS-004", "URS-005", 
+    "URS-006", "URS-007", "URS-008", "URS-009", "URS-010",
+    "URS-011", "URS-012", "URS-013", "URS-014", "URS-015",
+    "URS-016", "URS-017"
+  ],
+  "folds": {
+    "fold_1": {
+      "test_documents": ["URS-001", "URS-002", "URS-003"],
+      "train_documents": ["URS-004", "URS-005", "URS-006", "URS-007", "URS-008", "URS-009", "URS-010", "URS-011", "URS-012", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
+      "train_count": 14,
+      "test_count": 3
+    },
+    "fold_2": {
+      "test_documents": ["URS-004", "URS-005", "URS-006"],
+      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-007", "URS-008", "URS-009", "URS-010", "URS-011", "URS-012", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
+      "train_count": 14,
+      "test_count": 3
+    },
+    "fold_3": {
+      "test_documents": ["URS-007", "URS-008", "URS-009"],
+      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-004", "URS-005", "URS-006", "URS-010", "URS-011", "URS-012", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
+      "train_count": 14,
+      "test_count": 3
+    },
+    "fold_4": {
+      "test_documents": ["URS-010", "URS-011", "URS-012"],
+      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-004", "URS-005", "URS-006", "URS-007", "URS-008", "URS-009", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
+      "train_count": 14,
+      "test_count": 3
+    },
+    "fold_5": {
+      "test_documents": ["URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
+      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-004", "URS-005", "URS-006", "URS-007", "URS-008", "URS-009", "URS-010", "URS-011", "URS-012"],
+      "train_count": 12,
+      "test_count": 5
+    }
+  },
+  "validation_summary": {
+    "total_unique_documents": 17,
+    "documents_per_test_set": "Each document appears exactly once as test data across all folds",
+    "fold_balance": "3-3-3-3-5 split ensures no duplicates",
+    "coverage": "100% of documents used for testing exactly once"
+  }
+}

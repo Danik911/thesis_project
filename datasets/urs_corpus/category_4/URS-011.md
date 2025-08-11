@@ -1,0 +1,57 @@
+# URS-011: Configured Quality Management System
+**GAMP Category**: 4 (Configured Products)
+**System Type**: Commercial QMS with Pharmaceutical Configuration
+**Domain**: Quality Assurance
+**Complexity Level**: Medium-High
+
+## 1. Introduction
+This URS defines the requirements for a quality management system using commercial QMS software configured for pharmaceutical operations with custom deviation workflows and reporting capabilities.
+
+## 2. Functional Requirements
+- **URS-QMS-001**: System shall be based on commercial QMS platform (MasterControl, Veeva Vault QMS).
+- **URS-QMS-002**: Configure deviation management workflows with multi-stage approvals:
+  - Initial classification (Critical, Major, Minor)
+  - Root cause analysis assignment
+  - CAPA tracking and verification
+  - Management review and closure
+- **URS-QMS-003**: Configure change control processes with impact assessment workflows.
+- **URS-QMS-004**: Setup document control with pharmaceutical document types and lifecycle states.
+- **URS-QMS-005**: Configure training management with competency tracking and certification.
+- **URS-QMS-006**: Implement configured supplier quality management with audit scheduling.
+- **URS-QMS-007**: Configure complaint handling workflows with regulatory reporting requirements.
+- **URS-QMS-008**: Setup non-conformance management with disposition workflows and tracking.
+- **URS-QMS-009**: Configure internal audit management with finding tracking and follow-up.
+- **URS-QMS-010**: Implement configured risk management with FMEA and risk assessment tools.
+- **URS-QMS-011**: Configure management review processes with KPI dashboard and trending.
+- **URS-QMS-012**: Setup configured validation management with protocol and report tracking.
+- **URS-QMS-013**: Configure equipment qualification tracking with calibration and maintenance schedules.
+- **URS-QMS-014**: Implement configured batch disposition with quality review workflows.
+- **URS-QMS-015**: Configure configured regulatory inspection readiness with document packages.
+- **URS-QMS-016**: Setup configured metrics and KPI tracking with automated reporting.
+- **URS-QMS-017**: Configure electronic signature workflows using platform capabilities.
+- **URS-QMS-018**: Implement configured notification systems for escalations and reminders.
+- **URS-QMS-019**: Configure user roles and permissions with segregation of duties.
+- **URS-QMS-020**: Setup configured integration points with other pharmaceutical systems.
+- **URS-QMS-021**: Configure trending and statistical analysis using platform analytics.
+- **URS-QMS-022**: Implement configured workflow approvals with parallel and serial routing.
+
+## 3. Performance Requirements
+- **URS-QMS-023**: System shall support 200 concurrent users across quality functions.
+- **URS-QMS-024**: Workflow notifications shall be delivered within 15 minutes of trigger events.
+- **URS-QMS-025**: Dashboard reports shall refresh within 5 minutes of data updates.
+- **URS-QMS-026**: Document searches shall return results within 10 seconds.
+- **URS-QMS-027**: System shall maintain 99.7% availability during business hours.
+
+## 4. Regulatory Requirements
+- **URS-QMS-028**: Configure audit trail for all quality-related activities per 21 CFR Part 11.
+- **URS-QMS-029**: Implement configured data integrity controls and validation checks.
+- **URS-QMS-030**: Configure regulatory reporting packages for FDA, EMA, and other authorities.
+- **URS-QMS-031**: Setup configured data retention and archival policies (10-year minimum).
+- **URS-QMS-032**: Configure user access controls with regular access reviews.
+
+## 5. Integration Requirements
+- **URS-QMS-033**: Configure integration with ERP system for material and production data.
+- **URS-QMS-034**: Implement configured LIMS integration for test result evaluation.
+- **URS-QMS-035**: Configure integration with training management systems for competency tracking.
+- **URS-QMS-036**: Setup configured document management integration for controlled documents.
+- **URS-QMS-037**: Configure integration with manufacturing execution systems for batch data.
