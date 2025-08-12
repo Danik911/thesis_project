@@ -1,0 +1,6 @@
+@echo off
+set OPENROUTER_API_KEY=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
+set OPENAI_API_KEY=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
+echo Running security test with API keys set...
+python run_full_security_assessment.py --scenarios 3
+echo Test complete.
