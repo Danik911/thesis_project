@@ -1,0 +1,43 @@
+# URS-003: Manufacturing Execution System (MES)
+**GAMP Category**: 5 (Custom Applications)
+**System Type**: Custom Batch Record Management System
+**Domain**: Manufacturing Operations
+**Complexity Level**: High
+
+## 1. Introduction
+This URS defines requirements for a custom MES to manage electronic batch records for sterile injectable products.
+
+## 2. Functional Requirements
+- **URS-MES-001**: System shall be custom-developed to integrate with proprietary equipment.
+- **URS-MES-002**: Custom algorithms required for:
+  - Dynamic in-process control limits based on multivariate analysis
+  - Real-time batch genealogy tracking across multiple unit operations
+  - Proprietary yield optimization calculations
+- **URS-MES-003**: Develop custom interfaces for:
+  - 12 different equipment types with proprietary protocols
+  - Integration with custom warehouse management system
+  - Real-time data exchange with proprietary PAT systems
+- **URS-MES-004**: Custom workflow engine to handle:
+  - Parallel processing paths unique to our manufacturing process
+  - Complex exception handling for deviations
+  - Site-specific business rules not supported by commercial packages
+- **URS-MES-005**: Develop proprietary data structures for:
+  - Multi-level bill of materials with conditional components
+  - Process parameters with complex interdependencies
+- **URS-MES-006**: Custom mobile application for shop floor data entry.
+- **URS-MES-007**: Bespoke analytics module for real-time process monitoring.
+
+## 3. Regulatory Requirements
+- **URS-MES-008**: Custom audit trail implementation with enhanced metadata.
+- **URS-MES-009**: Develop proprietary electronic signature workflow.
+- **URS-MES-010**: Custom data integrity checks beyond standard validations.
+
+## 4. Performance Requirements
+- **URS-MES-011**: System shall process 100 concurrent batch records.
+- **URS-MES-012**: Real-time data collection with maximum 2-second latency.
+- **URS-MES-013**: Custom reporting shall complete within 10 minutes for complex queries.
+
+## 5. Integration Requirements
+- **URS-MES-014**: Develop custom APIs for third-party system integration.
+- **URS-MES-015**: Proprietary message queuing for equipment communication.
+- **URS-MES-016**: Custom synchronization with enterprise planning systems.

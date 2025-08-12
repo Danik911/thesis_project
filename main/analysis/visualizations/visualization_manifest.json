@@ -1,0 +1,13 @@
+{
+  "generated_at": "2025-08-12T11:35:16.775229",
+  "total_visualizations": 5,
+  "visualization_files": {
+    "performance_comparison": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\main\\analysis\\visualizations\\performance_comparison.png",
+    "cost_analysis": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\main\\analysis\\visualizations\\cost_analysis.png",
+    "gamp_distribution": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\main\\analysis\\visualizations\\gamp_distribution.png",
+    "reliability_dashboard": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\main\\analysis\\visualizations\\reliability_dashboard.png",
+    "executive_summary": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\main\\analysis\\visualizations\\executive_summary.png"
+  },
+  "data_source": "Real pharmaceutical test generation system data",
+  "compliance_note": "All visualizations based on actual system performance - no fallback data used"
+}

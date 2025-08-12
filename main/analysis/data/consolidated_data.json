@@ -1,0 +1,1450 @@
+{
+  "consolidation_metadata": {
+    "timestamp": "2025-08-12T10:27:36.546394+00:00",
+    "project_root": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project",
+    "data_sources_validated": {
+      "test_suites": true,
+      "urs_corpus": true,
+      "traces": true,
+      "security_assessment": true
+    }
+  },
+  "test_suites": {
+    "total_test_suites": 5,
+    "suite_details": [
+      {
+        "file_name": "test_suite_OQ-SUITE-1224_20250810_132400.json",
+        "suite_id": "OQ-SUITE-1224",
+        "generated_at": "2025-08-10T13:24:00.879895",
+        "test_count": 30,
+        "gamp_category": 5,
+        "document_name": "testing_data.md"
+      },
+      {
+        "file_name": "test_suite_OQ-SUITE-1230_20250806_133014.json",
+        "suite_id": "OQ-SUITE-1230",
+        "generated_at": "2025-08-06T13:30:14.561187",
+        "test_count": 20,
+        "gamp_category": 4,
+        "document_name": "test_pharmaceutical_urs.txt"
+      },
+      {
+        "file_name": "test_suite_OQ-SUITE-1252_20250806_135224.json",
+        "suite_id": "OQ-SUITE-1252",
+        "generated_at": "2025-08-06T13:52:24.830672",
+        "test_count": 20,
+        "gamp_category": 4,
+        "document_name": "test_pharmaceutical_urs.txt"
+      },
+      {
+        "file_name": "test_suite_OQ-SUITE-1326_20250806_142658.json",
+        "suite_id": "OQ-SUITE-1326",
+        "generated_at": "2025-08-06T14:26:58.787804",
+        "test_count": 20,
+        "gamp_category": 4,
+        "document_name": "test_pharmaceutical_urs.txt"
+      },
+      {
+        "file_name": "test_suite_OQ-SUITE-1814_20250809_191402.json",
+        "suite_id": "OQ-SUITE-1814",
+        "generated_at": "2025-08-09T19:14:02.257900",
+        "test_count": 30,
+        "gamp_category": 5,
+        "document_name": "testing_data.md"
+      }
+    ],
+    "aggregate_metrics": {
+      "total_tests": 120,
+      "test_categories": {
+        "installation": 8,
+        "functional": 39,
+        "performance": 20,
+        "security": 15,
+        "data_integrity": 20,
+        "integration": 18
+      },
+      "gamp_categories": {
+        "5": 60,
+        "4": 60
+      },
+      "risk_levels": {
+        "medium": 36,
+        "high": 49,
+        "critical": 35
+      },
+      "estimated_total_duration_minutes": 4545,
+      "compliance_standards": [
+        "GAMP-5",
+        "ALCOA+",
+        "21 CFR Part 11"
+      ],
+      "unique_urs_requirements": [
+        "Test method management requirements as specified in URS section 2.2",
+        "URS includes requirements for secure electronic signatures and audit trails",
+        "URS-LIMS-003",
+        "URS includes detailed integration requirements with ERP, MES, and other enterprise systems",
+        "Quality control and batch release features as outlined in the URS must be verified.",
+        "Integration interfaces must comply with URS and regulatory standards",
+        "URS-MES-002",
+        "System must enforce stringent electronic signature security controls.",
+        "Sample management functionality as outlined in the URS.",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Performance requirements specified",
+        "URS requires validation of custom workflows and process configurations",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Data integrity requirements",
+        "User access and privilege management requirements as outlined in the URS",
+        "URS requires robust user access control and detailed audit logging",
+        "URS-MES-009",
+        "URS-MES-007",
+        "MES integration must ensure real-time updates as specified in the URS.",
+        "URS must detail installation prerequisites and configuration management",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Integration requirements for MES and ERP",
+        "URS-MES-003",
+        "Sample Management requirements per URS Document",
+        "URS mandates comprehensive audit trail capabilities for data integrity management",
+        "Integration must support real-time data updates as per URS.",
+        "System must support traceability of registered samples.",
+        "User access management requirements as detailed in the URS must be met.",
+        "Integration requirements as detailed in URS section 5.2",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Installation procedures must be validated",
+        "Data integrity requirements as specified in URS section 4.3",
+        "Performance criteria as defined in the URS must be met.",
+        "Installation must comply with URS system setup specifications.",
+        "Security requirements for electronic signatures as defined in the URS",
+        "System must support concurrent users with acceptable response times.",
+        "URS mandates connectivity with various analytical instruments for direct data acquisition",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Electronic signature and security requirements",
+        "Migration must preserve data integrity as defined in the URS.",
+        "Integration of environmental monitoring as specified in the URS",
+        "URS specifies a maximum response time of less than 2 seconds for critical operations",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Batch release and electronic signature requirements",
+        "Performance testing requirements specified in the URS",
+        "URS-MES-008",
+        "Performance criteria outlined in URS section 3.3",
+        "URS-MES-004",
+        "The system must implement electronic signature features as per URS.",
+        "Integration with MES must comply with URS requirements.",
+        "Analytical method management as specified in the URS must be confirmed.",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Performance requirements under stress conditions",
+        "Installation prerequisites as per URS Document",
+        "URS specifies the need for high availability and disaster recovery capabilities",
+        "SOP integration functionality must comply with the URS.",
+        "URS-LIMS-005",
+        "URS-MES-006",
+        "Data backup requirements as defined in URS section 6.1",
+        "Backup and recovery specifications must adhere to the URS",
+        "URS-MES-001",
+        "Security and electronic signature requirements as specified in URS section 4.1",
+        "URS requires automated sample management and chain of custody functionality",
+        "Performance requirements as stated in URS section 3.4",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Functional workflows definition",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: User access control requirements",
+        "URS-LIMS-008",
+        "URS-MES-005",
+        "Installation process as defined in URS section 1.1",
+        "Data integrity controls for electronic records as specified in the URS must be validated.",
+        "Sample management specifications as outlined in URS section 2.1",
+        "System must support scalable concurrent user activities as defined in the URS.",
+        "System must implement robust security controls in line with the URS.",
+        "Compliance with change management process",
+        "URS-MES-010",
+        "URS-LIMS-006",
+        "Quality Control and Release requirements as specified in the URS",
+        "System installation must support high availability configurations.",
+        "Audit trail capabilities as specified in the URS must be validated.",
+        "PHARMACEUTICAL URS DOCUMENT - TEST VALIDATION SYSTEM: Customized workflow requirements",
+        "Security requirements as detailed in URS section 4.2",
+        "Test Method Management specifications as per URS"
+      ]
+    }
+  },
+  "urs_corpus": {
+    "total_documents": 17,
+    "documents_by_category": {
+      "ambiguous": [
+        "URS-004.md",
+        "URS-005.md"
+      ],
+      "3": [
+        "URS-001.md",
+        "URS-006.md",
+        "URS-007.md",
+        "URS-008.md",
+        "URS-009.md"
+      ],
+      "4": [
+        "URS-002.md",
+        "URS-010.md",
+        "URS-011.md",
+        "URS-012.md",
+        "URS-013.md"
+      ],
+      "5": [
+        "URS-003.md",
+        "URS-014.md",
+        "URS-015.md",
+        "URS-016.md",
+        "URS-017.md"
+      ]
+    },
+    "document_details": [
+      {
+        "file_name": "URS-004.md",
+        "file_path": "datasets\\urs_corpus\\ambiguous\\URS-004.md",
+        "gamp_category": "ambiguous",
+        "file_size_bytes": 2462,
+        "word_count": 299,
+        "line_count": 42
+      },
+      {
+        "file_name": "URS-005.md",
+        "file_path": "datasets\\urs_corpus\\ambiguous\\URS-005.md",
+        "gamp_category": "ambiguous",
+        "file_size_bytes": 3063,
+        "word_count": 373,
+        "line_count": 54
+      },
+      {
+        "file_name": "URS-001.md",
+        "file_path": "datasets\\urs_corpus\\category_3\\URS-001.md",
+        "gamp_category": 3,
+        "file_size_bytes": 1875,
+        "word_count": 245,
+        "line_count": 31
+      },
+      {
+        "file_name": "URS-006.md",
+        "file_path": "datasets\\urs_corpus\\category_3\\URS-006.md",
+        "gamp_category": 3,
+        "file_size_bytes": 2485,
+        "word_count": 302,
+        "line_count": 37
+      },
+      {
+        "file_name": "URS-007.md",
+        "file_path": "datasets\\urs_corpus\\category_3\\URS-007.md",
+        "gamp_category": 3,
+        "file_size_bytes": 2612,
+        "word_count": 313,
+        "line_count": 39
+      },
+      {
+        "file_name": "URS-008.md",
+        "file_path": "datasets\\urs_corpus\\category_3\\URS-008.md",
+        "gamp_category": 3,
+        "file_size_bytes": 2375,
+        "word_count": 286,
+        "line_count": 37
+      },
+      {
+        "file_name": "URS-009.md",
+        "file_path": "datasets\\urs_corpus\\category_3\\URS-009.md",
+        "gamp_category": 3,
+        "file_size_bytes": 2751,
+        "word_count": 339,
+        "line_count": 41
+      },
+      {
+        "file_name": "URS-002.md",
+        "file_path": "datasets\\urs_corpus\\category_4\\URS-002.md",
+        "gamp_category": 4,
+        "file_size_bytes": 2183,
+        "word_count": 270,
+        "line_count": 37
+      },
+      {
+        "file_name": "URS-010.md",
+        "file_path": "datasets\\urs_corpus\\category_4\\URS-010.md",
+        "gamp_category": 4,
+        "file_size_bytes": 3895,
+        "word_count": 458,
+        "line_count": 55
+      },
+      {
+        "file_name": "URS-011.md",
+        "file_path": "datasets\\urs_corpus\\category_4\\URS-011.md",
+        "gamp_category": 4,
+        "file_size_bytes": 4097,
+        "word_count": 489,
+        "line_count": 57
+      },
+      {
+        "file_name": "URS-012.md",
+        "file_path": "datasets\\urs_corpus\\category_4\\URS-012.md",
+        "gamp_category": 4,
+        "file_size_bytes": 4690,
+        "word_count": 566,
+        "line_count": 91
+      },
+      {
+        "file_name": "URS-013.md",
+        "file_path": "datasets\\urs_corpus\\category_4\\URS-013.md",
+        "gamp_category": 4,
+        "file_size_bytes": 5871,
+        "word_count": 739,
+        "line_count": 100
+      },
+      {
+        "file_name": "URS-003.md",
+        "file_path": "datasets\\urs_corpus\\category_5\\URS-003.md",
+        "gamp_category": 5,
+        "file_size_bytes": 2273,
+        "word_count": 280,
+        "line_count": 43
+      },
+      {
+        "file_name": "URS-014.md",
+        "file_path": "datasets\\urs_corpus\\category_5\\URS-014.md",
+        "gamp_category": 5,
+        "file_size_bytes": 5901,
+        "word_count": 710,
+        "line_count": 88
+      },
+      {
+        "file_name": "URS-015.md",
+        "file_path": "datasets\\urs_corpus\\category_5\\URS-015.md",
+        "gamp_category": 5,
+        "file_size_bytes": 6714,
+        "word_count": 781,
+        "line_count": 95
+      },
+      {
+        "file_name": "URS-016.md",
+        "file_path": "datasets\\urs_corpus\\category_5\\URS-016.md",
+        "gamp_category": 5,
+        "file_size_bytes": 6638,
+        "word_count": 768,
+        "line_count": 94
+      },
+      {
+        "file_name": "URS-017.md",
+        "file_path": "datasets\\urs_corpus\\category_5\\URS-017.md",
+        "gamp_category": 5,
+        "file_size_bytes": 6687,
+        "word_count": 793,
+        "line_count": 93
+      }
+    ],
+    "aggregate_metrics": {
+      "total_file_size_bytes": 66572,
+      "categories_distribution": {
+        "ambiguous": 2,
+        "3": 5,
+        "4": 5,
+        "5": 5
+      },
+      "average_document_length": 471.2352941176471
+    }
+  },
+  "performance_traces": {
+    "total_trace_files": 182,
+    "trace_file_details": [
+      {
+        "file_name": "all_spans_20250805_155549.jsonl",
+        "file_size_bytes": 1729,
+        "span_count": 2,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_185235.jsonl",
+        "file_size_bytes": 12192,
+        "span_count": 12,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_185532.jsonl",
+        "file_size_bytes": 12129,
+        "span_count": 12,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_191427.jsonl",
+        "file_size_bytes": 12171,
+        "span_count": 12,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_191633.jsonl",
+        "file_size_bytes": 2099244,
+        "span_count": 76,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_203951.jsonl",
+        "file_size_bytes": 11172,
+        "span_count": 12,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_211652.jsonl",
+        "file_size_bytes": 839,
+        "span_count": 1,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_211728.jsonl",
+        "file_size_bytes": 834,
+        "span_count": 1,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250805_211814.jsonl",
+        "file_size_bytes": 33869,
+        "span_count": 5,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "all_spans_20250806_082358.jsonl",
+        "file_size_bytes": 1643952,
+        "span_count": 98,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_093508.jsonl",
+        "file_size_bytes": 1719876,
+        "span_count": 98,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_104129.jsonl",
+        "file_size_bytes": 1582927,
+        "span_count": 92,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_105714.jsonl",
+        "file_size_bytes": 1732002,
+        "span_count": 98,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_124814.jsonl",
+        "file_size_bytes": 36854,
+        "span_count": 8,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_124832.jsonl",
+        "file_size_bytes": 2141898,
+        "span_count": 102,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_125636.jsonl",
+        "file_size_bytes": 1667374,
+        "span_count": 91,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_131042.jsonl",
+        "file_size_bytes": 1699643,
+        "span_count": 98,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_131503.jsonl",
+        "file_size_bytes": 1699997,
+        "span_count": 98,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_132609.jsonl",
+        "file_size_bytes": 1944010,
+        "span_count": 101,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_134507.jsonl",
+        "file_size_bytes": 1092113,
+        "span_count": 52,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_134717.jsonl",
+        "file_size_bytes": 1951175,
+        "span_count": 101,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_135506.jsonl",
+        "file_size_bytes": 36854,
+        "span_count": 8,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250806_142226.jsonl",
+        "file_size_bytes": 1977557,
+        "span_count": 102,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "all_spans_20250808_104416.jsonl",
+        "file_size_bytes": 36835,
+        "span_count": 8,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_104501.jsonl",
+        "file_size_bytes": 2034986,
+        "span_count": 101,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_111218.jsonl",
+        "file_size_bytes": 1916837,
+        "span_count": 96,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_111427.jsonl",
+        "file_size_bytes": 2366778,
+        "span_count": 104,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_113017.jsonl",
+        "file_size_bytes": 2538218,
+        "span_count": 116,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_113250.jsonl",
+        "file_size_bytes": 36853,
+        "span_count": 8,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_115644.jsonl",
+        "file_size_bytes": 36854,
+        "span_count": 8,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_131242.jsonl",
+        "file_size_bytes": 36827,
+        "span_count": 8,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_151451.jsonl",
+        "file_size_bytes": 986635,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_153119.jsonl",
+        "file_size_bytes": 988996,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_153803.jsonl",
+        "file_size_bytes": 111886,
+        "span_count": 31,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_160302.jsonl",
+        "file_size_bytes": 109734,
+        "span_count": 31,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_170041.jsonl",
+        "file_size_bytes": 988989,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_170232.jsonl",
+        "file_size_bytes": 36862,
+        "span_count": 8,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_170815.jsonl",
+        "file_size_bytes": 988996,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_171200.jsonl",
+        "file_size_bytes": 988978,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_171403.jsonl",
+        "file_size_bytes": 988980,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250808_193404.jsonl",
+        "file_size_bytes": 2826290,
+        "span_count": 130,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "all_spans_20250809_113625.jsonl",
+        "file_size_bytes": 36853,
+        "span_count": 8,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_113730.jsonl",
+        "file_size_bytes": 1868,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_113909.jsonl",
+        "file_size_bytes": 1862,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_113945.jsonl",
+        "file_size_bytes": 11284,
+        "span_count": 2,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_131259.jsonl",
+        "file_size_bytes": 4539,
+        "span_count": 2,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_131530.jsonl",
+        "file_size_bytes": 4280,
+        "span_count": 2,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_131827.jsonl",
+        "file_size_bytes": 11588,
+        "span_count": 3,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_132311.jsonl",
+        "file_size_bytes": 56336,
+        "span_count": 7,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_132402.jsonl",
+        "file_size_bytes": 83486,
+        "span_count": 12,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_132831.jsonl",
+        "file_size_bytes": 86960,
+        "span_count": 13,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_133113.jsonl",
+        "file_size_bytes": 150459,
+        "span_count": 21,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_133138.jsonl",
+        "file_size_bytes": 140623,
+        "span_count": 20,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_135612.jsonl",
+        "file_size_bytes": 36858,
+        "span_count": 8,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_135644.jsonl",
+        "file_size_bytes": 85387,
+        "span_count": 13,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_151134.jsonl",
+        "file_size_bytes": 3147,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_151424.jsonl",
+        "file_size_bytes": 2205,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_151629.jsonl",
+        "file_size_bytes": 2205,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_152515.jsonl",
+        "file_size_bytes": 2198,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_163045.jsonl",
+        "file_size_bytes": 2198,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_172333.jsonl",
+        "file_size_bytes": 13813,
+        "span_count": 2,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_172551.jsonl",
+        "file_size_bytes": 14058,
+        "span_count": 2,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_172644.jsonl",
+        "file_size_bytes": 29825,
+        "span_count": 2,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_172812.jsonl",
+        "file_size_bytes": 34509,
+        "span_count": 3,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_172921.jsonl",
+        "file_size_bytes": 36194,
+        "span_count": 3,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_173332.jsonl",
+        "file_size_bytes": 34387,
+        "span_count": 3,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_173423.jsonl",
+        "file_size_bytes": 2198,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_181824.jsonl",
+        "file_size_bytes": 34388,
+        "span_count": 3,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_181918.jsonl",
+        "file_size_bytes": 36870,
+        "span_count": 8,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_183920.jsonl",
+        "file_size_bytes": 34387,
+        "span_count": 3,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250809_190741.jsonl",
+        "file_size_bytes": 2826122,
+        "span_count": 131,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "all_spans_20250810_132017.jsonl",
+        "file_size_bytes": 2809357,
+        "span_count": 131,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "all_spans_20250810_150755.jsonl",
+        "file_size_bytes": 2842537,
+        "span_count": 132,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "all_spans_20250810_190053.jsonl",
+        "file_size_bytes": 1523652,
+        "span_count": 112,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "all_spans_20250810_193159.jsonl",
+        "file_size_bytes": 2147794,
+        "span_count": 127,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "chromadb_spans_20250805_155549.jsonl",
+        "file_size_bytes": 1729,
+        "span_count": 2,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "chromadb_spans_20250805_185235.jsonl",
+        "file_size_bytes": 8722,
+        "span_count": 9,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "chromadb_spans_20250805_185532.jsonl",
+        "file_size_bytes": 8658,
+        "span_count": 9,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "chromadb_spans_20250805_191427.jsonl",
+        "file_size_bytes": 8700,
+        "span_count": 9,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "chromadb_spans_20250805_191633.jsonl",
+        "file_size_bytes": 536396,
+        "span_count": 32,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_082358.jsonl",
+        "file_size_bytes": 536252,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_093508.jsonl",
+        "file_size_bytes": 536313,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_104129.jsonl",
+        "file_size_bytes": 536378,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_105714.jsonl",
+        "file_size_bytes": 536338,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_124832.jsonl",
+        "file_size_bytes": 536322,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_125636.jsonl",
+        "file_size_bytes": 428620,
+        "span_count": 25,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_131042.jsonl",
+        "file_size_bytes": 536188,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_131503.jsonl",
+        "file_size_bytes": 536175,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_132609.jsonl",
+        "file_size_bytes": 536301,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_134507.jsonl",
+        "file_size_bytes": 43060,
+        "span_count": 4,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_134717.jsonl",
+        "file_size_bytes": 536224,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250806_142226.jsonl",
+        "file_size_bytes": 536238,
+        "span_count": 32,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_104501.jsonl",
+        "file_size_bytes": 536223,
+        "span_count": 32,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_111218.jsonl",
+        "file_size_bytes": 753961,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_111427.jsonl",
+        "file_size_bytes": 753943,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_113017.jsonl",
+        "file_size_bytes": 753871,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_151451.jsonl",
+        "file_size_bytes": 16238,
+        "span_count": 2,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_153119.jsonl",
+        "file_size_bytes": 16236,
+        "span_count": 2,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_153803.jsonl",
+        "file_size_bytes": 82597,
+        "span_count": 27,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_160302.jsonl",
+        "file_size_bytes": 82580,
+        "span_count": 27,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_170041.jsonl",
+        "file_size_bytes": 16237,
+        "span_count": 2,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_170815.jsonl",
+        "file_size_bytes": 16236,
+        "span_count": 2,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_171200.jsonl",
+        "file_size_bytes": 16236,
+        "span_count": 2,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_171403.jsonl",
+        "file_size_bytes": 16236,
+        "span_count": 2,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250808_193404.jsonl",
+        "file_size_bytes": 753973,
+        "span_count": 50,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "chromadb_spans_20250809_190741.jsonl",
+        "file_size_bytes": 752568,
+        "span_count": 50,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "chromadb_spans_20250810_132017.jsonl",
+        "file_size_bytes": 752558,
+        "span_count": 50,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "chromadb_spans_20250810_150755.jsonl",
+        "file_size_bytes": 752410,
+        "span_count": 50,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "chromadb_spans_20250810_190053.jsonl",
+        "file_size_bytes": 641407,
+        "span_count": 43,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "chromadb_spans_20250810_193159.jsonl",
+        "file_size_bytes": 752464,
+        "span_count": 50,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "Dataset 2025-08-05T10_52_00.496Z (1).jsonl",
+        "file_size_bytes": 248214,
+        "span_count": 23,
+        "file_date": null
+      },
+      {
+        "file_name": "Dataset 2025-08-05T10_52_00.496Z.jsonl",
+        "file_size_bytes": 248523,
+        "span_count": 23,
+        "file_date": null
+      },
+      {
+        "file_name": "trace_20250803_071059.jsonl",
+        "file_size_bytes": 1472,
+        "span_count": 5,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_073101.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_073531.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_074226.jsonl",
+        "file_size_bytes": 256,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_074600.jsonl",
+        "file_size_bytes": 4993,
+        "span_count": 6,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_083908.jsonl",
+        "file_size_bytes": 2993,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_085023.jsonl",
+        "file_size_bytes": 2997,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_085429.jsonl",
+        "file_size_bytes": 2997,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_092352.jsonl",
+        "file_size_bytes": 2994,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_093141.jsonl",
+        "file_size_bytes": 2997,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_093807.jsonl",
+        "file_size_bytes": 2993,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_095132.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_100802.jsonl",
+        "file_size_bytes": 1413,
+        "span_count": 5,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_102159.jsonl",
+        "file_size_bytes": 3253,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_102437.jsonl",
+        "file_size_bytes": 2995,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_102707.jsonl",
+        "file_size_bytes": 3624,
+        "span_count": 4,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_102956.jsonl",
+        "file_size_bytes": 1502,
+        "span_count": 5,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_103206.jsonl",
+        "file_size_bytes": 3268,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_103416.jsonl",
+        "file_size_bytes": 2998,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_122718.jsonl",
+        "file_size_bytes": 3256,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_123535.jsonl",
+        "file_size_bytes": 2995,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_124930.jsonl",
+        "file_size_bytes": 3251,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_132415.jsonl",
+        "file_size_bytes": 3251,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_132916.jsonl",
+        "file_size_bytes": 3270,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_135335.jsonl",
+        "file_size_bytes": 3255,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_140159.jsonl",
+        "file_size_bytes": 4076,
+        "span_count": 14,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_140735.jsonl",
+        "file_size_bytes": 2996,
+        "span_count": 10,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_141932.jsonl",
+        "file_size_bytes": 3254,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_142504.jsonl",
+        "file_size_bytes": 3254,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_143129.jsonl",
+        "file_size_bytes": 3255,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_143623.jsonl",
+        "file_size_bytes": 4045,
+        "span_count": 14,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_150654.jsonl",
+        "file_size_bytes": 3782,
+        "span_count": 13,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_151348.jsonl",
+        "file_size_bytes": 3778,
+        "span_count": 13,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_152641.jsonl",
+        "file_size_bytes": 3255,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_153124.jsonl",
+        "file_size_bytes": 3252,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_153647.jsonl",
+        "file_size_bytes": 3253,
+        "span_count": 11,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_155729.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_160929.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_161202.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_161419.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250803_180707.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-03"
+      },
+      {
+        "file_name": "trace_20250805_185235.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "trace_20250805_185532.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "trace_20250805_191427.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "trace_20250805_191633.jsonl",
+        "file_size_bytes": 3257,
+        "span_count": 11,
+        "file_date": "2025-08-05"
+      },
+      {
+        "file_name": "trace_20250806_082358.jsonl",
+        "file_size_bytes": 256,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_093509.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_104129.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_105714.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_124832.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_125636.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_131042.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_131503.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_132609.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_134717.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250806_142226.jsonl",
+        "file_size_bytes": 256,
+        "span_count": 1,
+        "file_date": "2025-08-06"
+      },
+      {
+        "file_name": "trace_20250808_104501.jsonl",
+        "file_size_bytes": 11316,
+        "span_count": 2,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_111219.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_111427.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_113018.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_153803.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_160302.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_180336.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_180410.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250808_193405.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-08"
+      },
+      {
+        "file_name": "trace_20250809_190741.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-09"
+      },
+      {
+        "file_name": "trace_20250810_132018.jsonl",
+        "file_size_bytes": 256,
+        "span_count": 1,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "trace_20250810_150755.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "trace_20250810_190053.jsonl",
+        "file_size_bytes": 257,
+        "span_count": 1,
+        "file_date": "2025-08-10"
+      },
+      {
+        "file_name": "trace_20250810_193159.jsonl",
+        "file_size_bytes": 258,
+        "span_count": 1,
+        "file_date": "2025-08-10"
+      }
+    ],
+    "aggregate_metrics": {
+      "total_spans": 4378,
+      "total_file_size_bytes": 68761506,
+      "date_range": {
+        "earliest": "2025-08-03",
+        "latest": "2025-08-10"
+      }
+    }
+  },
+  "cross_dataset_metrics": {
+    "total_generated_tests": 120,
+    "total_urs_documents": 17,
+    "tests_per_document_ratio": 7.0588235294117645,
+    "total_monitoring_spans": 4378,
+    "data_volume_mb": 65.63957023620605
+  }
+}

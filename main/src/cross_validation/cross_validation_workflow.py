@@ -440,8 +440,9 @@ class CrossValidationWorkflow(Workflow):
                     "total_tokens": prompt_tokens + completion_tokens
                 }
 
-                # Calculate cost (DeepSeek V3 pricing)
-                cost_usd = (prompt_tokens / 1_000_000 * 0.27) + (completion_tokens / 1_000_000 * 1.10)
+                # Calculate cost using centralized pricing constants
+                from .pricing_constants import calculate_deepseek_v3_cost
+                cost_usd = calculate_deepseek_v3_cost(prompt_tokens, completion_tokens)
 
                 structured_logger.log_urs_processing(
                     fold_id=ev.fold_id,
@@ -602,7 +603,9 @@ class CrossValidationWorkflow(Workflow):
             avg_processing_time = sum(processing_times) / len(processing_times) if processing_times else 0.0
 
             total_tokens = sum(r.prompt_tokens + r.completion_tokens for r in fold_results)
-            total_cost = sum((r.prompt_tokens / 1_000_000 * 0.27) + (r.completion_tokens / 1_000_000 * 1.10) for r in fold_results)
+            # Calculate total cost using centralized pricing function
+            from .pricing_constants import calculate_deepseek_v3_cost
+            total_cost = sum(calculate_deepseek_v3_cost(r.prompt_tokens, r.completion_tokens) for r in fold_results)
 
             avg_tests = sum(r.tests_generated for r in fold_results if r.success) / max(successful_docs, 1)
             avg_coverage = sum(r.coverage_percentage for r in fold_results if r.success) / max(successful_docs, 1)

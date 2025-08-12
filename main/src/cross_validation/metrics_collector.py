@@ -26,6 +26,9 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
+# Import centralized pricing constants to ensure consistency
+from .pricing_constants import DEEPSEEK_V3_INPUT_COST_PER_1M, DEEPSEEK_V3_OUTPUT_COST_PER_1M
+
 
 class DocumentMetrics(BaseModel):
     """Metrics for processing a single URS document."""
@@ -137,9 +140,9 @@ class MetricsCollector:
     persistence capabilities with full GAMP-5 compliance and audit trails.
     """
 
-    # DeepSeek V3 pricing (per 1M tokens as of 2024)
-    DEEPSEEK_V3_PROMPT_COST_PER_1M = 0.27  # USD per 1M input tokens
-    DEEPSEEK_V3_COMPLETION_COST_PER_1M = 1.10  # USD per 1M output tokens
+    # DeepSeek V3 pricing (imported from centralized constants)
+    DEEPSEEK_V3_PROMPT_COST_PER_1M = DEEPSEEK_V3_INPUT_COST_PER_1M
+    DEEPSEEK_V3_COMPLETION_COST_PER_1M = DEEPSEEK_V3_OUTPUT_COST_PER_1M
 
     def __init__(
         self,

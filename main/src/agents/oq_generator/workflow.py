@@ -444,9 +444,18 @@ class OQTestGenerationWorkflow(Workflow):
             RuntimeError: If file saving fails (NO FALLBACKS)
         """
         try:
-            # Create output directory
-            output_dir = Path("output/test_suites")
-            output_dir.mkdir(parents=True, exist_ok=True)
+            # Create output directory with absolute path to ensure consistency
+            # Use main/output/test_suites for internal runs and root/output/test_suites for CLI runs
+            project_root = Path(__file__).parent.parent.parent.parent
+            main_output_dir = project_root / "main" / "output" / "test_suites"
+            root_output_dir = project_root / "output" / "test_suites"
+            
+            # Ensure both directories exist for maximum compatibility
+            main_output_dir.mkdir(parents=True, exist_ok=True)
+            root_output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Primary save location (main/output/test_suites)
+            output_dir = main_output_dir
             
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -496,7 +505,17 @@ class OQTestGenerationWorkflow(Workflow):
             if file_size == 0:
                 raise RuntimeError(f"File write verification failed: {output_file} is empty")
             
-            self.logger.info(f"Test suite file written successfully: {file_size} bytes")
+            # Also save to root output directory for backward compatibility
+            root_output_file = root_output_dir / filename
+            try:
+                with open(root_output_file, 'w', encoding='utf-8') as f:
+                    json_module.dump(output_data, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+                self.logger.info(f"Test suite also saved to: {root_output_file}")
+            except Exception as e:
+                # Log but don't fail - primary save succeeded
+                self.logger.warning(f"Secondary save to root directory failed: {e}")
+            
+            self.logger.info(f"Test suite file written successfully: {file_size} bytes to {output_file}")
             return str(output_file)
             
         except Exception as e:

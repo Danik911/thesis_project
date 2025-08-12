@@ -100,6 +100,56 @@ def test_metrics_collector():
         return False
 
 
+def test_environment_loading():
+    """Test that environment variables are loaded correctly."""
+    try:
+        import os
+        from dotenv import load_dotenv
+        
+        # Load environment variables first
+        load_dotenv()
+        
+        # Test direct environment access
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            print("FAIL: OPENROUTER_API_KEY not found in environment")
+            return False
+        
+        print(f"PASS: OPENROUTER_API_KEY found: {api_key[:10]}...{api_key[-4:]}")
+        
+        # Test LLMConfig import and initialization (should trigger dotenv loading)
+        from src.config.llm_config import LLMConfig
+        
+        provider_info = LLMConfig.get_provider_info()
+        if not provider_info['api_key_present']:
+            print("FAIL: LLMConfig reports API key not present")
+            return False
+        
+        print(f"PASS: LLMConfig provider: {provider_info['provider']}, API key present: {provider_info['api_key_present']}")
+        
+        # Test configuration validation
+        is_valid, message = LLMConfig.validate_configuration()
+        if not is_valid:
+            print(f"FAIL: LLMConfig validation failed: {message}")
+            return False
+        
+        print("PASS: LLMConfig validation successful")
+        
+        # Test LLM instance creation (this is where the original error occurred)
+        try:
+            llm = LLMConfig.get_llm()
+            print(f"PASS: LLM instance created successfully: {type(llm).__name__}")
+        except Exception as e:
+            print(f"FAIL: LLM instance creation failed: {e}")
+            return False
+        
+        return True
+        
+    except Exception as e:
+        print(f"FAIL: Environment loading test - {e}")
+        return False
+
+
 async def test_workflow_imports():
     """Test that workflow can be imported."""
     try:
@@ -124,25 +174,34 @@ async def main():
     print("=" * 40)
     
     tests_passed = 0
-    total_tests = 3
+    total_tests = 4
     
+    # Test environment loading FIRST (most critical for cross-validation)
+    print("\n1. Testing Environment Variable Loading...")
+    if test_environment_loading():
+        tests_passed += 1
+    
+    print("\n2. Testing FoldManager...")
     if test_fold_manager():
         tests_passed += 1
     
+    print("\n3. Testing MetricsCollector...")
     if test_metrics_collector():
         tests_passed += 1
     
+    print("\n4. Testing Workflow Imports...")
     if await test_workflow_imports():
         tests_passed += 1
     
-    print("=" * 40)
+    print("\n" + "=" * 40)
     print(f"Results: {tests_passed}/{total_tests} tests passed")
     
     if tests_passed == total_tests:
-        print("SUCCESS: All basic tests passed!")
+        print("✅ SUCCESS: All basic tests passed!")
+        print("✅ Cross-validation environment fix is working correctly!")
         return True
     else:
-        print("FAILURE: Some tests failed")
+        print("❌ FAILURE: Some tests failed")
         return False
 
 

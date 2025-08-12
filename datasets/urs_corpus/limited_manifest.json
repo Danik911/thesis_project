@@ -1,0 +1,29 @@
+{
+  "documents": [
+    {
+      "id": "URS-002",
+      "path": "datasets/urs_corpus/category_4/URS-002.md",
+      "category": "category_4"
+    },
+    {
+      "id": "URS-003",
+      "path": "datasets/urs_corpus/category_3/URS-003.md",
+      "category": "category_3"
+    },
+    {
+      "id": "URS-004",
+      "path": "datasets/urs_corpus/category_5/URS-004.md",
+      "category": "category_5"
+    }
+  ],
+  "folds": {
+    "fold_1": {
+      "train": [],
+      "validation": [
+        "URS-002",
+        "URS-003",
+        "URS-004"
+      ]
+    }
+  }
+}

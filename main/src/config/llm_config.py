@@ -11,9 +11,13 @@ CRITICAL: NO FALLBACKS ALLOWED
 import os
 from enum import Enum
 from typing import Any
+from dotenv import load_dotenv
 
 from llama_index.core.llms import LLM
 from llama_index.core import Settings
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class ModelProvider(Enum):
