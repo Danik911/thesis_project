@@ -1,103 +1,146 @@
-# Debug Plan: Cross-Validation Environment Variable Loading Issue
+# Debug Plan: Cross-Validation Framework Execution Issues
 
 ## Root Cause Analysis
 
-**Problem**: Cross-validation system failing with error:
-```
-Failed to initialize LLM with provider ModelProvider.OPENROUTER: 
-OPENROUTER_API_KEY not found in environment. NO FALLBACK ALLOWED
-```
+**Problem**: Task 17 cross-validation framework has NEVER been successfully executed due to multiple critical execution blockers.
 
-**Root Cause Identified**: 
-The `main/src/config/llm_config.py` file was checking for `OPENROUTER_API_KEY` using `os.getenv()` but never loaded the `.env` file using `load_dotenv()`.
+**Issues Identified**:
+1. **pdfplumber dependency missing**: Research and SME agents fail with ImportError
+2. **Component initialization errors**: Runtime failures despite correct code signatures  
+3. **No execution evidence**: Framework never run to completion, no results generated
+4. **Agent failures**: Silent failures preventing workflow progression
 
-**Call Chain Analysis**:
-1. `run_cross_validation.py` → imports nothing that loads dotenv
-2. `execution_harness.py` → creates CrossValidationWorkflow, no dotenv loading
-3. `cross_validation_workflow.py` → imports UnifiedTestGenerationWorkflow
-4. `unified_workflow.py` → imports LLMConfig
-5. `llm_config.py` → checks `os.getenv("OPENROUTER_API_KEY")` but never calls `load_dotenv()`
+**Sequential Analysis Results**:
+- Code review shows components have correct constructor signatures
+- Required paths exist (`datasets/cross_validation/`, `datasets/urs_corpus/`)  
+- pdfplumber listed in pyproject.toml but may not be installed in current environment
+- Agents fail silently without proper error handling
 
-**Solution**: Add `load_dotenv()` to `llm_config.py` so environment variables are loaded when the module is imported.
+## Solution Steps  
 
-## Solution Steps
+### Step 1: Dependency Verification and Installation
+**Objective**: Fix pdfplumber dependency that prevents Research and SME agents from executing
 
-### Step 1: Fixed Environment Loading ✅
-**File**: `C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\src\config\llm_config.py`
+**Actions**:
+1. Test if pdfplumber is installed in current environment
+2. Install if missing using UV package manager  
+3. Verify agents can import required dependencies
 
-**Changes Made**:
-```python
-# Added imports
-from dotenv import load_dotenv
+**Expected Outcome**: pdfplumber imports successfully, agents can execute
 
-# Added after imports
-# Load environment variables from .env file
-load_dotenv()
-```
+### Step 2: Dry Run Component Testing  
+**Objective**: Validate component initialization without full execution
 
-**Location**: Lines 14 and 19-20
+**Actions**:
+1. Run `python run_cross_validation.py --dry-run` to test setup
+2. Identify actual constructor signature mismatches
+3. Fix any parameter discrepancies
 
-### Step 2: Verification ✅
-**File**: `C:\Users\anteb\Desktop\Courses\Projects\thesis_project\test_basic_cv.py`
+**Expected Outcome**: All components initialize successfully in dry-run mode
 
-**Added Test Function**: `test_environment_loading()` - Tests:
-1. Direct `OPENROUTER_API_KEY` access via `os.getenv()`
-2. LLMConfig provider info and API key detection
-3. LLMConfig validation 
-4. LLM instance creation (where original error occurred)
+### Step 3: Single Document Processing Test
+**Objective**: Execute one document through complete workflow  
+
+**Actions**:
+1. Create minimal test script for single document processing
+2. Process one URS document through full pipeline
+3. Verify results generation and persistence
+
+**Expected Outcome**: One document processed successfully with results saved
+
+### Step 4: Single Fold Completion
+**Objective**: Complete one full cross-validation fold
+
+**Actions**:
+1. Execute one fold with multiple documents
+2. Generate fold-level metrics
+3. Verify statistical analysis components
+
+**Expected Outcome**: One fold completed with metrics and analysis
+
+### Step 5: Full Framework Integration
+**Objective**: Complete multi-fold cross-validation experiment
+
+**Actions**:
+1. Execute full 5-fold cross-validation
+2. Generate comprehensive statistical analysis
+3. Validate results persistence and reporting
+
+**Expected Outcome**: Complete cross-validation results with statistical confidence intervals
 
 ## Risk Assessment
 
-**Low Risk Fix**:
-- Only adds `load_dotenv()` import and call
-- `python-dotenv>=1.0.0` already in dependencies
-- No breaking changes to existing functionality
-- Centralized in the module that needs the environment variables
+- **Low Risk**: Dependency installation and dry-run testing
+- **Medium Risk**: Agent execution fixes (may require graceful dependency handling)
+- **High Risk**: Full framework execution (complex multi-agent coordination)
 
-**Rollback Plan**: 
-If issues occur, simply remove lines 14 and 19-20 from `llm_config.py`
+## Rollback Plan
+If fixes fail after 5 iterations:
+1. Document exact failure points with full stack traces
+2. Recommend architectural simplification 
+3. Suggest component-by-component mock-based testing
 
 ## Compliance Validation
 
-**GAMP-5 Compliance**: ✅
-- Explicit error handling maintained (NO FALLBACKS)
-- Full diagnostic information preserved
-- Configuration validation enhanced
-- Audit trail unaffected
+**GAMP-5 Requirements**: 
+- NO FALLBACK logic allowed - all failures must be explicit
+- Full audit trail maintenance in all components
+- Statistical analysis integrity preserved
+- Error handling with complete diagnostic information
 
-## Testing Results
+## Iteration Log
 
-**Expected Results**:
-1. Environment variables properly loaded at import time
-2. Cross-validation system can access OPENROUTER_API_KEY
-3. LLM instance creation succeeds
-4. No more "OPENROUTER_API_KEY not found" errors
+### Iteration 1: Dependency Resolution ✅ COMPLETED
+**Status**: Fixed
+**Actions**: Fixed pdfplumber import handling in regulatory_data_sources.py
+**Changes Made**:
+- Added conditional import for pdfplumber with explicit error handling
+- Modified `_extract_pdf_content` to fail explicitly if pdfplumber missing
+- NO FALLBACKS - clear error message with installation instructions
+**Files Modified**: `main/src/agents/parallel/regulatory_data_sources.py`
+**Success Criteria**: Agents import without ModuleNotFoundError ✅
 
-**Test Command**: 
-```bash
-python test_basic_cv.py
-```
+### Iteration 2: Component Initialization  
+**Status**: Ready to Test
+**Actions**: Run dry-run, verify constructor signatures work correctly
+**Test Commands**:
+- `python check_pdfplumber.py` - Check pdfplumber installation status
+- `python test_pdfplumber_fix.py` - Validate fix works
+- `python run_cross_validation.py --dry-run` - Test actual dry-run
+**Success Criteria**: All components initialize successfully
 
-## Implementation Status
+### Iteration 3: Single Document Test
+**Status**: Pending
+**Actions**: Process one document end-to-end
+**Success Criteria**: Document results persisted to disk
 
-- [x] Root cause identified through systematic analysis
-- [x] Fix implemented in `llm_config.py`  
-- [x] Test enhanced to validate fix
-- [x] Documentation created
-- [ ] Full cross-validation execution test (user should verify)
+### Iteration 4: Fold Completion
+**Status**: Pending  
+**Actions**: Complete one full fold
+**Success Criteria**: Fold metrics generated and saved
 
-## Next Steps
+### Iteration 5: Full Integration
+**Status**: Pending
+**Actions**: Multi-fold cross-validation
+**Success Criteria**: Statistical analysis and comprehensive results
 
-1. **User Verification**: Run `python test_basic_cv.py` to confirm environment loading works
-2. **Full System Test**: Run cross-validation with `python run_cross_validation.py --dry-run`
-3. **Real Execution Test**: Run actual cross-validation experiment if dry-run succeeds
+## Success Criteria Checklist
+- [x] pdfplumber dependency issue resolved (explicit error handling implemented)
+- [x] Research and SME agents import without ModuleNotFoundError  
+- [ ] Dry run completes without component initialization failures
+- [ ] At least one document processes completely
+- [ ] Fold-level results generated and persisted
+- [ ] Statistical confidence intervals calculated
+- [ ] Complete experiment results saved to `main/output/cross_validation/`
 
-## Files Modified
+## Implementation Timeline
+- **Iterations 1-2**: Environment fixes (45 minutes max)
+- **Iterations 3-4**: Single document and fold testing (60 minutes max)  
+- **Iteration 5**: Full integration (90 minutes max)
+- **Total Debug Time**: 3.25 hours maximum
 
-1. `main/src/config/llm_config.py` - Added dotenv loading
-2. `test_basic_cv.py` - Enhanced with environment loading test
-3. `main/docs/tasks_issues/cross_validation_env_fix_debug_plan.md` - This documentation
-
----
-
-**CRITICAL**: This fix addresses the exact error reported by ensuring environment variables are loaded before any LLM initialization attempts. No fallback logic was added - the system will still fail explicitly if the API key is missing from the .env file.
+## Escalation Criteria
+After 5 iterations, if framework cannot complete one fold:
+1. Architectural review required
+2. Component mocking approach recommended
+3. Incremental testing strategy needed

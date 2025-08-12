@@ -252,14 +252,14 @@ class StatisticalAnalyzer:
 
     def calculate_confidence_interval(self,
                                     data: list[float],
-                                    metric_name: str,
+                                    metric_name: str = "value",
                                     method: str = "bootstrap") -> ConfidenceInterval:
         """
         Calculate confidence interval for a metric.
 
         Args:
             data: Sample data
-            metric_name: Name of the metric
+            metric_name: Name of the metric (default: "value")
             method: Method to use ('bootstrap', 't_distribution', 'normal')
 
         Returns:

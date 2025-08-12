@@ -20,7 +20,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import pdfplumber
+# Explicit pdfplumber dependency check - NO FALLBACKS ALLOWED
+try:
+    import pdfplumber
+    PDFPLUMBER_AVAILABLE = True
+except ImportError as e:
+    PDFPLUMBER_AVAILABLE = False
+    PDFPLUMBER_ERROR = str(e)
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -486,6 +493,14 @@ class DocumentProcessor:
         extract_tables: bool
     ) -> dict[str, Any]:
         """Extract content from PDF using PDFPlumber."""
+        # Explicit dependency check - NO FALLBACKS ALLOWED
+        if not PDFPLUMBER_AVAILABLE:
+            raise ImportError(
+                f"pdfplumber is required for PDF processing but not installed. "
+                f"Original error: {PDFPLUMBER_ERROR}. "
+                f"Install with: uv add pdfplumber"
+            )
+        
         result = {
             "text": "",
             "tables": [],

@@ -36,10 +36,10 @@ def calculate_deepseek_v3_cost(prompt_tokens: int, completion_tokens: int) -> fl
     """
     if prompt_tokens < 0 or completion_tokens < 0:
         raise ValueError(f"Token counts cannot be negative: prompt={prompt_tokens}, completion={completion_tokens}")
-    
+
     prompt_cost = (prompt_tokens / 1_000_000) * DEEPSEEK_V3_INPUT_COST_PER_1M
     completion_cost = (completion_tokens / 1_000_000) * DEEPSEEK_V3_OUTPUT_COST_PER_1M
-    
+
     return prompt_cost + completion_cost
 
 
@@ -57,9 +57,9 @@ def validate_pricing_consistency() -> None:
     test_prompt_tokens = 2000
     test_completion_tokens = 1000
     expected_cost = 0.00056  # (2000/1M * 0.14) + (1000/1M * 0.28)
-    
+
     actual_cost = calculate_deepseek_v3_cost(test_prompt_tokens, test_completion_tokens)
-    
+
     # Allow for small floating point precision differences
     if abs(actual_cost - expected_cost) > 0.000001:
         raise ValueError(
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # Self-test
     validate_pricing_consistency()
     print("✅ Pricing constants validation passed")
-    
+
     # Example calculation
     cost = calculate_deepseek_v3_cost(2000, 1000)
     print(f"Example: 2000 prompt + 1000 completion tokens = ${cost:.6f}")

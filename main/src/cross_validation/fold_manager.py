@@ -72,18 +72,23 @@ class FoldManager:
 
     def __init__(
         self,
-        fold_assignments_path: str | Path,
-        urs_corpus_path: str | Path,
+        fold_assignments_path: str | Path | None = None,
+        urs_corpus_path: str | Path | None = None,
         random_seed: int = 42
     ):
         """
         Initialize the FoldManager.
 
         Args:
-            fold_assignments_path: Path to fold assignments JSON file
-            urs_corpus_path: Path to URS corpus directory
+            fold_assignments_path: Path to fold assignments JSON file (default: "datasets/cross_validation/fold_assignments.json")
+            urs_corpus_path: Path to URS corpus directory (default: "datasets/urs_corpus")
             random_seed: Random seed for reproducible processing
         """
+        # Set default paths if not provided
+        if fold_assignments_path is None:
+            fold_assignments_path = "datasets/cross_validation/fold_assignments.json"
+        if urs_corpus_path is None:
+            urs_corpus_path = "datasets/urs_corpus"
         self.fold_assignments_path = Path(fold_assignments_path)
         self.urs_corpus_path = Path(urs_corpus_path)
         self.random_seed = random_seed

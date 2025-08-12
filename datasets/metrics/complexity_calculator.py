@@ -14,7 +14,6 @@ import re
 import math
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
-import textstat
 
 
 class URSComplexityCalculator:
@@ -148,9 +147,68 @@ class URSComplexityCalculator:
         except Exception as e:
             raise RuntimeError(f"Failed to calculate requirement counts: {str(e)}")
 
+    def _count_syllables(self, word: str) -> int:
+        """
+        Count syllables in a word using basic heuristics.
+        
+        Args:
+            word: Word to count syllables for
+            
+        Returns:
+            Number of syllables (minimum 1)
+        """
+        word = word.lower().strip()
+        if not word:
+            return 0
+        
+        # Remove punctuation and digits
+        word = re.sub(r'[^a-z]', '', word)
+        if not word:
+            return 0
+        
+        # Count vowel groups
+        vowels = 'aeiouy'
+        syllables = 0
+        prev_was_vowel = False
+        
+        for char in word:
+            is_vowel = char in vowels
+            if is_vowel and not prev_was_vowel:
+                syllables += 1
+            prev_was_vowel = is_vowel
+        
+        # Handle silent 'e'
+        if word.endswith('e') and syllables > 1:
+            syllables -= 1
+        
+        # Ensure at least 1 syllable per word
+        return max(1, syllables)
+
+    def _count_sentences(self, text: str) -> int:
+        """
+        Count sentences in text using punctuation patterns.
+        
+        Args:
+            text: Text to count sentences for
+            
+        Returns:
+            Number of sentences (minimum 1)
+        """
+        if not text.strip():
+            return 0
+        
+        # Count sentence-ending punctuation
+        sentence_endings = re.findall(r'[.!?]+', text)
+        sentence_count = len(sentence_endings)
+        
+        # Ensure at least 1 sentence if text exists
+        return max(1, sentence_count)
+
     def calculate_readability_score(self, text: str) -> float:
         """
         Calculate readability score using Flesch-Kincaid Grade Level.
+        
+        Formula: 0.39 * (words/sentences) + 11.8 * (syllables/words) - 15.59
         
         Args:
             text: Text content to analyze
@@ -173,12 +231,25 @@ class URSComplexityCalculator:
             if len(clean_text.strip()) < 100:
                 raise ValueError("Text too short for reliable readability analysis (minimum 100 characters)")
             
-            score = textstat.flesch_kincaid().text_standard(clean_text, float_output=True)
+            # Count basic text statistics
+            words = clean_text.split()
+            word_count = len(words)
+            sentence_count = self._count_sentences(clean_text)
+            syllable_count = sum(self._count_syllables(word) for word in words)
             
-            if score is None or math.isnan(score):
+            if word_count == 0 or sentence_count == 0:
+                raise RuntimeError("Invalid text statistics: no words or sentences found")
+            
+            # Calculate Flesch-Kincaid Grade Level
+            avg_sentence_length = word_count / sentence_count
+            avg_syllables_per_word = syllable_count / word_count
+            
+            fk_grade_level = (0.39 * avg_sentence_length) + (11.8 * avg_syllables_per_word) - 15.59
+            
+            if math.isnan(fk_grade_level) or math.isinf(fk_grade_level):
                 raise RuntimeError("Readability calculation returned invalid result")
                 
-            return float(score)
+            return float(max(0.0, fk_grade_level))  # Ensure non-negative score
             
         except Exception as e:
             raise RuntimeError(f"Failed to calculate readability score: {str(e)}")

@@ -27,7 +27,10 @@ import pandas as pd
 from pydantic import BaseModel, Field
 
 # Import centralized pricing constants to ensure consistency
-from .pricing_constants import DEEPSEEK_V3_INPUT_COST_PER_1M, DEEPSEEK_V3_OUTPUT_COST_PER_1M
+from .pricing_constants import (
+    DEEPSEEK_V3_INPUT_COST_PER_1M,
+    DEEPSEEK_V3_OUTPUT_COST_PER_1M,
+)
 
 
 class DocumentMetrics(BaseModel):
