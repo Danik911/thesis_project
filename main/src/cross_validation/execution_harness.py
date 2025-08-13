@@ -14,10 +14,16 @@ Key Features:
 - No fallbacks - explicit error handling only
 """
 
+import os
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from dotenv import load_dotenv
+
+# CRITICAL: Load environment variables FIRST before any other imports
+# This ensures API keys are available for all components
+load_dotenv(override=True)
 
 from src.monitoring.phoenix_config import setup_phoenix
 from src.monitoring.simple_tracer import get_tracer

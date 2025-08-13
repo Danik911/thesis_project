@@ -15,11 +15,17 @@ Key Features:
 - Error handling with explicit failures (no fallbacks)
 """
 
+import os
 import asyncio
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from dotenv import load_dotenv
+
+# CRITICAL: Load environment variables FIRST before any other imports
+# This ensures API keys are available for all workflow components
+load_dotenv(override=True)
 
 from llama_index.core.workflow import (
     Context,

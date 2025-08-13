@@ -614,9 +614,10 @@ def create_planner_agent(
     Returns:
         Configured PlannerAgent instance
     """
-    # Use default LLM if not provided
+    # Use default LLM if not provided - DeepSeek via centralized config
     if llm is None:
-        llm = OpenAI(model="gpt-4.1-mini-2025-04-14")
+        from src.config.llm_config import LLMConfig
+        llm = LLMConfig.get_llm()
 
     # Create strategy generator
     strategy_generator = GAMPStrategyGenerator(verbose=verbose)

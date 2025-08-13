@@ -92,12 +92,12 @@ class OQTestGeneratorV2:
         self.generation_timeout = generation_timeout
         self.logger = logging.getLogger(__name__)
 
-        # Model selection - o3-mini for ALL OQ test generation
+        # Model selection - DeepSeek for ALL OQ test generation
         self.model_mapping = {
-            GAMPCategory.CATEGORY_1: "o3-mini",
-            GAMPCategory.CATEGORY_3: "o3-mini",
-            GAMPCategory.CATEGORY_4: "o3-mini",
-            GAMPCategory.CATEGORY_5: "o3-mini"  # o3 for ALL categories
+            GAMPCategory.CATEGORY_1: "deepseek/deepseek-chat",
+            GAMPCategory.CATEGORY_3: "deepseek/deepseek-chat",
+            GAMPCategory.CATEGORY_4: "deepseek/deepseek-chat",
+            GAMPCategory.CATEGORY_5: "deepseek/deepseek-chat"  # DeepSeek for ALL categories
         }
 
         # Timeout mapping per category
@@ -136,7 +136,7 @@ class OQTestGeneratorV2:
 
         try:
             # Get model and timeout for category
-            model_name = self.model_mapping.get(gamp_category, "o3-mini")
+            model_name = self.model_mapping.get(gamp_category, "deepseek/deepseek-chat")
             timeout = self.timeout_mapping.get(gamp_category, self.generation_timeout)
 
             self.logger.info(
@@ -162,11 +162,12 @@ class OQTestGeneratorV2:
                 test_count = category_config["max_tests"]
 
             # Generate tests based on model type
-            if model_name.startswith("o3"):
-                # Check if progressive generation needed for o3 model with many tests
-                if model_name.startswith("o3") and test_count > 10:
+            # Use DeepSeek for all generation (o3 models not in scope)
+            if "deepseek" in model_name.lower():
+                # Check if progressive generation needed for DeepSeek with many tests
+                if test_count > 10:
                     self.logger.info(
-                        f"Using progressive generation for o3 model with {test_count} tests"
+                        f"Using progressive generation for DeepSeek model with {test_count} tests"
                     )
                     test_suite = await self._generate_with_progressive_o3_model(
                         llm=llm,
@@ -177,7 +178,7 @@ class OQTestGeneratorV2:
                         context_data=context_data
                     )
                 else:
-                    # o3 models require different approach (reasoning models)
+                    # DeepSeek models use the same generation approach
                     test_suite = await self._generate_with_o3_model(
                         llm=llm,
                         gamp_category=gamp_category,
@@ -461,7 +462,7 @@ class OQTestGeneratorV2:
         document_name: str,
         test_count: int,
         context_data: dict[str, Any] = None,
-        model_name: str = "o3"
+        model_name: str = "deepseek"
     ) -> str:
         """Build enhanced prompt optimized for DeepSeek V3 model."""
         # Get base prompt

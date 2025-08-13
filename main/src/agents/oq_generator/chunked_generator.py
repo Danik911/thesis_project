@@ -209,35 +209,15 @@ class ChunkedOQGenerator:
             import time
             start_time = time.time()
             
-            # Try direct OpenAI API if available
-            if hasattr(self.llm, 'model') and 'gpt' in str(self.llm.model).lower():
-                # Use direct OpenAI API for better reliability
-                import os
-                from openai import OpenAI
-                
-                api_key = os.getenv("OPENAI_API_KEY")
-                if api_key:
-                    self.logger.info(f"Using direct OpenAI API for chunk {chunk_idx}")
-                    client = OpenAI(api_key=api_key)
-                    response = client.chat.completions.create(
-                        model="gpt-4-turbo-preview",
-                        messages=[
-                            {"role": "system", "content": "You are a pharmaceutical test generator. Generate tests in valid JSON format."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        max_tokens=4000,
-                        temperature=0.1,
-                        timeout=120  # 120 second timeout for complex prompts
-                    )
-                    raw_response = response.choices[0].message.content
-                else:
-                    # Fallback to LlamaIndex
-                    response = self.llm.complete(prompt)
-                    raw_response = response.text if hasattr(response, 'text') else str(response)
-            else:
-                # Use LlamaIndex for non-OpenAI models
-                response = self.llm.complete(prompt)
-                raw_response = response.text if hasattr(response, 'text') else str(response)
+            # Always use centralized LLM config for DeepSeek
+            from src.config.llm_config import LLMConfig
+            
+            self.logger.info(f"Using DeepSeek via OpenRouter for chunk {chunk_idx}")
+            llm = LLMConfig.get_llm(max_tokens=4000)
+            
+            # Use LlamaIndex interface for all models
+            response = llm.complete(prompt)
+            raw_response = response.text if hasattr(response, 'text') else str(response)
             
             elapsed = time.time() - start_time
             self.logger.info(f"LLM response received for chunk {chunk_idx} in {elapsed:.2f}s")

@@ -1,0 +1,1063 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-12T22:06:35.216918",
+    "suite_id": "OQ-SUITE-2106",
+    "gamp_category": 4,
+    "total_test_count": 20,
+    "file_version": "1.0",
+    "compliance_standards": [
+      "GAMP-5",
+      "ALCOA+",
+      "21 CFR Part 11"
+    ],
+    "generator_version": "OQTestGenerationWorkflow v1.0"
+  },
+  "test_suite": {
+    "suite_id": "OQ-SUITE-2106",
+    "gamp_category": 4,
+    "document_name": "URS-002_fold_1.md",
+    "test_cases": [
+      {
+        "test_id": "OQ-001",
+        "test_name": "Verify LIMS installation and configuration",
+        "test_category": "installation",
+        "gamp_category": 4,
+        "objective": "Ensure the LIMS software is correctly installed and configured according to vendor specifications.",
+        "prerequisites": [
+          "LIMS installation media",
+          "System requirements document"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Install LIMS software using vendor-provided installer.",
+            "expected_result": "Installation completes without errors.",
+            "data_to_capture": [
+              "Installation logs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Verify system configuration against vendor documentation.",
+            "expected_result": "Configuration matches documented requirements.",
+            "data_to_capture": [
+              "Configuration settings"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "LIMS software is installed and configured correctly."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure installation logs are retained."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-001"
+        ],
+        "related_tests": [
+          "OQ-002"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "IT Administrator"
+        ]
+      },
+      {
+        "test_id": "OQ-002",
+        "test_name": "Validate sample login screen configuration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Verify that sample login screens are configured to capture required attributes.",
+        "prerequisites": [
+          "LIMS access",
+          "Sample login configuration document"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Navigate to sample login screen.",
+            "expected_result": "Screen displays all configured fields.",
+            "data_to_capture": [
+              "Screen layout"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Enter sample data including batch number and manufacturing date.",
+            "expected_result": "Data is accepted and saved correctly.",
+            "data_to_capture": [
+              "Sample data entered"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All required fields are present and functional."
+        ],
+        "regulatory_basis": [
+          "GMP requirements"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure data entered is accurately stored."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-004"
+        ],
+        "related_tests": [
+          "OQ-003"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "LIMS Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-003",
+        "test_name": "Test SAP ERP integration",
+        "test_category": "integration",
+        "gamp_category": 4,
+        "objective": "Verify successful integration between LIMS and SAP ERP using vendor adapter.",
+        "prerequisites": [
+          "SAP ERP access",
+          "Integration configuration document"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Send test data from LIMS to SAP ERP.",
+            "expected_result": "Data is received and processed by SAP ERP.",
+            "data_to_capture": [
+              "Data transfer logs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Retrieve data from SAP ERP into LIMS.",
+            "expected_result": "Data is accurately imported into LIMS.",
+            "data_to_capture": [
+              "Imported data"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Data exchange between LIMS and SAP ERP is successful."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure data integrity during transfer."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-003"
+        ],
+        "related_tests": [
+          "OQ-002"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Integration Specialist"
+        ]
+      },
+      {
+        "test_id": "OQ-004",
+        "test_name": "Verify stability study protocol configuration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure stability study protocols are correctly configured in LIMS.",
+        "prerequisites": [
+          "Stability study protocol document",
+          "LIMS access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Create a new stability study in LIMS.",
+            "expected_result": "Study is created with all required parameters.",
+            "data_to_capture": [
+              "Study parameters"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Verify protocol steps and calculations.",
+            "expected_result": "Protocol matches documented requirements.",
+            "data_to_capture": [
+              "Protocol details"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Stability study protocols are correctly configured."
+        ],
+        "regulatory_basis": [
+          "ICH Q1A"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure protocol data is accurately stored."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-005"
+        ],
+        "related_tests": [
+          "OQ-005"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "QC Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-005",
+        "test_name": "Test OOS investigation business rules",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Verify custom business rules for OOS investigations are functioning as intended.",
+        "prerequisites": [
+          "OOS investigation SOP",
+          "LIMS access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate an OOS result in LIMS.",
+            "expected_result": "System triggers OOS investigation workflow.",
+            "data_to_capture": [
+              "OOS event details"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Follow investigation steps as per configured rules.",
+            "expected_result": "Workflow progresses correctly through stages.",
+            "data_to_capture": [
+              "Workflow progress"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "OOS investigation workflow functions as configured."
+        ],
+        "regulatory_basis": [
+          "FDA OOS Guidance"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure OOS data is accurately tracked."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-006"
+        ],
+        "related_tests": [
+          "OQ-004"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "QA Specialist"
+        ]
+      },
+      {
+        "test_id": "OQ-006",
+        "test_name": "Validate electronic worksheet configuration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure electronic worksheets for analytical methods are correctly configured.",
+        "prerequisites": [
+          "Analytical method documents",
+          "LIMS access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Open electronic worksheet for a specified method.",
+            "expected_result": "Worksheet displays all required fields and calculations.",
+            "data_to_capture": [
+              "Worksheet layout"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Enter test data and verify calculations.",
+            "expected_result": "Calculations are performed correctly.",
+            "data_to_capture": [
+              "Test data and results"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Electronic worksheets are correctly configured."
+        ],
+        "regulatory_basis": [
+          "GMP requirements"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure worksheet data is accurately stored."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-007"
+        ],
+        "related_tests": [
+          "OQ-005"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "QC Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-007",
+        "test_name": "Test report generation performance",
+        "test_category": "performance",
+        "gamp_category": 4,
+        "objective": "Verify that report generation completes within specified time limits.",
+        "prerequisites": [
+          "Report templates",
+          "LIMS access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Generate a standard report using configured template.",
+            "expected_result": "Report is generated within 5 minutes.",
+            "data_to_capture": [
+              "Report generation time"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Verify report content for accuracy.",
+            "expected_result": "Report contains correct data.",
+            "data_to_capture": [
+              "Report content"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Reports are generated within 5 minutes."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "low",
+        "data_integrity_requirements": [
+          "Ensure report data is accurate."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-013"
+        ],
+        "related_tests": [
+          "OQ-008"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "LIMS Analyst"
+        ]
+      },
+      {
+        "test_id": "OQ-008",
+        "test_name": "Verify user role configuration",
+        "test_category": "security",
+        "gamp_category": 4,
+        "objective": "Ensure user roles are correctly configured with appropriate permissions.",
+        "prerequisites": [
+          "User role configuration document",
+          "LIMS access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Log in as Analyst and attempt restricted actions.",
+            "expected_result": "Only permitted actions are allowed.",
+            "data_to_capture": [
+              "Access logs"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Log in as Reviewer and verify review capabilities.",
+            "expected_result": "Review functions are available as configured.",
+            "data_to_capture": [
+              "Review actions"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "User roles function as configured."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure access controls are enforced."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-009"
+        ],
+        "related_tests": [
+          "OQ-007"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "System Administrator"
+        ]
+      },
+      {
+        "test_id": "OQ-009",
+        "test_name": "Test two-stage electronic review process",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Verify that two-stage electronic review process functions as configured.",
+        "prerequisites": [
+          "Review process SOP",
+          "LIMS access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Submit test data for review.",
+            "expected_result": "Data enters first review stage.",
+            "data_to_capture": [
+              "Review status"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Complete first review and submit for second review.",
+            "expected_result": "Data progresses to second review stage.",
+            "data_to_capture": [
+              "Review progression"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Two-stage review process functions correctly."
+        ],
+        "regulatory_basis": [
+          "GMP requirements"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure review data is accurately tracked."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-010"
+        ],
+        "related_tests": [
+          "OQ-008"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "QA Reviewer"
+        ]
+      },
+      {
+        "test_id": "OQ-010",
+        "test_name": "Verify audit trail configuration",
+        "test_category": "data_integrity",
+        "gamp_category": 4,
+        "objective": "Ensure audit trail is correctly configured to capture required events.",
+        "prerequisites": [
+          "Audit trail configuration document",
+          "LIMS access"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform sample data modifications.",
+            "expected_result": "Changes are recorded in audit trail.",
+            "data_to_capture": [
+              "Audit trail entries"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          },
+          {
+            "step_number": 2,
+            "action": "Verify audit trail categories match SOP requirements.",
+            "expected_result": "Categories are correctly configured.",
+            "data_to_capture": [
+              "Audit trail categories"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Audit trail captures required events."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure audit trail is complete and accurate."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-011"
+        ],
+        "related_tests": [
+          "OQ-009"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "QA Auditor"
+        ]
+      },
+      {
+        "test_id": "OQ-011",
+        "test_name": "Verify LIMS Sample Login Screen Configuration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure the sample login screen is configured to capture site-specific attributes as per URS-LIMS-004.",
+        "prerequisites": [
+          "LIMS installed and configured",
+          "User access credentials"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Navigate to the sample login screen.",
+            "expected_result": "Screen displays fields for batch number, manufacturing date, expiry date, and storage conditions.",
+            "data_to_capture": [
+              "Screen layout",
+              "Field labels"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All required fields are present and correctly labeled."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure data entered is accurately captured and stored."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-004"
+        ],
+        "related_tests": [
+          "OQ-012"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "LIMS configuration"
+        ]
+      },
+      {
+        "test_id": "OQ-012",
+        "test_name": "Validate LIMS Integration with SAP ERP",
+        "test_category": "integration",
+        "gamp_category": 4,
+        "objective": "Verify the integration between LIMS and SAP ERP using the vendor's standard adapter.",
+        "prerequisites": [
+          "LIMS and SAP ERP installed",
+          "Integration configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Send a test transaction from LIMS to SAP ERP.",
+            "expected_result": "Transaction is successfully received and processed by SAP ERP.",
+            "data_to_capture": [
+              "Transaction status",
+              "Error messages"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Transactions are successfully exchanged between systems."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure data integrity during transmission."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-003"
+        ],
+        "related_tests": [
+          "OQ-011"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "System integration"
+        ]
+      },
+      {
+        "test_id": "OQ-013",
+        "test_name": "Test LIMS Stability Study Protocol Configuration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure stability study protocols are correctly configured using vendor's tools.",
+        "prerequisites": [
+          "LIMS installed",
+          "Stability study protocols configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Access a configured stability study protocol.",
+            "expected_result": "Protocol details match the configured parameters.",
+            "data_to_capture": [
+              "Protocol details",
+              "Configuration settings"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Protocols are correctly configured and accessible."
+        ],
+        "regulatory_basis": [
+          "ICH Q1A"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure protocol data is accurately captured."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-005"
+        ],
+        "related_tests": [
+          "OQ-014"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "LIMS configuration"
+        ]
+      },
+      {
+        "test_id": "OQ-014",
+        "test_name": "Verify LIMS Electronic Worksheet Configuration",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure electronic worksheets for 15 analytical methods are correctly configured.",
+        "prerequisites": [
+          "LIMS installed",
+          "Electronic worksheets configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Access an electronic worksheet for an analytical method.",
+            "expected_result": "Worksheet displays all required fields and calculations.",
+            "data_to_capture": [
+              "Worksheet layout",
+              "Field labels"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "All electronic worksheets are correctly configured."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure worksheet data is accurately captured."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-007"
+        ],
+        "related_tests": [
+          "OQ-013"
+        ],
+        "estimated_duration_minutes": 45,
+        "required_expertise": [
+          "LIMS configuration"
+        ]
+      },
+      {
+        "test_id": "OQ-015",
+        "test_name": "Validate LIMS Report Generation Performance",
+        "test_category": "performance",
+        "gamp_category": 4,
+        "objective": "Ensure report generation completes within 5 minutes for standard templates.",
+        "prerequisites": [
+          "LIMS installed",
+          "Report templates configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Generate a standard report.",
+            "expected_result": "Report generation completes within 5 minutes.",
+            "data_to_capture": [
+              "Report generation time",
+              "Report content"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Reports are generated within the specified time frame."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure report data is accurate and complete."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-013"
+        ],
+        "related_tests": [
+          "OQ-016"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Performance testing"
+        ]
+      },
+      {
+        "test_id": "OQ-016",
+        "test_name": "Test LIMS Concurrent User Support",
+        "test_category": "performance",
+        "gamp_category": 4,
+        "objective": "Verify the system supports concurrent use by 50 users.",
+        "prerequisites": [
+          "LIMS installed",
+          "50 user accounts created"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Simulate 50 concurrent users accessing the system.",
+            "expected_result": "System remains responsive and functional.",
+            "data_to_capture": [
+              "System response time",
+              "Error messages"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "System supports 50 concurrent users without performance degradation."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure data integrity during concurrent access."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-014"
+        ],
+        "related_tests": [
+          "OQ-015"
+        ],
+        "estimated_duration_minutes": 60,
+        "required_expertise": [
+          "Performance testing"
+        ]
+      },
+      {
+        "test_id": "OQ-017",
+        "test_name": "Verify LIMS Audit Trail Configuration",
+        "test_category": "data_integrity",
+        "gamp_category": 4,
+        "objective": "Ensure audit trail categories are configured per site SOPs.",
+        "prerequisites": [
+          "LIMS installed",
+          "Audit trail configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Perform an action that triggers an audit trail entry.",
+            "expected_result": "Audit trail entry is created with correct details.",
+            "data_to_capture": [
+              "Audit trail entry",
+              "Action details"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Audit trail entries are correctly captured and categorized."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "critical",
+        "data_integrity_requirements": [
+          "Ensure audit trail data is accurate and complete."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-011"
+        ],
+        "related_tests": [
+          "OQ-018"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Data integrity"
+        ]
+      },
+      {
+        "test_id": "OQ-018",
+        "test_name": "Validate LIMS Certificate of Analysis Generation",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure certificates of analysis are generated in PDF format using configured templates.",
+        "prerequisites": [
+          "LIMS installed",
+          "Certificate templates configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Generate a certificate of analysis.",
+            "expected_result": "Certificate is generated in PDF format with correct details.",
+            "data_to_capture": [
+              "Certificate content",
+              "PDF format"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Certificates are correctly generated and formatted."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure certificate data is accurate and complete."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-017"
+        ],
+        "related_tests": [
+          "OQ-017"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "LIMS configuration"
+        ]
+      },
+      {
+        "test_id": "OQ-019",
+        "test_name": "Test LIMS User Role Configuration",
+        "test_category": "security",
+        "gamp_category": 4,
+        "objective": "Verify user roles (Analyst, Reviewer, QA Approver) are correctly configured.",
+        "prerequisites": [
+          "LIMS installed",
+          "User roles configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Log in as an Analyst.",
+            "expected_result": "User has access to Analyst-specific functions.",
+            "data_to_capture": [
+              "User permissions",
+              "Accessible functions"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "User roles are correctly configured and enforced."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "high",
+        "data_integrity_requirements": [
+          "Ensure user role data is accurate and complete."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-009"
+        ],
+        "related_tests": [
+          "OQ-020"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "Security testing"
+        ]
+      },
+      {
+        "test_id": "OQ-020",
+        "test_name": "Validate LIMS Two-Stage Electronic Review",
+        "test_category": "functional",
+        "gamp_category": 4,
+        "objective": "Ensure two-stage electronic review is implemented using configuration options.",
+        "prerequisites": [
+          "LIMS installed",
+          "Two-stage review configured"
+        ],
+        "test_steps": [
+          {
+            "step_number": 1,
+            "action": "Submit a sample for review.",
+            "expected_result": "Sample undergoes two-stage electronic review.",
+            "data_to_capture": [
+              "Review stages",
+              "Reviewer actions"
+            ],
+            "verification_method": "visual_inspection",
+            "acceptance_criteria": ""
+          }
+        ],
+        "acceptance_criteria": [
+          "Two-stage electronic review is correctly implemented."
+        ],
+        "regulatory_basis": [
+          "21 CFR Part 11"
+        ],
+        "risk_level": "medium",
+        "data_integrity_requirements": [
+          "Ensure review data is accurately captured."
+        ],
+        "urs_requirements": [
+          "URS-LIMS-010"
+        ],
+        "related_tests": [
+          "OQ-019"
+        ],
+        "estimated_duration_minutes": 30,
+        "required_expertise": [
+          "LIMS configuration"
+        ]
+      }
+    ],
+    "test_categories": {},
+    "requirements_coverage": {
+      "URS-001": [
+        "OQ-001",
+        "OQ-002",
+        "OQ-003",
+        "OQ-004",
+        "OQ-005"
+      ],
+      "URS-002": [
+        "OQ-006",
+        "OQ-007",
+        "OQ-008",
+        "OQ-009",
+        "OQ-010"
+      ],
+      "URS-003": [
+        "OQ-011",
+        "OQ-012",
+        "OQ-013",
+        "OQ-014",
+        "OQ-015",
+        "OQ-016",
+        "OQ-017",
+        "OQ-018",
+        "OQ-019",
+        "OQ-020"
+      ]
+    },
+    "risk_coverage": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "compliance_coverage": {
+      "21_cfr_part_11": true,
+      "gamp5": true,
+      "alcoa_plus": true
+    },
+    "total_test_count": 20,
+    "estimated_execution_time": 660,
+    "coverage_percentage": 0.0,
+    "generation_timestamp": "2025-08-12T21:06:35.179283+00:00",
+    "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat",
+    "validation_approach": "",
+    "created_by": "oq_generation_agent_v2_progressive",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  },
+  "audit_trail": {
+    "created_by": "OQTestGenerationWorkflow",
+    "creation_timestamp": "2025-08-12T22:06:35.217310",
+    "validation_status": "generated",
+    "review_required": true,
+    "pharmaceutical_compliance": {
+      "alcoa_plus_compliant": true,
+      "gamp5_compliant": true,
+      "cfr_part_11_compliant": true,
+      "audit_trail_verified": true,
+      "data_integrity_assured": true,
+      "cfr_part11_compliant": false,
+      "data_integrity_validated": false
+    }
+  }
+}

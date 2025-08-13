@@ -30,6 +30,7 @@ async def main():
     parser.add_argument("--timeout", type=int, default=3600, help="Timeout in seconds (default: 1 hour)")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     parser.add_argument("--disable-phoenix", action="store_true", help="Disable Phoenix monitoring")
+    parser.add_argument("--manifest", help="Path to custom manifest JSON file (overrides default fold assignments)")
     
     args = parser.parse_args()
     
@@ -57,8 +58,8 @@ async def main():
             from src.cross_validation.metrics_collector import MetricsCollector
             from src.cross_validation.cross_validation_workflow import CrossValidationWorkflow
             
-            # Test paths
-            fold_path = Path("datasets/cross_validation/fold_assignments.json")
+            # Test paths - use manifest if provided
+            fold_path = Path(args.manifest) if args.manifest else Path("datasets/cross_validation/fold_assignments.json")
             corpus_path = Path("datasets/urs_corpus")
             output_path = Path("main/output/cross_validation")
             
@@ -92,8 +93,11 @@ async def main():
         print("Starting full cross-validation experiment...")
         print("=" * 60)
         
+        # Use manifest if provided, otherwise use default
+        fold_path = args.manifest if args.manifest else "datasets/cross_validation/fold_assignments.json"
+        
         results = await run_cross_validation_experiment(
-            fold_assignments_path="datasets/cross_validation/fold_assignments.json",
+            fold_assignments_path=fold_path,
             urs_corpus_path="datasets/urs_corpus",
             output_directory="main/output/cross_validation",
             experiment_id=experiment_id,
