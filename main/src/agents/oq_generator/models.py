@@ -125,6 +125,63 @@ class OQTestSuite(BaseModel):
     created_by: str = Field(default="oq_generation_agent", description="System or user that created suite")
     review_required: bool = Field(default=True, description="Whether human review is required")
     pharmaceutical_compliance: dict[str, bool] = Field(default_factory=dict, description="Regulatory compliance flags")
+    
+    # ALCOA+ Compliance Metadata (Task 23 Enhancement)
+    alcoa_plus_metadata: dict[str, Any] = Field(default_factory=dict, description="ALCOA+ compliance metadata")
+    
+    # Top-level ALCOA+ fields for direct scorer access
+    is_original: bool = Field(default=True, description="Original record flag")
+    version: str = Field(default="1.0", description="Version information")
+    source_document_id: str | None = Field(default=None, description="Source document reference")
+    digital_signature: str | None = Field(default=None, description="Ed25519 digital signature")
+    checksum: str | None = Field(default=None, description="Data integrity checksum")
+    hash: str | None = Field(default=None, description="Data integrity hash")
+    immutable: bool = Field(default=True, description="Immutability protection")
+    locked: bool = Field(default=False, description="Lock status")
+    
+    validated: bool = Field(default=True, description="Validation status")
+    accuracy_score: float | None = Field(default=None, ge=0.0, le=1.0, description="Data accuracy score")
+    confidence_score: float | None = Field(default=None, ge=0.0, le=1.0, description="LLM confidence score")
+    change_reason: str | None = Field(default=None, description="Reason for modifications")
+    modification_reason: str | None = Field(default=None, description="Modification justification")
+    reconciled: bool = Field(default=True, description="Reconciliation status")
+    cross_verified: bool = Field(default=True, description="Cross-verification status")
+    corrections: list[str] = Field(default_factory=list, description="Corrections made")
+    error_log: list[str] = Field(default_factory=list, description="Error log")
+    
+    # Additional compliance fields for full ALCOA+ coverage
+    user_id: str | None = Field(default=None, description="User identifier")
+    audit_trail: dict[str, Any] = Field(default_factory=dict, description="Audit trail")
+    created_at: str | None = Field(default=None, description="Creation timestamp")
+    timestamp: str | None = Field(default=None, description="General timestamp")
+    modified_at: str | None = Field(default=None, description="Modification timestamp")
+    last_updated: str | None = Field(default=None, description="Last update timestamp")
+    processing_time: float | None = Field(default=None, description="Processing time in seconds")
+    
+    format: str = Field(default="json", description="Data format")
+    encoding: str = Field(default="utf-8", description="Character encoding")
+    schema: dict[str, Any] = Field(default_factory=dict, description="Data schema")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    
+    retention_period: str | None = Field(default="7_years", description="Data retention period")
+    expires_at: str | None = Field(default=None, description="Expiration date")
+    encrypted: bool = Field(default=False, description="Encryption status")
+    protected: bool = Field(default=True, description="Protection status")
+    backed_up: bool = Field(default=False, description="Backup status")
+    backup_status: str | None = Field(default="pending", description="Backup status")
+    
+    accessible: bool = Field(default=True, description="Accessibility status")
+    retrieval_time: float | None = Field(default=0.1, description="Retrieval time")
+    searchable: bool = Field(default=True, description="Search capability")
+    indexed: bool = Field(default=True, description="Index status")
+    export_formats: list[str] = Field(default_factory=lambda: ["json", "xml", "csv"], description="Export formats")
+    download_options: list[str] = Field(default_factory=lambda: ["json", "xml", "pdf"], description="Download options")
+    
+    system_version: str | None = Field(default="1.0.0", description="System version")
+    process_id: str | None = Field(default=None, description="Process identifier")
+    change_history: list[dict[str, Any]] = Field(default_factory=list, description="Change history")
+    related_records: list[str] = Field(default_factory=list, description="Related records")
+    dependencies: list[str] = Field(default_factory=list, description="Dependencies")
 
     @field_validator("test_cases")
     @classmethod

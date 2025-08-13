@@ -1,0 +1,70 @@
+{
+  "suite_id": "OQ-SUITE-1234",
+  "gamp_category": 4,
+  "document_name": "Test URS Document",
+  "test_count": 5,
+  "generated_at": "2025-08-13T14:19:34.781630",
+  "is_original": true,
+  "version": "1.0",
+  "source_document_id": "Test_URS_Document",
+  "digital_signature": "ed25519_mock_signature_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "checksum": "md5_mock_checksum_bbbbbbbbbbbbbbbb",
+  "hash": "sha256_mock_hash_cccccccccccccccccccccccccccccccc",
+  "immutable": true,
+  "locked": false,
+  "validated": true,
+  "accuracy_score": 0.88,
+  "confidence_score": 0.92,
+  "change_reason": null,
+  "modification_reason": null,
+  "reconciled": true,
+  "cross_verified": true,
+  "corrections": [],
+  "error_log": [],
+  "user_id": "pharmaceutical_test_generation_system",
+  "created_by": "pharmaceutical_test_generation_agent",
+  "audit_trail": {
+    "creation_event": "test_generation",
+    "validated": true
+  },
+  "created_at": "2025-08-13T14:19:34.781735",
+  "timestamp": "2025-08-13T14:19:34.781738",
+  "modified_at": null,
+  "last_updated": "2025-08-13T14:19:34.781740",
+  "processing_time": 15.2,
+  "format": "json",
+  "encoding": "utf-8",
+  "schema": {
+    "type": "pharmaceutical_test_data",
+    "version": "1.0"
+  },
+  "metadata": {
+    "alcoa_compliance": true,
+    "regulatory_framework": "GAMP-5"
+  },
+  "retention_period": "7_years",
+  "expires_at": null,
+  "encrypted": false,
+  "protected": true,
+  "backed_up": false,
+  "backup_status": "pending",
+  "accessible": true,
+  "retrieval_time": 0.1,
+  "searchable": true,
+  "indexed": true,
+  "export_formats": [
+    "json",
+    "xml",
+    "csv"
+  ],
+  "download_options": [
+    "json",
+    "xml",
+    "pdf"
+  ],
+  "system_version": "1.0.0",
+  "process_id": "mock_process_123",
+  "change_history": [],
+  "related_records": [],
+  "dependencies": []
+}

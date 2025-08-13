@@ -23,6 +23,81 @@ from uuid import uuid4
 from pydantic import BaseModel, Field, validator
 
 
+class ALCOAPlusMetadata(BaseModel):
+    """
+    ALCOA+ compliant metadata for pharmaceutical data integrity.
+    
+    Provides comprehensive metadata fields required for ALCOA+ assessment
+    including Original and Accurate attribute compliance.
+    """
+    # Original attribute fields (2x weighted)
+    is_original: bool = Field(default=True, description="Whether this is the original record")
+    version: str = Field(default="1.0", description="Version or revision information")
+    source_document_id: str | None = Field(default=None, description="Source document identifier for copies")
+    digital_signature: str | None = Field(default=None, description="Ed25519 digital signature for integrity")
+    checksum: str | None = Field(default=None, description="Data integrity checksum")
+    hash: str | None = Field(default=None, description="Data hash for tamper detection")
+    immutable: bool = Field(default=True, description="Whether record is protected from modification")
+    locked: bool = Field(default=False, description="Whether record is locked for editing")
+    
+    # Accurate attribute fields (2x weighted)
+    validated: bool = Field(default=False, description="Whether data has been validated")
+    accuracy_score: float | None = Field(default=None, ge=0.0, le=1.0, description="Quantitative accuracy score")
+    confidence_score: float | None = Field(default=None, ge=0.0, le=1.0, description="LLM confidence score")
+    change_reason: str | None = Field(default=None, description="Reason for any modifications")
+    modification_reason: str | None = Field(default=None, description="Detailed modification justification")
+    reconciled: bool = Field(default=False, description="Whether data has been reconciled")
+    cross_verified: bool = Field(default=False, description="Whether cross-verification was performed")
+    corrections: list[str] = Field(default_factory=list, description="Record of corrections made")
+    error_log: list[str] = Field(default_factory=list, description="Log of errors found and addressed")
+    
+    # Additional compliance fields
+    user_id: str | None = Field(default=None, description="User who created/modified the data")
+    created_by: str | None = Field(default=None, description="System/person who created the record")
+    audit_trail: dict[str, Any] = Field(default_factory=dict, description="Comprehensive audit trail")
+    created_at: str | None = Field(default=None, description="Creation timestamp")
+    timestamp: str | None = Field(default=None, description="Alternative timestamp field")
+    modified_at: str | None = Field(default=None, description="Last modification timestamp")
+    last_updated: str | None = Field(default=None, description="Alternative last update timestamp")
+    processing_time: float | None = Field(default=None, description="Processing time in seconds")
+    
+    # Data format and structure
+    format: str = Field(default="json", description="Data format (json, xml, csv, structured)")
+    encoding: str = Field(default="utf-8", description="Character encoding")
+    schema: dict[str, Any] = Field(default_factory=dict, description="Data schema information")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    
+    # Storage and retention
+    retention_period: str | None = Field(default=None, description="Data retention period")
+    expires_at: str | None = Field(default=None, description="Expiration timestamp")
+    encrypted: bool = Field(default=False, description="Whether data is encrypted")
+    protected: bool = Field(default=True, description="Whether data is protected")
+    backed_up: bool = Field(default=False, description="Whether data is backed up")
+    backup_status: str | None = Field(default=None, description="Backup status information")
+    
+    # Accessibility
+    accessible: bool = Field(default=True, description="Whether data is accessible")
+    retrieval_time: float | None = Field(default=None, description="Data retrieval time in seconds")
+    searchable: bool = Field(default=True, description="Whether data is searchable")
+    indexed: bool = Field(default=False, description="Whether data is indexed")
+    export_formats: list[str] = Field(default_factory=list, description="Available export formats")
+    download_options: list[str] = Field(default_factory=list, description="Available download options")
+    
+    # Process tracking
+    system_version: str | None = Field(default=None, description="System version that processed the data")
+    process_id: str | None = Field(default=None, description="Process identifier")
+    change_history: list[dict[str, Any]] = Field(default_factory=list, description="History of changes")
+    related_records: list[str] = Field(default_factory=list, description="Related record identifiers")
+    dependencies: list[str] = Field(default_factory=list, description="Data dependencies")
+    
+    @validator("accuracy_score", "confidence_score", pre=True)
+    def validate_scores(cls, v):
+        """Validate score values are within valid range."""
+        if v is not None and not (0.0 <= v <= 1.0):
+            raise ValueError("Scores must be between 0.0 and 1.0")
+        return v
+
+
 class ComplianceFramework(str, Enum):
     """Compliance frameworks supported by the validation system."""
     GAMP5 = "GAMP-5"

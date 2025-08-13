@@ -426,11 +426,13 @@ class ALCOAScorer:
             # Check for real-time capture indicators
             if "processing_time" in sample:
                 processing_time = sample.get("processing_time", 0)
-                if processing_time < 60:  # Less than 1 minute indicates near real-time
+                if processing_time is not None and processing_time < 60:  # Less than 1 minute indicates near real-time
                     score_components.append(1.0)
                     evidence_items.append(f"Real-time capture: {processing_time}s")
-                else:
+                elif processing_time is not None:
                     score_components.append(0.7)
+                else:
+                    score_components.append(0.5)  # None value
             else:
                 score_components.append(0.5)  # Unknown timing
 
