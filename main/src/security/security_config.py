@@ -50,7 +50,7 @@ class SecurityThresholds:
 
     # LLM01: Prompt Injection Detection (TARGET: 95%+ effectiveness)
     max_input_length: int = 10000  # Pharmaceutical URS typical max length
-    max_instruction_keywords: int = 3  # Max injection keywords per input
+    max_instruction_keywords: int = 0  # ZERO TOLERANCE: Any injection pattern = block
     min_confidence_threshold: float = 0.85  # Minimum confidence for safety
 
     # LLM06: Sensitive Information Disclosure

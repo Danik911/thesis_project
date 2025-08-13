@@ -239,7 +239,8 @@ class PharmaceuticalInputSecurityWrapper:
                 max_confidence = max(max_confidence, 0.7)
 
         # Determine threat level and validation status
-        is_valid = len(detected_patterns) <= self.config.thresholds.max_instruction_keywords
+        # CRITICAL SECURITY FIX: Zero tolerance for injection patterns in pharmaceutical systems
+        is_valid = len(detected_patterns) == 0  # Any injection pattern detected = immediate block
         threat_level = self.config.get_threat_level(OWASPCategory.LLM01_PROMPT_INJECTION, max_confidence)
 
         return SecurityValidationResult(
