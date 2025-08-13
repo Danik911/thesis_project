@@ -36,7 +36,8 @@ from llama_index.core.workflow import (
     step,
 )
 from pydantic import Field
-from src.core.unified_workflow import UnifiedTestGenerationWorkflow
+# TEMPORARILY DISABLED to fix circular import for Task 30
+# from src.core.unified_workflow import UnifiedTestGenerationWorkflow
 
 from .fold_manager import FoldManager, URSDocument
 from .metrics_collector import MetricsCollector
@@ -362,6 +363,9 @@ class CrossValidationWorkflow(Workflow):
             temp_doc_path = temp_dir / f"{ev.document.document_id}_{ev.fold_id}.md"
             temp_doc_path.write_text(ev.document.content, encoding="utf-8")
 
+            # Dynamic import to avoid circular dependency
+            from src.core.unified_workflow import UnifiedTestGenerationWorkflow
+            
             # Initialize UnifiedTestGenerationWorkflow
             unified_workflow = UnifiedTestGenerationWorkflow(
                 timeout=1800,  # 30 minutes per document
@@ -381,6 +385,10 @@ class CrossValidationWorkflow(Workflow):
             success = True
             error_message = None
             error_type = None
+
+            # Check if workflow completed successfully
+            if hasattr(workflow_result, 'result'):
+                workflow_result = workflow_result.result
 
             # Calculate processing time
             end_time = asyncio.get_event_loop().time()

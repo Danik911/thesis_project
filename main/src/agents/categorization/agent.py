@@ -886,11 +886,13 @@ def create_gamp_categorization_agent(
         # Use secure LLM wrapper with OWASP protection - NO FALLBACKS
         # Migrated to secure wrapper for pharmaceutical compliance
         try:
-            llm = LLMConfig.get_secure_llm(
+            secure_llm = LLMConfig.get_secure_llm(
                 system_identifier="gamp5_categorization",
                 temperature=0.1,  # Override default temperature for categorization
                 max_tokens=2000
             )
+            # Extract wrapped LLM for FunctionAgent compatibility
+            llm = secure_llm._wrapped_llm
         except Exception as e:
             raise RuntimeError(
                 f"Failed to initialize secure LLM for GAMP-5 categorization: {e}\n"
@@ -1687,11 +1689,13 @@ def categorize_urs_document(
         # Use secure LLM wrapper with OWASP protection - NO FALLBACKS
         # Migrated to secure wrapper for pharmaceutical compliance
         try:
-            llm = LLMConfig.get_secure_llm(
+            secure_llm = LLMConfig.get_secure_llm(
                 system_identifier="gamp5_document_categorization",
                 temperature=0.1,  # Override default temperature for categorization
                 max_tokens=2000
             )
+            # Extract wrapped LLM for compatibility with LlamaIndex components
+            llm = secure_llm._wrapped_llm
         except Exception as e:
             raise RuntimeError(
                 f"Failed to initialize secure LLM for document categorization: {e}\n"

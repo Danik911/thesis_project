@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "description": "Stratified 5-fold cross-validation assignments for URS corpus",
+    "total_documents": 17,
+    "total_requirements": 442,
+    "folds": 5,
+    "stratification_method": "GAMP category + complexity level (manual analysis)",
+    "created_date": "2025-08-13",
+    "validation_strategy": "Stratified K-Fold with balanced GAMP category distribution",
+    "random_seed": null,
+    "complexity_range": {
+      "min": 0.18,
+      "max": 0.9,
+      "mean": 0.504,
+      "std": 0.235
+    },
+    "category_distribution": {
+      "Category 3": 5,
+      "Category 4": 5,
+      "Category 5": 5,
+      "Ambiguous": 2
+    }
+  },
+  "document_inventory": [
+    "URS-001",
+    "URS-002",
+    "URS-003",
+    "URS-004",
+    "URS-005",
+    "URS-006",
+    "URS-007",
+    "URS-008",
+    "URS-009",
+    "URS-010",
+    "URS-011",
+    "URS-012",
+    "URS-013",
+    "URS-014",
+    "URS-015",
+    "URS-016",
+    "URS-017"
+  ],
+  "folds": {
+    "fold_1": {
+      "test_documents": [
+        "URS-001",
+        "URS-002",
+        "URS-003",
+        "URS-004"
+      ],
+      "train_documents": [
+        "URS-005",
+        "URS-006",
+        "URS-007",
+        "URS-008",
+        "URS-009",
+        "URS-010",
+        "URS-011",
+        "URS-012",
+        "URS-013",
+        "URS-014",
+        "URS-015",
+        "URS-016",
+        "URS-017"
+      ],
+      "test_count": 4,
+      "train_count": 13
+    },
+    "fold_2": {
+      "test_documents": [
+        "URS-005",
+        "URS-006",
+        "URS-010",
+        "URS-014"
+      ],
+      "train_documents": [
+        "URS-001",
+        "URS-002",
+        "URS-003",
+        "URS-004",
+        "URS-007",
+        "URS-008",
+        "URS-009",
+        "URS-011",
+        "URS-012",
+        "URS-013",
+        "URS-015",
+        "URS-016",
+        "URS-017"
+      ],
+      "test_count": 4,
+      "train_count": 13
+    },
+    "fold_3": {
+      "test_documents": [
+        "URS-007",
+        "URS-011",
+        "URS-015"
+      ],
+      "train_documents": [
+        "URS-001",
+        "URS-002",
+        "URS-003",
+        "URS-004",
+        "URS-005",
+        "URS-006",
+        "URS-008",
+        "URS-009",
+        "URS-010",
+        "URS-012",
+        "URS-013",
+        "URS-014",
+        "URS-016",
+        "URS-017"
+      ],
+      "test_count": 3,
+      "train_count": 14
+    },
+    "fold_4": {
+      "test_documents": [
+        "URS-008",
+        "URS-012",
+        "URS-016"
+      ],
+      "train_documents": [
+        "URS-001",
+        "URS-002",
+        "URS-003",
+        "URS-004",
+        "URS-005",
+        "URS-006",
+        "URS-007",
+        "URS-009",
+        "URS-010",
+        "URS-011",
+        "URS-013",
+        "URS-014",
+        "URS-015",
+        "URS-017"
+      ],
+      "test_count": 3,
+      "train_count": 14
+    },
+    "fold_5": {
+      "test_documents": [
+        "URS-009",
+        "URS-013",
+        "URS-017"
+      ],
+      "train_documents": [
+        "URS-001",
+        "URS-002",
+        "URS-003",
+        "URS-004",
+        "URS-005",
+        "URS-006",
+        "URS-007",
+        "URS-008",
+        "URS-010",
+        "URS-011",
+        "URS-012",
+        "URS-014",
+        "URS-015",
+        "URS-016"
+      ],
+      "test_count": 3,
+      "train_count": 14
+    }
+  },
+  "validation_summary": {
+    "total_unique_documents": 17,
+    "documents_per_test_set": "Each document appears exactly once as test data across all folds",
+    "stratification_balance": "GAMP categories distributed across folds with round-robin assignment",
+    "coverage": "100% of documents used for testing exactly once",
+    "fold_distribution": "4-4-3-3-3 split maintains balance while ensuring complete coverage"
+  }
+}

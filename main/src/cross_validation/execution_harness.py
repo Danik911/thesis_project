@@ -381,7 +381,7 @@ class ExecutionHarness:
             self.logger.exception(f"Experiment failed: {e}")
 
             # Create failure result
-            {
+            self.experiment_results = {
                 "experiment_id": self.experiment_id,
                 "status": "failed",
                 "error": str(e),

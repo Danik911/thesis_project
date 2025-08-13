@@ -372,6 +372,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         super().__init__(timeout=timeout, verbose=verbose)
 
         # Configuration
+        self.timeout = timeout  # Store timeout for access in steps
         self.verbose = verbose
         self.enable_phoenix = enable_phoenix
         self.enable_parallel_coordination = enable_parallel_coordination
