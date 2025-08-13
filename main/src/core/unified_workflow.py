@@ -123,6 +123,8 @@ async def safe_context_set(ctx: Context, key: str, value):
     """
     Safe context storage with persistent storage and explicit error handling.
     
+    Enhanced with comprehensive state transition audit logging for regulatory compliance.
+    
     Args:
         ctx: Workflow context
         key: Context key to store
@@ -135,8 +137,19 @@ async def safe_context_set(ctx: Context, key: str, value):
         RuntimeError: If critical state storage fails (no fallback allowed)
     """
     try:
+        # Initialize audit trail for state transition logging
+        from src.core.audit_trail import get_audit_trail
+        audit_trail = get_audit_trail()
+        
         # ENHANCED: Add detailed logging for debugging
         logger.debug(f"[CTX] Attempting to store context key: {key}, type: {type(value)}")
+        
+        # Get previous value for state transition tracking
+        previous_value = None
+        try:
+            previous_value = await ctx.store.get(key)
+        except Exception:
+            pass  # New key, no previous value
         
         # ENHANCED: Handle complex objects that might need special serialization
         if hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool, list, dict)):
@@ -149,19 +162,98 @@ async def safe_context_set(ctx: Context, key: str, value):
         await ctx.store.set(key, value)
         logger.debug(f"[CTX] Context storage successful for key {key}")
         
+        # Log state transition for audit trail
+        audit_trail.log_state_transition(
+            from_state=f"context_{key}_previous" if previous_value is not None else "context_key_not_exists",
+            to_state=f"context_{key}_stored",
+            transition_trigger="safe_context_set",
+            transition_metadata={
+                "context_key": key,
+                "value_type": type(value).__name__,
+                "previous_value_existed": previous_value is not None,
+                "storage_method": "ctx.store.set",
+                "verification_enabled": True
+            },
+            workflow_step="context_management",
+            state_data={
+                "key": key,
+                "value_type": type(value).__name__,
+                "value_summary": str(value)[:100] + "..." if len(str(value)) > 100 else str(value)
+            },
+            workflow_context={
+                "context_operation": "storage",
+                "regulatory_compliance": "GAMP-5",
+                "audit_trail_enabled": True
+            }
+        )
+        
         # ENHANCED: Verify storage by reading back
         try:
             verification = await ctx.store.get(key)
             if verification is None:
                 logger.warning(f"[WARNING] Verification failed: {key} was stored but read back as None")
+                
+                # Log verification failure
+                audit_trail.log_error_recovery(
+                    error_type="context_verification_failure",
+                    error_message=f"Context key {key} was stored but verification read returned None",
+                    error_context={
+                        "context_key": key,
+                        "storage_successful": True,
+                        "verification_failed": True
+                    },
+                    recovery_strategy="continue_with_warning",
+                    recovery_actions=["log_warning", "continue_operation"],
+                    recovery_success=True,
+                    workflow_step="context_management"
+                )
             else:
                 logger.debug(f"[CTX] Storage verification successful for {key}")
         except Exception as verify_error:
             logger.warning(f"[WARNING] Storage verification failed for {key}: {verify_error}")
+            
+            # Log verification error
+            audit_trail.log_error_recovery(
+                error_type="context_verification_error",
+                error_message=str(verify_error),
+                error_context={
+                    "context_key": key,
+                    "storage_successful": True,
+                    "verification_exception": type(verify_error).__name__
+                },
+                recovery_strategy="continue_with_warning",
+                recovery_actions=["log_warning", "continue_operation"],
+                recovery_success=True,
+                workflow_step="context_management"
+            )
         
         return True
     except Exception as e:
         logger.error(f"[CRITICAL] Context storage failed for key {key}: {e}")
+        
+        # Log critical context storage failure
+        from src.core.audit_trail import get_audit_trail
+        audit_trail = get_audit_trail()
+        audit_trail.log_error_recovery(
+            error_type="critical_context_storage_failure",
+            error_message=str(e),
+            error_context={
+                "context_key": key,
+                "value_type": type(value).__name__ if value is not None else "None",
+                "error_type": type(e).__name__,
+                "fallback_prevented": True
+            },
+            recovery_strategy="no_fallback_explicit_failure",
+            recovery_actions=["log_error", "raise_runtime_error"],
+            recovery_success=False,
+            workflow_step="context_management",
+            workflow_context={
+                "regulatory_compliance": "GAMP-5",
+                "audit_trail_preserved": True,
+                "error_transparency": "complete"
+            }
+        )
+        
         # NO FALLBACKS - fail explicitly for regulatory compliance
         raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
@@ -308,7 +400,41 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             URSIngestionEvent to begin document processing
         """
+        # Initialize comprehensive audit trail for workflow state transitions
+        from src.core.audit_trail import get_audit_trail
+        audit_trail = get_audit_trail()
+        
         self.logger.info("[WORKFLOW] Starting unified test generation workflow")
+
+        # Log workflow initiation state transition
+        audit_trail.log_state_transition(
+            from_state="workflow_not_started",
+            to_state="workflow_initializing",
+            transition_trigger="start_event_received",
+            transition_metadata={
+                "workflow_type": "UnifiedTestGenerationWorkflow",
+                "session_id": self._workflow_session_id,
+                "start_event_type": type(ev).__name__,
+                "phoenix_enabled": self.enable_phoenix,
+                "parallel_coordination_enabled": self.enable_parallel_coordination
+            },
+            workflow_step="start_unified_workflow",
+            state_data={
+                "workflow_session_id": self._workflow_session_id,
+                "start_time": datetime.now(UTC).isoformat(),
+                "configuration": {
+                    "timeout": self.timeout,
+                    "verbose": self.verbose,
+                    "enable_phoenix": self.enable_phoenix,
+                    "enable_parallel_coordination": self.enable_parallel_coordination,
+                    "enable_human_consultation": self.enable_human_consultation
+                }
+            },
+            workflow_context={
+                "regulatory_standards": ["GAMP-5", "21_CFR_Part_11"],
+                "workflow_purpose": "pharmaceutical_test_generation"
+            }
+        )
 
         # Extract document path from start event
         document_path = ev.get("document_path") or getattr(ev, "document_path", None)
@@ -322,6 +448,32 @@ class UnifiedTestGenerationWorkflow(Workflow):
             raise FileNotFoundError(f"Document not found: {document_path}")
 
         urs_content = doc_path.read_text(encoding="utf-8")
+
+        # Log document loading state transition
+        audit_trail.log_state_transition(
+            from_state="workflow_initializing",
+            to_state="document_loaded",
+            transition_trigger="document_path_resolved",
+            transition_metadata={
+                "document_path": document_path,
+                "document_name": doc_path.name,
+                "document_size": len(urs_content),
+                "document_exists": True
+            },
+            workflow_step="start_unified_workflow",
+            state_data={
+                "document_metadata": {
+                    "path": document_path,
+                    "name": doc_path.name,
+                    "size_bytes": len(urs_content),
+                    "content_preview": urs_content[:200] + "..." if len(urs_content) > 200 else urs_content
+                }
+            },
+            workflow_context={
+                "workflow_session_id": self._workflow_session_id,
+                "document_processing_step": "content_loading"
+            }
+        )
 
         # Store workflow metadata using safe operations
         await safe_context_set(ctx, "workflow_start_time", datetime.now(UTC))
@@ -352,7 +504,39 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             GAMPCategorizationEvent with categorization results
         """
+        # Initialize comprehensive audit trail for state transitions
+        from src.core.audit_trail import get_audit_trail
+        audit_trail = get_audit_trail()
+        
         self.logger.info(f"[GAMP5] Starting GAMP-5 categorization for {ev.document_name}")
+
+        # Log state transition to categorization
+        audit_trail.log_state_transition(
+            from_state="document_loaded",
+            to_state="categorization_starting",
+            transition_trigger="urs_ingestion_event",
+            transition_metadata={
+                "document_name": ev.document_name,
+                "document_version": ev.document_version,
+                "author": ev.author,
+                "content_length": len(ev.urs_content),
+                "categorization_workflow": "GAMPCategorizationWorkflow"
+            },
+            workflow_step="categorize_document",
+            state_data={
+                "current_step": "gamp_categorization",
+                "document_metadata": {
+                    "name": ev.document_name,
+                    "version": ev.document_version,
+                    "author": ev.author
+                }
+            },
+            workflow_context={
+                "workflow_session_id": self._workflow_session_id,
+                "regulatory_standards": ["GAMP-5"],
+                "categorization_purpose": "validation_approach_determination"
+            }
+        )
 
         # Initialize categorization workflow
         categorization_workflow = GAMPCategorizationWorkflow(

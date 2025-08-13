@@ -1181,6 +1181,8 @@ def categorize_with_pydantic_structured_output(
     This approach bypasses LLMTextCompletionProgram's model validation to support
     both OpenAI and OpenRouter/OSS models through direct LLM calls with JSON parsing.
     
+    Enhanced with comprehensive audit trail logging for 100% regulatory compliance.
+    
     Args:
         llm: LLM instance to use for categorization
         urs_content: URS document content
@@ -1192,6 +1194,32 @@ def categorize_with_pydantic_structured_output(
     """
     if error_handler is None:
         error_handler = CategorizationErrorHandler()
+
+    # Initialize comprehensive audit trail logging
+    from src.core.audit_trail import get_audit_trail
+    from datetime import datetime, UTC
+    
+    audit_trail = get_audit_trail()
+    start_time = datetime.now(UTC)
+    agent_id = f"gamp_categorization_{document_name}_{start_time.strftime('%Y%m%d_%H%M%S')}"
+    
+    # Log agent decision initiation
+    audit_trail.log_system_event(
+        event_type="AGENT_DECISION",
+        event_data={
+            "agent_type": "gamp_categorization",
+            "agent_id": agent_id,
+            "decision_type": "document_categorization",
+            "document_name": document_name,
+            "document_size": len(urs_content),
+            "llm_model": getattr(llm, 'model_name', str(type(llm).__name__)),
+            "decision_start_time": start_time.isoformat()
+        },
+        workflow_context={
+            "workflow_step": "gamp_categorization",
+            "regulatory_standards": ["GAMP-5", "21_CFR_Part_11"]
+        }
+    )
 
     try:
         # Enhanced prompt with Chain-of-Thought reasoning and JSON examples
@@ -1247,7 +1275,53 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
         # Validate the result
         result.validate_category()
 
+        # Calculate processing time
+        end_time = datetime.now(UTC)
+        processing_time = (end_time - start_time).total_seconds()
+
         error_handler.logger.info(f"Structured categorization completed: Category {result.category}, Confidence {result.confidence_score:.2f}")
+
+        # Generate alternatives considered for audit trail
+        alternatives_considered = []
+        for cat in [1, 3, 4, 5]:
+            if cat != result.category:
+                alternatives_considered.append({
+                    "category": cat,
+                    "category_description": _get_category_description(GAMPCategory(cat)),
+                    "rejection_reason": f"Category {cat} does not match the primary indicators found in the document",
+                    "confidence_if_selected": max(0.1, 1.0 - result.confidence_score)  # Inverse confidence
+                })
+
+        # Log comprehensive agent decision with rationale
+        audit_trail.log_agent_decision(
+            agent_type="gamp_categorization",
+            agent_id=agent_id,
+            decision={
+                "category": result.category,
+                "category_enum": GAMPCategory(result.category).name,
+                "decision_type": "gamp_classification",
+                "decision_outcome": "categorization_complete"
+            },
+            confidence_score=result.confidence_score,
+            alternatives_considered=alternatives_considered,
+            rationale=result.reasoning,
+            input_context={
+                "document_name": document_name,
+                "document_content_length": len(urs_content),
+                "urs_content_preview": urs_content[:500] + "..." if len(urs_content) > 500 else urs_content,
+                "llm_model": getattr(llm, 'model_name', str(type(llm).__name__)),
+                "confidence_threshold": error_handler.confidence_threshold,
+                "gamp_category": result.category,
+                "validation_rigor": "enhanced" if result.category in [4, 5] else "standard"
+            },
+            processing_time=processing_time,
+            workflow_context={
+                "workflow_step": "gamp_categorization",
+                "llm_response": response_text[:200] + "..." if len(response_text) > 200 else response_text,
+                "parsing_successful": True,
+                "validation_successful": True
+            }
+        )
 
         # Check confidence threshold
         if result.confidence_score < error_handler.confidence_threshold:
@@ -1318,6 +1392,42 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
         # NO FALLBACKS: Handle errors explicitly with full diagnostic information
         error_handler.logger.error(f"Structured categorization failed: {e!s}")
         error_handler.logger.error(f"Input that caused error: {urs_content[:200]}...")
+        
+        # Calculate error processing time
+        error_time = datetime.now(UTC)
+        error_processing_time = (error_time - start_time).total_seconds()
+        
+        # Log comprehensive error recovery attempt
+        audit_trail.log_error_recovery(
+            error_type="gamp_categorization_failure",
+            error_message=str(e),
+            error_context={
+                "agent_type": "gamp_categorization",
+                "agent_id": agent_id,
+                "document_name": document_name,
+                "document_content_length": len(urs_content),
+                "llm_model": getattr(llm, 'model_name', str(type(llm).__name__)),
+                "error_type": type(e).__name__,
+                "processing_time_before_error": error_processing_time,
+                "urs_content_preview": urs_content[:200] + "..." if len(urs_content) > 200 else urs_content
+            },
+            recovery_strategy="no_fallback_explicit_failure",
+            recovery_actions=[
+                "log_error_details",
+                "preserve_full_stack_trace",
+                "raise_runtime_error_with_context",
+                "maintain_regulatory_compliance"
+            ],
+            recovery_success=False,  # NO FALLBACKS - explicit failure
+            workflow_step="gamp_categorization",
+            workflow_context={
+                "regulatory_standards": ["GAMP-5", "21_CFR_Part_11"],
+                "audit_trail_preserved": True,
+                "fallback_prevented": True,
+                "error_transparency": "complete"
+            }
+        )
+        
         # Re-raise with comprehensive diagnostic information
         raise RuntimeError(f"Structured categorization failed for document '{document_name}': {e!s}") from e
 

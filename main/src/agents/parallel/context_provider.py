@@ -160,6 +160,8 @@ class ContextProviderAgent:
         """
         Process a context provider request with comprehensive Phoenix observability.
         
+        Enhanced with comprehensive data transformation tracking for audit trail.
+        
         Args:
             request_event: Agent request event containing context requirements
             
@@ -168,6 +170,22 @@ class ContextProviderAgent:
         """
         start_time = datetime.now(UTC)
         self._processing_stats["total_requests"] += 1
+
+        # Initialize comprehensive audit trail for data transformation tracking
+        from src.core.audit_trail import get_audit_trail
+        audit_trail = get_audit_trail()
+        
+        # Capture input data transformation
+        input_data = {
+            "agent_type": request_event.agent_type,
+            "request_data": request_event.request_data,
+            "correlation_id": str(request_event.correlation_id),
+            "requesting_step": request_event.requesting_step,
+            "priority": request_event.priority,
+            "timeout_seconds": request_event.timeout_seconds,
+            "input_timestamp": start_time.isoformat(),
+            "data_size": len(str(request_event.request_data))
+        }
 
         # Get current span for detailed tracing
         current_span = trace.get_current_span()
@@ -255,6 +273,49 @@ class ContextProviderAgent:
                     f"quality: {context_response.context_quality}, "
                     f"processing time: {processing_time:.2f}s"
                 )
+
+            # Capture output data transformation
+            output_data = {
+                "retrieved_documents_count": len(context_response.retrieved_documents),
+                "context_quality": context_response.context_quality,
+                "search_coverage": context_response.search_coverage,
+                "confidence_score": context_response.confidence_score,
+                "processing_successful": True,
+                "output_timestamp": datetime.now(UTC).isoformat(),
+                "assembled_context_keys": list(context_response.assembled_context.keys()),
+                "requirements_extracted_count": len(context_response.requirements_extracted),
+                "processing_time_seconds": processing_time
+            }
+
+            # Log comprehensive data transformation
+            audit_trail.log_data_transformation(
+                transformation_type="context_provider_retrieval",
+                source_data=input_data,
+                target_data=output_data,
+                transformation_rules=[
+                    "rag_document_retrieval",
+                    "context_quality_assessment", 
+                    "requirements_extraction",
+                    "gamp_category_filtering",
+                    "context_assembly"
+                ],
+                transformation_metadata={
+                    "agent_type": "context_provider",
+                    "retrieval_method": "vector_similarity_search",
+                    "max_documents": self.max_documents,
+                    "quality_threshold": self.quality_threshold,
+                    "processing_successful": True,
+                    "timeout_configured": request_event.timeout_seconds
+                },
+                workflow_step="parallel_agent_coordination",
+                workflow_context={
+                    "correlation_id": str(request_event.correlation_id),
+                    "requesting_step": request_event.requesting_step,
+                    "gamp_category": request_data.gamp_category,
+                    "agent_type": "context_provider",
+                    "regulatory_standards": ["GAMP-5", "21_CFR_Part_11"]
+                }
+            )
 
             return AgentResultEvent(
                 agent_type="context_provider",

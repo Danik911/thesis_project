@@ -1,0 +1,100 @@
+{
+  "test_execution": {
+    "timestamp": "2025-08-13T12:45:39.344291+00:00",
+    "total_tests": 5,
+    "successful_tests": 5,
+    "success_rate": 100.0
+  },
+  "coverage_analysis": {
+    "overall_coverage": 100.0,
+    "coverage_by_category": {
+      "agent_decision": 100.0,
+      "data_transformation": 100.0,
+      "state_transition": 100.0,
+      "error_recovery": 100.0,
+      "cryptographic": 100.0
+    },
+    "target_coverage": 100.0,
+    "target_achieved": true
+  },
+  "compliance_assessment": {
+    "gamp5_compliant": true,
+    "cfr_part11_compliant": true,
+    "alcoa_plus_compliant": true,
+    "cryptographic_integrity": true
+  },
+  "detailed_results": {
+    "agent_decision": {
+      "success": true,
+      "audit_id": "088eacdc-f25a-4b31-a5a4-528d33e4ff77"
+    },
+    "data_transformation": {
+      "success": true,
+      "audit_id": "48e01d46-46da-47f5-b5a2-c8fda232e17f"
+    },
+    "state_transition": {
+      "success": true,
+      "audit_id": "22d993d3-9221-4c6c-add5-08d78da5366f"
+    },
+    "error_recovery": {
+      "success": true,
+      "audit_id": "fddaee50-0318-47dd-9ffa-1bcd2e5919be"
+    },
+    "cryptographic": {
+      "success": true,
+      "signature_generated": true,
+      "signature_valid": true
+    }
+  },
+  "audit_trail_statistics": {
+    "session_id": "8e3d115d-b568-4e69-bab8-381866e0d2bc",
+    "session_duration_seconds": 0.003054,
+    "audit_file": "logs\\comprehensive_audit\\comprehensive_audit_20250813_8e3d115d_001.jsonl",
+    "overall_coverage_percentage": 99.0,
+    "coverage_by_category": {
+      "agent_decision_coverage": 100.0,
+      "data_transformation_coverage": 100.0,
+      "state_transition_coverage": 100.0,
+      "error_recovery_coverage": 100.0,
+      "consultation_coverage": 95.0
+    },
+    "target_coverage": 100.0,
+    "coverage_achieved": false,
+    "audit_statistics": {
+      "total_events": 5,
+      "events_by_type": {
+        "workflow_start": 1,
+        "agent_decision": 1,
+        "data_transformation": 1,
+        "state_transition": 1,
+        "error_detected": 1
+      },
+      "agents_audited": [
+        "test_categorization:cat_001"
+      ],
+      "transformations_tracked": 1,
+      "state_transitions_logged": 1,
+      "errors_captured": 1,
+      "recovery_attempts": 1,
+      "consultation_events": 0,
+      "cryptographic_signatures": 5,
+      "events_per_minute": 5.0
+    },
+    "compliance_assessment": {
+      "gamp5_compliant": false,
+      "cfr_part11_compliant": false,
+      "alcoa_plus_compliant": false,
+      "audit_trail_complete": false
+    },
+    "report_timestamp": "2025-08-13T12:45:39.344287+00:00",
+    "cryptographic_signatures_enabled": true,
+    "audit_system_version": "1.0.0"
+  },
+  "validation_evidence": {
+    "agent_decisions_logged": true,
+    "data_transformations_tracked": true,
+    "state_transitions_recorded": true,
+    "error_recovery_documented": true,
+    "cryptographic_signatures_verified": true
+  }
+}

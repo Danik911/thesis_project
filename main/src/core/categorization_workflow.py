@@ -284,6 +284,8 @@ class GAMPCategorizationWorkflow(Workflow):
         This step uses the categorization agent to analyze the document
         and determine its GAMP category with confidence scoring.
         
+        Enhanced with comprehensive data transformation tracking for audit trail.
+        
         Args:
             ctx: Workflow context
             ev: URS ingestion event
@@ -291,6 +293,18 @@ class GAMPCategorizationWorkflow(Workflow):
         Returns:
             GAMPCategorizationEvent or ErrorRecoveryEvent on failure
         """
+        # Initialize comprehensive audit trail for data transformation tracking
+        from src.core.audit_trail import get_audit_trail
+        audit_trail = get_audit_trail()
+        
+        # Capture input data transformation
+        input_data = {
+            "event_type": type(ev).__name__,
+            "urs_content": ev.urs_content if hasattr(ev, 'urs_content') else None,
+            "document_name": getattr(ev, 'document_name', 'unknown'),
+            "content_length": len(ev.urs_content) if hasattr(ev, 'urs_content') and ev.urs_content else 0,
+            "input_timestamp": datetime.now(UTC).isoformat()
+        }
         # Store event in context
         await ctx.set("categorization_input_event", ev)
 
@@ -340,6 +354,47 @@ class GAMPCategorizationWorkflow(Workflow):
 
                 # Result is already a GAMPCategorizationEvent from LLM-based function
                 categorization_event = result
+
+                # Capture output data transformation
+                output_data = {
+                    "gamp_category": categorization_event.gamp_category.value,
+                    "gamp_category_name": categorization_event.gamp_category.name,
+                    "confidence_score": categorization_event.confidence_score,
+                    "review_required": categorization_event.review_required,
+                    "justification": categorization_event.justification[:500] + "..." if len(categorization_event.justification) > 500 else categorization_event.justification,
+                    "risk_assessment": categorization_event.risk_assessment,
+                    "categorized_by": categorization_event.categorized_by,
+                    "output_timestamp": datetime.now(UTC).isoformat(),
+                    "is_fallback": categorization_event.confidence_score == 0.0
+                }
+
+                # Log comprehensive data transformation
+                audit_trail.log_data_transformation(
+                    transformation_type="urs_to_gamp_categorization",
+                    source_data=input_data,
+                    target_data=output_data,
+                    transformation_rules=[
+                        "gamp_5_categorization_rules",
+                        "llm_structured_output_analysis",
+                        "confidence_scoring_validation",
+                        "risk_assessment_generation"
+                    ],
+                    transformation_metadata={
+                        "transformation_method": "llm_categorization_agent",
+                        "agent_type": "gamp_categorization",
+                        "workflow_step": "categorize_document",
+                        "attempt_number": attempt + 1,
+                        "processing_successful": True,
+                        "confidence_threshold_met": categorization_event.confidence_score >= 0.5
+                    },
+                    workflow_step="gamp_categorization",
+                    workflow_context={
+                        "document_name": document_name,
+                        "author": author,
+                        "workflow_type": "GAMPCategorizationWorkflow",
+                        "regulatory_standards": ["GAMP-5", "21_CFR_Part_11"]
+                    }
+                )
 
                 # Store result in context
                 await ctx.set("categorization_result", {
