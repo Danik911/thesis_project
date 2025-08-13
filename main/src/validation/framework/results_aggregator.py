@@ -31,6 +31,15 @@ try:
 except ImportError:
     SCIPY_AVAILABLE = False
 
+# Import statistical analysis components
+try:
+    from ..statistical.pipeline import ValidationStatisticalPipeline
+    from ..statistical.thesis_validator import ThesisClaimsValidator
+    from ..statistical.report_generator import StatisticalReportGenerator
+    STATISTICAL_PIPELINE_AVAILABLE = True
+except ImportError:
+    STATISTICAL_PIPELINE_AVAILABLE = False
+
 
 @dataclass
 class StatisticalSummary:

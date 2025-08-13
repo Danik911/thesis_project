@@ -738,6 +738,269 @@ class StatisticalAnalyzer:
 
         return limitations
 
+    def one_way_anova(self, 
+                     groups: dict[str, list[float]], 
+                     metric_name: str) -> StatisticalTest:
+        """
+        Perform one-way ANOVA between multiple groups.
+
+        Args:
+            groups: Dictionary with group names as keys and measurements as values
+            metric_name: Name of the metric being tested
+
+        Returns:
+            Statistical test results
+
+        Raises:
+            ValueError: If insufficient groups or data for ANOVA
+        """
+        if len(groups) < 2:
+            msg = f"ANOVA requires at least 2 groups, got {len(groups)}"
+            raise ValueError(msg)
+
+        # Validate groups have sufficient data
+        group_sizes = [len(values) for values in groups.values()]
+        if any(size < 2 for size in group_sizes):
+            msg = "Each group must have at least 2 observations for ANOVA"
+            raise ValueError(msg)
+
+        # Prepare data for ANOVA
+        group_arrays = [np.array(values) for values in groups.values()]
+        
+        try:
+            # Perform one-way ANOVA
+            f_statistic, p_value = stats.f_oneway(*group_arrays)
+
+            # Calculate degrees of freedom
+            k = len(groups)  # number of groups
+            n_total = sum(len(values) for values in groups.values())
+            df_between = k - 1
+            df_within = n_total - k
+
+            # Calculate effect size (eta-squared)
+            eta_squared = self.calculate_eta_squared(f_statistic, df_between, df_within)
+
+            # Calculate statistical power (approximate)
+            power = self._calculate_power_anova(f_statistic, df_between, df_within, self.alpha)
+
+            return StatisticalTest(
+                test_name=f"anova_{metric_name}",
+                test_type="parametric",
+                statistic=float(f_statistic),
+                p_value=float(p_value),
+                degrees_of_freedom=df_between,  # Using between-groups df as primary
+                effect_size=float(eta_squared),
+                effect_size_interpretation=self._interpret_eta_squared(eta_squared),
+                is_significant=float(p_value) < self.alpha,
+                sample_size=n_total,
+                power=float(power)
+            )
+
+        except Exception as e:
+            self.logger.exception(f"One-way ANOVA failed for {metric_name}: {e!s}")
+            msg = f"ANOVA calculation failed: {e!s}"
+            raise ValueError(msg) from e
+
+    def tukey_hsd_post_hoc(self, 
+                          groups: dict[str, list[float]]) -> dict[str, Any]:
+        """
+        Perform Tukey HSD post-hoc test after ANOVA.
+
+        Args:
+            groups: Dictionary with group names as keys and measurements as values
+
+        Returns:
+            Dictionary with pairwise comparison results
+
+        Raises:
+            ValueError: If insufficient groups or data
+        """
+        if len(groups) < 2:
+            msg = "Post-hoc tests require at least 2 groups"
+            raise ValueError(msg)
+
+        try:
+            from scipy.stats import tukey_hsd
+
+            # Prepare group arrays
+            group_names = list(groups.keys())
+            group_arrays = [np.array(groups[name]) for name in group_names]
+
+            # Perform Tukey HSD test
+            tukey_result = tukey_hsd(*group_arrays)
+
+            # Extract pairwise comparisons
+            pairwise_comparisons = {}
+            n_groups = len(group_names)
+            
+            for i in range(n_groups):
+                for j in range(i + 1, n_groups):
+                    comparison_name = f"{group_names[i]}_vs_{group_names[j]}"
+                    p_value = tukey_result.pvalue[i, j]
+                    
+                    pairwise_comparisons[comparison_name] = {
+                        "group_1": group_names[i],
+                        "group_2": group_names[j],
+                        "p_value": float(p_value),
+                        "is_significant": float(p_value) < self.alpha,
+                        "mean_diff": float(np.mean(group_arrays[i]) - np.mean(group_arrays[j]))
+                    }
+
+            return {
+                "test_name": "tukey_hsd",
+                "pairwise_comparisons": pairwise_comparisons,
+                "critical_value": float(tukey_result.statistic.max()),
+                "family_wise_error_rate": self.alpha
+            }
+
+        except ImportError:
+            self.logger.warning("scipy.stats.tukey_hsd not available, using alternative approach")
+            return self._alternative_pairwise_tests(groups)
+        except Exception as e:
+            self.logger.exception(f"Tukey HSD failed: {e!s}")
+            msg = f"Post-hoc test calculation failed: {e!s}"
+            raise ValueError(msg) from e
+
+    def levene_test(self, 
+                   groups: dict[str, list[float]]) -> tuple[float, float]:
+        """
+        Perform Levene's test for homogeneity of variances.
+
+        Args:
+            groups: Dictionary with group names as keys and measurements as values
+
+        Returns:
+            Tuple of (test_statistic, p_value)
+
+        Raises:
+            ValueError: If insufficient groups or data
+        """
+        if len(groups) < 2:
+            msg = "Levene's test requires at least 2 groups"
+            raise ValueError(msg)
+
+        group_arrays = [np.array(values) for values in groups.values()]
+        
+        try:
+            # Perform Levene's test
+            statistic, p_value = stats.levene(*group_arrays)
+            
+            return float(statistic), float(p_value)
+
+        except Exception as e:
+            self.logger.exception(f"Levene's test failed: {e!s}")
+            msg = f"Levene's test calculation failed: {e!s}"
+            raise ValueError(msg) from e
+
+    def calculate_eta_squared(self, 
+                             f_statistic: float, 
+                             df_between: int, 
+                             df_within: int) -> float:
+        """
+        Calculate eta-squared effect size for ANOVA.
+
+        Args:
+            f_statistic: F-statistic from ANOVA
+            df_between: Degrees of freedom between groups
+            df_within: Degrees of freedom within groups
+
+        Returns:
+            Eta-squared effect size
+        """
+        try:
+            ss_between = f_statistic * df_between
+            ss_total = ss_between + df_within
+            
+            if ss_total == 0:
+                return 0.0
+            
+            eta_squared = ss_between / ss_total
+            return min(1.0, max(0.0, eta_squared))
+
+        except Exception:
+            return 0.0
+
+    def _alternative_pairwise_tests(self, 
+                                  groups: dict[str, list[float]]) -> dict[str, Any]:
+        """Alternative pairwise testing when Tukey HSD is not available."""
+        group_names = list(groups.keys())
+        pairwise_comparisons = {}
+        p_values = []
+
+        # Perform pairwise t-tests
+        for i in range(len(group_names)):
+            for j in range(i + 1, len(group_names)):
+                group1_name = group_names[i]
+                group2_name = group_names[j]
+                group1_data = groups[group1_name]
+                group2_data = groups[group2_name]
+
+                try:
+                    t_stat, p_val = stats.ttest_ind(group1_data, group2_data)
+                    p_values.append(p_val)
+
+                    comparison_name = f"{group1_name}_vs_{group2_name}"
+                    pairwise_comparisons[comparison_name] = {
+                        "group_1": group1_name,
+                        "group_2": group2_name,
+                        "p_value": float(p_val),
+                        "t_statistic": float(t_stat),
+                        "is_significant_uncorrected": float(p_val) < self.alpha,
+                        "mean_diff": float(np.mean(group1_data) - np.mean(group2_data))
+                    }
+                except Exception as e:
+                    self.logger.warning(f"Pairwise test failed for {comparison_name}: {e}")
+
+        # Apply Bonferroni correction
+        if p_values:
+            corrected_p_values, fwer = self.apply_multiple_comparison_correction(p_values, "bonferroni")
+            
+            # Update comparisons with corrected p-values
+            for idx, (comp_name, comp_data) in enumerate(pairwise_comparisons.items()):
+                if idx < len(corrected_p_values):
+                    comp_data["p_value_corrected"] = corrected_p_values[idx]
+                    comp_data["is_significant"] = corrected_p_values[idx] < self.alpha
+
+        return {
+            "test_name": "bonferroni_corrected_t_tests",
+            "pairwise_comparisons": pairwise_comparisons,
+            "family_wise_error_rate": self.alpha
+        }
+
+    def _interpret_eta_squared(self, eta_squared: float) -> str:
+        """Interpret eta-squared effect size."""
+        abs_effect = abs(eta_squared)
+        if abs_effect < 0.01:
+            return "negligible"
+        if abs_effect < 0.06:
+            return "small"
+        if abs_effect < 0.14:
+            return "medium"
+        return "large"
+
+    def _calculate_power_anova(self, 
+                              f_statistic: float, 
+                              df_between: int, 
+                              df_within: int, 
+                              alpha: float) -> float:
+        """Calculate statistical power for ANOVA (approximate)."""
+        try:
+            # Critical F-value
+            f_critical = stats.f.ppf(1 - alpha, df_between, df_within)
+            
+            # Power calculation (approximate)
+            if f_statistic <= f_critical:
+                return alpha  # Power ≈ Type I error when no effect
+            
+            # Approximate power based on observed F-statistic
+            power = 1 - stats.f.cdf(f_critical, df_between, df_within, 
+                                   nc=f_statistic * df_between)
+            
+            return min(1.0, max(0.0, power))
+
+        except Exception:
+            return 0.0
+
     def save_statistical_summary(self, summary: StatisticalSummary) -> Path:
         """
         Save statistical summary to JSON file.
