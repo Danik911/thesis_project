@@ -1,0 +1,18 @@
+# Task ID: 30
+# Title: Execute First Fold Validation
+# Status: pending
+# Dependencies: 21, 22, 23, 24, 25, 27
+# Priority: high
+# Description: Run fold 1 of k=5 cross-validation with complete metrics collection and validation mode enabled.
+# Details:
+First fold execution:
+- Configure validation_mode=True
+- Process 3-4 documents in fold 1
+- Monitor consultation bypass events
+- Collect all performance metrics
+- Verify data quality and completeness
+
+This is the first real test of the complete system.
+
+# Test Strategy:
+

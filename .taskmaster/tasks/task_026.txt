@@ -1,0 +1,18 @@
+# Task ID: 26
+# Title: Prepare Cross-Validation Dataset
+# Status: pending
+# Dependencies: 21
+# Priority: high
+# Description: Setup all 17 URS documents for k=5 fold validation with stratified splitting based on GAMP category and complexity.
+# Details:
+Dataset requirements:
+- 17 URS documents available (5 Cat3, 5 Cat4, 5 Cat5, 2 Ambiguous)
+- 442 total requirements across all documents
+- Complexity scores: 0.180-0.431 range
+- Need 5-fold stratified splitting
+- Stratify by GAMP category and complexity score
+
+This enables statistically valid cross-validation for thesis.
+
+# Test Strategy:
+

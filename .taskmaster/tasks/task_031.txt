@@ -1,0 +1,18 @@
+# Task ID: 31
+# Title: Execute Remaining Folds (2-5)
+# Status: pending
+# Dependencies: 30
+# Priority: high
+# Description: Complete the remaining 4 folds of k=5 cross-validation to process all 17 documents.
+# Details:
+Execute folds 2-5:
+- Fold 2: ~3-4 documents
+- Fold 3: ~3-4 documents
+- Fold 4: ~3-4 documents
+- Fold 5: ~3-4 documents
+- Aggregate results across all folds
+
+Total: All 17 documents processed for statistical validity.
+
+# Test Strategy:
+

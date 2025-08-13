@@ -869,6 +869,389 @@
           "testStrategy": "- Completeness checklist against section requirements and page allocations.\n- Independent read-through for logical flow; resolve any contradictory statements.\n- Final numbers reconciliation script to re-validate all reported values against frozen outputs (statistical_results.json, performance_metrics.csv) and the completion report."
         }
       ]
+    },
+    {
+      "id": 21,
+      "title": "Implement Validation Mode for Category 5 Documents",
+      "description": "Add validation mode to bypass human consultation for testing while preserving audit trail. This fixes the 33.3% success rate issue by allowing Category 5 documents to proceed with low confidence during validation testing.",
+      "details": "The system currently triggers consultation_required for Category 5 documents when confidence is low (correct behavior for production). For thesis validation, we need a validation_mode flag that:\n1. Logs consultation events that would have triggered\n2. Proceeds with low confidence results\n3. Tracks these as consultation_bypassed for metrics\n4. Preserves production behavior when validation_mode=False\nThis maintains the NO FALLBACK principle in production while enabling automated testing.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Add validation_mode configuration parameter to unified_workflow.py",
+          "description": "Modify the workflow configuration to include a validation_mode boolean flag and bypass_consultation_threshold parameter",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 21
+        },
+        {
+          "id": 2,
+          "title": "Implement consultation bypass logic in human_consultation.py",
+          "description": "Add logic to check validation_mode and bypass consultation while logging the event for audit trail",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 21
+        },
+        {
+          "id": 3,
+          "title": "Create consultation_bypassed event tracking",
+          "description": "Implement event type and metrics collection for bypassed consultations to track validation mode impact",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 21
+        },
+        {
+          "id": 4,
+          "title": "Test Category 5 document processing with validation mode",
+          "description": "Verify Category 5 documents complete processing successfully when validation_mode=True",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 21
+        },
+        {
+          "id": 5,
+          "title": "Document validation mode impact on quality metrics",
+          "description": "Analyze and document the quality difference between bypassed vs consulted decisions for thesis transparency",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 21
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Achieve 100% Audit Trail Coverage",
+      "description": "Implement comprehensive audit logging for 21 CFR Part 11 compliance. Current coverage is only 40.8% - need to add agent decisions, data transformations, and state transitions.",
+      "details": "Current audit trail gaps:\n- Missing agent decision rationales\n- Missing data transformation logs  \n- Missing state transition tracking\n- Missing error recovery attempts\nMust implement cryptographic signatures (Ed25519) for tamper-evident logging and achieve 100% coverage for regulatory compliance.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        21
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Analyze current 40.8% coverage gaps",
+          "description": "Identify all missing audit points in the workflow to understand what needs to be added",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 22
+        },
+        {
+          "id": 2,
+          "title": "Implement agent decision logging with rationale",
+          "description": "Add comprehensive logging for every agent decision including confidence scores and reasoning",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 22
+        },
+        {
+          "id": 3,
+          "title": "Add data transformation tracking",
+          "description": "Log all data transformations between agents with before/after states",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 22
+        },
+        {
+          "id": 4,
+          "title": "Implement state transition logging",
+          "description": "Track all workflow state changes with triggers and timestamps",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 22
+        },
+        {
+          "id": 5,
+          "title": "Add cryptographic signatures (Ed25519)",
+          "description": "Implement Ed25519 digital signatures for tamper-evident audit trail",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 22
+        },
+        {
+          "id": 6,
+          "title": "Verify 100% coverage achievement",
+          "description": "Run audit trail completeness assessment and confirm 100% coverage",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 22
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Enhance ALCOA+ Compliance to Score ≥9.0",
+      "description": "Improve ALCOA+ scores from current 8.11/10 to ≥9.0/10, focusing on Original (0.40) and Accurate (0.40) attributes which are currently the weakest.",
+      "details": "Current ALCOA+ scores:\n- Attributable: 1.00 ✓\n- Legible: 0.50\n- Contemporaneous: 0.62\n- Original: 0.40 (weighted 2x = 0.80) ← CRITICAL\n- Accurate: 0.40 (weighted 2x = 0.80) ← CRITICAL\n- Complete: 0.62\n- Consistent: 1.00 ✓\n- Enduring: 0.25\n- Available: 0.62\nTotal: 8.11/10 (Target: ≥9.0)\n\nMust focus on Original and Accurate attributes as they have 2x weighting.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        22
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 24,
+      "title": "Implement OWASP Security Framework",
+      "description": "Achieve >90% security mitigation effectiveness (current: 88-92%). Focus on OWASP LLM Top 10 risks: LLM01 (Prompt Injection), LLM06 (Insecure Output), LLM09 (Overreliance).",
+      "details": "Current security mitigation: 88-92%\nTarget: >90% consistent effectiveness\n\nKey OWASP LLM risks to address:\n- LLM01: Prompt Injection - Currently 85-90% mitigation\n- LLM06: Insecure Output Handling - Currently 90-95% mitigation  \n- LLM09: Overreliance - Currently 95%+ mitigation\n\nNeed to strengthen input validation and implement comprehensive security framework.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        22
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 25,
+      "title": "Complete 21 CFR Part 11 Implementation",
+      "description": "Full regulatory compliance implementation for 21 CFR Part 11. Need electronic signatures, WORM storage, role-based access, and data integrity mechanisms.",
+      "details": "Requirements for full Part 11 compliance:\n- Electronic Signatures: Currently framework only → Need full Ed25519 implementation\n- Audit Trail: Will be 100% after Task 22\n- Access Controls: Basic → Need complete role-based with MFA\n- Data Integrity: Partial → Need WORM + checksums\n\nThis ensures pharmaceutical regulatory compliance for thesis claims.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        22,
+        23
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 26,
+      "title": "Prepare Cross-Validation Dataset",
+      "description": "Setup all 17 URS documents for k=5 fold validation with stratified splitting based on GAMP category and complexity.",
+      "details": "Dataset requirements:\n- 17 URS documents available (5 Cat3, 5 Cat4, 5 Cat5, 2 Ambiguous)\n- 442 total requirements across all documents\n- Complexity scores: 0.180-0.431 range\n- Need 5-fold stratified splitting\n- Stratify by GAMP category and complexity score\n\nThis enables statistically valid cross-validation for thesis.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        21
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 27,
+      "title": "Create Validation Execution Framework",
+      "description": "Build automated cross-validation runner with parallel processing, metrics collection, and error recovery.",
+      "details": "Framework requirements:\n- run_full_validation.py main script\n- Parallel processing for 3 concurrent documents\n- Comprehensive metrics collection\n- Progress tracking and logging\n- Error recovery mechanisms\n- Integration with validation_mode from Task 21\n\nThis automates the entire cross-validation process.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        26
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 28,
+      "title": "Implement Statistical Analysis Pipeline",
+      "description": "Create statistical validation framework for hypothesis testing, significance analysis, and confidence intervals.",
+      "details": "Statistical requirements:\n- Paired t-tests: LLM vs manual baseline\n- ANOVA: Between-category performance analysis\n- Confidence intervals: 95% CI for all metrics\n- Effect size: Cohen's d calculations\n- Significance threshold: p<0.05\n\nMust achieve statistical significance for thesis claims.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        27
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 29,
+      "title": "Build Visualization Generator",
+      "description": "Create comprehensive charts and dashboards for Chapter 4 including ROI visualization, performance matrices, and compliance dashboards.",
+      "details": "Required visualizations:\n1. Cost-benefit waterfall chart\n2. Performance matrix (Time/Cost/Quality)\n3. GAMP distribution heatmap\n4. Confidence calibration plots\n5. Compliance dashboard\n6. ROI visualization showing 535.7M% return\n\nThese visualizations are critical for thesis presentation.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        28
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 30,
+      "title": "Execute First Fold Validation",
+      "description": "Run fold 1 of k=5 cross-validation with complete metrics collection and validation mode enabled.",
+      "details": "First fold execution:\n- Configure validation_mode=True\n- Process 3-4 documents in fold 1\n- Monitor consultation bypass events\n- Collect all performance metrics\n- Verify data quality and completeness\n\nThis is the first real test of the complete system.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        21,
+        22,
+        23,
+        24,
+        25,
+        27
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 31,
+      "title": "Execute Remaining Folds (2-5)",
+      "description": "Complete the remaining 4 folds of k=5 cross-validation to process all 17 documents.",
+      "details": "Execute folds 2-5:\n- Fold 2: ~3-4 documents\n- Fold 3: ~3-4 documents\n- Fold 4: ~3-4 documents\n- Fold 5: ~3-4 documents\n- Aggregate results across all folds\n\nTotal: All 17 documents processed for statistical validity.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        30
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 32,
+      "title": "Run Dual-Mode Comparison",
+      "description": "Compare validation mode vs production mode to quantify the impact of bypassing consultation.",
+      "details": "Dual-mode testing:\n- Select subset of documents (3-5)\n- Run with validation_mode=False (production behavior)\n- Run same subset with validation_mode=True\n- Calculate quality impact metrics\n- Document consultation patterns\n\nThis provides evidence of validation mode impact for thesis transparency.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        31
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 33,
+      "title": "Perform Statistical Validation",
+      "description": "Achieve statistical significance (p<0.05) through comprehensive statistical testing of all collected metrics.",
+      "details": "Statistical validation requirements:\n- Run all statistical tests on collected data\n- Verify p<0.05 for efficiency claims\n- Calculate 95% confidence intervals\n- Document effect sizes (Cohen's d)\n- Create statistical summary report\n\nMust achieve significance for thesis validity.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        31,
+        32
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 34,
+      "title": "Analyze Performance Results",
+      "description": "Comprehensive performance analysis of efficiency, effectiveness, and ROI validation.",
+      "details": "Performance analysis components:\n- Efficiency metrics: time (3.6 min/doc), cost ($0.00056/doc), tokens\n- Effectiveness: requirements coverage (target ≥90%), test quality\n- Category-specific performance analysis\n- ROI validation: Confirm 535.7M% (99.98% cost reduction)\n- Create comprehensive performance summary\n\nThis validates all efficiency claims for the thesis.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        33
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 35,
+      "title": "Validate Compliance Achievement",
+      "description": "Verify all regulatory requirements are met including 100% audit trail, ALCOA+ ≥9.0, and GAMP-5 compliance.",
+      "details": "Compliance validation checklist:\n- Verify 100% audit trail coverage (from 40.8%)\n- Confirm ALCOA+ score ≥9.0 (from 8.11)\n- Validate GAMP-5 compliance\n- Confirm 21 CFR Part 11 adherence\n- Generate comprehensive compliance report\n\nCritical for regulatory claims in thesis.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        33
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 36,
+      "title": "Document Limitations and Future Work",
+      "description": "Honest assessment of system limitations and recommendations for future research.",
+      "details": "Limitations documentation:\n- Validation mode impact on quality\n- Statistical power with 17 documents\n- Generalization constraints\n- Remaining compliance gaps\n- Future work recommendations\n\nTransparency is critical for thesis credibility.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        34,
+        35
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 37,
+      "title": "Generate Visualizations Package",
+      "description": "Create all Chapter 4 visualizations including charts, matrices, and dashboards.",
+      "details": "Visualization package:\n- Performance charts (time, cost, quality)\n- Compliance matrices (GAMP-5, ALCOA+, Part 11)\n- Statistical plots (significance, confidence intervals)\n- Confidence distributions\n- ROI visualization\n- Package all for thesis inclusion\n\nVisual evidence is crucial for thesis presentation.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        34
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 38,
+      "title": "Write Chapter 4 Sections 4.1-4.3",
+      "description": "Write experimental setup, quantitative results, and compliance validation sections.",
+      "details": "Chapter sections:\n- 4.1 Experimental Setup: Cross-validation methodology\n- 4.2.1 Efficiency Metrics: Cost reduction, ROI, processing time\n- 4.2.2 Effectiveness Metrics: Coverage, quality, performance\n- 4.3 Compliance Validation: GAMP-5, Part 11, ALCOA+\n\nInclude all supporting tables and figures.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        34,
+        35,
+        37
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 39,
+      "title": "Write Chapter 4 Sections 4.4-4.6",
+      "description": "Write security analysis, human-AI collaboration, and statistical validation sections.",
+      "details": "Chapter sections:\n- 4.4 Security Analysis: OWASP mitigation results\n- 4.5 Human-AI Collaboration: Confidence thresholds, consultation patterns\n- 4.6 Statistical Validation: Significance testing, confidence intervals\n\nAdd visualizations and cross-reference methodology.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        38
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 40,
+      "title": "Write Chapter 4 Section 4.7 and Finalize",
+      "description": "Complete limitations section and perform final review of entire Chapter 4.",
+      "details": "Final chapter components:\n- 4.7 Limitations and Future Work\n- Executive summary\n- Review all claims against evidence\n- Ensure consistency with thesis proposal\n- Final formatting and proofreading\n\nThis completes Chapter 4 for thesis submission.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        36,
+        39
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 41,
+      "title": "Prepare Evidence Package",
+      "description": "Compile all supporting documentation for thesis defense and review.",
+      "details": "Evidence package contents:\n- Raw data files (CSV/JSON)\n- Statistical analysis notebooks\n- Audit trail logs\n- Compliance checklists\n- Security test reports\n- README for navigation\n\nComplete documentation for thesis defense.",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        40
+      ],
+      "priority": "high",
+      "subtasks": []
     }
   ]
 }

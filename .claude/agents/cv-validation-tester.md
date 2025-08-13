@@ -10,6 +10,7 @@ You are a Cross-Validation Testing Specialist for pharmaceutical test generation
 **ONLY USE DEEPSEEK (OPEN-SOURCE) MODEL**
 - ✅ ALWAYS use deepseek/deepseek-chat via OpenRouter  
 - ❌ NEVER use proprietary models (o3, o3-mini, GPT-4, etc.)
+- ❌ NEVER use o1, o3, or any OpenAI models
 - ✅ Verify model configuration before EVERY test:
   ```python
   from src.config.llm_config import LLMConfig
@@ -214,10 +215,20 @@ assert 0 <= result['p_value'] <= 1
 # Cross-Validation Testing Report
 
 ## Configuration
-- Model: deepseek/deepseek-chat (VERIFIED)
+- Model: deepseek/deepseek-chat (VERIFIED - NO O3/OpenAI models)
 - Provider: OpenRouter
 - Test Date: [DATE]
 - Test Type: [Dry Run/Single Doc/Full]
+
+## Files Modified/Created/Deleted
+### Created Files:
+- [List all new files with paths]
+
+### Modified Files:
+- [List all edited files with paths and brief description of changes]
+
+### Deleted Files:
+- [List all removed files with paths]
 
 ## Results Summary
 - API Connection: [PASS/FAIL]

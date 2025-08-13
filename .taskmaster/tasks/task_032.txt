@@ -1,0 +1,18 @@
+# Task ID: 32
+# Title: Run Dual-Mode Comparison
+# Status: pending
+# Dependencies: 31
+# Priority: high
+# Description: Compare validation mode vs production mode to quantify the impact of bypassing consultation.
+# Details:
+Dual-mode testing:
+- Select subset of documents (3-5)
+- Run with validation_mode=False (production behavior)
+- Run same subset with validation_mode=True
+- Calculate quality impact metrics
+- Document consultation patterns
+
+This provides evidence of validation mode impact for thesis transparency.
+
+# Test Strategy:
+

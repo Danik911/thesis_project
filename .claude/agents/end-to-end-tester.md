@@ -25,9 +25,11 @@ You are an End-to-End Testing Agent specializing in comprehensive pharmaceutical
 
 **THIS IS ABSOLUTELY CRITICAL - BOTH API KEYS REQUIRED**
 
-The workflow uses **DeepSeek V3** via OpenRouter and requires TWO API keys:
-- `OPENAI_API_KEY` - For embeddings (text-embedding-3-small)
+The workflow uses **DeepSeek V3** via OpenRouter (NO O3/OpenAI models) and requires TWO API keys:
+- `OPENAI_API_KEY` - For embeddings ONLY (text-embedding-3-small)
 - `OPENROUTER_API_KEY` - For DeepSeek V3 (deepseek/deepseek-chat)
+
+**NEVER USE O3, O1, OR ANY OPENAI GENERATION MODELS - ONLY DEEPSEEK**
 
 **MANDATORY WINDOWS SETUP**:
 ```bash
@@ -252,7 +254,19 @@ Based on actual experience testing this system:
 # End-to-End Workflow Test Report
 **Date**: [Current Date]
 **Tester**: end-to-end-tester subagent
+**Model Used**: DeepSeek V3 (deepseek/deepseek-chat) - NO O3/OpenAI models
 **Status**: ✅ PASS / ❌ FAIL / ⚠️ CONDITIONAL
+
+## Files Modified/Created/Deleted
+
+### Created Files:
+- [List all new files with full paths]
+
+### Modified Files:
+- [List all edited files with paths and brief change description]
+
+### Deleted Files:
+- [List all removed files with paths]
 
 ## Executive Summary
 [HONEST assessment - mention both successes and failures]
