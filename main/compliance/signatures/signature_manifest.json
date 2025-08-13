@@ -1,0 +1,20 @@
+{
+  "created": "2025-08-13T15:35:51.843409+00:00",
+  "manifest_version": "1.0",
+  "signatures": [
+    {
+      "binding_proof": "735fa6399b27ec7b129d676510de053455e8802f33d2b9c2986e7b1e1ab8c081",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "c395af28cb845a6c92550173cea105d3398d94ba4f9fd08513623eebbc20faf1",
+      "record_id": "TEST-001",
+      "signature_id": "2638605d-d679-422a-87da-cfd2d9f56f8b",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-08-13T15:35:51.843409+00:00",
+      "signature_value": "be2e39771b5bc886f1c9a654ebb3bfcbbfd6ffb7919d6401ffb266445b45144c7204e85e2ccf06da4a9c660baedbcdb0787717dc84c58965f826e96a3d99f90b",
+      "signer_id": "jsmith_qa",
+      "signer_name": "John Smith, QA Manager"
+    }
+  ],
+  "total_signatures": 1
+}

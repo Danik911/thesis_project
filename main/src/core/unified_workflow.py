@@ -48,6 +48,16 @@ from src.core.events import (
 from src.core.human_consultation import HumanConsultationManager
 from src.monitoring.phoenix_config import setup_phoenix
 from src.monitoring.simple_tracer import get_tracer
+
+# Import 21 CFR Part 11 compliance systems
+from src.compliance import (
+    get_rbac_system,
+    get_mfa_service,
+    get_signature_service,
+    get_worm_storage,
+    get_training_system,
+    get_validation_framework
+)
 # Enhanced Phoenix Observability - temporarily disabled for testing
 # from src.monitoring.phoenix_enhanced import (
 #     PhoenixEnhancedClient,
@@ -342,10 +352,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
         enable_phoenix: bool = True,
         enable_parallel_coordination: bool = True,
         enable_human_consultation: bool = True,
-        llm: LLM | None = None
+        llm: LLM | None = None,
+        enable_part11_compliance: bool = True,
+        user_session_id: str | None = None
     ):
         """
-        Initialize the unified workflow.
+        Initialize the unified workflow with 21 CFR Part 11 compliance.
         
         Args:
             timeout: Maximum time to wait for workflow completion
@@ -354,6 +366,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
             enable_parallel_coordination: Enable parallel agent coordination
             enable_human_consultation: Enable human consultation triggers
             llm: Language model for workflow intelligence
+            enable_part11_compliance: Enable 21 CFR Part 11 compliance controls
+            user_session_id: Active user session for access control
         """
         super().__init__(timeout=timeout, verbose=verbose)
 
@@ -362,6 +376,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self.enable_phoenix = enable_phoenix
         self.enable_parallel_coordination = enable_parallel_coordination
         self.enable_human_consultation = enable_human_consultation
+        self.enable_part11_compliance = enable_part11_compliance
+        self.user_session_id = user_session_id
         self.logger = logging.getLogger(__name__)
 
         # Initialize LLM using centralized configuration
@@ -370,6 +386,23 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         # Initialize workflow session
         self._workflow_session_id = f"unified_workflow_{datetime.now(UTC).isoformat()}"
+
+        # Initialize 21 CFR Part 11 compliance systems
+        if enable_part11_compliance:
+            self.rbac_system = get_rbac_system()
+            self.mfa_service = get_mfa_service()  
+            self.signature_service = get_signature_service()
+            self.worm_storage = get_worm_storage()
+            self.training_system = get_training_system()
+            self.validation_framework = get_validation_framework()
+            self.logger.info("[PART11] 21 CFR Part 11 compliance systems initialized")
+        else:
+            self.rbac_system = None
+            self.mfa_service = None
+            self.signature_service = None
+            self.worm_storage = None
+            self.training_system = None
+            self.validation_framework = None
 
         # Initialize tracer for monitoring and error logging
         self.tracer = get_tracer()
@@ -383,6 +416,55 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if enable_phoenix:
             setup_phoenix()
             self.logger.info("[PHOENIX] Phoenix observability enabled")
+
+    def _check_user_access(self, required_permission: str) -> bool:
+        """
+        Check if user has required permission for workflow operation.
+        
+        Args:
+            required_permission: Permission required for operation
+            
+        Returns:
+            bool: True if access granted
+        """
+        if not self.enable_part11_compliance or not self.user_session_id:
+            # Compliance disabled or no session - allow access
+            return True
+        
+        try:
+            # Check permission using RBAC system
+            has_permission = self.rbac_system.check_permission(
+                session_id=self.user_session_id,
+                permission=required_permission
+            )
+            
+            # Log access control event
+            from src.core.audit_trail import get_audit_trail, AuditEventType
+            audit_trail = get_audit_trail()
+            
+            audit_trail.log_part11_compliance_event(
+                compliance_event_type=AuditEventType.ACCESS_CONTROL_CHECK,
+                user_id=self.user_session_id,
+                compliance_data={
+                    "permission_required": required_permission,
+                    "access_granted": has_permission,
+                    "workflow_session": self._workflow_session_id
+                },
+                regulatory_context={
+                    "regulation_section": "21_CFR_11.10(d)",
+                    "requirement": "limiting_system_access_to_authorized_individuals"
+                }
+            )
+            
+            if not has_permission:
+                self.logger.warning(f"[PART11] Access denied for permission: {required_permission}")
+                
+            return has_permission
+            
+        except Exception as e:
+            self.logger.error(f"[PART11] Access control check failed: {e}")
+            # NO FALLBACKS - access control failure must be explicit
+            return False
 
     @step
     async def start_unified_workflow(
@@ -400,6 +482,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
         Returns:
             URSIngestionEvent to begin document processing
         """
+        # Check user access permission for test generation
+        if not self._check_user_access("CREATE_TESTS"):
+            raise PermissionError("Access denied: User lacks CREATE_TESTS permission for workflow execution")
+        
         # Initialize comprehensive audit trail for workflow state transitions
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()

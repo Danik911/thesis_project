@@ -1,0 +1,44 @@
+{
+  "guest_001": {
+    "account_locked": false,
+    "contact_info": {
+      "email": "guest_001@pharma.com"
+    },
+    "failed_login_attempts": 0,
+    "is_active": true,
+    "last_login": null,
+    "registration_timestamp": "2025-08-13T15:35:51.848969+00:00",
+    "role": "guest_user",
+    "training_completed": true,
+    "user_id": "guest_001",
+    "user_name": "Charlie Brown"
+  },
+  "qa_analyst_001": {
+    "account_locked": false,
+    "contact_info": {
+      "email": "qa_analyst_001@pharma.com"
+    },
+    "failed_login_attempts": 0,
+    "is_active": true,
+    "last_login": null,
+    "registration_timestamp": "2025-08-13T15:35:51.847966+00:00",
+    "role": "qa_analyst",
+    "training_completed": true,
+    "user_id": "qa_analyst_001",
+    "user_name": "Bob Wilson"
+  },
+  "qa_manager_001": {
+    "account_locked": false,
+    "contact_info": {
+      "email": "qa_manager_001@pharma.com"
+    },
+    "failed_login_attempts": 0,
+    "is_active": true,
+    "last_login": "2025-08-13T15:35:51.849998+00:00",
+    "registration_timestamp": "2025-08-13T15:35:51.847966+00:00",
+    "role": "qa_manager",
+    "training_completed": true,
+    "user_id": "qa_manager_001",
+    "user_name": "Alice Johnson"
+  }
+}

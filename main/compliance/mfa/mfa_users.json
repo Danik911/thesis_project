@@ -1,0 +1,68 @@
+{
+  "test_mfa_fix_001": {
+    "backup_codes": [
+      "4391530ff258258453e8055522ae0ca4:8da3a2ab252d3b0bef673c0b80801443e0e60706ff16ce67985a07d49a734fd3",
+      "9f8c25a30444793813ed7b09494f705e:0b7114a439d61aa6af85721f93d80b4304ad5d240af2a05ffcac54d88732e766",
+      "9869795ede005061efb4c3457ead4031:400fb7da615ce86ff3ea977e3e36ec44274e3e78cd2b0d57ba088ffe036098eb",
+      "1ee8975b3610ff8d38fe19743ab42ab5:a4493915624b84e49fb6aaf05894341ae70f4d99c49dcc975b669e4e53d021ed",
+      "c1b647e98e8de383dcec1789160ce251:6a800d20ceaec8b498b45fe1fbc931f67e0789013417aac927e2c2f9d3a65c24",
+      "da66d1eb9ce1fcd0fc29000cb733541b:407ddaef2f94ea93d00c8b7fe3238b61d964cfadfbbdcdb5064b8e1f1cd30b7f",
+      "3a671fe7774059a3e0569693fe9e79e1:dd911525362de1efee0a5733d4c97404850de61cf8fb6721089203d48db93f3b",
+      "f2996ab30ea0a489c82561aa04c77c23:7422cd8eb008ba33436ae9c64bbaaa414702c84f5fde2b11870c4db96d233b51",
+      "c72963d339ed5cf4e0cfa4f61c335e42:7d4f3b140f04f314214db439308106d9b5f6454547053767814a8d1cc3f89619",
+      "bad74d2c0220d812060dc8c8d863c3bb:71d954496dbc3e1b0467830aa55c2525822bbbfeac2c3231c2e0995224aea382"
+    ],
+    "failed_attempts": 0,
+    "is_setup": false,
+    "last_successful_auth": null,
+    "last_totp_used": null,
+    "locked_until": null,
+    "setup_timestamp": null,
+    "totp_secret": "G3aNfUtnfHuxg/lXB9omI0WYOjo=",
+    "user_id": "test_mfa_fix_001"
+  },
+  "test_mfa_simple_001": {
+    "backup_codes": [
+      "1c3c756f4f78e8adb9e22d3c734600bc:747b835678722da1907fae2eaa3d8589f817efec403388a052d57b64e632544a",
+      "18d768b8b7f3297a346d8fc8837af09d:002638df2d9b005b419a4f2ad306decb9785bc7d8d429ec3ed029b465cd1b994",
+      "062a0a36c3de5dcf94f9c1bffa689f23:f9ac3fb378733853314eb87ae92246aeeb11a4e88bc95c79c0caee0377432bae",
+      "ef08a112d645404fa9013a02a00cf52d:cc7b1c1a982bf2f6875cb03fb44e5e4ffadb18a98db520008519d0d600e908ca",
+      "f2aed01abb2549d3a7894cb2e4ebefda:1edddb8588b44b97d911f734b646c2a2f73e400de32f344e2e8e5ec73fa22bb3",
+      "9b6e9f0ab1195d49d1f70f0e42f487a0:499b56ac910966fed164ff52b47dc7b021e3e9d2df02480be938e102dd386407",
+      "dace6f9ad8e2a26e1190fbe6c95e5662:b06e7086c50d652bb62dccbf999793a4231df969096b269c8641cab1ba68b4e1",
+      "08071b91948c9bda3c12be799186c72b:494c9cbdf025ff76c4b26da6c630c5c78d5286cc7513976d007864a68286ea58",
+      "8fbb2134cded7acb14a4a7f79062eec0:c35ebbd5890589c992d50ebf5880fcd6fa6bdc6dc510d070141ae341313d5870",
+      "d2edf608ad6881bb7d32d035ff50bb98:f481c544afd37cdb0ae9ebec854fae525cb040edffed469976db7d7cacd13471"
+    ],
+    "failed_attempts": 0,
+    "is_setup": false,
+    "last_successful_auth": null,
+    "last_totp_used": null,
+    "locked_until": null,
+    "setup_timestamp": null,
+    "totp_secret": "I+0ucTzgPV5H0UjdKG1Tnfl19xQ=",
+    "user_id": "test_mfa_simple_001"
+  },
+  "test_mfa_user_001": {
+    "backup_codes": [
+      "3286dfbb9e53cc335e1edb1df2062b4a:c153063e57cf3fbdbfbc18359b7c0b587369db2dca8598d1cb0ec9ec41625e98",
+      "d574cf9f08f6aece184e01e0eb13b132:9cede63ea24cee51f13ef9f7342093e8aa0c7954763a5b2f3d8ba8698aed93ae",
+      "97223dfe3111e3c4b0880d3870b71ead:4c259a60a3d7ac1ac43680725cc6765f1bee35a78d4ea88b4937a869b7eb2d62",
+      "6db0a4f6914cf285900832eccca0d9ab:8bf308b7cb185a4c7fb8c8d2e79305bd60420db8e36467754ac3a339aa86bad5",
+      "7736dae758748aeb63a8642d83f160cb:ae98dd4eb384b592f4b36f9a5168663ebfe421e5db790bfd107f26b2a6726029",
+      "f4d4d6dec9073b6baca330032021b820:29193d3270c05562ffb9db2387fbc61572761a17104ad9b5038d25bbade035bf",
+      "86e710e5fc818d5748229af25decf597:444dfd2dd2a8493c0d82e42c07a8c4930923d81d3541c8c9f057173336fe670b",
+      "d0b21400691cb8f7828a493104a0b9dc:d050d7f12a0707d3310de9749d637cdbe92825c67d7b1bbe59964278bfe49b66",
+      "d10833d6bd0927a89eaa1d38b175527c:53032879844c85403c2932b4905f2e43cad1df2110be9468979781da7d3ecf6e",
+      "e8f830dc97578e4cd493105ecee6e762:2038a973784043eeb2bc28cece79a87e62458c09c27cde3759ed692ec6f3d1d2"
+    ],
+    "failed_attempts": 0,
+    "is_setup": false,
+    "last_successful_auth": null,
+    "last_totp_used": null,
+    "locked_until": null,
+    "setup_timestamp": null,
+    "totp_secret": "4hI1/PXD36BoyFMdh6K4kYQ5OKw=",
+    "user_id": "test_mfa_user_001"
+  }
+}
