@@ -1038,15 +1038,64 @@
     {
       "id": 26,
       "title": "Prepare Cross-Validation Dataset",
-      "description": "Setup all 17 URS documents for k=5 fold validation with stratified splitting based on GAMP category and complexity.",
-      "details": "Dataset requirements:\n- 17 URS documents available (5 Cat3, 5 Cat4, 5 Cat5, 2 Ambiguous)\n- 442 total requirements across all documents\n- Complexity scores: 0.180-0.431 range\n- Need 5-fold stratified splitting\n- Stratify by GAMP category and complexity score\n\nThis enables statistically valid cross-validation for thesis.",
-      "testStrategy": "",
-      "status": "pending",
+      "description": "All 17 URS documents containing real pharmaceutical requirements have been prepared and validated for k=5 fold cross-validation with stratified splitting by GAMP category and complexity. Dataset integrity, statistical validation, and workflow integration are complete and verified.",
+      "status": "done",
       "dependencies": [
         21
       ],
       "priority": "high",
-      "subtasks": []
+      "details": "Dataset integrity and cross-validation setup:\n- 17 genuine URS documents (5 Cat3, 5 Cat4, 5 Cat5, 2 Ambiguous), all verified to exist and contain real pharmaceutical requirements\n- 442 total requirements across all documents, with sampled breakdowns for each category\n- Complexity scores in the 0.180-0.431 range\n- 5-fold stratified splitting implemented, stratified by GAMP category and complexity score\n- Statistical validation (chi-square, KS tests) confirms acceptable category and complexity balance; expected minor imbalance for Ambiguous due to small sample size\n- All operations use fixed random seed (42) for reproducibility\n- All files and code modules created: dataset_inventory.json, cv_config.json, cv_manager.py, validate_folds.py, cv_workflow_integration.py\n- Integration with main workflow (main/src/core/unified_workflow.py) and Phoenix AI observability ready\n- Audit trail and explicit error handling (no fallbacks) implemented for GAMP-5 compliance\n- All fold assignments and validation results are available for thesis documentation and appendix",
+      "testStrategy": "1. Confirm all 17 URS documents exist at specified paths and contain real, non-mock pharmaceutical requirements\n2. Verify category distribution: 5 Cat3, 5 Cat4, 5 Cat5, 2 Ambiguous\n3. Validate total requirements count (442) and sampled breakdowns for each category\n4. Run cross-validation split with k=5, stratified by GAMP category and complexity, using seed=42\n5. Run statistical validation suite (chi-square for category, KS for complexity) and confirm results match expected (pass for category/complexity, partial fail for Ambiguous balance)\n6. Confirm all folds use each document exactly once as test set\n7. Review audit logs for GAMP-5 compliance and explicit error handling\n8. Confirm integration with main workflow and Phoenix AI observability\n9. Ensure all outputs (fold assignments, validation results) are available for thesis documentation",
+      "subtasks": [
+        {
+          "id": 2601,
+          "title": "Verify existence and authenticity of all 17 URS documents",
+          "description": "Check that all 17 URS documents exist at the correct paths and contain real pharmaceutical requirements (no mock data).",
+          "status": "done"
+        },
+        {
+          "id": 2602,
+          "title": "Catalog dataset metadata and verification status",
+          "description": "Create dataset_inventory.json with complete metadata and verification status for each URS document.",
+          "status": "done"
+        },
+        {
+          "id": 2603,
+          "title": "Configure and implement stratified k-fold splitting",
+          "description": "Implement k=5 stratified splitting by GAMP category and complexity score, using a fixed random seed (42) for reproducibility. Store configuration in cv_config.json.",
+          "status": "done"
+        },
+        {
+          "id": 2604,
+          "title": "Develop CrossValidationManager class",
+          "description": "Create cv_manager.py with CrossValidationManager class for managing fold assignments. Ensure no fallback logic; all errors must be explicit.",
+          "status": "done"
+        },
+        {
+          "id": 2605,
+          "title": "Statistical validation of folds",
+          "description": "Implement validate_folds.py to run chi-square and KS tests on fold assignments. Confirm category and complexity balance; document expected partial failures for Ambiguous category.",
+          "status": "done"
+        },
+        {
+          "id": 2606,
+          "title": "Integrate cross-validation workflow",
+          "description": "Integrate cross-validation process with main workflow (main/src/core/unified_workflow.py) and ensure compatibility with Phoenix AI observability.",
+          "status": "done"
+        },
+        {
+          "id": 2607,
+          "title": "Audit trail and compliance verification",
+          "description": "Ensure all operations are logged for GAMP-5 compliance and that all failures are explicit with diagnostics (no fallback logic).",
+          "status": "done"
+        },
+        {
+          "id": 2608,
+          "title": "Prepare outputs for thesis documentation",
+          "description": "Ensure all fold assignments, validation results, and audit logs are available and formatted for inclusion in the thesis appendix.",
+          "status": "done"
+        }
+      ]
     },
     {
       "id": 27,

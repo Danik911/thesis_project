@@ -1,11 +1,25 @@
 {
   "metadata": {
-    "description": "5-fold cross-validation assignments for URS corpus",
+    "description": "Stratified 5-fold cross-validation assignments for URS corpus",
     "total_documents": 17,
+    "total_requirements": 442,
     "folds": 5,
-    "stratification": "Sequential assignment ensuring no duplicates",
-    "created_date": "2025-08-11",
-    "validation_strategy": "K-Fold with balanced distribution"
+    "stratification_method": "GAMP category + complexity level (manual analysis)",
+    "created_date": "2025-08-13",
+    "validation_strategy": "Stratified K-Fold with balanced GAMP category distribution",
+    "random_seed": null,
+    "complexity_range": {
+      "min": 0.18,
+      "max": 0.90,
+      "mean": 0.504,
+      "std": 0.235
+    },
+    "category_distribution": {
+      "Category 3": 5,
+      "Category 4": 5,
+      "Category 5": 5,
+      "Ambiguous": 2
+    }
   },
   "document_inventory": [
     "URS-001", "URS-002", "URS-003", "URS-004", "URS-005", 
@@ -15,40 +29,1666 @@
   ],
   "folds": {
     "fold_1": {
-      "test_documents": ["URS-001", "URS-002", "URS-003"],
-      "train_documents": ["URS-004", "URS-005", "URS-006", "URS-007", "URS-008", "URS-009", "URS-010", "URS-011", "URS-012", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
-      "train_count": 14,
-      "test_count": 3
+      "test_documents": [
+        {
+          "doc_id": "URS-001",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Continuous Temperature and Humidity Monitoring",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 15,
+          "requirement_breakdown": {
+            "functional": 7,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 15
+          }
+        },
+        {
+          "doc_id": "URS-002",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-002.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Sample Management and Testing Platform",
+          "domain": "Quality Control Laboratory",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 17,
+          "requirement_breakdown": {
+            "functional": 9,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 17
+          }
+        },
+        {
+          "doc_id": "URS-003",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-003.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Record Management System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 16,
+          "requirement_breakdown": {
+            "functional": 8,
+            "regulatory": 3,
+            "performance": 2,
+            "integration": 2,
+            "technical": 1,
+            "total": 16
+          }
+        },
+        {
+          "doc_id": "URS-004",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-004.md",
+          "gamp_category": "Ambiguous (3/4)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Analytical Instrument Control and Data Analysis",
+          "domain": "Analytical Chemistry",
+          "complexity_level": "Medium",
+          "complexity_score": 0.32,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        }
+      ],
+      "train_documents": [
+        {
+          "doc_id": "URS-005",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-005.md",
+          "gamp_category": "Ambiguous (4/5)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Clinical Data Management and Analytics Platform",
+          "domain": "Clinical Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.70,
+          "total_requirements": 24,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 24
+          }
+        },
+        {
+          "doc_id": "URS-006",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-006.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Inventory Management Software",
+          "domain": "Warehouse Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-007",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-007.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Temperature Monitoring System",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 23,
+          "requirement_breakdown": {
+            "functional": 11,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 23
+          }
+        },
+        {
+          "doc_id": "URS-008",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-008.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Document Control System",
+          "domain": "Document Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-009",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-009.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Laboratory Equipment Integration System",
+          "domain": "Laboratory Operations",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 25,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 25
+          }
+        },
+        {
+          "doc_id": "URS-010",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-010.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Enterprise Resource Planning System",
+          "domain": "Enterprise Management",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 6,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-011",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-011.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Quality Management System",
+          "domain": "Quality Assurance",
+          "complexity_level": "Medium-High",
+          "complexity_score": 0.55,
+          "total_requirements": 37,
+          "requirement_breakdown": {
+            "functional": 19,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 37
+          }
+        },
+        {
+          "doc_id": "URS-012",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-012.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Supply Chain Management System",
+          "domain": "Supply Chain",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 27,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 27
+          }
+        },
+        {
+          "doc_id": "URS-013",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-013.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Process Control System",
+          "domain": "Process Control",
+          "complexity_level": "High",
+          "complexity_score": 0.65,
+          "total_requirements": 28,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 28
+          }
+        },
+        {
+          "doc_id": "URS-014",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-014.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Release System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 30,
+          "requirement_breakdown": {
+            "functional": 15,
+            "regulatory": 6,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 30
+          }
+        },
+        {
+          "doc_id": "URS-015",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-015.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Process Analytical Technology System",
+          "domain": "Process Analytics",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-016",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-016.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Regulatory Submission Platform",
+          "domain": "Regulatory Affairs",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 34,
+          "requirement_breakdown": {
+            "functional": 17,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 34
+          }
+        },
+        {
+          "doc_id": "URS-017",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-017.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Proprietary Supply Chain Analytics and Optimization Platform",
+          "domain": "Supply Chain Management",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 33,
+          "requirement_breakdown": {
+            "functional": 16,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 33
+          }
+        }
+      ],
+      "test_count": 4,
+      "train_count": 13
     },
     "fold_2": {
-      "test_documents": ["URS-004", "URS-005", "URS-006"],
-      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-007", "URS-008", "URS-009", "URS-010", "URS-011", "URS-012", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
-      "train_count": 14,
-      "test_count": 3
+      "test_documents": [
+        {
+          "doc_id": "URS-005",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-005.md",
+          "gamp_category": "Ambiguous (4/5)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Clinical Data Management and Analytics Platform",
+          "domain": "Clinical Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.70,
+          "total_requirements": 24,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 24
+          }
+        },
+        {
+          "doc_id": "URS-006",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-006.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Inventory Management Software",
+          "domain": "Warehouse Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-010",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-010.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Enterprise Resource Planning System",
+          "domain": "Enterprise Management",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 6,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-014",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-014.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Release System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 30,
+          "requirement_breakdown": {
+            "functional": 15,
+            "regulatory": 6,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 30
+          }
+        }
+      ],
+      "train_documents": [
+        {
+          "doc_id": "URS-001",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Continuous Temperature and Humidity Monitoring",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 15,
+          "requirement_breakdown": {
+            "functional": 7,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 15
+          }
+        },
+        {
+          "doc_id": "URS-002",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-002.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Sample Management and Testing Platform",
+          "domain": "Quality Control Laboratory",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 17,
+          "requirement_breakdown": {
+            "functional": 9,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 17
+          }
+        },
+        {
+          "doc_id": "URS-003",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-003.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Record Management System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 16,
+          "requirement_breakdown": {
+            "functional": 8,
+            "regulatory": 3,
+            "performance": 2,
+            "integration": 2,
+            "technical": 1,
+            "total": 16
+          }
+        },
+        {
+          "doc_id": "URS-004",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-004.md",
+          "gamp_category": "Ambiguous (3/4)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Analytical Instrument Control and Data Analysis",
+          "domain": "Analytical Chemistry",
+          "complexity_level": "Medium",
+          "complexity_score": 0.32,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-007",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-007.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Temperature Monitoring System",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 23,
+          "requirement_breakdown": {
+            "functional": 11,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 23
+          }
+        },
+        {
+          "doc_id": "URS-008",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-008.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Document Control System",
+          "domain": "Document Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-009",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-009.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Laboratory Equipment Integration System",
+          "domain": "Laboratory Operations",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 25,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 25
+          }
+        },
+        {
+          "doc_id": "URS-011",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-011.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Quality Management System",
+          "domain": "Quality Assurance",
+          "complexity_level": "Medium-High",
+          "complexity_score": 0.55,
+          "total_requirements": 37,
+          "requirement_breakdown": {
+            "functional": 19,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 37
+          }
+        },
+        {
+          "doc_id": "URS-012",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-012.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Supply Chain Management System",
+          "domain": "Supply Chain",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 27,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 27
+          }
+        },
+        {
+          "doc_id": "URS-013",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-013.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Process Control System",
+          "domain": "Process Control",
+          "complexity_level": "High",
+          "complexity_score": 0.65,
+          "total_requirements": 28,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 28
+          }
+        },
+        {
+          "doc_id": "URS-015",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-015.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Process Analytical Technology System",
+          "domain": "Process Analytics",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-016",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-016.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Regulatory Submission Platform",
+          "domain": "Regulatory Affairs",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 34,
+          "requirement_breakdown": {
+            "functional": 17,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 34
+          }
+        },
+        {
+          "doc_id": "URS-017",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-017.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Proprietary Supply Chain Analytics and Optimization Platform",
+          "domain": "Supply Chain Management",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 33,
+          "requirement_breakdown": {
+            "functional": 16,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 33
+          }
+        }
+      ],
+      "test_count": 4,
+      "train_count": 13
     },
     "fold_3": {
-      "test_documents": ["URS-007", "URS-008", "URS-009"],
-      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-004", "URS-005", "URS-006", "URS-010", "URS-011", "URS-012", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
-      "train_count": 14,
-      "test_count": 3
+      "test_documents": [
+        {
+          "doc_id": "URS-007",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-007.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Temperature Monitoring System",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 23,
+          "requirement_breakdown": {
+            "functional": 11,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 23
+          }
+        },
+        {
+          "doc_id": "URS-011",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-011.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Quality Management System",
+          "domain": "Quality Assurance",
+          "complexity_level": "Medium-High",
+          "complexity_score": 0.55,
+          "total_requirements": 37,
+          "requirement_breakdown": {
+            "functional": 19,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 37
+          }
+        },
+        {
+          "doc_id": "URS-015",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-015.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Process Analytical Technology System",
+          "domain": "Process Analytics",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 35
+          }
+        }
+      ],
+      "train_documents": [
+        {
+          "doc_id": "URS-001",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Continuous Temperature and Humidity Monitoring",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 15,
+          "requirement_breakdown": {
+            "functional": 7,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 15
+          }
+        },
+        {
+          "doc_id": "URS-002",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-002.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Sample Management and Testing Platform",
+          "domain": "Quality Control Laboratory",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 17,
+          "requirement_breakdown": {
+            "functional": 9,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 17
+          }
+        },
+        {
+          "doc_id": "URS-003",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-003.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Record Management System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 16,
+          "requirement_breakdown": {
+            "functional": 8,
+            "regulatory": 3,
+            "performance": 2,
+            "integration": 2,
+            "technical": 1,
+            "total": 16
+          }
+        },
+        {
+          "doc_id": "URS-004",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-004.md",
+          "gamp_category": "Ambiguous (3/4)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Analytical Instrument Control and Data Analysis",
+          "domain": "Analytical Chemistry",
+          "complexity_level": "Medium",
+          "complexity_score": 0.32,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-005",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-005.md",
+          "gamp_category": "Ambiguous (4/5)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Clinical Data Management and Analytics Platform",
+          "domain": "Clinical Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.70,
+          "total_requirements": 24,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 24
+          }
+        },
+        {
+          "doc_id": "URS-006",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-006.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Inventory Management Software",
+          "domain": "Warehouse Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-008",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-008.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Document Control System",
+          "domain": "Document Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-009",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-009.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Laboratory Equipment Integration System",
+          "domain": "Laboratory Operations",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 25,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 25
+          }
+        },
+        {
+          "doc_id": "URS-010",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-010.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Enterprise Resource Planning System",
+          "domain": "Enterprise Management",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 6,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-012",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-012.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Supply Chain Management System",
+          "domain": "Supply Chain",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 27,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 27
+          }
+        },
+        {
+          "doc_id": "URS-013",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-013.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Process Control System",
+          "domain": "Process Control",
+          "complexity_level": "High",
+          "complexity_score": 0.65,
+          "total_requirements": 28,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 28
+          }
+        },
+        {
+          "doc_id": "URS-014",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-014.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Release System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 30,
+          "requirement_breakdown": {
+            "functional": 15,
+            "regulatory": 6,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 30
+          }
+        },
+        {
+          "doc_id": "URS-016",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-016.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Regulatory Submission Platform",
+          "domain": "Regulatory Affairs",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 34,
+          "requirement_breakdown": {
+            "functional": 17,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 34
+          }
+        },
+        {
+          "doc_id": "URS-017",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-017.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Proprietary Supply Chain Analytics and Optimization Platform",
+          "domain": "Supply Chain Management",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 33,
+          "requirement_breakdown": {
+            "functional": 16,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 33
+          }
+        }
+      ],
+      "test_count": 3,
+      "train_count": 14
     },
     "fold_4": {
-      "test_documents": ["URS-010", "URS-011", "URS-012"],
-      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-004", "URS-005", "URS-006", "URS-007", "URS-008", "URS-009", "URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
-      "train_count": 14,
-      "test_count": 3
+      "test_documents": [
+        {
+          "doc_id": "URS-008",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-008.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Document Control System",
+          "domain": "Document Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-012",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-012.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Supply Chain Management System",
+          "domain": "Supply Chain",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 27,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 27
+          }
+        },
+        {
+          "doc_id": "URS-016",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-016.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Regulatory Submission Platform",
+          "domain": "Regulatory Affairs",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 34,
+          "requirement_breakdown": {
+            "functional": 17,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 34
+          }
+        }
+      ],
+      "train_documents": [
+        {
+          "doc_id": "URS-001",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Continuous Temperature and Humidity Monitoring",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 15,
+          "requirement_breakdown": {
+            "functional": 7,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 15
+          }
+        },
+        {
+          "doc_id": "URS-002",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-002.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Sample Management and Testing Platform",
+          "domain": "Quality Control Laboratory",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 17,
+          "requirement_breakdown": {
+            "functional": 9,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 17
+          }
+        },
+        {
+          "doc_id": "URS-003",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-003.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Record Management System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 16,
+          "requirement_breakdown": {
+            "functional": 8,
+            "regulatory": 3,
+            "performance": 2,
+            "integration": 2,
+            "technical": 1,
+            "total": 16
+          }
+        },
+        {
+          "doc_id": "URS-004",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-004.md",
+          "gamp_category": "Ambiguous (3/4)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Analytical Instrument Control and Data Analysis",
+          "domain": "Analytical Chemistry",
+          "complexity_level": "Medium",
+          "complexity_score": 0.32,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-005",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-005.md",
+          "gamp_category": "Ambiguous (4/5)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Clinical Data Management and Analytics Platform",
+          "domain": "Clinical Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.70,
+          "total_requirements": 24,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 24
+          }
+        },
+        {
+          "doc_id": "URS-006",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-006.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Inventory Management Software",
+          "domain": "Warehouse Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-007",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-007.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Temperature Monitoring System",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 23,
+          "requirement_breakdown": {
+            "functional": 11,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 23
+          }
+        },
+        {
+          "doc_id": "URS-009",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-009.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Laboratory Equipment Integration System",
+          "domain": "Laboratory Operations",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 25,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 25
+          }
+        },
+        {
+          "doc_id": "URS-010",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-010.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Enterprise Resource Planning System",
+          "domain": "Enterprise Management",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 6,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-011",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-011.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Quality Management System",
+          "domain": "Quality Assurance",
+          "complexity_level": "Medium-High",
+          "complexity_score": 0.55,
+          "total_requirements": 37,
+          "requirement_breakdown": {
+            "functional": 19,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 37
+          }
+        },
+        {
+          "doc_id": "URS-013",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-013.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Process Control System",
+          "domain": "Process Control",
+          "complexity_level": "High",
+          "complexity_score": 0.65,
+          "total_requirements": 28,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 28
+          }
+        },
+        {
+          "doc_id": "URS-014",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-014.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Release System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 30,
+          "requirement_breakdown": {
+            "functional": 15,
+            "regulatory": 6,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 30
+          }
+        },
+        {
+          "doc_id": "URS-015",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-015.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Process Analytical Technology System",
+          "domain": "Process Analytics",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-017",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-017.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Proprietary Supply Chain Analytics and Optimization Platform",
+          "domain": "Supply Chain Management",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 33,
+          "requirement_breakdown": {
+            "functional": 16,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 33
+          }
+        }
+      ],
+      "test_count": 3,
+      "train_count": 14
     },
     "fold_5": {
-      "test_documents": ["URS-013", "URS-014", "URS-015", "URS-016", "URS-017"],
-      "train_documents": ["URS-001", "URS-002", "URS-003", "URS-004", "URS-005", "URS-006", "URS-007", "URS-008", "URS-009", "URS-010", "URS-011", "URS-012"],
-      "train_count": 12,
-      "test_count": 5
+      "test_documents": [
+        {
+          "doc_id": "URS-009",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-009.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Laboratory Equipment Integration System",
+          "domain": "Laboratory Operations",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 25,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 25
+          }
+        },
+        {
+          "doc_id": "URS-013",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-013.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Process Control System",
+          "domain": "Process Control",
+          "complexity_level": "High",
+          "complexity_score": 0.65,
+          "total_requirements": 28,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 28
+          }
+        },
+        {
+          "doc_id": "URS-017",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-017.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Proprietary Supply Chain Analytics and Optimization Platform",
+          "domain": "Supply Chain Management",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 33,
+          "requirement_breakdown": {
+            "functional": 16,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 33
+          }
+        }
+      ],
+      "train_documents": [
+        {
+          "doc_id": "URS-001",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Continuous Temperature and Humidity Monitoring",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 15,
+          "requirement_breakdown": {
+            "functional": 7,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 15
+          }
+        },
+        {
+          "doc_id": "URS-002",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-002.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Sample Management and Testing Platform",
+          "domain": "Quality Control Laboratory",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 17,
+          "requirement_breakdown": {
+            "functional": 9,
+            "regulatory": 3,
+            "performance": 3,
+            "integration": 2,
+            "technical": 0,
+            "total": 17
+          }
+        },
+        {
+          "doc_id": "URS-003",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-003.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Record Management System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 16,
+          "requirement_breakdown": {
+            "functional": 8,
+            "regulatory": 3,
+            "performance": 2,
+            "integration": 2,
+            "technical": 1,
+            "total": 16
+          }
+        },
+        {
+          "doc_id": "URS-004",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-004.md",
+          "gamp_category": "Ambiguous (3/4)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Analytical Instrument Control and Data Analysis",
+          "domain": "Analytical Chemistry",
+          "complexity_level": "Medium",
+          "complexity_score": 0.32,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-005",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-005.md",
+          "gamp_category": "Ambiguous (4/5)",
+          "normalized_category": "Ambiguous",
+          "system_type": "Clinical Data Management and Analytics Platform",
+          "domain": "Clinical Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.70,
+          "total_requirements": 24,
+          "requirement_breakdown": {
+            "functional": 12,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 24
+          }
+        },
+        {
+          "doc_id": "URS-006",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-006.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Inventory Management Software",
+          "domain": "Warehouse Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-007",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-007.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Basic Temperature Monitoring System",
+          "domain": "Environmental Control",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 23,
+          "requirement_breakdown": {
+            "functional": 11,
+            "regulatory": 5,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 23
+          }
+        },
+        {
+          "doc_id": "URS-008",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-008.md",
+          "gamp_category": "3 (Standard Software)",
+          "normalized_category": "Category 3",
+          "system_type": "Standard Document Control System",
+          "domain": "Document Management",
+          "complexity_level": "Low",
+          "complexity_score": 0.18,
+          "total_requirements": 21,
+          "requirement_breakdown": {
+            "functional": 10,
+            "regulatory": 4,
+            "performance": 4,
+            "integration": 3,
+            "technical": 0,
+            "total": 21
+          }
+        },
+        {
+          "doc_id": "URS-010",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-010.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Enterprise Resource Planning System",
+          "domain": "Enterprise Management",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 6,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-011",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-011.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Quality Management System",
+          "domain": "Quality Assurance",
+          "complexity_level": "Medium-High",
+          "complexity_score": 0.55,
+          "total_requirements": 37,
+          "requirement_breakdown": {
+            "functional": 19,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 5,
+            "technical": 0,
+            "total": 37
+          }
+        },
+        {
+          "doc_id": "URS-012",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-012.md",
+          "gamp_category": "4 (Configured Products)",
+          "normalized_category": "Category 4",
+          "system_type": "Configured Supply Chain Management System",
+          "domain": "Supply Chain",
+          "complexity_level": "Medium",
+          "complexity_score": 0.30,
+          "total_requirements": 27,
+          "requirement_breakdown": {
+            "functional": 14,
+            "regulatory": 5,
+            "performance": 5,
+            "integration": 3,
+            "technical": 0,
+            "total": 27
+          }
+        },
+        {
+          "doc_id": "URS-014",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-014.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Batch Release System",
+          "domain": "Manufacturing Operations",
+          "complexity_level": "High",
+          "complexity_score": 0.75,
+          "total_requirements": 30,
+          "requirement_breakdown": {
+            "functional": 15,
+            "regulatory": 6,
+            "performance": 5,
+            "integration": 4,
+            "technical": 0,
+            "total": 30
+          }
+        },
+        {
+          "doc_id": "URS-015",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-015.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Process Analytical Technology System",
+          "domain": "Process Analytics",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 35,
+          "requirement_breakdown": {
+            "functional": 18,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 35
+          }
+        },
+        {
+          "doc_id": "URS-016",
+          "file_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-016.md",
+          "gamp_category": "5 (Custom Applications)",
+          "normalized_category": "Category 5",
+          "system_type": "Custom Regulatory Submission Platform",
+          "domain": "Regulatory Affairs",
+          "complexity_level": "Very High",
+          "complexity_score": 0.90,
+          "total_requirements": 34,
+          "requirement_breakdown": {
+            "functional": 17,
+            "regulatory": 7,
+            "performance": 6,
+            "integration": 4,
+            "technical": 0,
+            "total": 34
+          }
+        }
+      ],
+      "test_count": 3,
+      "train_count": 14
     }
   },
   "validation_summary": {
     "total_unique_documents": 17,
     "documents_per_test_set": "Each document appears exactly once as test data across all folds",
-    "fold_balance": "3-3-3-3-5 split ensures no duplicates",
-    "coverage": "100% of documents used for testing exactly once"
+    "stratification_balance": "GAMP categories distributed across folds with round-robin assignment",
+    "coverage": "100% of documents used for testing exactly once",
+    "fold_distribution": "4-4-3-3-3 split maintains balance while ensuring complete coverage"
   }
 }

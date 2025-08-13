@@ -1,0 +1,515 @@
+{
+  "timestamp": "2025-08-13T17:35:13.769975",
+  "validation_suite": "Comprehensive Cross-Validation Fold Validation",
+  "dataset_info": {
+    "total_documents": 17,
+    "total_folds": 5
+  },
+  "test_results": {
+    "category_distribution": {
+      "test_name": "Category Distribution Chi-Square Test",
+      "passed": "True",
+      "p_value": 0.9979728184600465,
+      "statistic": 2.5500000000000007,
+      "threshold": 0.05,
+      "description": "Tests independence of GAMP categories across folds (H0: categories are independent of fold assignment)",
+      "details": {
+        "observed_frequencies": {
+          "Category 3": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "Category 4": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "Category 5": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "Ambiguous": [
+            1,
+            1,
+            0,
+            0,
+            0
+          ]
+        },
+        "fold_categories": {
+          "fold_1": {
+            "Category 3": 1,
+            "Category 4": 1,
+            "Category 5": 1,
+            "Ambiguous": 1
+          },
+          "fold_2": {
+            "Category 3": 1,
+            "Category 4": 1,
+            "Category 5": 1,
+            "Ambiguous": 1
+          },
+          "fold_3": {
+            "Category 3": 1,
+            "Category 4": 1,
+            "Category 5": 1,
+            "Ambiguous": 0
+          },
+          "fold_4": {
+            "Category 3": 1,
+            "Category 4": 1,
+            "Category 5": 1,
+            "Ambiguous": 0
+          },
+          "fold_5": {
+            "Category 3": 1,
+            "Category 4": 1,
+            "Category 5": 1,
+            "Ambiguous": 0
+          }
+        },
+        "degrees_of_freedom": 12,
+        "interpretation": "PASSED: Categories well-balanced across folds"
+      }
+    },
+    "complexity_distribution": {
+      "test_name": "Complexity Distribution KS Test",
+      "passed": "True",
+      "p_value": 0.9842105263157895,
+      "statistic": 0.2549019607843137,
+      "threshold": 0.05,
+      "description": "Tests if complexity scores are similarly distributed across folds (H0: same distribution)",
+      "details": {
+        "fold_results": {
+          "fold_1": {
+            "ks_statistic": 0.22058823529411764,
+            "p_value": 0.9864661654135338,
+            "sample_size": 4,
+            "mean": 0.3875,
+            "std": 0.24944939366532845
+          },
+          "fold_2": {
+            "ks_statistic": 0.17647058823529413,
+            "p_value": 0.9993316624895572,
+            "sample_size": 4,
+            "mean": 0.4825,
+            "std": 0.285
+          },
+          "fold_3": {
+            "ks_statistic": 0.19607843137254902,
+            "p_value": 1.0,
+            "sample_size": 3,
+            "mean": 0.5433333333333333,
+            "std": 0.3600462933198082
+          },
+          "fold_4": {
+            "ks_statistic": 0.19607843137254902,
+            "p_value": 1.0,
+            "sample_size": 3,
+            "mean": 0.45999999999999996,
+            "std": 0.3857460304397182
+          },
+          "fold_5": {
+            "ks_statistic": 0.2549019607843137,
+            "p_value": 0.9842105263157895,
+            "sample_size": 3,
+            "mean": 0.5766666666666667,
+            "std": 0.36555893277737495
+          }
+        },
+        "overall_complexity_stats": {
+          "mean": 0.48352941176470593,
+          "std": 0.2882911110420895,
+          "min": 0.18,
+          "max": 0.9,
+          "count": 17
+        },
+        "worst_fold": "fold_5",
+        "interpretation": "PASSED: Complexity well-distributed across folds"
+      }
+    },
+    "fold_balance": {
+      "test_name": "Fold Balance Analysis",
+      "passed": false,
+      "p_value": -0.3693063937629153,
+      "statistic": 1.3693063937629153,
+      "threshold": 0.2,
+      "description": "Tests overall balance of document counts and categories across folds",
+      "details": {
+        "fold_sizes": [
+          4,
+          4,
+          3,
+          3,
+          3
+        ],
+        "fold_requirements": [
+          69,
+          110,
+          95,
+          82,
+          86
+        ],
+        "size_coefficient_of_variation": 0.16109486985446062,
+        "requirements_coefficient_of_variation": 0.17278462882463827,
+        "category_coefficients": {
+          "Category 3": 0.0,
+          "Category 4": 0.0,
+          "Category 5": 0.0,
+          "Ambiguous": 1.3693063937629153
+        },
+        "max_category_cv": 1.3693063937629153,
+        "balance_metrics": {
+          "size_balance": "Acceptable",
+          "category_balance": "Poor"
+        },
+        "interpretation": "FAILED: Significant fold imbalance detected"
+      }
+    },
+    "stratification_quality": {
+      "test_name": "Stratification Quality Analysis",
+      "passed": false,
+      "p_value": 0.21922446718642372,
+      "statistic": 0.7807755328135763,
+      "threshold": 0.3,
+      "description": "Tests quality of stratification across GAMP categories, complexity levels, and domains",
+      "details": {
+        "stratification_metrics": {
+          "gamp_category_balance": {},
+          "complexity_level_balance": {
+            "value_distributions": {
+              "Low": {
+                "counts_per_fold": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "coefficient_of_variation": 0.0,
+                "total_count": 5
+              },
+              "Medium": {
+                "counts_per_fold": [
+                  2,
+                  1,
+                  0,
+                  1,
+                  0
+                ],
+                "coefficient_of_variation": 1.0458250331675945,
+                "total_count": 4
+              },
+              "Medium-High": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Very High": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  1,
+                  1,
+                  1
+                ],
+                "coefficient_of_variation": 0.912870929175277,
+                "total_count": 3
+              },
+              "High": {
+                "counts_per_fold": [
+                  1,
+                  2,
+                  0,
+                  0,
+                  1
+                ],
+                "coefficient_of_variation": 1.0458250331675945,
+                "total_count": 4
+              }
+            },
+            "average_coefficient_of_variation": 1.0481177946020512,
+            "balance_quality": "Poor"
+          },
+          "domain_balance": {
+            "value_distributions": {
+              "Laboratory Operations": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Enterprise Management": {
+                "counts_per_fold": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Quality Control Laboratory": {
+                "counts_per_fold": [
+                  1,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Regulatory Affairs": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Process Control": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Supply Chain Management": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Environmental Control": {
+                "counts_per_fold": [
+                  1,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 1.3693063937629153,
+                "total_count": 2
+              },
+              "Analytical Chemistry": {
+                "counts_per_fold": [
+                  1,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Warehouse Management": {
+                "counts_per_fold": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Document Management": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Quality Assurance": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Manufacturing Operations": {
+                "counts_per_fold": [
+                  1,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 1.3693063937629153,
+                "total_count": 2
+              },
+              "Process Analytics": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Clinical Operations": {
+                "counts_per_fold": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              },
+              "Supply Chain": {
+                "counts_per_fold": [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "coefficient_of_variation": 2.23606797749979,
+                "total_count": 1
+              }
+            },
+            "average_coefficient_of_variation": 2.120499766334873,
+            "balance_quality": "Poor"
+          },
+          "combined_balance": {},
+          "gamp_categorie_balance": {
+            "value_distributions": {
+              "Category 3": {
+                "counts_per_fold": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "coefficient_of_variation": 0.0,
+                "total_count": 5
+              },
+              "Category 5": {
+                "counts_per_fold": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "coefficient_of_variation": 0.0,
+                "total_count": 5
+              },
+              "Ambiguous": {
+                "counts_per_fold": [
+                  1,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "coefficient_of_variation": 1.3693063937629153,
+                "total_count": 2
+              },
+              "Category 4": {
+                "counts_per_fold": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "coefficient_of_variation": 0.0,
+                "total_count": 5
+              }
+            },
+            "average_coefficient_of_variation": 0.3423265984407288,
+            "balance_quality": "Poor"
+          }
+        },
+        "overall_balance_score": 0.21922446718642372,
+        "fold_data_summary": {
+          "fold_1": {
+            "test_count": 4,
+            "unique_categories": 4,
+            "complexity_range": "0.18-0.75"
+          },
+          "fold_2": {
+            "test_count": 4,
+            "unique_categories": 4,
+            "complexity_range": "0.18-0.75"
+          },
+          "fold_3": {
+            "test_count": 3,
+            "unique_categories": 3,
+            "complexity_range": "0.18-0.90"
+          },
+          "fold_4": {
+            "test_count": 3,
+            "unique_categories": 3,
+            "complexity_range": "0.18-0.90"
+          },
+          "fold_5": {
+            "test_count": 3,
+            "unique_categories": 3,
+            "complexity_range": "0.18-0.90"
+          }
+        },
+        "interpretation": "FAILED: Stratification quality below threshold"
+      }
+    }
+  },
+  "overall_summary": {
+    "tests_passed": 2,
+    "tests_failed": 2,
+    "overall_passed": false,
+    "pass_rate": 0.5
+  },
+  "recommendations": [
+    "WARNING: Cross-validation folds failed one or more validation tests",
+    "Address Fold Balance Analysis failure: FAILED: Significant fold imbalance detected",
+    "Address Stratification Quality Analysis failure: FAILED: Stratification quality below threshold",
+    "Consider regenerating folds with improved stratification"
+  ]
+}
