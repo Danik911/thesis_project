@@ -38,6 +38,7 @@ from src.core.events import (
     AgentRequestEvent,
     AgentResultEvent,
     AgentResultsEvent,
+    ConsultationBypassedEvent,
     ConsultationRequiredEvent,
     GAMPCategorizationEvent,
     GAMPCategory,
@@ -740,20 +741,31 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self,
         ctx: Context,
         ev: GAMPCategorizationEvent
-    ) -> ConsultationRequiredEvent | PlanningEvent:
+    ) -> ConsultationRequiredEvent | ConsultationBypassedEvent | PlanningEvent:
         """
         Check if human consultation is required based on categorization results.
+        
+        Implements validation mode bypass logic: when validation_mode=True,
+        consultations that would normally be required are bypassed with
+        full audit trail logging for regulatory compliance.
         
         Args:
             ctx: Workflow context
             ev: GAMP categorization event
             
         Returns:
-            ConsultationRequiredEvent if consultation needed, otherwise PlanningEvent to continue workflow
+            ConsultationRequiredEvent if consultation needed (production mode),
+            ConsultationBypassedEvent if bypassed (validation mode),
+            or PlanningEvent if no consultation needed
         """
         # Store categorization result in context using safe operations
         await safe_context_set(ctx, "categorization_result", ev)
         await safe_context_set(ctx, "gamp_category", ev.gamp_category)
+
+        # Get validation mode configuration
+        validation_mode_enabled = config.validation_mode.validation_mode
+        bypass_threshold = config.validation_mode.bypass_consultation_threshold
+        bypass_allowed_categories = config.validation_mode.bypass_allowed_categories
 
         if not self.enable_human_consultation:
             # Skip consultation - create planning event directly
@@ -762,18 +774,18 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         # Check if consultation is required
         requires_consultation = (
-            ev.confidence_score < 0.7 or  # Low confidence
+            ev.confidence_score < bypass_threshold or  # Low confidence
             ev.gamp_category.value in [4, 5] or  # High-risk categories
             "consultation_required" in ev.risk_assessment.get("flags", [])
         )
 
         if requires_consultation:
-            self.logger.info("[CONSULT] Human consultation required")
+            # Create the consultation event that would be required
             consultation_event = ConsultationRequiredEvent(
                 consultation_type="categorization_review",
                 context={
                     "reason": f"Category {ev.gamp_category.value} with confidence {ev.confidence_score:.2f}",
-                    "gamp_category": ev.gamp_category.value,
+                    "gamp_category": ev.gamp_category,
                     "confidence_score": ev.confidence_score,
                     "risk_assessment": ev.risk_assessment,
                     "session_id": self._workflow_session_id
@@ -782,12 +794,105 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 required_expertise=["validation_engineer", "quality_assurance"],
                 triggering_step="check_consultation_required"
             )
-            # Store the categorization event for later use
-            consultation_event.categorization_event = ev  # Add as dynamic attribute
-            return consultation_event
+            
+            # Check if we should bypass consultation due to validation mode
+            should_bypass = (
+                validation_mode_enabled and 
+                ev.gamp_category.value in bypass_allowed_categories
+            )
+            
+            if should_bypass:
+                self.logger.info(
+                    f"[VALIDATION MODE] Bypassing consultation for Category {ev.gamp_category.value} "
+                    f"(confidence: {ev.confidence_score:.2f}) - validation mode active"
+                )
+                
+                # Create bypass event for audit trail
+                bypass_event = ConsultationBypassedEvent(
+                    original_consultation=consultation_event,
+                    bypass_reason="validation_mode_enabled",
+                    quality_metrics={
+                        "original_confidence": ev.confidence_score,
+                        "gamp_category": ev.gamp_category.value,
+                        "bypass_threshold": bypass_threshold,
+                        "validation_mode_active": True
+                    }
+                )
+                
+                # Log bypass for audit trail
+                self.logger.warning(
+                    f"AUDIT TRAIL: Consultation bypassed for {consultation_event.consultation_id} "
+                    f"due to validation mode. Original consultation: {consultation_event.consultation_type}"
+                )
+                
+                # Store categorization event in bypass event for downstream processing
+                bypass_event.original_consultation.categorization_event = ev
+                
+                # Return bypass event - it will be consumed by handle_consultation_bypassed step
+                return bypass_event
+            else:
+                # Production mode or category not allowed for bypass - require consultation
+                self.logger.info("[CONSULT] Human consultation required - production mode or bypass not allowed")
+                consultation_event.categorization_event = ev  # Add as dynamic attribute
+                return consultation_event
+        
         # No consultation needed - create planning event directly
         self.logger.info("No consultation required - creating planning event")
         return self._create_planning_event_from_categorization(ev)
+
+    @step
+    async def handle_consultation_bypassed(
+        self,
+        ctx: Context,
+        ev: ConsultationBypassedEvent
+    ) -> PlanningEvent:
+        """
+        Handle consultation bypass events for validation mode.
+        
+        This step processes ConsultationBypassedEvent by logging the bypass
+        for audit trail and continuing with workflow execution.
+        
+        Args:
+            ctx: Workflow context
+            ev: Consultation bypassed event
+            
+        Returns:
+            PlanningEvent to continue workflow execution
+        """
+        self.logger.info(f"[VALIDATION MODE] Processing consultation bypass: {ev.consultation_id}")
+        
+        # Log bypass metrics for audit trail
+        bypass_metrics = {
+            "consultation_type": ev.consultation_type,
+            "gamp_category": ev.gamp_category,
+            "confidence_score": ev.confidence_score,
+            "bypass_timestamp": ev.bypass_timestamp,
+            "bypass_reason": ev.bypass_reason
+        }
+        
+        # Store bypass information in context for audit trail
+        await safe_context_set(ctx, "consultation_bypassed", True)
+        await safe_context_set(ctx, "bypass_metrics", bypass_metrics)
+        
+        # Get the original categorization from the bypass event context
+        if ev.original_consultation and hasattr(ev.original_consultation, 'categorization_event'):
+            categorization_event = ev.original_consultation.categorization_event
+        else:
+            # Reconstruct from bypass event data
+            from src.core.events import GAMPCategorizationEvent, GAMPCategory
+            categorization_event = GAMPCategorizationEvent(
+                gamp_category=GAMPCategory(ev.gamp_category) if ev.gamp_category else GAMPCategory.CATEGORY_5,
+                confidence_score=ev.confidence_score or 0.6,
+                justification="Reconstructed from bypass event for workflow continuation",
+                risk_assessment={"bypassed_consultation": True},
+                categorized_by="validation_mode_bypass"
+            )
+        
+        # Create planning event to continue workflow
+        planning_event = self._create_planning_event_from_categorization(categorization_event)
+        
+        self.logger.info(f"[VALIDATION MODE] Consultation bypass processed - continuing with planning")
+        return planning_event
 
     def _create_planning_event_from_categorization(self, categorization_event: GAMPCategorizationEvent) -> PlanningEvent:
         """
@@ -1193,6 +1298,7 @@ async def run_unified_test_generation_workflow(
     enable_document_processing: bool = True,
     enable_parallel_coordination: bool = True,
     document_path: str | None = None,
+    validation_mode: bool = False,
     **kwargs
 ) -> dict[str, Any]:
     """
@@ -1210,30 +1316,38 @@ async def run_unified_test_generation_workflow(
         enable_document_processing: Enable document processing
         enable_parallel_coordination: Enable parallel coordination
         document_path: Path to the document to process
+        validation_mode: Enable validation mode (bypasses consultation for testing)
         **kwargs: Additional arguments
         
     Returns:
         Dictionary containing workflow results
     """
-    # Create workflow instance
-    workflow = UnifiedTestGenerationWorkflow(
-        timeout=timeout,
-        verbose=verbose,
-        enable_parallel_coordination=enable_parallel_coordination,
-        enable_phoenix=True,
-        enable_human_consultation=True
-    )
-
-    # Determine document path - prefer explicit document_path
-    if document_path:
-        doc_path = document_path
-    else:
-        # If we only have content, we need to create a temporary file
-        # For now, raise error if no path provided
-        raise ValueError("document_path is required for unified workflow")
-
-    # Run the workflow
+    # Temporarily set validation mode in config if requested
+    original_validation_mode = None
+    if validation_mode:
+        original_validation_mode = config.validation_mode.validation_mode
+        config.validation_mode.validation_mode = True
+        logger.warning(f"VALIDATION MODE ENABLED: Consultations will be bypassed for testing")
+    
     try:
+        # Create workflow instance
+        workflow = UnifiedTestGenerationWorkflow(
+            timeout=timeout,
+            verbose=verbose,
+            enable_parallel_coordination=enable_parallel_coordination,
+            enable_phoenix=True,
+            enable_human_consultation=True
+        )
+
+        # Determine document path - prefer explicit document_path
+        if document_path:
+            doc_path = document_path
+        else:
+            # If we only have content, we need to create a temporary file
+            # For now, raise error if no path provided
+            raise ValueError("document_path is required for unified workflow")
+
+        # Run the workflow
         result = await workflow.run(document_path=doc_path)
 
         # Handle different result formats
@@ -1251,6 +1365,11 @@ async def run_unified_test_generation_workflow(
                 "failure_reason": "workflow_execution_error"
             }
         }
+    finally:
+        # Restore original validation mode if it was modified
+        if original_validation_mode is not None:
+            config.validation_mode.validation_mode = original_validation_mode
+            logger.info("Validation mode restored to original setting")
 
 
 # Export the main workflow class and convenience function

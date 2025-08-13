@@ -147,6 +147,7 @@ class EventStreamConfig:
             "ValidationEvent",
             "ErrorRecoveryEvent",
             "ConsultationRequiredEvent",
+            "ConsultationBypassedEvent",
             "UserDecisionEvent",
             "URSIngestionEvent",
             "DocumentProcessedEvent",
@@ -270,6 +271,68 @@ class HumanConsultationConfig:
 
 
 @dataclass
+class ValidationModeConfig:
+    """Configuration for validation mode testing capabilities."""
+
+    # Validation mode settings - PRODUCTION SAFE defaults
+    validation_mode: bool = field(
+        default_factory=lambda: os.getenv("VALIDATION_MODE", "false").lower() == "true"
+    )
+    
+    # Consultation bypass threshold (confidence score below which consultation would normally be required)
+    bypass_consultation_threshold: float = field(
+        default_factory=lambda: float(os.getenv("BYPASS_CONSULTATION_THRESHOLD", "0.7"))
+    )
+    
+    # Category bypass settings (which GAMP categories can bypass consultation in validation mode)
+    bypass_allowed_categories: list[int] = field(
+        default_factory=lambda: [4, 5]  # Category 4 and 5 can bypass in validation mode
+    )
+    
+    # Audit trail settings for bypassed consultations
+    log_bypassed_consultations: bool = True
+    bypass_audit_directory: str = "logs/validation/bypassed_consultations"
+    
+    # Quality metrics tracking for bypass impact
+    track_bypass_quality_impact: bool = True
+    bypass_metrics_file: str = "logs/validation/bypass_quality_metrics.json"
+    
+    # Safety settings
+    require_explicit_validation_mode: bool = True  # Must be explicitly enabled
+    max_bypass_rate_threshold: float = 0.8  # Alert if bypass rate exceeds 80%
+    
+    def __post_init__(self):
+        """Validate validation mode configuration and ensure production safety."""
+        # Ensure bypass threshold is valid
+        if not 0.0 <= self.bypass_consultation_threshold <= 1.0:
+            raise ValueError("Bypass consultation threshold must be between 0.0 and 1.0")
+        
+        # Ensure bypass directories exist if validation mode is enabled
+        if self.validation_mode:
+            Path(self.bypass_audit_directory).mkdir(parents=True, exist_ok=True)
+            Path(Path(self.bypass_metrics_file).parent).mkdir(parents=True, exist_ok=True)
+        
+        # Validate GAMP categories
+        valid_categories = [1, 3, 4, 5]
+        for category in self.bypass_allowed_categories:
+            if category not in valid_categories:
+                raise ValueError(f"Invalid GAMP category for bypass: {category}. Must be one of {valid_categories}")
+        
+        # Production safety check
+        if self.validation_mode and self.require_explicit_validation_mode:
+            env_validation = os.getenv("VALIDATION_MODE_EXPLICIT", "false").lower() == "true"
+            if not env_validation:
+                # Allow validation mode but log warning for audit compliance
+                import logging
+                logger = logging.getLogger("ValidationModeConfig")
+                logger.warning(
+                    "VALIDATION MODE ACTIVE: This bypasses consultation requirements for testing. "
+                    "Ensure this is intentional and not in production environment. "
+                    "Set VALIDATION_MODE_EXPLICIT=true to suppress this warning."
+                )
+
+
+@dataclass
 class PhoenixConfig:
     """Configuration for Arize Phoenix observability integration."""
 
@@ -329,6 +392,7 @@ class Config:
     gamp5_compliance: GAMP5ComplianceConfig = field(default_factory=GAMP5ComplianceConfig)
     event_streaming: EventStreamConfig = field(default_factory=EventStreamConfig)
     human_consultation: HumanConsultationConfig = field(default_factory=HumanConsultationConfig)
+    validation_mode: ValidationModeConfig = field(default_factory=ValidationModeConfig)
     phoenix: PhoenixConfig = field(default_factory=PhoenixConfig)
 
     # Environment settings
@@ -404,6 +468,15 @@ class Config:
                 "enable_notifications": self.human_consultation.enable_notifications,
                 "require_digital_signature": self.human_consultation.require_digital_signature,
                 "detailed_audit_logging": self.human_consultation.detailed_audit_logging
+            },
+            "validation_mode": {
+                "validation_mode": self.validation_mode.validation_mode,
+                "bypass_consultation_threshold": self.validation_mode.bypass_consultation_threshold,
+                "bypass_allowed_categories": self.validation_mode.bypass_allowed_categories,
+                "log_bypassed_consultations": self.validation_mode.log_bypassed_consultations,
+                "track_bypass_quality_impact": self.validation_mode.track_bypass_quality_impact,
+                "require_explicit_validation_mode": self.validation_mode.require_explicit_validation_mode,
+                "max_bypass_rate_threshold": self.validation_mode.max_bypass_rate_threshold
             },
             "phoenix": {
                 "enable_phoenix": self.phoenix.enable_phoenix,

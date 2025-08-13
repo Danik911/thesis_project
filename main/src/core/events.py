@@ -197,6 +197,59 @@ class ConsultationTimeoutEvent(Event):
     escalation_contacts: list[str] = Field(default_factory=list)
 
 
+class ConsultationBypassedEvent(Event):
+    """
+    Event triggered when human consultation is bypassed due to validation mode.
+    
+    This event is created when validation_mode=True and a consultation would
+    normally be required, but is bypassed to allow automated testing to continue.
+    Maintains complete audit trail for regulatory compliance.
+    """
+    consultation_id: UUID = Field(default_factory=uuid4)
+    original_consultation: ConsultationRequiredEvent
+    bypass_reason: str = "validation_mode_enabled"
+    bypass_timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    
+    # Audit trail information
+    consultation_type: str = ""
+    triggering_step: str = ""
+    original_context: dict[str, Any] = Field(default_factory=dict)
+    confidence_score: float | None = None
+    gamp_category: int | None = None
+    
+    # Quality impact tracking
+    quality_metrics: dict[str, Any] = Field(default_factory=dict)
+    bypass_decision_rationale: str = "Bypassed for validation testing - human consultation would normally be required"
+    
+    # Compliance metadata
+    compliance_notes: str = "Bypassed consultation logged for audit trail - validation mode active"
+    regulatory_impact: str = "MEDIUM - Bypass logged for thesis validation testing"
+    audit_trail_preserved: bool = True
+    
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    
+    def __init__(self, **data: Any) -> None:
+        """Initialize bypass event with original consultation data."""
+        super().__init__(**data)
+        
+        # Extract key information from original consultation if provided
+        if self.original_consultation:
+            self.consultation_type = self.original_consultation.consultation_type
+            self.triggering_step = self.original_consultation.triggering_step
+            self.original_context = self.original_consultation.context
+            
+            # Extract GAMP-specific information from context if available
+            if "gamp_category" in self.original_context:
+                if hasattr(self.original_context["gamp_category"], "value"):
+                    self.gamp_category = self.original_context["gamp_category"].value
+                else:
+                    self.gamp_category = self.original_context["gamp_category"]
+            
+            if "confidence_score" in self.original_context:
+                self.confidence_score = self.original_context["confidence_score"]
+
+
 class ConsultationSessionEvent(Event):
     """
     Event for managing consultation sessions and lifecycle.
@@ -384,6 +437,7 @@ __all__ = [
     "AgentRequestEvent",
     "AgentResultEvent",
     "AgentResultsEvent",
+    "ConsultationBypassedEvent",
     "ConsultationRequiredEvent",
     "ConsultationSessionEvent",
     "ConsultationTimeoutEvent",
