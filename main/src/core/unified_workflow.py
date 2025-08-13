@@ -449,6 +449,71 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         urs_content = doc_path.read_text(encoding="utf-8")
 
+        # OWASP Security Validation - Critical first step
+        logger.info(f"[{self._workflow_session_id}] Running OWASP security validation on URS content")
+        
+        try:
+            from src.security import PharmaceuticalInputSecurityWrapper
+            
+            # Initialize security validator
+            security_validator = PharmaceuticalInputSecurityWrapper()
+            
+            # Validate URS content for security threats
+            validation_result = security_validator.validate_urs_content(
+                urs_content=urs_content,
+                document_name=doc_path.name,
+                author="system"
+            )
+            
+            # CRITICAL: Fail explicitly if security validation fails
+            if not validation_result.is_valid:
+                error_msg = (
+                    f"OWASP security validation FAILED for document {doc_path.name}\n"
+                    f"Threat Level: {validation_result.threat_level}\n"
+                    f"OWASP Category: {validation_result.owasp_category}\n"
+                    f"Detected Patterns: {validation_result.detected_patterns}\n"
+                    f"Confidence: {validation_result.confidence_score:.3f}\n"
+                    f"Error: {validation_result.error_message}\n"
+                    f"NO FALLBACKS ALLOWED - Human consultation required."
+                )
+                logger.error(f"[{self._workflow_session_id}] {error_msg}")
+                raise RuntimeError(error_msg)
+            
+            # Log successful security validation
+            logger.info(
+                f"[{self._workflow_session_id}] OWASP security validation PASSED: "
+                f"threat_level={validation_result.threat_level}, "
+                f"confidence={validation_result.confidence_score:.3f}"
+            )
+            
+            # Prepare security metadata for event
+            security_metadata = {
+                "validation_id": str(validation_result.validation_id),
+                "threat_level": validation_result.threat_level.value,
+                "owasp_category": validation_result.owasp_category.value,
+                "confidence_score": validation_result.confidence_score,
+                "detected_patterns": validation_result.detected_patterns,
+                "processing_time_ms": validation_result.processing_time_ms,
+                "is_valid": validation_result.is_valid
+            }
+            
+        except ImportError as e:
+            error_msg = (
+                f"OWASP security framework import failed: {e}\n"
+                f"Security validation is REQUIRED for pharmaceutical compliance.\n"
+                f"NO FALLBACKS ALLOWED - Human consultation required."
+            )
+            logger.error(f"[{self._workflow_session_id}] {error_msg}")
+            raise RuntimeError(error_msg) from e
+        except Exception as e:
+            error_msg = (
+                f"OWASP security validation engine failed: {e}\n"
+                f"Security validation failure prevents workflow execution.\n"
+                f"NO FALLBACKS ALLOWED - Human consultation required."
+            )
+            logger.error(f"[{self._workflow_session_id}] {error_msg}")
+            raise RuntimeError(error_msg) from e
+
         # Log document loading state transition
         audit_trail.log_state_transition(
             from_state="workflow_initializing",
@@ -480,12 +545,17 @@ class UnifiedTestGenerationWorkflow(Workflow):
         await safe_context_set(ctx, "workflow_session_id", self._workflow_session_id)
         await safe_context_set(ctx, "document_path", document_path)
 
-        # Create URS ingestion event with all required fields
+        # Create URS ingestion event with all required fields including security metadata
         return URSIngestionEvent(
             urs_content=urs_content,
             document_name=doc_path.name,
             document_version="1.0",  # Default version
-            author="system"
+            author="system",
+            # Security metadata from OWASP validation
+            security_validation_result=security_metadata,
+            security_threat_level=validation_result.threat_level.value,
+            owasp_category=validation_result.owasp_category.value,
+            security_confidence=validation_result.confidence_score
         )
 
     @step

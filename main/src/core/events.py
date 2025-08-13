@@ -37,7 +37,12 @@ class URSIngestionEvent(Event):
     Event triggered when a User Requirements Specification (URS) document is ingested.
     
     This event initiates the entire test generation workflow and contains
-    the source URS content along with metadata for traceability.
+    the source URS content along with metadata for traceability and security validation.
+    
+    Security Integration:
+    - Contains security validation result from OWASP LLM01 protection
+    - Tracks input validation status for audit trail  
+    - Maintains threat assessment for regulatory compliance
     """
     urs_content: str
     document_name: str
@@ -46,6 +51,12 @@ class URSIngestionEvent(Event):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     author: str
     digital_signature: str | None = None
+    
+    # Security metadata for OWASP compliance
+    security_validation_result: dict | None = None
+    security_threat_level: str | None = None  # low, medium, high, critical
+    owasp_category: str | None = None  # LLM01, LLM06, etc.
+    security_confidence: float | None = None  # 0.0-1.0
 
 
 class GAMPCategorizationEvent(Event):

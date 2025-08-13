@@ -13,14 +13,12 @@ Key Features:
 - NO FALLBACKS - explicit error handling only
 """
 
-import asyncio
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..core.human_consultation import HumanConsultationManager
-from ..cross_validation.execution_harness import ExecutionHarness as CrossValidationHarness
 from ..monitoring.phoenix_config import setup_phoenix
 from ..monitoring.simple_tracer import get_tracer
 from ..shared.event_logging import GAMP5ComplianceLogger
@@ -48,12 +46,12 @@ class SecurityExecutionHarness:
 
     def __init__(
         self,
-        experiment_id: Optional[str] = None,
+        experiment_id: str | None = None,
         log_level: str = "INFO",
         enable_phoenix: bool = True,
         target_mitigation_effectiveness: float = 0.90,
         target_human_hours_limit: float = 10.0,
-        output_directory: Optional[str] = None
+        output_directory: str | None = None
     ):
         """
         Initialize the SecurityExecutionHarness.
@@ -81,7 +79,7 @@ class SecurityExecutionHarness:
             self.output_dir = Path(output_directory)
         else:
             self.output_dir = Path("main/output/security_assessment")
-        
+
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize logging
@@ -100,15 +98,15 @@ class SecurityExecutionHarness:
         self.vulnerability_detector = VulnerabilityDetector()
         self.metrics_collector = SecurityMetricsCollector(str(self.output_dir / "metrics"))
         self.human_consultation_manager = HumanConsultationManager()
-        
+
         # Initialize compliance logger
         self.compliance_logger = GAMP5ComplianceLogger()
 
         # Execution state
-        self.workflow: Optional[SecurityAssessmentWorkflow] = None
-        self.start_time: Optional[datetime] = None
-        self.end_time: Optional[datetime] = None
-        self.assessment_results: Optional[Dict[str, Any]] = None
+        self.workflow: SecurityAssessmentWorkflow | None = None
+        self.start_time: datetime | None = None
+        self.end_time: datetime | None = None
+        self.assessment_results: dict[str, Any] | None = None
 
         self.logger.info(f"SecurityExecutionHarness initialized for experiment {experiment_id}")
 
@@ -209,8 +207,8 @@ class SecurityExecutionHarness:
         test_type: str = "full_suite",
         target_system_endpoint: str = "http://localhost:8000/api/security-test",
         timeout_seconds: int = 3600,
-        config_overrides: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        config_overrides: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Execute comprehensive security assessment.
 
@@ -378,9 +376,9 @@ class SecurityExecutionHarness:
 
     async def run_integrated_assessment(
         self,
-        cross_validation_results: Dict[str, Any],
+        cross_validation_results: dict[str, Any],
         security_test_type: str = "full_suite"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run integrated security assessment using cross-validation results.
 
@@ -395,7 +393,7 @@ class SecurityExecutionHarness:
 
         # Extract target system information from cross-validation results
         target_endpoint = "http://localhost:8000/api/integrated-security-test"
-        
+
         # Run security assessment
         security_results = await self.run_security_assessment(
             test_type=security_test_type,
@@ -435,16 +433,16 @@ class SecurityExecutionHarness:
 
     def _calculate_integrated_reliability(
         self,
-        cv_results: Dict[str, Any],
-        security_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        cv_results: dict[str, Any],
+        security_results: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate integrated reliability metrics."""
         cv_success_rate = cv_results.get("summary", {}).get("overall_success_rate", 0) / 100
         security_effectiveness = security_results.get("mitigation_effectiveness", {}).get("achieved_rate", 0)
-        
+
         # Combined reliability score (weighted average)
         combined_reliability = (cv_success_rate * 0.6) + (security_effectiveness * 0.4)
-        
+
         return {
             "cross_validation_success_rate": cv_success_rate,
             "security_mitigation_effectiveness": security_effectiveness,
@@ -457,22 +455,21 @@ class SecurityExecutionHarness:
         """Get reliability grade based on combined score."""
         if reliability_score >= 0.95:
             return "A+ (Excellent)"
-        elif reliability_score >= 0.90:
+        if reliability_score >= 0.90:
             return "A (Very Good)"
-        elif reliability_score >= 0.85:
+        if reliability_score >= 0.85:
             return "B+ (Good)"
-        elif reliability_score >= 0.80:
+        if reliability_score >= 0.80:
             return "B (Acceptable)"
-        elif reliability_score >= 0.75:
+        if reliability_score >= 0.75:
             return "C+ (Marginal)"
-        else:
-            return "C (Needs Improvement)"
+        return "C (Needs Improvement)"
 
     def _assess_pharmaceutical_readiness(
         self,
-        cv_results: Dict[str, Any],
-        security_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        cv_results: dict[str, Any],
+        security_results: dict[str, Any]
+    ) -> dict[str, Any]:
         """Assess pharmaceutical industry readiness."""
         readiness_criteria = {
             "cross_validation_success": cv_results.get("summary", {}).get("overall_success_rate", 0) >= 85,
@@ -481,9 +478,9 @@ class SecurityExecutionHarness:
             "audit_trail_complete": True,  # Always true in our implementation
             "gamp5_compliant": True  # Always true in our implementation
         }
-        
+
         readiness_score = sum(readiness_criteria.values()) / len(readiness_criteria)
-        
+
         return {
             "readiness_criteria": readiness_criteria,
             "readiness_score": readiness_score,
@@ -498,43 +495,43 @@ class SecurityExecutionHarness:
 
     def _generate_integrated_recommendations(
         self,
-        cv_results: Dict[str, Any],
-        security_results: Dict[str, Any]
-    ) -> List[str]:
+        cv_results: dict[str, Any],
+        security_results: dict[str, Any]
+    ) -> list[str]:
         """Generate integrated recommendations."""
         recommendations = []
-        
+
         cv_success = cv_results.get("summary", {}).get("overall_success_rate", 0)
         security_effective = security_results.get("mitigation_effectiveness", {}).get("achieved_rate", 0)
-        
+
         if cv_success < 85:
             recommendations.append(f"Cross-validation success rate ({cv_success:.1f}%) needs improvement - target 85%+")
-        
+
         if security_effective < 0.90:
             recommendations.append(f"Security mitigation effectiveness ({security_effective:.1%}) needs improvement - target 90%+")
-        
+
         human_hours = security_results.get("human_oversight_metrics", {}).get("total_human_hours", 0)
         if human_hours > 10:
             recommendations.append(f"Human oversight time ({human_hours:.1f}h) exceeds target (10h) - optimize thresholds")
-        
+
         if not recommendations:
             recommendations.append("System meets all pharmaceutical deployment criteria")
-        
+
         return recommendations
 
-    async def _save_final_results(self, results: Dict[str, Any]) -> None:
+    async def _save_final_results(self, results: dict[str, Any]) -> None:
         """Save final assessment results to file."""
         results_file = self.output_dir / f"security_assessment_results_{self.experiment_id}.json"
         await self._save_json_file(results, results_file)
         self.logger.info(f"Final results saved to: {results_file}")
 
-    async def _save_json_file(self, data: Dict[str, Any], file_path: Path) -> None:
+    async def _save_json_file(self, data: dict[str, Any], file_path: Path) -> None:
         """Save data to JSON file."""
         import json
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    def get_assessment_summary(self) -> Dict[str, Any]:
+    def get_assessment_summary(self) -> dict[str, Any]:
         """
         Get a summary of the assessment results.
 
@@ -563,14 +560,14 @@ class SecurityExecutionHarness:
 async def run_security_assessment_experiment(
     test_type: str = "full_suite",
     target_system_endpoint: str = "http://localhost:8000/api/security-test",
-    experiment_id: Optional[str] = None,
+    experiment_id: str | None = None,
     timeout_seconds: int = 3600,
     enable_phoenix: bool = True,
     log_level: str = "INFO",
-    output_directory: Optional[str] = None,
+    output_directory: str | None = None,
     target_mitigation_effectiveness: float = 0.90,
     target_human_hours_limit: float = 10.0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convenience function to run a complete security assessment.
 

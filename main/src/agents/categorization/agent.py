@@ -883,13 +883,20 @@ def create_gamp_categorization_agent(
         context that can boost confidence scores by 0.15-0.20 points.
     """
     if llm is None:
-        # Use centralized LLM config - NO FALLBACKS
-        # Migrated from direct OpenAI to centralized configuration
-        llm = LLMConfig.get_llm(
-            temperature=0.1,  # Override default temperature for categorization
-            max_tokens=2000
-            # JSON mode NOT used - FunctionAgent requires natural language responses
-        )
+        # Use secure LLM wrapper with OWASP protection - NO FALLBACKS
+        # Migrated to secure wrapper for pharmaceutical compliance
+        try:
+            llm = LLMConfig.get_secure_llm(
+                system_identifier="gamp5_categorization",
+                temperature=0.1,  # Override default temperature for categorization
+                max_tokens=2000
+            )
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to initialize secure LLM for GAMP-5 categorization: {e}\n"
+                f"OWASP security integration required for pharmaceutical compliance.\n"
+                f"NO FALLBACKS ALLOWED - Human consultation required."
+            ) from e
 
     # Create error handler if enabled
     error_handler = None
@@ -1677,12 +1684,20 @@ def categorize_urs_document(
         )
     """
     if llm is None:
-        # Use centralized LLM config - NO FALLBACKS
-        # Migrated from direct OpenAI to centralized configuration
-        llm = LLMConfig.get_llm(
-            temperature=0.1,  # Override default temperature for categorization
-            max_tokens=2000
-        )
+        # Use secure LLM wrapper with OWASP protection - NO FALLBACKS
+        # Migrated to secure wrapper for pharmaceutical compliance
+        try:
+            llm = LLMConfig.get_secure_llm(
+                system_identifier="gamp5_document_categorization",
+                temperature=0.1,  # Override default temperature for categorization
+                max_tokens=2000
+            )
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to initialize secure LLM for document categorization: {e}\n"
+                f"OWASP security integration required for pharmaceutical compliance.\n"
+                f"NO FALLBACKS ALLOWED - Human consultation required."
+            ) from e
 
     # Create error handler for compliance tracking
     error_handler = CategorizationErrorHandler(

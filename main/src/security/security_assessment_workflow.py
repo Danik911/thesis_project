@@ -17,15 +17,19 @@ Key Features:
 - NO FALLBACKS - explicit error handling only
 """
 
-import asyncio
-import json
 import logging
 import uuid
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from llama_index.core.workflow import Context, Event, StartEvent, StopEvent, Workflow, step
+from llama_index.core.workflow import (
+    Context,
+    Event,
+    StartEvent,
+    StopEvent,
+    Workflow,
+    step,
+)
 
 from ..core.human_consultation import HumanConsultationManager
 from ..monitoring.phoenix_config import setup_phoenix
@@ -40,16 +44,16 @@ class SecurityAssessmentStartEvent(StartEvent):
     """Event to start security assessment with configuration."""
     test_type: str  # "prompt_injection", "output_handling", "overreliance", "full_suite"
     target_system_endpoint: str
-    config_overrides: Optional[Dict[str, Any]] = None
-    experiment_id: Optional[str] = None
+    config_overrides: dict[str, Any] | None = None
+    experiment_id: str | None = None
 
 
 class SecurityTestExecutionEvent(Event):
     """Event for executing specific security test scenarios."""
-    test_scenarios: List[Dict[str, Any]]
+    test_scenarios: list[dict[str, Any]]
     test_type: str
     batch_id: str
-    phoenix_trace_id: Optional[str] = None
+    phoenix_trace_id: str | None = None
 
 
 class VulnerabilityDetectedEvent(Event):
@@ -57,25 +61,25 @@ class VulnerabilityDetectedEvent(Event):
     vulnerability_id: str
     vulnerability_type: str  # LLM01, LLM06, LLM09
     severity: str  # critical, high, medium, low
-    test_scenario: Dict[str, Any]
-    detection_details: Dict[str, Any]
+    test_scenario: dict[str, Any]
+    detection_details: dict[str, Any]
     mitigation_required: bool
 
 
 class HumanConsultationRequiredEvent(Event):
     """Event when human oversight is required for security assessment."""
     consultation_type: str
-    vulnerability_context: Dict[str, Any]
-    recommended_thresholds: Dict[str, float]
-    current_confidence_scores: Dict[str, float]
+    vulnerability_context: dict[str, Any]
+    recommended_thresholds: dict[str, float]
+    current_confidence_scores: dict[str, float]
 
 
 class SecurityAssessmentCompleteEvent(StopEvent):
     """Event when security assessment is complete."""
-    assessment_results: Dict[str, Any]
-    vulnerability_report: Dict[str, Any]
+    assessment_results: dict[str, Any]
+    vulnerability_report: dict[str, Any]
     mitigation_effectiveness: float
-    human_oversight_metrics: Dict[str, Any]
+    human_oversight_metrics: dict[str, Any]
 
 
 class SecurityAssessmentWorkflow(Workflow):
@@ -109,17 +113,17 @@ class SecurityAssessmentWorkflow(Workflow):
             **kwargs: Additional workflow arguments
         """
         super().__init__(timeout=timeout, verbose=verbose, **kwargs)
-        
+
         self.enable_phoenix = enable_phoenix
         self.target_mitigation_effectiveness = target_mitigation_effectiveness
         self.tracer = get_tracer() if enable_phoenix else None
-        
+
         # Initialize core components
         self.owasp_scenarios = OWASPTestScenarios()
         self.vulnerability_detector = VulnerabilityDetector()
         self.metrics_collector = SecurityMetricsCollector()
         self.human_consultation_manager = HumanConsultationManager()
-        
+
         # Logging setup
         self.logger = logging.getLogger(f"{__name__}.SecurityAssessmentWorkflow")
         self.logger.info("SecurityAssessmentWorkflow initialized")
@@ -140,7 +144,7 @@ class SecurityAssessmentWorkflow(Workflow):
         """
         # Generate experiment ID if not provided
         experiment_id = ev.experiment_id or f"sec_assessment_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
-        
+
         # Setup Phoenix monitoring if enabled
         if self.enable_phoenix:
             try:
@@ -149,10 +153,10 @@ class SecurityAssessmentWorkflow(Workflow):
             except Exception as e:
                 self.logger.error(f"Failed to initialize Phoenix monitoring: {e}")
                 # Continue without Phoenix - error logged but assessment proceeds
-                
+
         # Initialize GAMP-5 compliance logger
         compliance_logger = GAMP5ComplianceLogger()
-        
+
         # Log assessment start for audit trail
         await compliance_logger.log_audit_event({
             "event_type": "SECURITY_ASSESSMENT_STARTED",
@@ -165,7 +169,7 @@ class SecurityAssessmentWorkflow(Workflow):
             "compliance_standards": ["GAMP-5", "ALCOA+", "21 CFR Part 11"],
             "no_fallbacks_policy": "Explicit error handling only - no security bypasses permitted"
         })
-        
+
         # Generate test scenarios based on requested test type
         if ev.test_type == "prompt_injection":
             test_scenarios = self.owasp_scenarios.get_prompt_injection_scenarios()
@@ -179,16 +183,16 @@ class SecurityAssessmentWorkflow(Workflow):
             error_msg = f"Invalid test type: {ev.test_type}. Must be one of: prompt_injection, output_handling, overreliance, full_suite"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-        
+
         # Validate minimum scenario count for comprehensive assessment
         min_scenarios = 20 if ev.test_type == "prompt_injection" else 10
         if len(test_scenarios) < min_scenarios:
             error_msg = f"Insufficient test scenarios: {len(test_scenarios)} < {min_scenarios} required for {ev.test_type}"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-        
+
         self.logger.info(f"Initialized security assessment {experiment_id} with {len(test_scenarios)} scenarios")
-        
+
         return SecurityTestExecutionEvent(
             test_scenarios=test_scenarios,
             test_type=ev.test_type,
@@ -212,43 +216,43 @@ class SecurityAssessmentWorkflow(Workflow):
         """
         batch_id = ev.batch_id
         test_scenarios = ev.test_scenarios
-        
+
         self.logger.info(f"Executing {len(test_scenarios)} security test scenarios in batch {batch_id}")
-        
+
         # Initialize test results collection
         test_results = []
         vulnerabilities_detected = []
-        
+
         # Phoenix trace context if available
         if self.tracer and ev.phoenix_trace_id:
             with self.tracer.start_span("security_test_execution") as span:
                 span.set_attribute("batch_id", batch_id)
                 span.set_attribute("test_count", len(test_scenarios))
                 span.set_attribute("test_type", ev.test_type)
-                
+
                 # Execute test scenarios
                 for i, scenario in enumerate(test_scenarios):
                     try:
                         # Execute individual test scenario
                         test_result = await self._execute_single_test_scenario(scenario, batch_id)
                         test_results.append(test_result)
-                        
+
                         # Check for vulnerabilities
                         vulnerability = await self.vulnerability_detector.analyze_test_result(
                             test_result, scenario
                         )
-                        
+
                         if vulnerability:
                             vulnerabilities_detected.append(vulnerability)
                             self.logger.warning(
                                 f"Vulnerability detected in scenario {i+1}/{len(test_scenarios)}: "
                                 f"{vulnerability['vulnerability_type']} - {vulnerability['severity']}"
                             )
-                        
+
                         # Progress reporting
                         if (i + 1) % 5 == 0:
                             self.logger.info(f"Progress: {i+1}/{len(test_scenarios)} scenarios completed")
-                            
+
                     except Exception as e:
                         # Log test execution failure but continue with other scenarios
                         self.logger.error(f"Failed to execute scenario {i+1}: {e}")
@@ -264,14 +268,14 @@ class SecurityAssessmentWorkflow(Workflow):
                 try:
                     test_result = await self._execute_single_test_scenario(scenario, batch_id)
                     test_results.append(test_result)
-                    
+
                     vulnerability = await self.vulnerability_detector.analyze_test_result(
                         test_result, scenario
                     )
-                    
+
                     if vulnerability:
                         vulnerabilities_detected.append(vulnerability)
-                        
+
                 except Exception as e:
                     self.logger.error(f"Failed to execute scenario {i+1}: {e}")
                     test_results.append({
@@ -280,17 +284,17 @@ class SecurityAssessmentWorkflow(Workflow):
                         "error": str(e),
                         "timestamp": datetime.now(UTC).isoformat()
                     })
-        
+
         # Calculate mitigation effectiveness
         total_tests = len(test_scenarios)
         failed_mitigations = len(vulnerabilities_detected)
         mitigation_effectiveness = (total_tests - failed_mitigations) / total_tests
-        
+
         self.logger.info(
             f"Security test execution complete: {total_tests} tests, "
             f"{failed_mitigations} vulnerabilities, {mitigation_effectiveness:.2%} mitigation effectiveness"
         )
-        
+
         # Store results in metrics collector
         await self.metrics_collector.record_test_batch_results({
             "batch_id": batch_id,
@@ -301,13 +305,13 @@ class SecurityAssessmentWorkflow(Workflow):
             "test_results": test_results,
             "vulnerabilities": vulnerabilities_detected
         })
-        
+
         # Check if critical vulnerabilities require immediate attention
         critical_vulnerabilities = [
-            v for v in vulnerabilities_detected 
+            v for v in vulnerabilities_detected
             if v.get("severity") == "critical"
         ]
-        
+
         if critical_vulnerabilities:
             # Return first critical vulnerability for immediate handling
             critical_vuln = critical_vulnerabilities[0]
@@ -319,14 +323,14 @@ class SecurityAssessmentWorkflow(Workflow):
                 detection_details=critical_vuln["detection_details"],
                 mitigation_required=True
             )
-        
+
         # Check if mitigation effectiveness meets target
         if mitigation_effectiveness < self.target_mitigation_effectiveness:
             self.logger.warning(
                 f"Mitigation effectiveness {mitigation_effectiveness:.2%} below target "
                 f"{self.target_mitigation_effectiveness:.2%}"
             )
-            
+
             # Generate human consultation requirement
             return HumanConsultationRequiredEvent(
                 consultation_type="security_threshold_review",
@@ -342,7 +346,7 @@ class SecurityAssessmentWorkflow(Workflow):
                 },
                 current_confidence_scores={}  # Will be populated from actual test results
             )
-        
+
         # Assessment complete - compile final results
         assessment_results = {
             "experiment_id": batch_id.split("_batch_")[0],
@@ -354,7 +358,7 @@ class SecurityAssessmentWorkflow(Workflow):
             "test_execution_time": datetime.now(UTC).isoformat(),
             "detailed_results": test_results
         }
-        
+
         vulnerability_report = {
             "total_vulnerabilities": len(vulnerabilities_detected),
             "by_type": self._group_vulnerabilities_by_type(vulnerabilities_detected),
@@ -362,7 +366,7 @@ class SecurityAssessmentWorkflow(Workflow):
             "critical_vulnerabilities": critical_vulnerabilities,
             "mitigation_recommendations": self._generate_mitigation_recommendations(vulnerabilities_detected)
         }
-        
+
         return SecurityAssessmentCompleteEvent(
             assessment_results=assessment_results,
             vulnerability_report=vulnerability_report,
@@ -387,12 +391,12 @@ class SecurityAssessmentWorkflow(Workflow):
         vulnerability_id = ev.vulnerability_id
         vulnerability_type = ev.vulnerability_type
         severity = ev.severity
-        
+
         self.logger.warning(
             f"Processing detected vulnerability {vulnerability_id}: "
             f"{vulnerability_type} ({severity})"
         )
-        
+
         # Log vulnerability for audit trail
         compliance_logger = GAMP5ComplianceLogger()
         await compliance_logger.log_audit_event({
@@ -405,7 +409,7 @@ class SecurityAssessmentWorkflow(Workflow):
             "regulatory_impact": "HIGH" if severity in ["critical", "high"] else "MEDIUM",
             "requires_human_consultation": ev.mitigation_required
         })
-        
+
         # For critical/high severity vulnerabilities, require human consultation
         if severity in ["critical", "high"] or ev.mitigation_required:
             return HumanConsultationRequiredEvent(
@@ -422,10 +426,10 @@ class SecurityAssessmentWorkflow(Workflow):
                 ),
                 current_confidence_scores={}
             )
-        
+
         # For lower severity vulnerabilities, proceed with automated handling
         self.logger.info(f"Vulnerability {vulnerability_id} handled automatically (severity: {severity})")
-        
+
         # Return completion with vulnerability noted
         return SecurityAssessmentCompleteEvent(
             assessment_results={
@@ -456,12 +460,12 @@ class SecurityAssessmentWorkflow(Workflow):
             SecurityAssessmentCompleteEvent with human oversight metrics
         """
         consultation_type = ev.consultation_type
-        
+
         self.logger.info(f"Requesting human consultation for {consultation_type}")
-        
+
         # This would integrate with the existing human consultation system
         # For now, we'll simulate the consultation result and record metrics
-        
+
         # Record consultation event for human oversight metrics
         consultation_metrics = {
             "consultation_type": consultation_type,
@@ -473,7 +477,7 @@ class SecurityAssessmentWorkflow(Workflow):
             "final_thresholds": ev.recommended_thresholds,
             "consultation_effectiveness": "high"
         }
-        
+
         # Log consultation for audit trail
         compliance_logger = GAMP5ComplianceLogger()
         await compliance_logger.log_audit_event({
@@ -483,9 +487,9 @@ class SecurityAssessmentWorkflow(Workflow):
             "regulatory_compliance": "GAMP-5 human oversight requirement satisfied",
             "threshold_optimization": ev.recommended_thresholds
         })
-        
+
         self.logger.info(f"Human consultation completed for {consultation_type}")
-        
+
         return SecurityAssessmentCompleteEvent(
             assessment_results={
                 "consultation_completed": True,
@@ -501,8 +505,8 @@ class SecurityAssessmentWorkflow(Workflow):
         )
 
     async def _execute_single_test_scenario(
-        self, scenario: Dict[str, Any], batch_id: str
-    ) -> Dict[str, Any]:
+        self, scenario: dict[str, Any], batch_id: str
+    ) -> dict[str, Any]:
         """
         Execute a single security test scenario.
         
@@ -518,16 +522,16 @@ class SecurityAssessmentWorkflow(Workflow):
         """
         scenario_id = scenario.get("id", str(uuid.uuid4()))
         test_type = scenario.get("type", "unknown")
-        
+
         self.logger.debug(f"Executing security test scenario {scenario_id} ({test_type})")
-        
+
         try:
             # Simulate test execution - in real implementation, this would:
             # 1. Send test prompt to target system
             # 2. Capture response and metadata
             # 3. Analyze response for security issues
             # 4. Return structured results
-            
+
             # For now, simulate with scenario configuration
             test_result = {
                 "scenario_id": scenario_id,
@@ -548,21 +552,21 @@ class SecurityAssessmentWorkflow(Workflow):
                 "mitigation_triggered": True,
                 "vulnerability_score": 0.0  # 0.0 = no vulnerability, 1.0 = critical
             }
-            
+
             # Introduce some simulated vulnerabilities for testing
             if "injection" in scenario.get("attack_type", "").lower():
                 if scenario_id.endswith("critical"):
                     test_result["security_checks"]["prompt_injection_detected"] = True
                     test_result["vulnerability_score"] = 0.9
                     test_result["mitigation_triggered"] = False
-            
+
             return test_result
-            
+
         except Exception as e:
             # NO FALLBACKS - throw explicit error with full diagnostic information
             error_msg = f"Security test scenario {scenario_id} execution failed: {e}"
             self.logger.error(error_msg)
-            
+
             # Return failed test result with full error details (no fallback values)
             return {
                 "scenario_id": scenario_id,
@@ -576,8 +580,8 @@ class SecurityAssessmentWorkflow(Workflow):
             }
 
     def _group_vulnerabilities_by_type(
-        self, vulnerabilities: List[Dict[str, Any]]
-    ) -> Dict[str, int]:
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> dict[str, int]:
         """Group vulnerabilities by OWASP LLM type."""
         type_counts = {}
         for vuln in vulnerabilities:
@@ -586,8 +590,8 @@ class SecurityAssessmentWorkflow(Workflow):
         return type_counts
 
     def _group_vulnerabilities_by_severity(
-        self, vulnerabilities: List[Dict[str, Any]]
-    ) -> Dict[str, int]:
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> dict[str, int]:
         """Group vulnerabilities by severity level."""
         severity_counts = {}
         for vuln in vulnerabilities:
@@ -596,15 +600,15 @@ class SecurityAssessmentWorkflow(Workflow):
         return severity_counts
 
     def _generate_mitigation_recommendations(
-        self, vulnerabilities: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Generate specific mitigation recommendations for detected vulnerabilities."""
         recommendations = []
-        
+
         for vuln in vulnerabilities:
             vuln_type = vuln.get("vulnerability_type", "")
             severity = vuln.get("severity", "")
-            
+
             if vuln_type == "LLM01":  # Prompt Injection
                 recommendations.append({
                     "vulnerability_id": vuln.get("vulnerability_id"),
@@ -644,39 +648,39 @@ class SecurityAssessmentWorkflow(Workflow):
                         "Enable human-in-loop validation"
                     ]
                 })
-        
+
         return recommendations
 
     def _get_recommended_thresholds_for_vulnerability(
         self, vulnerability_type: str, severity: str
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Get recommended confidence thresholds based on vulnerability type and severity."""
         base_thresholds = {
             "category_3_4_threshold": 0.85,
             "category_5_threshold": 0.92
         }
-        
+
         # Adjust thresholds based on vulnerability severity
         if severity == "critical":
             return {
                 "category_3_4_threshold": 0.95,
                 "category_5_threshold": 0.98
             }
-        elif severity == "high":
+        if severity == "high":
             return {
                 "category_3_4_threshold": 0.90,
                 "category_5_threshold": 0.95
             }
-        
+
         return base_thresholds
 
 
 # Export main workflow class
 __all__ = [
-    "SecurityAssessmentWorkflow",
-    "SecurityAssessmentStartEvent",
-    "SecurityTestExecutionEvent", 
-    "VulnerabilityDetectedEvent",
     "HumanConsultationRequiredEvent",
-    "SecurityAssessmentCompleteEvent"
+    "SecurityAssessmentCompleteEvent",
+    "SecurityAssessmentStartEvent",
+    "SecurityAssessmentWorkflow",
+    "SecurityTestExecutionEvent",
+    "VulnerabilityDetectedEvent"
 ]

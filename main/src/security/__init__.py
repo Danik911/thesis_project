@@ -1,26 +1,61 @@
 """
-Security Assessment Framework for OWASP LLM Top 10 Compliance Testing
+OWASP Security Framework for Pharmaceutical LLM Systems
 
-This module provides comprehensive security assessment capabilities for pharmaceutical
-LLM systems, focusing on OWASP LLM Top 10 vulnerabilities with GAMP-5 compliance.
+This module provides comprehensive OWASP LLM Top 10 security protection and assessment
+capabilities for pharmaceutical LLM systems with GAMP-5 compliance.
 
 Key Components:
-- OWASP test scenario generation (LLM01, LLM06, LLM09)
+- Runtime Security Protection (LLM01, LLM06, LLM09)
+- Input validation and prompt injection protection
+- System prompt isolation and template hardening
+- Output security scanning and PII detection
+- Security assessment and testing framework
+- Comprehensive audit trail for regulatory compliance
+- NO FALLBACKS - explicit security validation only
+
+Runtime Protection:
+- PharmaceuticalInputSecurityWrapper: Input validation and injection detection
+- SecureLLMWrapper: System prompt isolation and secure LLM operations
+- PharmaceuticalOutputScanner: Output security scanning and compliance validation
+- SecurityConfig: Central OWASP compliance configuration
+
+Assessment Framework:
+- OWASP test scenario generation and execution
 - Vulnerability detection and analysis
 - Security metrics collection and reporting
-- Execution harness with Phoenix monitoring
-- Human-in-loop evaluation integration
-- NO FALLBACKS - explicit security validation only
+- Phoenix monitoring integration
 """
 
+# Runtime Security Protection Components (OWASP Implementation)
+from .input_validator import (
+    PharmaceuticalInputSecurityWrapper,
+    SecurityValidationResult,
+)
+from .output_scanner import (
+    OutputSecurityScanResult,
+    PharmaceuticalOutputScanner,
+)
+
+# Security Assessment Framework Components
 from .owasp_test_scenarios import OWASPTestScenarios
+from .prompt_guardian import (
+    PromptSecurityAudit,
+    SecureLLMWrapper,
+)
 from .security_assessment_workflow import (
+    HumanConsultationRequiredEvent,
     SecurityAssessmentCompleteEvent,
     SecurityAssessmentStartEvent,
     SecurityAssessmentWorkflow,
     SecurityTestExecutionEvent,
     VulnerabilityDetectedEvent,
-    HumanConsultationRequiredEvent,
+)
+from .security_config import (
+    OWASPCategory,
+    SecurityConfig,
+    SecurityThreatLevel,
+    SecurityThresholds,
+    security_config,
 )
 from .security_execution_harness import (
     SecurityExecutionHarness,
@@ -38,12 +73,25 @@ except ImportError:
     LEGACY_COMPONENTS = []
 
 __all__ = [
-    # Core OWASP LLM Top 10 Security Assessment Framework
+    # Runtime Security Protection (OWASP LLM Top 10 Implementation)
+    "SecurityConfig",
+    "SecurityThresholds",
+    "SecurityThreatLevel",
+    "OWASPCategory",
+    "security_config",
+    "PharmaceuticalInputSecurityWrapper",
+    "SecurityValidationResult",
+    "SecureLLMWrapper",
+    "PromptSecurityAudit",
+    "PharmaceuticalOutputScanner",
+    "OutputSecurityScanResult",
+
+    # Security Assessment Framework
     "OWASPTestScenarios",
-    "VulnerabilityDetector", 
+    "VulnerabilityDetector",
     "SecurityMetricsCollector",
     "SecurityExecutionHarness",
-    
+
     # Workflow Components
     "SecurityAssessmentWorkflow",
     "SecurityAssessmentStartEvent",
@@ -51,7 +99,7 @@ __all__ = [
     "VulnerabilityDetectedEvent",
     "HumanConsultationRequiredEvent",
     "SecurityAssessmentCompleteEvent",
-    
+
     # Convenience Functions
     "run_security_assessment_experiment",
 ] + LEGACY_COMPONENTS

@@ -1,11 +1,12 @@
 """
-Centralized LLM Configuration for OpenAI/OpenRouter Model Selection
+Secure LLM Configuration with OWASP Security Integration
 
 CRITICAL: NO FALLBACKS ALLOWED
 - This configuration explicitly fails on errors
 - No default values or fallback models
 - Human consultation triggered on failures
 - Full diagnostic information provided
+- OWASP LLM01 protection through secure wrapper integration
 """
 
 import os
@@ -214,3 +215,56 @@ class LLMConfig:
             return False, f"Import error: {e}"
         except Exception as e:
             return False, f"Validation error: {e}"
+    
+    @classmethod
+    def get_secure_llm(cls, 
+                      system_identifier: str = "pharmaceutical_system",
+                      **override_kwargs: Any):
+        """
+        Get secure LLM wrapper with OWASP LLM01 protection.
+        
+        This method creates a SecureLLMWrapper around the base LLM to provide:
+        - System prompt isolation
+        - Input validation and injection detection  
+        - Template hardening
+        - Complete audit trail for regulatory compliance
+        
+        Args:
+            system_identifier: System identifier for audit trail
+            **override_kwargs: Optional parameters to override defaults
+            
+        Returns:
+            SecureLLMWrapper: Secure LLM wrapper with OWASP protection
+            
+        Raises:
+            ValueError: If parameters are invalid
+            RuntimeError: If secure wrapper initialization fails
+            ImportError: If security modules are not available
+        """
+        try:
+            # Import security wrapper
+            from src.security import SecureLLMWrapper
+            
+            # Get base LLM instance
+            base_llm = cls.get_llm(**override_kwargs)
+            
+            # Wrap with security layer
+            secure_wrapper = SecureLLMWrapper(
+                wrapped_llm=base_llm,
+                system_identifier=system_identifier
+            )
+            
+            return secure_wrapper
+            
+        except ImportError as e:
+            raise RuntimeError(
+                f"Failed to import security wrapper: {e}\n"
+                f"OWASP security framework required for pharmaceutical compliance.\n"
+                f"NO FALLBACKS ALLOWED - Human consultation required."
+            ) from e
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to create secure LLM wrapper: {e}\n"
+                f"Security initialization failed.\n" 
+                f"NO FALLBACKS ALLOWED - Human consultation required."
+            ) from e
