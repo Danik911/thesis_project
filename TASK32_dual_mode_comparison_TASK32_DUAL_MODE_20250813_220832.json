@@ -1,0 +1,127 @@
+{
+  "experiment_id": "TASK32_DUAL_MODE_20250813_220832",
+  "timestamp": "2025-08-13T22:08:32.718394+00:00",
+  "test_documents": [
+    "datasets/urs_corpus/category_3/URS-001.md",
+    "datasets/urs_corpus/category_4/URS-002.md",
+    "datasets/urs_corpus/category_5/URS-003.md",
+    "datasets/urs_corpus/ambiguous/URS-004.md"
+  ],
+  "production_mode_results": [
+    {
+      "document": "datasets/urs_corpus/category_3/URS-001.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 80.42334151268005,
+      "success": true,
+      "timestamp": "2025-08-13T22:09:53.142164+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_4/URS-002.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 79.00459122657776,
+      "success": true,
+      "timestamp": "2025-08-13T22:11:14.151089+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_5/URS-003.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 80.12037301063538,
+      "success": true,
+      "timestamp": "2025-08-13T22:12:36.280130+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/ambiguous/URS-004.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 79.48526883125305,
+      "success": true,
+      "timestamp": "2025-08-13T22:13:57.777298+00:00"
+    }
+  ],
+  "validation_mode_results": [
+    {
+      "document": "datasets/urs_corpus/category_3/URS-001.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 78.19497323036194,
+      "success": true,
+      "timestamp": "2025-08-13T22:15:22.999905+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_4/URS-002.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 79.06025099754333,
+      "success": true,
+      "timestamp": "2025-08-13T22:16:44.064320+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_5/URS-003.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 82.16686367988586,
+      "success": true,
+      "timestamp": "2025-08-13T22:18:08.242986+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/ambiguous/URS-004.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 80.43034625053406,
+      "success": true,
+      "timestamp": "2025-08-13T22:19:30.688077+00:00"
+    }
+  ],
+  "comparison_metrics": {
+    "success_rates": {
+      "production_mode": 1.0,
+      "validation_mode": 1.0,
+      "difference": 0.0
+    },
+    "execution_times": {
+      "production_mode_avg": 79.75839364528656,
+      "validation_mode_avg": 79.9631085395813,
+      "time_difference": 0.20471489429473877,
+      "speedup_factor": 0.9974398832407396
+    },
+    "consultation_patterns": {
+      "total_bypasses": 0,
+      "total_consultations": 4,
+      "bypass_rate": 0.0
+    },
+    "quality_metrics": {
+      "production_confidence_avg": 0,
+      "validation_confidence_avg": 0,
+      "production_tests_avg": 0.0,
+      "validation_tests_avg": 0.0
+    }
+  },
+  "consultation_patterns": {
+    "production_consultations": [
+      {
+        "document": "datasets/urs_corpus/category_3/URS-001.md",
+        "timestamp": "2025-08-13T22:09:53.142235+00:00",
+        "consultation_required": true
+      },
+      {
+        "document": "datasets/urs_corpus/category_4/URS-002.md",
+        "timestamp": "2025-08-13T22:11:14.151164+00:00",
+        "consultation_required": true
+      },
+      {
+        "document": "datasets/urs_corpus/category_5/URS-003.md",
+        "timestamp": "2025-08-13T22:12:36.280177+00:00",
+        "consultation_required": true
+      },
+      {
+        "document": "datasets/urs_corpus/ambiguous/URS-004.md",
+        "timestamp": "2025-08-13T22:13:57.777326+00:00",
+        "consultation_required": true
+      }
+    ],
+    "validation_bypasses": []
+  }
+}

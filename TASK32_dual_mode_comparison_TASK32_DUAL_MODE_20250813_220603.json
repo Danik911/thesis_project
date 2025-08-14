@@ -1,0 +1,114 @@
+{
+  "experiment_id": "TASK32_DUAL_MODE_20250813_220603",
+  "timestamp": "2025-08-13T22:06:03.553675+00:00",
+  "test_documents": [
+    "datasets/urs_corpus/category_3/URS-001.md",
+    "datasets/urs_corpus/category_4/URS-002.md",
+    "datasets/urs_corpus/category_5/URS-003.md",
+    "datasets/urs_corpus/ambiguous/URS-004.md"
+  ],
+  "production_mode_results": [
+    {
+      "document": "datasets/urs_corpus/category_3/URS-001.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 4.839897155761719e-05,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:03.554387+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_4/URS-002.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 0.00035309791564941406,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:05.561682+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_5/URS-003.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 0.0003428459167480469,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:07.570637+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/ambiguous/URS-004.md",
+      "mode": "production",
+      "validation_mode": false,
+      "execution_time": 0.0016434192657470703,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:09.581322+00:00"
+    }
+  ],
+  "validation_mode_results": [
+    {
+      "document": "datasets/urs_corpus/category_3/URS-001.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 9.799003601074219e-05,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:16.610861+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_4/URS-002.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 8.869171142578125e-05,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:18.616534+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/category_5/URS-003.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 0.00015211105346679688,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:20.661729+00:00"
+    },
+    {
+      "document": "datasets/urs_corpus/ambiguous/URS-004.md",
+      "mode": "validation",
+      "validation_mode": true,
+      "execution_time": 0.00020456314086914062,
+      "success": false,
+      "error": "'Config' object has no attribute 'llm'",
+      "timestamp": "2025-08-13T22:06:22.665637+00:00"
+    }
+  ],
+  "comparison_metrics": {
+    "success_rates": {
+      "production_mode": 0.0,
+      "validation_mode": 0.0,
+      "difference": 0.0
+    },
+    "execution_times": {
+      "production_mode_avg": 0.0,
+      "validation_mode_avg": 0.0,
+      "time_difference": 0.0,
+      "speedup_factor": 0
+    },
+    "consultation_patterns": {
+      "total_bypasses": 0,
+      "total_consultations": 0,
+      "bypass_rate": 0.0
+    },
+    "quality_metrics": {
+      "production_confidence_avg": 0,
+      "validation_confidence_avg": 0,
+      "production_tests_avg": 0,
+      "validation_tests_avg": 0
+    }
+  },
+  "consultation_patterns": {
+    "production_consultations": [],
+    "validation_bypasses": []
+  }
+}

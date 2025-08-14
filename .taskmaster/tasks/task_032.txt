@@ -1,6 +1,6 @@
 # Task ID: 32
 # Title: Run Dual-Mode Comparison
-# Status: pending
+# Status: done
 # Dependencies: 31
 # Priority: high
 # Description: Compare validation mode vs production mode to quantify the impact of bypassing consultation.
