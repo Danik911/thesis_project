@@ -180,7 +180,7 @@ class Ed25519AuditSigner:
         try:
             timestamp = datetime.now(UTC).isoformat()
             signature_id = str(uuid4())
-            
+
             # Create record-specific binding payload
             binding_payload = {
                 "record_id": record_id,
@@ -199,10 +199,10 @@ class Ed25519AuditSigner:
                     "part11_compliant": True
                 }
             }
-            
+
             # Generate signature using existing audit infrastructure
             return self.sign_audit_entry(binding_payload, entry_type="electronic_signature_binding")
-            
+
         except Exception as e:
             logger.error(f"[CRYPTO] Signature binding failed: {e}")
             raise CryptographicAuditError(f"Electronic signature binding failed: {e}") from e

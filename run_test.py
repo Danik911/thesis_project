@@ -3,9 +3,9 @@
 Execute the final OSS test from project root.
 """
 
-import sys
 import os
 import subprocess
+import sys
 
 # Add the main directory to sys.path
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -16,8 +16,8 @@ sys.path.insert(0, main_path)
 os.chdir(main_path)
 
 # Run the test
-result = subprocess.run([sys.executable, "test_oss_final.py"], 
-                       capture_output=True, text=True)
+result = subprocess.run([sys.executable, "test_oss_final.py"],
+                       check=False, capture_output=True, text=True)
 
 print("STDOUT:")
 print(result.stdout)

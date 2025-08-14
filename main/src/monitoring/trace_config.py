@@ -5,28 +5,27 @@ Ensures all trace data is stored in consistent locations for compliance.
 
 import os
 from pathlib import Path
-from typing import Optional
 
 
 class TraceConfig:
     """Central configuration for all trace storage locations."""
-    
+
     # Base directories
     BASE_LOG_DIR = Path("logs")
     BASE_MONITORING_DIR = Path("docs/reports/monitoring")
-    
+
     # Primary trace storage (consolidate all traces here)
     PRIMARY_TRACE_DIR = BASE_LOG_DIR / "traces"
-    
+
     # Phoenix export directory
     PHOENIX_EXPORT_DIR = BASE_MONITORING_DIR / "phoenix_data"
-    
+
     # Event logs
     EVENT_LOG_DIR = BASE_LOG_DIR / "events"
-    
+
     # Audit logs
     AUDIT_LOG_DIR = BASE_LOG_DIR / "audit"
-    
+
     @classmethod
     def ensure_directories(cls):
         """Ensure all trace directories exist."""
@@ -37,7 +36,7 @@ class TraceConfig:
             cls.AUDIT_LOG_DIR,
         ]:
             dir_path.mkdir(parents=True, exist_ok=True)
-    
+
     @classmethod
     def get_trace_search_paths(cls) -> list[Path]:
         """Get all paths where traces might be stored."""
@@ -46,7 +45,7 @@ class TraceConfig:
             cls.PHOENIX_EXPORT_DIR,
             cls.EVENT_LOG_DIR,
         ]
-    
+
     @classmethod
     def get_all_trace_files(cls, pattern: str = "*.jsonl") -> list[Path]:
         """Get all trace files from all possible locations."""
@@ -55,7 +54,7 @@ class TraceConfig:
             if search_path.exists():
                 trace_files.extend(search_path.glob(pattern))
         return sorted(trace_files)
-    
+
     @classmethod
     def consolidate_traces(cls) -> dict:
         """Consolidate traces from all locations to primary directory."""
@@ -64,15 +63,15 @@ class TraceConfig:
             "files_found": 0,
             "errors": []
         }
-        
+
         # Ensure primary directory exists
         cls.PRIMARY_TRACE_DIR.mkdir(parents=True, exist_ok=True)
-        
+
         # Find all trace files not in primary directory
         for search_path in cls.get_trace_search_paths():
             if search_path == cls.PRIMARY_TRACE_DIR:
                 continue
-                
+
             if search_path.exists():
                 for trace_file in search_path.glob("*.jsonl"):
                     consolidated["files_found"] += 1
@@ -88,7 +87,7 @@ class TraceConfig:
                             "file": str(trace_file),
                             "error": str(e)
                         })
-        
+
         return consolidated
 
 

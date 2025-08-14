@@ -14,11 +14,11 @@ Key Features:
 - No fallbacks - explicit error handling only
 """
 
-import os
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
 from dotenv import load_dotenv
 
 # CRITICAL: Load environment variables FIRST before any other imports

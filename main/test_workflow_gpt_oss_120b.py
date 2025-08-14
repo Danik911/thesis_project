@@ -4,7 +4,6 @@
 import os
 import sys
 import time
-import json
 from pathlib import Path
 
 # Force OpenRouter with gpt-oss-120b
@@ -21,12 +20,12 @@ print("="*60)
 from src.config.llm_config import LLMConfig
 
 info = LLMConfig.get_provider_info()
-print(f"\nConfiguration:")
+print("\nConfiguration:")
 print(f"  Provider: {info['provider']}")
 print(f"  Model: {info['configuration']['model']}")
 print(f"  API Key: {'Present' if info['api_key_present'] else 'Missing'}")
 
-if info['configuration']['model'] != "openai/gpt-oss-120b":
+if info["configuration"]["model"] != "openai/gpt-oss-120b":
     print(f"[ERROR] Wrong model! Expected gpt-oss-120b, got {info['configuration']['model']}")
     sys.exit(1)
 
@@ -38,16 +37,16 @@ print("="*60)
 try:
     llm = LLMConfig.get_llm()
     print(f"LLM Type: {type(llm).__name__}")
-    
+
     # Simple test
     response = llm.complete("Complete this: The GAMP-5 categories are")
     print(f"Response: {response.text.strip()[:200]}")
-    
+
     if response.text.strip():
         print("[PASS] LLM is responding with content")
     else:
         print("[FAIL] Empty response from LLM")
-        
+
 except Exception as e:
     print(f"[FAIL] Error: {e}")
     sys.exit(1)
@@ -66,13 +65,13 @@ test_cases = [
 
 for name, description, expected in test_cases:
     print(f"\nTesting: {name} (Expected Category {expected})")
-    
+
     urs = f"""
     User Requirements Specification
     System: {name}
     Description: {description}
     """
-    
+
     try:
         start_time = time.time()
         result = categorize_with_pydantic_structured_output(
@@ -81,12 +80,12 @@ for name, description, expected in test_cases:
             document_name=f"test_{name}.txt"
         )
         elapsed = time.time() - start_time
-        
+
         print(f"  Category: {result.category}")
         print(f"  Confidence: {result.confidence:.2f}")
         print(f"  Time: {elapsed:.2f}s")
         print(f"  Status: {'PASS' if result.category == expected else 'FAIL'}")
-        
+
     except Exception as e:
         print(f"  [ERROR] {str(e)[:200]}")
 
@@ -97,21 +96,21 @@ print("="*60)
 
 try:
     from src.core.unified_workflow import UnifiedTestGenerationWorkflow
-    
+
     workflow = UnifiedTestGenerationWorkflow()
-    
+
     # Check it's using the right LLM
     llm_type = type(workflow.llm).__name__
-    llm_model = workflow.llm.model if hasattr(workflow.llm, 'model') else 'unknown'
-    
+    llm_model = workflow.llm.model if hasattr(workflow.llm, "model") else "unknown"
+
     print(f"Workflow LLM Type: {llm_type}")
     print(f"Workflow LLM Model: {llm_model}")
-    
+
     if llm_type == "OpenRouterLLM" and llm_model == "openai/gpt-oss-120b":
         print("[PASS] Workflow correctly configured with gpt-oss-120b")
     else:
-        print(f"[FAIL] Wrong configuration - expected OpenRouterLLM with gpt-oss-120b")
-        
+        print("[FAIL] Wrong configuration - expected OpenRouterLLM with gpt-oss-120b")
+
 except Exception as e:
     print(f"[ERROR] {e}")
 

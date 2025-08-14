@@ -4,11 +4,11 @@ Task 14 Simple Validation Script
 Tests categorization accuracy directly
 """
 
+import json
 import os
 import sys
-import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -105,27 +105,27 @@ def test_categorization():
     print("TASK 14 VALIDATION - CATEGORIZATION ACCURACY TEST")
     print("=" * 80)
     print()
-    
+
     # Create agent
     agent = create_gamp_categorization_agent()
-    
+
     results = []
-    
+
     for test_case in TEST_CASES:
         print(f"\nTesting {test_case['id']}: {test_case['name']}")
         print(f"Expected: {test_case['expected']}")
-        
+
         try:
             # Use the agent directly
-            response = agent.chat(test_case['text'])
-            
+            response = agent.chat(test_case["text"])
+
             # Parse response
             response_text = str(response)
-            
+
             # Extract category from response
             category = None
             confidence = None
-            
+
             if "Category 5" in response_text:
                 category = "Category 5"
             elif "Category 4" in response_text:
@@ -136,12 +136,12 @@ def test_categorization():
                 category = "Category 2"
             elif "Category 1" in response_text:
                 category = "Category 1"
-            
+
             # Try to extract confidence
             try:
                 if "confidence" in response_text.lower():
                     import re
-                    conf_match = re.search(r'(\d+)%', response_text)
+                    conf_match = re.search(r"(\d+)%", response_text)
                     if conf_match:
                         confidence = int(conf_match.group(1)) / 100
                     else:
@@ -150,102 +150,102 @@ def test_categorization():
                     confidence = 0.9
             except:
                 confidence = 0.9
-            
+
             # Check for ambiguity
             is_ambiguous = "ambiguous" in response_text.lower()
-            
+
             print(f"Result: {category} (Confidence: {confidence:.1%})")
             print(f"Ambiguous: {is_ambiguous}")
-            
+
             # Check if matches expected
-            if test_case['expected'].endswith("or 4") or test_case['expected'].endswith("or 5"):
+            if test_case["expected"].endswith("or 4") or test_case["expected"].endswith("or 5"):
                 # Ambiguous case
-                expected_categories = [f"Category {c}" for c in test_case['expected'] if c.isdigit()]
+                expected_categories = [f"Category {c}" for c in test_case["expected"] if c.isdigit()]
                 passed = category in expected_categories or is_ambiguous
             else:
                 # Clear case
-                passed = category == test_case['expected']
-            
+                passed = category == test_case["expected"]
+
             print(f"Status: {'✅ PASSED' if passed else '❌ FAILED'}")
-            
+
             results.append({
-                "id": test_case['id'],
-                "name": test_case['name'],
-                "expected": test_case['expected'],
+                "id": test_case["id"],
+                "name": test_case["name"],
+                "expected": test_case["expected"],
                 "actual": category,
                 "confidence": confidence,
                 "ambiguous": is_ambiguous,
                 "passed": passed
             })
-            
+
         except Exception as e:
-            print(f"❌ ERROR: {str(e)}")
+            print(f"❌ ERROR: {e!s}")
             results.append({
-                "id": test_case['id'],
-                "name": test_case['name'],
-                "expected": test_case['expected'],
+                "id": test_case["id"],
+                "name": test_case["name"],
+                "expected": test_case["expected"],
                 "actual": "ERROR",
                 "confidence": 0,
                 "ambiguous": False,
                 "passed": False,
                 "error": str(e)
             })
-    
+
     # Summary
     print("\n" + "=" * 80)
     print("SUMMARY")
     print("=" * 80)
-    
-    passed_count = sum(1 for r in results if r['passed'])
+
+    passed_count = sum(1 for r in results if r["passed"])
     total_count = len(results)
     accuracy = (passed_count / total_count) * 100 if total_count > 0 else 0
-    
+
     print(f"\nTotal Tests: {total_count}")
     print(f"Passed: {passed_count}")
     print(f"Failed: {total_count - passed_count}")
     print(f"Accuracy: {accuracy:.1f}%")
-    
+
     print("\nDetailed Results:")
     for result in results:
-        status = "✅" if result['passed'] else "❌"
+        status = "✅" if result["passed"] else "❌"
         print(f"{status} {result['id']}: Expected {result['expected']}, Got {result['actual']} (Confidence: {result['confidence']:.1%})")
-    
+
     # Critical validations
     print("\n" + "=" * 80)
     print("CRITICAL VALIDATIONS")
     print("=" * 80)
-    
+
     # Check URS-003 (must be Category 5)
-    urs003 = next((r for r in results if r['id'] == 'URS-003'), None)
-    if urs003 and urs003['actual'] == 'Category 5' and not urs003['ambiguous']:
+    urs003 = next((r for r in results if r["id"] == "URS-003"), None)
+    if urs003 and urs003["actual"] == "Category 5" and not urs003["ambiguous"]:
         print("✅ URS-003 correctly identified as Category 5 (custom development)")
     else:
         print("❌ URS-003 categorization issue - critical failure")
-    
+
     # Check for NO FALLBACK behavior
     print("\n✅ NO FALLBACK behavior confirmed - all errors explicit")
-    
+
     # Production readiness
     print("\n" + "=" * 80)
     print("PRODUCTION READINESS ASSESSMENT")
     print("=" * 80)
-    
+
     if accuracy >= 80:
         print(f"✅ System accuracy ({accuracy:.1f}%) meets production threshold (≥80%)")
     else:
         print(f"⚠️ System accuracy ({accuracy:.1f}%) below production threshold (≥80%)")
-    
-    if urs003 and urs003['passed']:
+
+    if urs003 and urs003["passed"]:
         print("✅ Critical Category 5 detection working correctly")
     else:
         print("❌ Critical Category 5 detection failing")
-    
-    print("\nFinal Status: " + ("READY FOR PRODUCTION" if accuracy >= 80 and urs003 and urs003['passed'] else "NEEDS IMPROVEMENT"))
-    
+
+    print("\nFinal Status: " + ("READY FOR PRODUCTION" if accuracy >= 80 and urs003 and urs003["passed"] else "NEEDS IMPROVEMENT"))
+
     # Save results
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     results_file = f"task14_results_{timestamp}.json"
-    with open(results_file, 'w') as f:
+    with open(results_file, "w") as f:
         json.dump({
             "timestamp": timestamp,
             "accuracy": accuracy,

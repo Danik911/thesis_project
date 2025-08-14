@@ -5,14 +5,14 @@ This module provides a compatibility wrapper that inherits from OpenAI's LLM
 to pass LlamaIndex's Pydantic validation while routing requests to OpenRouter.
 """
 
-import os
-from typing import Any, Optional, Sequence
-import requests
 import json
+import os
 import time
 import uuid
+from collections.abc import Sequence
+from typing import Any
 
-from llama_index.llms.openai import OpenAI
+import requests
 from llama_index.core.base.llms.types import (
     ChatMessage,
     ChatResponse,
@@ -23,13 +23,14 @@ from llama_index.core.base.llms.types import (
     MessageRole,
 )
 from llama_index.core.callbacks import CallbackManager, CBEventType, EventPayload
+from llama_index.llms.openai import OpenAI
 
 # Import OpenTelemetry for direct span creation
 try:
+    from openinference.semconv.trace import SpanAttributes
     from opentelemetry import trace
     from opentelemetry.trace import Status, StatusCode
-    from openinference.semconv.trace import SpanAttributes
-    
+
     # Get tracer for OpenRouter LLM
     tracer = trace.get_tracer("openrouter_compat_llm")
     OTEL_AVAILABLE = True
@@ -50,15 +51,15 @@ class OpenRouterCompatLLM(OpenAI):
     
     CRITICAL: NO FALLBACKS - This wrapper fails explicitly if OpenRouter fails.
     """
-    
+
     def __init__(
         self,
         model: str = "openai/gpt-oss-120b",
-        openrouter_api_key: Optional[str] = None,
+        openrouter_api_key: str | None = None,
         api_base: str = "https://openrouter.ai/api/v1",
         temperature: float = 0.1,
         max_tokens: int = 30000,  # Increased to 30000 to prevent JSON truncation of 25 test cases
-        callback_manager: Optional[CallbackManager] = None,
+        callback_manager: CallbackManager | None = None,
         **kwargs: Any,
     ):
         """
@@ -78,17 +79,17 @@ class OpenRouterCompatLLM(OpenAI):
         """
         # Get OpenRouter API key first (before parent init)
         openrouter_key = openrouter_api_key or os.getenv("OPENROUTER_API_KEY")
-        
+
         if not openrouter_key:
             raise ValueError(
                 "OpenRouter API key is required. Set OPENROUTER_API_KEY environment variable. "
                 "NO FALLBACK ALLOWED - Human consultation required."
             )
-        
+
         # Initialize parent OpenAI class with dummy OpenAI key to pass validation
         # The actual API calls will be overridden to use OpenRouter
         dummy_openai_key = "sk-dummy-key-for-llamaindex-validation"
-        
+
         super().__init__(
             model="gpt-4",  # Use valid OpenAI model name for validation
             api_key=dummy_openai_key,
@@ -97,15 +98,15 @@ class OpenRouterCompatLLM(OpenAI):
             callback_manager=callback_manager,
             **kwargs,
         )
-        
+
         # Store OpenRouter settings after parent initialization
         self._openrouter_api_key = openrouter_key
         self._openrouter_api_base = api_base
         self._openrouter_model = model
-        
+
         # Override with actual OpenRouter model after initialization
         self.model = model
-    
+
     def _calculate_tokens(self, text: str) -> int:
         """
         Estimate token count using simple approximation.
@@ -117,7 +118,7 @@ class OpenRouterCompatLLM(OpenAI):
             Estimated token count (1 token ≈ 4 characters)
         """
         return max(1, len(text) // 4)
-    
+
     def _emit_llm_event(self, event_type: CBEventType, payload: dict) -> None:
         """
         Emit LLM callback event if callback manager exists.
@@ -132,7 +133,7 @@ class OpenRouterCompatLLM(OpenAI):
                     self.callback_manager.on_event_start(event_type, payload)
                 else:  # End event
                     self.callback_manager.on_event_end(event_type, payload)
-        
+
     @property
     def metadata(self) -> LLMMetadata:
         """Get LLM metadata for OpenRouter model."""
@@ -142,7 +143,7 @@ class OpenRouterCompatLLM(OpenAI):
             model_name=self.model,
             is_chat_model=True,
         )
-    
+
     def _make_openrouter_request(self, messages: list[dict], stream: bool = False) -> dict:
         """
         Make API request to OpenRouter.
@@ -163,7 +164,7 @@ class OpenRouterCompatLLM(OpenAI):
             "HTTP-Referer": "http://localhost:3000",
             "X-Title": "GAMP-5 Pharmaceutical Test Generation"
         }
-        
+
         data = {
             "model": self.model,
             "messages": messages,
@@ -171,10 +172,10 @@ class OpenRouterCompatLLM(OpenAI):
             "max_tokens": self.max_tokens,
             "stream": stream
         }
-        
+
         # Get configurable timeout with logging
         api_timeout = TimeoutConfig.get_timeout("openrouter_api")
-        
+
         try:
             response = requests.post(
                 f"{self._openrouter_api_base}/chat/completions",
@@ -203,14 +204,14 @@ class OpenRouterCompatLLM(OpenAI):
                 f"OpenRouter API error: {e}. "
                 f"NO FALLBACK ALLOWED - Human consultation required."
             ) from e
-    
+
     def complete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponse:
         """Complete the prompt using OpenRouter API with OpenTelemetry tracing."""
         # Convert prompt to chat format for OpenRouter
         messages = [{"role": "user", "content": prompt}]
-        
+
         # Create OpenTelemetry span for Phoenix
         span = None
         if OTEL_AVAILABLE and tracer:
@@ -228,7 +229,7 @@ class OpenRouterCompatLLM(OpenAI):
                 "max_tokens": self.max_tokens,
                 "provider": "openrouter"
             }))
-        
+
         # Emit start event for callbacks
         event_id = str(uuid.uuid4())
         start_payload = {
@@ -243,19 +244,19 @@ class OpenRouterCompatLLM(OpenAI):
             }
         }
         self._emit_llm_event(CBEventType.LLM, start_payload)
-        
+
         try:
             start_time = time.time()
             response_data = self._make_openrouter_request(messages)
             latency = time.time() - start_time
-            
+
             text = response_data["choices"][0]["message"]["content"]
-            
+
             # Calculate token usage
             prompt_tokens = self._calculate_tokens(prompt)
             completion_tokens = self._calculate_tokens(text)
             total_tokens = prompt_tokens + completion_tokens
-            
+
             # Update OpenTelemetry span with response
             if span:
                 span.set_attribute(SpanAttributes.OUTPUT_VALUE, text)
@@ -264,13 +265,13 @@ class OpenRouterCompatLLM(OpenAI):
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_TOTAL, total_tokens)
                 span.set_attribute("llm.latency_ms", latency * 1000)
                 span.set_status(Status(StatusCode.OK))
-            
+
             # Create response object
             response = CompletionResponse(
                 text=text,
                 raw=response_data,
             )
-            
+
             # Emit end event for callbacks
             end_payload = {
                 EventPayload.RESPONSE: response,
@@ -283,14 +284,14 @@ class OpenRouterCompatLLM(OpenAI):
                 }
             }
             self._emit_llm_event(CBEventType.LLM, end_payload)
-            
+
             return response
         except Exception as e:
             # Set error status on span
             if span:
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
-                
+
             # Emit error event for callbacks
             error_payload = {
                 EventPayload.EXCEPTION: str(e),
@@ -302,7 +303,7 @@ class OpenRouterCompatLLM(OpenAI):
             # End the span
             if span:
                 span.end()
-    
+
     def stream_complete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponseGen:
@@ -311,7 +312,7 @@ class OpenRouterCompatLLM(OpenAI):
             "Streaming not implemented for OpenRouter compatibility wrapper. "
             "Use non-streaming methods only."
         )
-    
+
     def chat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponse:
@@ -320,13 +321,13 @@ class OpenRouterCompatLLM(OpenAI):
         message_dicts = []
         messages_text = ""
         for msg in messages:
-            role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+            role = msg.role.value if hasattr(msg.role, "value") else str(msg.role)
             message_dicts.append({
                 "role": role,
                 "content": msg.content
             })
             messages_text += f"{role}: {msg.content}\n"
-        
+
         # Create OpenTelemetry span for Phoenix
         span = None
         if OTEL_AVAILABLE and tracer:
@@ -335,11 +336,11 @@ class OpenRouterCompatLLM(OpenAI):
             span.set_attribute(SpanAttributes.LLM_MODEL_NAME, self.model)
             span.set_attribute(SpanAttributes.LLM_PROVIDER, "openrouter")
             span.set_attribute(SpanAttributes.LLM_SYSTEM, "OpenRouter")
-            
+
             # Set messages as input
             span.set_attribute(SpanAttributes.INPUT_VALUE, messages_text)
             # Set messages in OpenInference format
-            span.set_attribute(SpanAttributes.LLM_INPUT_MESSAGES, 
+            span.set_attribute(SpanAttributes.LLM_INPUT_MESSAGES,
                              [{"role": m["role"], "content": m["content"]} for m in message_dicts])
             # Set invocation parameters as a JSON string (OpenInference convention)
             span.set_attribute(SpanAttributes.LLM_INVOCATION_PARAMETERS, json.dumps({
@@ -348,7 +349,7 @@ class OpenRouterCompatLLM(OpenAI):
                 "max_tokens": self.max_tokens,
                 "provider": "openrouter"
             }))
-        
+
         # Emit start event for callbacks
         event_id = str(uuid.uuid4())
         start_payload = {
@@ -362,19 +363,19 @@ class OpenRouterCompatLLM(OpenAI):
             }
         }
         self._emit_llm_event(CBEventType.LLM, start_payload)
-        
+
         try:
             start_time = time.time()
             response_data = self._make_openrouter_request(message_dicts)
             latency = time.time() - start_time
-            
+
             message_data = response_data["choices"][0]["message"]
-            
+
             # Calculate token usage
             input_tokens = self._calculate_tokens(messages_text)
             output_tokens = self._calculate_tokens(message_data["content"])
             total_tokens = input_tokens + output_tokens
-            
+
             # Update OpenTelemetry span with response
             if span:
                 span.set_attribute(SpanAttributes.OUTPUT_VALUE, message_data["content"])
@@ -385,7 +386,7 @@ class OpenRouterCompatLLM(OpenAI):
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_TOTAL, total_tokens)
                 span.set_attribute("llm.latency_ms", latency * 1000)
                 span.set_status(Status(StatusCode.OK))
-            
+
             # Create response object
             response = ChatResponse(
                 message=ChatMessage(
@@ -394,7 +395,7 @@ class OpenRouterCompatLLM(OpenAI):
                 ),
                 raw=response_data,
             )
-            
+
             # Emit end event for callbacks
             end_payload = {
                 EventPayload.RESPONSE: response,
@@ -407,14 +408,14 @@ class OpenRouterCompatLLM(OpenAI):
                 }
             }
             self._emit_llm_event(CBEventType.LLM, end_payload)
-            
+
             return response
         except Exception as e:
             # Set error status on span
             if span:
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
-                
+
             # Emit error event for callbacks
             error_payload = {
                 EventPayload.EXCEPTION: str(e),
@@ -426,7 +427,7 @@ class OpenRouterCompatLLM(OpenAI):
             # End the span
             if span:
                 span.end()
-    
+
     def stream_chat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponseGen:
@@ -435,7 +436,7 @@ class OpenRouterCompatLLM(OpenAI):
             "Streaming not implemented for OpenRouter compatibility wrapper. "
             "Use non-streaming methods only."
         )
-    
+
     async def acomplete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponse:
@@ -443,7 +444,7 @@ class OpenRouterCompatLLM(OpenAI):
         # Reuse the synchronous implementation for now
         # This ensures the same instrumentation is applied
         return self.complete(prompt, formatted, **kwargs)
-    
+
     async def astream_complete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponseGen:
@@ -451,7 +452,7 @@ class OpenRouterCompatLLM(OpenAI):
         raise NotImplementedError(
             "Async streaming not implemented for OpenRouter compatibility wrapper."
         )
-    
+
     async def achat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponse:
@@ -459,7 +460,7 @@ class OpenRouterCompatLLM(OpenAI):
         # Reuse the synchronous implementation for now
         # This ensures the same instrumentation is applied
         return self.chat(messages, **kwargs)
-    
+
     async def astream_chat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponseGen:
@@ -467,16 +468,16 @@ class OpenRouterCompatLLM(OpenAI):
         raise NotImplementedError(
             "Async streaming not implemented for OpenRouter compatibility wrapper."
         )
-    
+
     def _as_query_component(self, **kwargs: Any) -> Any:
         """Return as query component."""
         # Return self to maintain compatibility
         return self
-    
+
     def __str__(self) -> str:
         """String representation."""
         return f"OpenRouterCompatLLM(model={self.model}, api_base={self._openrouter_api_base})"
-    
+
     def __repr__(self) -> str:
         """Detailed representation."""
         return (

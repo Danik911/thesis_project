@@ -27,12 +27,12 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 # Add main source to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "main" / "src"))
 
-from visualization import ThesisVisualizationGenerator, ThesisDashboard, ExportManager
+from visualization import ExportManager, ThesisDashboard, ThesisVisualizationGenerator
 from visualization.thesis_visualizations import ThesisData
 
 
@@ -40,9 +40,9 @@ def setup_logging() -> logging.Logger:
     """Set up logging for visualization generation."""
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
-            logging.FileHandler('thesis_visualization_generation.log'),
+            logging.FileHandler("thesis_visualization_generation.log"),
             logging.StreamHandler(sys.stdout)
         ]
     )
@@ -61,24 +61,24 @@ def load_real_statistical_data() -> ThesisData:
         ValueError: If data validation fails
     """
     logger = logging.getLogger(__name__)
-    
+
     # Path to Task 28 statistical results
     stats_file = Path("main/analysis/results/statistical_results.json")
-    
+
     if not stats_file.exists():
         logger.warning(f"Statistical results file not found at {stats_file}")
         logger.info("Using default real data from Task 28 validation report")
         return ThesisData()  # Uses default real values
-    
+
     try:
-        with open(stats_file, 'r', encoding='utf-8') as f:
+        with open(stats_file, encoding="utf-8") as f:
             stats_data = json.load(f)
-        
+
         # Extract real data from Task 28 results
         cost_analysis = stats_data.get("cost_effectiveness_analysis", {})
         performance_analysis = stats_data.get("performance_analysis", {})
         reliability_analysis = stats_data.get("system_reliability_analysis", {})
-        
+
         # Create ThesisData with real values
         real_data = ThesisData(
             roi_percentage=cost_analysis.get("savings_analysis", {}).get("roi_percentage", 535714185.7),
@@ -95,19 +95,19 @@ def load_real_statistical_data() -> ThesisData:
             reliability_score=reliability_analysis.get("reliability_score", {}).get("overall_reliability", 1.0),
             error_handling_compliance=reliability_analysis.get("reliability_score", {}).get("error_handling_compliance", 1.0)
         )
-        
+
         logger.info("Successfully loaded real statistical data from Task 28")
         logger.info(f"ROI: {real_data.roi_percentage:,.0f}% | Tests: {real_data.tests_generated} | Reliability: {real_data.reliability_score:.0%}")
-        
+
         return real_data
-        
+
     except Exception as e:
         logger.error(f"Failed to load statistical data: {e}")
         logger.info("Falling back to validated default data")
         return ThesisData()  # Use default validated data
 
 
-def generate_individual_visualizations(data: ThesisData, output_dir: Path) -> Dict[str, Path]:
+def generate_individual_visualizations(data: ThesisData, output_dir: Path) -> dict[str, Path]:
     """
     Generate individual thesis visualizations.
     
@@ -120,28 +120,28 @@ def generate_individual_visualizations(data: ThesisData, output_dir: Path) -> Di
     """
     logger = logging.getLogger(__name__)
     logger.info("Generating individual thesis visualizations...")
-    
+
     # Initialize visualization generator
     viz_gen = ThesisVisualizationGenerator(output_dir)
-    
+
     try:
         # Generate all 6 key visualizations
         generated_files = viz_gen.generate_all_thesis_visualizations(data)
-        
+
         visualization_map = {}
         for file_path in generated_files:
-            viz_name = file_path.stem.split('_')[0]  # Extract base name
+            viz_name = file_path.stem.split("_")[0]  # Extract base name
             visualization_map[viz_name] = file_path
-        
+
         logger.info(f"Successfully generated {len(generated_files)} individual visualizations")
         return visualization_map
-        
+
     except Exception as e:
         logger.error(f"Failed to generate individual visualizations: {e}")
         raise
 
 
-def create_comprehensive_dashboard(data: ThesisData, viz_files: Dict[str, Path], output_dir: Path) -> Path:
+def create_comprehensive_dashboard(data: ThesisData, viz_files: dict[str, Path], output_dir: Path) -> Path:
     """
     Create comprehensive interactive dashboard.
     
@@ -155,28 +155,28 @@ def create_comprehensive_dashboard(data: ThesisData, viz_files: Dict[str, Path],
     """
     logger = logging.getLogger(__name__)
     logger.info("Creating comprehensive thesis dashboard...")
-    
+
     try:
         # Initialize dashboard generator
         dashboard = ThesisDashboard(output_dir)
-        
+
         # Create comprehensive dashboard
         dashboard_path = dashboard.create_comprehensive_dashboard(data)
-        
+
         # Create navigation index
         nav_index_path = dashboard.create_navigation_index(list(viz_files.values()))
-        
+
         logger.info(f"Dashboard created: {dashboard_path}")
         logger.info(f"Navigation index: {nav_index_path}")
-        
+
         return dashboard_path
-        
+
     except Exception as e:
         logger.error(f"Failed to create dashboard: {e}")
         raise
 
 
-def export_publication_formats(viz_files: Dict[str, Path], output_dir: Path) -> Dict[str, Any]:
+def export_publication_formats(viz_files: dict[str, Path], output_dir: Path) -> dict[str, Any]:
     """
     Export all visualizations in publication-ready formats.
     
@@ -189,11 +189,11 @@ def export_publication_formats(viz_files: Dict[str, Path], output_dir: Path) -> 
     """
     logger = logging.getLogger(__name__)
     logger.info("Exporting publication-ready formats...")
-    
+
     try:
         # Initialize export manager
         export_mgr = ExportManager(output_dir)
-        
+
         # For now, create export directory structure
         # Full implementation would load each visualization and export in multiple formats
         export_results = {
@@ -202,20 +202,20 @@ def export_publication_formats(viz_files: Dict[str, Path], output_dir: Path) -> 
             "stakeholder": len(viz_files),
             "web": len(viz_files)
         }
-        
+
         # Create export manifest
         manifest_path = export_mgr.create_export_manifest(export_results)
-        
+
         logger.info(f"Export manifest created: {manifest_path}")
         return export_results
-        
+
     except Exception as e:
         logger.error(f"Failed to export publication formats: {e}")
         raise
 
 
-def create_summary_report(data: ThesisData, viz_files: Dict[str, Path], 
-                         export_results: Dict[str, Any], output_dir: Path) -> Path:
+def create_summary_report(data: ThesisData, viz_files: dict[str, Path],
+                         export_results: dict[str, Any], output_dir: Path) -> Path:
     """
     Create summary report of all generated visualizations.
     
@@ -230,7 +230,7 @@ def create_summary_report(data: ThesisData, viz_files: Dict[str, Path],
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_path = output_dir / f"visualization_generation_report_{timestamp}.md"
-    
+
     report_content = f"""# Thesis Visualization Generation Report
 
 **Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
@@ -279,10 +279,10 @@ Successfully generated all 6 thesis visualizations for Chapter 4 using real stat
 
 #### Generated Visualizations
 """
-    
+
     for viz_name, file_path in viz_files.items():
         report_content += f"- **{viz_name.title()}**: `{file_path}`\n"
-    
+
     report_content += f"""
 #### Output Directories
 - **Interactive**: `{output_dir}/interactive/`
@@ -322,55 +322,55 @@ Successfully generated all 6 thesis visualizations for Chapter 4 using real stat
 **Data Integrity**: NO FALLBACKS - Real validation data only  
 **Status**: Task 29 COMPLETE ✅
 """
-    
-    with open(report_path, 'w', encoding='utf-8') as f:
+
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_content)
-    
+
     return report_path
 
 
 def main():
     """Main execution function for thesis visualization generation."""
     logger = setup_logging()
-    
+
     print("THESIS VISUALIZATION GENERATOR")
     print("=" * 50)
     print("Task 29: Build Visualization Generator")
     print("Generating publication-quality charts for Chapter 4")
     print()
-    
+
     try:
         # Set up output directory
         output_dir = Path("thesis_visualizations")
         output_dir.mkdir(exist_ok=True)
-        
+
         logger.info("Starting thesis visualization generation...")
-        
+
         # 1. Load real statistical data
         print("Loading real statistical data from Task 28...")
         data = load_real_statistical_data()
         print(f"   SUCCESS: ROI: {data.roi_percentage:,.0f}% | Tests: {data.tests_generated}")
-        
+
         # 2. Generate individual visualizations
         print("Generating individual visualizations...")
         viz_files = generate_individual_visualizations(data, output_dir)
         print(f"   SUCCESS: Generated {len(viz_files)} visualizations")
-        
+
         # 3. Create comprehensive dashboard
         print("Creating comprehensive dashboard...")
         dashboard_path = create_comprehensive_dashboard(data, viz_files, output_dir)
         print(f"   SUCCESS: Dashboard: {dashboard_path.name}")
-        
+
         # 4. Export publication formats
         print("Exporting publication-ready formats...")
         export_results = export_publication_formats(viz_files, output_dir)
         print(f"   SUCCESS: Exported in {len(export_results)} format categories")
-        
+
         # 5. Create summary report
         print("Creating summary report...")
         report_path = create_summary_report(data, viz_files, export_results, output_dir)
         print(f"   SUCCESS: Report: {report_path.name}")
-        
+
         # Success summary
         print()
         print("THESIS VISUALIZATION GENERATION COMPLETE!")
@@ -378,17 +378,17 @@ def main():
         print(f"Output Directory: {output_dir}")
         print(f"Visualizations Generated: {len(viz_files)}")
         print(f"ROI Displayed: {data.roi_percentage:,.0f}%")
-        print(f"Real Data Used: YES (Task 28 results)")
+        print("Real Data Used: YES (Task 28 results)")
         print(f"Summary Report: {report_path}")
         print()
         print("READY FOR THESIS CHAPTER 4 INCLUSION")
-        
+
         # Log completion
         logger.info("Thesis visualization generation completed successfully")
         logger.info(f"Generated {len(viz_files)} visualizations showing {data.roi_percentage:,.0f}% ROI")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Thesis visualization generation failed: {e}")
         print(f"\nGENERATION FAILED: {e}")

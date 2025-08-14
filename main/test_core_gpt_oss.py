@@ -3,7 +3,6 @@
 
 import os
 import sys
-import time
 from pathlib import Path
 
 # Force OpenRouter with gpt-oss-120b
@@ -23,8 +22,8 @@ info = LLMConfig.get_provider_info()
 print(f"Provider: {info['provider']}")
 print(f"Model: {info['configuration']['model']}")
 
-if info['configuration']['model'] != "openai/gpt-oss-120b":
-    print(f"ERROR: Wrong model configured!")
+if info["configuration"]["model"] != "openai/gpt-oss-120b":
+    print("ERROR: Wrong model configured!")
     sys.exit(1)
 
 # Create LLM instance
@@ -48,18 +47,17 @@ for prompt, expected in tests:
         response = llm.complete(prompt)
         content = response.text.strip() if response.text else "EMPTY"
         print(f"Response: {content[:100]}")
-        
+
         if expected:
             if expected in content:
                 print("[PASS]")
             else:
                 print(f"[FAIL] Expected '{expected}' in response")
+        elif content and content != "EMPTY":
+            print("[PASS] Got response")
         else:
-            if content and content != "EMPTY":
-                print("[PASS] Got response")
-            else:
-                print("[FAIL] Empty response")
-                
+            print("[FAIL] Empty response")
+
     except Exception as e:
         print(f"[ERROR] {e}")
 
@@ -70,21 +68,21 @@ print("-"*60)
 
 try:
     from src.core.unified_workflow import UnifiedTestGenerationWorkflow
-    
+
     workflow = UnifiedTestGenerationWorkflow()
-    
+
     # Verify it's using the right LLM
     workflow_llm_type = type(workflow.llm).__name__
-    workflow_model = workflow.llm.model if hasattr(workflow.llm, 'model') else 'unknown'
-    
+    workflow_model = workflow.llm.model if hasattr(workflow.llm, "model") else "unknown"
+
     print(f"Workflow LLM Type: {workflow_llm_type}")
     print(f"Workflow Model: {workflow_model}")
-    
+
     if workflow_llm_type == "OpenRouterLLM" and workflow_model == "openai/gpt-oss-120b":
         print("[PASS] Workflow using gpt-oss-120b correctly")
     else:
         print("[FAIL] Workflow not configured correctly")
-        
+
 except Exception as e:
     print(f"[ERROR] {e}")
 
@@ -105,7 +103,7 @@ try:
     response = llm.complete(gamp_prompt)
     content = response.text.strip() if response.text else ""
     print(f"Response: {content}")
-    
+
     # Try to parse as JSON
     import json
     try:
@@ -117,7 +115,7 @@ try:
         print("[INFO] Response is not valid JSON")
         if "5" in content:
             print("[PARTIAL] Contains category 5 (correct)")
-        
+
 except Exception as e:
     print(f"[ERROR] {e}")
 

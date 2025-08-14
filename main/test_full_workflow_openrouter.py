@@ -29,7 +29,7 @@ print("\nCreating LLM instance...")
 try:
     llm = LLMConfig.get_llm()
     print(f"[SUCCESS] LLM Type: {type(llm).__name__}")
-    
+
     # Quick test
     response = llm.complete("Return exactly: SUCCESS")
     print(f"[SUCCESS] LLM Response: {response.text.strip()}")
@@ -88,36 +88,36 @@ results = []
 for test in test_cases:
     print(f"\nTest: {test['name']}")
     print("-" * 40)
-    
+
     start_time = time.time()
     try:
         result = categorize_with_pydantic_structured_output(
             llm=llm,
-            urs_content=test['urs'],
+            urs_content=test["urs"],
             document_name=f"test_{test['expected']}.txt"
         )
         elapsed = time.time() - start_time
-        
-        success = result.category == test['expected']
+
+        success = result.category == test["expected"]
         status = "[PASS]" if success else "[FAIL]"
-        
+
         print(f"{status} Category: {result.category} (expected {test['expected']})")
         print(f"      Confidence: {result.confidence:.2f}")
         print(f"      Time: {elapsed:.2f}s")
-        
+
         results.append({
-            "test": test['name'],
+            "test": test["name"],
             "success": success,
             "got": result.category,
-            "expected": test['expected'],
+            "expected": test["expected"],
             "confidence": result.confidence,
             "time": elapsed
         })
-        
+
     except Exception as e:
         print(f"[ERROR] {e}")
         results.append({
-            "test": test['name'],
+            "test": test["name"],
             "success": False,
             "error": str(e)
         })

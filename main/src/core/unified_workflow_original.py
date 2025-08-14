@@ -2,35 +2,31 @@
 import asyncio
 import json
 import logging
-import time
-import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
 from uuid import UUID, uuid4
 
 # Third-party imports
 from llama_index.core.workflow import (
     Context,
-    Event,
     StartEvent,
-    StopEvent,
     Workflow,
     step,
 )
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 # Configure logging first
 logger = logging.getLogger(__name__)
 
 # GAMP-5 category and available events
 from src.core.events import (
-    GAMPCategory,
-    GAMPCategorizationEvent,
-    DocumentProcessedEvent,
     AgentRequestEvent,
     AgentResultEvent,
     AgentResultsEvent,
+    DocumentProcessedEvent,
+    GAMPCategorizationEvent,
+    GAMPCategory,
     WorkflowCompletionEvent,
 )
 
@@ -61,11 +57,16 @@ except ImportError:
     WorkflowMonitor = None
 
 # Import agents
-from src.agents.categorization.agent import CategorizationAgentWrapper as GAMPCategorizationAgent
-from src.agents.parallel.context_provider import create_context_provider_agent, ContextProviderAgent
-from src.agents.parallel.research_agent import create_research_agent, ResearchAgent 
-from src.agents.parallel.sme_agent import create_sme_agent, SMEAgent
+from src.agents.categorization.agent import (
+    CategorizationAgentWrapper as GAMPCategorizationAgent,
+)
 from src.agents.oq_generator.generator import OQTestGenerator
+from src.agents.parallel.context_provider import (
+    ContextProviderAgent,
+    create_context_provider_agent,
+)
+from src.agents.parallel.research_agent import ResearchAgent, create_research_agent
+from src.agents.parallel.sme_agent import SMEAgent, create_sme_agent
 
 
 # Simple GAMP Classification model for workflow needs
@@ -74,15 +75,15 @@ class GAMPClassification(BaseModel):
     category: GAMPCategory
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
-    indicators: List[str] = Field(default_factory=list)
+    indicators: list[str] = Field(default_factory=list)
 
 
 # Simple test generation result model
 class TestGenerationResult(BaseModel):
     """Test generation result containing test cases and metadata."""
-    test_cases: List[Dict[str, Any]]
+    test_cases: list[dict[str, Any]]
     gamp_category: GAMPCategory
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 # Simple workflow result model
@@ -94,7 +95,7 @@ class WorkflowResult(BaseModel):
     test_result: TestGenerationResult
     execution_time: float
     output_file: str
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class UnifiedTestGenerationWorkflow(Workflow):
@@ -117,7 +118,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
     
     NO FALLBACK LOGIC: All failures result in explicit errors with full diagnostic information.
     """
-    
+
     def __init__(
         self,
         timeout: int = 1800,  # 30 minutes default
@@ -128,33 +129,33 @@ class UnifiedTestGenerationWorkflow(Workflow):
     ):
         """Initialize the unified workflow with configuration and monitoring."""
         super().__init__(timeout=timeout, verbose=verbose)
-        
+
         # Configuration
         self.timeout = timeout
         self.verbose = verbose
         self.enable_human_consultation = enable_human_consultation
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize components
         self._initialize_components()
-        
+
         # Workflow state
         self.workflow_id = str(uuid4())
         self.start_time = None
         self.end_time = None
         self.current_step = None
-        
+
         # Agent instances (initialized lazily)
         self._categorization_agent = None
         self._context_provider_agent = None
         self._research_agent = None
         self._sme_agent = None
         self._oq_generator = None
-        
+
         if self.verbose:
             logger.info(f"🚀 Initialized UnifiedTestGenerationWorkflow (ID: {self.workflow_id[:8]})")
-    
+
     def _initialize_components(self) -> None:
         """Initialize workflow components with proper error handling."""
         try:
@@ -167,7 +168,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 self.phoenix_manager = None
                 if self.verbose:
                     logger.warning("⚠️ Phoenix observability not available")
-            
+
             # Initialize output manager (optional)
             if OutputManager:
                 self.output_manager = OutputManager(output_dir=self.output_dir)
@@ -175,13 +176,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 self.output_manager = None
                 if self.verbose:
                     logger.warning("⚠️ Output manager not available")
-            
+
             # Initialize error handler (optional)
             if ErrorHandler:
                 self.error_handler = ErrorHandler()
             else:
                 self.error_handler = None
-            
+
             # Initialize event logger (optional)
             if EventLogger:
                 self.event_logger = EventLogger()
@@ -189,19 +190,19 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 self.event_logger = None
                 if self.verbose:
                     logger.warning("⚠️ Event logger not available")
-            
+
             # Initialize workflow monitor (optional)
             if WorkflowMonitor:
                 self.monitor = WorkflowMonitor(workflow_id=self.workflow_id)
             else:
                 self.monitor = None
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize workflow components: {e}")
             # Don't fail - just log and continue with reduced functionality
             if self.verbose:
                 logger.warning(f"⚠️ Continuing with reduced functionality: {e}")
-    
+
     # Properties for lazy agent initialization
     @property
     def categorization_agent(self) -> GAMPCategorizationAgent:
@@ -209,7 +210,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if self._categorization_agent is None:
             self._categorization_agent = GAMPCategorizationAgent()
         return self._categorization_agent
-    
+
     @property
     def context_provider_agent(self) -> ContextProviderAgent:
         """Lazy initialization of context provider agent."""
@@ -220,7 +221,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 max_documents=50
             )
         return self._context_provider_agent
-    
+
     @property
     def research_agent(self) -> ResearchAgent:
         """Lazy initialization of research agent."""
@@ -231,8 +232,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 max_research_items=20
             )
         return self._research_agent
-    
-    @property 
+
+    @property
     def sme_agent(self) -> SMEAgent:
         """Lazy initialization of SME agent."""
         if self._sme_agent is None:
@@ -243,7 +244,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 max_recommendations=10
             )
         return self._sme_agent
-    
+
     @property
     def oq_generator(self) -> OQTestGenerator:
         """Lazy initialization of OQ test generator."""
@@ -254,8 +255,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 verbose=self.verbose
             )
         return self._oq_generator
-    
-    async def _log_event(self, event_data: Dict[str, Any]) -> None:
+
+    async def _log_event(self, event_data: dict[str, Any]) -> None:
         """Log event with fallback to basic logging."""
         if self.event_logger:
             try:
@@ -265,15 +266,15 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 logger.info(f"Event: {event_data}")
         else:
             logger.info(f"Event: {event_data}")
-    
-    async def _save_output(self, test_result: TestGenerationResult, metadata: Dict[str, Any]) -> str:
+
+    async def _save_output(self, test_result: TestGenerationResult, metadata: dict[str, Any]) -> str:
         """Save output with fallback to basic file creation."""
         if self.output_manager:
             try:
                 return await self.output_manager.save_test_suite(test_result, metadata)
             except Exception as e:
                 logger.warning(f"Output manager failed: {e}")
-        
+
         # Fallback: create basic JSON output
         output_file = self.output_dir / f"test_suite_{self.workflow_id}.json"
         output_data = {
@@ -281,12 +282,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
             "gamp_category": test_result.gamp_category.value,
             "metadata": {**test_result.metadata, **metadata}
         }
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
+
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(output_data, f, indent=2, default=str)
-        
+
         return str(output_file)
-    
+
     @step
     async def start_workflow(self, ctx: Context, ev: StartEvent) -> DocumentProcessedEvent:
         """
@@ -300,24 +301,24 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         self.current_step = "document_processing"
         self.start_time = datetime.now()
-        
+
         try:
             # Extract document path from start event
-            document_path = getattr(ev, 'document_path', None)
+            document_path = getattr(ev, "document_path", None)
             if not document_path:
                 raise ValueError("No document_path provided in StartEvent")
-            
+
             document_path = Path(document_path)
             if not document_path.exists():
                 raise FileNotFoundError(f"Document not found: {document_path}")
-            
+
             # Load document content
-            with open(document_path, 'r', encoding='utf-8') as f:
+            with open(document_path, encoding="utf-8") as f:
                 content = f.read()
-            
+
             if not content.strip():
                 raise ValueError("Document is empty")
-            
+
             # Log workflow start
             await self._log_event({
                 "event_type": "workflow_started",
@@ -326,15 +327,15 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "content_length": len(content),
                 "timestamp": self.start_time.isoformat()
             })
-            
+
             if self.verbose:
                 logger.info(f"📄 Loaded document: {document_path.name} ({len(content)} characters)")
-            
+
             # Store in context
             await ctx.set("document_path", str(document_path))
             await ctx.set("document_content", content)
             await ctx.set("workflow_start_time", self.start_time.isoformat())
-            
+
             return DocumentProcessedEvent(
                 document_path=str(document_path),
                 content=content,
@@ -343,11 +344,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "workflow_id": self.workflow_id
                 }
             )
-            
+
         except Exception as e:
             error_msg = f"Document processing failed: {e}"
             logger.error(error_msg)
-            
+
             # Log error event
             await self._log_event({
                 "event_type": "workflow_error",
@@ -356,9 +357,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "step": self.current_step,
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             raise RuntimeError(error_msg) from e
-    
+
     @step
     async def categorize_document(self, ctx: Context, ev: DocumentProcessedEvent) -> GAMPCategorizationEvent:
         """
@@ -371,11 +372,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         4. Emits GAMPCategorizationEvent
         """
         self.current_step = "categorization"
-        
+
         try:
             if self.verbose:
                 logger.info("🔍 Starting GAMP-5 categorization...")
-            
+
             # Create categorization request
             categorization_request = AgentRequestEvent(
                 request_id=str(uuid4()),
@@ -386,18 +387,18 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "workflow_id": self.workflow_id
                 }
             )
-            
+
             # Process with categorization agent
             result = await self.categorization_agent.process_request(categorization_request)
-            
+
             if not isinstance(result, AgentResultEvent):
                 raise ValueError(f"Unexpected result type from categorization agent: {type(result)}")
-            
+
             # Extract classification
             classification_data = result.result_data.get("classification")
             if not classification_data:
                 raise ValueError("No classification data returned from categorization agent")
-            
+
             # Create GAMP classification object
             gamp_classification = GAMPClassification(
                 category=GAMPCategory(classification_data["category"]),
@@ -405,7 +406,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 reasoning=classification_data["reasoning"],
                 indicators=classification_data.get("indicators", [])
             )
-            
+
             # Validate confidence threshold
             min_confidence = 0.4  # Configurable threshold
             if gamp_classification.confidence < min_confidence:
@@ -413,7 +414,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     f"Categorization confidence {gamp_classification.confidence:.3f} below threshold {min_confidence}. "
                     f"NO FALLBACK ALLOWED - Human consultation required."
                 )
-            
+
             # Log successful categorization
             await self._log_event({
                 "event_type": "categorization_completed",
@@ -422,14 +423,14 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "confidence": gamp_classification.confidence,
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             # Store in context
             await ctx.set("gamp_classification", gamp_classification.model_dump())
-            
+
             if self.verbose:
                 logger.info(f"✅ Categorization complete: {gamp_classification.category.name} "
                            f"(confidence: {gamp_classification.confidence:.3f})")
-            
+
             return GAMPCategorizationEvent(
                 gamp_category=gamp_classification.category,
                 confidence_score=gamp_classification.confidence,
@@ -437,11 +438,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 risk_assessment={"workflow_id": self.workflow_id},
                 categorized_by="GAMPCategorizationAgent"
             )
-            
+
         except Exception as e:
             error_msg = f"GAMP-5 categorization failed: {e}"
             logger.error(error_msg)
-            
+
             # Log error
             await self._log_event({
                 "event_type": "categorization_error",
@@ -449,9 +450,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "error": error_msg,
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             raise RuntimeError(error_msg) from e
-    
+
     @step
     async def coordinate_agents(self, ctx: Context, ev: GAMPCategorizationEvent) -> AgentResultsEvent:
         """
@@ -465,27 +466,27 @@ class UnifiedTestGenerationWorkflow(Workflow):
         5. Emits AgentResultsEvent
         """
         self.current_step = "agent_coordination"
-        
+
         try:
             if self.verbose:
                 logger.info("🤝 Starting real parallel agent coordination...")
-            
+
             gamp_category = ev.gamp_category
-            document_content = await ctx.get("document_content") 
-            
+            document_content = await ctx.get("document_content")
+
             # Prepare common request data
             correlation_id = uuid4()
-            
+
             # Execute real agents in parallel
             agent_tasks = []
-            
+
             # Context Provider agent - always needed
             if self.verbose:
                 logger.info("📋 Executing Context Provider agent...")
-            
+
             context_request = AgentRequestEvent(
                 request_id=str(uuid4()),
-                agent_type="context_provider", 
+                agent_type="context_provider",
                 request_data={
                     "gamp_category": str(gamp_category.value),
                     "test_strategy": {
@@ -494,7 +495,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     },
                     "document_sections": [
                         "functional_requirements",
-                        "system_requirements", 
+                        "system_requirements",
                         "data_requirements",
                         "security_requirements"
                     ],
@@ -507,12 +508,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 correlation_id=correlation_id
             )
             agent_tasks.append(("context", self.context_provider_agent.process_request(context_request)))
-            
+
             # Research agent for complex categories (4, 5)
             if gamp_category in [GAMPCategory.CATEGORY_4, GAMPCategory.CATEGORY_5]:
                 if self.verbose:
                     logger.info("🔬 Executing Research agent...")
-                
+
                 research_request = AgentRequestEvent(
                     request_id=str(uuid4()),
                     agent_type="research_agent",
@@ -527,14 +528,14 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     correlation_id=correlation_id
                 )
                 agent_tasks.append(("research", self.research_agent.process_request(research_request)))
-            
+
             # SME agent for all categories requiring expert insight
             if gamp_category != GAMPCategory.CATEGORY_1:
                 if self.verbose:
                     logger.info("👨‍💼 Executing SME agent...")
-                
+
                 sme_request = AgentRequestEvent(
-                    request_id=str(uuid4()), 
+                    request_id=str(uuid4()),
                     agent_type="sme_agent",
                     request_data={
                         "specialty": "pharmaceutical_validation",
@@ -555,16 +556,16 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     correlation_id=correlation_id
                 )
                 agent_tasks.append(("sme", self.sme_agent.process_request(sme_request)))
-            
+
             # Execute all agents concurrently
             if self.verbose:
                 logger.info(f"⚡ Executing {len(agent_tasks)} agents concurrently...")
-            
+
             agent_results = {}
             results = await asyncio.gather(*[task for _, task in agent_tasks], return_exceptions=True)
-            
+
             # Process results
-            for (agent_name, _), result in zip(agent_tasks, results):
+            for (agent_name, _), result in zip(agent_tasks, results, strict=False):
                 if isinstance(result, Exception):
                     logger.error(f"Agent {agent_name} failed: {result}")
                     agent_results[agent_name] = {
@@ -572,34 +573,33 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "error": str(result),
                         "agent": agent_name
                     }
+                elif result.success:
+                    agent_results[agent_name] = {
+                        "status": "completed",
+                        "result_data": result.result_data,
+                        "processing_time": result.processing_time,
+                        "agent": agent_name
+                    }
                 else:
-                    if result.success:
-                        agent_results[agent_name] = {
-                            "status": "completed",
-                            "result_data": result.result_data,
-                            "processing_time": result.processing_time,
-                            "agent": agent_name
-                        }
-                    else:
-                        agent_results[agent_name] = {
-                            "status": "failed", 
-                            "error": result.error_message,
-                            "agent": agent_name
-                        }
-            
+                    agent_results[agent_name] = {
+                        "status": "failed",
+                        "error": result.error_message,
+                        "agent": agent_name
+                    }
+
             # Log coordination results
             await self._log_event({
                 "event_type": "agent_coordination_completed",
                 "workflow_id": self.workflow_id,
                 "executed_agents": list(agent_results.keys()),
-                "successful_agents": [name for name, result in agent_results.items() 
+                "successful_agents": [name for name, result in agent_results.items()
                                     if result.get("status") == "completed"],
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             # Store results in context for test generation
             await ctx.set("agent_results", agent_results)
-            
+
             successful = len([r for r in agent_results.values() if r.get("status") == "completed"])
             if self.verbose:
                 logger.info(f"🎯 Real agent coordination complete: {successful}/{len(agent_results)} successful")
@@ -608,26 +608,26 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         logger.info(f"   ✅ {agent_name}: Success")
                     else:
                         logger.warning(f"   ❌ {agent_name}: {result.get('error', 'Unknown error')}")
-            
+
             return AgentResultsEvent(
                 results=agent_results,
                 workflow_id=UUID(self.workflow_id),
                 completed_at=datetime.now()
             )
-            
+
         except Exception as e:
             error_msg = f"Real agent coordination failed: {e}"
             logger.error(error_msg)
-            
+
             await self._log_event({
                 "event_type": "agent_coordination_error",
                 "workflow_id": self.workflow_id,
                 "error": error_msg,
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             raise RuntimeError(error_msg) from e
-    
+
     @step
     async def generate_tests(self, ctx: Context, ev: AgentResultsEvent) -> WorkflowCompletionEvent:
         """
@@ -641,41 +641,41 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         self.current_step = "test_generation"
         self.end_time = datetime.now()
-        
+
         try:
             if self.verbose:
                 logger.info("🧪 Starting real test generation with DeepSeek V3...")
-            
+
             # Get stored data
             gamp_classification = GAMPClassification(**await ctx.get("gamp_classification"))
             document_content = await ctx.get("document_content")
             document_path = await ctx.get("document_path")
-            
+
             # Prepare context data from agent results
             context_data = {}
-            
+
             # Extract context provider data
             if "context" in ev.results and ev.results["context"].get("status") == "completed":
                 context_data["context_provider_result"] = ev.results["context"]["result_data"]
                 if self.verbose:
                     logger.info("📋 Context Provider data integrated for test generation")
-            
-            # Extract research data 
+
+            # Extract research data
             if "research" in ev.results and ev.results["research"].get("status") == "completed":
                 context_data["research_findings"] = ev.results["research"]["result_data"]
                 if self.verbose:
                     logger.info("🔬 Research Agent data integrated for test generation")
-            
+
             # Extract SME data
             if "sme" in ev.results and ev.results["sme"].get("status") == "completed":
                 context_data["sme_insights"] = ev.results["sme"]["result_data"]
                 if self.verbose:
                     logger.info("👨‍💼 SME Agent data integrated for test generation")
-            
+
             # Generate tests using real OQ generator
             if self.verbose:
                 logger.info(f"🤖 Calling OQ Generator for GAMP Category {gamp_classification.category.value}...")
-            
+
             try:
                 # Use real OQ test generator with DeepSeek V3
                 test_suite = self.oq_generator.generate_oq_test_suite(
@@ -684,13 +684,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     document_name=Path(document_path).name,
                     context_data=context_data
                 )
-                
+
                 if self.verbose:
-                    logger.info(f"🎯 OQ Generator completed successfully:")
+                    logger.info("🎯 OQ Generator completed successfully:")
                     logger.info(f"   Suite ID: {test_suite.suite_id}")
                     logger.info(f"   Tests Generated: {len(test_suite.test_cases)}")
-                    logger.info(f"   Target Range: 23-33 tests for real pharmaceutical workflow")
-                
+                    logger.info("   Target Range: 23-33 tests for real pharmaceutical workflow")
+
                 # Convert to our workflow format
                 test_cases = []
                 for test_case in test_suite.test_cases:
@@ -706,7 +706,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "urs_requirements": test_case.urs_requirements,
                         "test_category": test_case.test_category
                     })
-                
+
                 # Create test generation result
                 test_result = TestGenerationResult(
                     test_cases=test_cases,
@@ -722,7 +722,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "generation_timestamp": test_suite.generation_timestamp.isoformat() if test_suite.generation_timestamp else None
                     }
                 )
-                
+
             except Exception as oq_error:
                 # OQ generator failed - NO FALLBACKS
                 error_msg = f"Real OQ test generation failed: {oq_error}"
@@ -733,10 +733,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     f"GAMP Category: {gamp_classification.category.value}\n"
                     f"NO FALLBACK ALLOWED - Pharmaceutical system requires explicit failure handling."
                 ) from oq_error
-            
+
             # Generate output files
             execution_time = (self.end_time - self.start_time).total_seconds()
-            
+
             # Save output file
             output_file = await self._save_output(
                 test_result=test_result,
@@ -750,7 +750,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     }
                 }
             )
-            
+
             # Log test generation
             await self._log_event({
                 "event_type": "real_test_generation_completed",
@@ -763,19 +763,19 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "agent_coordination_success": len([r for r in ev.results.values() if r.get("status") == "completed"]),
                 "timestamp": self.end_time.isoformat()
             })
-            
+
             if self.verbose:
-                logger.info(f"✅ Real test generation complete with DeepSeek V3:")
+                logger.info("✅ Real test generation complete with DeepSeek V3:")
                 logger.info(f"   🎯 {len(test_cases)} test cases generated")
                 logger.info(f"   📋 Context Provider: {'✅' if context_data.get('context_provider_result') else '❌'}")
                 logger.info(f"   🔬 Research Agent: {'✅' if context_data.get('research_findings') else '❌'}")
                 logger.info(f"   👨‍💼 SME Agent: {'✅' if context_data.get('sme_insights') else '❌'}")
-                logger.info(f"🎉 Real pharmaceutical workflow completed successfully!")
+                logger.info("🎉 Real pharmaceutical workflow completed successfully!")
                 logger.info(f"   Duration: {execution_time:.2f}s")
                 logger.info(f"   Output: {output_file}")
                 logger.info(f"   Tests: {len(test_cases)} (target: 23-33)")
                 logger.info(f"   Category: {gamp_classification.category.name} (confidence: {gamp_classification.confidence:.3f})")
-            
+
             # Create final workflow result
             workflow_result = WorkflowResult(
                 workflow_id=self.workflow_id,
@@ -792,10 +792,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "generator_used": "deepseek_v3_oq_generator"
                 }
             )
-            
+
             # Store final result in context
             await ctx.set("workflow_result", workflow_result)
-            
+
             return WorkflowCompletionEvent(
                 workflow_id=UUID(self.workflow_id),
                 completion_time=self.end_time,
@@ -809,18 +809,18 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "generator": "deepseek_v3"
                 }
             )
-            
+
         except Exception as e:
             error_msg = f"Real test generation failed: {e}"
             logger.error(error_msg)
-            
+
             await self._log_event({
                 "event_type": "real_test_generation_error",
                 "workflow_id": self.workflow_id,
                 "error": error_msg,
                 "timestamp": datetime.now().isoformat()
             })
-            
+
             raise RuntimeError(error_msg) from e
 
 
@@ -856,10 +856,10 @@ async def run_pharmaceutical_workflow(
         enable_human_consultation=enable_human_consultation,
         output_dir=output_dir
     )
-    
+
     start_event = StartEvent(document_path=document_path)
     result = await workflow.run(start_event)
-    
+
     if isinstance(result, WorkflowCompletionEvent):
         # Get the stored workflow result from the context (would need context access)
         # For now, create a basic result
@@ -881,5 +881,4 @@ async def run_pharmaceutical_workflow(
             output_file=result.output_file or "",
             metadata=result.metadata or {}
         )
-    else:
-        raise ValueError(f"Unexpected workflow result type: {type(result)}")
+    raise ValueError(f"Unexpected workflow result type: {type(result)}")

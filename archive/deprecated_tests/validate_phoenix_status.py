@@ -53,10 +53,10 @@ print("\n2. Testing Phoenix enhanced module import...")
 
 try:
     from src.monitoring.phoenix_enhanced import (
+        AutomatedTraceAnalyzer,
         PhoenixGraphQLClient,
         WorkflowEventFlowVisualizer,
-        AutomatedTraceAnalyzer,
-        setup_enhanced_phoenix_observability
+        setup_enhanced_phoenix_observability,
     )
     print("   ✅ Phoenix enhanced module - OK")
     print("   ✅ All enhanced classes available")
@@ -68,9 +68,9 @@ except ImportError as e:
 print("\n3. Testing basic Phoenix configuration...")
 
 try:
-    from src.monitoring.phoenix_config import PhoenixConfig, PhoenixManager
+    from src.monitoring.phoenix_config import PhoenixConfig
     config = PhoenixConfig()
-    print(f"   ✅ PhoenixConfig - OK")
+    print("   ✅ PhoenixConfig - OK")
     print(f"   📍 Phoenix endpoint: {config.phoenix_host}:{config.phoenix_port}")
     print(f"   🔧 OTLP endpoint: {config.otlp_endpoint}")
 except Exception as e:
@@ -81,18 +81,19 @@ print("\n4. Checking production integration status...")
 
 try:
     # Check unified workflow
-    from src.core.unified_workflow import UnifiedTestGenerationWorkflow
     import inspect
-    
+
+    from src.core.unified_workflow import UnifiedTestGenerationWorkflow
+
     # Get the source code
     source = inspect.getsource(UnifiedTestGenerationWorkflow)
-    
+
     if "phoenix_enhanced" in source:
         print("   ✅ Enhanced Phoenix is integrated into unified workflow")
     else:
         print("   ❌ Enhanced Phoenix is NOT integrated into unified workflow")
         print("   🔧 REQUIRES INTEGRATION: Enhanced features are available but not used")
-    
+
 except Exception as e:
     print(f"   ❌ Integration check failed: {e}")
 

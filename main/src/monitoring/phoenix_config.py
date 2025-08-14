@@ -194,10 +194,9 @@ class PhoenixManager:
                 # In production, Phoenix is required for compliance
                 logger.error("Production pharmaceutical system requires Phoenix observability")
                 raise RuntimeError("Phoenix initialization failure in production environment") from e
-            else:
-                # In development, allow graceful degradation with warning
-                logger.warning("Continuing without Phoenix in development mode - observability will be limited")
-                self._initialized = False
+            # In development, allow graceful degradation with warning
+            logger.warning("Continuing without Phoenix in development mode - observability will be limited")
+            self._initialized = False
 
         return self
 
@@ -289,7 +288,7 @@ class PhoenixManager:
         trace.set_tracer_provider(self.tracer_provider)
 
         logger.debug(f"Manual tracer configured with endpoint: {self.config.otlp_endpoint}")
-        
+
         # Add local file exporter to capture ALL spans including ChromaDB
         if add_local_span_exporter:
             try:
@@ -305,7 +304,7 @@ class PhoenixManager:
 
             # ENHANCED: Add more detailed logging for debugging
             logger.info("[CONFIG] Attempting LlamaIndex instrumentation with OpenInference...")
-            
+
             # Instrument with our tracer provider
             LlamaIndexInstrumentor().instrument(
                 skip_dep_check=True,
@@ -341,7 +340,7 @@ class PhoenixManager:
 
             # ENHANCED: Add more detailed logging
             logger.info("[CONFIG] Attempting OpenAI instrumentation with OpenInference...")
-            
+
             # Instrument OpenAI with our tracer provider
             OpenAIInstrumentor().instrument(tracer_provider=self.tracer_provider)
 

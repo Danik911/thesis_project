@@ -23,23 +23,23 @@ print("=" * 50)
 print("\n📋 Test 1: Environment Variable Loading")
 try:
     from dotenv import load_dotenv
-    
+
     # Load from project root .env
     env_path = Path(__file__).parent / ".env"
     result = load_dotenv(env_path)
     print(f"✅ dotenv load result: {result}")
     print(f"✅ .env file exists: {env_path.exists()}")
-    
+
     # Check specific environment variables
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
         print(f"✅ OPENAI_API_KEY found: {openai_key[:20]}...")
     else:
         print("❌ OPENAI_API_KEY not found")
-        
+
     phoenix_enable = os.getenv("PHOENIX_ENABLE_TRACING")
     print(f"✅ PHOENIX_ENABLE_TRACING: {phoenix_enable}")
-    
+
 except Exception as e:
     print(f"❌ Environment loading failed: {e}")
 
@@ -67,34 +67,35 @@ except ImportError as e:
 print("\n🤖 Test 3: OpenAI Client Initialization")
 try:
     from llama_index.llms.openai import OpenAI
-    
+
     # Test client creation
     llm = OpenAI(model="gpt-4.1-mini-2025-04-14")
     print("✅ OpenAI LLM client created successfully")
-    
+
     # Test if API key is properly loaded
     import openai
     client = openai.OpenAI()  # Should use env var automatically
     print("✅ OpenAI client initialized with API key")
-    
+
 except Exception as e:
     print(f"❌ OpenAI client initialization failed: {e}")
 
 # Test 4: Basic LLM Call
 print("\n💬 Test 4: Basic LLM Call")
 try:
-    from llama_index.llms.openai import OpenAI
     import asyncio
-    
+
+    from llama_index.llms.openai import OpenAI
+
     async def test_llm_call():
         llm = OpenAI(model="gpt-4.1-mini-2025-04-14")
         response = await llm.acomplete("Reply with exactly: TEST_SUCCESS")
         return response.text.strip()
-    
+
     # Run the test
     result = asyncio.run(test_llm_call())
     print(f"✅ LLM call successful: {result}")
-    
+
 except Exception as e:
     print(f"❌ LLM call failed: {e}")
 
@@ -103,11 +104,11 @@ print("\n🧑‍⚕️ Test 5: SME Agent Import")
 try:
     from src.agents.parallel.sme_agent import SMEAgent
     print("✅ SME Agent import successful")
-    
+
     # Test agent creation
     agent = SMEAgent(verbose=True)
     print("✅ SME Agent creation successful")
-    
+
 except Exception as e:
     print(f"❌ SME Agent import/creation failed: {e}")
 

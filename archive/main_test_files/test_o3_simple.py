@@ -1,6 +1,6 @@
 """Test o3 model with correct parameters."""
 import asyncio
-import os
+
 from dotenv import load_dotenv
 from llama_index.llms.openai import OpenAI
 
@@ -14,7 +14,7 @@ async def test_o3():
         temperature=0.1,
         max_completion_tokens=100  # o3 requires this instead of max_tokens
     )
-    
+
     try:
         response = await llm.acomplete("Generate a JSON object with one field 'status' set to 'success'")
         print(f"SUCCESS: o3 response: {response.text}")

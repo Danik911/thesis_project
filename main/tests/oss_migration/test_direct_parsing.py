@@ -9,10 +9,11 @@ instead of LLMTextCompletionProgram to support OSS models.
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables from project root
-env_path = Path(__file__).parent.parent.parent.parent / '.env'
+env_path = Path(__file__).parent.parent.parent.parent / ".env"
 load_dotenv(env_path)
 
 # Add parent directory to path
@@ -29,7 +30,7 @@ def test_openai_model():
     print("\n" + "=" * 60)
     print("Testing with OpenAI GPT-4o-mini")
     print("=" * 60)
-    
+
     # Sample URS content for testing
     urs_content = """
     User Requirements Specification for Laboratory Information Management System (LIMS)
@@ -54,7 +55,7 @@ def test_openai_model():
     
     No custom programming or code modifications will be performed.
     """
-    
+
     try:
         # Initialize OpenAI LLM
         llm = OpenAI(
@@ -62,10 +63,10 @@ def test_openai_model():
             api_key=os.getenv("OPENAI_API_KEY"),
             temperature=0.1
         )
-        
+
         # Initialize error handler
         error_handler = CategorizationErrorHandler()
-        
+
         # Test categorization
         result = categorize_with_pydantic_structured_output(
             llm=llm,
@@ -73,25 +74,25 @@ def test_openai_model():
             document_name="test_lims_urs.txt",
             error_handler=error_handler
         )
-        
-        print(f"SUCCESS: OpenAI model categorization completed")
+
+        print("SUCCESS: OpenAI model categorization completed")
         print(f"Category: {result.gamp_category.value}")
         print(f"Confidence: {result.confidence_score:.2%}")
         # Extract reasoning safely
-        if 'REASONING:' in result.justification:
-            reasoning_part = result.justification.split('REASONING:')[1]
-            reasoning_lines = reasoning_part.split('\n')
+        if "REASONING:" in result.justification:
+            reasoning_part = result.justification.split("REASONING:")[1]
+            reasoning_lines = reasoning_part.split("\n")
             if len(reasoning_lines) > 1:
                 print(f"Reasoning excerpt: {reasoning_lines[1][:200]}...")
             else:
                 print(f"Reasoning: {reasoning_lines[0][:200]}...")
         else:
             print(f"Justification excerpt: {result.justification[:200]}...")
-        
+
         return True
-        
+
     except Exception as e:
-        print(f"FAILED: OpenAI model test failed")
+        print("FAILED: OpenAI model test failed")
         print(f"Error: {e}")
         import traceback
         traceback.print_exc()
@@ -103,14 +104,14 @@ def test_openrouter_model():
     print("\n" + "=" * 60)
     print("Testing with OpenRouter OSS Model")
     print("=" * 60)
-    
+
     # Check for OpenRouter API key
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     if not openrouter_key:
         print("[WARN]  SKIPPED: OPENROUTER_API_KEY not set")
         print("To test OSS models, set OPENROUTER_API_KEY environment variable")
         return None
-    
+
     # Sample URS content for testing
     urs_content = """
     Requirements for Custom Patient Data Analytics Platform
@@ -134,7 +135,7 @@ def test_openrouter_model():
     
     All components will be developed specifically for this application.
     """
-    
+
     try:
         # Initialize OpenRouter LLM using custom class
         llm = OpenRouterLLM(
@@ -143,10 +144,10 @@ def test_openrouter_model():
             temperature=0.1,
             max_tokens=500
         )
-        
+
         # Initialize error handler
         error_handler = CategorizationErrorHandler()
-        
+
         # Test categorization
         result = categorize_with_pydantic_structured_output(
             llm=llm,
@@ -154,25 +155,25 @@ def test_openrouter_model():
             document_name="test_custom_analytics.txt",
             error_handler=error_handler
         )
-        
-        print(f"[OK] SUCCESS: OpenRouter OSS model categorization completed")
+
+        print("[OK] SUCCESS: OpenRouter OSS model categorization completed")
         print(f"Category: {result.gamp_category.value}")
         print(f"Confidence: {result.confidence_score:.2%}")
         # Extract reasoning safely
-        if 'REASONING:' in result.justification:
-            reasoning_part = result.justification.split('REASONING:')[1]
-            reasoning_lines = reasoning_part.split('\n')
+        if "REASONING:" in result.justification:
+            reasoning_part = result.justification.split("REASONING:")[1]
+            reasoning_lines = reasoning_part.split("\n")
             if len(reasoning_lines) > 1:
                 print(f"Reasoning excerpt: {reasoning_lines[1][:200]}...")
             else:
                 print(f"Reasoning: {reasoning_lines[0][:200]}...")
         else:
             print(f"Justification excerpt: {result.justification[:200]}...")
-        
+
         return True
-        
+
     except Exception as e:
-        print(f"[FAIL] FAILED: OpenRouter OSS model test failed")
+        print("[FAIL] FAILED: OpenRouter OSS model test failed")
         print(f"Error: {e}")
         import traceback
         traceback.print_exc()
@@ -185,37 +186,36 @@ def main():
     print("OSS MIGRATION FIX VERIFICATION")
     print("Testing direct LLM parsing approach")
     print("=" * 60)
-    
+
     # Test 1: Verify backward compatibility with OpenAI
     openai_result = test_openai_model()
-    
+
     # Test 2: Verify new OSS model support
     openrouter_result = test_openrouter_model()
-    
+
     # Summary
     print("\n" + "=" * 60)
     print("TEST SUMMARY")
     print("=" * 60)
-    
+
     if openai_result:
         print("[OK] OpenAI models: WORKING (backward compatibility maintained)")
     else:
         print("[FAIL] OpenAI models: FAILED")
-    
+
     if openrouter_result is None:
         print("[WARN]  OpenRouter/OSS models: NOT TESTED (API key missing)")
     elif openrouter_result:
         print("[OK] OpenRouter/OSS models: WORKING (new capability enabled)")
     else:
         print("[FAIL] OpenRouter/OSS models: FAILED")
-    
+
     if openai_result and (openrouter_result is True or openrouter_result is None):
         print("\n[SUCCESS] SUCCESS: OSS migration fix is working!")
         print("The system now supports both OpenAI and OSS models.")
         return 0
-    else:
-        print("\n[WARN]  Some tests failed. Please review the errors above.")
-        return 1
+    print("\n[WARN]  Some tests failed. Please review the errors above.")
+    return 1
 
 
 if __name__ == "__main__":

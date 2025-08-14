@@ -16,25 +16,22 @@ Key Features:
 """
 
 import asyncio
+import json
 import logging
 import re
-import json
-import time
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from uuid import UUID
 
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
-from src.config.llm_config import LLMConfig
 from opentelemetry import trace
-from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field
+from src.config.llm_config import LLMConfig
+from src.config.timeout_config import TimeoutConfig
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.agent_instrumentation import trace_agent_method
-from src.monitoring.simple_tracer import get_tracer
-from src.config.timeout_config import TimeoutConfig
 
 
 def clean_unicode_characters(text: str) -> str:
@@ -55,26 +52,26 @@ def clean_unicode_characters(text: str) -> str:
         Cleaned text suitable for JSON parsing
     """
     # Remove BOM marker
-    if text.startswith('\ufeff'):
+    if text.startswith("\ufeff"):
         text = text[1:]
-    
+
     # Remove various invisible Unicode characters
     invisible_chars = [
-        '\u200b',  # Zero-width space
-        '\u200c',  # Zero-width non-joiner
-        '\u200d',  # Zero-width joiner
-        '\u2028',  # Line separator
-        '\u2029',  # Paragraph separator
-        '\ufeff',  # Additional BOM occurrences
+        "\u200b",  # Zero-width space
+        "\u200c",  # Zero-width non-joiner
+        "\u200d",  # Zero-width joiner
+        "\u2028",  # Line separator
+        "\u2029",  # Paragraph separator
+        "\ufeff",  # Additional BOM occurrences
     ]
-    
+
     for char in invisible_chars:
-        text = text.replace(char, '')
-    
+        text = text.replace(char, "")
+
     return text
 
 
-def find_balanced_json_array(text: str) -> Optional[str]:
+def find_balanced_json_array(text: str) -> str | None:
     """
     Find a balanced JSON array using bracket counting.
     
@@ -87,41 +84,41 @@ def find_balanced_json_array(text: str) -> Optional[str]:
     Returns:
         Complete JSON array string or None if not found
     """
-    start = text.find('[')
+    start = text.find("[")
     if start == -1:
         return None
-    
+
     bracket_count = 0
     in_string = False
     escape_next = False
-    
+
     for i in range(start, len(text)):
         char = text[i]
-        
+
         if escape_next:
             escape_next = False
             continue
-            
-        if char == '\\':
+
+        if char == "\\":
             escape_next = True
             continue
-            
+
         if char == '"' and not escape_next:
             in_string = not in_string
             continue
-            
+
         if not in_string:
-            if char == '[':
+            if char == "[":
                 bracket_count += 1
-            elif char == ']':
+            elif char == "]":
                 bracket_count -= 1
                 if bracket_count == 0:
                     return text[start:i+1]
-    
+
     return None
 
 
-def find_balanced_json_object(text: str) -> Optional[str]:
+def find_balanced_json_object(text: str) -> str | None:
     """
     Find a balanced JSON object using brace counting.
     
@@ -134,41 +131,41 @@ def find_balanced_json_object(text: str) -> Optional[str]:
     Returns:
         Complete JSON object string or None if not found
     """
-    start = text.find('{')
+    start = text.find("{")
     if start == -1:
         return None
-    
+
     brace_count = 0
     in_string = False
     escape_next = False
-    
+
     for i in range(start, len(text)):
         char = text[i]
-        
+
         if escape_next:
             escape_next = False
             continue
-            
-        if char == '\\':
+
+        if char == "\\":
             escape_next = True
             continue
-            
+
         if char == '"' and not escape_next:
             in_string = not in_string
             continue
-            
+
         if not in_string:
-            if char == '{':
+            if char == "{":
                 brace_count += 1
-            elif char == '}':
+            elif char == "}":
                 brace_count -= 1
                 if brace_count == 0:
                     return text[start:i+1]
-    
+
     return None
 
 
-def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List[Any]]:
+def extract_json_from_markdown(response_text: str) -> dict[str, Any] | list[Any]:
     """
     Extract JSON from markdown code blocks using balanced bracket parsing.
     
@@ -191,29 +188,29 @@ def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List
         ValueError: If no valid JSON found in response (NO FALLBACK for GAMP-5 compliance)
     """
     logger = logging.getLogger(__name__)
-    
+
     # Clean invisible Unicode characters that can break JSON parsing
     cleaned_text = clean_unicode_characters(response_text)
-    
+
     # Strategy 1: Extract from markdown code blocks (```json or ```)
     # Use balanced parsing to extract content from code blocks
     code_block_patterns = [
-        r'```json\s*(.*?)\s*```',  # Explicit JSON blocks
-        r'```\s*(.*?)\s*```',      # Generic code blocks
+        r"```json\s*(.*?)\s*```",  # Explicit JSON blocks
+        r"```\s*(.*?)\s*```",      # Generic code blocks
     ]
-    
+
     for pattern in code_block_patterns:
         matches = re.finditer(pattern, cleaned_text, re.DOTALL | re.IGNORECASE)
         for match in matches:
             block_content = match.group(1).strip()
-            
+
             # Check what type of JSON we have by looking at the first non-whitespace character
-            first_char_match = re.search(r'[^\s]', block_content)
+            first_char_match = re.search(r"[^\s]", block_content)
             if first_char_match:
                 first_char = first_char_match.group(0)
-                
+
                 # Use balanced parsing for objects (check first since objects can contain arrays)
-                if first_char == '{':
+                if first_char == "{":
                     balanced_json = find_balanced_json_object(block_content)
                     if balanced_json:
                         try:
@@ -222,9 +219,9 @@ def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List
                             return parsed_data
                         except json.JSONDecodeError as e:
                             logger.warning(f"Balanced JSON object failed parsing: {e}")
-                            
+
                 # Use balanced parsing for arrays
-                elif first_char == '[':
+                elif first_char == "[":
                     balanced_json = find_balanced_json_array(block_content)
                     if balanced_json:
                         try:
@@ -233,14 +230,14 @@ def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List
                             return parsed_data
                         except json.JSONDecodeError as e:
                             logger.warning(f"Balanced JSON array failed parsing: {e}")
-    
+
     # Strategy 2: Check for raw JSON - determine order based on first character
     # This prevents extracting objects from inside arrays
-    first_char_match = re.search(r'[^\s]', cleaned_text)
+    first_char_match = re.search(r"[^\s]", cleaned_text)
     if first_char_match:
         first_char = first_char_match.group(0)
-        
-        if first_char == '[':
+
+        if first_char == "[":
             # For arrays, check arrays first to avoid extracting nested objects
             balanced_array = find_balanced_json_array(cleaned_text)
             if balanced_array:
@@ -250,7 +247,7 @@ def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List
                     return parsed_data
                 except json.JSONDecodeError as e:
                     logger.warning(f"Raw JSON array failed parsing: {e}")
-            
+
             # If array parsing failed, try object as fallback
             balanced_object = find_balanced_json_object(cleaned_text)
             if balanced_object:
@@ -270,7 +267,7 @@ def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List
                     return parsed_data
                 except json.JSONDecodeError as e:
                     logger.warning(f"Raw JSON object failed parsing: {e}")
-            
+
             # Then try arrays as fallback
             balanced_array = find_balanced_json_array(cleaned_text)
             if balanced_array:
@@ -280,25 +277,25 @@ def extract_json_from_markdown(response_text: str) -> Union[Dict[str, Any], List
                     return parsed_data
                 except json.JSONDecodeError as e:
                     logger.warning(f"Raw JSON array failed parsing: {e}")
-    
+
     # NO FALLBACK - Explicit failure for GAMP-5 compliance
     logger.error(f"No valid JSON found in response: {cleaned_text[:200]}...")
     logger.error(f"Original response length: {len(response_text)}, cleaned length: {len(cleaned_text)}")
-    
+
     # Provide diagnostic information for troubleshooting
-    has_arrays = '[' in cleaned_text and ']' in cleaned_text
-    has_objects = '{' in cleaned_text and '}' in cleaned_text
-    has_code_blocks = '```' in cleaned_text
-    
+    has_arrays = "[" in cleaned_text and "]" in cleaned_text
+    has_objects = "{" in cleaned_text and "}" in cleaned_text
+    has_code_blocks = "```" in cleaned_text
+
     diagnostic_info = {
         "has_potential_arrays": has_arrays,
-        "has_potential_objects": has_objects, 
+        "has_potential_objects": has_objects,
         "has_code_blocks": has_code_blocks,
         "cleaned_length": len(cleaned_text),
         "original_length": len(response_text),
         "unicode_cleaning_applied": len(response_text) != len(cleaned_text)
     }
-    
+
     logger.error(f"JSON extraction diagnostic info: {diagnostic_info}")
     raise ValueError(f"No valid JSON found in response. Diagnostic info: {diagnostic_info}. Preview: {cleaned_text[:200]}...")
 
@@ -377,7 +374,7 @@ class SMEAgent:
         self.confidence_threshold = confidence_threshold
         self.max_recommendations = max_recommendations
         self.logger = logging.getLogger(__name__)
-        
+
         # Detect OSS model for enhanced prompting strategies
         self.is_oss_model = self._detect_oss_model()
         if self.is_oss_model:
@@ -435,7 +432,7 @@ class SMEAgent:
                 current_span.set_attribute("request.test_focus", request_data.test_focus)
                 current_span.set_attribute("request.risk_factors", str(request_data.risk_factors))
                 current_span.set_attribute("request.timeout_seconds", request_data.timeout_seconds)
-                
+
                 # Add compliance attributes
                 current_span.set_attribute("compliance.gamp5.sme", True)
                 current_span.set_attribute("compliance.pharmaceutical", True)
@@ -454,7 +451,7 @@ class SMEAgent:
                     "compliance_level": request_data.compliance_level,
                     "test_focus": request_data.test_focus
                 })
-            
+
             sme_response = await asyncio.wait_for(
                 self._execute_sme_analysis(request_data),
                 timeout=request_data.timeout_seconds
@@ -467,7 +464,7 @@ class SMEAgent:
             if sme_response.confidence_score >= self.confidence_threshold:
                 self._expertise_stats["high_confidence_recommendations"] += 1
             self._update_performance_stats(processing_time)
-            
+
             # Add completion event and result attributes to span
             if current_span and current_span.is_recording():
                 current_span.add_event("sme_analysis_complete", {
@@ -476,7 +473,7 @@ class SMEAgent:
                     "risk_level": sme_response.risk_analysis.get("risk_level", "unknown"),
                     "processing_time": processing_time
                 })
-                
+
                 # Set result attributes
                 current_span.set_attribute("result.recommendations_count", len(sme_response.recommendations))
                 current_span.set_attribute("result.confidence_score", sme_response.confidence_score)
@@ -541,7 +538,7 @@ class SMEAgent:
             span.set_attribute("sme.request_id", str(request.correlation_id))
             span.set_attribute("sme.specialty", request.specialty)
             span.set_attribute("sme.compliance_level", request.compliance_level)
-            
+
             # Initialize response
             response = SMEAgentResponse(specialty=request.specialty)
 
@@ -611,7 +608,7 @@ class SMEAgent:
 
     async def _assess_compliance(self, request: SMEAgentRequest) -> dict[str, Any]:
         """Assess compliance requirements and gaps using LLM expertise."""
-        
+
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
         base_compliance_prompt = f"""
         As a pharmaceutical validation expert specializing in {request.specialty}, assess the compliance requirements for a system with the following characteristics:
@@ -639,38 +636,38 @@ class SMEAgent:
             "certainty_score": 0.0
         }}
         """
-        
+
         # Enhance prompt for OSS models
         compliance_prompt = self._enhance_prompt_for_oss(base_compliance_prompt, "json")
-        
+
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(compliance_prompt)
             response_text = response.text.strip()
-            
+
             # Enhanced debug logging for OSS model troubleshooting
             self._log_llm_response_debug(response_text, "compliance_assessment")
-            
+
             # Parse JSON response using robust extraction
             try:
                 compliance_assessment = extract_json_from_markdown(response_text)
-                
+
                 # Debug logging
                 self.logger.debug(f"Parsed compliance assessment type: {type(compliance_assessment)}")
                 self.logger.debug(f"Parsed compliance assessment keys: {list(compliance_assessment.keys()) if isinstance(compliance_assessment, dict) else 'Not a dict'}")
-                
+
                 # Ensure we have a dictionary
                 if not isinstance(compliance_assessment, dict):
                     raise ValueError(f"Expected dictionary, got {type(compliance_assessment).__name__}")
-                
+
                 # Validate required fields are present
                 required_fields = ["level", "applicable_standards", "compliance_gaps", "required_controls", "certainty_score"]
                 for field in required_fields:
                     if field not in compliance_assessment:
                         raise ValueError(f"Missing required field: {field}")
-                
+
                 return compliance_assessment
-                
+
             except (json.JSONDecodeError, ValueError) as parse_error:
                 # NO FALLBACKS: Fail explicitly with full diagnostic information
                 raise RuntimeError(
@@ -679,9 +676,9 @@ class SMEAgent:
                     f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
-                
+
         except Exception as llm_error:
-            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            # NO FALLBACKS: Fail explicitly with full diagnostic information
             raise RuntimeError(
                 f"CRITICAL: Compliance assessment LLM call failed.\n"
                 f"Error: {llm_error}\n"
@@ -691,7 +688,7 @@ class SMEAgent:
 
     async def _analyze_risks(self, request: SMEAgentRequest) -> dict[str, Any]:
         """Analyze risks and provide mitigation strategies using LLM expertise."""
-        
+
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
         risk_prompt = f"""
         As a pharmaceutical validation expert, analyze the validation risks for a system with these characteristics:
@@ -740,28 +737,28 @@ class SMEAgent:
             "clarity_score": 0.0
         }}
         """
-        
+
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(risk_prompt)
             response_text = response.text.strip()
-            
+
             # Parse JSON response using robust extraction
             try:
                 risk_analysis = extract_json_from_markdown(response_text)
-                
+
                 # Validate required fields are present
                 required_fields = ["identified_risks", "risk_level", "mitigation_strategies", "critical_concerns", "clarity_score"]
                 for field in required_fields:
                     if field not in risk_analysis:
                         raise ValueError(f"Missing required field: {field}")
-                
+
                 # Validate risk_level is valid
                 if risk_analysis["risk_level"] not in ["low", "medium", "high"]:
                     raise ValueError(f"Invalid risk_level: {risk_analysis['risk_level']}")
-                
+
                 return risk_analysis
-                
+
             except (json.JSONDecodeError, ValueError) as parse_error:
                 # NO FALLBACKS: Fail explicitly with full diagnostic information
                 raise RuntimeError(
@@ -770,9 +767,9 @@ class SMEAgent:
                     f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
-                
+
         except Exception as llm_error:
-            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            # NO FALLBACKS: Fail explicitly with full diagnostic information
             raise RuntimeError(
                 f"CRITICAL: Risk analysis LLM call failed.\n"
                 f"Error: {llm_error}\n"
@@ -787,7 +784,7 @@ class SMEAgent:
         risk_analysis: dict[str, Any]
     ) -> list[dict[str, Any]]:
         """Generate expert recommendations using LLM expertise."""
-        
+
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
         base_recommendations_prompt = f"""
         As a pharmaceutical validation expert specializing in {request.specialty}, generate specific recommendations based on this analysis:
@@ -830,32 +827,32 @@ class SMEAgent:
             }}
         ]
         """
-        
+
         # Enhance prompt for OSS models
         recommendations_prompt = self._enhance_prompt_for_oss(base_recommendations_prompt, "array")
-        
+
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(recommendations_prompt)
             response_text = response.text.strip()
-            
+
             # Enhanced debug logging for OSS model troubleshooting
             self._log_llm_response_debug(response_text, "recommendations_generation")
-            
+
             # Parse JSON response using robust extraction
             try:
                 recommendations = extract_json_from_markdown(response_text)
-                
+
                 # Debug logging for recommendations parsing
                 self.logger.debug(f"Parsed recommendations type: {type(recommendations)}")
                 self.logger.debug(f"Is list: {isinstance(recommendations, list)}")
                 if isinstance(recommendations, list) and len(recommendations) > 0:
                     self.logger.debug(f"First item type: {type(recommendations[0])}")
-                
+
                 # Validate response structure
                 if not isinstance(recommendations, list):
                     raise ValueError("Response must be a list of recommendations")
-                
+
                 # Validate each recommendation
                 required_fields = ["category", "priority", "recommendation", "rationale", "implementation_effort", "expected_benefit"]
                 for i, rec in enumerate(recommendations):
@@ -868,10 +865,10 @@ class SMEAgent:
                         raise ValueError(f"Recommendation {i} has invalid priority: {rec['priority']}")
                     if rec["implementation_effort"] not in ["low", "medium", "high"]:
                         raise ValueError(f"Recommendation {i} has invalid implementation_effort: {rec['implementation_effort']}")
-                
+
                 # Limit to max recommendations
                 return recommendations[:self.max_recommendations]
-                
+
             except (json.JSONDecodeError, ValueError) as parse_error:
                 # NO FALLBACKS: Fail explicitly with full diagnostic information
                 raise RuntimeError(
@@ -880,9 +877,9 @@ class SMEAgent:
                     f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
-                
+
         except Exception as llm_error:
-            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            # NO FALLBACKS: Fail explicitly with full diagnostic information
             raise RuntimeError(
                 f"CRITICAL: Recommendations generation LLM call failed.\n"
                 f"Error: {llm_error}\n"
@@ -896,7 +893,7 @@ class SMEAgent:
         recommendations: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         """Provide specific validation guidance using LLM expertise."""
-        
+
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
         guidance_prompt = f"""
         As a pharmaceutical validation expert specializing in {request.specialty}, provide specific validation guidance based on:
@@ -934,20 +931,20 @@ class SMEAgent:
             }}
         ]
         """
-        
+
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(guidance_prompt)
             response_text = response.text.strip()
-            
+
             # Parse JSON response using robust extraction
             try:
                 guidance = extract_json_from_markdown(response_text)
-                
+
                 # Validate response structure
                 if not isinstance(guidance, list):
                     raise ValueError("Response must be a list of guidance items")
-                
+
                 # Validate each guidance item
                 required_fields = ["area", "guidance", "key_considerations", "success_criteria"]
                 for i, item in enumerate(guidance):
@@ -958,9 +955,9 @@ class SMEAgent:
                             raise ValueError(f"Guidance item {i} missing required field: {field}")
                     if not isinstance(item["key_considerations"], list):
                         raise ValueError(f"Guidance item {i} key_considerations must be a list")
-                
+
                 return guidance
-                
+
             except (json.JSONDecodeError, ValueError) as parse_error:
                 # NO FALLBACKS: Fail explicitly with full diagnostic information
                 raise RuntimeError(
@@ -969,9 +966,9 @@ class SMEAgent:
                     f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
-                
+
         except Exception as llm_error:
-            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            # NO FALLBACKS: Fail explicitly with full diagnostic information
             raise RuntimeError(
                 f"CRITICAL: Validation guidance LLM call failed.\n"
                 f"Error: {llm_error}\n"
@@ -981,7 +978,7 @@ class SMEAgent:
 
     async def _generate_domain_insights(self, request: SMEAgentRequest) -> dict[str, Any]:
         """Generate domain-specific insights using LLM expertise."""
-        
+
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
         insights_prompt = f"""
         As a pharmaceutical validation expert specializing in {request.specialty}, provide domain-specific insights for a validation project with these characteristics:
@@ -1012,30 +1009,30 @@ class SMEAgent:
             "opportunities": ["opportunity1", "opportunity2"]
         }}
         """
-        
+
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(insights_prompt)
             response_text = response.text.strip()
-            
+
             # Parse JSON response using robust extraction
             try:
                 insights = extract_json_from_markdown(response_text)
-                
+
                 # Validate required fields are present
                 required_fields = ["specialty_focus", "key_expertise_areas", "industry_trends", "best_practices", "common_pitfalls"]
                 for field in required_fields:
                     if field not in insights:
                         raise ValueError(f"Missing required field: {field}")
-                
+
                 # Validate field types
                 list_fields = ["key_expertise_areas", "industry_trends", "best_practices", "common_pitfalls"]
                 for field in list_fields:
                     if not isinstance(insights[field], list):
                         raise ValueError(f"Field {field} must be a list")
-                
+
                 return insights
-                
+
             except (json.JSONDecodeError, ValueError) as parse_error:
                 # NO FALLBACKS: Fail explicitly with full diagnostic information
                 raise RuntimeError(
@@ -1044,9 +1041,9 @@ class SMEAgent:
                     f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
-                
+
         except Exception as llm_error:
-            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            # NO FALLBACKS: Fail explicitly with full diagnostic information
             raise RuntimeError(
                 f"CRITICAL: Domain insights LLM call failed.\n"
                 f"Error: {llm_error}\n"
@@ -1056,7 +1053,7 @@ class SMEAgent:
 
     async def _assess_regulatory_considerations(self, request: SMEAgentRequest) -> list[dict[str, Any]]:
         """Assess regulatory considerations using LLM expertise."""
-        
+
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
         regulatory_prompt = f"""
         As a pharmaceutical regulatory expert specializing in {request.specialty}, assess the regulatory considerations for a validation project with these characteristics:
@@ -1093,25 +1090,25 @@ class SMEAgent:
             }}
         ]
         """
-        
+
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(regulatory_prompt)
             response_text = response.text.strip()
-            
+
             # Parse JSON response using robust extraction
             try:
                 considerations = extract_json_from_markdown(response_text)
-                
+
                 # Validate response structure
                 if not isinstance(considerations, list):
                     raise ValueError("Response must be a list of regulatory considerations")
-                
+
                 # Validate each consideration
                 required_fields = ["regulation", "consideration", "impact", "action_required", "timeline"]
                 valid_impacts = ["low", "medium", "high", "critical"]
                 valid_timelines = ["design_phase", "implementation_phase", "validation_phase", "ongoing"]
-                
+
                 for i, item in enumerate(considerations):
                     if not isinstance(item, dict):
                         raise ValueError(f"Consideration {i} must be a dictionary")
@@ -1125,9 +1122,9 @@ class SMEAgent:
                     for timeline_part in timeline_parts:
                         if timeline_part.strip() not in valid_timelines:
                             raise ValueError(f"Consideration {i} has invalid timeline part: {timeline_part.strip()} in {item['timeline']}")
-                
+
                 return considerations
-                
+
             except (json.JSONDecodeError, ValueError) as parse_error:
                 # NO FALLBACKS: Fail explicitly with full diagnostic information
                 raise RuntimeError(
@@ -1136,9 +1133,9 @@ class SMEAgent:
                     f"LLM Response: {response_text[:2000]}...\n"
                     f"This violates pharmaceutical system requirements for explicit failure handling."
                 ) from parse_error
-                
+
         except Exception as llm_error:
-            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            # NO FALLBACKS: Fail explicitly with full diagnostic information
             raise RuntimeError(
                 f"CRITICAL: Regulatory considerations LLM call failed.\n"
                 f"Error: {llm_error}\n"
@@ -1153,7 +1150,7 @@ class SMEAgent:
         risk_analysis: dict[str, Any]
     ) -> str:
         """Formulate expert opinion summary using LLM expertise."""
-        
+
         # NO FALLBACKS: Use actual LLM analysis instead of static logic
         opinion_prompt = f"""
         As a pharmaceutical validation expert specializing in {request.specialty}, formulate a comprehensive expert opinion based on the complete analysis conducted:
@@ -1182,27 +1179,27 @@ class SMEAgent:
         
         Respond with just the expert opinion text, no JSON formatting needed.
         """
-        
+
         try:
             # Make actual LLM call - NO FALLBACKS ALLOWED
             response = await self.llm.acomplete(opinion_prompt)
             expert_opinion = response.text.strip()
-            
+
             # Basic validation - ensure we got a reasonable response
             if not expert_opinion or len(expert_opinion) < 50:
                 raise ValueError("Expert opinion is too short or empty")
-            
+
             # Increased limit to 3000 characters for comprehensive pharmaceutical analysis
             # Pharmaceutical expert opinions often require detailed explanations for regulatory compliance
             if len(expert_opinion) > 3000:
                 self.logger.warning(f"Expert opinion is very long ({len(expert_opinion)} chars), consider review for conciseness")
                 # Don't fail - just log warning for audit trail
                 # raise ValueError("Expert opinion is too long")
-            
+
             return expert_opinion
-                
+
         except Exception as llm_error:
-            # NO FALLBACKS: Fail explicitly with full diagnostic information  
+            # NO FALLBACKS: Fail explicitly with full diagnostic information
             raise RuntimeError(
                 f"CRITICAL: Expert opinion formulation LLM call failed.\n"
                 f"Error: {llm_error}\n"
@@ -1395,9 +1392,9 @@ Always maintain pharmaceutical regulatory standards and provide evidence-based r
         Returns:
             bool: True if OSS model detected
         """
-        if hasattr(self.llm, 'model'):
+        if hasattr(self.llm, "model"):
             model_name = str(self.llm.model).lower()
-            return 'oss' in model_name or 'gpt-oss' in model_name
+            return "oss" in model_name or "gpt-oss" in model_name
         return False
 
     def _enhance_prompt_for_oss(self, base_prompt: str, response_format: str = "json") -> str:
@@ -1413,7 +1410,7 @@ Always maintain pharmaceutical regulatory standards and provide evidence-based r
         """
         if not self.is_oss_model:
             return base_prompt
-            
+
         format_instructions = {
             "json": """
 CRITICAL RESPONSE FORMAT REQUIREMENTS:
@@ -1440,7 +1437,7 @@ Example valid response:
 [{"key": "value"}, {"key2": "value2"}]
             """
         }
-        
+
         instruction = format_instructions.get(response_format, format_instructions["json"])
         return f"{base_prompt}\n\n{instruction}"
 
@@ -1454,22 +1451,22 @@ Example valid response:
         """
         self.logger.info(f"[LLM DEBUG] {parsing_context} - Response length: {len(response_text)}")
         self.logger.info(f"[LLM DEBUG] {parsing_context} - Response preview (first 500 chars): {response_text[:500]}...")
-        
+
         # Check for common OSS model issues
-        has_markdown = '```' in response_text
-        has_json_start = '{' in response_text or '[' in response_text
-        has_json_end = '}' in response_text or ']' in response_text
-        starts_with_json = response_text.strip().startswith(('{', '['))
-        
+        has_markdown = "```" in response_text
+        has_json_start = "{" in response_text or "[" in response_text
+        has_json_end = "}" in response_text or "]" in response_text
+        starts_with_json = response_text.strip().startswith(("{", "["))
+
         self.logger.info(f"[LLM DEBUG] {parsing_context} - Format analysis:")
         self.logger.info(f"  - Has markdown blocks: {has_markdown}")
         self.logger.info(f"  - Has JSON start chars: {has_json_start}")
-        self.logger.info(f"  - Has JSON end chars: {has_json_end}")  
+        self.logger.info(f"  - Has JSON end chars: {has_json_end}")
         self.logger.info(f"  - Starts with JSON: {starts_with_json}")
-        
+
         if self.is_oss_model:
             self.logger.info(f"[OSS MODEL DEBUG] Model: {self.llm.model}")
-            
+
         # Log the last 200 characters to see how it ends
         self.logger.info(f"[LLM DEBUG] {parsing_context} - Response ending (last 200 chars): ...{response_text[-200:]}")
 

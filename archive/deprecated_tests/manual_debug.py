@@ -79,7 +79,7 @@ strong_score = len(strong_matches) * 3  # Strong indicators worth 3 points
 exclusion_penalty = len(exclusions) * -2  # Exclusions subtract 2 points
 base_score = strong_score + exclusion_penalty
 
-print(f"\nSCORE CALCULATION:")
+print("\nSCORE CALCULATION:")
 print(f"Strong score (count * 3): {len(strong_matches)} * 3 = {strong_score}")
 print(f"Exclusion penalty (count * -2): {len(exclusions)} * -2 = {exclusion_penalty}")
 print(f"Base score: {base_score}")
@@ -99,14 +99,14 @@ print(f"Final Category 3 score: {max(0, final_score)}")
 # Basic confidence calculation
 if final_score > base_score:  # Got bonus
     raw_confidence = 0.4 * len(strong_matches) + (-0.3) * len(exclusions)
-    print(f"\nCONFIDENCE CALCULATION:")
+    print("\nCONFIDENCE CALCULATION:")
     print(f"Base confidence: 0.4 * {len(strong_matches)} + (-0.3) * {len(exclusions)} = {raw_confidence}")
-    
+
     # Category 3 adjustment (from lines 359-360)
     if len(strong_matches) >= 1:
         category_adjustment = 0.05
         print(f"Category 3 adjustment: +{category_adjustment}")
         raw_confidence += category_adjustment
-    
+
     final_confidence = max(0.0, min(1.0, raw_confidence))
     print(f"Final confidence: {final_confidence} ({final_confidence * 100:.1f}%)")

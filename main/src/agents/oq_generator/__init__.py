@@ -51,7 +51,7 @@ __all__ = [
 
     # Generator engine
     "OQTestGenerator",
-    "OQTestGeneratorV2", 
+    "OQTestGeneratorV2",
     "create_oq_test_generator_v2",
     "OQTestGenerationError",
 

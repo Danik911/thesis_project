@@ -8,7 +8,7 @@ completion_tokens = 1000
 # Old (wrong) calculation
 old_cost = (prompt_tokens / 1_000_000 * 0.27) + (completion_tokens / 1_000_000 * 1.10)
 
-# New (correct) calculation  
+# New (correct) calculation
 new_cost = (prompt_tokens / 1_000_000 * 0.14) + (completion_tokens / 1_000_000 * 0.28)
 
 print("Cost Calculation Fix Validation")

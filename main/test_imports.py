@@ -15,7 +15,7 @@ def test_core_imports():
             OQTestSuiteEvent,
             OQValidationResultEvent,
             URSIngestionEvent,
-            WorkflowCompletionEvent
+            WorkflowCompletionEvent,
         )
         print("✓ Core events import successful")
     except ImportError as e:
@@ -29,14 +29,14 @@ def test_core_imports():
             ContextData,
             DocumentMetadata,
             MonitoringConfiguration,
-            OQTestSuite,
             OQTestCase,
+            OQTestSuite,
             OutputConfiguration,
             QualityThresholds,
             TestPlan,
             ValidationReport,
             ValidationResult,
-            WorkflowConfiguration
+            WorkflowConfiguration,
         )
         print("✓ Core models import successful")
     except ImportError as e:
@@ -46,10 +46,10 @@ def test_core_imports():
     try:
         from src.core.error_handler import (
             ErrorHandler,
+            RecoveryStrategy,
+            ValidationError,
             WorkflowError,
             WorkflowErrorType,
-            ValidationError,
-            RecoveryStrategy
         )
         print("✓ Error handler import successful")
     except ImportError as e:
@@ -58,9 +58,9 @@ def test_core_imports():
 
     try:
         from src.core.monitoring import (
-            WorkflowMonitor,
             MonitoringEventType,
-            PerformanceMetrics
+            PerformanceMetrics,
+            WorkflowMonitor,
         )
         print("✓ Monitoring import successful")
     except ImportError as e:
@@ -68,7 +68,7 @@ def test_core_imports():
         return False
 
     try:
-        from src.core.output_management import OutputManager, FileCreationResult
+        from src.core.output_management import FileCreationResult, OutputManager
         print("✓ Output management import successful")
     except ImportError as e:
         print(f"✗ Output management import failed: {e}")
@@ -88,11 +88,11 @@ def test_agent_imports():
     """Test agent imports."""
     try:
         from src.agents.categorization.agent import GAMPCategorizationAgent
+        from src.agents.categorization.workflow import GAMPCategorizationWorkflow
+        from src.agents.oq_generator.generator import OQGeneratorAgent
         from src.agents.parallel.context_provider import ContextProviderAgent
         from src.agents.parallel.research_agent import ResearchAgent
         from src.agents.parallel.sme_agent import SMEAgent
-        from src.agents.oq_generator.generator import OQGeneratorAgent
-        from src.agents.categorization.workflow import GAMPCategorizationWorkflow
         print("✓ Agent imports successful")
         return True
     except ImportError as e:
@@ -105,7 +105,7 @@ def test_unified_workflow_import():
     try:
         from src.core.unified_workflow import (
             UnifiedTestGenerationWorkflow,
-            run_pharmaceutical_workflow
+            run_pharmaceutical_workflow,
         )
         print("✓ Unified workflow import successful")
         return True
@@ -118,34 +118,33 @@ def main():
     """Run all import tests."""
     print("Testing import resolution for unified workflow...")
     print("=" * 60)
-    
+
     all_passed = True
-    
+
     # Test core imports
     if not test_core_imports():
         all_passed = False
-    
+
     print()
-    
+
     # Test agent imports
     if not test_agent_imports():
         all_passed = False
-    
+
     print()
-    
+
     # Test unified workflow import
     if not test_unified_workflow_import():
         all_passed = False
-    
+
     print()
     print("=" * 60)
-    
+
     if all_passed:
         print("🎉 ALL IMPORTS SUCCESSFUL - Unified workflow can be loaded!")
         return 0
-    else:
-        print("❌ SOME IMPORTS FAILED - Additional fixes needed")
-        return 1
+    print("❌ SOME IMPORTS FAILED - Additional fixes needed")
+    return 1
 
 
 if __name__ == "__main__":

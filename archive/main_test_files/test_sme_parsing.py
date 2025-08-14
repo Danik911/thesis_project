@@ -31,11 +31,11 @@ test_response = """```json
 import re
 
 # Extract JSON from markdown
-json_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', test_response, re.DOTALL)
+json_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", test_response, re.DOTALL)
 if json_match:
     json_str = json_match.group(1)
     print(f"Extracted JSON string length: {len(json_str)}")
-    
+
     try:
         parsed = json.loads(json_str)
         print("SUCCESS: Successfully parsed JSON")

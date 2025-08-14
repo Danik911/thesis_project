@@ -63,9 +63,8 @@ This URS defines the requirements for an Environmental Monitoring System to moni
         if result.gamp_category.value == 3:
             print("\n✅ CORRECT CATEGORY: 3 (Non-Configured Products)")
             return True
-        else:
-            print(f"\n❌ INCORRECT CATEGORY: {result.gamp_category.value} (Expected: 3)")
-            return False
+        print(f"\n❌ INCORRECT CATEGORY: {result.gamp_category.value} (Expected: 3)")
+        return False
 
     except Exception as e:
         print(f"❌ CATEGORIZATION FAILED: {e}")
@@ -129,9 +128,8 @@ This URS defines requirements for a CDS to control HPLC/GC instruments and proce
         if result.gamp_category.value in [3, 4]:
             print(f"\n✅ CORRECT CATEGORY: {result.gamp_category.value} (Expected: 3 or 4)")
             return True
-        else:
-            print(f"\n❌ INCORRECT CATEGORY: {result.gamp_category.value} (Expected: 3 or 4)")
-            return False
+        print(f"\n❌ INCORRECT CATEGORY: {result.gamp_category.value} (Expected: 3 or 4)")
+        return False
 
     except Exception as e:
         print(f"❌ CATEGORIZATION FAILED: {e}")

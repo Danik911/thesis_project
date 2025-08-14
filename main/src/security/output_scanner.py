@@ -143,10 +143,10 @@ class PharmaceuticalOutputScanner:
                 r"-----BEGIN (?:RSA )?PRIVATE KEY-----",
                 re.MULTILINE
             ),
-            
+
             # Enhanced pattern for "sk-" prefixed API keys
             "openai_api_key": re.compile(
-                r'\bsk-[A-Za-z0-9]{20,}\b',
+                r"\bsk-[A-Za-z0-9]{20,}\b",
                 re.IGNORECASE
             ),
         }
@@ -233,14 +233,14 @@ class PharmaceuticalOutputScanner:
                     "position": output_content.find(match)
                 })
                 max_confidence = max(max_confidence, 0.80)
-        
+
         # Additional patient ID detection patterns
         patient_patterns = [
-            re.compile(r'\bpatient\s+id[:\s]*([A-Za-z0-9]{4,15})\b', re.IGNORECASE),
-            re.compile(r'\bpatient[:\s]+([A-Za-z0-9]{4,15})\b', re.IGNORECASE),
-            re.compile(r'\bid[:\s]+([A-Za-z0-9]{4,15})', re.IGNORECASE),
+            re.compile(r"\bpatient\s+id[:\s]*([A-Za-z0-9]{4,15})\b", re.IGNORECASE),
+            re.compile(r"\bpatient[:\s]+([A-Za-z0-9]{4,15})\b", re.IGNORECASE),
+            re.compile(r"\bid[:\s]+([A-Za-z0-9]{4,15})", re.IGNORECASE),
         ]
-        
+
         for pattern in patient_patterns:
             matches = pattern.findall(output_content)
             for match in matches:
@@ -290,13 +290,13 @@ class PharmaceuticalOutputScanner:
                     "position": output_content.find(match)
                 })
                 max_confidence = max(max_confidence, confidence)
-        
+
         # Additional API key patterns that might be missed
         additional_api_patterns = [
-            re.compile(r'\bapi\s+key[:\s]*([A-Za-z0-9\-_]{10,})', re.IGNORECASE),
-            re.compile(r'\bkey[:\s]*([A-Za-z0-9\-_]{15,})', re.IGNORECASE),
+            re.compile(r"\bapi\s+key[:\s]*([A-Za-z0-9\-_]{10,})", re.IGNORECASE),
+            re.compile(r"\bkey[:\s]*([A-Za-z0-9\-_]{15,})", re.IGNORECASE),
         ]
-        
+
         for pattern in additional_api_patterns:
             matches = pattern.findall(output_content)
             for match in matches:

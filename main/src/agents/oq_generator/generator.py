@@ -15,10 +15,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 from llama_index.core.llms import LLM
-from llama_index.core.program import LLMTextCompletionProgram
 from pydantic import ValidationError
-from src.core.events import GAMPCategory
 from src.config.timeout_config import TimeoutConfig
+from src.core.events import GAMPCategory
 
 from .models import OQGenerationConfig, OQTestSuite
 from .templates import GAMPCategoryConfig, OQPromptTemplates
@@ -43,22 +42,22 @@ def clean_unicode_characters(text: str) -> str:
         Cleaned text suitable for JSON parsing
     """
     # Remove BOM marker if present at start
-    if text.startswith('\ufeff'):
+    if text.startswith("\ufeff"):
         text = text[1:]
-    
+
     # Remove various invisible Unicode characters that break JSON parsing
     invisible_chars = [
-        '\u200b',  # Zero-width space
-        '\u200c',  # Zero-width non-joiner  
-        '\u200d',  # Zero-width joiner
-        '\u2028',  # Line separator
-        '\u2029',  # Paragraph separator
-        '\ufeff',  # Additional BOM occurrences
+        "\u200b",  # Zero-width space
+        "\u200c",  # Zero-width non-joiner
+        "\u200d",  # Zero-width joiner
+        "\u2028",  # Line separator
+        "\u2029",  # Paragraph separator
+        "\ufeff",  # Additional BOM occurrences
     ]
-    
+
     for char in invisible_chars:
-        text = text.replace(char, '')
-    
+        text = text.replace(char, "")
+
     return text
 
 
@@ -86,25 +85,25 @@ def extract_json_from_mixed_response(response_text: str) -> tuple[str, dict[str,
         "json_found": False,
         "parsing_stage": "initial_cleaning"
     }
-    
+
     try:
         # Step 1: Clean unicode characters
         original_text = response_text
         cleaned_text = clean_unicode_characters(response_text)
-        
+
         if cleaned_text != original_text:
             diagnostic_context["unicode_issues_detected"] = True
             diagnostic_context["unicode_chars_removed"] = len(original_text) - len(cleaned_text)
-        
+
         diagnostic_context["parsing_stage"] = "markdown_extraction"
-        
+
         # Step 2: Try to extract from markdown code blocks first
         markdown_patterns = [
-            r'```json\s*\n(.*?)\n```',  # Standard ```json``` blocks
-            r'```\s*\n(\{.*?\})\s*\n```',  # Generic ``` blocks with JSON
-            r'`([^`]*\{.*?\}[^`]*)`',  # Single backticks with JSON
+            r"```json\s*\n(.*?)\n```",  # Standard ```json``` blocks
+            r"```\s*\n(\{.*?\})\s*\n```",  # Generic ``` blocks with JSON
+            r"`([^`]*\{.*?\}[^`]*)`",  # Single backticks with JSON
         ]
-        
+
         for pattern in markdown_patterns:
             matches = re.findall(pattern, cleaned_text, re.DOTALL | re.MULTILINE)
             if matches:
@@ -112,7 +111,7 @@ def extract_json_from_mixed_response(response_text: str) -> tuple[str, dict[str,
                 diagnostic_context["extraction_method"] = f"markdown_pattern_{pattern[:20]}..."
                 diagnostic_context["json_found"] = True
                 diagnostic_context["parsing_stage"] = "json_validation"
-                
+
                 # Validate it's actually JSON
                 try:
                     json.loads(json_candidate)
@@ -120,20 +119,20 @@ def extract_json_from_mixed_response(response_text: str) -> tuple[str, dict[str,
                 except json.JSONDecodeError as e:
                     diagnostic_context["json_parse_error"] = str(e)
                     continue
-        
+
         # Step 3: Look for JSON object boundaries without markdown
         diagnostic_context["parsing_stage"] = "boundary_detection"
-        
+
         # Find JSON object boundaries (balanced braces)
         brace_count = 0
         start_idx = -1
-        
+
         for i, char in enumerate(cleaned_text):
-            if char == '{':
+            if char == "{":
                 if brace_count == 0:
                     start_idx = i
                 brace_count += 1
-            elif char == '}':
+            elif char == "}":
                 brace_count -= 1
                 if brace_count == 0 and start_idx != -1:
                     # Found complete JSON object
@@ -141,24 +140,24 @@ def extract_json_from_mixed_response(response_text: str) -> tuple[str, dict[str,
                     diagnostic_context["extraction_method"] = "boundary_detection"
                     diagnostic_context["json_found"] = True
                     diagnostic_context["parsing_stage"] = "json_validation"
-                    
+
                     try:
                         json.loads(json_candidate)
                         return json_candidate, diagnostic_context
                     except json.JSONDecodeError as e:
                         diagnostic_context["json_parse_error"] = str(e)
                         continue
-        
+
         # Step 4: Last resort - try to find any JSON-like content
         diagnostic_context["parsing_stage"] = "pattern_matching"
-        
+
         # Look for patterns that start with { and contain typical JSON elements
         json_patterns = [
             r'(\{[^{}]*"suite_id"[^{}]*\})',  # Look for suite_id field
             r'(\{.*?"gamp_category".*?\})',   # Look for gamp_category field
             r'(\{.*?"test_cases".*?\})',      # Look for test_cases field
         ]
-        
+
         for pattern in json_patterns:
             matches = re.findall(pattern, cleaned_text, re.DOTALL)
             if matches:
@@ -166,18 +165,18 @@ def extract_json_from_mixed_response(response_text: str) -> tuple[str, dict[str,
                 diagnostic_context["extraction_method"] = f"pattern_matching_{pattern[:30]}..."
                 diagnostic_context["json_found"] = True
                 diagnostic_context["parsing_stage"] = "json_validation"
-                
+
                 try:
                     json.loads(json_candidate)
                     return json_candidate, diagnostic_context
                 except json.JSONDecodeError as e:
                     diagnostic_context["json_parse_error"] = str(e)
                     continue
-        
+
         # If we get here, no valid JSON was found
         diagnostic_context["parsing_stage"] = "extraction_failed"
         diagnostic_context["json_found"] = False
-        
+
         raise TestGenerationFailure(
             "No valid JSON found in OSS model response after trying all extraction methods",
             {
@@ -193,19 +192,19 @@ def extract_json_from_mixed_response(response_text: str) -> tuple[str, dict[str,
                 ]
             }
         )
-        
+
     except Exception as e:
         if isinstance(e, TestGenerationFailure):
             raise  # Re-raise our own exceptions
-        
+
         # Unexpected error during extraction
         diagnostic_context["parsing_stage"] = "unexpected_error"
         diagnostic_context["unexpected_error"] = str(e)
-        
+
         raise TestGenerationFailure(
             f"Unexpected error during JSON extraction: {e}",
             {
-                "error_type": "json_extraction_unexpected_error", 
+                "error_type": "json_extraction_unexpected_error",
                 "diagnostic_context": diagnostic_context,
                 "no_fallback_available": True,
                 "requires_human_intervention": True
@@ -265,13 +264,13 @@ class OQTestGenerator:
         # Critical: NO fallback values or default behaviors
         self._generation_program = None
         self._last_generation_context = None
-        
+
         # Configure LLM timeout if it's OpenAI
-        if hasattr(self.llm, 'timeout'):
+        if hasattr(self.llm, "timeout"):
             # Set timeout to our generation timeout (OpenAI SDK v1.0.0+)
             self.llm.timeout = self.generation_timeout
             self.logger.info(f"Set LLM timeout to {self.generation_timeout}s")
-        elif hasattr(self.llm, '_client') and hasattr(self.llm._client, 'timeout'):
+        elif hasattr(self.llm, "_client") and hasattr(self.llm._client, "timeout"):
             # For newer OpenAI client versions
             self.llm._client.timeout = self.generation_timeout
             self.logger.info(f"Set LLM client timeout to {self.generation_timeout}s")
@@ -502,19 +501,19 @@ class OQTestGenerator:
                 test_count=test_count,
                 context_summary=context_summary
             )
-            
+
             # Parse YAML response - NO FALLBACKS
             try:
                 yaml_data = extract_yaml_from_response(raw_response)
                 validated_data = validate_yaml_data(yaml_data)
                 result = OQTestSuite(**validated_data)
-                
+
                 self.logger.info(
                     f"OQ generation successful with YAML parsing: "
                     f"{len(result.test_cases)} tests generated"
                 )
                 return result
-                
+
             except Exception as yaml_e:
                 # YAML parsing failed - provide diagnostic information and fail
                 raise TestGenerationFailure(
@@ -549,7 +548,7 @@ class OQTestGenerator:
                 f"YAML-based test generation failed: {e}",
                 error_context
             )
-    
+
     # Template-based extraction methods removed - NO FALLBACKS policy
     # All generation must go through primary YAML path for GAMP-5 compliance
 
@@ -577,24 +576,24 @@ class OQTestGenerator:
                 test_count=test_count,
                 context_summary=context_summary
             )
-            
+
             # Configure LLM for OSS model optimization
             generation_kwargs = {
                 "max_tokens": 15000,  # Reduced from 30000 for better parseability
                 "temperature": 0.1,   # Low temperature for consistent YAML format
             }
-            
+
             # Make direct LLM call with optimized parameters
-            if hasattr(self.llm, 'complete'):
+            if hasattr(self.llm, "complete"):
                 # Use complete method for direct text completion
                 response = self.llm.complete(prompt, **generation_kwargs)
-                raw_response = response.text if hasattr(response, 'text') else str(response)
-            elif hasattr(self.llm, '_client'):
+                raw_response = response.text if hasattr(response, "text") else str(response)
+            elif hasattr(self.llm, "_client"):
                 # For OpenRouter-compatible clients, try direct generation
                 try:
                     # Try to use the client directly with proper parameters
                     response = self.llm._client.completions.create(
-                        model=getattr(self.llm, 'model_name', 'llama-3.1-8b'),
+                        model=getattr(self.llm, "model_name", "llama-3.1-8b"),
                         prompt=prompt,
                         **generation_kwargs
                     )
@@ -602,22 +601,22 @@ class OQTestGenerator:
                 except AttributeError:
                     # Fallback to standard complete method
                     response = self.llm.complete(prompt)
-                    raw_response = response.text if hasattr(response, 'text') else str(response)
+                    raw_response = response.text if hasattr(response, "text") else str(response)
             else:
-                # Last resort: try calling LLM directly 
+                # Last resort: try calling LLM directly
                 raw_response = str(self.llm(prompt))
-            
+
             self.logger.info(
                 f"Raw LLM response received: {len(raw_response)} characters "
                 f"(max_tokens={generation_kwargs['max_tokens']}, temperature={generation_kwargs['temperature']})"
             )
-            
+
             # Log response preview for debugging (first 300 chars to see YAML start)
             response_preview = raw_response[:300] + "..." if len(raw_response) > 300 else raw_response
             self.logger.debug(f"Raw LLM response preview: {response_preview}")
-            
+
             return raw_response
-            
+
         except Exception as e:
             raise TestGenerationFailure(
                 f"Failed to get raw LLM response for YAML generation: {e}",

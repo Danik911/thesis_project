@@ -13,16 +13,18 @@ Key Test Coverage:
 - Workflow orchestration
 """
 
-import json
 import tempfile
 import unittest
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-from uuid import uuid4
+from unittest.mock import MagicMock
 
-import pytest
-
+from src.compliance_validation.alcoa_scorer import ALCOAScorer
+from src.compliance_validation.cfr_part11_verifier import CFRPart11Verifier
+from src.compliance_validation.compliance_workflow import ComplianceWorkflow
+from src.compliance_validation.evidence_collector import EvidenceCollector
+from src.compliance_validation.gamp5_assessor import GAMP5Assessor
+from src.compliance_validation.gap_analyzer import GapAnalyzer
 from src.compliance_validation.models import (
     ComplianceFramework,
     ComplianceStatus,
@@ -30,26 +32,19 @@ from src.compliance_validation.models import (
     EvidenceType,
     Gap,
     GapSeverity,
-    ValidationTemplate
 )
-from src.compliance_validation.evidence_collector import EvidenceCollector
-from src.compliance_validation.gamp5_assessor import GAMP5Assessor
-from src.compliance_validation.cfr_part11_verifier import CFRPart11Verifier
-from src.compliance_validation.alcoa_scorer import ALCOAScorer
-from src.compliance_validation.gap_analyzer import GapAnalyzer
 from src.compliance_validation.remediation_planner import RemediationPlanner
-from src.compliance_validation.compliance_workflow import ComplianceWorkflow
 from src.core.events import GAMPCategory
 
 
 class TestComplianceValidationFramework(unittest.TestCase):
     """Test suite for compliance validation framework."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.temp_dir = Path(tempfile.mkdtemp())
         self.test_system_name = "Test Pharmaceutical System"
-        
+
         # Initialize components
         self.evidence_collector = EvidenceCollector(self.temp_dir / "evidence")
         self.gamp5_assessor = GAMP5Assessor(self.evidence_collector)
@@ -58,7 +53,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.gap_analyzer = GapAnalyzer(self.evidence_collector)
         self.remediation_planner = RemediationPlanner(self.evidence_collector)
         self.compliance_workflow = ComplianceWorkflow(self.temp_dir / "workflow")
-        
+
         # Test data
         self.sample_gap = Gap(
             title="Test Compliance Gap",
@@ -76,7 +71,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             identified_by="test_framework",
             identification_method="automated_test"
         )
-        
+
         self.sample_data = [
             {
                 "id": "test_doc_1",
@@ -95,27 +90,27 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "retrieval_time": 30
             }
         ]
-    
+
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
-    
+
     def test_evidence_collector_initialization(self):
         """Test evidence collector initialization and template creation."""
         # Test initialization
         self.assertIsInstance(self.evidence_collector, EvidenceCollector)
         self.assertTrue(self.evidence_collector.evidence_directory.exists())
         self.assertTrue(self.evidence_collector.template_directory.exists())
-        
+
         # Test template creation
         self.evidence_collector.create_default_templates()
         self.assertGreater(len(self.evidence_collector.template_registry), 0)
-        
+
         # Verify templates exist on disk
         template_files = list(self.evidence_collector.template_directory.glob("*.json"))
         self.assertGreater(len(template_files), 0)
-    
+
     def test_evidence_collection_system_integration(self):
         """Test evidence collection from system integration."""
         # Collect test evidence
@@ -127,17 +122,17 @@ class TestComplianceValidationFramework(unittest.TestCase):
             experiment_id="test_experiment_1",
             metrics={"accuracy": 0.95, "precision": 0.90}
         )
-        
+
         # Verify evidence collection
         self.assertIsInstance(evidence, Evidence)
         self.assertEqual(evidence.evidence_type, EvidenceType.TEST_RESULT)
         self.assertEqual(evidence.collected_by, "test_collector")
         self.assertGreater(evidence.completeness_score, 0.0)
         self.assertGreater(evidence.reliability_score, 0.0)
-        
+
         # Verify evidence storage
         self.assertIn(evidence.evidence_id, self.evidence_collector.evidence_registry)
-    
+
     def test_gamp5_categorization_assessment(self):
         """Test GAMP-5 categorization assessment."""
         # Test categorization assessment (providing experiment_id for evidence collection)
@@ -149,7 +144,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             confidence_score=0.92,
             assessor_name="test_assessor"
         )
-        
+
         # Verify assessment results
         self.assertIsInstance(assessment_result, dict)
         self.assertEqual(assessment_result["system_name"], self.test_system_name)
@@ -157,14 +152,14 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.assertEqual(assessment_result["confidence_score"], 0.92)
         self.assertIn("compliance_status", assessment_result)
         self.assertIn("evidence_id", assessment_result)
-        
+
         # Verify strategy information
         self.assertIn("strategy", assessment_result)
         strategy = assessment_result["strategy"]
         self.assertEqual(strategy["validation_rigor"], "full")
         self.assertGreater(len(strategy["test_types"]), 0)
         self.assertIn("custom_validation", strategy["test_types"])
-    
+
     def test_lifecycle_coverage_validation(self):
         """Test GAMP-5 lifecycle coverage validation."""
         # Prepare lifecycle artifacts
@@ -188,7 +183,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "content": "Comprehensive validation plan"
             }
         }
-        
+
         # Test lifecycle validation
         validation_result = self.gamp5_assessor.validate_lifecycle_coverage(
             system_name=self.test_system_name,
@@ -196,7 +191,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             lifecycle_artifacts=lifecycle_artifacts,
             assessor_name="test_assessor"
         )
-        
+
         # Verify validation results
         self.assertIsInstance(validation_result, dict)
         self.assertEqual(validation_result["system_name"], self.test_system_name)
@@ -204,7 +199,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.assertIn("coverage_score", validation_result)
         self.assertIn("compliance_status", validation_result)
         self.assertGreater(validation_result["coverage_score"], 0.0)
-    
+
     def test_cfr_part11_audit_trail_verification(self):
         """Test 21 CFR Part 11 audit trail verification."""
         # Prepare audit trail data
@@ -231,7 +226,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "export_available": True
             }
         }
-        
+
         # Test audit trail verification
         verification_result = self.cfr_part11_verifier.verify_audit_trail_completeness(
             system_name=self.test_system_name,
@@ -239,7 +234,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             target_completeness=1.0,
             verifier_name="test_verifier"
         )
-        
+
         # Verify verification results
         self.assertIsInstance(verification_result, dict)
         self.assertEqual(verification_result["system_name"], self.test_system_name)
@@ -247,7 +242,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.assertIn("actual_completeness", verification_result)
         self.assertIn("compliance_status", verification_result)
         self.assertGreater(verification_result["actual_completeness"], 0.0)
-    
+
     def test_electronic_signatures_verification(self):
         """Test electronic signatures verification."""
         # Prepare signature data
@@ -277,21 +272,21 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "signature_preservation": True
             }
         }
-        
+
         # Test signature verification
         verification_result = self.cfr_part11_verifier.verify_electronic_signatures(
             system_name=self.test_system_name,
             signature_data=signature_data,
             verifier_name="test_verifier"
         )
-        
+
         # Verify verification results
         self.assertIsInstance(verification_result, dict)
         self.assertEqual(verification_result["system_name"], self.test_system_name)
         self.assertIn("compliance_score", verification_result)
         self.assertIn("compliance_status", verification_result)
         self.assertGreater(verification_result["compliance_score"], 0.0)
-    
+
     def test_alcoa_plus_assessment(self):
         """Test ALCOA+ data integrity assessment."""
         # Test ALCOA+ assessment
@@ -302,7 +297,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             target_score=9.0,
             assessor_name="test_assessor"
         )
-        
+
         # Verify assessment results
         from src.compliance_validation.alcoa_scorer import ALCOAAssessment
         self.assertIsInstance(assessment, ALCOAAssessment)
@@ -311,23 +306,23 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.assertEqual(assessment.data_samples_assessed, 1)
         self.assertGreater(assessment.overall_score, 0.0)
         self.assertLessEqual(assessment.overall_score, 10.0)
-        
+
         # Verify attribute scores
         self.assertEqual(len(assessment.attribute_scores), 9)  # All 9 ALCOA+ attributes
-        
+
         # Check weighted scores for Original and Accurate
         if "original" in assessment.attribute_scores:
             self.assertEqual(assessment.attribute_scores["original"].weight, 2.0)
         if "accurate" in assessment.attribute_scores:
             self.assertEqual(assessment.attribute_scores["accurate"].weight, 2.0)
-        
+
         # Verify compliance status determination
         self.assertIn(assessment.compliance_status, [
-            ComplianceStatus.COMPLIANT, 
-            ComplianceStatus.PARTIALLY_COMPLIANT, 
+            ComplianceStatus.COMPLIANT,
+            ComplianceStatus.PARTIALLY_COMPLIANT,
             ComplianceStatus.NON_COMPLIANT
         ])
-    
+
     def test_gap_analysis_and_prioritization(self):
         """Test gap analysis and prioritization."""
         # Create test gaps for different frameworks
@@ -347,7 +342,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             identified_by="gamp5_assessor",
             identification_method="automated_assessment"
         )
-        
+
         cfr_gap = Gap(
             title="Audit Trail Completeness Gap",
             description="Incomplete audit trail configuration",
@@ -364,38 +359,38 @@ class TestComplianceValidationFramework(unittest.TestCase):
             identified_by="cfr_part11_verifier",
             identification_method="automated_verification"
         )
-        
+
         # Test gap consolidation
         gap_sources = {
             "gamp5": [gamp5_gap],
             "cfr_part_11": [cfr_gap]
         }
-        
+
         consolidation_result = self.gap_analyzer.consolidate_gaps(
             system_name=self.test_system_name,
             gap_sources=gap_sources,
             analyzer_name="test_analyzer"
         )
-        
+
         # Verify consolidation results
         self.assertIsInstance(consolidation_result, dict)
         self.assertEqual(consolidation_result["system_name"], self.test_system_name)
         self.assertEqual(consolidation_result["total_gaps"], 2)
         self.assertIn("gaps_by_framework", consolidation_result)
         self.assertIn("gaps_by_severity", consolidation_result)
-        
+
         # Test gap prioritization
         prioritized_gaps = self.gap_analyzer.prioritize_gaps("risk_based")
-        
+
         # Verify prioritization
         self.assertIsInstance(prioritized_gaps, list)
         self.assertEqual(len(prioritized_gaps), 2)
-        
+
         # Critical gaps should be prioritized higher
         if len(prioritized_gaps) > 1:
             first_gap = prioritized_gaps[0]
             self.assertLessEqual(first_gap.priority_rank, prioritized_gaps[1].priority_rank)
-    
+
     def test_remediation_planning(self):
         """Test remediation plan creation."""
         # Test individual remediation plan
@@ -405,7 +400,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             business_context={"preferred_owners": {"GAMP-5": "Test Validation Manager"}},
             planner_name="test_planner"
         )
-        
+
         # Verify remediation plan
         from src.compliance_validation.models import RemediationPlan
         self.assertIsInstance(remediation_plan, RemediationPlan)
@@ -414,20 +409,20 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.assertGreater(len(remediation_plan.required_resources), 0)
         self.assertGreater(len(remediation_plan.corrective_actions), 0)
         self.assertGreater(len(remediation_plan.preventive_actions), 0)
-        
+
         # Verify CAPA structure
         for action in remediation_plan.corrective_actions:
             self.assertIn("action_id", action)
             self.assertIn("title", action)
             self.assertIn("category", action)
             self.assertEqual(action["category"], "corrective")
-        
+
         for action in remediation_plan.preventive_actions:
             self.assertIn("action_id", action)
             self.assertIn("title", action)
             self.assertIn("category", action)
             self.assertEqual(action["category"], "preventive")
-    
+
     def test_consolidated_remediation_planning(self):
         """Test consolidated remediation planning for multiple gaps."""
         # Create additional test gap
@@ -447,7 +442,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             identified_by="test_framework",
             identification_method="automated_test"
         )
-        
+
         # Test consolidated planning
         consolidated_plan = self.remediation_planner.create_consolidated_plan(
             gaps=[self.sample_gap, second_gap],
@@ -455,7 +450,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             business_context={},
             planner_name="test_planner"
         )
-        
+
         # Verify consolidated plan
         from src.compliance_validation.models import RemediationPlan
         self.assertIsInstance(consolidated_plan, RemediationPlan)
@@ -463,7 +458,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.assertGreater(len(consolidated_plan.dependencies), 0)
         self.assertGreater(len(consolidated_plan.corrective_actions), 0)
         self.assertGreater(len(consolidated_plan.preventive_actions), 0)
-    
+
     def test_comprehensive_compliance_workflow(self):
         """Test end-to-end compliance validation workflow."""
         # Prepare validation scope
@@ -492,7 +487,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "data_samples": self.sample_data
             }
         }
-        
+
         business_context = {
             "priority_weights": {
                 "patient_safety": 0.5,
@@ -501,7 +496,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "compliance_exposure": 0.05
             }
         }
-        
+
         # Execute comprehensive validation
         workflow_results = self.compliance_workflow.execute_comprehensive_validation(
             system_name=self.test_system_name,
@@ -509,7 +504,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
             business_context=business_context,
             workflow_manager="test_workflow_manager"
         )
-        
+
         # Verify workflow results
         self.assertIsInstance(workflow_results, dict)
         self.assertEqual(workflow_results["system_name"], self.test_system_name)
@@ -521,17 +516,17 @@ class TestComplianceValidationFramework(unittest.TestCase):
         self.assertIn("evidence_items_collected", workflow_results)
         self.assertIn("next_steps", workflow_results)
         self.assertIn("compliance_report", workflow_results)
-        
+
         # Verify frameworks were assessed
         self.assertGreater(len(workflow_results["frameworks_assessed"]), 0)
-        
+
         # Verify compliance report structure
         compliance_report = workflow_results["compliance_report"]
         self.assertIn("assessment_name", compliance_report)
         self.assertIn("system_under_assessment", compliance_report)
         self.assertIn("overall_status", compliance_report)
         self.assertIn("overall_score", compliance_report)
-    
+
     def test_workflow_error_handling(self):
         """Test workflow error handling and NO FALLBACKS principle."""
         # Test with invalid validation scope
@@ -539,14 +534,14 @@ class TestComplianceValidationFramework(unittest.TestCase):
             "frameworks": ["invalid_framework"],
             "invalid_parameters": {}
         }
-        
+
         # Should raise explicit error, not fallback
         with self.assertRaises(Exception):
             self.compliance_workflow.execute_comprehensive_validation(
                 system_name=self.test_system_name,
                 validation_scope=invalid_scope
             )
-    
+
     def test_evidence_traceability(self):
         """Test evidence collection and traceability matrix."""
         # Build traceability matrix
@@ -560,7 +555,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "description": "System must maintain complete audit trails per 21 CFR Part 11"
             }
         }
-        
+
         test_cases = {
             "TC-001": {
                 "title": "GAMP-5 categorization test",
@@ -571,7 +566,7 @@ class TestComplianceValidationFramework(unittest.TestCase):
                 "description": "Verify audit trail completeness"
             }
         }
-        
+
         # Build traceability matrix
         matrix = self.evidence_collector.build_traceability_matrix(
             matrix_name="Test Traceability Matrix",
@@ -580,28 +575,28 @@ class TestComplianceValidationFramework(unittest.TestCase):
             requirements=requirements,
             test_cases=test_cases
         )
-        
+
         # Verify matrix creation
         from src.compliance_validation.models import TraceabilityMatrix
         self.assertIsInstance(matrix, TraceabilityMatrix)
         self.assertEqual(matrix.matrix_name, "Test Traceability Matrix")
         self.assertEqual(len(matrix.requirements), 2)
         self.assertEqual(len(matrix.test_cases), 2)
-        
+
         # Link requirements to test cases
         matrix.link_requirement_to_test("REQ-001", "TC-001")
         matrix.link_requirement_to_test("REQ-002", "TC-002")
-        
+
         # Calculate coverage
         coverage = matrix.calculate_coverage()
         self.assertGreater(coverage, 0.0)
         self.assertLessEqual(coverage, 100.0)
-    
+
     def test_integration_with_cross_validation(self):
         """Test integration with existing cross-validation framework."""
         # This test verifies that compliance validation can work with
         # quality metrics from the cross-validation framework
-        
+
         # Mock quality metrics
         mock_quality_metrics = MagicMock()
         mock_quality_metrics.analyze_classification_quality.return_value = MagicMock(
@@ -609,19 +604,19 @@ class TestComplianceValidationFramework(unittest.TestCase):
             false_positive_rate=0.02,
             false_negative_rate=0.03
         )
-        
+
         # Create ALCOA scorer with quality metrics
         alcoa_scorer_with_metrics = ALCOAScorer(
             self.evidence_collector,
             mock_quality_metrics
         )
-        
+
         # Test assessment with quality metrics integration
         assessment = alcoa_scorer_with_metrics.assess_system_data_integrity(
             system_name=self.test_system_name,
             data_samples=self.sample_data
         )
-        
+
         # Verify assessment works with quality metrics integration
         from src.compliance_validation.alcoa_scorer import ALCOAAssessment
         self.assertIsInstance(assessment, ALCOAAssessment)
@@ -630,23 +625,23 @@ class TestComplianceValidationFramework(unittest.TestCase):
 
 class TestComplianceValidationIntegration(unittest.TestCase):
     """Integration tests for compliance validation framework."""
-    
+
     def setUp(self):
         """Set up integration test fixtures."""
         self.temp_dir = Path(tempfile.mkdtemp())
         self.compliance_workflow = ComplianceWorkflow(self.temp_dir)
-    
+
     def tearDown(self):
         """Clean up integration test fixtures."""
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
-    
+
     def test_end_to_end_validation_scenario(self):
         """Test complete end-to-end validation scenario."""
         # This test simulates a real pharmaceutical system validation
-        
+
         system_name = "Pharmaceutical Quality Management System"
-        
+
         validation_scope = {
             "frameworks": ["gamp5", "cfr_part_11", "alcoa_plus"],
             "gamp5_parameters": {
@@ -698,25 +693,25 @@ class TestComplianceValidationIntegration(unittest.TestCase):
                 ]
             }
         }
-        
+
         # Execute validation
         results = self.compliance_workflow.execute_comprehensive_validation(
             system_name=system_name,
             validation_scope=validation_scope
         )
-        
+
         # Verify end-to-end execution
         self.assertIsInstance(results, dict)
         self.assertIn("session_id", results)
         self.assertIn("overall_compliance_status", results)
-        
+
         # Test deliverables generation
         deliverable_types = ["executive_summary", "compliance_report", "gap_analysis"]
         deliverables = self.compliance_workflow.generate_validation_deliverables(
             session_id=results["session_id"],
             deliverable_types=deliverable_types
         )
-        
+
         # Verify deliverables
         self.assertIsInstance(deliverables, dict)
         for deliverable_type in deliverable_types:

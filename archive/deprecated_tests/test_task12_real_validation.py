@@ -5,7 +5,7 @@ Critical validation of Task 12 - Real test with actual LLM categorization.
 import os
 import sys
 from pathlib import Path
-import asyncio
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -21,9 +21,10 @@ sys.path.insert(0, str(Path(__file__).parent / "main"))
 from src.agents.categorization.agent import categorize_with_pydantic_structured_output
 from src.agents.categorization.error_handler import CategorizationErrorHandler
 
+
 def test_urs003_real_categorization():
     """Test URS-003 with actual LLM-based categorization."""
-    
+
     # URS-003 from the test data file
     urs003_content = """
 ## URS-003: Manufacturing Execution System (MES)
@@ -58,16 +59,16 @@ This URS defines requirements for a custom MES to manage electronic batch record
 - **URS-MES-009**: Develop proprietary electronic signature workflow.
 - **URS-MES-010**: Custom data integrity checks beyond standard validations.
 """
-    
+
     print("CRITICAL VALIDATION: Task 12 Real Test")
     print("=" * 80)
     print("Testing URS-003 with actual LLM categorization...")
     print("-" * 60)
-    
+
     try:
         # Initialize error handler
         error_handler = CategorizationErrorHandler()
-        
+
         # Run actual LLM-based categorization
         print("Calling LLM-based categorization...")
         result = categorize_with_pydantic_structured_output(
@@ -75,37 +76,37 @@ This URS defines requirements for a custom MES to manage electronic batch record
             urs_content=urs003_content,
             error_handler=error_handler
         )
-        
-        print(f"\n✓ Categorization completed")
+
+        print("\n✓ Categorization completed")
         print(f"Category: {result.category}")
         print(f"Confidence: {result.confidence:.3f}")
         print(f"Rationale: {result.rationale}")
         print(f"Evidence: {result.evidence}")
-        
+
         # Validate results
         success = True
         issues = []
-        
+
         # Check category
         if result.category != 5:
             issues.append(f"Wrong category: {result.category} (expected 5)")
             success = False
         else:
-            print(f"\n✅ PASS: Correct Category 5 identified")
-            
+            print("\n✅ PASS: Correct Category 5 identified")
+
         # Check confidence
         if result.confidence < 0.7:
             issues.append(f"Low confidence: {result.confidence:.3f} (expected >0.7)")
             success = False
         else:
             print(f"✅ PASS: High confidence {result.confidence:.3f}")
-            
+
         # Check for proper categorization reasoning
         if "custom" in result.rationale.lower():
-            print(f"✅ PASS: Rationale mentions custom development")
+            print("✅ PASS: Rationale mentions custom development")
         else:
             issues.append("Rationale doesn't mention custom development")
-            
+
         # Final verdict
         print("\n" + "="*80)
         if success:
@@ -115,11 +116,11 @@ This URS defines requirements for a custom MES to manage electronic batch record
             print("❌ TASK 12 FAILED VALIDATION:")
             for issue in issues:
                 print(f"   - {issue}")
-                
+
         return success
-        
+
     except Exception as e:
-        print(f"\n❌ EXCEPTION: {str(e)}")
+        print(f"\n❌ EXCEPTION: {e!s}")
         import traceback
         traceback.print_exc()
         return False
@@ -129,17 +130,17 @@ if __name__ == "__main__":
     if not os.getenv("OPENAI_API_KEY"):
         print("❌ ERROR: OPENAI_API_KEY not found in environment")
         sys.exit(1)
-        
+
     # Run the real test
     success = test_urs003_real_categorization()
-    
+
     print("\n" + "="*80)
     print("CRITICAL EVALUATION COMPLETE")
     print("="*80)
-    
+
     if success:
         print("✅ Task 12 is ACTUALLY working correctly")
     else:
         print("❌ Task 12 has REAL issues that need fixing")
-        
+
     sys.exit(0 if success else 1)

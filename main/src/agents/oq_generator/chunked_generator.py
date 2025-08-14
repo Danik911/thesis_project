@@ -7,16 +7,13 @@ This module implements a chunked generation approach to work around OpenAI's
 
 import json
 import logging
-from typing import Any, List
 from datetime import UTC, datetime
-import uuid
+from typing import Any
 
 from llama_index.core.llms import LLM
 from src.core.events import GAMPCategory
-from src.config.timeout_config import TimeoutConfig
 
 from .models import OQTestCase, OQTestSuite, TestStep
-from .templates import GAMPCategoryConfig
 
 
 class ChunkedOQGenerator:
@@ -28,7 +25,7 @@ class ChunkedOQGenerator:
     - Merge results into a complete test suite
     - Ensure pharmaceutical compliance across all batches
     """
-    
+
     def __init__(self, llm: LLM = None, verbose: bool = False):
         """Initialize chunked generator with OpenAI LLM."""
         if llm is None:
@@ -39,10 +36,10 @@ class ChunkedOQGenerator:
             )
         else:
             self.llm = llm
-        
+
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
-    
+
     def generate_test_suite(
         self,
         gamp_category: GAMPCategory,
@@ -66,19 +63,19 @@ class ChunkedOQGenerator:
         # Validate test count
         if not (23 <= total_tests <= 33):
             raise ValueError(f"Test count {total_tests} must be between 23-33")
-        
+
         # Calculate chunks (5-8 tests per chunk for OpenAI)
         tests_per_chunk = 6  # Conservative to stay under token limit
         num_chunks = (total_tests + tests_per_chunk - 1) // tests_per_chunk
-        
+
         self.logger.info(
             f"Generating {total_tests} tests in {num_chunks} chunks "
             f"({tests_per_chunk} tests per chunk)"
         )
-        
+
         # Generate suite metadata first
         suite_id = f"OQ-SUITE-{datetime.now(UTC).strftime('%H%M')}"
-        
+
         all_test_cases = []
         # Valid categories from OQTestCase model
         test_categories_distribution = {
@@ -89,15 +86,15 @@ class ChunkedOQGenerator:
             "data_integrity": [],
             "installation": []
         }
-        
+
         # Generate tests in chunks
         for chunk_idx in range(num_chunks):
             chunk_start = chunk_idx * tests_per_chunk
             chunk_end = min(chunk_start + tests_per_chunk, total_tests)
             chunk_size = chunk_end - chunk_start
-            
+
             self.logger.info(f"Generating chunk {chunk_idx + 1}/{num_chunks} ({chunk_size} tests)")
-            
+
             # Generate chunk with focused prompt
             chunk_tests = self._generate_test_chunk(
                 gamp_category=gamp_category,
@@ -107,21 +104,21 @@ class ChunkedOQGenerator:
                 total_tests=total_tests,
                 existing_test_ids=[tc.test_id for tc in all_test_cases]
             )
-            
+
             # Add to collection
             all_test_cases.extend(chunk_tests)
-            
+
             # Track category distribution
             for test in chunk_tests:
                 if test.test_category in test_categories_distribution:
                     test_categories_distribution[test.test_category].append(test.test_id)
-        
+
         # Count test categories
         test_categories = {}
         for test in all_test_cases:
             cat = test.test_category
             test_categories[cat] = test_categories.get(cat, 0) + 1
-        
+
         # Build requirements coverage
         requirements_coverage = {}
         for test in all_test_cases:
@@ -129,16 +126,16 @@ class ChunkedOQGenerator:
                 if req not in requirements_coverage:
                     requirements_coverage[req] = []
                 requirements_coverage[req].append(test.test_id)
-        
+
         # Count risk coverage
         risk_coverage = {}
         for test in all_test_cases:
             risk = test.risk_level
             risk_coverage[risk] = risk_coverage.get(risk, 0) + 1
-        
+
         # Calculate total execution time
         total_execution_time = sum(test.estimated_duration_minutes for test in all_test_cases)
-        
+
         # Create complete test suite
         test_suite = OQTestSuite(
             suite_id=suite_id,
@@ -169,14 +166,14 @@ class ChunkedOQGenerator:
                 "data_integrity_validated": True
             }
         )
-        
+
         self.logger.info(
             f"Successfully generated {len(all_test_cases)} tests "
             f"in {num_chunks} chunks"
         )
-        
+
         return test_suite
-    
+
     def _generate_test_chunk(
         self,
         gamp_category: GAMPCategory,
@@ -184,8 +181,8 @@ class ChunkedOQGenerator:
         chunk_idx: int,
         chunk_size: int,
         total_tests: int,
-        existing_test_ids: List[str]
-    ) -> List[OQTestCase]:
+        existing_test_ids: list[str]
+    ) -> list[OQTestCase]:
         """
         Generate a single chunk of tests.
         
@@ -200,33 +197,33 @@ class ChunkedOQGenerator:
             total_tests=total_tests,
             existing_test_ids=existing_test_ids
         )
-        
+
         try:
             # Call LLM with chunked prompt
             self.logger.info(f"Calling LLM for chunk {chunk_idx} with prompt length: {len(prompt)}")
-            
+
             # Add timeout handling
             import time
             start_time = time.time()
-            
+
             # Always use centralized LLM config for DeepSeek
             from src.config.llm_config import LLMConfig
-            
+
             self.logger.info(f"Using DeepSeek via OpenRouter for chunk {chunk_idx}")
             llm = LLMConfig.get_llm(max_tokens=4000)
-            
+
             # Use LlamaIndex interface for all models
             response = llm.complete(prompt)
-            raw_response = response.text if hasattr(response, 'text') else str(response)
-            
+            raw_response = response.text if hasattr(response, "text") else str(response)
+
             elapsed = time.time() - start_time
             self.logger.info(f"LLM response received for chunk {chunk_idx} in {elapsed:.2f}s")
-            
+
             # Parse JSON response
             test_cases = self._parse_chunk_response(raw_response, chunk_idx)
-            
+
             return test_cases
-            
+
         except Exception as e:
             self.logger.error(f"Failed to generate chunk {chunk_idx}: {e}")
             self.logger.error(f"Error type: {type(e).__name__}")
@@ -235,7 +232,7 @@ class ChunkedOQGenerator:
             # Generate fallback tests for this chunk
             self.logger.warning(f"Using fallback generation for chunk {chunk_idx}")
             return self._generate_fallback_chunk(chunk_idx, chunk_size)
-    
+
     def _create_chunk_prompt(
         self,
         gamp_category: GAMPCategory,
@@ -243,10 +240,10 @@ class ChunkedOQGenerator:
         chunk_idx: int,
         chunk_size: int,
         total_tests: int,
-        existing_test_ids: List[str]
+        existing_test_ids: list[str]
     ) -> str:
         """Create focused prompt for generating a specific chunk of tests."""
-        
+
         # Determine test categories for this chunk (only valid categories)
         if chunk_idx == 0:
             focus_categories = ["functional", "integration", "security"]
@@ -254,7 +251,7 @@ class ChunkedOQGenerator:
             focus_categories = ["data_integrity", "performance", "installation"]
         else:
             focus_categories = ["functional", "security", "integration"]
-        
+
         prompt = f"""Generate exactly {chunk_size} pharmaceutical OQ (Operational Qualification) tests.
 
 This is chunk {chunk_idx + 1} generating tests {len(existing_test_ids) + 1}-{len(existing_test_ids) + chunk_size} of {total_tests} total tests.
@@ -305,80 +302,80 @@ Return ONLY valid JSON in this exact format:
 }}
 
 Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders or templates."""
-        
+
         return prompt
-    
-    def _parse_chunk_response(self, raw_response: str, chunk_idx: int) -> List[OQTestCase]:
+
+    def _parse_chunk_response(self, raw_response: str, chunk_idx: int) -> list[OQTestCase]:
         """Parse LLM response into OQTestCase objects."""
         test_cases = []
-        
+
         try:
             # Extract JSON from response
-            json_start = raw_response.find('{')
-            json_end = raw_response.rfind('}') + 1
-            
+            json_start = raw_response.find("{")
+            json_end = raw_response.rfind("}") + 1
+
             if json_start >= 0 and json_end > json_start:
                 json_str = raw_response[json_start:json_end]
                 data = json.loads(json_str)
-                
+
                 # Extract tests
-                tests_data = data.get('tests', [])
-                
+                tests_data = data.get("tests", [])
+
                 for test_data in tests_data:
                     # Convert test steps
                     test_steps = []
-                    for step_data in test_data.get('test_steps', []):
+                    for step_data in test_data.get("test_steps", []):
                         test_steps.append(TestStep(
-                            step_number=step_data.get('step_number', 1),
-                            action=step_data.get('action', 'Perform test action'),
-                            expected_result=step_data.get('expected_result', 'Expected outcome'),
-                            data_to_capture=step_data.get('data_to_capture', []),
-                            verification_method=step_data.get('verification_method', 'visual_inspection'),
-                            acceptance_criteria=step_data.get('acceptance_criteria', '')
+                            step_number=step_data.get("step_number", 1),
+                            action=step_data.get("action", "Perform test action"),
+                            expected_result=step_data.get("expected_result", "Expected outcome"),
+                            data_to_capture=step_data.get("data_to_capture", []),
+                            verification_method=step_data.get("verification_method", "visual_inspection"),
+                            acceptance_criteria=step_data.get("acceptance_criteria", "")
                         ))
-                    
+
                     # Create test case
                     test_case = OQTestCase(
-                        test_id=test_data.get('test_id', f'OQ-{chunk_idx:03d}'),
-                        test_name=test_data.get('test_name', 'Test Name'),
-                        test_category=test_data.get('test_category', 'functional'),
-                        gamp_category=test_data.get('gamp_category', 5),
-                        objective=test_data.get('objective', 'Verify system functionality'),
-                        prerequisites=test_data.get('prerequisites', []),
+                        test_id=test_data.get("test_id", f"OQ-{chunk_idx:03d}"),
+                        test_name=test_data.get("test_name", "Test Name"),
+                        test_category=test_data.get("test_category", "functional"),
+                        gamp_category=test_data.get("gamp_category", 5),
+                        objective=test_data.get("objective", "Verify system functionality"),
+                        prerequisites=test_data.get("prerequisites", []),
                         test_steps=test_steps,
-                        acceptance_criteria=test_data.get('acceptance_criteria', ['System performs as expected']),
-                        regulatory_basis=test_data.get('regulatory_basis', []),
-                        risk_level=test_data.get('risk_level', 'medium'),
-                        data_integrity_requirements=test_data.get('data_integrity_requirements', []),
-                        urs_requirements=test_data.get('urs_requirements', []),
-                        related_tests=test_data.get('related_tests', []),
-                        estimated_duration_minutes=test_data.get('estimated_duration_minutes', 15),
-                        required_expertise=test_data.get('required_expertise', [])
+                        acceptance_criteria=test_data.get("acceptance_criteria", ["System performs as expected"]),
+                        regulatory_basis=test_data.get("regulatory_basis", []),
+                        risk_level=test_data.get("risk_level", "medium"),
+                        data_integrity_requirements=test_data.get("data_integrity_requirements", []),
+                        urs_requirements=test_data.get("urs_requirements", []),
+                        related_tests=test_data.get("related_tests", []),
+                        estimated_duration_minutes=test_data.get("estimated_duration_minutes", 15),
+                        required_expertise=test_data.get("required_expertise", [])
                     )
-                    
+
                     test_cases.append(test_case)
-                    
+
         except Exception as e:
             self.logger.error(f"Failed to parse chunk {chunk_idx} response: {e}")
-        
+
         return test_cases
-    
-    def _generate_fallback_chunk(self, chunk_idx: int, chunk_size: int) -> List[OQTestCase]:
+
+    def _generate_fallback_chunk(self, chunk_idx: int, chunk_size: int) -> list[OQTestCase]:
         """
         Generate basic fallback tests if LLM generation fails.
         This violates NO FALLBACKS policy but ensures some output for testing.
         """
         self.logger.warning(f"Using fallback generation for chunk {chunk_idx}")
-        
+
         test_cases = []
         categories = ["functional", "integration", "data_integrity", "security", "performance"]
-        
+
         for i in range(chunk_size):
             # Format: OQ-XXX where XXX is 3 digits
             test_number = chunk_idx * 10 + i + 1  # Start from 001
             test_id = f"OQ-{test_number:03d}"
             category = categories[i % len(categories)]
-            
+
             test_case = OQTestCase(
                 test_id=test_id,
                 test_name=f"Test {test_id}: {category.replace('_', ' ').title()} Validation",
@@ -405,7 +402,7 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
                 estimated_duration_minutes=15,
                 required_expertise=["QA Tester"]
             )
-            
+
             test_cases.append(test_case)
-        
+
         return test_cases

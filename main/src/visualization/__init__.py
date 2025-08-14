@@ -17,12 +17,12 @@ All visualizations use real data from Task 28 statistical analysis with
 NO FALLBACK LOGIC and explicit error handling.
 """
 
-from .thesis_visualizations import ThesisVisualizationGenerator
-from .thesis_dashboard import ThesisDashboard
 from .export_manager import ExportManager
+from .thesis_dashboard import ThesisDashboard
+from .thesis_visualizations import ThesisVisualizationGenerator
 
 __all__ = [
-    "ThesisVisualizationGenerator",
-    "ThesisDashboard", 
-    "ExportManager"
+    "ExportManager",
+    "ThesisDashboard",
+    "ThesisVisualizationGenerator"
 ]

@@ -12,8 +12,8 @@ os.environ["OPENAI_API_KEY"] = "sk-proj-PME2Eb2SNlWk8fb9JRvnjS5l_6Swx4XobNX-YT1h
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.config.llm_config import LLMConfig
 from src.agents.categorization.agent import categorize_with_pydantic_structured_output
+from src.config.llm_config import LLMConfig
 
 print("\n" + "="*60)
 print("TESTING MIGRATION WITH OPENAI")
@@ -57,12 +57,12 @@ try:
         document_name="test_migration.txt"
     )
     elapsed = time.time() - start_time
-    
+
     print(f"   [PASS] Categorization complete in {elapsed:.2f}s")
     print(f"   Category: {result.category}")
     print(f"   Confidence: {result.confidence:.2f}")
     print(f"   Using LLM: {type(llm).__name__}")
-    
+
 except Exception as e:
     print(f"   [FAIL] Error: {e}")
     import traceback
@@ -73,17 +73,17 @@ except Exception as e:
 print("\n3. Testing unified workflow migration...")
 try:
     from src.core.unified_workflow import UnifiedTestGenerationWorkflow
-    
+
     # Create workflow - should use centralized config
     workflow = UnifiedTestGenerationWorkflow()
-    
+
     # Check the LLM type
     llm_type = type(workflow.llm).__name__
     print(f"   [PASS] Workflow LLM: {llm_type}")
-    
+
     if llm_type != "OpenAI":
         print(f"   [WARNING] Expected OpenAI, got {llm_type}")
-        
+
 except Exception as e:
     print(f"   [FAIL] Error: {e}")
     import traceback

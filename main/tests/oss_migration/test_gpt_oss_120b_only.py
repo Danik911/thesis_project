@@ -4,37 +4,38 @@ COMPREHENSIVE TEST WITH ONLY openai/gpt-oss-120b
 NO OTHER MODELS - NO FALLBACKS
 """
 
+import json
 import os
 import sys
-from pathlib import Path
-from dotenv import load_dotenv
-import json
 from datetime import datetime
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Load environment variables
-env_path = Path(__file__).parent.parent.parent.parent / '.env'
+env_path = Path(__file__).parent.parent.parent.parent / ".env"
 load_dotenv(env_path)
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.llms.openrouter_llm import OpenRouterLLM
 from src.agents.categorization.agent import categorize_with_pydantic_structured_output
 from src.agents.categorization.error_handler import CategorizationErrorHandler
+from src.llms.openrouter_llm import OpenRouterLLM
 
 
 def test_gpt_oss_120b_comprehensive():
     """Comprehensive test with ONLY openai/gpt-oss-120b."""
-    
+
     print("\n" + "="*70)
     print("COMPREHENSIVE TEST: openai/gpt-oss-120b ONLY")
     print("NO OTHER MODELS - NO FALLBACKS")
     print("="*70)
-    
+
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
         print("FATAL: No OPENROUTER_API_KEY")
         return False
-    
+
     # Comprehensive test cases covering all GAMP categories
     test_cases = [
         {
@@ -122,10 +123,10 @@ def test_gpt_oss_120b_comprehensive():
             "description": "Configured lab software"
         }
     ]
-    
+
     # Initialize model ONCE - openai/gpt-oss-120b ONLY
     print(f"\nInitializing openai/gpt-oss-120b at {datetime.now().strftime('%H:%M:%S')}")
-    
+
     try:
         llm = OpenRouterLLM(
             model="openai/gpt-oss-120b",  # ONLY THIS MODEL
@@ -138,71 +139,71 @@ def test_gpt_oss_120b_comprehensive():
     except Exception as e:
         print(f"FATAL: Cannot initialize openai/gpt-oss-120b: {e}")
         return False
-    
+
     # Run all tests
     results = []
     failures = []
-    
+
     for i, test in enumerate(test_cases, 1):
         print(f"\n[{i}/{len(test_cases)}] Testing: {test['name']}")
         print(f"Expected: Category {test['expected']} ({test['description']})")
-        
+
         try:
             result = categorize_with_pydantic_structured_output(
                 llm=llm,
-                urs_content=test['content'],
-                document_name=test['name'],
+                urs_content=test["content"],
+                document_name=test["name"],
                 error_handler=error_handler
             )
-            
+
             actual = result.gamp_category.value
             confidence = result.confidence_score
-            success = actual == test['expected']
-            
+            success = actual == test["expected"]
+
             print(f"Result: Category {actual} (Confidence: {confidence:.0%})")
             print(f"Status: {'PASS' if success else 'FAIL'}")
-            
+
             results.append({
-                "test": test['name'],
-                "expected": test['expected'],
+                "test": test["name"],
+                "expected": test["expected"],
                 "actual": actual,
                 "confidence": confidence,
                 "success": success
             })
-            
+
             if not success:
-                failures.append(test['name'])
-                
+                failures.append(test["name"])
+
         except Exception as e:
             print(f"ERROR: {str(e)[:100]}")
             results.append({
-                "test": test['name'],
-                "expected": test['expected'],
+                "test": test["name"],
+                "expected": test["expected"],
                 "actual": "ERROR",
                 "confidence": 0,
                 "success": False
             })
-            failures.append(test['name'])
-    
+            failures.append(test["name"])
+
     # Final Report
     print("\n" + "="*70)
     print("FINAL REPORT: openai/gpt-oss-120b Performance")
     print("="*70)
-    
-    successful = sum(1 for r in results if r['success'])
+
+    successful = sum(1 for r in results if r["success"])
     total = len(results)
     accuracy = (successful / total * 100) if total > 0 else 0
-    
+
     print(f"\nAccuracy: {successful}/{total} ({accuracy:.1f}%)")
-    
+
     if failures:
-        print(f"\nFailed Tests:")
+        print("\nFailed Tests:")
         for failure in failures:
             print(f"  - {failure}")
-    
+
     # Save results
     output_file = f"gpt_oss_120b_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         json.dump({
             "model": "openai/gpt-oss-120b",
             "timestamp": datetime.now().isoformat(),
@@ -210,24 +211,23 @@ def test_gpt_oss_120b_comprehensive():
             "results": results
         }, f, indent=2)
     print(f"\nResults saved to: {output_file}")
-    
+
     # VERDICT
     print("\n" + "="*70)
     print("VERDICT FOR openai/gpt-oss-120b")
     print("="*70)
-    
+
     if accuracy >= 80:
         print(f"SUCCESS: Model works with {accuracy:.1f}% accuracy")
         print("The integration is production-ready for this model.")
         return True
-    elif accuracy >= 60:
+    if accuracy >= 60:
         print(f"PARTIAL: Model works but only {accuracy:.1f}% accurate")
         print("May need prompt tuning for this specific model.")
         return False
-    else:
-        print(f"FAILURE: Model accuracy too low at {accuracy:.1f}%")
-        print("This model is NOT suitable for production use.")
-        return False
+    print(f"FAILURE: Model accuracy too low at {accuracy:.1f}%")
+    print("This model is NOT suitable for production use.")
+    return False
 
 
 if __name__ == "__main__":

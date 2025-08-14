@@ -1248,7 +1248,7 @@
       "description": "Achieve statistical significance (p<0.05) through comprehensive statistical testing of all collected metrics.",
       "details": "Statistical validation requirements:\n- Run all statistical tests on collected data\n- Verify p<0.05 for efficiency claims\n- Calculate 95% confidence intervals\n- Document effect sizes (Cohen's d)\n- Create statistical summary report\n\nMust achieve significance for thesis validity.",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         31,
         32
@@ -1262,7 +1262,7 @@
       "description": "Comprehensive performance analysis of efficiency, effectiveness, and ROI validation.",
       "details": "Performance analysis components:\n- Efficiency metrics: time (3.6 min/doc), cost ($0.00056/doc), tokens\n- Effectiveness: requirements coverage (target ≥90%), test quality\n- Category-specific performance analysis\n- ROI validation: Confirm 535.7M% (99.98% cost reduction)\n- Create comprehensive performance summary\n\nThis validates all efficiency claims for the thesis.",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         33
       ],

@@ -4,11 +4,10 @@ Task 14 Validation Script
 Tests all 5 URS cases with the enhanced categorization logic
 """
 
-import os
-import sys
 import asyncio
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -102,118 +101,118 @@ async def test_categorization():
     print("TASK 14 VALIDATION - CATEGORIZATION ACCURACY TEST")
     print("=" * 80)
     print()
-    
+
     # Initialize agent
     agent = GAMPCategorizationAgent()
-    
+
     results = []
-    
+
     for test_case in TEST_CASES:
         print(f"\nTesting {test_case['id']}: {test_case['name']}")
         print(f"Expected: {test_case['expected']}")
-        
+
         # Create event
         event = URSIngestionEvent(
-            urs_content=test_case['text'],
+            urs_content=test_case["text"],
             request_id=f"test-{test_case['id']}-{datetime.now().isoformat()}"
         )
-        
+
         try:
             # Process categorization
             result = await agent.categorize_system(event)
-            
-            category = result.data.get('gamp_category', 'Unknown')
-            confidence = result.data.get('confidence', 0)
-            is_ambiguous = result.data.get('is_ambiguous', False)
-            
+
+            category = result.data.get("gamp_category", "Unknown")
+            confidence = result.data.get("confidence", 0)
+            is_ambiguous = result.data.get("is_ambiguous", False)
+
             print(f"Result: {category} (Confidence: {confidence:.1%})")
             print(f"Ambiguous: {is_ambiguous}")
-            
+
             # Check if matches expected
-            if test_case['expected'].endswith("or 4") or test_case['expected'].endswith("or 5"):
+            if test_case["expected"].endswith("or 4") or test_case["expected"].endswith("or 5"):
                 # Ambiguous case
-                expected_categories = [int(c) for c in test_case['expected'] if c.isdigit()]
+                expected_categories = [int(c) for c in test_case["expected"] if c.isdigit()]
                 category_num = int(category.split()[-1]) if category.startswith("Category") else 0
                 passed = category_num in expected_categories or is_ambiguous
             else:
                 # Clear case
-                passed = category == test_case['expected']
-            
+                passed = category == test_case["expected"]
+
             print(f"Status: {'✅ PASSED' if passed else '❌ FAILED'}")
-            
+
             results.append({
-                "id": test_case['id'],
-                "name": test_case['name'],
-                "expected": test_case['expected'],
+                "id": test_case["id"],
+                "name": test_case["name"],
+                "expected": test_case["expected"],
                 "actual": category,
                 "confidence": confidence,
                 "ambiguous": is_ambiguous,
                 "passed": passed
             })
-            
+
         except Exception as e:
-            print(f"❌ ERROR: {str(e)}")
+            print(f"❌ ERROR: {e!s}")
             results.append({
-                "id": test_case['id'],
-                "name": test_case['name'],
-                "expected": test_case['expected'],
+                "id": test_case["id"],
+                "name": test_case["name"],
+                "expected": test_case["expected"],
                 "actual": "ERROR",
                 "confidence": 0,
                 "ambiguous": False,
                 "passed": False,
                 "error": str(e)
             })
-    
+
     # Summary
     print("\n" + "=" * 80)
     print("SUMMARY")
     print("=" * 80)
-    
-    passed_count = sum(1 for r in results if r['passed'])
+
+    passed_count = sum(1 for r in results if r["passed"])
     total_count = len(results)
     accuracy = (passed_count / total_count) * 100 if total_count > 0 else 0
-    
+
     print(f"\nTotal Tests: {total_count}")
     print(f"Passed: {passed_count}")
     print(f"Failed: {total_count - passed_count}")
     print(f"Accuracy: {accuracy:.1f}%")
-    
+
     print("\nDetailed Results:")
     for result in results:
-        status = "✅" if result['passed'] else "❌"
+        status = "✅" if result["passed"] else "❌"
         print(f"{status} {result['id']}: Expected {result['expected']}, Got {result['actual']} (Confidence: {result['confidence']:.1%})")
-    
+
     # Critical validations
     print("\n" + "=" * 80)
     print("CRITICAL VALIDATIONS")
     print("=" * 80)
-    
+
     # Check URS-003 (must be Category 5)
-    urs003 = next((r for r in results if r['id'] == 'URS-003'), None)
-    if urs003 and urs003['actual'] == 'Category 5' and not urs003['ambiguous']:
+    urs003 = next((r for r in results if r["id"] == "URS-003"), None)
+    if urs003 and urs003["actual"] == "Category 5" and not urs003["ambiguous"]:
         print("✅ URS-003 correctly identified as Category 5 (custom development)")
     else:
         print("❌ URS-003 categorization issue - critical failure")
-    
+
     # Check for NO FALLBACK behavior
     print("\n✅ NO FALLBACK behavior confirmed - all errors explicit")
-    
+
     # Production readiness
     print("\n" + "=" * 80)
     print("PRODUCTION READINESS ASSESSMENT")
     print("=" * 80)
-    
+
     if accuracy >= 80:
         print(f"✅ System accuracy ({accuracy:.1f}%) meets production threshold (≥80%)")
     else:
         print(f"⚠️ System accuracy ({accuracy:.1f}%) below production threshold (≥80%)")
-    
-    if urs003 and urs003['passed']:
+
+    if urs003 and urs003["passed"]:
         print("✅ Critical Category 5 detection working correctly")
     else:
         print("❌ Critical Category 5 detection failing")
-    
-    print("\nFinal Status: " + ("READY FOR PRODUCTION" if accuracy >= 80 and urs003['passed'] else "NEEDS IMPROVEMENT"))
+
+    print("\nFinal Status: " + ("READY FOR PRODUCTION" if accuracy >= 80 and urs003["passed"] else "NEEDS IMPROVEMENT"))
 
 if __name__ == "__main__":
     asyncio.run(test_categorization())

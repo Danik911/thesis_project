@@ -16,9 +16,7 @@ CRITICAL: NO FALLBACK LOGIC - All failures must surface explicitly
 """
 
 import asyncio
-import subprocess
 import sys
-import time
 from pathlib import Path
 
 # Test 1: Dependency Import Validation
@@ -65,13 +63,13 @@ print("\n🔍 TEST 2: Phoenix enhanced module import...")
 try:
     sys.path.append(str(Path.cwd() / "main"))
     from src.monitoring.phoenix_enhanced import (
+        AutomatedTraceAnalyzer,
         PhoenixGraphQLClient,
         WorkflowEventFlowVisualizer,
-        AutomatedTraceAnalyzer,
-        setup_enhanced_phoenix_observability
+        setup_enhanced_phoenix_observability,
     )
     print("✅ Phoenix enhanced module imported successfully")
-    print(f"✅ Available classes: PhoenixGraphQLClient, WorkflowEventFlowVisualizer, AutomatedTraceAnalyzer")
+    print("✅ Available classes: PhoenixGraphQLClient, WorkflowEventFlowVisualizer, AutomatedTraceAnalyzer")
 except ImportError as e:
     print(f"❌ Phoenix enhanced import failed: {e}")
     print("CRITICAL: Cannot import phoenix_enhanced module")
@@ -84,7 +82,7 @@ async def test_phoenix_server():
     """Test if Phoenix server is running and accessible."""
     try:
         import aiohttp
-        
+
         # Test HTTP endpoint
         async with aiohttp.ClientSession() as session:
             try:
@@ -92,14 +90,13 @@ async def test_phoenix_server():
                     if response.status == 200:
                         print("✅ Phoenix server is running at http://localhost:6006")
                         return True
-                    else:
-                        print(f"⚠️  Phoenix server responded with status {response.status}")
-                        return False
+                    print(f"⚠️  Phoenix server responded with status {response.status}")
+                    return False
             except Exception as e:
                 print(f"❌ Phoenix server not accessible: {e}")
                 print("CRITICAL: Phoenix server is not running on port 6006")
                 return False
-                
+
     except Exception as e:
         print(f"❌ Server connectivity test failed: {e}")
         return False
@@ -114,10 +111,10 @@ async def test_graphql_endpoint():
     if not server_running:
         print("❌ Skipping GraphQL test - server not running")
         return False
-        
+
     try:
         client = PhoenixGraphQLClient()
-        
+
         # Test with a simple query
         test_query = """
         query TestQuery {
@@ -132,7 +129,7 @@ async def test_graphql_endpoint():
             }
         }
         """
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 "http://localhost:6006/graphql",
@@ -145,13 +142,11 @@ async def test_graphql_endpoint():
                     if "errors" in data:
                         print(f"⚠️  GraphQL returned errors: {data['errors']}")
                         return False
-                    else:
-                        print("✅ GraphQL endpoint is accessible and responding")
-                        return True
-                else:
-                    print(f"❌ GraphQL endpoint returned status {response.status}")
-                    return False
-                    
+                    print("✅ GraphQL endpoint is accessible and responding")
+                    return True
+                print(f"❌ GraphQL endpoint returned status {response.status}")
+                return False
+
     except Exception as e:
         print(f"❌ GraphQL endpoint test failed: {e}")
         return False
@@ -165,7 +160,7 @@ try:
     client = PhoenixGraphQLClient()
     visualizer = WorkflowEventFlowVisualizer(client)
     analyzer = AutomatedTraceAnalyzer(client)
-    
+
     print("✅ PhoenixGraphQLClient initialized successfully")
     print("✅ WorkflowEventFlowVisualizer initialized successfully")
     print("✅ AutomatedTraceAnalyzer initialized successfully")
@@ -182,20 +177,20 @@ async def test_basic_functionality():
     if not server_running or not graphql_working or not clients_initialized:
         print("❌ Skipping functionality test - prerequisites not met")
         return False
-        
+
     try:
         client = PhoenixGraphQLClient()
-        
+
         # Test compliance metrics query (should work even with no data)
         metrics = await client.query_compliance_metrics(timeframe_hours=1)
         print(f"✅ Compliance metrics query successful: {len(metrics)} metrics returned")
-        
+
         # Test trace query (should work even with no data)
         traces = await client.query_workflow_traces(hours=1)
         print(f"✅ Workflow traces query successful: {len(traces)} traces returned")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Basic functionality test failed: {e}")
         print(f"   Error details: {type(e).__name__}: {e}")
@@ -207,12 +202,12 @@ functionality_working = asyncio.run(test_basic_functionality())
 print("\n🔍 TEST 7: Integration status check...")
 
 try:
-    from src.core.unified_workflow import UnifiedTestGenerationWorkflow
-    
     # Check if unified workflow imports enhanced phoenix
     import inspect
+
+    from src.core.unified_workflow import UnifiedTestGenerationWorkflow
     source = inspect.getsource(UnifiedTestGenerationWorkflow)
-    
+
     if "phoenix_enhanced" in source:
         print("✅ Unified workflow imports phoenix_enhanced")
         integration_status = "INTEGRATED"
@@ -220,7 +215,7 @@ try:
         print("❌ Unified workflow does NOT import phoenix_enhanced")
         print("CRITICAL: Enhanced features are not integrated into production workflow")
         integration_status = "NOT_INTEGRATED"
-        
+
 except Exception as e:
     print(f"❌ Integration status check failed: {e}")
     integration_status = "ERROR"
@@ -238,9 +233,9 @@ print(f"⚙️  Basic Functionality:  {'✅ WORKING' if functionality_working el
 print(f"🔧 Production Integration: {'✅ INTEGRATED' if integration_status == 'INTEGRATED' else f'❌ {integration_status}'}")
 
 overall_status = all([
-    server_running, 
-    graphql_working, 
-    clients_initialized, 
+    server_running,
+    graphql_working,
+    clients_initialized,
     functionality_working,
     integration_status == "INTEGRATED"
 ])

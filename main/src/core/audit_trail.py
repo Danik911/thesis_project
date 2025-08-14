@@ -65,7 +65,7 @@ class AuditEventType(str, Enum):
     GAMP_CATEGORIZATION = "gamp_categorization"
     COMPLIANCE_VALIDATION = "compliance_validation"
     REGULATORY_CHECK = "regulatory_check"
-    
+
     # 21 CFR Part 11 compliance events
     ELECTRONIC_SIGNATURE_BINDING = "electronic_signature_binding"
     ACCESS_CONTROL_CHECK = "access_control_check"
@@ -529,7 +529,7 @@ class ComprehensiveAuditTrail:
                 "regulatory_requirements_met": True
             }
         }
-        
+
         # Use INFO severity for compliance events unless otherwise specified
         severity = AuditSeverity.INFO
         if compliance_event_type in [
@@ -537,7 +537,7 @@ class ComprehensiveAuditTrail:
             AuditEventType.MFA_AUTHENTICATION
         ] and not compliance_data.get("success", True):
             severity = AuditSeverity.WARN
-        
+
         return self._write_audit_event(
             event_type=compliance_event_type,
             event_data=enhanced_event_data,

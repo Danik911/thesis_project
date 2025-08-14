@@ -1,23 +1,22 @@
 """Test o3 model JSON generation with corrected schema."""
 import asyncio
 import json
-from datetime import UTC, datetime
+
 from dotenv import load_dotenv
 from llama_index.llms.openai import OpenAI
-from src.core.events import GAMPCategory
 
 load_dotenv()
 
 async def test_o3_json_generation():
     """Test o3 model generates correct JSON format."""
-    
+
     llm = OpenAI(
         model="o3-2025-04-16",
         temperature=0.1,
         timeout=300,  # 5 minutes
         max_completion_tokens=2000
     )
-    
+
     # Simple prompt with exact schema
     prompt = """Generate a simple OQ test suite JSON with exactly 2 tests.
 
@@ -78,36 +77,35 @@ Output ONLY valid JSON, no explanations.
         "completion_tokens": 0
     }
 }"""
-    
+
     try:
         print("Testing o3 JSON generation...")
         response = await llm.acomplete(prompt)
         response_text = response.text
-        
+
         # Extract JSON
         json_start = response_text.find("{")
         json_end = response_text.rfind("}") + 1
-        
+
         if json_start == -1 or json_end == 0:
             print(f"ERROR: No JSON found in response:\n{response_text}")
             return False
-            
+
         json_str = response_text[json_start:json_end]
-        
+
         # Parse JSON
         data = json.loads(json_str)
         print("SUCCESS: JSON parsed successfully")
         print(f"Suite ID: {data.get('suite_id')}")
         print(f"Test count: {len(data.get('test_cases', []))}")
-        
+
         # Validate key fields
-        if data.get('suite_id') and data.get('test_cases'):
+        if data.get("suite_id") and data.get("test_cases"):
             print("SUCCESS: Key fields present")
             return True
-        else:
-            print("ERROR: Missing key fields")
-            return False
-            
+        print("ERROR: Missing key fields")
+        return False
+
     except Exception as e:
         print(f"ERROR: {type(e).__name__}: {e}")
         import traceback

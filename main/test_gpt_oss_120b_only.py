@@ -4,8 +4,9 @@
 import os
 import sys
 import time
-import requests
 from pathlib import Path
+
+import requests
 
 # Force OpenRouter with gpt-oss-120b
 os.environ["LLM_PROVIDER"] = "openrouter"
@@ -44,7 +45,7 @@ try:
         json=data,
         timeout=30
     )
-    
+
     if response.status_code == 200:
         result = response.json()
         content = result["choices"][0]["message"]["content"]
@@ -55,7 +56,7 @@ try:
         print(f"[FAIL] Status: {response.status_code}")
         print(f"Error: {response.text}")
         sys.exit(1)
-        
+
 except Exception as e:
     print(f"[ERROR] {e}")
     sys.exit(1)
@@ -88,7 +89,7 @@ try:
         timeout=30
     )
     elapsed = time.time() - start_time
-    
+
     if response.status_code == 200:
         result = response.json()
         content = result["choices"][0]["message"]["content"]
@@ -98,7 +99,7 @@ try:
     else:
         print(f"[FAIL] Status: {response.status_code}")
         print(f"Error: {response.text}")
-        
+
 except Exception as e:
     print(f"[ERROR] {e}")
 
@@ -112,23 +113,23 @@ info = LLMConfig.get_provider_info()
 print(f"Provider: {info['provider']}")
 print(f"Model: {info['configuration']['model']}")
 
-if info['configuration']['model'] != "openai/gpt-oss-120b":
+if info["configuration"]["model"] != "openai/gpt-oss-120b":
     print("[ERROR] Wrong model configured! Must be openai/gpt-oss-120b")
     sys.exit(1)
 
 try:
     llm = LLMConfig.get_llm()
     print(f"LLM Type: {type(llm).__name__}")
-    
+
     # Test with gpt-oss-120b
     response = llm.complete("Return exactly: TEST")
     content = response.text.strip()
     print(f"Response: '{content}'")
-    
+
     if not content:
         print("[WARNING] gpt-oss-120b returns empty response!")
         print("This model may not be functioning correctly")
-        
+
 except Exception as e:
     print(f"[ERROR] {e}")
     import traceback

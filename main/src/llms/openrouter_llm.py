@@ -6,10 +6,10 @@ to work with LlamaIndex without model name validation issues.
 """
 
 import os
-from typing import Any, Optional, Sequence
-import requests
-import json
+from collections.abc import Sequence
+from typing import Any
 
+import requests
 from llama_index.core.base.llms.base import BaseLLM
 from llama_index.core.base.llms.types import (
     ChatMessage,
@@ -21,26 +21,27 @@ from llama_index.core.base.llms.types import (
     MessageRole,
 )
 from llama_index.core.callbacks import CallbackManager
+
 # QueryComponent import removed - not needed for basic LLM functionality
 
 
 class OpenRouterLLM(BaseLLM):
     """Custom LLM class for OpenRouter API integration."""
-    
+
     model: str = "meta-llama/llama-3.1-8b-instruct:free"
-    api_key: Optional[str] = None
+    api_key: str | None = None
     api_base: str = "https://openrouter.ai/api/v1"
     temperature: float = 0.1
     max_tokens: int = 2000
-    
+
     def __init__(
         self,
         model: str = "meta-llama/llama-3.1-8b-instruct:free",
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         api_base: str = "https://openrouter.ai/api/v1",
         temperature: float = 0.1,
         max_tokens: int = 2000,
-        callback_manager: Optional[CallbackManager] = None,
+        callback_manager: CallbackManager | None = None,
         **kwargs: Any,
     ):
         """Initialize OpenRouter LLM."""
@@ -53,10 +54,10 @@ class OpenRouterLLM(BaseLLM):
             callback_manager=callback_manager,
             **kwargs,
         )
-        
+
         if not self.api_key:
             raise ValueError("OpenRouter API key is required. Set OPENROUTER_API_KEY environment variable.")
-    
+
     @property
     def metadata(self) -> LLMMetadata:
         """Get LLM metadata."""
@@ -66,7 +67,7 @@ class OpenRouterLLM(BaseLLM):
             model_name=self.model,
             is_chat_model=True,
         )
-    
+
     @property
     def _model_kwargs(self) -> dict:
         """Get model kwargs."""
@@ -74,7 +75,7 @@ class OpenRouterLLM(BaseLLM):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
-    
+
     def _make_api_request(self, messages: list[dict], stream: bool = False) -> dict:
         """Make API request to OpenRouter."""
         headers = {
@@ -83,7 +84,7 @@ class OpenRouterLLM(BaseLLM):
             "HTTP-Referer": "http://localhost:3000",
             "X-Title": "GAMP-5 Test Generation"
         }
-        
+
         data = {
             "model": self.model,
             "messages": messages,
@@ -91,7 +92,7 @@ class OpenRouterLLM(BaseLLM):
             "max_tokens": self.max_tokens,
             "stream": stream
         }
-        
+
         response = requests.post(
             f"{self.api_base}/chat/completions",
             headers=headers,
@@ -99,31 +100,31 @@ class OpenRouterLLM(BaseLLM):
         )
         response.raise_for_status()
         return response.json()
-    
+
     def complete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponse:
         """Complete the prompt."""
         # Convert prompt to chat format
         messages = [{"role": "user", "content": prompt}]
-        
+
         try:
             response = self._make_api_request(messages)
             text = response["choices"][0]["message"]["content"]
-            
+
             return CompletionResponse(
                 text=text,
                 raw=response,
             )
         except Exception as e:
             raise RuntimeError(f"OpenRouter API error: {e}")
-    
+
     def stream_complete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponseGen:
         """Stream complete the prompt."""
         raise NotImplementedError("Streaming not implemented for OpenRouter LLM")
-    
+
     def chat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponse:
@@ -131,16 +132,16 @@ class OpenRouterLLM(BaseLLM):
         # Convert ChatMessage objects to dict format
         message_dicts = []
         for msg in messages:
-            role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+            role = msg.role.value if hasattr(msg.role, "value") else str(msg.role)
             message_dicts.append({
                 "role": role,
                 "content": msg.content
             })
-        
+
         try:
             response = self._make_api_request(message_dicts)
             message = response["choices"][0]["message"]
-            
+
             return ChatResponse(
                 message=ChatMessage(
                     role=MessageRole(message["role"]),
@@ -150,37 +151,37 @@ class OpenRouterLLM(BaseLLM):
             )
         except Exception as e:
             raise RuntimeError(f"OpenRouter API error: {e}")
-    
+
     def stream_chat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponseGen:
         """Stream chat with the model."""
         raise NotImplementedError("Streaming not implemented for OpenRouter LLM")
-    
+
     async def acomplete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponse:
         """Async complete."""
         return self.complete(prompt, formatted, **kwargs)
-    
+
     async def astream_complete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponseGen:
         """Async stream complete."""
         raise NotImplementedError("Async streaming not implemented")
-    
+
     async def achat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponse:
         """Async chat."""
         return self.chat(messages, **kwargs)
-    
+
     async def astream_chat(
         self, messages: Sequence[ChatMessage], **kwargs: Any
     ) -> ChatResponseGen:
         """Async stream chat."""
         raise NotImplementedError("Async streaming not implemented")
-    
+
     def _as_query_component(self, **kwargs: Any) -> Any:
         """Return as query component."""
         # This is required by LlamaIndex but not used in our implementation

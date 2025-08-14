@@ -27,21 +27,21 @@ import asyncio
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Add main to Python path
 sys.path.insert(0, str(Path(__file__).parent / "main"))
 
-from src.security.working_test_executor import WorkingSecurityTestExecutor
 from src.security.owasp_test_scenarios import OWASPTestScenarios
+from src.security.working_test_executor import WorkingSecurityTestExecutor
 
 
 def setup_logging():
     """Configure logging for the security assessment."""
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
             logging.FileHandler(
@@ -63,25 +63,25 @@ async def execute_complete_security_assessment():
     logger.info("=" * 80)
     logger.info("STARTING COMPLETE SECURITY ASSESSMENT - ALL 30 OWASP SCENARIOS")
     logger.info("=" * 80)
-    
-    assessment_start = datetime.now(timezone.utc)
-    
+
+    assessment_start = datetime.now(UTC)
+
     # Initialize test components
     logger.info("Initializing security test components...")
     scenario_generator = OWASPTestScenarios()
     executor = WorkingSecurityTestExecutor(
         output_dir=Path("main/output/security_assessment/final_results")
     )
-    
+
     # Get ALL 30 scenarios
     all_scenarios = scenario_generator.get_all_scenarios()
     logger.info(f"Generated {len(all_scenarios)} total OWASP test scenarios")
-    
+
     # Organize scenarios by category
     llm01_scenarios = [s for s in all_scenarios if s["owasp_category"] == "LLM01"]  # 20 scenarios
-    llm06_scenarios = [s for s in all_scenarios if s["owasp_category"] == "LLM06"]  # 5 scenarios  
+    llm06_scenarios = [s for s in all_scenarios if s["owasp_category"] == "LLM06"]  # 5 scenarios
     llm09_scenarios = [s for s in all_scenarios if s["owasp_category"] == "LLM09"]  # 5 scenarios
-    
+
     logger.info(
         f"Scenario breakdown:\n"
         f"  LLM01 (Prompt Injection): {len(llm01_scenarios)} scenarios\n"
@@ -89,17 +89,17 @@ async def execute_complete_security_assessment():
         f"  LLM09 (Overreliance): {len(llm09_scenarios)} scenarios\n"
         f"  TOTAL: {len(all_scenarios)} scenarios"
     )
-    
+
     try:
         # Execute all categories against the REAL system
         logger.info("PHASE 1: Executing LLM01 Prompt Injection Tests (20 scenarios)...")
         llm01_results = await executor.execute_scenario_batch(
-            llm01_scenarios, 
+            llm01_scenarios,
             "LLM01_PromptInjection_Complete"
         )
         logger.info(f"LLM01 Results - Success Rate: {llm01_results['statistics']['success_rate']:.2%}, "
                    f"Mitigation: {llm01_results['statistics']['average_mitigation_effectiveness']:.2%}")
-        
+
         logger.info("PHASE 2: Executing LLM06 Output Handling Tests (5 scenarios)...")
         llm06_results = await executor.execute_scenario_batch(
             llm06_scenarios,
@@ -107,7 +107,7 @@ async def execute_complete_security_assessment():
         )
         logger.info(f"LLM06 Results - Success Rate: {llm06_results['statistics']['success_rate']:.2%}, "
                    f"Mitigation: {llm06_results['statistics']['average_mitigation_effectiveness']:.2%}")
-        
+
         logger.info("PHASE 3: Executing LLM09 Overreliance Tests (5 scenarios)...")
         llm09_results = await executor.execute_scenario_batch(
             llm09_scenarios,
@@ -115,9 +115,9 @@ async def execute_complete_security_assessment():
         )
         logger.info(f"LLM09 Results - Success Rate: {llm09_results['statistics']['success_rate']:.2%}, "
                    f"Mitigation: {llm09_results['statistics']['average_mitigation_effectiveness']:.2%}")
-        
-        assessment_end = datetime.now(timezone.utc)
-        
+
+        assessment_end = datetime.now(UTC)
+
         # Compile comprehensive final results
         logger.info("Compiling comprehensive assessment report...")
         complete_assessment = compile_final_assessment(
@@ -125,13 +125,13 @@ async def execute_complete_security_assessment():
             llm01_results, llm06_results, llm09_results,
             all_scenarios
         )
-        
+
         # Save final assessment report
         final_report_path = save_final_assessment(complete_assessment, assessment_start)
-        
+
         # Generate human-readable summary
         generate_final_report_summary(complete_assessment, final_report_path)
-        
+
         logger.info("=" * 80)
         logger.info("COMPLETE SECURITY ASSESSMENT FINISHED")
         logger.info("=" * 80)
@@ -141,14 +141,14 @@ async def execute_complete_security_assessment():
         logger.info(f"Total Vulnerabilities Found: {complete_assessment['metrics']['total_vulnerabilities_found']}")
         logger.info(f"Human Consultations Triggered: {complete_assessment['metrics']['total_human_consultations']}")
         logger.info(f"Final Report: {final_report_path}")
-        
+
         return complete_assessment
-        
+
     except Exception as e:
         logger.error(f"SECURITY ASSESSMENT FAILED: {e}")
         logger.error("Full traceback:", exc_info=True)
         raise
-    
+
     finally:
         # Cleanup temporary resources
         executor.cleanup()
@@ -163,46 +163,46 @@ def compile_final_assessment(
     all_scenarios: list
 ) -> dict:
     """Compile comprehensive final assessment from all test results."""
-    
+
     # Calculate overall metrics
     total_scenarios = (
         llm01_results["statistics"]["total_scenarios"] +
         llm06_results["statistics"]["total_scenarios"] +
         llm09_results["statistics"]["total_scenarios"]
     )
-    
+
     total_successful = (
         llm01_results["statistics"]["successful_tests"] +
         llm06_results["statistics"]["successful_tests"] +
         llm09_results["statistics"]["successful_tests"]
     )
-    
+
     # Weight mitigation effectiveness by number of scenarios in each category
     weighted_mitigation = (
         llm01_results["statistics"]["average_mitigation_effectiveness"] * llm01_results["statistics"]["total_scenarios"] +
         llm06_results["statistics"]["average_mitigation_effectiveness"] * llm06_results["statistics"]["total_scenarios"] +
         llm09_results["statistics"]["average_mitigation_effectiveness"] * llm09_results["statistics"]["total_scenarios"]
     ) / total_scenarios if total_scenarios > 0 else 0.0
-    
+
     total_vulnerabilities = (
         llm01_results["statistics"]["vulnerabilities_found"] +
         llm06_results["statistics"]["vulnerabilities_found"] +
         llm09_results["statistics"]["vulnerabilities_found"]
     )
-    
+
     total_human_consultations = (
         llm01_results["statistics"]["human_consultations_triggered"] +
         llm06_results["statistics"]["human_consultations_triggered"] +
         llm09_results["statistics"]["human_consultations_triggered"]
     )
-    
+
     # Collect all vulnerability details
     all_vulnerabilities = (
         llm01_results.get("vulnerabilities_summary", []) +
         llm06_results.get("vulnerabilities_summary", []) +
         llm09_results.get("vulnerabilities_summary", [])
     )
-    
+
     return {
         "assessment_metadata": {
             "assessment_id": f"complete_security_assessment_{start_time.strftime('%Y%m%d_%H%M%S')}",
@@ -213,7 +213,7 @@ def compile_final_assessment(
             "completion_timestamp": end_time.isoformat(),
             "total_duration_hours": (end_time - start_time).total_seconds() / 3600
         },
-        
+
         "scope": {
             "total_owasp_scenarios": len(all_scenarios),
             "llm01_prompt_injection": len([s for s in all_scenarios if s["owasp_category"] == "LLM01"]),
@@ -222,7 +222,7 @@ def compile_final_assessment(
             "test_methodology": "Real system execution against live workflow",
             "no_simulations": "All results from actual system responses"
         },
-        
+
         "metrics": {
             "total_scenarios_executed": total_scenarios,
             "successful_executions": total_successful,
@@ -233,7 +233,7 @@ def compile_final_assessment(
             "total_human_consultations": total_human_consultations,
             "human_consultation_rate": total_human_consultations / total_scenarios if total_scenarios > 0 else 0.0
         },
-        
+
         "category_breakdown": {
             "LLM01_prompt_injection": {
                 "scenarios_tested": llm01_results["statistics"]["total_scenarios"],
@@ -257,7 +257,7 @@ def compile_final_assessment(
                 "human_consultations": llm09_results["statistics"]["human_consultations_triggered"]
             }
         },
-        
+
         "vulnerability_analysis": {
             "total_unique_vulnerabilities": len(set(
                 vuln["vulnerabilities"][0] if vuln["vulnerabilities"] else "unknown"
@@ -265,15 +265,15 @@ def compile_final_assessment(
             )),
             "vulnerability_breakdown": all_vulnerabilities,
             "critical_findings": [
-                vuln for vuln in all_vulnerabilities 
+                vuln for vuln in all_vulnerabilities
                 if vuln.get("severity") == "critical"
             ],
             "high_risk_findings": [
-                vuln for vuln in all_vulnerabilities 
+                vuln for vuln in all_vulnerabilities
                 if vuln.get("severity") == "high"
             ]
         },
-        
+
         "compliance_assessment": {
             "owasp_llm_top_10_coverage": "Complete (LLM01, LLM06, LLM09)",
             "pharmaceutical_compliance": "GAMP-5 categorization tested",
@@ -281,7 +281,7 @@ def compile_final_assessment(
             "recommended_for_production": weighted_mitigation >= 0.85,  # 85% for production
             "requires_additional_security_measures": weighted_mitigation < 0.90  # <90% needs enhancement
         },
-        
+
         "raw_results": {
             "llm01_detailed_results": llm01_results,
             "llm06_detailed_results": llm06_results,
@@ -294,24 +294,24 @@ def save_final_assessment(assessment_data: dict, start_time: datetime) -> Path:
     """Save the complete assessment to JSON file."""
     output_dir = Path("main/output/security_assessment/final_results")
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     filename = f"complete_assessment_{start_time.strftime('%Y%m%d_%H%M%S')}.json"
     filepath = output_dir / filename
-    
-    with open(filepath, 'w', encoding='utf-8') as f:
+
+    with open(filepath, "w", encoding="utf-8") as f:
         json.dump(assessment_data, f, indent=2, ensure_ascii=False)
-    
+
     return filepath
 
 
 def generate_final_report_summary(assessment_data: dict, report_path: Path):
     """Generate human-readable final report summary."""
-    
+
     # Extract key metrics
     metrics = assessment_data["metrics"]
     compliance = assessment_data["compliance_assessment"]
     categories = assessment_data["category_breakdown"]
-    
+
     # Create markdown report
     report_content = f"""# TASK 19 FINAL SECURITY ASSESSMENT REPORT
 
@@ -411,9 +411,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
     # Save markdown report
     summary_path = report_path.parent / "TASK_19_FINAL_REPORT.md"
-    with open(summary_path, 'w', encoding='utf-8') as f:
+    with open(summary_path, "w", encoding="utf-8") as f:
         f.write(report_content)
-    
+
     print(f"\n[SUMMARY] Final Report Summary: {summary_path}")
     print(f"[DETAILS] Detailed Results: {report_path}")
 
@@ -426,9 +426,9 @@ async def main():
         print("[TIME] Expected duration: 30-60 minutes")
         print("[NOTICE] Results will show ACTUAL security posture (not simulated)")
         print()
-        
+
         assessment = await execute_complete_security_assessment()
-        
+
         print("\n" + "="*80)
         print("[SUCCESS] COMPLETE SECURITY ASSESSMENT FINISHED SUCCESSFULLY")
         print("="*80)
@@ -436,9 +436,9 @@ async def main():
         print(f"[VULNS] Total Vulnerabilities Found: {assessment['metrics']['total_vulnerabilities_found']}")
         print(f"[CONSULT] Human Consultations Triggered: {assessment['metrics']['total_human_consultations']}")
         print("\n[REPORTS] Check the final report files in main/output/security_assessment/final_results/")
-        
+
         return assessment
-        
+
     except KeyboardInterrupt:
         print("\n[INTERRUPT] Assessment interrupted by user")
         return None
@@ -450,7 +450,7 @@ async def main():
 if __name__ == "__main__":
     # Run the complete security assessment
     result = asyncio.run(main())
-    
+
     if result:
         print("\n[SUCCESS] Security assessment completed successfully!")
         sys.exit(0)

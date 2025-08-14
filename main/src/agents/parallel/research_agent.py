@@ -25,9 +25,7 @@ from uuid import UUID
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
-from src.config.llm_config import LLMConfig
 from opentelemetry import trace
-from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field
 from src.agents.parallel.regulatory_data_sources import (
     FDAAPIError,
@@ -35,9 +33,9 @@ from src.agents.parallel.regulatory_data_sources import (
     create_document_processor,
     create_fda_client,
 )
+from src.config.llm_config import LLMConfig
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.agent_instrumentation import trace_agent_method
-from src.monitoring.simple_tracer import get_tracer
 
 
 class ResearchAgentRequest(BaseModel):
@@ -172,7 +170,7 @@ class ResearchAgent:
                 current_span.set_attribute("request.time_horizon", request_data.time_horizon)
                 current_span.set_attribute("request.include_trends", request_data.include_trends)
                 current_span.set_attribute("request.timeout_seconds", request_data.timeout_seconds)
-                
+
                 # Add compliance attributes
                 current_span.set_attribute("compliance.gamp5.research", True)
                 current_span.set_attribute("compliance.pharmaceutical", True)
@@ -191,7 +189,7 @@ class ResearchAgent:
                     "depth_level": request_data.depth_level,
                     "time_horizon": request_data.time_horizon
                 })
-            
+
             research_response = await asyncio.wait_for(
                 self._execute_research(request_data),
                 timeout=request_data.timeout_seconds
@@ -205,7 +203,7 @@ class ResearchAgent:
             if research_response.confidence_score >= self.quality_threshold:
                 self._research_stats["high_quality_results"] += 1
             self._update_performance_stats(processing_time)
-            
+
             # Add completion event and result attributes to span
             if current_span and current_span.is_recording():
                 current_span.add_event("research_analysis_complete", {
@@ -216,7 +214,7 @@ class ResearchAgent:
                     "research_quality": research_response.research_quality,
                     "processing_time": processing_time
                 })
-                
+
                 # Set result attributes
                 current_span.set_attribute("result.results_count", len(research_response.research_results))
                 current_span.set_attribute("result.regulatory_updates_count", len(research_response.regulatory_updates))
@@ -282,7 +280,7 @@ class ResearchAgent:
         with self.tracer.start_as_current_span("research.execute") as span:
             span.set_attribute("research.request_id", str(request.correlation_id))
             span.set_attribute("research.depth_level", request.depth_level)
-            
+
             # Initialize response
             response = ResearchAgentResponse()
 
@@ -1057,48 +1055,48 @@ Always maintain currency with evolving regulatory landscape."""
                 try:
                     # Search drug labels for guidance information
                     api_start = time.time()
-                    
+
                     # Create span for FDA API call
                     with self.tracer.start_as_current_span("fda.drug_labels_search") as api_span:
                         api_span.set_attribute("api.service", "fda")
                         api_span.set_attribute("api.endpoint", "drug_labels_search")
                         api_span.set_attribute("api.query", search_query)
                         api_span.set_attribute("api.limit", 3)
-                        
+
                         drug_labels = await self.fda_client.search_drug_labels(
                             search_query=search_query,
                             limit=3
                         )
-                        
+
                         # Add API result attributes
                         api_duration = time.time() - api_start
                         api_span.set_attribute("api.duration_seconds", api_duration)
                         api_span.set_attribute("api.success", True)
                         api_span.set_attribute("api.results_count", len(drug_labels.get("results", [])))
-                    
+
                     updates.extend(self._process_fda_drug_labels(drug_labels, focus_area))
 
                     # Search enforcement reports for recent regulatory actions
                     api_start = time.time()
-                    
+
                     # Create span for FDA enforcement API call
                     with self.tracer.start_as_current_span("fda.enforcement_search") as api_span:
                         api_span.set_attribute("api.service", "fda")
                         api_span.set_attribute("api.endpoint", "enforcement_search")
                         api_span.set_attribute("api.query", search_query)
                         api_span.set_attribute("api.limit", 2)
-                        
+
                         enforcement = await self.fda_client.search_enforcement_reports(
                             search_query=search_query,
                             limit=2
                         )
-                        
+
                         # Add API result attributes
                         api_duration = time.time() - api_start
                         api_span.set_attribute("api.duration_seconds", api_duration)
                         api_span.set_attribute("api.success", True)
                         api_span.set_attribute("api.results_count", len(enforcement.get("results", [])))
-                    
+
                     updates.extend(self._process_fda_enforcement_reports(enforcement, focus_area))
 
                 except FDAAPIError as e:

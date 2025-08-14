@@ -10,9 +10,7 @@ CRITICAL: NO FALLBACK LOGIC - All failures must surface explicitly for regulator
 import logging
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Dict, List, Optional
-from pathlib import Path
-import json
+from typing import Any
 
 try:
     import phoenix as px
@@ -37,11 +35,11 @@ class TraceAnalysisResult:
     duration_ms: float
     compliance_status: str
     span_count: int
-    attributes: Dict[str, Any]
+    attributes: dict[str, Any]
     start_time: str
     end_time: str
     error_count: int = 0
-    llm_token_usage: Optional[Dict[str, int]] = None
+    llm_token_usage: dict[str, int] | None = None
 
 
 @dataclass
@@ -54,7 +52,7 @@ class ComplianceViolation:
     timestamp: str
     remediation_suggestion: str
     regulatory_impact: str
-    span_id: Optional[str] = None
+    span_id: str | None = None
 
 
 class PhoenixEnhancedClient:
@@ -65,7 +63,7 @@ class PhoenixEnhancedClient:
     explicitly to maintain pharmaceutical regulatory compliance.
     """
 
-    def __init__(self, phoenix_host: str = "http://localhost:6006", api_key: Optional[str] = None):
+    def __init__(self, phoenix_host: str = "http://localhost:6006", api_key: str | None = None):
         """
         Initialize Phoenix enhanced client.
         
@@ -80,22 +78,22 @@ class PhoenixEnhancedClient:
             raise Exception(
                 "Phoenix client not available. Install with: pip install arize-phoenix"
             )
-        
+
         self.phoenix_host = phoenix_host
         self.api_key = api_key
-        
+
         try:
             # Initialize Phoenix client with correct parameter
             self.client = Client(
                 base_url=phoenix_host,
                 api_key=api_key
             )
-            
+
             # Test connection
             self._test_connection()
-            
+
             logger.info(f"Phoenix enhanced client initialized: {phoenix_host}")
-            
+
         except Exception as e:
             # NO FALLBACKS - connection failures must surface explicitly
             raise Exception(f"Failed to initialize Phoenix enhanced client: {e}") from e
@@ -111,7 +109,7 @@ class PhoenixEnhancedClient:
             # Simple connection test - check if we can access spans
             # Note: Phoenix client doesn't have a direct health check
             # so we'll just verify the client is initialized
-            if hasattr(self.client, 'spans'):
+            if hasattr(self.client, "spans"):
                 logger.debug("Phoenix connection test successful")
             else:
                 raise Exception("Phoenix client missing spans attribute")
@@ -119,10 +117,10 @@ class PhoenixEnhancedClient:
             raise Exception(f"Phoenix connection test failed: {e}") from e
 
     async def query_workflow_traces(
-        self, 
-        workflow_type: str = "UnifiedTestGenerationWorkflow", 
+        self,
+        workflow_type: str = "UnifiedTestGenerationWorkflow",
         hours: int = 24
-    ) -> List[TraceAnalysisResult]:
+    ) -> list[TraceAnalysisResult]:
         """
         Query workflow-specific traces for analysis using Phoenix Python client.
         
@@ -138,14 +136,14 @@ class PhoenixEnhancedClient:
         """
         try:
             start_time = datetime.now(UTC) - timedelta(hours=hours)
-            
+
             # Query spans using Phoenix Python client
             # Note: The exact API may vary, using DataFrame approach
             spans_df = self.client.spans.get_spans_dataframe(
                 filter_condition=f"span_kind = 'LLM' AND start_time >= '{start_time.isoformat()}'",
                 limit=1000
             )
-            
+
             # Group spans by trace_id
             traces_by_id = {}
             for span in spans:
@@ -153,41 +151,41 @@ class PhoenixEnhancedClient:
                 if trace_id not in traces_by_id:
                     traces_by_id[trace_id] = []
                 traces_by_id[trace_id].append(span)
-            
+
             # Process traces
             results = []
             for trace_id, trace_spans in traces_by_id.items():
                 # Filter for workflow-related spans
                 workflow_spans = [
-                    s for s in trace_spans 
+                    s for s in trace_spans
                     if workflow_type.lower() in str(s.name).lower()
                 ]
-                
+
                 if not workflow_spans and workflow_type != "ALL":
                     continue
-                
+
                 # Calculate trace metrics
                 start_times = [s.start_time for s in trace_spans]
                 end_times = [s.end_time for s in trace_spans]
-                
+
                 trace_start = min(start_times)
                 trace_end = max(end_times)
                 duration_ms = (trace_end - trace_start).total_seconds() * 1000
-                
+
                 # Extract attributes and compliance status
                 all_attributes = {}
                 error_count = 0
                 token_usage = {}
-                
+
                 for span in trace_spans:
                     # Merge attributes
                     if span.attributes:
                         all_attributes.update(span.attributes)
-                    
+
                     # Count errors
                     if span.status_code == "ERROR":
                         error_count += 1
-                    
+
                     # Extract token usage
                     if span.attributes:
                         if "llm.token.usage.total" in span.attributes:
@@ -196,10 +194,10 @@ class PhoenixEnhancedClient:
                             token_usage["prompt"] = span.attributes["llm.token.usage.prompt"]
                         if "llm.token.usage.completion" in span.attributes:
                             token_usage["completion"] = span.attributes["llm.token.usage.completion"]
-                
+
                 # Determine compliance status
                 compliance_status = self._determine_compliance_status(all_attributes, error_count)
-                
+
                 results.append(TraceAnalysisResult(
                     trace_id=trace_id,
                     workflow_type=workflow_type,
@@ -212,15 +210,15 @@ class PhoenixEnhancedClient:
                     error_count=error_count,
                     llm_token_usage=token_usage if token_usage else None
                 ))
-            
+
             logger.info(f"Retrieved {len(results)} traces for analysis")
             return results
-            
+
         except Exception as e:
             # NO FALLBACKS - query failures must surface explicitly
             raise Exception(f"Failed to query workflow traces: {e}") from e
 
-    async def query_compliance_metrics(self, timeframe_hours: int = 24) -> Dict[str, Any]:
+    async def query_compliance_metrics(self, timeframe_hours: int = 24) -> dict[str, Any]:
         """
         Query compliance-specific metrics for GAMP-5 dashboard.
         
@@ -235,13 +233,13 @@ class PhoenixEnhancedClient:
         """
         try:
             start_time = datetime.now(UTC) - timedelta(hours=timeframe_hours)
-            
+
             # Query all spans in timeframe
             spans = self.client.get_spans(
                 filter_condition=f"start_time >= '{start_time.isoformat()}'",
                 limit=5000
             )
-            
+
             metrics = {
                 "total_spans": len(spans),
                 "compliance_breakdown": {},
@@ -251,46 +249,46 @@ class PhoenixEnhancedClient:
                 "audit_trail_completeness": 0,
                 "token_usage": {}
             }
-            
+
             compliant_count = 0
             gamp_categories = {}
             error_count = 0
             latencies = []
             audit_complete_count = 0
             total_tokens = 0
-            
+
             for span in spans:
                 attributes = span.attributes or {}
-                
+
                 # Check compliance status
                 is_compliant = self._is_span_compliant(attributes, span.status_code == "ERROR")
                 if is_compliant:
                     compliant_count += 1
-                
+
                 # Extract GAMP category
                 gamp_category = attributes.get("gamp.category", "Unknown")
                 gamp_categories[gamp_category] = gamp_categories.get(gamp_category, 0) + 1
-                
+
                 # Count errors
                 if span.status_code == "ERROR":
                     error_count += 1
-                
+
                 # Extract latency
                 if span.start_time and span.end_time:
                     latency_ms = (span.end_time - span.start_time).total_seconds() * 1000
                     latencies.append(latency_ms)
-                
+
                 # Check audit trail
                 if attributes.get("audit.trail.complete") == "true":
                     audit_complete_count += 1
-                
+
                 # Sum token usage
                 if "llm.token.usage.total" in attributes:
                     try:
                         total_tokens += int(attributes["llm.token.usage.total"])
                     except (ValueError, TypeError):
                         pass
-            
+
             # Calculate metrics
             total_spans = len(spans)
             if total_spans > 0:
@@ -299,16 +297,16 @@ class PhoenixEnhancedClient:
                     "non_compliant": total_spans - compliant_count,
                     "compliance_rate": (compliant_count / total_spans) * 100
                 }
-                
+
                 metrics["error_rates"] = {
                     "total_errors": error_count,
                     "error_rate": (error_count / total_spans) * 100
                 }
-                
+
                 metrics["audit_trail_completeness"] = (audit_complete_count / total_spans) * 100
-            
+
             metrics["gamp_categories"] = gamp_categories
-            
+
             if latencies:
                 metrics["performance_metrics"] = {
                     "avg_latency_ms": sum(latencies) / len(latencies),
@@ -316,63 +314,63 @@ class PhoenixEnhancedClient:
                     "min_latency_ms": min(latencies),
                     "total_operations": len(latencies)
                 }
-            
+
             metrics["token_usage"] = {
                 "total_tokens": total_tokens,
                 "average_per_span": total_tokens / total_spans if total_spans > 0 else 0
             }
-            
+
             return metrics
-            
+
         except Exception as e:
             # NO FALLBACKS - compliance metrics must be accurate for regulatory purposes
             raise Exception(f"Failed to query compliance metrics: {e}") from e
 
-    def _determine_compliance_status(self, attributes: Dict[str, Any], error_count: int) -> str:
+    def _determine_compliance_status(self, attributes: dict[str, Any], error_count: int) -> str:
         """Determine compliance status based on span attributes and error count."""
         try:
             # Check for explicit compliance markers
             if "compliance.status" in attributes:
                 return attributes["compliance.status"]
-            
+
             # Check for GAMP-5 compliance attributes
             if attributes.get("compliance.gamp5.workflow") == "true":
                 # Check for errors
                 if error_count > 0:
                     return "non_compliant"
-                
+
                 # Check for required audit attributes
                 required_attrs = ["audit.trail.required", "compliance.pharmaceutical"]
                 has_required = all(attributes.get(attr) for attr in required_attrs)
-                
+
                 return "compliant" if has_required else "partial_compliance"
-            
+
             return "unknown"
-            
+
         except Exception:
             return "error_determining_status"
 
-    def _is_span_compliant(self, attributes: Dict[str, Any], has_error: bool) -> bool:
+    def _is_span_compliant(self, attributes: dict[str, Any], has_error: bool) -> bool:
         """Check if a span meets GAMP-5 compliance requirements."""
         try:
             # Must have GAMP-5 compliance attributes
             if not attributes.get("compliance.gamp5.workflow"):
                 return False
-            
+
             # Must not have errors
             if has_error:
                 return False
-            
+
             # Must have audit trail
             if not attributes.get("audit.trail.required"):
                 return False
-            
+
             # Must have pharmaceutical context
             if not attributes.get("compliance.pharmaceutical"):
                 return False
-            
+
             return True
-            
+
         except Exception:
             return False
 
@@ -385,7 +383,7 @@ class AutomatedTraceAnalyzer:
         self.client = phoenix_client
         self.compliance_rules = self._load_gamp5_rules()
 
-    def _load_gamp5_rules(self) -> Dict[str, Any]:
+    def _load_gamp5_rules(self) -> dict[str, Any]:
         """Load GAMP-5 compliance rules for automated analysis."""
         return {
             "confidence_threshold": 0.8,
@@ -409,7 +407,7 @@ class AutomatedTraceAnalyzer:
             ]
         }
 
-    async def analyze_compliance_violations(self, hours: int = 24) -> List[ComplianceViolation]:
+    async def analyze_compliance_violations(self, hours: int = 24) -> list[ComplianceViolation]:
         """
         Automated compliance violation detection.
         
@@ -521,14 +519,14 @@ class AutomatedTraceAnalyzer:
         try:
             # Get compliance data
             compliance_data = await self.client.query_compliance_metrics(timeframe_hours=hours)
-            
+
             # Create subplots for different compliance metrics
             fig = make_subplots(
                 rows=2, cols=2,
                 subplot_titles=(
                     "GAMP Category Distribution",
                     "Compliance Rate Analysis",
-                    "Error Rate Analysis", 
+                    "Error Rate Analysis",
                     "Audit Trail Completeness"
                 ),
                 specs=[
@@ -603,7 +601,7 @@ class AutomatedTraceAnalyzer:
                 row=2, col=2
             )
 
-            # Update layout 
+            # Update layout
             fig.update_layout(
                 title_text="GAMP-5 Pharmaceutical Compliance Dashboard",
                 title_x=0.5,
@@ -614,7 +612,7 @@ class AutomatedTraceAnalyzer:
             # Add compliance summary
             total_spans = compliance_data.get("total_spans", 0)
             compliance_rate = compliance_breakdown.get("compliance_rate", 0)
-            
+
             summary_text = f"Total Spans: {total_spans} | Compliance Rate: {compliance_rate:.1f}% | Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             fig.add_annotation(
                 text=summary_text,
@@ -634,7 +632,7 @@ class AutomatedTraceAnalyzer:
             # NO FALLBACKS - dashboard creation errors must surface explicitly
             raise Exception(f"Failed to generate compliance dashboard: {e}") from e
 
-    async def generate_compliance_report(self) -> Dict[str, Any]:
+    async def generate_compliance_report(self) -> dict[str, Any]:
         """
         Generate comprehensive compliance analysis report.
         
@@ -705,7 +703,7 @@ class AutomatedTraceAnalyzer:
             # NO FALLBACKS - compliance reporting must be explicit for regulatory purposes
             raise Exception(f"Failed to generate compliance report: {e}") from e
 
-    def _assess_regulatory_impact(self, violations_by_severity: Dict[str, List[ComplianceViolation]]) -> Dict[str, Any]:
+    def _assess_regulatory_impact(self, violations_by_severity: dict[str, list[ComplianceViolation]]) -> dict[str, Any]:
         """Assess regulatory impact of violations."""
         if violations_by_severity["CRITICAL"]:
             return {
@@ -731,7 +729,7 @@ class AutomatedTraceAnalyzer:
             "impact_description": "System is operating within acceptable compliance parameters"
         }
 
-    def _generate_recommendations(self, violations: List[ComplianceViolation]) -> List[str]:
+    def _generate_recommendations(self, violations: list[ComplianceViolation]) -> list[str]:
         """Generate actionable recommendations based on violation patterns."""
         recommendations = []
 
@@ -769,8 +767,8 @@ class AutomatedTraceAnalyzer:
 # Main enhanced Phoenix setup function
 async def setup_enhanced_phoenix_observability(
     phoenix_host: str = "http://localhost:6006",
-    api_key: Optional[str] = None
-) -> Dict[str, Any]:
+    api_key: str | None = None
+) -> dict[str, Any]:
     """
     Set up enhanced Phoenix observability with official Python client.
     
@@ -787,12 +785,12 @@ async def setup_enhanced_phoenix_observability(
     try:
         # Initialize Phoenix enhanced client
         client = PhoenixEnhancedClient(phoenix_host, api_key)
-        
+
         # Initialize analysis components
         analyzer = AutomatedTraceAnalyzer(client)
-        
+
         logger.info("Enhanced Phoenix observability setup completed successfully")
-        
+
         return {
             "phoenix_client": client,
             "analyzer": analyzer,
@@ -806,7 +804,7 @@ async def setup_enhanced_phoenix_observability(
                 "Real-time violation detection"
             ]
         }
-        
+
     except Exception as e:
         # NO FALLBACKS - setup failures must surface explicitly
         raise Exception(f"Failed to setup enhanced Phoenix observability: {e}") from e
@@ -814,9 +812,9 @@ async def setup_enhanced_phoenix_observability(
 
 # Export main classes and functions
 __all__ = [
-    "PhoenixEnhancedClient",
-    "AutomatedTraceAnalyzer", 
-    "TraceAnalysisResult",
+    "AutomatedTraceAnalyzer",
     "ComplianceViolation",
+    "PhoenixEnhancedClient",
+    "TraceAnalysisResult",
     "setup_enhanced_phoenix_observability"
 ]

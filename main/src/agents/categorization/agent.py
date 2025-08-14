@@ -1205,13 +1205,14 @@ def categorize_with_pydantic_structured_output(
         error_handler = CategorizationErrorHandler()
 
     # Initialize comprehensive audit trail logging
+    from datetime import UTC, datetime
+
     from src.core.audit_trail import get_audit_trail
-    from datetime import datetime, UTC
-    
+
     audit_trail = get_audit_trail()
     start_time = datetime.now(UTC)
     agent_id = f"gamp_categorization_{document_name}_{start_time.strftime('%Y%m%d_%H%M%S')}"
-    
+
     # Log agent decision initiation
     audit_trail.log_system_event(
         event_type="AGENT_DECISION",
@@ -1221,7 +1222,7 @@ def categorize_with_pydantic_structured_output(
             "decision_type": "document_categorization",
             "document_name": document_name,
             "document_size": len(urs_content),
-            "llm_model": getattr(llm, 'model_name', str(type(llm).__name__)),
+            "llm_model": getattr(llm, "model_name", str(type(llm).__name__)),
             "decision_start_time": start_time.isoformat()
         },
         workflow_context={
@@ -1318,7 +1319,7 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
                 "document_name": document_name,
                 "document_content_length": len(urs_content),
                 "urs_content_preview": urs_content[:500] + "..." if len(urs_content) > 500 else urs_content,
-                "llm_model": getattr(llm, 'model_name', str(type(llm).__name__)),
+                "llm_model": getattr(llm, "model_name", str(type(llm).__name__)),
                 "confidence_threshold": error_handler.confidence_threshold,
                 "gamp_category": result.category,
                 "validation_rigor": "enhanced" if result.category in [4, 5] else "standard"
@@ -1401,11 +1402,11 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
         # NO FALLBACKS: Handle errors explicitly with full diagnostic information
         error_handler.logger.error(f"Structured categorization failed: {e!s}")
         error_handler.logger.error(f"Input that caused error: {urs_content[:200]}...")
-        
+
         # Calculate error processing time
         error_time = datetime.now(UTC)
         error_processing_time = (error_time - start_time).total_seconds()
-        
+
         # Log comprehensive error recovery attempt
         audit_trail.log_error_recovery(
             error_type="gamp_categorization_failure",
@@ -1415,7 +1416,7 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
                 "agent_id": agent_id,
                 "document_name": document_name,
                 "document_content_length": len(urs_content),
-                "llm_model": getattr(llm, 'model_name', str(type(llm).__name__)),
+                "llm_model": getattr(llm, "model_name", str(type(llm).__name__)),
                 "error_type": type(e).__name__,
                 "processing_time_before_error": error_processing_time,
                 "urs_content_preview": urs_content[:200] + "..." if len(urs_content) > 200 else urs_content
@@ -1436,7 +1437,7 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
                 "error_transparency": "complete"
             }
         )
-        
+
         # Re-raise with comprehensive diagnostic information
         raise RuntimeError(f"Structured categorization failed for document '{document_name}': {e!s}") from e
 

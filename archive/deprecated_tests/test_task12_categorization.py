@@ -3,10 +3,11 @@ Test script to validate Task 12 categorization accuracy fix.
 Tests URS-003 and other cases for proper categorization without false ambiguity.
 """
 
+import asyncio
 import os
 import sys
 from pathlib import Path
-import asyncio
+
 from dotenv import load_dotenv
 
 # Add main directory to path
@@ -20,16 +21,15 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 os.environ["PHOENIX_HOST"] = "localhost"
 os.environ["PHOENIX_PORT"] = "6006"
 
+from llama_index.core.workflow import Context
 from src.agents.categorization.agent import (
-    categorization_agent,
+    CategorizationErrorEvent,
     CategorizationEvent,
     CategorizationResultEvent,
-    CategorizationErrorEvent
+    categorization_agent,
 )
-from src.core.models.events import WorkflowStartEvent
-from src.core.models.requirement import UserRequirement
 from src.core.models.context import WorkflowContext
-from llama_index.core.workflow import Context
+from src.core.models.requirement import UserRequirement
 
 # Test cases
 TEST_CASES = [
@@ -40,7 +40,7 @@ TEST_CASES = [
         "rationale": "Standardized reporting ensures consistent documentation across all test executions while allowing flexibility for project-specific requirements.",
         "acceptance_criteria": [
             "System generates reports in multiple formats (PDF, Word, HTML)",
-            "Templates support dynamic data insertion from test results", 
+            "Templates support dynamic data insertion from test results",
             "Reports include all required regulatory compliance fields",
             "Custom templates can be created and saved for reuse",
             "Report generation completes within 60 seconds for standard test suites"
@@ -49,7 +49,7 @@ TEST_CASES = [
         "expected_rationale": "custom development"
     },
     {
-        "id": "URS-001", 
+        "id": "URS-001",
         "title": "User Authentication and Authorization",
         "description": "The system shall provide secure user authentication and role-based authorization to ensure only authorized personnel can access and perform specific functions within the system.",
         "rationale": "Regulatory compliance requires strict access control and audit trails for all system activities in pharmaceutical environments.",
@@ -115,18 +115,18 @@ async def test_categorization():
     print("\n" + "="*80)
     print("TASK 12 CATEGORIZATION VALIDATION TEST")
     print("="*80 + "\n")
-    
+
     # Track results
     results = {
         "passed": 0,
         "failed": 0,
         "errors": []
     }
-    
+
     for test_case in TEST_CASES:
         print(f"\nTesting {test_case['id']}: {test_case['title']}")
         print("-" * 60)
-        
+
         try:
             # Create requirement
             requirement = UserRequirement(
@@ -136,33 +136,33 @@ async def test_categorization():
                 rationale=test_case["rationale"],
                 acceptance_criteria=test_case["acceptance_criteria"]
             )
-            
+
             # Create workflow context
             workflow_context = WorkflowContext(
                 requirements=[requirement],
                 workflow_id=f"test_{test_case['id']}",
                 config={}
             )
-            
+
             # Create categorization event
             event = CategorizationEvent(
                 requirement=requirement,
                 workflow_context=workflow_context
             )
-            
+
             # Create llama-index context
             ctx = Context()
-            
+
             # Run categorization
-            print(f"Running categorization agent...")
+            print("Running categorization agent...")
             result = await categorization_agent(ctx, event)
-            
+
             # Check result type
             if isinstance(result, CategorizationErrorEvent):
                 print(f"❌ ERROR: {result.error}")
                 print(f"   Error Type: {result.error_type}")
                 print(f"   Severity: {result.severity}")
-                if hasattr(result, 'categorization_result') and result.categorization_result:
+                if hasattr(result, "categorization_result") and result.categorization_result:
                     print(f"   Attempted Category: {result.categorization_result.category}")
                     print(f"   Confidence: {result.categorization_result.confidence}")
                 results["failed"] += 1
@@ -172,23 +172,23 @@ async def test_categorization():
                     "type": "error_event"
                 })
                 continue
-                
-            elif isinstance(result, CategorizationResultEvent):
+
+            if isinstance(result, CategorizationResultEvent):
                 cat_result = result.categorization_result
-                print(f"✓ Categorization completed successfully")
+                print("✓ Categorization completed successfully")
                 print(f"  Category: {cat_result.category}")
                 print(f"  Confidence: {cat_result.confidence:.2f}")
                 print(f"  Rationale: {cat_result.rationale}")
-                
+
                 # Validate results
                 if cat_result.category == test_case["expected_category"]:
-                    print(f"✅ PASS: Correct category")
-                    
+                    print("✅ PASS: Correct category")
+
                     # Additional validation for URS-003
                     if test_case["id"] == "URS-003":
                         if cat_result.confidence >= 0.7:
-                            print(f"✅ PASS: High confidence for clear Category 5 case")
-                            print(f"✅ PASS: No false ambiguity detected")
+                            print("✅ PASS: High confidence for clear Category 5 case")
+                            print("✅ PASS: No false ambiguity detected")
                             results["passed"] += 1
                         else:
                             print(f"❌ FAIL: Low confidence {cat_result.confidence} for clear case")
@@ -216,9 +216,9 @@ async def test_categorization():
                     "error": f"Unexpected result type: {type(result)}",
                     "type": "unexpected"
                 })
-                
+
         except Exception as e:
-            print(f"❌ EXCEPTION: {str(e)}")
+            print(f"❌ EXCEPTION: {e!s}")
             import traceback
             traceback.print_exc()
             results["failed"] += 1
@@ -227,7 +227,7 @@ async def test_categorization():
                 "error": str(e),
                 "type": "exception"
             })
-    
+
     # Print summary
     print("\n" + "="*80)
     print("TEST SUMMARY")
@@ -236,19 +236,18 @@ async def test_categorization():
     print(f"Passed: {results['passed']}")
     print(f"Failed: {results['failed']}")
     print(f"Success Rate: {(results['passed'] / len(TEST_CASES)) * 100:.1f}%")
-    
+
     if results["errors"]:
         print("\n❌ ERRORS:")
         for error in results["errors"]:
             print(f"  - {error['id']}: {error['error']} (Type: {error['type']})")
-    
+
     # Overall result
     if results["failed"] == 0:
         print("\n✅ ALL TESTS PASSED - Task 12 implementation is working correctly!")
         return True
-    else:
-        print(f"\n❌ TESTS FAILED - {results['failed']} failures detected")
-        return False
+    print(f"\n❌ TESTS FAILED - {results['failed']} failures detected")
+    return False
 
 if __name__ == "__main__":
     # Run the test

@@ -10,11 +10,11 @@ This script tests the updated OQ generator with:
 - Exactly 25 tests requirement validation
 """
 
-import asyncio
 import logging
 import os
 import sys
 from datetime import datetime
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -26,21 +26,20 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 from src.agents.oq_generator.generator import OQTestGenerator
 from src.agents.oq_generator.models import OQGenerationConfig
 from src.core.events import GAMPCategory
-from src.llms.openrouter_compat import OpenRouterCompatLLM
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 def test_yaml_enhanced_generation():
     """Test enhanced YAML generation with OSS model optimization."""
-    
+
     print("\n" + "="*80)
     print("TESTING: Step 2 - Enhanced YAML Format for OSS Model Compatibility")
     print("="*80)
-    
+
     try:
         # Initialize OpenRouter LLM with OSS model
         print("\n1. Initializing OpenRouter LLM...")
@@ -48,10 +47,10 @@ def test_yaml_enhanced_generation():
         # Use the configured OSS model
         llm = LLMConfig.get_llm()
         print(f"   Using model: {llm.model}")
-        print(f"SUCCESS LLM initialized")
+        print("SUCCESS LLM initialized")
         print(f"   Max tokens: {getattr(llm, 'max_tokens', 30000)}")
         print(f"   Temperature: {getattr(llm, 'temperature', 0.1)}")
-        
+
         # Initialize OQ Generator
         print("\n2. Initializing OQ Test Generator...")
         generator = OQTestGenerator(
@@ -60,7 +59,7 @@ def test_yaml_enhanced_generation():
             generation_timeout=300  # 5 minutes
         )
         print("SUCCESS OQ Generator initialized")
-        
+
         # Test URS content
         urs_content = """
         User Requirements Specification (URS)
@@ -83,7 +82,7 @@ def test_yaml_enhanced_generation():
         REQ-005: Batch Processing
         The system shall process pharmaceutical batch records
         """
-        
+
         # Configuration for exactly 25 tests
         config = OQGenerationConfig(
             gamp_category=5,
@@ -95,16 +94,16 @@ def test_yaml_enhanced_generation():
             include_negative_testing=True,
             validate_data_integrity=True
         )
-        
+
         print("\n3. Generating OQ Test Suite with YAML format...")
         print(f"   GAMP Category: {GAMPCategory.CATEGORY_5.value}")
         print(f"   Target test count: {config.target_test_count}")
-        print(f"   Format: YAML (primary path)")
-        print(f"   Fallbacks: DISABLED (NO FALLBACKS policy)")
-        
+        print("   Format: YAML (primary path)")
+        print("   Fallbacks: DISABLED (NO FALLBACKS policy)")
+
         # Generate test suite
         start_time = datetime.now()
-        
+
         try:
             test_suite = generator.generate_oq_test_suite(
                 gamp_category=GAMPCategory.CATEGORY_5,
@@ -120,11 +119,11 @@ def test_yaml_enhanced_generation():
                 },
                 config=config
             )
-            
+
             generation_time = (datetime.now() - start_time).total_seconds()
-            
+
             print(f"\nSUCCESS YAML Generation SUCCESSFUL in {generation_time:.2f}s")
-            
+
             # Validation Results
             print("\n4. Validation Results:")
             print(f"   Suite ID: {test_suite.suite_id}")
@@ -132,53 +131,53 @@ def test_yaml_enhanced_generation():
             print(f"   Total Test Count: {test_suite.total_test_count}")
             print(f"   Actual Test Cases: {len(test_suite.test_cases)}")
             print(f"   Version: {test_suite.version}")
-            
+
             # Validate exactly 25 tests
             if test_suite.total_test_count == 25:
                 print("   SUCCESS Test count validation: PASSED (exactly 25 tests)")
             else:
                 print(f"   FAILED Test count validation: FAILED (expected 25, got {test_suite.total_test_count})")
-                
+
             # Validate test IDs
             test_ids = [test.test_id for test in test_suite.test_cases]
             expected_ids = [f"OQ-{i:03d}" for i in range(1, 26)]
-            
+
             if test_ids == expected_ids:
                 print("   SUCCESS Test ID format: PASSED (OQ-001 through OQ-025)")
             else:
-                print(f"   FAILED Test ID format: FAILED")
+                print("   FAILED Test ID format: FAILED")
                 print(f"      Expected: {expected_ids[:3]}...{expected_ids[-3:]}")
                 print(f"      Got: {test_ids[:3]}...{test_ids[-3:]}")
-            
+
             # Validate required fields
             sample_test = test_suite.test_cases[0] if test_suite.test_cases else None
             if sample_test:
                 required_fields = ["test_id", "test_name", "test_category", "objective", "test_steps", "acceptance_criteria"]
                 missing_fields = [field for field in required_fields if not hasattr(sample_test, field)]
-                
+
                 if not missing_fields:
                     print("   SUCCESS Required fields: PASSED (all fields present)")
                 else:
                     print(f"   FAILED Required fields: FAILED (missing: {missing_fields})")
-            
+
             # Compliance validation
             compliance = test_suite.pharmaceutical_compliance
-            print(f"\n5. Pharmaceutical Compliance:")
+            print("\n5. Pharmaceutical Compliance:")
             print(f"   ALCOA+ Compliant: {compliance.get('alcoa_plus_compliant', 'Unknown')}")
             print(f"   CFR Part 11 Compliant: {compliance.get('cfr_part11_compliant', 'Unknown')}")
             print(f"   GAMP-5 Compliant: {compliance.get('gamp5_compliant', 'Unknown')}")
             print(f"   Data Integrity Validated: {compliance.get('data_integrity_validated', 'Unknown')}")
-            
+
             # Test categories distribution
             categories = {}
             for test in test_suite.test_cases:
-                cat = getattr(test, 'test_category', 'unknown')
+                cat = getattr(test, "test_category", "unknown")
                 categories[cat] = categories.get(cat, 0) + 1
-                
-            print(f"\n6. Test Categories Distribution:")
+
+            print("\n6. Test Categories Distribution:")
             for category, count in sorted(categories.items()):
                 print(f"   {category}: {count} tests")
-            
+
             print("\n" + "="*80)
             print("SUCCESS STEP 2 IMPLEMENTATION: SUCCESS")
             print("SUCCESS YAML format working as primary generation method")
@@ -186,32 +185,32 @@ def test_yaml_enhanced_generation():
             print("SUCCESS NO FALLBACKS policy enforced")
             print("SUCCESS Exactly 25 tests generated and validated")
             print("="*80)
-            
+
             return True
-            
+
         except Exception as e:
             generation_time = (datetime.now() - start_time).total_seconds()
             print(f"\nFAILED YAML Generation FAILED after {generation_time:.2f}s")
             print(f"   Error: {e}")
-            
-            if hasattr(e, 'error_context'):
+
+            if hasattr(e, "error_context"):
                 context = e.error_context
                 print(f"   Error Type: {context.get('error_type', 'unknown')}")
                 print(f"   Generation Method: {context.get('generation_method', 'unknown')}")
                 print(f"   No Fallback Available: {context.get('no_fallback_available', 'unknown')}")
-                
-                if 'suggested_actions' in context:
+
+                if "suggested_actions" in context:
                     print("   Suggested Actions:")
-                    for action in context['suggested_actions']:
+                    for action in context["suggested_actions"]:
                         print(f"     - {action}")
-            
+
             print("\n" + "="*80)
             print("FAILED STEP 2 IMPLEMENTATION: FAILED")
             print("FAILED YAML generation needs debugging")
             print("="*80)
-            
+
             return False
-            
+
     except Exception as e:
         print(f"\nFAILED Test setup failed: {e}")
         print("\n" + "="*80)

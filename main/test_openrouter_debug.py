@@ -2,9 +2,8 @@
 """Debug OpenRouter API issues."""
 
 import os
-import sys
+
 import requests
-from pathlib import Path
 
 # Force OpenRouter configuration
 os.environ["LLM_PROVIDER"] = "openrouter"
@@ -28,21 +27,21 @@ models_to_test = [
 
 for model in models_to_test:
     print(f"\nTesting model: {model}")
-    
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "HTTP-Referer": "http://localhost:3000",
         "X-Title": "Test"
     }
-    
+
     data = {
         "model": model,
         "messages": [{"role": "user", "content": "Say 'test'"}],
         "temperature": 0.1,
         "max_tokens": 10
     }
-    
+
     try:
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
@@ -50,7 +49,7 @@ for model in models_to_test:
             json=data,
             timeout=30
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             content = result["choices"][0]["message"]["content"]
@@ -58,7 +57,7 @@ for model in models_to_test:
         else:
             print(f"  [FAIL] Status: {response.status_code}")
             print(f"  Error: {response.text[:200]}")
-            
+
     except Exception as e:
         print(f"  [ERROR] {e}")
 

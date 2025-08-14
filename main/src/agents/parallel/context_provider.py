@@ -37,11 +37,11 @@ from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.schema import NodeWithScore, QueryBundle
 from llama_index.core.tools import FunctionTool
 from llama_index.embeddings.openai import OpenAIEmbedding
-from src.config.llm_config import LLMConfig
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field, field_validator
+from src.config.llm_config import LLMConfig
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.agent_instrumentation import trace_agent_method
 from src.monitoring.simple_tracer import get_tracer
@@ -174,7 +174,7 @@ class ContextProviderAgent:
         # Initialize comprehensive audit trail for data transformation tracking
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()
-        
+
         # Capture input data transformation
         input_data = {
             "agent_type": request_event.agent_type,
@@ -193,20 +193,20 @@ class ContextProviderAgent:
         try:
             # Parse request data with explicit validation
             request_data_dict = request_event.request_data.copy()
-            
+
             # CRITICAL FIX: Ensure GAMP category is string and add missing fields
             if "gamp_category" in request_data_dict:
                 request_data_dict["gamp_category"] = str(request_data_dict["gamp_category"])
-            
+
             # Add required search_scope if missing
             if "search_scope" not in request_data_dict:
                 request_data_dict["search_scope"] = {}
-            
+
             # Add correlation_id if not in request_data
             request_data_dict["correlation_id"] = request_event.correlation_id
-            
+
             self.logger.info(f"[CONFIG] Context Provider request validation: gamp_category={request_data_dict.get('gamp_category')} (type: {type(request_data_dict.get('gamp_category'))})")
-            
+
             request_data = ContextProviderRequest(**request_data_dict)
 
             # Add request attributes to span
@@ -294,7 +294,7 @@ class ContextProviderAgent:
                 target_data=output_data,
                 transformation_rules=[
                     "rag_document_retrieval",
-                    "context_quality_assessment", 
+                    "context_quality_assessment",
                     "requirements_extraction",
                     "gamp_category_filtering",
                     "context_assembly"
@@ -478,16 +478,16 @@ class ContextProviderAgent:
 
             # Initialize embedding model - avoid Phoenix callback conflict
             from llama_index.core import Settings
-            
+
             # Check if callback_manager exists and is properly initialized
             callback_mgr = None
-            if hasattr(Settings, 'callback_manager') and Settings.callback_manager:
+            if hasattr(Settings, "callback_manager") and Settings.callback_manager:
                 # Only use callback manager if it has the required attributes
-                if hasattr(Settings.callback_manager, 'event_starts_to_ignore'):
+                if hasattr(Settings.callback_manager, "event_starts_to_ignore"):
                     callback_mgr = Settings.callback_manager
                 else:
                     self.logger.warning("Skipping Phoenix callback manager due to missing attributes")
-            
+
             self.embedding_model = OpenAIEmbedding(
                 model=self.embedding_model_name,
                 api_key=os.getenv("OPENAI_API_KEY"),
@@ -604,18 +604,18 @@ class ContextProviderAgent:
 
                 # Create query embedding for observability
                 query_embedding_start = datetime.now(UTC)
-                
+
                 # Log API call to tracer
                 tracer = get_tracer()
                 api_start = time.time()
-                
+
                 try:
                     # Fix callback manager issue - ensure embedding model has valid callback manager
                     if self.embedding_model.callback_manager is None:
                         from llama_index.core.callbacks import CallbackManager
                         self.embedding_model.callback_manager = CallbackManager([])
                         self.logger.debug("Created empty CallbackManager for embedding model")
-                    
+
                     query_embedding = await asyncio.to_thread(
                         self.embedding_model.get_text_embedding,
                         query
@@ -625,11 +625,11 @@ class ContextProviderAgent:
                     self.logger.error(error_msg)
                     # NO FALLBACKS - fail explicitly with full diagnostic information
                     raise RuntimeError(f"Context provider embedding operation failed: {error_msg}") from e
-                
+
                 # Log successful API call
                 api_duration = time.time() - api_start
                 tracer.log_api_call("openai", "embeddings", api_duration, True, {"model": self.embedding_model_name})
-                
+
                 query_embedding_time = (datetime.now(UTC) - query_embedding_start).total_seconds() * 1000
 
                 # Add comprehensive span attributes

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Create a sample OQ test suite output to demonstrate the expected format"""
 import json
-from pathlib import Path
-from datetime import datetime
 import uuid
+from datetime import datetime
+from pathlib import Path
 
 # Create output directory
 output_dir = Path("output/test_suites")
@@ -190,11 +190,11 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 filename = f"test_suite_OQ_{timestamp}_SAMPLE.json"
 output_file = output_dir / filename
 
-with open(output_file, 'w', encoding='utf-8') as f:
+with open(output_file, "w", encoding="utf-8") as f:
     json.dump(test_suite, f, indent=2, ensure_ascii=False)
 
-print(f"Sample OQ Test Suite created successfully!")
+print("Sample OQ Test Suite created successfully!")
 print(f"File: {output_file}")
 print(f"Size: {output_file.stat().st_size:,} bytes")
-print(f"\nThis demonstrates the expected output format from the OQ Generator.")
+print("\nThis demonstrates the expected output format from the OQ Generator.")
 print(f"The file contains {len(test_suite['test_suite']['tests'])} complete OQ test cases.")

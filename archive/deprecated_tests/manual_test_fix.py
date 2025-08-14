@@ -49,33 +49,33 @@ detected_exclusions = []
 for exc in exclusions_to_check:
     if exc in normalized_content:
         print(f"Found '{exc}' in content")
-        
+
         # Apply the new negation patterns
         negation_patterns = [
             f"without {exc}",
             f"without any {exc}",
             f"no {exc}",
             f"not {exc}",
-            f"not configured", # Special case for "configuration" in negative context
-            f"not customized", # Special case for "customization" in negative context
-            f"no custom",     # Covers "no custom code", "no custom logic"
-            f"no bespoke",    # Covers "no bespoke interfaces"
+            "not configured", # Special case for "configuration" in negative context
+            "not customized", # Special case for "customization" in negative context
+            "no custom",     # Covers "no custom code", "no custom logic"
+            "no bespoke",    # Covers "no bespoke interfaces"
             f"standard {exc} only",  # "standard configuration only" = limited, not custom
             f"basic {exc}",          # "basic configuration" = minimal setup
             f"minimal {exc}",        # "minimal setup" = not extensive configuration
         ]
-        
+
         # Check if negated
         negation_found = []
         for pattern in negation_patterns:
             if pattern in normalized_content:
                 negation_found.append(pattern)
-        
+
         is_negated = len(negation_found) > 0
-        
+
         print(f"  Negation patterns found: {negation_found}")
         print(f"  Is negated: {is_negated}")
-        
+
         if not is_negated:
             detected_exclusions.append(exc)
             print(f"  → EXCLUSION APPLIES: '{exc}' will count against score")
@@ -84,7 +84,7 @@ for exc in exclusions_to_check:
     else:
         print(f"'{exc}' not found in content")
 
-print(f"\n=== FINAL RESULTS ===")
+print("\n=== FINAL RESULTS ===")
 print(f"Total exclusions that would apply: {len(detected_exclusions)}")
 print(f"Exclusions: {detected_exclusions}")
 

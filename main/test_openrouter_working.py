@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Test OpenRouter with working models."""
 
+import json
 import os
 import sys
 import time
-import json
 from pathlib import Path
 
 # Force OpenRouter configuration
@@ -27,18 +27,19 @@ test_models = [
 
 import requests
 
+
 def test_model(model_name, cost_per_m):
     """Test a specific model with GAMP-5 categorization."""
     print(f"\nTesting: {model_name} (${cost_per_m}/1K tokens)")
     print("-" * 40)
-    
+
     headers = {
         "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
         "Content-Type": "application/json",
         "HTTP-Referer": "http://localhost:3000",
         "X-Title": "GAMP-5 Test"
     }
-    
+
     # Test with actual GAMP-5 categorization prompt
     prompt = """You are a GAMP-5 compliance expert. Categorize the following system according to GAMP-5 categories (1, 3, 4, or 5).
 
@@ -54,14 +55,14 @@ Respond with a JSON object containing:
   "confidence": <0.0 to 1.0>,
   "rationale": "<brief explanation>"
 }"""
-    
+
     data = {
         "model": model_name,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.1,
         "max_tokens": 200
     }
-    
+
     try:
         start_time = time.time()
         response = requests.post(
@@ -71,11 +72,11 @@ Respond with a JSON object containing:
             timeout=30
         )
         elapsed = time.time() - start_time
-        
+
         if response.status_code == 200:
             result = response.json()
             content = result["choices"][0]["message"]["content"]
-            
+
             # Try to parse as JSON
             try:
                 parsed = json.loads(content)
@@ -83,23 +84,23 @@ Respond with a JSON object containing:
                 print(f"  Category: {parsed.get('category', 'N/A')}")
                 print(f"  Confidence: {parsed.get('confidence', 'N/A')}")
                 print(f"  Rationale: {parsed.get('rationale', 'N/A')[:100]}...")
-                
+
                 # Calculate cost
                 tokens = result.get("usage", {}).get("total_tokens", 0)
                 cost = (tokens / 1000000) * cost_per_m
                 print(f"  Tokens: {tokens}, Cost: ${cost:.6f}")
                 return True
-                
+
             except json.JSONDecodeError:
                 print(f"[PARTIAL] Response in {elapsed:.2f}s")
                 print(f"  Raw response: {content[:200]}...")
                 return False
-                
+
         else:
             print(f"[FAIL] Status: {response.status_code}")
             print(f"  Error: {response.text[:200]}")
             return False
-            
+
     except Exception as e:
         print(f"[ERROR] {e}")
         return False
@@ -133,11 +134,11 @@ try:
     llm = LLMConfig.get_llm()
     print(f"LLM Created: {type(llm).__name__}")
     print(f"Model: {llm.model}")
-    
+
     response = llm.complete("Say 'OpenRouter integration successful' in exactly 4 words")
     print(f"Response: {response.text.strip()}")
     print("\n[SUCCESS] OpenRouter integration is WORKING!")
-    
+
 except Exception as e:
     print(f"[FAIL] Error: {e}")
     import traceback

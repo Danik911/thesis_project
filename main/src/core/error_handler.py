@@ -11,10 +11,9 @@ import logging
 import traceback
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from llama_index.core.workflow import Context
-from pydantic import BaseModel, Field
 
 
 class WorkflowErrorType(str, Enum):
@@ -39,12 +38,12 @@ class RecoveryStrategy(str, Enum):
 
 class WorkflowError(Exception):
     """Custom exception for workflow errors with regulatory compliance metadata."""
-    
+
     def __init__(
         self,
         message: str,
         error_type: WorkflowErrorType,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         recovery_strategy: RecoveryStrategy = RecoveryStrategy.ESCALATE
     ):
         super().__init__(message)
@@ -58,12 +57,12 @@ class WorkflowError(Exception):
 
 class ValidationError(WorkflowError):
     """Validation error for pharmaceutical compliance violations."""
-    
+
     def __init__(
         self,
         message: str,
         error_type: WorkflowErrorType = WorkflowErrorType.VALIDATION_ERROR,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ):
         super().__init__(message, error_type, context, RecoveryStrategy.ABORT)
 
@@ -75,17 +74,17 @@ class ErrorHandler:
     Provides structured error handling with recovery strategies and
     comprehensive audit trail for pharmaceutical compliance.
     """
-    
+
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.error_count = 0
         self.recovery_attempts = {}
-        
+
     async def handle_error(
         self,
         error: Exception,
-        context: Dict[str, Any],
-        workflow_context: Optional[Context] = None,
+        context: dict[str, Any],
+        workflow_context: Context | None = None,
         max_retries: int = 3
     ) -> None:
         """
@@ -95,7 +94,7 @@ class ErrorHandler:
         for pharmaceutical compliance requirements.
         """
         self.error_count += 1
-        
+
         # Determine error type and recovery strategy
         if isinstance(error, WorkflowError):
             error_type = error.error_type
@@ -105,7 +104,7 @@ class ErrorHandler:
             error_type = self._classify_error(error)
             recovery_strategy = self._determine_recovery_strategy(error_type)
             error_context = context
-        
+
         # Log error with full context
         error_details = {
             "error_id": f"ERR-{datetime.now(UTC).strftime('%Y%m%d%H%M%S%f')}",
@@ -116,9 +115,9 @@ class ErrorHandler:
             "timestamp": datetime.now(UTC).isoformat(),
             "stack_trace": traceback.format_exc()
         }
-        
+
         self.logger.error(f"Workflow error occurred: {error_details}")
-        
+
         # Store error in workflow context if available
         if workflow_context:
             try:
@@ -127,39 +126,37 @@ class ErrorHandler:
                 await workflow_context.set("errors", errors)
             except Exception as ctx_error:
                 self.logger.warning(f"Could not store error in context: {ctx_error}")
-        
+
         # Apply recovery strategy - NO FALLBACKS, explicit failures only
         if recovery_strategy == RecoveryStrategy.ABORT:
             self.logger.critical("Error requires workflow abortion - no recovery possible")
             raise error
-        elif recovery_strategy == RecoveryStrategy.ESCALATE:
+        if recovery_strategy == RecoveryStrategy.ESCALATE:
             self.logger.error("Error requires escalation - raising to calling system")
             raise error
-        elif recovery_strategy == RecoveryStrategy.HUMAN_INTERVENTION:
+        if recovery_strategy == RecoveryStrategy.HUMAN_INTERVENTION:
             self.logger.warning("Error requires human intervention - workflow cannot continue")
             raise error
-        else:
-            # For other strategies, still raise the error - no masking
-            self.logger.error(f"Error with recovery strategy {recovery_strategy} - raising for explicit handling")
-            raise error
-    
+        # For other strategies, still raise the error - no masking
+        self.logger.error(f"Error with recovery strategy {recovery_strategy} - raising for explicit handling")
+        raise error
+
     def _classify_error(self, error: Exception) -> WorkflowErrorType:
         """Classify error type based on exception characteristics."""
         error_str = str(error).lower()
-        
+
         if isinstance(error, (FileNotFoundError, PermissionError)):
             return WorkflowErrorType.IO_ERROR
-        elif isinstance(error, asyncio.TimeoutError):
+        if isinstance(error, asyncio.TimeoutError):
             return WorkflowErrorType.TIMEOUT_ERROR
-        elif "validation" in error_str or "invalid" in error_str:
+        if "validation" in error_str or "invalid" in error_str:
             return WorkflowErrorType.VALIDATION_ERROR
-        elif "compliance" in error_str or "regulatory" in error_str:
+        if "compliance" in error_str or "regulatory" in error_str:
             return WorkflowErrorType.COMPLIANCE_ERROR
-        elif "agent" in error_str:
+        if "agent" in error_str:
             return WorkflowErrorType.AGENT_ERROR
-        else:
-            return WorkflowErrorType.WORKFLOW_ERROR
-    
+        return WorkflowErrorType.WORKFLOW_ERROR
+
     def _determine_recovery_strategy(self, error_type: WorkflowErrorType) -> RecoveryStrategy:
         """Determine appropriate recovery strategy for error type."""
         recovery_map = {
@@ -171,10 +168,10 @@ class ErrorHandler:
             WorkflowErrorType.COMPLIANCE_ERROR: RecoveryStrategy.ABORT,
             WorkflowErrorType.DATA_INTEGRITY_ERROR: RecoveryStrategy.ABORT,
         }
-        
+
         return recovery_map.get(error_type, RecoveryStrategy.ESCALATE)
-    
-    def get_error_statistics(self) -> Dict[str, Any]:
+
+    def get_error_statistics(self) -> dict[str, Any]:
         """Get error handling statistics for monitoring."""
         return {
             "total_errors": self.error_count,

@@ -4,21 +4,21 @@ Provides immediate visibility without complex infrastructure.
 """
 import json
 import time
+import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
-import traceback
+from typing import Any
 
 
 class SimpleTracer:
     """Direct file-based tracing for debugging and monitoring."""
-    
+
     def __init__(self, trace_dir: str = "logs/traces"):
         self.trace_dir = Path(trace_dir)
         self.trace_dir.mkdir(parents=True, exist_ok=True)
         self.session_file = self.trace_dir / f"trace_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"
         self.current_trace = {}
-        
+
     def start_workflow(self, workflow_name: str, document: str):
         """Start workflow trace."""
         self.current_trace = {
@@ -28,8 +28,8 @@ class SimpleTracer:
             "steps": []
         }
         self._write_event("workflow_start", {"workflow": workflow_name, "document": document})
-        
-    def log_step(self, step_name: str, data: Dict[str, Any]):
+
+    def log_step(self, step_name: str, data: dict[str, Any]):
         """Log a workflow step."""
         step_data = {
             "step": step_name,
@@ -38,8 +38,8 @@ class SimpleTracer:
         }
         self.current_trace.setdefault("steps", []).append(step_data)
         self._write_event("step", step_data)
-        
-    def log_api_call(self, service: str, endpoint: str, duration: float, success: bool, details: Optional[Dict] = None):
+
+    def log_api_call(self, service: str, endpoint: str, duration: float, success: bool, details: dict | None = None):
         """Log API call details."""
         api_data = {
             "service": service,
@@ -51,8 +51,8 @@ class SimpleTracer:
         }
         self._write_event("api_call", api_data)
         print(f"[API] {service} - {endpoint} - {duration:.2f}s - {'OK' if success else 'FAIL'}")
-        
-    def log_agent_execution(self, agent_type: str, start_time: float, result: Any, error: Optional[str] = None):
+
+    def log_agent_execution(self, agent_type: str, start_time: float, result: Any, error: str | None = None):
         """Log agent execution details."""
         duration = time.time() - start_time
         agent_data = {
@@ -66,7 +66,7 @@ class SimpleTracer:
         self._write_event("agent", agent_data)
         status = "OK" if error is None else "FAIL"
         print(f"[AGENT] {agent_type} - {duration:.2f}s - {status}")
-        
+
     def log_error(self, component: str, error: Exception):
         """Log error with full stack trace."""
         error_data = {
@@ -78,8 +78,8 @@ class SimpleTracer:
         }
         self._write_event("error", error_data)
         print(f"[ERROR] {component}: {error}")
-        
-    def end_workflow(self, success: bool, results: Optional[Dict] = None):
+
+    def end_workflow(self, success: bool, results: dict | None = None):
         """End workflow trace."""
         self.current_trace["end_time"] = time.time()
         self.current_trace["duration"] = self.current_trace["end_time"] - self.current_trace.get("start_time", 0)
@@ -90,8 +90,8 @@ class SimpleTracer:
             "duration": self.current_trace["duration"],
             "step_count": len(self.current_trace.get("steps", []))
         })
-        
-    def _write_event(self, event_type: str, data: Dict[str, Any]):
+
+    def _write_event(self, event_type: str, data: dict[str, Any]):
         """Write event to JSONL file."""
         event = {
             "event_type": event_type,
@@ -100,21 +100,21 @@ class SimpleTracer:
         }
         with open(self.session_file, "a") as f:
             f.write(json.dumps(event) + "\n")
-            
-    def get_summary(self) -> Dict[str, Any]:
+
+    def get_summary(self) -> dict[str, Any]:
         """Get summary of current trace."""
         if not self.session_file.exists():
             return {"error": "No trace file found"}
-            
+
         events = []
-        with open(self.session_file, "r") as f:
+        with open(self.session_file) as f:
             for line in f:
                 events.append(json.loads(line))
-                
+
         api_calls = [e for e in events if e["event_type"] == "api_call"]
         agents = [e for e in events if e["event_type"] == "agent"]
         errors = [e for e in events if e["event_type"] == "error"]
-        
+
         return {
             "total_events": len(events),
             "api_calls": {
@@ -133,7 +133,7 @@ class SimpleTracer:
 
 
 # Global tracer instance
-_tracer: Optional[SimpleTracer] = None
+_tracer: SimpleTracer | None = None
 
 
 def get_tracer() -> SimpleTracer:

@@ -29,10 +29,21 @@ from uuid import uuid4
 
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
-# from llama_index.llms.openai import OpenAI  # Migrated to centralized LLM config
-from src.config.llm_config import LLMConfig
 from src.agents.oq_generator.events import OQTestGenerationEvent, OQTestSuiteEvent
 from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
+
+# Import 21 CFR Part 11 compliance systems
+from src.compliance import (
+    get_mfa_service,
+    get_rbac_system,
+    get_signature_service,
+    get_training_system,
+    get_validation_framework,
+    get_worm_storage,
+)
+
+# from llama_index.llms.openai import OpenAI  # Migrated to centralized LLM config
+from src.config.llm_config import LLMConfig
 from src.core.categorization_workflow import GAMPCategorizationWorkflow
 from src.core.events import (
     AgentRequestEvent,
@@ -49,15 +60,6 @@ from src.core.human_consultation import HumanConsultationManager
 from src.monitoring.phoenix_config import setup_phoenix
 from src.monitoring.simple_tracer import get_tracer
 
-# Import 21 CFR Part 11 compliance systems
-from src.compliance import (
-    get_rbac_system,
-    get_mfa_service,
-    get_signature_service,
-    get_worm_storage,
-    get_training_system,
-    get_validation_framework
-)
 # Enhanced Phoenix Observability - temporarily disabled for testing
 # from src.monitoring.phoenix_enhanced import (
 #     PhoenixEnhancedClient,
@@ -94,7 +96,7 @@ async def safe_context_get(ctx: Context, key: str, default=None):
     try:
         # ENHANCED: Add detailed logging for debugging
         logger.debug(f"[CTX] Attempting to retrieve context key: {key}")
-        
+
         # Use ctx.store for persistent storage across workflow boundaries
         value = await ctx.store.get(key)
         if value is not None:
@@ -106,12 +108,12 @@ async def safe_context_get(ctx: Context, key: str, default=None):
             return default
         # NO FALLBACKS - explicit failure for critical state
         logger.error(f"[CRITICAL] Context key '{key}' not found in persistent store and no default provided")
-        
+
         # ENHANCED: Add context diagnosis for debugging
         all_keys = []
         try:
             # Try to get all available keys for debugging
-            for test_key in ['workflow_start_time', 'categorization_result', 'planning_event', 'gamp_category']:
+            for test_key in ["workflow_start_time", "categorization_result", "planning_event", "gamp_category"]:
                 try:
                     test_value = await ctx.store.get(test_key)
                     if test_value is not None:
@@ -121,7 +123,7 @@ async def safe_context_get(ctx: Context, key: str, default=None):
             logger.error(f"[CTX] Available context keys: {all_keys}")
         except Exception as diag_error:
             logger.error(f"Context diagnosis failed: {diag_error}")
-            
+
         raise RuntimeError(f"Critical state '{key}' not found in workflow context - workflow state corrupted")
     except Exception as e:
         logger.error(f"[ERROR] Context retrieval failed for key {key}: {e}")
@@ -150,28 +152,28 @@ async def safe_context_set(ctx: Context, key: str, value):
         # Initialize audit trail for state transition logging
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()
-        
+
         # ENHANCED: Add detailed logging for debugging
         logger.debug(f"[CTX] Attempting to store context key: {key}, type: {type(value)}")
-        
+
         # Get previous value for state transition tracking
         previous_value = None
         try:
             previous_value = await ctx.store.get(key)
         except Exception:
             pass  # New key, no previous value
-        
+
         # ENHANCED: Handle complex objects that might need special serialization
-        if hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool, list, dict)):
+        if hasattr(value, "__dict__") and not isinstance(value, (str, int, float, bool, list, dict)):
             logger.debug(f"[CTX] Storing complex object {key}: {type(value)}")
             # For GAMPCategory enum, store both value and type info
-            if hasattr(value, 'value') and hasattr(value, '__class__'):
+            if hasattr(value, "value") and hasattr(value, "__class__"):
                 logger.debug(f"[CTX] Enum detected for {key}: {value.value}")
-        
+
         # Use ctx.store for persistent storage across workflow boundaries
         await ctx.store.set(key, value)
         logger.debug(f"[CTX] Context storage successful for key {key}")
-        
+
         # Log state transition for audit trail
         audit_trail.log_state_transition(
             from_state=f"context_{key}_previous" if previous_value is not None else "context_key_not_exists",
@@ -196,13 +198,13 @@ async def safe_context_set(ctx: Context, key: str, value):
                 "audit_trail_enabled": True
             }
         )
-        
+
         # ENHANCED: Verify storage by reading back
         try:
             verification = await ctx.store.get(key)
             if verification is None:
                 logger.warning(f"[WARNING] Verification failed: {key} was stored but read back as None")
-                
+
                 # Log verification failure
                 audit_trail.log_error_recovery(
                     error_type="context_verification_failure",
@@ -221,7 +223,7 @@ async def safe_context_set(ctx: Context, key: str, value):
                 logger.debug(f"[CTX] Storage verification successful for {key}")
         except Exception as verify_error:
             logger.warning(f"[WARNING] Storage verification failed for {key}: {verify_error}")
-            
+
             # Log verification error
             audit_trail.log_error_recovery(
                 error_type="context_verification_error",
@@ -236,11 +238,11 @@ async def safe_context_set(ctx: Context, key: str, value):
                 recovery_success=True,
                 workflow_step="context_management"
             )
-        
+
         return True
     except Exception as e:
         logger.error(f"[CRITICAL] Context storage failed for key {key}: {e}")
-        
+
         # Log critical context storage failure
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()
@@ -263,7 +265,7 @@ async def safe_context_set(ctx: Context, key: str, value):
                 "error_transparency": "complete"
             }
         )
-        
+
         # NO FALLBACKS - fail explicitly for regulatory compliance
         raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
@@ -391,7 +393,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # Initialize 21 CFR Part 11 compliance systems
         if enable_part11_compliance:
             self.rbac_system = get_rbac_system()
-            self.mfa_service = get_mfa_service()  
+            self.mfa_service = get_mfa_service()
             self.signature_service = get_signature_service()
             self.worm_storage = get_worm_storage()
             self.training_system = get_training_system()
@@ -431,18 +433,18 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if not self.enable_part11_compliance or not self.user_session_id:
             # Compliance disabled or no session - allow access
             return True
-        
+
         try:
             # Check permission using RBAC system
             has_permission = self.rbac_system.check_permission(
                 session_id=self.user_session_id,
                 permission=required_permission
             )
-            
+
             # Log access control event
-            from src.core.audit_trail import get_audit_trail, AuditEventType
+            from src.core.audit_trail import AuditEventType, get_audit_trail
             audit_trail = get_audit_trail()
-            
+
             audit_trail.log_part11_compliance_event(
                 compliance_event_type=AuditEventType.ACCESS_CONTROL_CHECK,
                 user_id=self.user_session_id,
@@ -456,12 +458,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "requirement": "limiting_system_access_to_authorized_individuals"
                 }
             )
-            
+
             if not has_permission:
                 self.logger.warning(f"[PART11] Access denied for permission: {required_permission}")
-                
+
             return has_permission
-            
+
         except Exception as e:
             self.logger.error(f"[PART11] Access control check failed: {e}")
             # NO FALLBACKS - access control failure must be explicit
@@ -486,11 +488,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # Check user access permission for test generation
         if not self._check_user_access("CREATE_TESTS"):
             raise PermissionError("Access denied: User lacks CREATE_TESTS permission for workflow execution")
-        
+
         # Initialize comprehensive audit trail for workflow state transitions
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()
-        
+
         self.logger.info("[WORKFLOW] Starting unified test generation workflow")
 
         # Log workflow initiation state transition
@@ -538,20 +540,20 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         # OWASP Security Validation - Critical first step
         logger.info(f"[{self._workflow_session_id}] Running OWASP security validation on URS content")
-        
+
         try:
             from src.security import PharmaceuticalInputSecurityWrapper
-            
+
             # Initialize security validator
             security_validator = PharmaceuticalInputSecurityWrapper()
-            
+
             # Validate URS content for security threats
             validation_result = security_validator.validate_urs_content(
                 urs_content=urs_content,
                 document_name=doc_path.name,
                 author="system"
             )
-            
+
             # CRITICAL: Fail explicitly if security validation fails
             if not validation_result.is_valid:
                 error_msg = (
@@ -565,14 +567,14 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 )
                 logger.error(f"[{self._workflow_session_id}] {error_msg}")
                 raise RuntimeError(error_msg)
-            
+
             # Log successful security validation
             logger.info(
                 f"[{self._workflow_session_id}] OWASP security validation PASSED: "
                 f"threat_level={validation_result.threat_level}, "
                 f"confidence={validation_result.confidence_score:.3f}"
             )
-            
+
             # Prepare security metadata for event
             security_metadata = {
                 "validation_id": str(validation_result.validation_id),
@@ -583,7 +585,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "processing_time_ms": validation_result.processing_time_ms,
                 "is_valid": validation_result.is_valid
             }
-            
+
         except ImportError as e:
             error_msg = (
                 f"OWASP security framework import failed: {e}\n"
@@ -664,7 +666,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # Initialize comprehensive audit trail for state transitions
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()
-        
+
         self.logger.info(f"[GAMP5] Starting GAMP-5 categorization for {ev.document_name}")
 
         # Log state transition to categorization
@@ -881,16 +883,16 @@ class UnifiedTestGenerationWorkflow(Workflow):
         try:
             # Import asyncio for timeout protection
             import asyncio
-            
+
             # Dynamic timeout configuration based on agent type and operation
             timeout_mapping = {
                 "research": 300.0,           # 5 minutes for regulatory APIs (FDA can take 14+ seconds)
                 "sme": 120.0,               # 2 minutes for LLM calls
                 "context_provider": 60.0,   # 1 minute for document processing
             }
-            
+
             agent_timeout = timeout_mapping.get(ev.agent_type.lower(), 60.0)  # Default 1 minute
-            
+
             # Execute actual agents based on type with timeout protection
             if ev.agent_type.lower() == "context_provider":
                 # Use the actual context provider agent
@@ -910,8 +912,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         agent.process_request(ev),
                         timeout=agent_timeout
                     )
-                except asyncio.TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout", 
+                except TimeoutError:
+                    self.tracer.log_error(f"{ev.agent_type}_timeout",
                                         Exception(f"Agent execution timed out after {agent_timeout}s"))
                     self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
@@ -945,8 +947,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         agent.process_request(ev),
                         timeout=agent_timeout
                     )
-                except asyncio.TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout", 
+                except TimeoutError:
+                    self.tracer.log_error(f"{ev.agent_type}_timeout",
                                         Exception(f"Agent execution timed out after {agent_timeout}s"))
                     self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
@@ -980,8 +982,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         agent.process_request(ev),
                         timeout=agent_timeout
                     )
-                except asyncio.TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout", 
+                except TimeoutError:
+                    self.tracer.log_error(f"{ev.agent_type}_timeout",
                                         Exception(f"Agent execution timed out after {agent_timeout}s"))
                     self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
                     return AgentResultEvent(
@@ -1135,19 +1137,19 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 required_expertise=["validation_engineer", "quality_assurance"],
                 triggering_step="check_consultation_required"
             )
-            
+
             # Check if we should bypass consultation due to validation mode
             should_bypass = (
-                validation_mode_enabled and 
+                validation_mode_enabled and
                 ev.gamp_category.value in bypass_allowed_categories
             )
-            
+
             if should_bypass:
                 self.logger.info(
                     f"[VALIDATION MODE] Bypassing consultation for Category {ev.gamp_category.value} "
                     f"(confidence: {ev.confidence_score:.2f}) - validation mode active"
                 )
-                
+
                 # Create bypass event for audit trail
                 bypass_event = ConsultationBypassedEvent(
                     original_consultation=consultation_event,
@@ -1159,24 +1161,23 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "validation_mode_active": True
                     }
                 )
-                
+
                 # Log bypass for audit trail
                 self.logger.warning(
                     f"AUDIT TRAIL: Consultation bypassed for {consultation_event.consultation_id} "
                     f"due to validation mode. Original consultation: {consultation_event.consultation_type}"
                 )
-                
+
                 # Store categorization event in bypass event for downstream processing
                 bypass_event.original_consultation.categorization_event = ev
-                
+
                 # Return bypass event - it will be consumed by handle_consultation_bypassed step
                 return bypass_event
-            else:
-                # Production mode or category not allowed for bypass - require consultation
-                self.logger.info("[CONSULT] Human consultation required - production mode or bypass not allowed")
-                consultation_event.categorization_event = ev  # Add as dynamic attribute
-                return consultation_event
-        
+            # Production mode or category not allowed for bypass - require consultation
+            self.logger.info("[CONSULT] Human consultation required - production mode or bypass not allowed")
+            consultation_event.categorization_event = ev  # Add as dynamic attribute
+            return consultation_event
+
         # No consultation needed - create planning event directly
         self.logger.info("No consultation required - creating planning event")
         return self._create_planning_event_from_categorization(ev)
@@ -1201,7 +1202,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             PlanningEvent to continue workflow execution
         """
         self.logger.info(f"[VALIDATION MODE] Processing consultation bypass: {ev.consultation_id}")
-        
+
         # Log bypass metrics for audit trail
         bypass_metrics = {
             "consultation_type": ev.consultation_type,
@@ -1210,13 +1211,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
             "bypass_timestamp": ev.bypass_timestamp,
             "bypass_reason": ev.bypass_reason
         }
-        
+
         # Store bypass information in context for audit trail
         await safe_context_set(ctx, "consultation_bypassed", True)
         await safe_context_set(ctx, "bypass_metrics", bypass_metrics)
-        
+
         # Get the original categorization from the bypass event context
-        if ev.original_consultation and hasattr(ev.original_consultation, 'categorization_event'):
+        if ev.original_consultation and hasattr(ev.original_consultation, "categorization_event"):
             categorization_event = ev.original_consultation.categorization_event
         else:
             # Reconstruct from bypass event data
@@ -1228,11 +1229,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 risk_assessment={"bypassed_consultation": True},
                 categorized_by="validation_mode_bypass"
             )
-        
+
         # Create planning event to continue workflow
         planning_event = self._create_planning_event_from_categorization(categorization_event)
-        
-        self.logger.info(f"[VALIDATION MODE] Consultation bypass processed - continuing with planning")
+
+        self.logger.info("[VALIDATION MODE] Consultation bypass processed - continuing with planning")
         return planning_event
 
     def _create_planning_event_from_categorization(self, categorization_event: GAMPCategorizationEvent) -> PlanningEvent:
@@ -1422,30 +1423,30 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 self.logger.warning(
                     f"OQ generation returned consultation request: {oq_result.consultation_type}"
                 )
-                
+
                 # Extract error details
                 error_context = oq_result.context
-                error_type = error_context.get('consultation_type', 'unknown') if error_context else 'unknown'
-                
+                error_type = error_context.get("consultation_type", "unknown") if error_context else "unknown"
+
                 # Re-raise with proper context
                 raise RuntimeError(
                     f"OQ generation requires consultation: {error_type}",
                     {"consultation_event": oq_result, "context": error_context}
                 )
-            
+
             # Handle OQTestSuiteEvent directly
             if isinstance(oq_result, OQTestSuiteEvent):
                 self.logger.info(
                     f"[OQ] Generated {oq_result.test_suite.total_test_count} OQ tests successfully"
                 )
                 return oq_result
-            
+
             # Handle dictionary result (legacy format)
             if hasattr(oq_result, "result"):
                 oq_data = oq_result.result
             else:
                 oq_data = oq_result
-                
+
             # Process dictionary result
             if isinstance(oq_data, dict):
                 if oq_data.get("status") == "completed_successfully":
@@ -1455,13 +1456,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
                             f"[OQ] Generated {oq_event.test_suite.total_test_count} OQ tests successfully"
                         )
                         return oq_event
-                
+
                 # Handle consultation in dictionary format
                 consultation = oq_data.get("consultation", {})
                 raise RuntimeError(
                     f"OQ generation failed: {consultation.get('consultation_type', 'unknown')}"
                 )
-            
+
             # Unexpected result type
             raise ValueError(
                 f"Unexpected OQ workflow result type: {type(oq_result)}"
@@ -1524,7 +1525,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "agents_coordinated": len(agent_results),
                 "coordination_success_rate": (len([r for r in agent_results if r.success]) / len(agent_results)) if agent_results else 0.0
             },
-            
+
             # Detailed workflow metadata
             "workflow_metadata": {
                 "session_id": self._workflow_session_id,
@@ -1534,10 +1535,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "total_processing_time": total_time.total_seconds() if total_time else None,
                 "phoenix_enabled": self.enable_phoenix
             },
-            
+
             # Top-level status for backward compatibility
             "status": status,
-            
+
             # Categorization results
             "categorization": {
                 "category": categorization_result.gamp_category.value if categorization_result else None,
@@ -1546,24 +1547,24 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "confidence_score": categorization_result.confidence_score if categorization_result else 0.0,
                 "review_required": categorization_result.review_required if categorization_result else False
             } if categorization_result else None,
-            
+
             # Planning results
             "planning": {
                 "estimated_test_count": planning_event.estimated_test_count if planning_event else 0,
                 "test_strategy": planning_event.test_strategy if planning_event else None,
                 "agent_requests_processed": len(agent_results)
             } if planning_event else None,
-            
+
             # Agent coordination results
             "agent_coordination": {
                 "total_agents": len(agent_results),
                 "successful_agents": len([r for r in agent_results if r.success]),
                 "failed_agents": len([r for r in agent_results if not r.success])
             },
-            
+
             # OQ generation results
             "oq_generation": oq_results,
-            
+
             # Additional workflow results
             "workflow_results": ev.workflow_results if hasattr(ev, "workflow_results") else None
         }
@@ -1576,23 +1577,23 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # if self.enable_phoenix:
         #     try:
         #         self.logger.info("🔍 Running enhanced Phoenix observability analysis...")
-        #         
+        #
         #         # Initialize enhanced observability components
         #         phoenix_client = PhoenixEnhancedClient()
         #         analyzer = AutomatedTraceAnalyzer(phoenix_client)
-        #         
+        #
         #         # Query recent traces for this workflow session
         #         traces = await phoenix_client.query_workflow_traces(
         #             workflow_type="UnifiedTestGenerationWorkflow",
         #             hours=1  # Fixed parameter name
         #         )
-        #         
+        #
         #         # Analyze traces for compliance violations
         #         violations = await analyzer.analyze_compliance_violations(hours=24)
-        #         
+        #
         #         # Generate compliance dashboard
         #         dashboard_path = await analyzer.generate_compliance_dashboard(hours=24)
-        #         
+        #
         #         # Add enhanced observability results to final results
         #         final_results["enhanced_observability"] = {
         #             "traces_analyzed": len(traces),
@@ -1601,7 +1602,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         #             "critical_violations": len([v for v in violations if v.severity == "CRITICAL"]),
         #             "regulatory_status": "COMPLIANT" if len(violations) == 0 else "NON_COMPLIANT"
         #         }
-        #         
+        #
         #         if violations:
         #             self.logger.warning(f"⚠️ Found {len(violations)} compliance violations")
         #             final_results["enhanced_observability"]["violations"] = [
@@ -1613,9 +1614,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
         #             ]
         #         else:
         #             self.logger.info("✅ No compliance violations detected")
-        #             
+        #
         #         self.logger.info(f"📊 Compliance dashboard generated: {dashboard_path}")
-        #         
+        #
         #     except Exception as e:
         #         self.logger.error(f"Enhanced observability analysis failed: {e}")
         #         final_results["enhanced_observability"] = {
@@ -1668,8 +1669,8 @@ async def run_unified_test_generation_workflow(
     if validation_mode:
         original_validation_mode = config.validation_mode.validation_mode
         config.validation_mode.validation_mode = True
-        logger.warning(f"VALIDATION MODE ENABLED: Consultations will be bypassed for testing")
-    
+        logger.warning("VALIDATION MODE ENABLED: Consultations will be bypassed for testing")
+
     try:
         # Create workflow instance
         workflow = UnifiedTestGenerationWorkflow(

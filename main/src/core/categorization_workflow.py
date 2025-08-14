@@ -296,13 +296,13 @@ class GAMPCategorizationWorkflow(Workflow):
         # Initialize comprehensive audit trail for data transformation tracking
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()
-        
+
         # Capture input data transformation
         input_data = {
             "event_type": type(ev).__name__,
-            "urs_content": ev.urs_content if hasattr(ev, 'urs_content') else None,
-            "document_name": getattr(ev, 'document_name', 'unknown'),
-            "content_length": len(ev.urs_content) if hasattr(ev, 'urs_content') and ev.urs_content else 0,
+            "urs_content": ev.urs_content if hasattr(ev, "urs_content") else None,
+            "document_name": getattr(ev, "document_name", "unknown"),
+            "content_length": len(ev.urs_content) if hasattr(ev, "urs_content") and ev.urs_content else 0,
             "input_timestamp": datetime.now(UTC).isoformat()
         }
         # Store event in context
@@ -321,15 +321,15 @@ class GAMPCategorizationWorkflow(Workflow):
             document_name = ev.document_name
             author = ev.author
             self.logger.info(f"Categorizing raw document: {document_name}")
-        
+
         # Validate URS content is not empty
         if not urs_content or not urs_content.strip():
             self.logger.error(f"Empty URS content for document: {document_name}")
             # Log the event details for debugging
             self.logger.error(f"Event type: {type(ev).__name__}")
-            if hasattr(ev, 'urs_content'):
+            if hasattr(ev, "urs_content"):
                 self.logger.error(f"Event urs_content length: {len(ev.urs_content) if ev.urs_content else 0}")
-            
+
             # Return error recovery event with Category 5 fallback
             return ErrorRecoveryEvent(
                 error_type="empty_content",
@@ -337,7 +337,7 @@ class GAMPCategorizationWorkflow(Workflow):
                 recovery_strategy="default_to_category_5",
                 context={"document_name": document_name}
             )
-        
+
         self.logger.info(f"URS content length: {len(urs_content)} characters")
 
         # Attempt categorization with retries

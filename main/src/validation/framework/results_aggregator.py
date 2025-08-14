@@ -16,17 +16,17 @@ CRITICAL REQUIREMENTS:
 """
 
 import json
-import statistics
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
 import logging
+import statistics
 from collections import defaultdict
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 try:
     import numpy as np
-    import scipy.stats as stats
+    from scipy import stats
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -34,8 +34,8 @@ except ImportError:
 # Import statistical analysis components
 try:
     from ..statistical.pipeline import ValidationStatisticalPipeline
-    from ..statistical.thesis_validator import ThesisClaimsValidator
     from ..statistical.report_generator import StatisticalReportGenerator
+    from ..statistical.thesis_validator import ThesisClaimsValidator
     STATISTICAL_PIPELINE_AVAILABLE = True
 except ImportError:
     STATISTICAL_PIPELINE_AVAILABLE = False
@@ -49,7 +49,7 @@ class StatisticalSummary:
     std_dev: float
     min_value: float
     max_value: float
-    confidence_interval_95: Tuple[float, float]
+    confidence_interval_95: tuple[float, float]
     coefficient_of_variation: float
     sample_size: int
 
@@ -71,15 +71,15 @@ class CategoryPerformance:
 @dataclass
 class AggregatedResults:
     """Comprehensive aggregated results across all folds."""
-    execution_summary: Dict[str, Any]
-    performance_metrics: Dict[str, StatisticalSummary]
-    category_analysis: Dict[str, CategoryPerformance]
-    statistical_tests: Dict[str, Any]
-    trends_and_patterns: Dict[str, Any]
-    compliance_assessment: Dict[str, Any]
-    quality_indicators: Dict[str, Any]
-    recommendations: List[str]
-    confidence_assessment: Dict[str, Any]
+    execution_summary: dict[str, Any]
+    performance_metrics: dict[str, StatisticalSummary]
+    category_analysis: dict[str, CategoryPerformance]
+    statistical_tests: dict[str, Any]
+    trends_and_patterns: dict[str, Any]
+    compliance_assessment: dict[str, Any]
+    quality_indicators: dict[str, Any]
+    recommendations: list[str]
+    confidence_assessment: dict[str, Any]
 
 
 class ResultsAggregator:
@@ -94,7 +94,7 @@ class ResultsAggregator:
     - Quality assessment and recommendations
     - Performance consistency evaluation
     """
-    
+
     def __init__(self, validation_config):
         """
         Initialize the results aggregator.
@@ -104,12 +104,12 @@ class ResultsAggregator:
         """
         self.validation_config = validation_config
         self.logger = logging.getLogger(__name__)
-        
+
         # Statistical analysis configuration
         self.confidence_level = 0.95
         self.significance_level = 0.05
         self.trend_window = 3  # Number of folds for trend analysis
-        
+
         # Quality thresholds
         self.quality_thresholds = {
             "min_accuracy": 0.7,
@@ -118,11 +118,11 @@ class ResultsAggregator:
             "min_success_rate": 0.8,
             "min_consistency": 0.8
         }
-        
+
         # Results storage
         self.aggregated_results = None
         self.raw_fold_data = {}
-    
+
     async def initialize(self) -> None:
         """
         Initialize the results aggregator.
@@ -132,30 +132,30 @@ class ResultsAggregator:
         """
         try:
             self.logger.info("Initializing ResultsAggregator...")
-            
+
             # Create results directories
             results_dir = Path("logs/validation/results")
             reports_dir = Path("logs/validation/reports")
             statistical_dir = Path("logs/validation/statistical")
-            
+
             for directory in [results_dir, reports_dir, statistical_dir]:
                 directory.mkdir(parents=True, exist_ok=True)
-            
+
             # Log available statistical capabilities
             if SCIPY_AVAILABLE:
                 self.logger.info("SciPy available - advanced statistical analysis enabled")
             else:
                 self.logger.info("SciPy not available - using basic statistical analysis")
-            
+
             self.logger.info("Results aggregator initialized successfully")
-            
+
         except Exception as e:
             raise RuntimeError(f"Failed to initialize results aggregator: {e!s}")
-    
+
     async def aggregate_results(
-        self, 
-        fold_results: Dict[str, Any], 
-        comprehensive_metrics: Dict[str, Any]
+        self,
+        fold_results: dict[str, Any],
+        comprehensive_metrics: dict[str, Any]
     ) -> AggregatedResults:
         """
         Aggregate results across all folds with comprehensive analysis.
@@ -172,16 +172,16 @@ class ResultsAggregator:
         """
         try:
             self.logger.info("Aggregating cross-validation results...")
-            
+
             # Store raw data for analysis
             self.raw_fold_data = fold_results
-            
+
             # Extract successful fold data for analysis
             successful_folds = {k: v for k, v in fold_results.items() if v.get("success", False)}
-            
+
             if not successful_folds:
                 raise RuntimeError("No successful folds to aggregate")
-            
+
             # Perform comprehensive analysis
             execution_summary = self._create_execution_summary(fold_results, comprehensive_metrics)
             performance_metrics = await self._analyze_performance_metrics(successful_folds)
@@ -194,7 +194,7 @@ class ResultsAggregator:
             recommendations = await self._generate_comprehensive_recommendations(
                 performance_metrics, category_analysis, quality_indicators, compliance_assessment
             )
-            
+
             # Create aggregated results
             self.aggregated_results = AggregatedResults(
                 execution_summary=execution_summary,
@@ -207,23 +207,23 @@ class ResultsAggregator:
                 recommendations=recommendations,
                 confidence_assessment=confidence_assessment
             )
-            
+
             self.logger.info(f"Results aggregated for {len(successful_folds)} successful folds")
-            
+
             return self.aggregated_results
-            
+
         except Exception as e:
             self.logger.error(f"Failed to aggregate results: {e!s}")
             raise RuntimeError(f"Results aggregation failed: {e!s}")
-    
+
     def _create_execution_summary(
-        self, 
-        fold_results: Dict[str, Any], 
-        comprehensive_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self,
+        fold_results: dict[str, Any],
+        comprehensive_metrics: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create execution summary with key statistics."""
         execution_summary = comprehensive_metrics.get("execution_summary", {})
-        
+
         # Add detailed fold breakdown
         fold_breakdown = {}
         for fold_key, fold_result in fold_results.items():
@@ -234,7 +234,7 @@ class ResultsAggregator:
                 "processing_time": fold_result.get("processing_time", 0.0),
                 "parallel_efficiency": fold_result.get("parallel_efficiency", 0.0)
             }
-        
+
         execution_summary.update({
             "fold_breakdown": fold_breakdown,
             "overall_document_success_rate": sum(
@@ -248,13 +248,13 @@ class ResultsAggregator:
                 if fold_result.get("success", False)
             ]) if any(fold_result.get("success", False) for fold_result in fold_results.values()) else 0.0
         })
-        
+
         return execution_summary
-    
-    async def _analyze_performance_metrics(self, successful_folds: Dict[str, Any]) -> Dict[str, StatisticalSummary]:
+
+    async def _analyze_performance_metrics(self, successful_folds: dict[str, Any]) -> dict[str, StatisticalSummary]:
         """Analyze performance metrics with statistical summaries."""
         performance_metrics = {}
-        
+
         # Extract metrics from successful folds
         metrics_data = {
             "success_rate": [],
@@ -263,14 +263,14 @@ class ResultsAggregator:
             "categorization_accuracy": [],
             "tests_per_document": []
         }
-        
+
         for fold_result in successful_folds.values():
             metrics_data["success_rate"].append(
                 fold_result.get("successful_documents", 0) / max(fold_result.get("total_documents", 1), 1)
             )
             metrics_data["processing_time"].append(fold_result.get("processing_time", 0.0))
             metrics_data["parallel_efficiency"].append(fold_result.get("parallel_efficiency", 0.0))
-            
+
             # Extract from nested metrics if available
             if "metrics" in fold_result:
                 fold_metrics = fold_result["metrics"]
@@ -283,35 +283,35 @@ class ResultsAggregator:
             else:
                 metrics_data["categorization_accuracy"].append(0.0)
                 metrics_data["tests_per_document"].append(0.0)
-        
+
         # Calculate statistical summaries for each metric
         for metric_name, values in metrics_data.items():
             if values and any(v > 0 for v in values):  # Skip empty or all-zero metrics
                 performance_metrics[metric_name] = self._calculate_statistical_summary(values)
-        
+
         return performance_metrics
-    
-    def _calculate_statistical_summary(self, values: List[float]) -> StatisticalSummary:
+
+    def _calculate_statistical_summary(self, values: list[float]) -> StatisticalSummary:
         """Calculate comprehensive statistical summary for a list of values."""
         if not values:
             return StatisticalSummary(0, 0, 0, 0, 0, (0, 0), 0, 0)
-        
+
         # Basic statistics
         mean_val = statistics.mean(values)
         median_val = statistics.median(values)
         min_val = min(values)
         max_val = max(values)
         sample_size = len(values)
-        
+
         # Standard deviation
         std_dev = statistics.stdev(values) if len(values) > 1 else 0.0
-        
+
         # Coefficient of variation
         cv = (std_dev / mean_val) if mean_val != 0 else 0.0
-        
+
         # Confidence interval
         confidence_interval = self._calculate_confidence_interval(values)
-        
+
         return StatisticalSummary(
             mean=mean_val,
             median=median_val,
@@ -322,33 +322,32 @@ class ResultsAggregator:
             coefficient_of_variation=cv,
             sample_size=sample_size
         )
-    
-    def _calculate_confidence_interval(self, values: List[float]) -> Tuple[float, float]:
+
+    def _calculate_confidence_interval(self, values: list[float]) -> tuple[float, float]:
         """Calculate confidence interval for values."""
         if len(values) < 2:
             mean_val = values[0] if values else 0.0
             return (mean_val, mean_val)
-        
+
         if SCIPY_AVAILABLE:
             # Use scipy for precise confidence intervals
             mean_val = np.mean(values)
             sem = stats.sem(values)
             ci = stats.t.interval(
-                self.confidence_level, 
-                len(values) - 1, 
-                loc=mean_val, 
+                self.confidence_level,
+                len(values) - 1,
+                loc=mean_val,
                 scale=sem
             )
             return ci
-        else:
-            # Basic confidence interval calculation
-            mean_val = statistics.mean(values)
-            std_dev = statistics.stdev(values)
-            n = len(values)
-            margin = 1.96 * (std_dev / (n ** 0.5))  # Approximate 95% CI
-            return (mean_val - margin, mean_val + margin)
-    
-    async def _analyze_category_performance(self, successful_folds: Dict[str, Any]) -> Dict[str, CategoryPerformance]:
+        # Basic confidence interval calculation
+        mean_val = statistics.mean(values)
+        std_dev = statistics.stdev(values)
+        n = len(values)
+        margin = 1.96 * (std_dev / (n ** 0.5))  # Approximate 95% CI
+        return (mean_val - margin, mean_val + margin)
+
+    async def _analyze_category_performance(self, successful_folds: dict[str, Any]) -> dict[str, CategoryPerformance]:
         """Analyze performance by GAMP category."""
         category_data = defaultdict(lambda: {
             "documents": [],
@@ -357,22 +356,22 @@ class ResultsAggregator:
             "tests_per_doc": [],
             "fold_performances": []
         })
-        
+
         # Collect category data across folds
         for fold_num, fold_result in enumerate(successful_folds.values(), 1):
             categorization_results = fold_result.get("categorization_results", {})
             category_distribution = categorization_results.get("category_distribution", {})
-            
+
             for category, count in category_distribution.items():
                 category_data[category]["documents"].append(count)
                 category_data[category]["fold_performances"].append(fold_num)
-                
+
                 # Extract category-specific metrics (simplified for now)
                 # In a real implementation, this would extract detailed category metrics
                 category_data[category]["accuracies"].append(0.8)  # Placeholder
                 category_data[category]["confidences"].append(0.75)  # Placeholder
                 category_data[category]["tests_per_doc"].append(5.0)  # Placeholder
-        
+
         # Analyze each category
         category_analysis = {}
         for category, data in category_data.items():
@@ -383,13 +382,13 @@ class ResultsAggregator:
                 confidence_mean = statistics.mean(data["confidences"]) if data["confidences"] else 0.0
                 confidence_std = statistics.stdev(data["confidences"]) if len(data["confidences"]) > 1 else 0.0
                 tests_mean = statistics.mean(data["tests_per_doc"]) if data["tests_per_doc"] else 0.0
-                
+
                 # Calculate fold consistency
                 fold_consistency = self._calculate_fold_consistency(data["accuracies"])
-                
+
                 # Determine performance trend
                 performance_trend = self._analyze_performance_trend(data["fold_performances"], data["accuracies"])
-                
+
                 category_analysis[category] = CategoryPerformance(
                     category=category,
                     total_documents=total_docs,
@@ -401,71 +400,67 @@ class ResultsAggregator:
                     fold_consistency=fold_consistency,
                     performance_trend=performance_trend
                 )
-        
+
         return category_analysis
-    
-    def _calculate_fold_consistency(self, values: List[float]) -> float:
+
+    def _calculate_fold_consistency(self, values: list[float]) -> float:
         """Calculate consistency across folds (1.0 - coefficient of variation)."""
         if not values or len(values) < 2:
             return 1.0
-        
+
         mean_val = statistics.mean(values)
         if mean_val == 0:
             return 1.0
-        
+
         std_val = statistics.stdev(values)
         cv = std_val / mean_val
-        
+
         # Return consistency (inverse of variation)
         return max(0.0, 1.0 - cv)
-    
-    def _analyze_performance_trend(self, fold_numbers: List[int], performance_values: List[float]) -> str:
+
+    def _analyze_performance_trend(self, fold_numbers: list[int], performance_values: list[float]) -> str:
         """Analyze performance trend across folds."""
         if len(performance_values) < 3:
             return "insufficient_data"
-        
+
         # Simple trend analysis using linear correlation
         if SCIPY_AVAILABLE:
             correlation, p_value = stats.pearsonr(fold_numbers, performance_values)
-            
+
             if p_value < self.significance_level:
                 if correlation > 0.3:
                     return "improving"
-                elif correlation < -0.3:
+                if correlation < -0.3:
                     return "declining"
-                else:
-                    return "stable"
-            else:
                 return "stable"
-        else:
-            # Basic trend analysis
-            early_avg = statistics.mean(performance_values[:len(performance_values)//2])
-            late_avg = statistics.mean(performance_values[len(performance_values)//2:])
-            
-            if late_avg > early_avg * 1.1:
-                return "improving"
-            elif late_avg < early_avg * 0.9:
-                return "declining"
-            else:
-                return "stable"
-    
-    async def _perform_statistical_tests(self, successful_folds: Dict[str, Any]) -> Dict[str, Any]:
+            return "stable"
+        # Basic trend analysis
+        early_avg = statistics.mean(performance_values[:len(performance_values)//2])
+        late_avg = statistics.mean(performance_values[len(performance_values)//2:])
+
+        if late_avg > early_avg * 1.1:
+            return "improving"
+        if late_avg < early_avg * 0.9:
+            return "declining"
+        return "stable"
+
+    async def _perform_statistical_tests(self, successful_folds: dict[str, Any]) -> dict[str, Any]:
         """Perform statistical tests on fold results."""
         statistical_tests = {}
-        
+
         if not SCIPY_AVAILABLE:
             statistical_tests["note"] = "Advanced statistical tests require SciPy"
             return statistical_tests
-        
+
         # Extract performance metrics for testing
         success_rates = []
         processing_times = []
-        
+
         for fold_result in successful_folds.values():
             success_rate = fold_result.get("successful_documents", 0) / max(fold_result.get("total_documents", 1), 1)
             success_rates.append(success_rate)
             processing_times.append(fold_result.get("processing_time", 0.0))
-        
+
         # Normality tests
         if len(success_rates) >= 3:
             shapiro_stat, shapiro_p = stats.shapiro(success_rates)
@@ -475,7 +470,7 @@ class ResultsAggregator:
                 "p_value": float(shapiro_p),
                 "is_normal": shapiro_p > self.significance_level
             }
-        
+
         # One-sample t-test against expected performance
         expected_success_rate = self.quality_thresholds["min_success_rate"]
         if len(success_rates) >= 2:
@@ -488,7 +483,7 @@ class ResultsAggregator:
                 "significantly_different": t_p < self.significance_level,
                 "performance_assessment": "above_expected" if t_stat > 0 else "below_expected"
             }
-        
+
         # Consistency test (coefficient of variation test)
         cv_success_rates = statistics.stdev(success_rates) / statistics.mean(success_rates) if success_rates and statistics.mean(success_rates) > 0 else 0
         statistical_tests["consistency_assessment"] = {
@@ -496,19 +491,19 @@ class ResultsAggregator:
             "consistency_rating": "high" if cv_success_rates < 0.1 else "medium" if cv_success_rates < 0.2 else "low",
             "meets_consistency_threshold": cv_success_rates <= self.quality_thresholds["max_cv"]
         }
-        
+
         return statistical_tests
-    
-    async def _analyze_trends_and_patterns(self, successful_folds: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def _analyze_trends_and_patterns(self, successful_folds: dict[str, Any]) -> dict[str, Any]:
         """Analyze trends and patterns across folds."""
         trends_patterns = {}
-        
+
         # Extract time-series data
         fold_numbers = []
         success_rates = []
         processing_times = []
         parallel_efficiencies = []
-        
+
         for i, (fold_key, fold_result) in enumerate(successful_folds.items(), 1):
             fold_numbers.append(i)
             success_rates.append(
@@ -516,34 +511,34 @@ class ResultsAggregator:
             )
             processing_times.append(fold_result.get("processing_time", 0.0))
             parallel_efficiencies.append(fold_result.get("parallel_efficiency", 0.0))
-        
+
         # Performance trends
         trends_patterns["performance_trends"] = {
             "success_rate_trend": self._analyze_performance_trend(fold_numbers, success_rates),
             "processing_time_trend": self._analyze_performance_trend(fold_numbers, processing_times),
             "efficiency_trend": self._analyze_performance_trend(fold_numbers, parallel_efficiencies)
         }
-        
+
         # Pattern detection
         trends_patterns["patterns"] = {
             "performance_stability": self._assess_performance_stability(success_rates),
             "processing_consistency": self._assess_performance_stability(processing_times),
             "efficiency_consistency": self._assess_performance_stability(parallel_efficiencies)
         }
-        
+
         # Learning curve analysis
         if len(success_rates) >= 3:
             trends_patterns["learning_curve"] = self._analyze_learning_curve(fold_numbers, success_rates)
-        
+
         return trends_patterns
-    
-    def _assess_performance_stability(self, values: List[float]) -> Dict[str, Any]:
+
+    def _assess_performance_stability(self, values: list[float]) -> dict[str, Any]:
         """Assess stability of performance metric."""
         if not values or len(values) < 2:
             return {"stability": "unknown", "reason": "insufficient_data"}
-        
-        cv = statistics.stdev(values) / statistics.mean(values) if statistics.mean(values) > 0 else float('inf')
-        
+
+        cv = statistics.stdev(values) / statistics.mean(values) if statistics.mean(values) > 0 else float("inf")
+
         if cv < 0.05:
             stability = "very_stable"
         elif cv < 0.1:
@@ -552,32 +547,32 @@ class ResultsAggregator:
             stability = "moderately_stable"
         else:
             stability = "unstable"
-        
+
         return {
             "stability": stability,
             "coefficient_of_variation": cv,
             "mean": statistics.mean(values),
             "std_dev": statistics.stdev(values)
         }
-    
-    def _analyze_learning_curve(self, fold_numbers: List[int], performance_values: List[float]) -> Dict[str, Any]:
+
+    def _analyze_learning_curve(self, fold_numbers: list[int], performance_values: list[float]) -> dict[str, Any]:
         """Analyze learning curve characteristics."""
         if len(performance_values) < 3:
             return {"curve_type": "insufficient_data"}
-        
+
         # Simple learning curve analysis
         early_performance = statistics.mean(performance_values[:2])
         late_performance = statistics.mean(performance_values[-2:])
-        
+
         improvement = (late_performance - early_performance) / early_performance if early_performance > 0 else 0
-        
+
         if improvement > 0.1:
             curve_type = "improving"
         elif improvement < -0.1:
             curve_type = "declining"
         else:
             curve_type = "stable"
-        
+
         return {
             "curve_type": curve_type,
             "early_performance": early_performance,
@@ -585,11 +580,11 @@ class ResultsAggregator:
             "relative_improvement": improvement,
             "learning_detected": abs(improvement) > 0.05
         }
-    
-    async def _assess_compliance(self, successful_folds: Dict[str, Any], comprehensive_metrics: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def _assess_compliance(self, successful_folds: dict[str, Any], comprehensive_metrics: dict[str, Any]) -> dict[str, Any]:
         """Assess compliance with pharmaceutical standards."""
         compliance_assessment = {}
-        
+
         # GAMP-5 compliance assessment
         gamp5_compliance = {
             "category_coverage_adequate": True,  # Would be calculated from actual data
@@ -597,7 +592,7 @@ class ResultsAggregator:
             "audit_trail_complete": True,
             "data_integrity_maintained": True
         }
-        
+
         # ALCOA+ principles assessment
         alcoa_plus_compliance = {
             "attributable": True,
@@ -610,7 +605,7 @@ class ResultsAggregator:
             "enduring": True,  # Data persistence verified
             "available": True   # Results accessible
         }
-        
+
         # 21 CFR Part 11 compliance
         cfr_part_11_compliance = {
             "electronic_records_validated": True,
@@ -619,7 +614,7 @@ class ResultsAggregator:
             "system_access_controlled": True,
             "data_backup_verified": True
         }
-        
+
         # Overall compliance score
         all_checks = [
             *gamp5_compliance.values(),
@@ -627,7 +622,7 @@ class ResultsAggregator:
             *cfr_part_11_compliance.values()
         ]
         compliance_score = sum(all_checks) / len(all_checks)
-        
+
         compliance_assessment = {
             "overall_compliance_score": compliance_score,
             "gamp5_compliance": gamp5_compliance,
@@ -636,38 +631,38 @@ class ResultsAggregator:
             "compliance_issues": [],  # Would be populated with actual issues
             "recommendations": []  # Would be populated with compliance recommendations
         }
-        
+
         return compliance_assessment
-    
-    async def _calculate_quality_indicators(self, successful_folds: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def _calculate_quality_indicators(self, successful_folds: dict[str, Any]) -> dict[str, Any]:
         """Calculate comprehensive quality indicators."""
         quality_indicators = {}
-        
+
         # Extract quality metrics
         success_rates = []
         accuracies = []
         consistencies = []
-        
+
         for fold_result in successful_folds.values():
             success_rate = fold_result.get("successful_documents", 0) / max(fold_result.get("total_documents", 1), 1)
             success_rates.append(success_rate)
-            
+
             # Extract accuracy if available
             if "metrics" in fold_result:
                 accuracies.append(fold_result["metrics"].get("categorization_accuracy", 0.0))
-            
+
         # Calculate quality scores
         avg_success_rate = statistics.mean(success_rates) if success_rates else 0.0
         avg_accuracy = statistics.mean(accuracies) if accuracies else 0.0
         consistency_score = self._calculate_fold_consistency(success_rates)
-        
+
         # Overall quality score (weighted combination)
         quality_score = (
             avg_success_rate * 0.4 +
             avg_accuracy * 0.3 +
             consistency_score * 0.3
         )
-        
+
         quality_indicators = {
             "overall_quality_score": quality_score,
             "quality_grade": self._assign_quality_grade(quality_score),
@@ -682,23 +677,22 @@ class ResultsAggregator:
                 "robustness": 1.0 - (statistics.stdev(success_rates) if len(success_rates) > 1 else 0.0)
             }
         }
-        
+
         return quality_indicators
-    
+
     def _assign_quality_grade(self, quality_score: float) -> str:
         """Assign quality grade based on score."""
         if quality_score >= 0.9:
             return "A"
-        elif quality_score >= 0.8:
-            return "B" 
-        elif quality_score >= 0.7:
+        if quality_score >= 0.8:
+            return "B"
+        if quality_score >= 0.7:
             return "C"
-        elif quality_score >= 0.6:
+        if quality_score >= 0.6:
             return "D"
-        else:
-            return "F"
-    
-    def _assess_metric_quality(self, value: float, threshold: float) -> Dict[str, Any]:
+        return "F"
+
+    def _assess_metric_quality(self, value: float, threshold: float) -> dict[str, Any]:
         """Assess quality of a specific metric."""
         if value >= threshold:
             if value >= threshold * 1.2:
@@ -707,12 +701,11 @@ class ResultsAggregator:
                 quality = "good"
             else:
                 quality = "acceptable"
+        elif value >= threshold * 0.9:
+            quality = "marginal"
         else:
-            if value >= threshold * 0.9:
-                quality = "marginal"
-            else:
-                quality = "poor"
-        
+            quality = "poor"
+
         return {
             "quality": quality,
             "value": value,
@@ -720,24 +713,24 @@ class ResultsAggregator:
             "meets_threshold": value >= threshold,
             "margin": value - threshold
         }
-    
-    async def _assess_confidence_levels(self, successful_folds: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def _assess_confidence_levels(self, successful_folds: dict[str, Any]) -> dict[str, Any]:
         """Assess confidence levels in results."""
         confidence_assessment = {}
-        
+
         # Statistical confidence
         n_folds = len(successful_folds)
         statistical_confidence = "high" if n_folds >= 4 else "medium" if n_folds >= 3 else "low"
-        
+
         # Result consistency confidence
         success_rates = [
             fold_result.get("successful_documents", 0) / max(fold_result.get("total_documents", 1), 1)
             for fold_result in successful_folds.values()
         ]
-        
+
         consistency_cv = statistics.stdev(success_rates) / statistics.mean(success_rates) if success_rates and statistics.mean(success_rates) > 0 else 1.0
         consistency_confidence = "high" if consistency_cv < 0.1 else "medium" if consistency_cv < 0.2 else "low"
-        
+
         # Overall confidence assessment
         confidence_factors = [statistical_confidence, consistency_confidence]
         if "high" in confidence_factors:
@@ -749,7 +742,7 @@ class ResultsAggregator:
             overall_confidence = "medium"
         else:
             overall_confidence = "low"
-        
+
         confidence_assessment = {
             "overall_confidence": overall_confidence,
             "statistical_confidence": statistical_confidence,
@@ -763,19 +756,19 @@ class ResultsAggregator:
                 "complete_coverage": True   # Would be calculated from category coverage
             }
         }
-        
+
         return confidence_assessment
-    
+
     async def _generate_comprehensive_recommendations(
         self,
-        performance_metrics: Dict[str, StatisticalSummary],
-        category_analysis: Dict[str, CategoryPerformance],
-        quality_indicators: Dict[str, Any],
-        compliance_assessment: Dict[str, Any]
-    ) -> List[str]:
+        performance_metrics: dict[str, StatisticalSummary],
+        category_analysis: dict[str, CategoryPerformance],
+        quality_indicators: dict[str, Any],
+        compliance_assessment: dict[str, Any]
+    ) -> list[str]:
         """Generate comprehensive recommendations based on analysis."""
         recommendations = []
-        
+
         # Performance-based recommendations
         overall_quality = quality_indicators.get("overall_quality_score", 0.0)
         if overall_quality >= 0.9:
@@ -786,7 +779,7 @@ class ResultsAggregator:
             recommendations.append("⚠️ Acceptable validation performance - consider improvements")
         else:
             recommendations.append("❌ Poor validation performance - significant improvements needed")
-        
+
         # Success rate recommendations
         if "success_rate" in performance_metrics:
             success_rate_stats = performance_metrics["success_rate"]
@@ -794,14 +787,14 @@ class ResultsAggregator:
                 recommendations.append(f"❌ Success rate ({success_rate_stats.mean:.1%}) below threshold - investigate failures")
             elif success_rate_stats.coefficient_of_variation > self.quality_thresholds["max_cv"]:
                 recommendations.append("⚠️ Inconsistent success rates across folds - review fold balance")
-        
+
         # Category-specific recommendations
         for category, performance in category_analysis.items():
             if performance.accuracy_mean < self.quality_thresholds["min_accuracy"]:
                 recommendations.append(f"❌ {category} accuracy ({performance.accuracy_mean:.1%}) needs improvement")
             elif performance.fold_consistency < self.quality_thresholds["min_consistency"]:
                 recommendations.append(f"⚠️ {category} performance inconsistent across folds")
-        
+
         # Parallel processing recommendations
         if "parallel_efficiency" in performance_metrics:
             efficiency_stats = performance_metrics["parallel_efficiency"]
@@ -809,20 +802,20 @@ class ResultsAggregator:
                 recommendations.append("⚠️ Parallel processing efficiency could be improved")
             elif efficiency_stats.mean > 0.9:
                 recommendations.append("✅ Excellent parallel processing efficiency achieved")
-        
+
         # Compliance recommendations
         compliance_score = compliance_assessment.get("overall_compliance_score", 0.0)
         if compliance_score < 1.0:
             recommendations.append("⚠️ Review compliance assessment results and address any issues")
         else:
             recommendations.append("✅ Full pharmaceutical compliance achieved")
-        
+
         # Statistical significance recommendations
         if len(performance_metrics) >= 3:
             recommendations.append("✅ Sufficient statistical power for reliable conclusions")
         else:
             recommendations.append("⚠️ Consider additional validation runs for improved statistical power")
-        
+
         # General recommendations
         recommendations.extend([
             "📊 Document detailed results for regulatory submission",
@@ -830,10 +823,10 @@ class ResultsAggregator:
             "📈 Monitor performance trends for continuous improvement",
             "🏆 Use results as baseline for future system enhancements"
         ])
-        
+
         return recommendations
-    
-    async def save_report(self, final_report: Dict[str, Any]) -> str:
+
+    async def save_report(self, final_report: dict[str, Any]) -> str:
         """
         Save comprehensive report to file.
         
@@ -849,53 +842,53 @@ class ResultsAggregator:
             execution_id = final_report.get("validation_execution_framework", {}).get("execution_id", "unknown")
             report_filename = f"validation_report_{execution_id}_{timestamp}.json"
             report_path = Path("logs/validation/reports") / report_filename
-            
+
             # Ensure directory exists
             report_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Save report
-            with open(report_path, 'w', encoding='utf-8') as f:
+            with open(report_path, "w", encoding="utf-8") as f:
                 json.dump(final_report, f, indent=2, ensure_ascii=False, default=str)
-            
+
             self.logger.info(f"Comprehensive validation report saved to: {report_path}")
-            
+
             # Also save a summary report
             summary_path = await self._save_summary_report(final_report, timestamp)
-            
+
             return str(report_path)
-            
+
         except Exception as e:
             self.logger.error(f"Failed to save report: {e!s}")
             raise RuntimeError(f"Report saving failed: {e!s}")
-    
-    async def _save_summary_report(self, final_report: Dict[str, Any], timestamp: str) -> str:
+
+    async def _save_summary_report(self, final_report: dict[str, Any], timestamp: str) -> str:
         """Save a human-readable summary report."""
         try:
             execution_id = final_report.get("validation_execution_framework", {}).get("execution_id", "unknown")
             summary_filename = f"validation_summary_{execution_id}_{timestamp}.md"
             summary_path = Path("logs/validation/reports") / summary_filename
-            
+
             # Generate markdown summary
             summary_content = self._generate_markdown_summary(final_report)
-            
+
             # Save summary
-            with open(summary_path, 'w', encoding='utf-8') as f:
+            with open(summary_path, "w", encoding="utf-8") as f:
                 f.write(summary_content)
-            
+
             self.logger.info(f"Validation summary saved to: {summary_path}")
-            
+
             return str(summary_path)
-            
+
         except Exception as e:
             self.logger.warning(f"Failed to save summary report: {e}")
             return ""
-    
-    def _generate_markdown_summary(self, final_report: Dict[str, Any]) -> str:
+
+    def _generate_markdown_summary(self, final_report: dict[str, Any]) -> str:
         """Generate human-readable markdown summary."""
         framework_info = final_report.get("validation_execution_framework", {})
         execution_summary = final_report.get("execution_summary", {})
         aggregated_results = final_report.get("aggregated_results", {})
-        
+
         summary = f"""# Validation Execution Framework Report
 
 ## Execution Summary
@@ -911,27 +904,27 @@ class ResultsAggregator:
 
 ## Quality Assessment
 """
-        
+
         # Add quality indicators if available
         quality_indicators = aggregated_results.get("quality_indicators", {})
         if quality_indicators:
             quality_score = quality_indicators.get("overall_quality_score", 0)
             quality_grade = quality_indicators.get("quality_grade", "N/A")
             summary += f"- **Overall Quality Score**: {quality_score:.2f} (Grade: {quality_grade})\n"
-        
+
         # Add recommendations
         recommendations = aggregated_results.get("recommendations", [])
         if recommendations:
             summary += "\n## Key Recommendations\n"
             for rec in recommendations[:10]:  # Top 10 recommendations
                 summary += f"- {rec}\n"
-        
+
         # Add compliance status
         compliance = aggregated_results.get("compliance_assessment", {})
         if compliance:
             compliance_score = compliance.get("overall_compliance_score", 0)
             summary += f"\n## Compliance Status\n- **Overall Compliance Score**: {compliance_score:.1%}\n"
-        
+
         summary += f"\n## Report Generation\n- **Generated**: {datetime.now().isoformat()}\n- **Framework Version**: 1.0.0\n"
-        
+
         return summary

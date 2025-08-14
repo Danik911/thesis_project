@@ -12,7 +12,6 @@ import json
 import sys
 import time
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 
 import pandas as pd
 import phoenix as px
@@ -24,9 +23,9 @@ class PhoenixDirectMonitor:
     def __init__(self, phoenix_url: str = "http://localhost:6006"):
         """Initialize direct Phoenix monitor."""
         self.phoenix_url = phoenix_url
-        print(f"🔧 Using Direct Client Mode (GraphQL Bypass)")
+        print("🔧 Using Direct Client Mode (GraphQL Bypass)")
         print(f"📊 Phoenix URL: {phoenix_url}")
-        
+
         try:
             self.client = px.Client(endpoint=phoenix_url)
             print("✅ Phoenix client initialized successfully")
@@ -40,7 +39,7 @@ class PhoenixDirectMonitor:
         try:
             print(f"📊 Retrieving spans data (last {hours_back} hours)...")
             spans_df = self.client.get_spans_dataframe()
-            
+
             if len(spans_df) == 0:
                 return {
                     "phoenix_url": self.phoenix_url,
@@ -104,7 +103,7 @@ class PhoenixDirectMonitor:
 
         except Exception as e:
             return {
-                "error": str(e), 
+                "error": str(e),
                 "phoenix_url": self.phoenix_url,
                 "method": "direct_client_bypass",
                 "error_type": type(e).__name__
@@ -205,7 +204,7 @@ class PhoenixDirectMonitor:
         """Export comprehensive traces report to JSON file using direct client."""
         try:
             print("📊 Generating comprehensive trace report...")
-            
+
             report = {
                 "generated_at": datetime.now(UTC).isoformat(),
                 "phoenix_url": self.phoenix_url,
@@ -231,28 +230,27 @@ class PhoenixDirectMonitor:
         """Validate that trace data is accessible via direct client."""
         print("\n🔍 Validating Direct Client Trace Access")
         print("-" * 50)
-        
+
         try:
             spans_df = self.client.get_spans_dataframe()
             print(f"✅ Successfully retrieved {len(spans_df)} spans")
-            
+
             if len(spans_df) > 0:
                 print(f"📊 Unique traces: {spans_df['trace_id'].nunique()}")
                 print(f"📅 Date range: {spans_df['start_time'].min()} to {spans_df['start_time'].max()}")
                 print(f"📋 Available columns: {list(spans_df.columns)}")
-                
+
                 # Show sample spans
                 print("\n📝 Sample Spans:")
                 for idx, (_, row) in enumerate(spans_df.head(3).iterrows()):
                     print(f"   {idx+1}. {row['name']} (trace: {row['trace_id'][:8]}...)")
-                
+
                 print("\n✅ Direct client access working - GraphQL bypass successful!")
                 return True
-            else:
-                print("⚠️ No spans found in database")
-                print("🔧 This may indicate an empty database or connection issues")
-                return False
-                
+            print("⚠️ No spans found in database")
+            print("🔧 This may indicate an empty database or connection issues")
+            return False
+
         except Exception as e:
             print(f"❌ Direct client access failed: {e}")
             print("🚨 This indicates a deeper Phoenix connectivity issue")

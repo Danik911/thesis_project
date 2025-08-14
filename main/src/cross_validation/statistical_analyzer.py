@@ -19,6 +19,7 @@ import json
 import logging
 import warnings
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -738,8 +739,8 @@ class StatisticalAnalyzer:
 
         return limitations
 
-    def one_way_anova(self, 
-                     groups: dict[str, list[float]], 
+    def one_way_anova(self,
+                     groups: dict[str, list[float]],
                      metric_name: str) -> StatisticalTest:
         """
         Perform one-way ANOVA between multiple groups.
@@ -766,7 +767,7 @@ class StatisticalAnalyzer:
 
         # Prepare data for ANOVA
         group_arrays = [np.array(values) for values in groups.values()]
-        
+
         try:
             # Perform one-way ANOVA
             f_statistic, p_value = stats.f_oneway(*group_arrays)
@@ -801,7 +802,7 @@ class StatisticalAnalyzer:
             msg = f"ANOVA calculation failed: {e!s}"
             raise ValueError(msg) from e
 
-    def tukey_hsd_post_hoc(self, 
+    def tukey_hsd_post_hoc(self,
                           groups: dict[str, list[float]]) -> dict[str, Any]:
         """
         Perform Tukey HSD post-hoc test after ANOVA.
@@ -832,12 +833,12 @@ class StatisticalAnalyzer:
             # Extract pairwise comparisons
             pairwise_comparisons = {}
             n_groups = len(group_names)
-            
+
             for i in range(n_groups):
                 for j in range(i + 1, n_groups):
                     comparison_name = f"{group_names[i]}_vs_{group_names[j]}"
                     p_value = tukey_result.pvalue[i, j]
-                    
+
                     pairwise_comparisons[comparison_name] = {
                         "group_1": group_names[i],
                         "group_2": group_names[j],
@@ -861,7 +862,7 @@ class StatisticalAnalyzer:
             msg = f"Post-hoc test calculation failed: {e!s}"
             raise ValueError(msg) from e
 
-    def levene_test(self, 
+    def levene_test(self,
                    groups: dict[str, list[float]]) -> tuple[float, float]:
         """
         Perform Levene's test for homogeneity of variances.
@@ -880,11 +881,11 @@ class StatisticalAnalyzer:
             raise ValueError(msg)
 
         group_arrays = [np.array(values) for values in groups.values()]
-        
+
         try:
             # Perform Levene's test
             statistic, p_value = stats.levene(*group_arrays)
-            
+
             return float(statistic), float(p_value)
 
         except Exception as e:
@@ -892,9 +893,9 @@ class StatisticalAnalyzer:
             msg = f"Levene's test calculation failed: {e!s}"
             raise ValueError(msg) from e
 
-    def calculate_eta_squared(self, 
-                             f_statistic: float, 
-                             df_between: int, 
+    def calculate_eta_squared(self,
+                             f_statistic: float,
+                             df_between: int,
                              df_within: int) -> float:
         """
         Calculate eta-squared effect size for ANOVA.
@@ -910,17 +911,17 @@ class StatisticalAnalyzer:
         try:
             ss_between = f_statistic * df_between
             ss_total = ss_between + df_within
-            
+
             if ss_total == 0:
                 return 0.0
-            
+
             eta_squared = ss_between / ss_total
             return min(1.0, max(0.0, eta_squared))
 
         except Exception:
             return 0.0
 
-    def _alternative_pairwise_tests(self, 
+    def _alternative_pairwise_tests(self,
                                   groups: dict[str, list[float]]) -> dict[str, Any]:
         """Alternative pairwise testing when Tukey HSD is not available."""
         group_names = list(groups.keys())
@@ -954,7 +955,7 @@ class StatisticalAnalyzer:
         # Apply Bonferroni correction
         if p_values:
             corrected_p_values, fwer = self.apply_multiple_comparison_correction(p_values, "bonferroni")
-            
+
             # Update comparisons with corrected p-values
             for idx, (comp_name, comp_data) in enumerate(pairwise_comparisons.items()):
                 if idx < len(corrected_p_values):
@@ -978,24 +979,24 @@ class StatisticalAnalyzer:
             return "medium"
         return "large"
 
-    def _calculate_power_anova(self, 
-                              f_statistic: float, 
-                              df_between: int, 
-                              df_within: int, 
+    def _calculate_power_anova(self,
+                              f_statistic: float,
+                              df_between: int,
+                              df_within: int,
                               alpha: float) -> float:
         """Calculate statistical power for ANOVA (approximate)."""
         try:
             # Critical F-value
             f_critical = stats.f.ppf(1 - alpha, df_between, df_within)
-            
+
             # Power calculation (approximate)
             if f_statistic <= f_critical:
                 return alpha  # Power ≈ Type I error when no effect
-            
+
             # Approximate power based on observed F-statistic
-            power = 1 - stats.f.cdf(f_critical, df_between, df_within, 
+            power = 1 - stats.f.cdf(f_critical, df_between, df_within,
                                    nc=f_statistic * df_between)
-            
+
             return min(1.0, max(0.0, power))
 
         except Exception:

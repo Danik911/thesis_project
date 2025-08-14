@@ -5,9 +5,8 @@ Run Phoenix Enhanced Integration Test
 This script runs the integration test and captures output for analysis.
 """
 
-import subprocess
-import sys
 import os
+import subprocess
 from pathlib import Path
 
 # Change to project directory
@@ -21,17 +20,17 @@ try:
     # Run the test using uv
     result = subprocess.run([
         "uv", "run", "python", "test_phoenix_enhanced_integration.py"
-    ], capture_output=True, text=True, timeout=60)
-    
+    ], check=False, capture_output=True, text=True, timeout=60)
+
     print("STDOUT:")
     print(result.stdout)
-    
+
     if result.stderr:
         print("\nSTDERR:")
         print(result.stderr)
-    
+
     print(f"\nReturn code: {result.returncode}")
-    
+
 except subprocess.TimeoutExpired:
     print("❌ Test timed out after 60 seconds")
 except Exception as e:

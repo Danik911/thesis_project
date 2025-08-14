@@ -32,26 +32,26 @@ async def main():
     print("This will execute REAL security tests against the actual system")
     print("NO SIMULATIONS - capturing genuine vulnerabilities and mitigation rates")
     print()
-    
+
     # Set up logging
     logging.basicConfig(
-        level=logging.INFO, 
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    
+
     # Initialize the working security test executor
     executor = WorkingSecurityTestExecutor()
-    
+
     try:
         print("Starting complete security assessment...")
-        
+
         # Execute the full security assessment
         # This will test LLM01 (prompt injection), LLM06 (output handling), and LLM09 (overreliance)
         assessment_results = await executor.execute_full_security_assessment()
-        
+
         print("\nSECURITY ASSESSMENT COMPLETED!")
         print("=" * 35)
-        
+
         # Display key metrics
         metrics = assessment_results["overall_metrics"]
         print(f"Total Scenarios Executed: {metrics['total_scenarios_executed']}")
@@ -59,7 +59,7 @@ async def main():
         print(f"Overall Mitigation Effectiveness: {metrics['overall_mitigation_effectiveness']:.1%}")
         print(f"Total Vulnerabilities Found: {metrics['total_vulnerabilities_found']}")
         print(f"Total Human Consultations: {metrics['total_human_consultations']}")
-        
+
         # Show category breakdown
         print("\nCategory Breakdown:")
         for category, results in assessment_results["category_results"].items():
@@ -67,32 +67,32 @@ async def main():
             print(f"  {category}: {stats['successful_tests']}/{stats['total_scenarios']} tests "
                   f"({stats['success_rate']:.1%} success, "
                   f"{stats['average_mitigation_effectiveness']:.1%} mitigation)")
-        
+
         # Compliance assessment
         print("\nCompliance Assessment:")
         compliance = assessment_results.get("compliance_assessment", {})
         target_mitigation = compliance.get("target_mitigation_effectiveness", 0.9)
         achieved_mitigation = compliance.get("achieved_mitigation_effectiveness", 0.0)
-        
+
         print(f"Target Mitigation Effectiveness: {target_mitigation:.1%}")
         print(f"Achieved Mitigation Effectiveness: {achieved_mitigation:.1%}")
-        
+
         if achieved_mitigation >= target_mitigation:
             print("STATUS: COMPLIANT - Mitigation targets met")
         else:
             print("STATUS: NON-COMPLIANT - Mitigation targets not met")
-        
-        print(f"\nDetailed results saved to:")
+
+        print("\nDetailed results saved to:")
         print(f"  {executor.output_dir}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"ERROR: Security assessment failed: {e}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         return False
-        
+
     finally:
         # Clean up temporary files
         executor.cleanup()

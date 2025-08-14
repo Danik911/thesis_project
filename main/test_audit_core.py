@@ -11,12 +11,12 @@ import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # Add main directory to Python path
 sys.path.append(str(Path(__file__).parent))
 
-from src.core.audit_trail import get_audit_trail, AuditEventType, AuditSeverity
+from src.core.audit_trail import get_audit_trail
 from src.core.cryptographic_audit import get_audit_crypto
 
 logging.basicConfig(level=logging.INFO)
@@ -25,22 +25,22 @@ logger = logging.getLogger(__name__)
 
 class CoreAuditTester:
     """Test core audit trail functionality for Task 22 validation."""
-    
+
     def __init__(self):
         """Initialize the core audit tester."""
         self.audit_trail = get_audit_trail()
         self.crypto_audit = get_audit_crypto()
         self.test_results = {}
-        
-    async def test_all_audit_categories(self) -> Dict[str, Any]:
+
+    async def test_all_audit_categories(self) -> dict[str, Any]:
         """Test all five audit categories that were missing."""
         logger.info("Testing all audit trail categories for 100% coverage")
-        
+
         # Test 1: Agent Decision Logging
         logger.info("1. Testing Agent Decision Logging...")
         try:
             audit_id = self.audit_trail.log_agent_decision(
-                agent_type="test_categorization", 
+                agent_type="test_categorization",
                 agent_id="cat_001",
                 decision={"category": 4, "decision_type": "gamp_classification"},
                 confidence_score=0.85,
@@ -61,7 +61,7 @@ class CoreAuditTester:
         except Exception as e:
             self.test_results["agent_decision"] = {"success": False, "error": str(e)}
             logger.error(f"Agent decision test failed: {e}")
-        
+
         # Test 2: Data Transformation Tracking
         logger.info("2. Testing Data Transformation Tracking...")
         try:
@@ -78,13 +78,13 @@ class CoreAuditTester:
         except Exception as e:
             self.test_results["data_transformation"] = {"success": False, "error": str(e)}
             logger.error(f"Data transformation test failed: {e}")
-        
+
         # Test 3: State Transition Logging
         logger.info("3. Testing State Transition Logging...")
         try:
             audit_id = self.audit_trail.log_state_transition(
                 from_state="workflow_start",
-                to_state="document_processing", 
+                to_state="document_processing",
                 transition_trigger="document_upload_event",
                 transition_metadata={
                     "event_type": "DocumentUploadEvent",
@@ -98,7 +98,7 @@ class CoreAuditTester:
         except Exception as e:
             self.test_results["state_transition"] = {"success": False, "error": str(e)}
             logger.error(f"State transition test failed: {e}")
-        
+
         # Test 4: Error Recovery Logging
         logger.info("4. Testing Error Recovery Logging...")
         try:
@@ -111,8 +111,8 @@ class CoreAuditTester:
                 },
                 recovery_strategy="retry_with_enhanced_prompt",
                 recovery_actions=[
-                    "log_error", 
-                    "enhance_prompt", 
+                    "log_error",
+                    "enhance_prompt",
                     "retry_llm_call"
                 ],
                 recovery_success=True,
@@ -123,7 +123,7 @@ class CoreAuditTester:
         except Exception as e:
             self.test_results["error_recovery"] = {"success": False, "error": str(e)}
             logger.error(f"Error recovery test failed: {e}")
-        
+
         # Test 5: Cryptographic Signatures
         logger.info("5. Testing Cryptographic Signatures...")
         try:
@@ -133,43 +133,43 @@ class CoreAuditTester:
                 "data": "Test data for signature validation",
                 "timestamp": datetime.now(UTC).isoformat()
             }
-            
+
             signed_entry = self.crypto_audit.sign_audit_event(
                 event_type="signature_validation",
                 event_data=test_data
             )
-            
+
             # Verify signature
             signature_valid = self.crypto_audit.verify_audit_event(signed_entry)
-            
+
             self.test_results["cryptographic"] = {
                 "success": True,
                 "signature_generated": "cryptographic_metadata" in signed_entry,
                 "signature_valid": signature_valid
             }
             logger.info(f"Cryptographic signature test: Generated={signed_entry.get('cryptographic_metadata') is not None}, Valid={signature_valid}")
-            
+
         except Exception as e:
             self.test_results["cryptographic"] = {"success": False, "error": str(e)}
             logger.error(f"Cryptographic signature test failed: {e}")
-        
+
         return self.test_results
-    
-    def generate_coverage_report(self) -> Dict[str, Any]:
+
+    def generate_coverage_report(self) -> dict[str, Any]:
         """Generate coverage report based on test results."""
         successful_tests = sum(1 for result in self.test_results.values() if result.get("success", False))
         total_tests = len(self.test_results)
-        
+
         # Calculate coverage for each category
         coverage_by_category = {}
         for category, result in self.test_results.items():
             coverage_by_category[category] = 100.0 if result.get("success", False) else 0.0
-        
+
         overall_coverage = (successful_tests / total_tests * 100) if total_tests > 0 else 0
-        
+
         # Get audit trail statistics
         audit_stats = self.audit_trail.get_audit_coverage_report()
-        
+
         return {
             "test_execution": {
                 "timestamp": datetime.now(UTC).isoformat(),
@@ -205,63 +205,62 @@ async def main():
     """Run core audit trail testing."""
     print("TASK 22 VALIDATION: Core Audit Trail Testing")
     print("=" * 50)
-    
+
     tester = CoreAuditTester()
-    
+
     # Test all audit categories
     test_results = await tester.test_all_audit_categories()
-    
+
     # Generate comprehensive report
     coverage_report = tester.generate_coverage_report()
-    
+
     # Display results
-    print(f"\nTEST EXECUTION RESULTS:")
+    print("\nTEST EXECUTION RESULTS:")
     exec_results = coverage_report["test_execution"]
     print(f"Tests Run: {exec_results['total_tests']}")
     print(f"Tests Passed: {exec_results['successful_tests']}")
     print(f"Success Rate: {exec_results['success_rate']:.1f}%")
-    
-    print(f"\nCOVERAGE ANALYSIS:")
+
+    print("\nCOVERAGE ANALYSIS:")
     coverage = coverage_report["coverage_analysis"]
     print(f"Overall Coverage: {coverage['overall_coverage']:.1f}%")
     print(f"Target Coverage: {coverage['target_coverage']:.1f}%")
     print(f"Target Achieved: {'YES' if coverage['target_achieved'] else 'NO'}")
-    
-    print(f"\nCOVERAGE BY CATEGORY:")
+
+    print("\nCOVERAGE BY CATEGORY:")
     for category, cov in coverage["coverage_by_category"].items():
         print(f"  {category}: {cov:.1f}%")
-    
-    print(f"\nCOMPLIANCE ASSESSMENT:")
+
+    print("\nCOMPLIANCE ASSESSMENT:")
     compliance = coverage_report["compliance_assessment"]
     print(f"GAMP-5 Compliant: {'YES' if compliance['gamp5_compliant'] else 'NO'}")
     print(f"21 CFR Part 11 Compliant: {'YES' if compliance['cfr_part11_compliant'] else 'NO'}")
     print(f"ALCOA+ Compliant: {'YES' if compliance['alcoa_plus_compliant'] else 'NO'}")
     print(f"Cryptographic Integrity: {'YES' if compliance['cryptographic_integrity'] else 'NO'}")
-    
-    print(f"\nVALIDATION EVIDENCE:")
+
+    print("\nVALIDATION EVIDENCE:")
     evidence = coverage_report["validation_evidence"]
     print(f"Agent Decisions Logged: {'YES' if evidence['agent_decisions_logged'] else 'NO'}")
     print(f"Data Transformations Tracked: {'YES' if evidence['data_transformations_tracked'] else 'NO'}")
     print(f"State Transitions Recorded: {'YES' if evidence['state_transitions_recorded'] else 'NO'}")
     print(f"Error Recovery Documented: {'YES' if evidence['error_recovery_documented'] else 'NO'}")
     print(f"Cryptographic Signatures Verified: {'YES' if evidence['cryptographic_signatures_verified'] else 'NO'}")
-    
+
     # Save detailed report
     report_path = Path("output/task22_core_audit_validation.json")
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(report_path, 'w') as f:
+
+    with open(report_path, "w") as f:
         json.dump(coverage_report, f, indent=2, default=str)
-    
+
     print(f"\nDetailed validation report saved to: {report_path}")
-    
+
     if coverage["target_achieved"]:
         print("\nSUCCESS: Task 22 - 100% Audit Trail Coverage ACHIEVED!")
         print("All five missing audit categories now implemented and tested.")
         return 0
-    else:
-        print(f"\nINCOMPLETE: {100 - coverage['overall_coverage']:.1f}% coverage gap remaining")
-        return 1
+    print(f"\nINCOMPLETE: {100 - coverage['overall_coverage']:.1f}% coverage gap remaining")
+    return 1
 
 
 if __name__ == "__main__":

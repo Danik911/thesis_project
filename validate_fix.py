@@ -3,23 +3,20 @@
 Validate that the fixed complexity calculator works without textstat.
 """
 
-import sys
 import os
-import re
-import math
-from pathlib import Path
+import sys
 
 # Add datasets to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'datasets'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "datasets"))
 
 def test_readability_calculator():
     """Test the custom readability calculator implementation."""
-    
+
     # Import our fixed calculator
     from datasets.metrics.complexity_calculator import URSComplexityCalculator
-    
+
     calculator = URSComplexityCalculator()
-    
+
     # Test with sample text from URS-001
     test_text = """
     This URS defines the requirements for an Environmental Monitoring System to monitor critical storage areas for temperature-sensitive pharmaceutical products.
@@ -27,21 +24,21 @@ def test_readability_calculator():
     Temperature readings shall be recorded at intervals not exceeding 5 minutes.
     The system shall use vendor-supplied software without modification.
     """
-    
+
     print("Testing Custom Readability Calculator")
     print("=" * 40)
-    
+
     # Test syllable counting
     test_words = ["system", "requirements", "environmental", "pharmaceutical", "monitoring"]
     print("Syllable counting test:")
     for word in test_words:
         syllables = calculator._count_syllables(word)
         print(f"  {word}: {syllables} syllables")
-    
+
     # Test sentence counting
     sentences = calculator._count_sentences(test_text)
     print(f"\nSentence count: {sentences}")
-    
+
     # Test full readability calculation
     try:
         readability = calculator.calculate_readability_score(test_text)
@@ -54,18 +51,18 @@ def test_readability_calculator():
 
 def test_urs_analysis():
     """Test full URS document analysis."""
-    
+
     from datasets.metrics.complexity_calculator import URSComplexityCalculator
-    
+
     calculator = URSComplexityCalculator()
     urs_file = os.path.join(os.path.dirname(__file__), "datasets", "urs_corpus", "category_3", "URS-001.md")
-    
+
     print("\nTesting URS Document Analysis")
     print("=" * 40)
-    
+
     try:
         result = calculator.analyze_urs_document(urs_file)
-        
+
         print(f"Document: {result['document_id']}")
         print(f"Total requirements: {result['requirement_counts']['total']}")
         print(f"Functional: {result['requirement_counts']['functional']}")
@@ -79,10 +76,10 @@ def test_urs_analysis():
         print(f"Ambiguity rate: {result['ambiguity_rate']:.3f}")
         print(f"Custom rate: {result['custom_indicators']['custom_rate']:.3f}")
         print(f"Composite complexity: {result['composite_complexity_score']:.4f}")
-        
+
         print("✓ URS document analysis working!")
         return True
-        
+
     except Exception as e:
         print(f"✗ URS analysis failed: {e}")
         import traceback
@@ -91,16 +88,16 @@ def test_urs_analysis():
 
 def main():
     """Run all validation tests."""
-    
+
     print("Task 16 Dataset Fix Validation")
     print("=" * 50)
-    
+
     # Test 1: Custom readability calculator
     test1_passed = test_readability_calculator()
-    
+
     # Test 2: Full URS analysis
     test2_passed = test_urs_analysis()
-    
+
     if test1_passed and test2_passed:
         print("\n" + "=" * 50)
         print("✓ ALL TESTS PASSED!")
@@ -111,12 +108,11 @@ def main():
         print("✓ Complexity scoring working")
         print("=" * 50)
         return True
-    else:
-        print("\n" + "=" * 50)
-        print("✗ SOME TESTS FAILED!")
-        print("Further debugging required.")
-        print("=" * 50)
-        return False
+    print("\n" + "=" * 50)
+    print("✗ SOME TESTS FAILED!")
+    print("Further debugging required.")
+    print("=" * 50)
+    return False
 
 if __name__ == "__main__":
     success = main()

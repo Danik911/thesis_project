@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 # Set up minimal environment to avoid import errors
 import os
+
 os.environ.setdefault("OPENAI_API_KEY", "dummy")
 
 # URS-003 content for testing
@@ -48,57 +49,57 @@ This URS defines requirements for a custom MES to manage electronic batch record
 
 def test_gamp_analysis():
     """Test the GAMP analysis tool directly"""
-    
+
     try:
-        from src.agents.categorization.agent import gamp_analysis_tool, confidence_tool
-        
+        from src.agents.categorization.agent import confidence_tool, gamp_analysis_tool
+
         print("Testing GAMP Analysis Tool with URS-003")
         print("Expected: Category 5")
         print("=" * 60)
-        
+
         # Step 1: Run GAMP analysis
         print("\n1. Running GAMP Analysis...")
         result = gamp_analysis_tool(URS003_CONTENT)
-        
+
         print(f"   Predicted Category: {result['predicted_category']}")
         print(f"   Decision Rationale: {result['decision_rationale']}")
-        
+
         # Show Category 5 evidence
-        cat5_evidence = result['all_categories_analysis'][5]
-        print(f"\n   Category 5 Evidence:")
+        cat5_evidence = result["all_categories_analysis"][5]
+        print("\n   Category 5 Evidence:")
         print(f"   - Strong Count: {cat5_evidence['strong_count']}")
         print(f"   - Strong Indicators: {cat5_evidence['strong_indicators']}")
         print(f"   - Weak Count: {cat5_evidence['weak_count']}")
         print(f"   - Weak Indicators: {cat5_evidence['weak_indicators']}")
-        
+
         # Step 2: Calculate confidence
-        print(f"\n2. Calculating Confidence...")
+        print("\n2. Calculating Confidence...")
         confidence = confidence_tool(result)
         print(f"   Confidence Score: {confidence:.3f} ({confidence:.1%})")
-        
+
         # Step 3: Assessment
-        print(f"\n3. Assessment:")
-        if result['predicted_category'] == 5:
+        print("\n3. Assessment:")
+        if result["predicted_category"] == 5:
             print("   ✅ CATEGORY: Correctly predicted Category 5")
         else:
             print(f"   ❌ CATEGORY: Wrong prediction - got {result['predicted_category']}, expected 5")
-            
+
         if confidence > 0.6:
             print(f"   ✅ CONFIDENCE: Good confidence {confidence:.1%} > 60%")
         elif confidence > 0.0:
             print(f"   ⚠️ CONFIDENCE: Low confidence {confidence:.1%} (0% < conf < 60%)")
         else:
             print(f"   ❌ CONFIDENCE: Zero confidence {confidence:.1%}")
-            
+
         # Overall result
-        print(f"\n" + "=" * 60)
-        if result['predicted_category'] == 5 and confidence > 0.0:
+        print("\n" + "=" * 60)
+        if result["predicted_category"] == 5 and confidence > 0.0:
             print("🎉 SUCCESS: Fix appears to be working!")
         else:
             print("❌ ISSUES REMAIN: Need further debugging")
-            
+
         return result, confidence
-        
+
     except ImportError as e:
         print(f"Import error: {e}")
         return None, None

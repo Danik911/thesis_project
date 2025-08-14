@@ -12,10 +12,9 @@ CRITICAL: NO FALLBACKS ALLOWED
 import os
 from enum import Enum
 from typing import Any
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 from llama_index.core.llms import LLM
-from llama_index.core import Settings
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,10 +36,10 @@ class LLMConfig:
     - FAIL EXPLICITLY WITH FULL DIAGNOSTICS
     - HUMAN CONSULTATION FOR UNCERTAINTIES
     """
-    
+
     # Set provider from environment (default to OpenRouter for OSS migration)
     PROVIDER = ModelProvider(os.getenv("LLM_PROVIDER", "openrouter"))
-    
+
     # Model configurations (NO FALLBACKS - single model per provider)
     MODELS = {
         ModelProvider.OPENAI: {
@@ -54,7 +53,7 @@ class LLMConfig:
             "max_tokens": 30000,  # Increased to 30000 to prevent JSON truncation of 25 OQ test cases
         }
     }
-    
+
     @classmethod
     def get_llm(cls, **override_kwargs: Any) -> LLM:
         """
@@ -79,17 +78,17 @@ class LLMConfig:
             Exception: Any other error (no masking)
         """
         config = cls.MODELS[cls.PROVIDER].copy()
-        
+
         # Apply any overrides
         for key, value in override_kwargs.items():
             if value is not None:
                 config[key] = value
-        
+
         # EMERGENCY FIX: Disable Phoenix callback manager to unblock system
         # Phoenix integration is corrupting LlamaIndex callbacks and preventing all LLM operations
         # TODO: Re-enable Phoenix after fixing the callback corruption issue
         callback_manager = None  # Bypass Phoenix completely for now
-        
+
         # Original Phoenix code (disabled due to critical failure)
         # callback_manager = Settings.callback_manager if hasattr(Settings, 'callback_manager') else None
         # if callback_manager and hasattr(callback_manager, 'handlers'):
@@ -102,19 +101,19 @@ class LLMConfig:
         #                     callback_manager.add_handler(handler)
         #         except ImportError:
         #             pass
-        
+
         try:
             if cls.PROVIDER == ModelProvider.OPENAI:
                 # Import and initialize OpenAI
                 from llama_index.llms.openai import OpenAI
-                
+
                 api_key = os.getenv("OPENAI_API_KEY")
                 if not api_key:
                     raise ValueError(
                         "OPENAI_API_KEY not found in environment. "
                         "NO FALLBACK ALLOWED - Human consultation required."
                     )
-                
+
                 return OpenAI(
                     model=config["model"],
                     api_key=api_key,
@@ -122,18 +121,18 @@ class LLMConfig:
                     max_tokens=config["max_tokens"],
                     callback_manager=callback_manager,  # Pass global callback manager
                 )
-                
-            elif cls.PROVIDER == ModelProvider.OPENROUTER:
+
+            if cls.PROVIDER == ModelProvider.OPENROUTER:
                 # Import and initialize OpenRouter compatibility wrapper
                 from src.llms.openrouter_compat import OpenRouterCompatLLM
-                
+
                 api_key = os.getenv("OPENROUTER_API_KEY")
                 if not api_key:
                     raise ValueError(
                         "OPENROUTER_API_KEY not found in environment. "
                         "NO FALLBACK ALLOWED - Human consultation required."
                     )
-                
+
                 return OpenRouterCompatLLM(
                     model=config["model"],
                     openrouter_api_key=api_key,
@@ -141,13 +140,12 @@ class LLMConfig:
                     max_tokens=config["max_tokens"],
                     callback_manager=callback_manager,  # Pass global callback manager
                 )
-                
-            else:
-                raise ValueError(
-                    f"Unknown provider: {cls.PROVIDER}. "
-                    f"NO FALLBACK ALLOWED - Configuration error."
-                )
-                
+
+            raise ValueError(
+                f"Unknown provider: {cls.PROVIDER}. "
+                f"NO FALLBACK ALLOWED - Configuration error."
+            )
+
         except ImportError as e:
             # FAIL EXPLICITLY - no masking
             raise RuntimeError(
@@ -155,7 +153,7 @@ class LLMConfig:
                 f"Full stack trace provided for debugging.\n"
                 f"NO FALLBACK ALLOWED - Human consultation required."
             ) from e
-            
+
         except Exception as e:
             # FAIL EXPLICITLY - no masking or fallback
             raise RuntimeError(
@@ -163,7 +161,7 @@ class LLMConfig:
                 f"Configuration: {config}\n"
                 f"NO FALLBACK ALLOWED - Human consultation required."
             ) from e
-    
+
     @classmethod
     def get_provider_info(cls) -> dict[str, Any]:
         """
@@ -176,7 +174,7 @@ class LLMConfig:
             "provider": cls.PROVIDER.value,
             "configuration": cls.MODELS[cls.PROVIDER],
             "api_key_env_var": (
-                "OPENAI_API_KEY" if cls.PROVIDER == ModelProvider.OPENAI 
+                "OPENAI_API_KEY" if cls.PROVIDER == ModelProvider.OPENAI
                 else "OPENROUTER_API_KEY"
             ),
             "api_key_present": bool(
@@ -184,7 +182,7 @@ class LLMConfig:
                 else os.getenv("OPENROUTER_API_KEY")
             ),
         }
-    
+
     @classmethod
     def validate_configuration(cls) -> tuple[bool, str]:
         """
@@ -196,28 +194,28 @@ class LLMConfig:
         try:
             # Check API key
             api_key_var = (
-                "OPENAI_API_KEY" if cls.PROVIDER == ModelProvider.OPENAI 
+                "OPENAI_API_KEY" if cls.PROVIDER == ModelProvider.OPENAI
                 else "OPENROUTER_API_KEY"
             )
-            
+
             if not os.getenv(api_key_var):
                 return False, f"{api_key_var} not found in environment"
-            
+
             # Try to import required modules
             if cls.PROVIDER == ModelProvider.OPENAI:
                 from llama_index.llms.openai import OpenAI
             else:
                 from src.llms.openrouter_compat import OpenRouterCompatLLM
-            
+
             return True, "Configuration valid"
-            
+
         except ImportError as e:
             return False, f"Import error: {e}"
         except Exception as e:
             return False, f"Validation error: {e}"
-    
+
     @classmethod
-    def get_secure_llm(cls, 
+    def get_secure_llm(cls,
                       system_identifier: str = "pharmaceutical_system",
                       **override_kwargs: Any):
         """
@@ -244,18 +242,18 @@ class LLMConfig:
         try:
             # Import security wrapper
             from src.security import SecureLLMWrapper
-            
+
             # Get base LLM instance
             base_llm = cls.get_llm(**override_kwargs)
-            
+
             # Wrap with security layer
             secure_wrapper = SecureLLMWrapper(
                 wrapped_llm=base_llm,
                 system_identifier=system_identifier
             )
-            
+
             return secure_wrapper
-            
+
         except ImportError as e:
             raise RuntimeError(
                 f"Failed to import security wrapper: {e}\n"
@@ -265,6 +263,6 @@ class LLMConfig:
         except Exception as e:
             raise RuntimeError(
                 f"Failed to create secure LLM wrapper: {e}\n"
-                f"Security initialization failed.\n" 
+                f"Security initialization failed.\n"
                 f"NO FALLBACKS ALLOWED - Human consultation required."
             ) from e

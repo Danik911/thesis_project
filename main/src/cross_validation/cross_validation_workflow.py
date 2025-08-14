@@ -15,12 +15,12 @@ Key Features:
 - Error handling with explicit failures (no fallbacks)
 """
 
-import os
 import asyncio
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
 from dotenv import load_dotenv
 
 # CRITICAL: Load environment variables FIRST before any other imports
@@ -36,9 +36,9 @@ from llama_index.core.workflow import (
     step,
 )
 from pydantic import Field
+
 # TEMPORARILY DISABLED to fix circular import for Task 30
 # from src.core.unified_workflow import UnifiedTestGenerationWorkflow
-
 from .fold_manager import FoldManager, URSDocument
 from .metrics_collector import MetricsCollector
 from .structured_logger import StructuredLogger
@@ -365,7 +365,7 @@ class CrossValidationWorkflow(Workflow):
 
             # Dynamic import to avoid circular dependency
             from src.core.unified_workflow import UnifiedTestGenerationWorkflow
-            
+
             # Initialize UnifiedTestGenerationWorkflow
             unified_workflow = UnifiedTestGenerationWorkflow(
                 timeout=1800,  # 30 minutes per document
@@ -387,7 +387,7 @@ class CrossValidationWorkflow(Workflow):
             error_type = None
 
             # Check if workflow completed successfully
-            if hasattr(workflow_result, 'result'):
+            if hasattr(workflow_result, "result"):
                 workflow_result = workflow_result.result
 
             # Calculate processing time

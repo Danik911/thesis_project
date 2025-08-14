@@ -4,7 +4,7 @@ Test ChromaDB callback manager fix.
 """
 
 import asyncio
-import os
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -12,21 +12,21 @@ load_dotenv()
 
 async def test_chromadb_fix():
     """Test that ChromaDB operations work after callback fix."""
-    
+
     print("=" * 60)
     print("TESTING CHROMADB CALLBACK FIX")
     print("=" * 60)
-    
+
     try:
         # Import after env vars are loaded
         from src.agents.parallel.context_provider import create_context_provider_agent
         from src.config.llm_config import LLMConfig
-        
+
         # Create LLM
         print("\n1. Creating LLM...")
         llm = LLMConfig.get_llm()
         print(f"   LLM created: {llm.model}")
-        
+
         # Create context provider
         print("\n2. Creating Context Provider Agent...")
         agent = create_context_provider_agent(
@@ -35,12 +35,12 @@ async def test_chromadb_fix():
             enable_phoenix=False
         )
         print("   Context Provider created successfully")
-        
+
         # Test a search operation
         print("\n3. Testing ChromaDB search...")
-        from src.agents.parallel.context_provider import ContextProviderRequest
-        
         import uuid
+
+        from src.agents.parallel.context_provider import ContextProviderRequest
         request = ContextProviderRequest(
             gamp_category="5",
             test_strategy={"approach": "comprehensive"},
@@ -48,31 +48,30 @@ async def test_chromadb_fix():
             search_scope={},
             correlation_id=str(uuid.uuid4())
         )
-        
+
         # Run the agent through internal method
         # The agent expects an AgentRequestEvent, so we'll use the internal method directly
         result = await agent._execute_context_retrieval(request)
-        
+
         if result:
             # Check what fields the response has
-            if hasattr(result, 'context') and result.context:
+            if hasattr(result, "context") and result.context:
                 print(f"   SUCCESS: Context retrieved with {len(result.context)} items")
-            elif hasattr(result, 'retrieved_documents') and result.retrieved_documents:
+            elif hasattr(result, "retrieved_documents") and result.retrieved_documents:
                 print(f"   SUCCESS: Retrieved {len(result.retrieved_documents)} documents")
             else:
                 print(f"   SUCCESS: Response received (type: {type(result).__name__})")
         else:
             print("   No results returned")
-            
+
         return True
-        
+
     except AttributeError as e:
         if "event_starts_to_ignore" in str(e):
             print(f"\nCALLBACK ERROR STILL EXISTS: {e}")
             print("\nThe fix needs to be applied in context_provider.py")
             return False
-        else:
-            raise
+        raise
     except Exception as e:
         print(f"\nTEST FAILED: {e}")
         import traceback

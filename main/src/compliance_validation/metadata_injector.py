@@ -45,7 +45,7 @@ class ALCOAMetadataInjector:
         self.system_id = system_id
         self.audit_crypto = get_audit_crypto()
         self.logger = logging.getLogger(__name__)
-        
+
     def inject_alcoa_metadata(
         self,
         data: dict[str, Any],
@@ -73,12 +73,12 @@ class ALCOAMetadataInjector:
             timestamp = datetime.now(UTC).isoformat()
             unique_id = str(uuid4())
             context = context or {}
-            
+
             # Calculate data integrity metrics
             data_json = json.dumps(data, sort_keys=True, default=str)
             checksum = self._calculate_checksum(data_json)
             data_hash = self._calculate_hash(data_json)
-            
+
             # Generate Ed25519 signature for integrity
             signature_result = self.audit_crypto.sign_audit_event(
                 event_type="data_creation",
@@ -89,9 +89,9 @@ class ALCOAMetadataInjector:
                 },
                 workflow_context=context
             )
-            
+
             digital_signature = signature_result.get("cryptographic_metadata", {}).get("signature")
-            
+
             # Create comprehensive ALCOA+ metadata
             alcoa_metadata = ALCOAPlusMetadata(
                 # Original attribute fields (2x weighted)
@@ -103,7 +103,7 @@ class ALCOAMetadataInjector:
                 hash=data_hash,
                 immutable=True,
                 locked=False,
-                
+
                 # Accurate attribute fields (2x weighted)
                 validated=validated,
                 accuracy_score=self._calculate_accuracy_score(data, context),
@@ -114,7 +114,7 @@ class ALCOAMetadataInjector:
                 cross_verified=validated,
                 corrections=[],  # No corrections needed
                 error_log=[],  # No errors found
-                
+
                 # Additional compliance fields
                 user_id=self.system_id,
                 created_by="pharmaceutical_test_generation_agent",
@@ -128,7 +128,7 @@ class ALCOAMetadataInjector:
                 modified_at=None,  # No modifications yet
                 last_updated=timestamp,
                 processing_time=processing_time,
-                
+
                 # Data format and structure
                 format="json",
                 encoding="utf-8",
@@ -139,7 +139,7 @@ class ALCOAMetadataInjector:
                     "alcoa_compliance": True,
                     "regulatory_framework": "GAMP-5"
                 },
-                
+
                 # Storage and retention
                 retention_period="7_years",  # Pharmaceutical requirement
                 expires_at=None,  # Permanent retention
@@ -147,7 +147,7 @@ class ALCOAMetadataInjector:
                 protected=True,
                 backed_up=False,  # Would be handled by storage layer
                 backup_status="pending",
-                
+
                 # Accessibility
                 accessible=True,
                 retrieval_time=0.1,  # Fast retrieval expected
@@ -155,7 +155,7 @@ class ALCOAMetadataInjector:
                 indexed=True,
                 export_formats=["json", "xml", "csv"],
                 download_options=["json", "xml", "pdf"],
-                
+
                 # Process tracking
                 system_version="1.0.0",
                 process_id=unique_id,
@@ -163,12 +163,12 @@ class ALCOAMetadataInjector:
                 related_records=[],
                 dependencies=[]
             )
-            
+
             # Inject metadata into original data
             enhanced_data = {
                 **data,
                 "alcoa_plus_metadata": alcoa_metadata.model_dump(),
-                
+
                 # Add top-level fields that ALCOA+ scorer checks for
                 "is_original": is_original,
                 "version": "1.0",
@@ -178,7 +178,7 @@ class ALCOAMetadataInjector:
                 "hash": data_hash,
                 "immutable": True,
                 "locked": False,
-                
+
                 "validated": validated,
                 "accuracy_score": alcoa_metadata.accuracy_score,
                 "confidence_score": confidence_score,
@@ -188,7 +188,7 @@ class ALCOAMetadataInjector:
                 "cross_verified": validated,
                 "corrections": [],
                 "error_log": [],
-                
+
                 # Additional fields for other ALCOA+ attributes
                 "user_id": self.system_id,
                 "created_by": "pharmaceutical_test_generation_agent",
@@ -198,42 +198,42 @@ class ALCOAMetadataInjector:
                 "modified_at": None,
                 "last_updated": timestamp,
                 "processing_time": processing_time,
-                
+
                 "format": "json",
                 "encoding": "utf-8",
                 "schema": alcoa_metadata.schema,
                 "metadata": alcoa_metadata.metadata,
-                
+
                 "retention_period": "7_years",
                 "expires_at": None,
                 "encrypted": False,
                 "protected": True,
                 "backed_up": False,
                 "backup_status": "pending",
-                
+
                 "accessible": True,
                 "retrieval_time": 0.1,
                 "searchable": True,
                 "indexed": True,
                 "export_formats": ["json", "xml", "csv"],
                 "download_options": ["json", "xml", "pdf"],
-                
+
                 "system_version": "1.0.0",
                 "process_id": unique_id,
                 "change_history": [],
                 "related_records": [],
                 "dependencies": []
             }
-            
+
             self.logger.info(f"ALCOA+ metadata injected: {unique_id} (signature: {digital_signature[:16]}...)")
             return enhanced_data
-            
+
         except Exception as e:
             error_msg = f"ALCOA+ metadata injection failed: {e}"
             self.logger.error(error_msg)
             # NO FALLBACKS - fail explicitly for regulatory compliance
             raise RuntimeError(error_msg) from e
-    
+
     def inject_test_suite_metadata(
         self,
         test_suite_dict: dict[str, Any],
@@ -253,10 +253,10 @@ class ALCOAMetadataInjector:
         """
         # Extract confidence score from LLM response
         confidence_score = self._extract_confidence_score(llm_response)
-        
+
         # Extract processing time from context
         processing_time = generation_context.get("processing_time") if generation_context else None
-        
+
         return self.inject_alcoa_metadata(
             data=test_suite_dict,
             is_original=True,  # Generated test suites are original
@@ -269,15 +269,15 @@ class ALCOAMetadataInjector:
                 "generation_method": "llm_structured_output"
             }
         )
-    
+
     def _calculate_checksum(self, data_str: str) -> str:
         """Calculate MD5 checksum for data integrity."""
         return hashlib.md5(data_str.encode("utf-8")).hexdigest()
-    
+
     def _calculate_hash(self, data_str: str) -> str:
         """Calculate SHA-256 hash for data integrity."""
         return hashlib.sha256(data_str.encode("utf-8")).hexdigest()
-    
+
     def _calculate_accuracy_score(self, data: dict[str, Any], context: dict[str, Any]) -> float:
         """
         Calculate accuracy score based on data quality indicators.
@@ -292,24 +292,24 @@ class ALCOAMetadataInjector:
         try:
             # Base accuracy score
             accuracy = 0.8  # High base score for generated data
-            
+
             # Adjust based on data completeness
             if isinstance(data, dict):
                 required_fields = ["test_cases", "gamp_category", "document_name"]
-                present_fields = sum(1 for field in required_fields if field in data and data[field])
+                present_fields = sum(1 for field in required_fields if data.get(field))
                 completeness = present_fields / len(required_fields)
                 accuracy = accuracy * completeness
-            
+
             # Adjust based on context quality
             if context and "aggregated_context" in context:
                 context_quality = len(str(context["aggregated_context"])) / 1000  # Rough measure
                 accuracy = min(accuracy + (context_quality * 0.1), 1.0)
-            
+
             return min(max(accuracy, 0.0), 1.0)  # Ensure 0-1 range
-            
+
         except Exception:
             return 0.85  # Default high accuracy for pharmaceutical data
-    
+
     def _extract_confidence_score(self, llm_response: dict[str, Any] | None) -> float | None:
         """
         Extract confidence score from LLM response.
@@ -322,13 +322,13 @@ class ALCOAMetadataInjector:
         """
         if not llm_response:
             return None
-            
+
         # Try various fields where confidence might be stored
         confidence_fields = [
             "confidence_score", "confidence", "score", "certainty",
             "quality_score", "reliability_score"
         ]
-        
+
         for field in confidence_fields:
             if field in llm_response:
                 score = llm_response[field]
@@ -336,7 +336,7 @@ class ALCOAMetadataInjector:
                     return float(score)
                 if isinstance(score, (int, float)) and 0 <= score <= 100:
                     return float(score / 100)
-        
+
         # Default high confidence for structured outputs
         return 0.92
 

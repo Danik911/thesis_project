@@ -500,7 +500,7 @@ class DocumentProcessor:
                 f"Original error: {PDFPLUMBER_ERROR}. "
                 f"Install with: uv add pdfplumber"
             )
-        
+
         result = {
             "text": "",
             "tables": [],

@@ -8,25 +8,24 @@ consistency, and regulatory compliance.
 NO FALLBACKS: All tests must fail explicitly if OSS models don't meet criteria.
 """
 
+import json
 import os
 import sys
-import json
 import time
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
-from datetime import datetime, UTC
-import pytest
-from dataclasses import dataclass, asdict
+from typing import Any
 
 # Add main directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.llms.oss_provider_factory import OSSModelFactory, OSSProvider
-from src.agents.categorization.agent import (
-    categorize_with_pydantic_structured_output,
-    GAMPCategory
-)
 from llama_index.llms.openai import OpenAI
+from src.agents.categorization.agent import (
+    GAMPCategory,
+    categorize_with_pydantic_structured_output,
+)
+from src.llms.oss_provider_factory import OSSModelFactory, OSSProvider
 
 
 @dataclass
@@ -50,7 +49,7 @@ class TestResult:
     expected_category: int
     passed: bool
     latency_ms: float
-    tokens_used: Dict[str, int]
+    tokens_used: dict[str, int]
     error: str = None
 
 
@@ -60,15 +59,15 @@ class CategorizationOSSTestSuite:
     
     NO FALLBACKS: Tests fail immediately if accuracy thresholds not met.
     """
-    
+
     def __init__(self, verbose: bool = True):
         """Initialize test suite."""
         self.verbose = verbose
         self.factory = OSSModelFactory(verbose=verbose)
-        self.test_results: List[TestResult] = []
+        self.test_results: list[TestResult] = []
         self.test_cases = self._load_test_cases()
-        
-    def _load_test_cases(self) -> List[TestCase]:
+
+    def _load_test_cases(self) -> list[TestCase]:
         """Load predefined test cases for categorization."""
         return [
             TestCase(
@@ -173,7 +172,7 @@ class CategorizationOSSTestSuite:
                 description="Edge case between Category 4 and 5"
             )
         ]
-    
+
     def test_single_case(
         self,
         test_case: TestCase,
@@ -187,7 +186,7 @@ class CategorizationOSSTestSuite:
         NO FALLBACKS: Raises exception on failure rather than masking errors.
         """
         start_time = time.time()
-        
+
         try:
             # Perform categorization
             result = categorize_with_pydantic_structured_output(
@@ -195,14 +194,14 @@ class CategorizationOSSTestSuite:
                 urs_content=test_case.urs_content,
                 document_name=test_case.name
             )
-            
+
             # Calculate metrics
             latency_ms = (time.time() - start_time) * 1000
             passed = (
                 result.gamp_category == test_case.expected_category and
                 result.confidence_score >= test_case.min_confidence
             )
-            
+
             # Create test result
             test_result = TestResult(
                 test_case=test_case.name,
@@ -215,7 +214,7 @@ class CategorizationOSSTestSuite:
                 latency_ms=latency_ms,
                 tokens_used={"estimate": len(test_case.urs_content) // 4}
             )
-            
+
             if self.verbose:
                 status = "[PASS]" if passed else "[FAIL]"
                 print(f"{status} | {test_case.name}")
@@ -223,23 +222,23 @@ class CategorizationOSSTestSuite:
                 print(f"  Got: Category {result.gamp_category.value} (confidence: {result.confidence_score:.2f})")
                 print(f"  Latency: {latency_ms:.0f}ms")
                 if not passed:
-                    print(f"  FAILURE REASON: ", end="")
+                    print("  FAILURE REASON: ", end="")
                     if result.gamp_category != test_case.expected_category:
-                        print(f"Wrong category")
+                        print("Wrong category")
                     else:
                         print(f"Low confidence ({result.confidence_score:.2f} < {test_case.min_confidence})")
                 print()
-            
+
             return test_result
-            
+
         except Exception as e:
             # NO FALLBACK - Report error explicitly
-            error_msg = f"Categorization failed: {str(e)}"
+            error_msg = f"Categorization failed: {e!s}"
             if self.verbose:
                 print(f"[ERROR] | {test_case.name}")
                 print(f"  Error: {error_msg}")
                 print()
-            
+
             return TestResult(
                 test_case=test_case.name,
                 provider=provider,
@@ -252,12 +251,12 @@ class CategorizationOSSTestSuite:
                 tokens_used={},
                 error=error_msg
             )
-    
+
     def test_provider(
         self,
         provider: OSSProvider | str,
         model: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Test all cases with a specific provider.
         
@@ -268,7 +267,7 @@ class CategorizationOSSTestSuite:
         print(f"Testing Provider: {provider}")
         print(f"Model: {model or 'default'}")
         print(f"{'='*60}\n")
-        
+
         # Create LLM instance
         try:
             llm = self.factory.create_llm(provider, model)
@@ -283,7 +282,7 @@ class CategorizationOSSTestSuite:
                 "tests_passed": 0,
                 "accuracy": 0.0
             }
-        
+
         # Run all test cases
         results = []
         for test_case in self.test_cases:
@@ -292,13 +291,13 @@ class CategorizationOSSTestSuite:
             )
             results.append(result)
             self.test_results.append(result)
-        
+
         # Calculate metrics
         total_tests = len(results)
         passed_tests = sum(1 for r in results if r.passed)
         accuracy = passed_tests / total_tests if total_tests > 0 else 0.0
         avg_latency = sum(r.latency_ms for r in results) / total_tests if total_tests > 0 else 0
-        
+
         # Category-specific accuracy
         category_accuracy = {}
         for cat in GAMPCategory:
@@ -306,7 +305,7 @@ class CategorizationOSSTestSuite:
             if cat_results:
                 cat_passed = sum(1 for r in cat_results if r.passed)
                 category_accuracy[f"category_{cat.value}"] = cat_passed / len(cat_results)
-        
+
         summary = {
             "provider": provider_name,
             "model": model or "default",
@@ -317,7 +316,7 @@ class CategorizationOSSTestSuite:
             "category_accuracy": category_accuracy,
             "results": [asdict(r) for r in results]
         }
-        
+
         # Print summary
         print(f"\n{'-'*40}")
         print(f"Provider Summary: {provider_name}")
@@ -325,21 +324,21 @@ class CategorizationOSSTestSuite:
         print(f"  Average Latency: {avg_latency:.0f}ms")
         for cat, acc in category_accuracy.items():
             print(f"  {cat}: {acc:.1%}")
-        
+
         # Check if meets minimum criteria
         MIN_ACCURACY = 0.95
         if accuracy < MIN_ACCURACY:
             print(f"\n[WARNING] FAILED: Accuracy {accuracy:.1%} < {MIN_ACCURACY:.1%} threshold")
-            print(f"  NO FALLBACK: Provider does not meet pharmaceutical requirements")
+            print("  NO FALLBACK: Provider does not meet pharmaceutical requirements")
         else:
-            print(f"\n[PASS] PASSED: Provider meets accuracy requirements")
-        
+            print("\n[PASS] PASSED: Provider meets accuracy requirements")
+
         return summary
-    
+
     def compare_providers(
         self,
-        providers: List[Tuple[str, str]] = None
-    ) -> Dict[str, Any]:
+        providers: list[tuple[str, str]] = None
+    ) -> dict[str, Any]:
         """
         Compare multiple providers side-by-side.
         
@@ -356,13 +355,13 @@ class CategorizationOSSTestSuite:
                 ("openrouter", "openai/gpt-oss-120b"),
                 ("cerebras", "gpt-oss-120b"),
             ]
-        
+
         print("\n" + "="*80)
         print("PROVIDER COMPARISON TEST")
         print("="*80)
-        
+
         all_results = {}
-        
+
         for provider, model in providers:
             try:
                 results = self.test_provider(provider, model)
@@ -370,72 +369,72 @@ class CategorizationOSSTestSuite:
             except Exception as e:
                 print(f"[ERROR] Failed to test {provider}: {e}")
                 all_results[provider] = {"error": str(e)}
-        
+
         # Generate comparison report
         comparison = self._generate_comparison_report(all_results)
-        
+
         return comparison
-    
-    def _generate_comparison_report(self, results: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _generate_comparison_report(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate comprehensive comparison report."""
         print("\n" + "="*80)
         print("COMPARISON SUMMARY")
         print("="*80 + "\n")
-        
+
         # Create comparison table
         providers = list(results.keys())
         metrics = ["accuracy", "avg_latency_ms", "tests_passed", "tests_run"]
-        
+
         # Print comparison table
         print(f"{'Provider':<15} {'Accuracy':<12} {'Latency (ms)':<15} {'Tests Passed':<15}")
         print("-" * 60)
-        
+
         for provider in providers:
             if "error" in results[provider]:
                 print(f"{provider:<15} {'ERROR':<12} {'-':<15} {'-':<15}")
             else:
                 r = results[provider]
                 print(f"{provider:<15} {r['accuracy']:.1%}{'':7} {r['avg_latency_ms']:.0f}{'':10} {r['tests_passed']}/{r['tests_run']}")
-        
+
         # Identify best provider
         valid_providers = [p for p in providers if "error" not in results[p]]
         if valid_providers:
             best_accuracy = max(valid_providers, key=lambda p: results[p]["accuracy"])
             best_latency = min(valid_providers, key=lambda p: results[p]["avg_latency_ms"])
-            
+
             print(f"\n[BEST] Accuracy: {best_accuracy} ({results[best_accuracy]['accuracy']:.1%})")
             print(f"[BEST] Latency: {best_latency} ({results[best_latency]['avg_latency_ms']:.0f}ms)")
-            
+
             # Cost comparison (if not baseline)
             if "openai" in results and best_accuracy != "openai":
                 openai_cost = 10.0  # $10 per million tokens
                 best_config = self.factory.PROVIDER_CONFIG.get(
-                    OSSProvider(best_accuracy), 
+                    OSSProvider(best_accuracy),
                     {"cost_per_m_input": 0}
                 )
                 best_cost = best_config.get("cost_per_m_input", 0)
                 if best_cost > 0:
                     savings = ((openai_cost - best_cost) / openai_cost) * 100
                     print(f"[SAVINGS] Cost Savings: {savings:.1f}% vs OpenAI")
-        
+
         return {
             "timestamp": datetime.now(UTC).isoformat(),
             "providers_tested": len(providers),
             "results": results,
             "recommendations": self._generate_recommendations(results)
         }
-    
-    def _generate_recommendations(self, results: Dict[str, Any]) -> Dict[str, str]:
+
+    def _generate_recommendations(self, results: dict[str, Any]) -> dict[str, str]:
         """Generate recommendations based on test results."""
         recommendations = {}
-        
+
         # Check if any OSS provider meets requirements
-        oss_providers = [p for p in results.keys() if p != "openai" and "error" not in results[p]]
+        oss_providers = [p for p in results if p != "openai" and "error" not in results[p]]
         qualified_providers = [
-            p for p in oss_providers 
+            p for p in oss_providers
             if results[p].get("accuracy", 0) >= 0.95
         ]
-        
+
         if qualified_providers:
             best = max(qualified_providers, key=lambda p: results[p]["accuracy"])
             recommendations["primary"] = best
@@ -447,25 +446,25 @@ class CategorizationOSSTestSuite:
             recommendations["status"] = "oss_not_ready"
             recommendations["risk_level"] = "high"
             recommendations["action"] = "Continue using OpenAI; OSS models need improvement"
-        
+
         return recommendations
-    
+
     def save_results(self, filepath: str = None):
         """Save test results to file."""
         if filepath is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filepath = f"test_results_categorization_oss_{timestamp}.json"
-        
+
         results_data = {
             "timestamp": datetime.now(UTC).isoformat(),
             "test_suite": "categorization_oss",
             "total_tests": len(self.test_results),
             "results": [asdict(r) for r in self.test_results]
         }
-        
-        with open(filepath, 'w') as f:
+
+        with open(filepath, "w") as f:
             json.dump(results_data, f, indent=2, default=str)
-        
+
         print(f"\n[SAVED] Results saved to: {filepath}")
 
 
@@ -479,40 +478,39 @@ def main():
   NO FALLBACKS - All failures reported explicitly            
 ==================================================================
     """)
-    
+
     # Initialize test suite
     suite = CategorizationOSSTestSuite(verbose=True)
-    
+
     # Check environment
     provider = os.getenv("LLM_PROVIDER", "openrouter")
     model = os.getenv("LLM_MODEL_OSS")
-    
-    print(f"Configuration:")
+
+    print("Configuration:")
     print(f"  Provider: {provider}")
     print(f"  Model: {model or 'default'}")
     print(f"  Test Mode: {os.getenv('LLM_TEST_MODE', 'isolation')}")
     print()
-    
+
     # Run tests based on mode
     test_mode = os.getenv("LLM_TEST_MODE", "isolation")
-    
+
     if test_mode == "comparison":
         # Compare multiple providers
         results = suite.compare_providers()
     else:
         # Test single provider
         results = suite.test_provider(provider, model)
-    
+
     # Save results
     suite.save_results()
-    
+
     # Return exit code based on success
     if isinstance(results, dict) and results.get("accuracy", 0) >= 0.95:
         print("\n[SUCCESS] TEST SUITE PASSED")
         return 0
-    else:
-        print("\n[FAILED] TEST SUITE FAILED")
-        return 1
+    print("\n[FAILED] TEST SUITE FAILED")
+    return 1
 
 
 if __name__ == "__main__":

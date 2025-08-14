@@ -19,9 +19,9 @@ def create_enhanced_workflow_patch():
     This adds Phoenix enhanced observability features to the unified workflow
     including compliance analysis, violation detection, and dashboard generation.
     """
-    
+
     # The imports to add at the top of unified_workflow.py
-    enhanced_imports = '''
+    enhanced_imports = """
 # Enhanced Phoenix Observability
 from src.monitoring.phoenix_enhanced import (
     PhoenixGraphQLClient,
@@ -29,7 +29,7 @@ from src.monitoring.phoenix_enhanced import (
     AutomatedTraceAnalyzer,
     setup_enhanced_phoenix_observability
 )
-'''
+"""
 
     # The enhanced completion method
     enhanced_completion_method = '''
@@ -214,53 +214,53 @@ from src.monitoring.phoenix_enhanced import (
 
 def apply_integration_patch():
     """Apply the Phoenix enhanced integration patch to unified_workflow.py."""
-    
+
     workflow_file = Path("main/src/core/unified_workflow.py")
-    
+
     if not workflow_file.exists():
         print(f"❌ Workflow file not found: {workflow_file}")
         return False
-    
+
     print("🔍 Reading current unified workflow...")
-    
+
     # Read current file
-    with open(workflow_file, 'r', encoding='utf-8') as f:
+    with open(workflow_file, encoding="utf-8") as f:
         content = f.read()
-    
+
     # Get the patch components
     enhanced_imports, enhanced_completion_method = create_enhanced_workflow_patch()
-    
+
     # Check if already patched
     if "phoenix_enhanced" in content:
         print("⚠️  Workflow already appears to have enhanced Phoenix integration")
         return True
-    
+
     print("🔧 Applying enhanced Phoenix integration patch...")
-    
+
     try:
         # Add enhanced imports after existing monitoring imports
         import_insertion_point = content.find("from src.monitoring.phoenix_config import setup_phoenix")
         if import_insertion_point == -1:
             print("❌ Could not find phoenix_config import to add enhanced imports")
             return False
-        
+
         # Find the end of that import line
-        import_end = content.find('\n', import_insertion_point) + 1
-        
+        import_end = content.find("\n", import_insertion_point) + 1
+
         # Insert enhanced imports
         new_content = (
-            content[:import_end] + 
-            enhanced_imports + 
+            content[:import_end] +
+            enhanced_imports +
             content[import_end:]
         )
-        
+
         # Find and replace the complete_workflow method
         # Look for the method signature
         method_start = new_content.find("async def complete_workflow(")
         if method_start == -1:
             print("❌ Could not find complete_workflow method to replace")
             return False
-        
+
         # Find the method end (look for next @step or class end)
         method_end = new_content.find("\n    @step", method_start + 1)
         if method_end == -1:
@@ -269,27 +269,27 @@ def apply_integration_patch():
             if method_end == -1:
                 # Look for end of file
                 method_end = len(new_content)
-        
+
         # Replace the method
         new_content = (
-            new_content[:method_start] + 
+            new_content[:method_start] +
             enhanced_completion_method.strip() + "\n\n" +
             new_content[method_end:]
         )
-        
+
         # Write the updated file
-        with open(workflow_file, 'w', encoding='utf-8') as f:
+        with open(workflow_file, "w", encoding="utf-8") as f:
             f.write(new_content)
-        
+
         print("✅ Enhanced Phoenix integration patch applied successfully!")
         print("📋 Added features:")
         print("   - Compliance violation detection")
         print("   - GAMP-5 compliance dashboard generation")
         print("   - Comprehensive regulatory reporting")
         print("   - Workflow trace analysis")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Failed to apply patch: {e}")
         return False
@@ -297,9 +297,9 @@ def apply_integration_patch():
 if __name__ == "__main__":
     print("🚀 Phoenix Enhanced Observability Integration Patch")
     print("=" * 60)
-    
+
     success = apply_integration_patch()
-    
+
     if success:
         print("\n✅ INTEGRATION COMPLETE!")
         print("🎯 Next steps:")
@@ -309,5 +309,5 @@ if __name__ == "__main__":
     else:
         print("\n❌ INTEGRATION FAILED!")
         print("   Manual integration may be required")
-    
+
     print("=" * 60)

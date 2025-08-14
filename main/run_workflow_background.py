@@ -36,7 +36,7 @@ check_count = 0
 while True:
     check_count += 1
     elapsed = time.time() - start_time
-    
+
     # Check if process is still running
     poll = process.poll()
     if poll is not None:
@@ -47,30 +47,30 @@ while True:
         if stderr:
             print("STDERR:", stderr[-1000:])  # Last 1000 chars
         break
-    
+
     # Check for output files
     json_files = list(output_dir.glob("*.json"))
-    
+
     print(f"\r[{elapsed:.0f}s] Check #{check_count}: Found {len(json_files)} files", end="", flush=True)
-    
+
     if json_files:
-        print(f"\n\nSUCCESS! Test suite generated:")
+        print("\n\nSUCCESS! Test suite generated:")
         for f in json_files:
             print(f"  - {f.name} ({f.stat().st_size} bytes)")
-            
+
             # Show content preview
-            with open(f, 'r') as file:
+            with open(f) as file:
                 content = file.read()
-                print(f"\nFirst 1000 characters:")
+                print("\nFirst 1000 characters:")
                 print(content[:1000])
         break
-    
+
     # Timeout after 15 minutes
     if elapsed > 900:
         print("\n\nTimeout reached (15 minutes)")
         process.terminate()
         break
-    
+
     # Wait 30 seconds before next check
     time.sleep(30)
 

@@ -6,7 +6,6 @@ LlamaIndex event-driven architecture with pharmaceutical compliance
 and regulatory validation requirements.
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -14,13 +13,13 @@ from typing import Any
 
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
+from src.compliance_validation.metadata_injector import get_metadata_injector
 from src.config.llm_config import LLMConfig
 from src.core.events import ConsultationRequiredEvent
-from src.compliance_validation.metadata_injector import get_metadata_injector
 
 from .events import OQTestGenerationEvent, OQTestSuiteEvent
-from .generator import OQTestGenerationError, OQTestGenerator
-from .generator_v2 import OQTestGeneratorV2, create_oq_test_generator_v2
+from .generator import OQTestGenerationError
+from .generator_v2 import create_oq_test_generator_v2
 from .models import OQTestSuite
 
 
@@ -118,9 +117,9 @@ class OQTestGenerationWorkflow(Workflow):
             if not self._test_generator:
                 # Use enhanced V2 generator with o1 model support
                 # Use default if timeout attribute not available
-                workflow_timeout = getattr(self, 'timeout', 600)  # Default 10 minutes
+                workflow_timeout = getattr(self, "timeout", 600)  # Default 10 minutes
                 generation_timeout = int(workflow_timeout * 0.8)
-                
+
                 # Use V2 generator for better model support
                 self._test_generator = create_oq_test_generator_v2(
                     verbose=self.verbose,
@@ -278,13 +277,13 @@ class OQTestGenerationWorkflow(Workflow):
         """
         try:
             self.logger.info(f"Injecting ALCOA+ metadata into test suite: {test_suite.suite_id}")
-            
+
             # Get metadata injector
             metadata_injector = get_metadata_injector()
-            
+
             # Convert test suite to dictionary for metadata injection
             test_suite_dict = test_suite.model_dump()
-            
+
             # Prepare generation context
             generation_context = {
                 "source_document_id": generation_event.document_metadata.get("name"),
@@ -297,17 +296,17 @@ class OQTestGenerationWorkflow(Workflow):
                 "generation_method": "LLMTextCompletionProgram",
                 "pharmaceutical_validation": True
             }
-            
+
             # Extract confidence score from generation context or use default
             confidence_score = 0.92  # High confidence for structured LLM outputs
-            
+
             # Inject comprehensive ALCOA+ metadata
             enhanced_dict = metadata_injector.inject_test_suite_metadata(
                 test_suite_dict=test_suite_dict,
                 llm_response={"confidence_score": confidence_score},
                 generation_context=generation_context
             )
-            
+
             # Create new test suite with enhanced metadata
             # Update the original fields with ALCOA+ metadata
             enhanced_test_suite = OQTestSuite(
@@ -329,7 +328,7 @@ class OQTestGenerationWorkflow(Workflow):
                 created_by=test_suite.created_by,
                 review_required=test_suite.review_required,
                 pharmaceutical_compliance=test_suite.pharmaceutical_compliance,
-                
+
                 # ALCOA+ Enhanced fields
                 alcoa_plus_metadata=enhanced_dict.get("alcoa_plus_metadata", {}),
                 is_original=enhanced_dict.get("is_original", True),
@@ -340,7 +339,7 @@ class OQTestGenerationWorkflow(Workflow):
                 hash=enhanced_dict.get("hash"),
                 immutable=enhanced_dict.get("immutable", True),
                 locked=enhanced_dict.get("locked", False),
-                
+
                 validated=enhanced_dict.get("validated", True),
                 accuracy_score=enhanced_dict.get("accuracy_score"),
                 confidence_score=enhanced_dict.get("confidence_score"),
@@ -350,7 +349,7 @@ class OQTestGenerationWorkflow(Workflow):
                 cross_verified=enhanced_dict.get("cross_verified", True),
                 corrections=enhanced_dict.get("corrections", []),
                 error_log=enhanced_dict.get("error_log", []),
-                
+
                 user_id=enhanced_dict.get("user_id"),
                 audit_trail=enhanced_dict.get("audit_trail", {}),
                 created_at=enhanced_dict.get("created_at"),
@@ -358,42 +357,42 @@ class OQTestGenerationWorkflow(Workflow):
                 modified_at=enhanced_dict.get("modified_at"),
                 last_updated=enhanced_dict.get("last_updated"),
                 processing_time=enhanced_dict.get("processing_time"),
-                
+
                 format=enhanced_dict.get("format", "json"),
                 encoding=enhanced_dict.get("encoding", "utf-8"),
                 schema=enhanced_dict.get("schema", {}),
                 metadata=enhanced_dict.get("metadata", {}),
-                
+
                 retention_period=enhanced_dict.get("retention_period", "7_years"),
                 expires_at=enhanced_dict.get("expires_at"),
                 encrypted=enhanced_dict.get("encrypted", False),
                 protected=enhanced_dict.get("protected", True),
                 backed_up=enhanced_dict.get("backed_up", False),
                 backup_status=enhanced_dict.get("backup_status", "pending"),
-                
+
                 accessible=enhanced_dict.get("accessible", True),
                 retrieval_time=enhanced_dict.get("retrieval_time", 0.1),
                 searchable=enhanced_dict.get("searchable", True),
                 indexed=enhanced_dict.get("indexed", True),
                 export_formats=enhanced_dict.get("export_formats", ["json", "xml", "csv"]),
                 download_options=enhanced_dict.get("download_options", ["json", "xml", "pdf"]),
-                
+
                 system_version=enhanced_dict.get("system_version", "1.0.0"),
                 process_id=enhanced_dict.get("process_id"),
                 change_history=enhanced_dict.get("change_history", []),
                 related_records=enhanced_dict.get("related_records", []),
                 dependencies=enhanced_dict.get("dependencies", [])
             )
-            
+
             self.logger.info(
                 f"ALCOA+ metadata successfully injected: "
                 f"signature={enhanced_test_suite.digital_signature[:16] if enhanced_test_suite.digital_signature else 'none'}..., "
                 f"validated={enhanced_test_suite.validated}, "
                 f"confidence={enhanced_test_suite.confidence_score}"
             )
-            
+
             return enhanced_test_suite
-            
+
         except Exception as e:
             error_msg = f"ALCOA+ metadata injection failed for test suite {test_suite.suite_id}: {e}"
             self.logger.error(error_msg)
@@ -609,19 +608,19 @@ class OQTestGenerationWorkflow(Workflow):
             project_root = Path(__file__).parent.parent.parent.parent
             main_output_dir = project_root / "main" / "output" / "test_suites"
             root_output_dir = project_root / "output" / "test_suites"
-            
+
             # Ensure both directories exist for maximum compatibility
             main_output_dir.mkdir(parents=True, exist_ok=True)
             root_output_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Primary save location (main/output/test_suites)
             output_dir = main_output_dir
-            
+
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"test_suite_{test_suite.suite_id}_{timestamp}.json"
             output_file = output_dir / filename
-            
+
             # Prepare comprehensive output data
             output_data = {
                 "metadata": {
@@ -642,42 +641,42 @@ class OQTestGenerationWorkflow(Workflow):
                     "pharmaceutical_compliance": test_suite.pharmaceutical_compliance
                 }
             }
-            
+
             # Write file with proper error handling - NO FALLBACKS
             # Use custom JSON encoder to handle datetime objects
             import json as json_module
             from datetime import datetime as dt
-            
+
             class DateTimeEncoder(json_module.JSONEncoder):
                 def default(self, obj):
                     if isinstance(obj, dt):
                         return obj.isoformat()
                     return super().default(obj)
-            
-            with open(output_file, 'w', encoding='utf-8') as f:
+
+            with open(output_file, "w", encoding="utf-8") as f:
                 json_module.dump(output_data, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
-            
+
             # Verify file was written correctly
             if not output_file.exists():
                 raise RuntimeError(f"File write verification failed: {output_file} does not exist")
-                
+
             file_size = output_file.stat().st_size
             if file_size == 0:
                 raise RuntimeError(f"File write verification failed: {output_file} is empty")
-            
+
             # Also save to root output directory for backward compatibility
             root_output_file = root_output_dir / filename
             try:
-                with open(root_output_file, 'w', encoding='utf-8') as f:
+                with open(root_output_file, "w", encoding="utf-8") as f:
                     json_module.dump(output_data, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
                 self.logger.info(f"Test suite also saved to: {root_output_file}")
             except Exception as e:
                 # Log but don't fail - primary save succeeded
                 self.logger.warning(f"Secondary save to root directory failed: {e}")
-            
+
             self.logger.info(f"Test suite file written successfully: {file_size} bytes to {output_file}")
             return str(output_file)
-            
+
         except Exception as e:
             # File saving failed - NO FALLBACKS for GAMP-5 compliance
             error_msg = f"CRITICAL: Test suite file save failed: {e}"
@@ -714,7 +713,7 @@ class OQTestGenerationWorkflow(Workflow):
                 f"OQ test generation completed successfully: {ev.test_suite.suite_id} "
                 f"({ev.test_suite.total_test_count} tests)"
             )
-            
+
             # Save test suite to JSON file
             output_file = await self._save_test_suite_to_file(ev.test_suite)
             self.logger.info(f"Test suite saved to: {output_file}")

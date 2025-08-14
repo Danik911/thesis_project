@@ -3,8 +3,8 @@
 Quick test to verify the environment variable loading fix.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add main to path
@@ -17,25 +17,25 @@ print("=" * 50)
 print("1. Testing direct import of llm_config...")
 try:
     from src.config.llm_config import LLMConfig
-    
+
     # Check if API key is now accessible
     api_key = os.getenv("OPENROUTER_API_KEY")
     if api_key:
         print(f"✅ OPENROUTER_API_KEY found: {api_key[:10]}...{api_key[-4:]}")
     else:
         print("❌ OPENROUTER_API_KEY still not found")
-    
+
     # Test provider info
     provider_info = LLMConfig.get_provider_info()
     print(f"✅ Provider: {provider_info['provider']}")
     print(f"✅ API key present: {provider_info['api_key_present']}")
-    
+
     # Test configuration validation
     is_valid, message = LLMConfig.validate_configuration()
     print(f"✅ Configuration valid: {is_valid}")
     if not is_valid:
         print(f"❌ Validation error: {message}")
-    
+
 except Exception as e:
     print(f"❌ Error importing llm_config: {e}")
 

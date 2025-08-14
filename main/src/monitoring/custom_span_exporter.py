@@ -9,10 +9,8 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Sequence
 
-from opentelemetry.sdk.trace import SpanProcessor, ReadableSpan
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.sdk.trace import ReadableSpan, SpanProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +22,7 @@ class LocalFileSpanExporter(SpanProcessor):
     This ensures we capture ChromaDB and other instrumentation spans that
     Phoenix doesn't persist to its database.
     """
-    
+
     def __init__(self, output_dir: Path | str | None = None):
         """
         Initialize the local file span exporter.
@@ -34,18 +32,17 @@ class LocalFileSpanExporter(SpanProcessor):
         """
         self.output_dir = Path(output_dir) if output_dir else Path("logs/traces")
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create a new file for this session
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.trace_file = self.output_dir / f"all_spans_{timestamp}.jsonl"
         self.chromadb_file = self.output_dir / f"chromadb_spans_{timestamp}.jsonl"
-        
+
         logger.info(f"LocalFileSpanExporter initialized - saving to: {self.trace_file}")
-        
+
     def on_start(self, span: ReadableSpan, parent_context=None) -> None:
         """Called when a span is started. We don't need to do anything here."""
-        pass
-    
+
     def on_end(self, span: ReadableSpan) -> None:
         """
         Called when a span ends. Export it to our local file.
@@ -56,29 +53,29 @@ class LocalFileSpanExporter(SpanProcessor):
         try:
             # Convert span to a serializable format
             span_data = self._span_to_dict(span)
-            
+
             # Write to main trace file
-            with open(self.trace_file, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(span_data, default=str) + '\n')
-            
+            with open(self.trace_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(span_data, default=str) + "\n")
+
             # Also write ChromaDB spans to separate file for easier analysis
             span_name = span.name.lower()
-            if any(keyword in span_name for keyword in ['chromadb', 'vector', 'collection', 'embed']):
-                with open(self.chromadb_file, 'a', encoding='utf-8') as f:
-                    f.write(json.dumps(span_data, default=str) + '\n')
+            if any(keyword in span_name for keyword in ["chromadb", "vector", "collection", "embed"]):
+                with open(self.chromadb_file, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(span_data, default=str) + "\n")
                 logger.debug(f"Captured ChromaDB span: {span.name}")
-                
+
         except Exception as e:
             logger.error(f"Failed to export span {span.name}: {e}")
-    
+
     def shutdown(self) -> None:
         """Shutdown the exporter."""
         logger.info(f"LocalFileSpanExporter shutdown - traces saved to: {self.trace_file}")
-    
+
     def force_flush(self, timeout_millis: int = 30000) -> bool:
         """Force flush any pending spans. We write immediately so nothing to flush."""
         return True
-    
+
     def _span_to_dict(self, span: ReadableSpan) -> dict:
         """
         Convert a ReadableSpan to a dictionary format similar to Phoenix exports.
@@ -100,7 +97,7 @@ class LocalFileSpanExporter(SpanProcessor):
                     attributes[attr_key] = value
                 else:
                     attributes[attr_key] = str(value)
-        
+
         # Extract events
         events = []
         if span.events:
@@ -114,12 +111,12 @@ class LocalFileSpanExporter(SpanProcessor):
                     for key, value in event.attributes.items():
                         event_data["attributes"][str(key)] = value
                 events.append(event_data)
-        
+
         # Build span dictionary
         span_dict = {
-            "span_id": format(span.context.span_id, '016x'),
-            "trace_id": format(span.context.trace_id, '032x'),
-            "parent_id": format(span.parent.span_id, '016x') if span.parent else None,
+            "span_id": format(span.context.span_id, "016x"),
+            "trace_id": format(span.context.trace_id, "032x"),
+            "parent_id": format(span.parent.span_id, "016x") if span.parent else None,
             "name": span.name,
             "kind": span.kind.name,
             "start_time": span.start_time,
@@ -133,18 +130,18 @@ class LocalFileSpanExporter(SpanProcessor):
             "events": events,
             "links": [],  # Links not commonly used in our system
             "resource": {},  # Resource attributes if needed
-            
+
             # Add pharmaceutical compliance markers
             "pharmaceutical_system": True,
             "exporter": "LocalFileSpanExporter",
             "capture_time": datetime.now().isoformat()
         }
-        
+
         # Add specific fields for ChromaDB operations
-        if 'chromadb' in span.name.lower():
+        if "chromadb" in span.name.lower():
             span_dict["span_type"] = "vector_database"
             span_dict["database_type"] = "chromadb"
-            
+
             # Extract ChromaDB specific attributes
             if "vector_db.operation" in attributes:
                 span_dict["operation"] = attributes["vector_db.operation"]
@@ -152,11 +149,11 @@ class LocalFileSpanExporter(SpanProcessor):
                 span_dict["result_count"] = attributes["chromadb.query.result_count"]
             if "chromadb.query.avg_distance" in attributes:
                 span_dict["avg_distance"] = attributes["chromadb.query.avg_distance"]
-        
+
         # Add LLM fields if this is an LLM span
-        elif any(llm_key in span.name.lower() for llm_key in ['llm', 'chat', 'completion', 'openai']):
+        elif any(llm_key in span.name.lower() for llm_key in ["llm", "chat", "completion", "openai"]):
             span_dict["span_type"] = "llm"
-            
+
             # Extract LLM specific attributes
             if "llm.token_count.prompt" in attributes:
                 span_dict["prompt_tokens"] = attributes["llm.token_count.prompt"]
@@ -164,21 +161,21 @@ class LocalFileSpanExporter(SpanProcessor):
                 span_dict["completion_tokens"] = attributes["llm.token_count.completion"]
             if "llm.model_name" in attributes:
                 span_dict["model"] = attributes["llm.model_name"]
-        
+
         # Add workflow fields
-        elif 'workflow' in span.name.lower():
+        elif "workflow" in span.name.lower():
             span_dict["span_type"] = "workflow"
             if "workflow.type" in attributes:
                 span_dict["workflow_type"] = attributes["workflow.type"]
-        
+
         # Add tool fields
-        elif 'tool' in span.name.lower():
+        elif "tool" in span.name.lower():
             span_dict["span_type"] = "tool"
             if "tool.name" in attributes:
                 span_dict["tool_name"] = attributes["tool.name"]
             if "tool.category" in attributes:
                 span_dict["tool_category"] = attributes["tool.category"]
-        
+
         return span_dict
 
 

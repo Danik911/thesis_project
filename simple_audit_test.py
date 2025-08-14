@@ -14,18 +14,19 @@ sys.path.insert(0, str(Path(__file__).parent / "main"))
 from src.core.audit_trail import get_audit_trail
 from src.core.cryptographic_audit import get_audit_crypto
 
+
 async def test_audit_coverage():
     """Test comprehensive audit trail coverage."""
     print("Testing Comprehensive Audit Trail Coverage")
     print("=" * 50)
-    
+
     # Initialize audit trail
     audit_trail = get_audit_trail()
     crypto_audit = get_audit_crypto()
-    
+
     tests_passed = 0
     total_tests = 5
-    
+
     # Test 1: Agent Decision Logging
     try:
         print("1. Testing Agent Decision Logging...")
@@ -46,7 +47,7 @@ async def test_audit_coverage():
             print("   FAIL - No audit ID returned")
     except Exception as e:
         print(f"   FAIL - Agent decision logging error: {e}")
-    
+
     # Test 2: Data Transformation Tracking
     try:
         print("2. Testing Data Transformation Tracking...")
@@ -65,7 +66,7 @@ async def test_audit_coverage():
             print("   FAIL - No audit ID returned")
     except Exception as e:
         print(f"   FAIL - Data transformation error: {e}")
-    
+
     # Test 3: State Transition Logging
     try:
         print("3. Testing State Transition Logging...")
@@ -83,7 +84,7 @@ async def test_audit_coverage():
             print("   FAIL - No audit ID returned")
     except Exception as e:
         print(f"   FAIL - State transition error: {e}")
-    
+
     # Test 4: Error Recovery Logging
     try:
         print("4. Testing Error Recovery Logging...")
@@ -103,7 +104,7 @@ async def test_audit_coverage():
             print("   FAIL - No audit ID returned")
     except Exception as e:
         print(f"   FAIL - Error recovery error: {e}")
-    
+
     # Test 5: Cryptographic Signatures
     try:
         print("5. Testing Cryptographic Signatures...")
@@ -112,7 +113,7 @@ async def test_audit_coverage():
             event_data={"test": "data"},
             workflow_context={"test": "context"}
         )
-        
+
         # Verify signature
         signature_valid = crypto_audit.verify_audit_event(signed_entry)
         if signature_valid:
@@ -122,39 +123,38 @@ async def test_audit_coverage():
             print("   FAIL - Signature verification failed")
     except Exception as e:
         print(f"   FAIL - Cryptographic signatures error: {e}")
-    
+
     # Generate coverage report
     print("\nCOVERAGE REPORT:")
     print("-" * 30)
-    
+
     coverage_percentage = (tests_passed / total_tests) * 100
     print(f"Tests Passed: {tests_passed}/{total_tests}")
     print(f"Coverage: {coverage_percentage:.1f}%")
-    
+
     # Get detailed audit statistics
     try:
         audit_report = audit_trail.get_audit_coverage_report()
-        print(f"\nAudit Statistics:")
+        print("\nAudit Statistics:")
         print(f"Total Events: {audit_report['audit_statistics']['total_events']}")
         print(f"Cryptographic Signatures: {audit_report['audit_statistics']['cryptographic_signatures']}")
         print(f"Session ID: {audit_report['session_id']}")
-        
+
         # Compliance assessment
-        compliance = audit_report['compliance_assessment']
-        print(f"\nCompliance Assessment:")
+        compliance = audit_report["compliance_assessment"]
+        print("\nCompliance Assessment:")
         for standard, compliant in compliance.items():
             status = "COMPLIANT" if compliant else "NON-COMPLIANT"
             print(f"  {standard}: {status}")
-            
+
     except Exception as e:
         print(f"Could not generate detailed report: {e}")
-    
+
     if coverage_percentage >= 100.0:
         print("\nSUCCESS: 100% Audit Trail Coverage Achieved!")
         return True
-    else:
-        print(f"\nINCOMPLETE: {100 - coverage_percentage:.1f}% coverage gap remaining")
-        return False
+    print(f"\nINCOMPLETE: {100 - coverage_percentage:.1f}% coverage gap remaining")
+    return False
 
 if __name__ == "__main__":
     success = asyncio.run(test_audit_coverage())

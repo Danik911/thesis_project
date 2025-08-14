@@ -8,16 +8,15 @@ achieving an overall score of ≥9.0 from the current 8.11.
 """
 
 import sys
-import os
 from pathlib import Path
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
 import asyncio
 import json
 import logging
 from datetime import datetime
-from uuid import uuid4
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 logger = logging.getLogger(__name__)
 
 async def test_alcoa_enhancement():
@@ -26,13 +25,13 @@ async def test_alcoa_enhancement():
         from compliance_validation.alcoa_scorer import ALCOAScorer
         from compliance_validation.evidence_collector import EvidenceCollector
         from compliance_validation.metadata_injector import get_metadata_injector
-        
+
         logger.info("Starting ALCOA+ enhancement validation test...")
-        
+
         # Create output directory for evidence collector
-        output_dir = Path('output/test_alcoa')
+        output_dir = Path("output/test_alcoa")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create minimal test data (simulating generated OQ test suite)
         test_data = {
             "suite_id": "OQ-SUITE-1234",
@@ -47,32 +46,32 @@ async def test_alcoa_enhancement():
             "total_test_count": 1,
             "estimated_execution_time": 60
         }
-        
+
         logger.info(f"Created original test data: {test_data['suite_id']}")
-        
+
         # Test original data ALCOA+ score
         evidence_collector = EvidenceCollector(output_directory=output_dir)
         alcoa_scorer = ALCOAScorer(evidence_collector)
-        
+
         original_data_samples = [test_data]
-        
+
         logger.info("Assessing original ALCOA+ score...")
         original_assessment = alcoa_scorer.assess_system_data_integrity(
             system_name="original_test_suite",
             data_samples=original_data_samples,
             target_score=9.0
         )
-        
+
         logger.info(f"Original ALCOA+ Score: {original_assessment.overall_score:.2f}/10")
         original_scores = original_assessment.attribute_scores
-        original_original_score = original_scores.get("original", type('', (), {"score": 0.0})()).score
-        original_accurate_score = original_scores.get("accurate", type('', (), {"score": 0.0})()).score
+        original_original_score = original_scores.get("original", type("", (), {"score": 0.0})()).score
+        original_accurate_score = original_scores.get("accurate", type("", (), {"score": 0.0})()).score
         logger.info(f"Original scores - Original: {original_original_score:.2f}, Accurate: {original_accurate_score:.2f}")
-        
+
         # Apply ALCOA+ metadata enhancement
         logger.info("Applying ALCOA+ metadata enhancement...")
         metadata_injector = get_metadata_injector()
-        
+
         enhanced_dict = metadata_injector.inject_test_suite_metadata(
             test_suite_dict=test_data,
             llm_response={"confidence_score": 0.92},
@@ -83,28 +82,28 @@ async def test_alcoa_enhancement():
                 "generation_method": "LLMTextCompletionProgram"
             }
         )
-        
+
         logger.info("Enhanced test suite with ALCOA+ metadata")
-        
+
         # Test enhanced suite ALCOA+ score
         enhanced_data_samples = [enhanced_dict]
-        
+
         logger.info("Assessing enhanced ALCOA+ score...")
         enhanced_assessment = alcoa_scorer.assess_system_data_integrity(
             system_name="enhanced_test_suite",
             data_samples=enhanced_data_samples,
             target_score=9.0
         )
-        
+
         logger.info(f"Enhanced ALCOA+ Score: {enhanced_assessment.overall_score:.2f}/10")
         enhanced_scores = enhanced_assessment.attribute_scores
-        enhanced_original_score = enhanced_scores.get("original", type('', (), {"score": 0.0})()).score
-        enhanced_accurate_score = enhanced_scores.get("accurate", type('', (), {"score": 0.0})()).score
+        enhanced_original_score = enhanced_scores.get("original", type("", (), {"score": 0.0})()).score
+        enhanced_accurate_score = enhanced_scores.get("accurate", type("", (), {"score": 0.0})()).score
         logger.info(f"Enhanced scores - Original: {enhanced_original_score:.2f}, Accurate: {enhanced_accurate_score:.2f}")
-        
+
         # Validate improvement
         score_improvement = enhanced_assessment.overall_score - original_assessment.overall_score
-        
+
         print()
         print("="*60)
         print("ALCOA+ ENHANCEMENT VALIDATION RESULTS")
@@ -115,7 +114,7 @@ async def test_alcoa_enhancement():
         print(f"Target Achievement: {'[SUCCESS]' if enhanced_assessment.overall_score >= 9.0 else '[FAILED]'} (>=9.0)")
         print(f"Original Target: {'[SUCCESS]' if enhanced_original_score >= 0.80 else '[FAILED]'} (>=0.80)")
         print(f"Accurate Target: {'[SUCCESS]' if enhanced_accurate_score >= 0.80 else '[FAILED]'} (>=0.80)")
-        
+
         # Check specific metadata fields
         print()
         print("Metadata Validation:")
@@ -123,7 +122,7 @@ async def test_alcoa_enhancement():
             "is_original", "digital_signature", "validated", "confidence_score",
             "checksum", "hash", "accuracy_score", "reconciled", "cross_verified"
         ]
-        
+
         fields_present = 0
         for field in key_fields:
             value = enhanced_dict.get(field)
@@ -131,21 +130,21 @@ async def test_alcoa_enhancement():
             if value is not None:
                 fields_present += 1
             print(f"  {status} {field}: {value}")
-        
+
         print(f"\nMetadata Coverage: {fields_present}/{len(key_fields)} fields present ({100*fields_present/len(key_fields):.1f}%)")
-        
+
         # Final validation
         success = (
             enhanced_assessment.overall_score >= 9.0 and
-            enhanced_original_score >= 0.80 and 
+            enhanced_original_score >= 0.80 and
             enhanced_accurate_score >= 0.80
         )
-        
+
         print()
         print("="*60)
         print(f"TASK 23 VALIDATION: {'[COMPLETE SUCCESS]' if success else '[NEEDS WORK]'}")
         print("="*60)
-        
+
         # Save detailed results
         results = {
             "test_timestamp": datetime.now().isoformat(),
@@ -179,16 +178,16 @@ async def test_alcoa_enhancement():
                 "coverage_percentage": 100 * fields_present / len(key_fields)
             }
         }
-        
+
         # Save results
         results_file = Path("../TASK23_ALCOA_VALIDATION_RESULTS.json")
         with open(results_file, "w") as f:
             json.dump(results, f, indent=2, default=str)
-        
+
         print(f"\nDetailed results saved to: {results_file}")
-        
+
         return success
-        
+
     except Exception as e:
         logger.error(f"ALCOA+ enhancement test failed: {e}")
         import traceback

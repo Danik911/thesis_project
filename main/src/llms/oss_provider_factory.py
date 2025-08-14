@@ -9,10 +9,11 @@ NO FALLBACKS: This module will NEVER mask failures or provide automatic fallback
 All errors are reported explicitly for regulatory compliance.
 """
 
-import os
 import logging
-from typing import Any, Dict, Optional, Literal
+import os
 from enum import Enum
+from typing import Any
+
 from llama_index.llms.openai import OpenAI
 from openai import OpenAI as OpenAIClient
 
@@ -33,7 +34,7 @@ class OSSModelFactory:
     NO FALLBACKS: If a provider fails, the error is raised immediately with
     full diagnostic information. No automatic switching between providers.
     """
-    
+
     # Provider configuration
     PROVIDER_CONFIG = {
         OSSProvider.OPENROUTER: {
@@ -82,7 +83,7 @@ class OSSModelFactory:
             "env_key": "OPENAI_API_KEY"
         }
     }
-    
+
     def __init__(self, verbose: bool = False):
         """
         Initialize the OSS model factory.
@@ -92,7 +93,7 @@ class OSSModelFactory:
         """
         self.logger = logging.getLogger(__name__)
         self.verbose = verbose
-        
+
         # Track usage for cost analysis
         self.usage_stats = {
             "total_input_tokens": 0,
@@ -100,14 +101,14 @@ class OSSModelFactory:
             "total_requests": 0,
             "errors": []
         }
-    
+
     def create_llm(
         self,
         provider: OSSProvider | str,
-        model: Optional[str] = None,
+        model: str | None = None,
         temperature: float = 0.1,
-        max_tokens: Optional[int] = None,
-        api_key: Optional[str] = None,
+        max_tokens: int | None = None,
+        api_key: str | None = None,
         **kwargs
     ) -> OpenAI:
         """
@@ -139,10 +140,10 @@ class OSSModelFactory:
                     f"Unsupported provider: {provider}. "
                     f"Supported providers: {[p.value for p in OSSProvider]}"
                 )
-        
+
         # Get provider configuration
         config = self.PROVIDER_CONFIG[provider]
-        
+
         # Get API key (NO FALLBACK - fail if missing)
         if api_key is None:
             api_key = os.getenv(config["env_key"])
@@ -152,19 +153,19 @@ class OSSModelFactory:
                     f"Set {config['env_key']} environment variable or provide api_key parameter. "
                     f"NO FALLBACK: Cannot proceed without valid API key."
                 )
-        
+
         # Use default model if not specified
         if model is None:
             model = config["default_model"]
             if self.verbose:
                 self.logger.info(f"Using default model for {provider.value}: {model}")
-        
+
         # Log provider selection (for audit trail)
         self.logger.info(
             f"Creating LLM with provider={provider.value}, model={model}, "
             f"temperature={temperature}, max_tokens={max_tokens}"
         )
-        
+
         try:
             # Special handling for non-OpenAI providers (bypass model validation)
             if provider in [OSSProvider.CEREBRAS, OSSProvider.OPENROUTER, OSSProvider.TOGETHER, OSSProvider.FIREWORKS]:
@@ -180,7 +181,7 @@ class OSSModelFactory:
                 # Override with actual model
                 llm.model = model
                 llm._model_name = model  # Some versions use this
-                
+
                 # Replace client with properly configured one
                 llm._client = OpenAIClient(
                     base_url=config["base_url"],
@@ -200,14 +201,14 @@ class OSSModelFactory:
                     api_base=config["base_url"],
                     **kwargs
                 )
-            
+
             # Add provider metadata
             llm._provider = provider.value
             llm._cost_per_m_input = config["cost_per_m_input"]
             llm._cost_per_m_output = config["cost_per_m_output"]
-            
+
             return llm
-            
+
         except Exception as e:
             # NO FALLBACK - report error with full diagnostics
             error_msg = (
@@ -215,7 +216,7 @@ class OSSModelFactory:
                 f"Provider: {provider.value}\n"
                 f"Model: {model}\n"
                 f"API Base: {config['base_url']}\n"
-                f"Error: {str(e)}\n"
+                f"Error: {e!s}\n"
                 f"NO FALLBACK: Manual intervention required."
             )
             self.logger.error(error_msg)
@@ -225,7 +226,7 @@ class OSSModelFactory:
                 "error": str(e)
             })
             raise RuntimeError(error_msg) from e
-    
+
     def create_from_env(self) -> OpenAI:
         """
         Create LLM instance from environment variables.
@@ -248,20 +249,20 @@ class OSSModelFactory:
                 "LLM_PROVIDER environment variable not set. "
                 "Set to one of: openrouter, cerebras, together, fireworks, openai"
             )
-        
+
         return self.create_llm(
             provider=provider_str,
             model=os.getenv("LLM_MODEL_OSS"),
             temperature=float(os.getenv("LLM_TEMPERATURE", "0.1")),
             max_tokens=int(os.getenv("LLM_MAX_TOKENS", "4000")) if os.getenv("LLM_MAX_TOKENS") else None
         )
-    
+
     def estimate_cost(
         self,
         provider: OSSProvider | str,
         input_tokens: int,
         output_tokens: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Estimate cost for a given token usage.
         
@@ -275,13 +276,13 @@ class OSSModelFactory:
         """
         if isinstance(provider, str):
             provider = OSSProvider(provider.lower())
-        
+
         config = self.PROVIDER_CONFIG[provider]
-        
+
         input_cost = (input_tokens / 1_000_000) * config["cost_per_m_input"]
         output_cost = (output_tokens / 1_000_000) * config["cost_per_m_output"]
         total_cost = input_cost + output_cost
-        
+
         return {
             "provider": provider.value,
             "input_tokens": input_tokens,
@@ -292,12 +293,12 @@ class OSSModelFactory:
             "cost_per_m_input": config["cost_per_m_input"],
             "cost_per_m_output": config["cost_per_m_output"]
         }
-    
+
     def compare_providers(
         self,
         input_tokens: int = 1000,
         output_tokens: int = 2000
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Compare costs across all providers.
         
@@ -309,18 +310,18 @@ class OSSModelFactory:
             Comparison dictionary with all providers
         """
         comparison = {}
-        
+
         for provider in OSSProvider:
             cost_data = self.estimate_cost(provider, input_tokens, output_tokens)
             config = self.PROVIDER_CONFIG[provider]
-            
+
             comparison[provider.value] = {
                 **cost_data,
                 "max_tps": config["max_tps"],
                 "context_window": config["context_window"],
                 "savings_vs_openai": None
             }
-        
+
         # Calculate savings vs OpenAI
         openai_cost = comparison["openai"]["total_cost"]
         for provider in comparison:
@@ -328,17 +329,17 @@ class OSSModelFactory:
                 provider_cost = comparison[provider]["total_cost"]
                 savings_pct = ((openai_cost - provider_cost) / openai_cost) * 100
                 comparison[provider]["savings_vs_openai"] = round(savings_pct, 1)
-        
+
         return comparison
-    
-    def get_usage_stats(self) -> Dict[str, Any]:
+
+    def get_usage_stats(self) -> dict[str, Any]:
         """Get current usage statistics."""
         return self.usage_stats.copy()
 
 
 def get_oss_llm(
-    provider: Optional[str] = None,
-    model: Optional[str] = None,
+    provider: str | None = None,
+    model: str | None = None,
     **kwargs
 ) -> OpenAI:
     """
@@ -353,41 +354,40 @@ def get_oss_llm(
         Configured LLM instance
     """
     factory = OSSModelFactory()
-    
+
     if provider:
         return factory.create_llm(provider, model, **kwargs)
-    else:
-        return factory.create_from_env()
+    return factory.create_from_env()
 
 
 if __name__ == "__main__":
     # Example usage and cost comparison
     factory = OSSModelFactory(verbose=True)
-    
+
     print("\n=== Provider Cost Comparison ===")
     print("For 1000 input tokens + 2000 output tokens:\n")
-    
+
     comparison = factory.compare_providers(1000, 2000)
-    
+
     for provider, data in comparison.items():
         print(f"{provider.upper()}:")
         print(f"  Total Cost: ${data['total_cost']:.6f}")
         print(f"  Max TPS: {data['max_tps']}")
         print(f"  Context: {data['context_window']:,} tokens")
-        if data['savings_vs_openai']:
+        if data["savings_vs_openai"]:
             print(f"  Savings vs OpenAI: {data['savings_vs_openai']}%")
         print()
-    
+
     # Test provider initialization (if API keys are set)
     try:
         print("\n=== Testing Provider Initialization ===")
-        
+
         # Try to create from environment
         if os.getenv("LLM_PROVIDER"):
             llm = factory.create_from_env()
             print(f"✓ Successfully created LLM from environment: {llm._provider}")
         else:
             print("LLM_PROVIDER not set, skipping environment test")
-            
+
     except Exception as e:
         print(f"✗ Provider initialization failed: {e}")

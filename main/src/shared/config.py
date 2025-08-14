@@ -278,46 +278,46 @@ class ValidationModeConfig:
     validation_mode: bool = field(
         default_factory=lambda: os.getenv("VALIDATION_MODE", "false").lower() == "true"
     )
-    
+
     # Consultation bypass threshold (confidence score below which consultation would normally be required)
     bypass_consultation_threshold: float = field(
         default_factory=lambda: float(os.getenv("BYPASS_CONSULTATION_THRESHOLD", "0.7"))
     )
-    
+
     # Category bypass settings (which GAMP categories can bypass consultation in validation mode)
     bypass_allowed_categories: list[int] = field(
         default_factory=lambda: [4, 5]  # Category 4 and 5 can bypass in validation mode
     )
-    
+
     # Audit trail settings for bypassed consultations
     log_bypassed_consultations: bool = True
     bypass_audit_directory: str = "logs/validation/bypassed_consultations"
-    
+
     # Quality metrics tracking for bypass impact
     track_bypass_quality_impact: bool = True
     bypass_metrics_file: str = "logs/validation/bypass_quality_metrics.json"
-    
+
     # Safety settings
     require_explicit_validation_mode: bool = True  # Must be explicitly enabled
     max_bypass_rate_threshold: float = 0.8  # Alert if bypass rate exceeds 80%
-    
+
     def __post_init__(self):
         """Validate validation mode configuration and ensure production safety."""
         # Ensure bypass threshold is valid
         if not 0.0 <= self.bypass_consultation_threshold <= 1.0:
             raise ValueError("Bypass consultation threshold must be between 0.0 and 1.0")
-        
+
         # Ensure bypass directories exist if validation mode is enabled
         if self.validation_mode:
             Path(self.bypass_audit_directory).mkdir(parents=True, exist_ok=True)
             Path(Path(self.bypass_metrics_file).parent).mkdir(parents=True, exist_ok=True)
-        
+
         # Validate GAMP categories
         valid_categories = [1, 3, 4, 5]
         for category in self.bypass_allowed_categories:
             if category not in valid_categories:
                 raise ValueError(f"Invalid GAMP category for bypass: {category}. Must be one of {valid_categories}")
-        
+
         # Production safety check
         if self.validation_mode and self.require_explicit_validation_mode:
             env_validation = os.getenv("VALIDATION_MODE_EXPLICIT", "false").lower() == "true"

@@ -3,12 +3,12 @@
 Test Task 17 Cross-Validation Framework - Real Execution
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 # Add main to path
-sys.path.insert(0, 'main')
+sys.path.insert(0, "main")
 
 print("="*60)
 print("TASK 17 REAL VALIDATION TEST")
@@ -18,18 +18,18 @@ print("="*60)
 print("\n1. Module Import Test:")
 try:
     from src.cross_validation import (
-        FoldManager, 
-        MetricsCollector,
         CrossValidationWorkflow,
+        FoldManager,
+        MetricsCollector,
     )
     print("[PASS] Core cross-validation modules imported successfully")
-    
+
     # Try importing analysis components directly
     try:
         from src.cross_validation.coverage_analyzer import CoverageAnalyzer
         from src.cross_validation.quality_metrics import QualityMetrics
-        from src.cross_validation.statistical_analyzer import StatisticalAnalyzer
         from src.cross_validation.results_aggregator import ResultsAggregator
+        from src.cross_validation.statistical_analyzer import StatisticalAnalyzer
         print("[PASS] Analysis components imported successfully")
     except ImportError as e:
         print(f"[WARNING] Analysis components not found: {e}")
@@ -45,12 +45,12 @@ except ImportError as e:
 print("\n2. Fold Assignments Test:")
 fold_file = Path("main/datasets/cross_validation/fold_assignments.json")
 if fold_file.exists():
-    with open(fold_file, 'r') as f:
+    with open(fold_file) as f:
         fold_data = json.load(f)
     print(f"[PASS] Fold assignments found: {len(fold_data['folds'])} folds")
-    for fold_id, fold_info in fold_data['folds'].items():
-        train = len(fold_info['train'])
-        val = len(fold_info['validation'])
+    for fold_id, fold_info in fold_data["folds"].items():
+        train = len(fold_info["train"])
+        val = len(fold_info["validation"])
         print(f"   {fold_id}: {train} train, {val} validation")
 else:
     print(f"[FAIL] Fold assignments not found at {fold_file}")
@@ -61,7 +61,7 @@ try:
     fold_manager = FoldManager()
     print(f"[PASS] FoldManager initialized with {fold_manager.get_fold_count()} folds")
     print(f"   Total documents: {len(fold_manager.get_document_inventory())}")
-    
+
     # Test iteration
     fold_count = 0
     for fold_id, train_docs, val_docs in fold_manager.iterate_folds():
@@ -70,7 +70,7 @@ try:
             print(f"   Sample fold '{fold_id}': {len(train_docs)} train, {len(val_docs)} val")
         if fold_count >= 1:  # Only test first fold to avoid full document loading
             break
-    print(f"[PASS] Successfully iterated through 1 fold (testing iteration)")
+    print("[PASS] Successfully iterated through 1 fold (testing iteration)")
 except Exception as e:
     print(f"[FAIL] FoldManager error: {e}")
 
@@ -79,13 +79,13 @@ print("\n4. MetricsCollector Test:")
 try:
     output_dir = Path("main/output/cross_validation/test_task17")
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     metrics_collector = MetricsCollector(
         experiment_id="test_task17",
         output_directory=output_dir
     )
     print("[PASS] MetricsCollector initialized")
-    
+
     # Test metric recording
     metrics_collector.start_fold_processing("test_fold")
     timer_key = metrics_collector.start_document_processing(
@@ -110,7 +110,6 @@ except Exception as e:
 print("\n5. CrossValidationWorkflow Test:")
 try:
     # Check if workflow can be initialized
-    from llama_index.core.workflow import Context
     cv_workflow = CrossValidationWorkflow()
     print("[PASS] CrossValidationWorkflow initialized")
     print(f"   Event types: {len(cv_workflow._get_steps())}")
@@ -126,13 +125,13 @@ if CoverageAnalyzer and QualityMetrics and StatisticalAnalyzer and ResultsAggreg
         quality_metrics = QualityMetrics()
         statistical_analyzer = StatisticalAnalyzer()
         results_aggregator = ResultsAggregator(output_dir)
-        
+
         print("[PASS] All analysis components initialized:")
         print("   - CoverageAnalyzer")
-        print("   - QualityMetrics") 
+        print("   - QualityMetrics")
         print("   - StatisticalAnalyzer")
         print("   - ResultsAggregator")
-        
+
         # Test statistical methods
         import numpy as np
         sample_data = np.random.randn(10)
@@ -147,16 +146,16 @@ else:
 print("\n7. Previous Execution Check:")
 cv_output = Path("main/output/cross_validation")
 if cv_output.exists():
-    experiments = [d for d in cv_output.iterdir() if d.is_dir() and not d.name.startswith('test')]
+    experiments = [d for d in cv_output.iterdir() if d.is_dir() and not d.name.startswith("test")]
     print(f"Found {len(experiments)} experiment directories:")
     for exp in experiments[:5]:  # Show first 5
         print(f"   - {exp.name}")
         # Check for results
         results_file = exp / "aggregated_results.json"
         if results_file.exists():
-            print(f"     [PASS] Has aggregated results")
+            print("     [PASS] Has aggregated results")
         else:
-            print(f"     [FAIL] No aggregated results found")
+            print("     [FAIL] No aggregated results found")
 else:
     print("[FAIL] No cross-validation output directory found")
 
@@ -169,7 +168,7 @@ if entry_script.exists():
     import subprocess
     result = subprocess.run(
         ["python", "run_cross_validation.py", "--dry-run"],
-        capture_output=True,
+        check=False, capture_output=True,
         text=True,
         timeout=10
     )

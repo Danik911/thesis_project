@@ -24,16 +24,16 @@ This test prioritizes HONESTY and REAL RESULTS over perfect scores.
 import asyncio
 import json
 import logging
-import sys
 import os
-from datetime import datetime, timezone
+import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Add main to Python path
 sys.path.insert(0, str(Path(__file__).parent / "main"))
 
-from src.security.working_test_executor import WorkingSecurityTestExecutor
 from src.security.owasp_test_scenarios import OWASPTestScenarios
+from src.security.working_test_executor import WorkingSecurityTestExecutor
 
 
 def setup_environment():
@@ -42,21 +42,21 @@ def setup_environment():
     if env_file.exists():
         with open(env_file) as f:
             for line in f:
-                if '=' in line and not line.startswith('#'):
-                    key, value = line.strip().split('=', 1)
+                if "=" in line and not line.startswith("#"):
+                    key, value = line.strip().split("=", 1)
                     # Remove quotes if present
                     value = value.strip('"\'')
                     os.environ[key] = value
-    
+
     # Set provider to OpenRouter for DeepSeek V3
-    os.environ['LLM_PROVIDER'] = 'openrouter'
+    os.environ["LLM_PROVIDER"] = "openrouter"
 
 
 def setup_logging():
     """Configure logging for the security test."""
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
             logging.FileHandler(
@@ -78,65 +78,65 @@ async def run_single_security_test():
     logger.info("=" * 60)
     logger.info("STARTING SINGLE SECURITY TEST - PROOF OF CONCEPT")
     logger.info("=" * 60)
-    
-    test_start = datetime.now(timezone.utc)
-    
+
+    test_start = datetime.now(UTC)
+
     # Initialize test components
     logger.info("Loading environment and initializing components...")
     setup_environment()
-    
+
     scenario_generator = OWASPTestScenarios()
     executor = WorkingSecurityTestExecutor(
         output_dir=Path("main/output/security_assessment/single_test")
     )
-    
+
     # Get a single, representative test scenario
     all_scenarios = scenario_generator.get_all_scenarios()
-    
+
     # Select one LLM01 prompt injection scenario for testing
     llm01_scenarios = [s for s in all_scenarios if s["owasp_category"] == "LLM01"]
     if not llm01_scenarios:
         raise Exception("No LLM01 scenarios available for testing")
-    
+
     test_scenario = llm01_scenarios[0]  # Get first prompt injection scenario
     logger.info(f"Selected test scenario: {test_scenario['id']} - {test_scenario.get('attack_type', 'prompt_injection')}")
     logger.info(f"Scenario description: {test_scenario.get('description', 'No description available')}")
-    
+
     try:
         # Execute the SINGLE security test
         logger.info("EXECUTING SINGLE SECURITY TEST...")
         logger.info(f"Testing scenario: {test_scenario['id']}")
         logger.info(f"Attack type: {test_scenario.get('attack_type', 'unknown')}")
         logger.info(f"Expected behavior: {test_scenario.get('expected_behavior', 'unknown')}")
-        
+
         result = await executor.execute_single_scenario(
-            test_scenario, 
+            test_scenario,
             "SingleSecurityTest"
         )
-        
-        test_end = datetime.now(timezone.utc)
-        
+
+        test_end = datetime.now(UTC)
+
         # Analyze results
         logger.info("ANALYZING TEST RESULTS...")
         vulnerabilities_found = result.get("vulnerability_analysis", {}).get("vulnerabilities_detected", [])
         mitigation_effectiveness = result.get("mitigation_effectiveness", 0.0)
         human_consultation = result.get("human_consultation_triggered", False)
-        
+
         # Log findings
         if vulnerabilities_found and "ANALYSIS_FAILED" not in vulnerabilities_found:
             logger.warning(f"VULNERABILITIES DETECTED: {vulnerabilities_found}")
         else:
             logger.info("No vulnerabilities detected in this test")
-        
+
         logger.info(f"Mitigation Effectiveness: {mitigation_effectiveness:.2%}")
         logger.info(f"Human Consultation Triggered: {human_consultation}")
-        
+
         # Compile final report
         test_report = {
             "test_metadata": {
                 "test_id": f"single_security_test_{test_start.strftime('%Y%m%d_%H%M%S')}",
                 "test_type": "single_scenario_validation",
-                "scenario_tested": test_scenario['id'],
+                "scenario_tested": test_scenario["id"],
                 "execution_timestamp": test_start.isoformat(),
                 "completion_timestamp": test_end.isoformat(),
                 "duration_seconds": (test_end - test_start).total_seconds()
@@ -157,15 +157,15 @@ async def run_single_security_test():
             },
             "detailed_results": result
         }
-        
+
         # Save report
         output_dir = Path("main/output/security_assessment/single_test")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         report_file = output_dir / f"single_test_report_{test_start.strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(test_report, f, indent=2, ensure_ascii=False)
-        
+
         # Generate summary
         logger.info("=" * 60)
         logger.info("SINGLE SECURITY TEST COMPLETED")
@@ -177,14 +177,14 @@ async def run_single_security_test():
         logger.info(f"Human Consultation: {'YES' if human_consultation else 'NO'}")
         logger.info(f"Duration: {(test_end - test_start).total_seconds():.1f} seconds")
         logger.info(f"Report saved to: {report_file}")
-        
+
         return test_report
-        
+
     except Exception as e:
         logger.error(f"SINGLE SECURITY TEST FAILED: {e}")
         logger.error("Full traceback:", exc_info=True)
         raise
-    
+
     finally:
         # Cleanup temporary resources
         executor.cleanup()
@@ -197,9 +197,9 @@ async def main():
         print("[TARGET] Testing one OWASP LLM scenario against real system")
         print("[NOTICE] This is a proof-of-concept for the complete assessment")
         print()
-        
+
         test_report = await run_single_security_test()
-        
+
         print("\n" + "="*60)
         print("[SUCCESS] SINGLE SECURITY TEST COMPLETED")
         print("="*60)
@@ -208,9 +208,9 @@ async def main():
         print(f"[MITIGATION] {test_report['security_findings']['mitigation_effectiveness']:.1%} effective")
         print(f"[CONSULTATION] {'Required' if test_report['security_findings']['human_consultation_triggered'] else 'Not required'}")
         print(f"[STATUS] {'PASSED' if test_report['security_findings']['test_successful'] else 'FAILED'}")
-        
+
         return test_report
-        
+
     except KeyboardInterrupt:
         print("\n[INTERRUPT] Test interrupted by user")
         return None
@@ -222,8 +222,8 @@ async def main():
 if __name__ == "__main__":
     # Run the single security test
     result = asyncio.run(main())
-    
-    if result and result['security_findings']['test_successful']:
+
+    if result and result["security_findings"]["test_successful"]:
         print("\n[SUCCESS] Single security test completed successfully!")
         sys.exit(0)
     else:

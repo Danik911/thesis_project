@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 
+
 def start_phoenix():
     """Start Phoenix server as a background process."""
     try:
@@ -15,21 +16,20 @@ def start_phoenix():
             stderr=subprocess.PIPE,
             text=True
         )
-        
+
         print("Phoenix server starting...")
         time.sleep(5)  # Give it time to start
-        
+
         # Check if process is still running
         if process.poll() is None:
             print("Phoenix server started successfully in background")
             print("Access Phoenix at: http://localhost:6006")
             return True
-        else:
-            print("Phoenix server failed to start")
-            stdout, stderr = process.communicate()
-            print(f"Error: {stderr}")
-            return False
-            
+        print("Phoenix server failed to start")
+        stdout, stderr = process.communicate()
+        print(f"Error: {stderr}")
+        return False
+
     except Exception as e:
         print(f"Failed to start Phoenix: {e}")
         return False

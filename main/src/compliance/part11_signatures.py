@@ -373,7 +373,7 @@ class ElectronicSignatureBinding:
             # For verification, we just check if the binding proof is valid
             # The binding proof was calculated from the complete payload during creation
             # We don't need to reconstruct the exact payload with the nonce
-            
+
             # Verify the signature exists and has required components
             if not all([
                 signature_binding.signature_id,
@@ -383,7 +383,7 @@ class ElectronicSignatureBinding:
             ]):
                 logger.error(f"[PART11] Incomplete signature data: {signature_binding.signature_id}")
                 return False
-                
+
             # The binding proof provides cryptographic evidence that the signature
             # is bound to this specific record content
             # In a full implementation, this would verify the binding proof
