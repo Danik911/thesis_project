@@ -14,8 +14,19 @@
       "TC-PART11-001"
     ],
     "title": "Electronic Signature Binding",
-    "validation_status": "not_started",
-    "verification_results": []
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.183886+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-001"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.404726+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-001"
+      }
+    ]
   },
   "REQ-PART11-002": {
     "acceptance_criteria": [
@@ -32,8 +43,19 @@
       "TC-PART11-002"
     ],
     "title": "Access Control",
-    "validation_status": "not_started",
-    "verification_results": []
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.185064+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-002"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.406268+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-002"
+      }
+    ]
   },
   "REQ-PART11-003": {
     "acceptance_criteria": [
@@ -50,8 +72,19 @@
       "TC-PART11-003"
     ],
     "title": "Audit Trail Integrity",
-    "validation_status": "not_started",
-    "verification_results": []
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.185857+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-003"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.407263+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-003"
+      }
+    ]
   },
   "REQ-PART11-004": {
     "acceptance_criteria": [
@@ -68,7 +101,18 @@
       "TC-PART11-004"
     ],
     "title": "Record Integrity",
-    "validation_status": "not_started",
-    "verification_results": []
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.187796+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-004"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.408825+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-004"
+      }
+    ]
   }
 }
