@@ -725,11 +725,11 @@ class SMEAgent:
                     "mitigation": "mitigation_strategy"
                 }}
             ],
-            "risk_level": "low/medium/high",
+            "risk_level": "critical/high/medium/low",
             "mitigation_strategies": [
                 {{
                     "strategy": "strategy_description",
-                    "priority": "low/medium/high", 
+                    "priority": "critical/high/medium/low", 
                     "timeline": "immediate/planned/future"
                 }}
             ],
@@ -753,9 +753,30 @@ class SMEAgent:
                     if field not in risk_analysis:
                         raise ValueError(f"Missing required field: {field}")
 
-                # Validate risk_level is valid
-                if risk_analysis["risk_level"] not in ["low", "medium", "high"]:
-                    raise ValueError(f"Invalid risk_level: {risk_analysis['risk_level']}")
+                # Validate risk_level with case-insensitive matching for robustness
+                valid_risk_levels = ["critical", "high", "medium", "low"]
+                risk_level_lower = risk_analysis["risk_level"].lower() if isinstance(risk_analysis["risk_level"], str) else str(risk_analysis["risk_level"]).lower()
+                if risk_level_lower not in [r.lower() for r in valid_risk_levels]:
+                    raise ValueError(f"Invalid risk_level: {risk_analysis['risk_level']} (must be one of: {', '.join(valid_risk_levels)})")
+
+                # Validate mitigation strategies structure and priority values
+                if "mitigation_strategies" in risk_analysis and isinstance(risk_analysis["mitigation_strategies"], list):
+                    valid_strategy_priorities = ["critical", "high", "medium", "low"]
+                    valid_timelines = ["immediate", "planned", "future"]
+                    
+                    for i, strategy in enumerate(risk_analysis["mitigation_strategies"]):
+                        if isinstance(strategy, dict):
+                            # Validate priority if present
+                            if "priority" in strategy:
+                                priority_lower = strategy["priority"].lower() if isinstance(strategy["priority"], str) else str(strategy["priority"]).lower()
+                                if priority_lower not in [p.lower() for p in valid_strategy_priorities]:
+                                    raise ValueError(f"Mitigation strategy {i} has invalid priority: {strategy['priority']} (must be one of: {', '.join(valid_strategy_priorities)})")
+                            
+                            # Validate timeline if present
+                            if "timeline" in strategy:
+                                timeline_lower = strategy["timeline"].lower() if isinstance(strategy["timeline"], str) else str(strategy["timeline"]).lower()
+                                if timeline_lower not in [t.lower() for t in valid_timelines]:
+                                    raise ValueError(f"Mitigation strategy {i} has invalid timeline: {strategy['timeline']} (must be one of: {', '.join(valid_timelines)})")
 
                 return risk_analysis
 
@@ -819,10 +840,10 @@ class SMEAgent:
         [
             {{
                 "category": "category_name",
-                "priority": "high/medium/low",
+                "priority": "critical/high/medium/low",
                 "recommendation": "specific_actionable_recommendation",
                 "rationale": "clear_justification",
-                "implementation_effort": "low/medium/high",
+                "implementation_effort": "high/medium/low",
                 "expected_benefit": "benefit_category"
             }}
         ]
@@ -855,16 +876,25 @@ class SMEAgent:
 
                 # Validate each recommendation
                 required_fields = ["category", "priority", "recommendation", "rationale", "implementation_effort", "expected_benefit"]
+                valid_priorities = ["critical", "high", "medium", "low"]
+                valid_implementation_efforts = ["high", "medium", "low"]
+                
                 for i, rec in enumerate(recommendations):
                     if not isinstance(rec, dict):
                         raise ValueError(f"Recommendation {i} must be a dictionary")
                     for field in required_fields:
                         if field not in rec:
                             raise ValueError(f"Recommendation {i} missing required field: {field}")
-                    if rec["priority"] not in ["low", "medium", "high"]:
-                        raise ValueError(f"Recommendation {i} has invalid priority: {rec['priority']}")
-                    if rec["implementation_effort"] not in ["low", "medium", "high"]:
-                        raise ValueError(f"Recommendation {i} has invalid implementation_effort: {rec['implementation_effort']}")
+                    
+                    # Case-insensitive priority validation for robustness with DeepSeek V3
+                    priority_lower = rec["priority"].lower() if isinstance(rec["priority"], str) else str(rec["priority"]).lower()
+                    if priority_lower not in [p.lower() for p in valid_priorities]:
+                        raise ValueError(f"Recommendation {i} has invalid priority: {rec['priority']} (must be one of: {', '.join(valid_priorities)})")
+                    
+                    # Case-insensitive implementation effort validation
+                    effort_lower = rec["implementation_effort"].lower() if isinstance(rec["implementation_effort"], str) else str(rec["implementation_effort"]).lower()
+                    if effort_lower not in [e.lower() for e in valid_implementation_efforts]:
+                        raise ValueError(f"Recommendation {i} has invalid implementation_effort: {rec['implementation_effort']} (must be one of: {', '.join(valid_implementation_efforts)})")
 
                 # Limit to max recommendations
                 return recommendations[:self.max_recommendations]
@@ -1425,7 +1455,7 @@ Example valid response:
 {"key": "value", "array": ["item1", "item2"]}
             """,
             "array": """
-CRITICAL RESPONSE FORMAT REQUIREMENTS:
+CRITICAL RESPONSE FORMAT REQUIREMENTS FOR PHARMACEUTICAL VALIDATION:
 1. You MUST respond with a valid JSON ARRAY only
 2. Do NOT include any text before or after the JSON array
 3. Do NOT use markdown code blocks (no ```)
@@ -1433,8 +1463,15 @@ CRITICAL RESPONSE FORMAT REQUIREMENTS:
 5. Ensure all JSON is properly escaped and valid
 6. Double-check your JSON array syntax before responding
 
+IMPORTANT VALUE CONSTRAINTS:
+- For "priority" fields: ONLY use: "critical", "high", "medium", or "low" (lowercase)
+- For "implementation_effort" fields: ONLY use: "high", "medium", or "low" (lowercase)
+- For "risk_level" fields: ONLY use: "critical", "high", "medium", or "low" (lowercase)
+- For "timeline" fields: ONLY use: "immediate", "planned", or "future" (lowercase)
+- Do NOT use variations like "Critical", "HIGH", "urgent", "minimal", etc.
+
 Example valid response:
-[{"key": "value"}, {"key2": "value2"}]
+[{"category": "compliance", "priority": "critical", "implementation_effort": "high"}]
             """
         }
 

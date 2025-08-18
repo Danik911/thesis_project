@@ -480,9 +480,9 @@ class OQTestGenerator:
         category_config: dict[str, Any]
     ) -> OQTestSuite:
         """
-        Generate test suite using YAML as primary format for OSS model compatibility.
+        Generate test suite using JSON as primary format for OSS model compatibility.
         
-        Critical: NO FALLBACKS - Uses YAML generation directly with strict parsing.
+        Critical: NO FALLBACKS - Uses JSON generation directly with strict parsing.
         """
         try:
             # Store generation context for debugging
@@ -493,7 +493,7 @@ class OQTestGenerator:
                 "context_summary": context_summary
             }
 
-            # Get raw LLM response configured for YAML output
+            # Get raw LLM response configured for JSON output
             raw_response = self._get_raw_llm_response(
                 gamp_category=gamp_category,
                 urs_content=urs_content,
@@ -502,33 +502,39 @@ class OQTestGenerator:
                 context_summary=context_summary
             )
 
-            # Parse YAML response - NO FALLBACKS
+            # Parse JSON response - NO FALLBACKS
             try:
-                yaml_data = extract_yaml_from_response(raw_response)
-                validated_data = validate_yaml_data(yaml_data)
-                result = OQTestSuite(**validated_data)
+                json_string, diagnostic_context = extract_json_from_mixed_response(raw_response)
+                
+                # Parse JSON and validate
+                import json
+                json_data = json.loads(json_string)
+                
+                # Create OQTestSuite from JSON data
+                result = OQTestSuite(**json_data)
 
                 self.logger.info(
-                    f"OQ generation successful with YAML parsing: "
-                    f"{len(result.test_cases)} tests generated"
+                    f"OQ generation successful with JSON parsing: "
+                    f"{len(result.test_cases)} tests generated "
+                    f"(extraction method: {diagnostic_context.get('extraction_method', 'unknown')})"
                 )
                 return result
 
-            except Exception as yaml_e:
-                # YAML parsing failed - provide diagnostic information and fail
+            except Exception as json_e:
+                # JSON parsing failed - provide diagnostic information and fail
                 raise TestGenerationFailure(
-                    f"YAML parsing failed: {yaml_e}",
+                    f"JSON parsing failed: {json_e}",
                     {
-                        "parsing_error": str(yaml_e),
+                        "parsing_error": str(json_e),
                         "raw_response_preview": raw_response[:500] + "..." if len(raw_response) > 500 else raw_response,
-                        "generation_method": "yaml_primary",
+                        "generation_method": "json_primary",
                         "no_fallback_available": True,
                         "requires_human_intervention": True,
                         "suggested_actions": [
-                            "Review YAML format in model response",
-                            "Check for indentation and syntax issues",
+                            "Review JSON format in model response",
+                            "Check for syntax and structure issues",
                             "Verify all required fields are present",
-                            "Consider model prompt adjustments for clearer YAML structure"
+                            "Consider model prompt adjustments for clearer JSON structure"
                         ]
                     }
                 )
@@ -541,16 +547,16 @@ class OQTestGenerator:
                 "document_name": document_name,
                 "test_count": test_count,
                 "error_message": str(e),
-                "generation_method": "yaml_primary"
+                "generation_method": "json_primary"
             }
 
             raise TestGenerationFailure(
-                f"YAML-based test generation failed: {e}",
+                f"JSON-based test generation failed: {e}",
                 error_context
             )
 
     # Template-based extraction methods removed - NO FALLBACKS policy
-    # All generation must go through primary YAML path for GAMP-5 compliance
+    # All generation must go through primary JSON path for GAMP-5 compliance
 
     def _get_raw_llm_response(
         self,
@@ -561,14 +567,14 @@ class OQTestGenerator:
         context_summary: str
     ) -> str:
         """
-        Get raw response from LLM optimized for YAML generation.
+        Get raw response from LLM optimized for JSON generation.
         
         This directly calls the LLM with optimized parameters:
         - max_tokens: 15000 (reduced from 30000 for better consistency)
         - temperature: 0.1 (low for more deterministic output)
         """
         try:
-            # Create YAML-optimized prompt
+            # Create JSON-optimized prompt
             prompt = OQPromptTemplates.get_generation_prompt(
                 gamp_category=gamp_category,
                 urs_content=urs_content,
@@ -580,7 +586,7 @@ class OQTestGenerator:
             # Configure LLM for OSS model optimization
             generation_kwargs = {
                 "max_tokens": 15000,  # Reduced from 30000 for better parseability
-                "temperature": 0.1,   # Low temperature for consistent YAML format
+                "temperature": 0.1,   # Low temperature for consistent JSON format
             }
 
             # Make direct LLM call with optimized parameters
@@ -611,7 +617,7 @@ class OQTestGenerator:
                 f"(max_tokens={generation_kwargs['max_tokens']}, temperature={generation_kwargs['temperature']})"
             )
 
-            # Log response preview for debugging (first 300 chars to see YAML start)
+            # Log response preview for debugging (first 300 chars to see JSON start)
             response_preview = raw_response[:300] + "..." if len(raw_response) > 300 else raw_response
             self.logger.debug(f"Raw LLM response preview: {response_preview}")
 
@@ -619,9 +625,9 @@ class OQTestGenerator:
 
         except Exception as e:
             raise TestGenerationFailure(
-                f"Failed to get raw LLM response for YAML generation: {e}",
+                f"Failed to get raw LLM response for JSON generation: {e}",
                 {
-                    "error_type": "yaml_llm_response_failure",
+                    "error_type": "json_llm_response_failure",
                     "llm_model": str(self.llm),
                     "gamp_category": gamp_category.value,
                     "document_name": document_name,

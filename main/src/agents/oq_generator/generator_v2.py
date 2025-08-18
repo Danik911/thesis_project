@@ -279,8 +279,8 @@ class OQTestGeneratorV2:
 
                 json_str = response_text[json_start:json_end]
 
-                # Parse JSON and create OQTestSuite
-                raw_test_data = json.loads(json_str)
+                # Parse JSON with robust error handling for DeepSeek V3
+                raw_test_data = self._parse_json_robustly(json_str, "main_generation")
 
                 # Apply flexible field mapping for DeepSeek V3 model variations
                 test_data = self._normalize_deepseek_json_fields(raw_test_data)
@@ -301,7 +301,7 @@ class OQTestGeneratorV2:
         except (json.JSONDecodeError, ValidationError) as e:
             raise TestGenerationFailure(
                 f"Failed to parse o3 model output: {e}",
-                {"parse_error": str(e), "model": llm.model}
+                {"parse_error": str(e), "model": llm.model, "json_content": json_str[:500] if 'json_str' in locals() else "N/A"}
             )
 
     async def _generate_with_o3_model(
@@ -541,6 +541,156 @@ JSON Schema:
 
         return deepseek_prompt
 
+    def _parse_json_robustly(self, json_str: str, context: str) -> dict[str, Any]:
+        """
+        Robust JSON parsing for DeepSeek V3 responses with common formatting issues.
+        
+        This method handles:
+        - Missing commas between array/object elements
+        - Trailing commas
+        - Unescaped quotes in strings
+        - Unicode characters
+        - Multiple JSON objects in response
+        
+        Args:
+            json_str: JSON string to parse
+            context: Context for error reporting (e.g., "main_generation", "batch_1")
+            
+        Returns:
+            Parsed JSON data
+            
+        Raises:
+            TestGenerationFailure: If all parsing strategies fail - NO FALLBACKS
+        """
+        # Clean the JSON first
+        cleaned_json = clean_unicode_characters(json_str.strip())
+        
+        # Store original for error reporting
+        original_json = json_str[:500] if len(json_str) > 500 else json_str
+        
+        parsing_strategies = []
+        
+        try:
+            # Strategy 1: Direct parsing (fastest)
+            try:
+                parsed_data = json.loads(cleaned_json)
+                self.logger.debug(f"JSON parsed successfully with direct parsing for {context}")
+                return parsed_data
+            except json.JSONDecodeError as e1:
+                parsing_strategies.append(("direct", str(e1)))
+                
+            # Strategy 2: Fix common comma issues
+            try:
+                # Fix missing commas between object/array elements
+                comma_fixed = self._fix_missing_commas(cleaned_json)
+                parsed_data = json.loads(comma_fixed)
+                self.logger.info(f"JSON parsed successfully after comma fixes for {context}")
+                return parsed_data
+            except json.JSONDecodeError as e2:
+                parsing_strategies.append(("comma_fixes", str(e2)))
+                
+            # Strategy 3: Fix trailing commas
+            try:
+                trailing_fixed = self._fix_trailing_commas(cleaned_json)
+                parsed_data = json.loads(trailing_fixed)
+                self.logger.info(f"JSON parsed successfully after trailing comma fixes for {context}")
+                return parsed_data
+            except json.JSONDecodeError as e3:
+                parsing_strategies.append(("trailing_commas", str(e3)))
+                
+            # Strategy 4: Fix quote escaping issues
+            try:
+                quote_fixed = self._fix_quote_issues(cleaned_json)
+                parsed_data = json.loads(quote_fixed)
+                self.logger.info(f"JSON parsed successfully after quote fixes for {context}")
+                return parsed_data
+            except json.JSONDecodeError as e4:
+                parsing_strategies.append(("quote_fixes", str(e4)))
+                
+            # All strategies failed - NO FALLBACKS
+            error_details = {
+                "context": context,
+                "json_length": len(cleaned_json),
+                "json_preview": original_json,
+                "parsing_strategies_attempted": parsing_strategies,
+                "requires_human_intervention": True,
+                "no_fallback_available": True,
+                "audit_trail": f"DeepSeek V3 JSON parsing failed for {context} after 4 strategies"
+            }
+            
+            # Log detailed error for pharmaceutical audit trail
+            self.logger.error(
+                f"JSON parsing failed for {context}. "
+                f"Attempted {len(parsing_strategies)} strategies. "
+                f"JSON preview: {original_json}"
+            )
+            
+            raise TestGenerationFailure(
+                f"Failed to parse DeepSeek V3 JSON response for {context}: "
+                f"All parsing strategies exhausted. Last error: {parsing_strategies[-1][1] if parsing_strategies else 'Unknown'}",
+                error_details
+            )
+            
+        except Exception as e:
+            # Unexpected error during parsing
+            error_details = {
+                "context": context,
+                "unexpected_error": str(e),
+                "error_type": type(e).__name__,
+                "json_preview": original_json,
+                "requires_human_intervention": True,
+                "audit_trail": f"Unexpected error during JSON parsing for {context}"
+            }
+            
+            self.logger.error(f"Unexpected error during robust JSON parsing for {context}: {e}")
+            
+            raise TestGenerationFailure(
+                f"Unexpected error parsing DeepSeek V3 JSON for {context}: {e}",
+                error_details
+            )
+    
+    def _fix_missing_commas(self, json_str: str) -> str:
+        """Fix missing commas between JSON elements."""
+        import re
+        
+        # Fix missing commas between object elements: }" -> }",
+        json_str = re.sub(r'}\s*{', '},{', json_str)
+        
+        # Fix missing commas between array elements: ]" -> ]",
+        json_str = re.sub(r']\s*\[', '],[', json_str)
+        
+        # Fix missing commas after closing brace/bracket before opening quote
+        json_str = re.sub(r'}\s*"', '},"', json_str)
+        json_str = re.sub(r']\s*"', '],"', json_str)
+        
+        # Fix missing commas after quoted strings before opening brace/bracket  
+        json_str = re.sub(r'"\s*{', '",{', json_str)
+        json_str = re.sub(r'"\s*\[', '",[', json_str)
+        
+        return json_str
+    
+    def _fix_trailing_commas(self, json_str: str) -> str:
+        """Remove trailing commas that break JSON parsing."""
+        import re
+        
+        # Remove trailing commas before closing brackets/braces
+        json_str = re.sub(r',\s*}', '}', json_str)
+        json_str = re.sub(r',\s*]', ']', json_str)
+        
+        return json_str
+    
+    def _fix_quote_issues(self, json_str: str) -> str:
+        """Fix common quote escaping issues."""
+        # This is a simplified version - can be enhanced based on actual patterns
+        # Replace unescaped quotes within strings (basic heuristic)
+        import re
+        
+        # Fix common patterns where quotes are not escaped within strings
+        # This is heuristic and may need refinement based on actual DeepSeek V3 patterns
+        json_str = re.sub(r'(?<=[a-zA-Z0-9])"(?=[a-zA-Z0-9])', '\\"', json_str)
+        
+        return json_str
+
     def _normalize_deepseek_json_fields(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
         Normalize field names from DeepSeek V3 model variations to match Pydantic schema.
@@ -660,8 +810,12 @@ JSON Schema:
             timestamp = datetime.now(UTC).strftime("%Y%m")
             test_data["suite_id"] = f"OQ-SUITE-{timestamp}"
 
-        # Ensure basic suite information
-        test_data.setdefault("gamp_category", gamp_category.value)
+        # Ensure basic suite information - NO FALLBACKS
+        if "gamp_category" not in test_data:
+            raise ValueError(
+                f"Generated test suite missing required 'gamp_category' field. "
+                f"NO FALLBACK available - LLM must generate this field explicitly."
+            )
         test_data.setdefault("document_name", document_name)
         test_data.setdefault("generation_timestamp", datetime.now(UTC).isoformat())
 
@@ -686,9 +840,14 @@ JSON Schema:
         if "test_cases" in test_data and isinstance(test_data["test_cases"], list):
             for i, test_case in enumerate(test_data["test_cases"]):
                 if isinstance(test_case, dict):
-                    # Ensure required test case fields
+                    # Check required test case fields - NO FALLBACKS
+                    if "gamp_category" not in test_case:
+                        test_id = test_case.get("test_id", f"test_{i+1}")
+                        raise ValueError(
+                            f"Test case '{test_id}' missing required 'gamp_category' field. "
+                            f"NO FALLBACK available - LLM must generate this field explicitly."
+                        )
                     test_case.setdefault("test_category", "functional")
-                    test_case.setdefault("gamp_category", gamp_category.value)
                     test_case.setdefault("risk_level", "medium")
                     test_case.setdefault("estimated_duration_minutes", 30)
 
@@ -964,8 +1123,8 @@ EXACT JSON Schema for this batch:
 
             json_str = cleaned_text[json_start:json_end]
 
-            # Parse JSON
-            batch_data = json.loads(json_str)
+            # Parse JSON with robust error handling
+            batch_data = self._parse_json_robustly(json_str, f"batch_{batch_num + 1}")
 
             # Extract test cases from batch response
             test_cases = batch_data.get("test_cases", [])

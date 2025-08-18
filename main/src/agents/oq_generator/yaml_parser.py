@@ -452,9 +452,13 @@ def validate_yaml_data(data: dict[str, Any]) -> dict[str, Any]:
                 f"NO FALLBACKS - all test cases must be properly structured."
             )
 
-        # Add gamp_category if missing (DeepSeek V3 doesn't always include it)
+        # Check for required gamp_category field - NO FALLBACKS
         if "gamp_category" not in test_case:
-            test_case["gamp_category"] = 5  # Default to Category 5 for custom applications
+            raise ValueError(
+                f"Test case {i+1} missing required 'gamp_category' field. "
+                f"NO FALLBACK available - LLM must generate this field explicitly. "
+                f"Test case: {test_case.get('test_id', 'unknown')}"
+            )
 
         # Fix invalid test categories (map non-standard categories to valid ones)
         if "test_category" in test_case:
