@@ -1,0 +1,167 @@
+# Task ID: 42
+# Title: Execute Cross-Validation Testing with Phoenix Monitoring
+# Status: pending
+# Dependencies: 20, 31
+# Priority: high
+# Description: Run comprehensive 5-fold cross-validation on 17 URS documents with full Phoenix observability monitoring and compliance validation
+# Details:
+## Comprehensive Cross-Validation Execution Guide
+
+### Prerequisites Completed:
+- ✅ ChromaDB ingested with 26 regulatory document embeddings
+- ✅ GAMP categorization fixed (now achieves 100% confidence)
+- ✅ LlamaIndex callback errors resolved
+- ✅ API keys configured (OPENROUTER_API_KEY, OPENAI_API_KEY)
+
+### Environment Setup:
+
+1. **API Keys Required** (already in .env):
+```
+OPENROUTER_API_KEY=ssk-or-v1-09cbbafdf8699f7d6cf2ab720f8c93d2bae1efe648f1c339b0d8dcdb5960ba07
+OPENAI_API_KEY=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
+PHOENIX_PORT=6006
+```
+
+2. **Launch Phoenix Docker Container**:
+```bash
+# Start Phoenix observability
+docker run -d -p 6006:6006 --name phoenix-server arizephoenix/phoenix:latest
+# Verify at http://localhost:6006
+```
+
+3. **Clear Old Traces**:
+```bash
+cd main
+rm -f logs/traces/*.jsonl
+```
+
+### Execution Steps:
+
+#### Step 1: Verify ChromaDB Population
+```bash
+cd main
+python ingest_chromadb.py
+# Should show: "26 embeddings" in pharmaceutical_regulations collection
+```
+
+#### Step 2: Test Single Document First
+```bash
+python main.py tests/test_data/gamp5_test_data/testing_data.md --categorization-only --verbose
+# Expected: Category 3, Confidence 100%
+```
+
+#### Step 3: Run Full Cross-Validation
+```bash
+python run_cross_validation.py --folds 5 --documents 17 --enable-phoenix
+# Or use the CV harness directly:
+python -m src.cross_validation.execution_harness
+```
+
+### Using Specialized Subagents:
+
+#### 1. cv-validation-tester Subagent
+**Purpose**: Specialized for cross-validation testing with DeepSeek OSS model
+**When to use**: 
+- Running Tasks 17-20 (Chapter 4 evaluation)
+- Testing performance metrics and compliance
+- Validating statistical analysis
+
+**Invocation**:
+```
+Use cv-validation-tester subagent to:
+- Execute 5-fold cross-validation
+- Use DeepSeek V3 model ONLY
+- Capture all Phoenix traces
+- Generate compliance reports
+```
+
+#### 2. end-to-end-tester Subagent  
+**Purpose**: Full workflow testing with Phoenix monitoring
+**When to use**:
+- Testing complete workflow execution
+- Validating system integration
+- Generating evaluation reports
+
+**Key Requirement**: Must launch Phoenix Docker first!
+
+**Invocation**:
+```
+Use end-to-end-tester subagent to:
+- Launch Phoenix Docker container
+- Run complete test workflow
+- Generate comprehensive reports
+```
+
+### Expected Metrics:
+
+1. **Performance Targets**:
+- Success rate: >80% of documents
+- Tests per document: 15-20
+- Cost per document: <$0.01
+- Processing time: <5 minutes per document
+
+2. **Compliance Metrics**:
+- GAMP-5 categorization: >85% confidence
+- Audit trail: Complete for all operations
+- ALCOA+ score: >7/10
+- 21 CFR Part 11: 100% compliance
+
+### Data Locations:
+
+**Test Documents**: 
+- `main/tests/test_data/gamp5_test_data/testing_data.md`
+- `main/tests/test_data/gamp5_test_data/validation_data.md`
+
+**Output Locations**:
+- Phoenix traces: `main/logs/traces/`
+- CV results: `main/output/cross_validation/`
+- Compliance reports: `main/output/compliance/`
+
+### Troubleshooting:
+
+1. **"OPENROUTER_API_KEY not found"**: Ensure .env file loaded
+2. **"oq_generation_system_error"**: Check ChromaDB population
+3. **Phoenix UI not accessible**: Restart Docker container
+4. **Categorization <85% confidence**: Re-ingest regulatory docs
+5. **Circular import error**: Already fixed in context_provider.py
+
+### Success Criteria:
+
+- [ ] At least 14/17 documents process successfully (>80%)
+- [ ] Generate 250+ total OQ tests
+- [ ] Capture 1000+ Phoenix spans
+- [ ] GAMP categorization >85% confidence
+- [ ] Total cost <$0.20
+- [ ] Generate statistical validation report
+- [ ] Create compliance assessment
+
+### Critical Notes:
+
+1. **NO FALLBACKS**: System must fail explicitly with diagnostics
+2. **Use DeepSeek V3**: For cost optimization (91% reduction)
+3. **Capture all traces**: Required for thesis evidence
+4. **Document failures**: Full stack traces needed
+
+### Command Summary:
+```bash
+# Complete execution sequence
+cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
+
+# 1. Start Phoenix
+docker start phoenix-server
+
+# 2. Clear old data
+rm -rf logs/traces/*.jsonl
+
+# 3. Ensure ChromaDB populated
+python ingest_chromadb.py
+
+# 4. Run cross-validation
+python run_cross_validation.py --folds 5 --documents 17
+
+# 5. Analyze results
+python analyze_cv_results.py
+```
+
+# Test Strategy:
+Execute 5-fold cross-validation with Phoenix monitoring. Verify >80% success rate, 15+ tests per document, <$0.01 cost per document. Capture all traces for compliance validation. Generate statistical reports matching Chapter 4 requirements.

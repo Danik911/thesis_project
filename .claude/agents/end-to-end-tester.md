@@ -31,6 +31,22 @@ The workflow uses **DeepSeek V3** via OpenRouter (NO O3/OpenAI models) and requi
 
 **NEVER USE O3, O1, OR ANY OPENAI GENERATION MODELS - ONLY DEEPSEEK**
 
+## 🐳 CRITICAL: PHOENIX DOCKER REQUIREMENT
+
+**MUST LAUNCH PHOENIX DOCKER CONTAINER FIRST:**
+```bash
+# Start Phoenix observability server
+docker run -d -p 6006:6006 --name phoenix-server arizephoenix/phoenix:latest
+
+# Or restart if already exists
+docker start phoenix-server
+
+# Verify Phoenix UI accessible
+curl http://localhost:6006 || echo "Phoenix not accessible - check Docker"
+```
+
+**Without Phoenix running, traces will not be captured for compliance!**
+
 **MANDATORY WINDOWS SETUP**:
 ```bash
 # CRITICAL: Load BOTH API keys from .env file

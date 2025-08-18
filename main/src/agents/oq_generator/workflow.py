@@ -18,7 +18,7 @@ from src.config.llm_config import LLMConfig
 from src.core.events import ConsultationRequiredEvent
 
 from .events import OQTestGenerationEvent, OQTestSuiteEvent
-from .generator import OQTestGenerationError
+from .generator import OQTestGenerationError, OQTestGenerator
 from .generator_v2 import create_oq_test_generator_v2
 from .models import OQTestSuite
 
@@ -120,10 +120,10 @@ class OQTestGenerationWorkflow(Workflow):
                 workflow_timeout = getattr(self, "timeout", 600)  # Default 10 minutes
                 generation_timeout = int(workflow_timeout * 0.8)
 
-                # Use V2 generator for better model support
-                self._test_generator = create_oq_test_generator_v2(
-                    verbose=self.verbose,
-                    generation_timeout=generation_timeout
+                # Use regular generator with YAML support for OSS models
+                self._test_generator = OQTestGenerator(
+                    llm=LLMConfig.get_llm(),
+                    verbose=self.verbose
                 )
 
             # Store generation context

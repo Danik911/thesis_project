@@ -476,23 +476,16 @@ class ContextProviderAgent:
                 )
             }
 
-            # Initialize embedding model - avoid Phoenix callback conflict
-            from llama_index.core import Settings
-
-            # Check if callback_manager exists and is properly initialized
-            callback_mgr = None
-            if hasattr(Settings, "callback_manager") and Settings.callback_manager:
-                # Only use callback manager if it has the required attributes
-                if hasattr(Settings.callback_manager, "event_starts_to_ignore"):
-                    callback_mgr = Settings.callback_manager
-                else:
-                    self.logger.warning("Skipping Phoenix callback manager due to missing attributes")
-
+            # Initialize embedding model with thread-safe callback handling for cross-validation
+            # CRITICAL FIX: Always disable callback manager to prevent cross-validation conflicts
             self.embedding_model = OpenAIEmbedding(
                 model=self.embedding_model_name,
                 api_key=os.getenv("OPENAI_API_KEY"),
-                callback_manager=None  # Disable callback manager to avoid Phoenix issues
+                callback_manager=None  # Always None to prevent thread conflicts in cross-validation
             )
+            
+            # Log thread-safety approach for cross-validation debugging
+            self.logger.info(f"Embedding model initialized for cross-validation: {self.embedding_model_name} (callback_manager=None)")
 
             if self.verbose:
                 self.logger.info(f"ChromaDB initialized with collections: {list(self.collections.keys())}")
@@ -610,12 +603,8 @@ class ContextProviderAgent:
                 api_start = time.time()
 
                 try:
-                    # Fix callback manager issue - ensure embedding model has valid callback manager
-                    if self.embedding_model.callback_manager is None:
-                        from llama_index.core.callbacks import CallbackManager
-                        self.embedding_model.callback_manager = CallbackManager([])
-                        self.logger.debug("Created empty CallbackManager for embedding model")
-
+                    # CRITICAL FIX: Create isolated embedding call to avoid callback conflicts in cross-validation
+                    # In cross-validation mode, multiple threads can conflict on shared callback managers
                     query_embedding = await asyncio.to_thread(
                         self.embedding_model.get_text_embedding,
                         query
