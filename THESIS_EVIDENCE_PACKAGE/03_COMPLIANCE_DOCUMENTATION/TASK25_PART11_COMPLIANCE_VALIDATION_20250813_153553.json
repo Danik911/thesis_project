@@ -1,0 +1,519 @@
+{
+  "compliance_results": {
+    "11.10a_validation_framework": {
+      "compliance_report": {
+        "compliance_status": {
+          "audit_trail_complete": true,
+          "gamp5_methodology_followed": true,
+          "part11_validation_compliant": false,
+          "regulatory_ready": false,
+          "validation_documentation_current": true
+        },
+        "execution_metrics": {
+          "pass_rate": 100.0,
+          "recent_executions_30d": 1,
+          "total_executions": 1
+        },
+        "report_timestamp": "2025-08-13T15:35:53.062969+00:00",
+        "requirements_analysis": {
+          "by_status": {
+            "completed": 1,
+            "not_started": 3
+          },
+          "by_type": {
+            "regulatory": 4
+          },
+          "regulatory_compliance_rate": 25.0,
+          "regulatory_requirements": 4
+        },
+        "system_information": {
+          "gamp_category": "Category 5",
+          "system_name": "Pharmaceutical Test Generation System",
+          "system_version": "1.0.0",
+          "validation_approach": "Full_Lifecycle_Validation"
+        },
+        "test_case_analysis": {
+          "by_phase": {
+            "oq": 4
+          },
+          "by_result": {
+            "not_executed": 3,
+            "pass": 1
+          },
+          "by_status": {
+            "completed": 1,
+            "not_started": 3
+          }
+        },
+        "traceability_matrix": {
+          "REQ-PART11-001": {
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-001"
+            ],
+            "title": "Electronic Signature Binding",
+            "type": "regulatory",
+            "verification_results": [
+              {
+                "execution_date": "2025-08-13T15:35:53.060659+00:00",
+                "result": "pass",
+                "test_case_id": "TC-PART11-001"
+              }
+            ]
+          },
+          "REQ-PART11-002": {
+            "status": "not_started",
+            "test_cases": [
+              "TC-PART11-002"
+            ],
+            "title": "Access Control",
+            "type": "regulatory",
+            "verification_results": []
+          },
+          "REQ-PART11-003": {
+            "status": "not_started",
+            "test_cases": [
+              "TC-PART11-003"
+            ],
+            "title": "Audit Trail Integrity",
+            "type": "regulatory",
+            "verification_results": []
+          },
+          "REQ-PART11-004": {
+            "status": "not_started",
+            "test_cases": [
+              "TC-PART11-004"
+            ],
+            "title": "Record Integrity",
+            "type": "regulatory",
+            "verification_results": []
+          }
+        },
+        "validation_summary": {
+          "overall_validation_status": "In Progress",
+          "requirement_coverage_percentage": 25.0,
+          "test_case_coverage_percentage": 25.0,
+          "total_requirements": 4,
+          "total_test_cases": 4
+        }
+      },
+      "overall_status": "PASS",
+      "section": "11.10a_validation_framework",
+      "test_end": "2025-08-13T15:35:53.064018+00:00",
+      "test_start": "2025-08-13T15:35:53.053936+00:00",
+      "tests": [
+        {
+          "details": "Framework initialized with 4 requirements",
+          "status": "PASS",
+          "test": "framework_initialization"
+        },
+        {
+          "details": "Found 4 Part 11 requirements",
+          "status": "PASS",
+          "test": "part11_requirements_coverage"
+        },
+        {
+          "details": "Test case TC-PART11-001 executed successfully",
+          "status": "PASS",
+          "test": "test_case_execution"
+        },
+        {
+          "details": "All requirements have associated test cases",
+          "status": "PASS",
+          "test": "traceability_matrix"
+        }
+      ]
+    },
+    "11.10c_worm_storage": {
+      "compliance_report": {
+        "compliance_status": {
+          "cryptographic_integrity": true,
+          "regulatory_compliant": true,
+          "tamper_detection_active": true,
+          "worm_constraints_enforced": true
+        },
+        "database_integrity": true,
+        "integrity_failures": 0,
+        "integrity_rate": 100.0,
+        "integrity_verified": 1,
+        "signature_failures": 0,
+        "signature_verifications": 1,
+        "storage_statistics": {
+          "access_events": 1,
+          "integrity_checks": 1,
+          "records_stored": 1,
+          "tamper_detections": 0,
+          "total_storage_bytes": 304
+        },
+        "tamper_evidence": [],
+        "total_records_checked": 1,
+        "verification_timestamp": "2025-08-13T15:35:53.044056+00:00"
+      },
+      "overall_status": "PASS",
+      "section": "11.10c_worm_storage",
+      "test_end": "2025-08-13T15:35:53.050345+00:00",
+      "test_start": "2025-08-13T15:35:53.024550+00:00",
+      "tests": [
+        {
+          "details": "Record stored with ID: test_specification_188f0f62-3e14-4033-85f7-d27a4d754af7",
+          "status": "PASS",
+          "test": "worm_record_storage"
+        },
+        {
+          "details": "Record integrity verified successfully",
+          "status": "PASS",
+          "test": "record_integrity"
+        },
+        {
+          "details": "WORM constraints properly enforced",
+          "status": "PASS",
+          "test": "worm_constraint_enforcement"
+        },
+        {
+          "details": "Storage integrity verified",
+          "status": "PASS",
+          "test": "storage_integrity_verification"
+        }
+      ]
+    },
+    "11.10d_access_control": {
+      "compliance_report": {
+        "active_sessions": {
+          "by_role": {
+            "qa_manager": 1
+          },
+          "total": 1
+        },
+        "compliance_status": {
+          "authority_checks_enabled": true,
+          "device_checks_enabled": true,
+          "part11_section_10d_compliant": true,
+          "user_accountability_enforced": true
+        },
+        "report_timestamp": "2025-08-13T15:35:51.849998+00:00",
+        "role_hierarchy_validation": {
+          "hierarchy_valid": true,
+          "missing_permissions": [],
+          "role_conflicts": [],
+          "separation_of_duties": true,
+          "validation_timestamp": "2025-08-13T15:35:51.849998+00:00"
+        },
+        "system_configuration": {
+          "device_check_enabled": true,
+          "max_failed_attempts": 3,
+          "session_timeout_hours": 8.0
+        },
+        "user_statistics": {
+          "active_users": 3,
+          "total_users": 3,
+          "trained_users": 3,
+          "training_compliance_rate": 100.0
+        }
+      },
+      "overall_status": "PASS",
+      "section": "11.10d_access_control",
+      "test_end": "2025-08-13T15:35:51.849998+00:00",
+      "test_start": "2025-08-13T15:35:51.847443+00:00",
+      "tests": [
+        {
+          "details": "Successfully registered 3 users with roles",
+          "status": "PASS",
+          "test": "user_registration"
+        },
+        {
+          "details": "Valid user authenticated successfully",
+          "status": "PASS",
+          "test": "user_authentication"
+        },
+        {
+          "details": "All permission checks passed",
+          "status": "PASS",
+          "test": "permission_enforcement"
+        },
+        {
+          "details": "Role hierarchy properly configured",
+          "status": "PASS",
+          "test": "role_hierarchy"
+        }
+      ]
+    },
+    "11.10g_mfa_authentication": {
+      "compliance_report": {
+        "account_security": {
+          "currently_locked": 0,
+          "lockout_duration_minutes": 30,
+          "lockout_rate": 0.0,
+          "max_failed_attempts": 3
+        },
+        "activity_metrics": {
+          "active_user_rate": 0.0,
+          "recent_authentications_30d": 0
+        },
+        "backup_codes": {
+          "low_backup_codes": 0,
+          "no_backup_codes": 0,
+          "users_with_codes": 1
+        },
+        "compliance_status": {
+          "account_lockout_enabled": true,
+          "audit_logging_enabled": true,
+          "backup_recovery_available": true,
+          "mfa_enforcement_active": true
+        },
+        "mfa_enrollment": {
+          "enrollment_rate": 0.0,
+          "setup_complete": 0,
+          "setup_pending": 1,
+          "total_users": 1
+        },
+        "report_timestamp": "2025-08-13T15:35:53.020736+00:00",
+        "system_configuration": {
+          "backup_code_length": 8,
+          "backup_codes_per_user": 10,
+          "totp_time_step": 30,
+          "totp_window_tolerance": 1
+        }
+      },
+      "overall_status": "FAIL",
+      "section": "11.10g_mfa_authentication",
+      "test_end": "2025-08-13T15:35:53.020736+00:00",
+      "test_start": "2025-08-13T15:35:51.849998+00:00",
+      "tests": [
+        {
+          "details": "MFA setup completed with all required components",
+          "status": "PASS",
+          "test": "mfa_setup"
+        },
+        {
+          "error": "TOTP verification failed during setup",
+          "regulatory_impact": "HIGH - TOTP system not working",
+          "status": "FAIL",
+          "test": "totp_verification"
+        },
+        {
+          "error": "Backup code authentication failed: mfa_not_setup",
+          "regulatory_impact": "MEDIUM - Backup recovery compromised",
+          "status": "FAIL",
+          "test": "backup_code_authentication"
+        }
+      ]
+    },
+    "11.10i_training_system": {
+      "compliance_report": {
+        "assessment_overview": {
+          "assessment_modules": [
+            "21_cfr_part11_overview",
+            "electronic_signatures"
+          ],
+          "total_assessments": 2
+        },
+        "compliance_status": {
+          "audit_logging_enabled": true,
+          "certification_issuance_active": true,
+          "competency_tracking_enabled": true,
+          "regulatory_compliant": true,
+          "training_system_operational": true
+        },
+        "module_statistics": {
+          "21_cfr_part11_overview": {
+            "average_score": 100,
+            "completed": 1,
+            "failed": 0,
+            "in_progress": 0,
+            "total_enrollments": 1
+          }
+        },
+        "report_timestamp": "2025-08-13T15:35:53.053936+00:00",
+        "role_requirements": {
+          "guest_user": [
+            "21_cfr_part11_overview"
+          ],
+          "qa_analyst": [
+            "electronic_signatures",
+            "documentation_best_practices",
+            "21_cfr_part11_overview",
+            "pharmaceutical_system_operation",
+            "data_integrity_alcoa_plus"
+          ],
+          "qa_manager": [
+            "electronic_signatures",
+            "role_based_responsibilities",
+            "documentation_best_practices",
+            "21_cfr_part11_overview",
+            "gamp5_validation_principles",
+            "audit_trail_compliance",
+            "data_integrity_alcoa_plus"
+          ],
+          "system_administrator": [
+            "cybersecurity_awareness",
+            "electronic_signatures",
+            "change_control_procedures",
+            "21_cfr_part11_overview",
+            "pharmaceutical_system_operation",
+            "audit_trail_compliance",
+            "data_integrity_alcoa_plus"
+          ],
+          "test_generator_user": [
+            "pharmaceutical_system_operation",
+            "21_cfr_part11_overview",
+            "data_integrity_alcoa_plus"
+          ],
+          "validation_engineer": [
+            "change_control_procedures",
+            "documentation_best_practices",
+            "21_cfr_part11_overview",
+            "pharmaceutical_system_operation",
+            "gamp5_validation_principles"
+          ]
+        },
+        "training_overview": {
+          "completed_training": 1,
+          "completion_rate": 100.0,
+          "current_compliance_rate": 100.0,
+          "expired_training": 0,
+          "total_training_records": 1
+        }
+      },
+      "overall_status": "PASS",
+      "section": "11.10i_training_system",
+      "test_end": "2025-08-13T15:35:53.053936+00:00",
+      "test_start": "2025-08-13T15:35:53.050345+00:00",
+      "tests": [
+        {
+          "details": "Training record created: test_training_user_001_21_cfr_part11_overview_basic_20cb84a6",
+          "status": "PASS",
+          "test": "training_enrollment"
+        },
+        {
+          "details": "Assessment passed with score: 100.0%",
+          "status": "PASS",
+          "test": "competency_assessment"
+        },
+        {
+          "details": "Training certification issued",
+          "status": "PASS",
+          "test": "certification_issuance"
+        },
+        {
+          "compliance_data": {
+            "check_timestamp": "2025-08-13T15:35:53.053936+00:00",
+            "completed_modules": [
+              {
+                "completion_date": "2025-08-13T15:35:53.053936+00:00",
+                "expiry_date": "2027-08-13T15:35:53.053936+00:00",
+                "module": "21_cfr_part11_overview",
+                "score": 100.0
+              }
+            ],
+            "compliance_percentage": 33.3,
+            "expired_modules": [],
+            "overall_compliant": false,
+            "pending_modules": [
+              "pharmaceutical_system_operation",
+              "data_integrity_alcoa_plus"
+            ],
+            "required_modules": [
+              "pharmaceutical_system_operation",
+              "21_cfr_part11_overview",
+              "data_integrity_alcoa_plus"
+            ],
+            "role": "test_generator_user",
+            "user_id": "test_training_user_001"
+          },
+          "details": "Compliance rate: 33.3%, Overall compliant: False",
+          "status": "PASS",
+          "test": "training_compliance_check"
+        },
+        {
+          "details": "Training report generated with all required sections",
+          "status": "PASS",
+          "test": "training_reporting"
+        }
+      ]
+    },
+    "11.50-11.70_electronic_signatures": {
+      "compliance_report": {
+        "compliance_status": {
+          "binding_integrity": true,
+          "manifest_integrity": true,
+          "part11_section_50_compliant": true,
+          "part11_section_70_compliant": true
+        },
+        "report_timestamp": "2025-08-13T15:35:51.846408+00:00",
+        "signature_integrity": {
+          "integrity_violations": [],
+          "invalid_signatures": 0,
+          "total_signatures": 1,
+          "valid_signatures": 1,
+          "verification_timestamp": "2025-08-13T15:35:51.846408+00:00"
+        },
+        "signature_statistics": {
+          "by_meaning": {
+            "approved": 1
+          },
+          "by_signer": {
+            "jsmith_qa": 1
+          },
+          "records_signed": 1,
+          "signers_active": 1,
+          "total_signatures": 1
+        }
+      },
+      "overall_status": "PASS",
+      "section": "11.50-11.70_electronic_signatures",
+      "test_end": "2025-08-13T15:35:51.846408+00:00",
+      "test_start": "2025-08-13T15:35:48.853477+00:00",
+      "tests": [
+        {
+          "details": "All required signature elements present per \u00a711.50",
+          "status": "PASS",
+          "test": "signature_binding_11.50"
+        },
+        {
+          "details": "Signature properly bound to specific record per \u00a711.70",
+          "status": "PASS",
+          "test": "signature_uniqueness_11.70"
+        },
+        {
+          "details": "Signature verification successful with bound record",
+          "status": "PASS",
+          "test": "signature_verification"
+        },
+        {
+          "details": "Signature properly stored and retrievable",
+          "status": "PASS",
+          "test": "signature_manifest"
+        }
+      ]
+    }
+  },
+  "components_tested": [
+    "11.50-11.70_electronic_signatures",
+    "11.10d_access_control",
+    "11.10g_mfa_authentication",
+    "11.10c_worm_storage",
+    "11.10i_training_system",
+    "11.10a_validation_framework"
+  ],
+  "critical_failures": [],
+  "fda_compliance_assessment": {
+    "access_control_11_10d": true,
+    "electronic_signatures_11_50_70": true,
+    "mfa_authentication_11_10g": false,
+    "record_protection_11_10c": true,
+    "system_validation_11_10a": true,
+    "user_training_11_10i": true
+  },
+  "fda_document_reference": "21 CFR Part 11 - Electronic Records; Electronic Signatures",
+  "overall_compliance": false,
+  "regulatory_status": "NON-COMPLIANT",
+  "test_end": "2025-08-13T15:35:53.064018+00:00",
+  "test_environment": "Pharmaceutical Test Generation System v1.0",
+  "test_summary": {
+    "success_rate_percentage": 83.3,
+    "tests_failed": 1,
+    "tests_passed": 5,
+    "total_tests": 6
+  },
+  "validation_timestamp": "2025-08-13T15:35:48.809911+00:00"
+}

@@ -258,3 +258,8 @@ dev-debug.log
 # tasks/ 
 main/nul
 nul
+
+
+# Thesis documents (Chapter 4)
+THESIS_EVIDENCE_PACKAGE/05_THESIS_DOCUMENTS/chapter_4/
+

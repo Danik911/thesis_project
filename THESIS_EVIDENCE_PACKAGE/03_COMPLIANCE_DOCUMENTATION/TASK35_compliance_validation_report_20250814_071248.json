@@ -1,0 +1,489 @@
+{
+  "report_metadata": {
+    "report_timestamp": "2025-08-14T07:12:48.820137+00:00",
+    "validation_duration_seconds": 80.63721,
+    "task_id": "35",
+    "task_title": "Validate Compliance Achievement",
+    "validator_version": "1.0.0",
+    "report_type": "comprehensive_compliance_achievement"
+  },
+  "compliance_summary": {
+    "overall_compliance_score": 59.21212121212121,
+    "all_targets_achieved": false,
+    "validation_status": "NON_COMPLIANT",
+    "regulatory_ready": false
+  },
+  "target_achievement": {
+    "audit_coverage": {
+      "target": 100.0,
+      "achieved": 0.0,
+      "met": false
+    },
+    "alcoa_score": {
+      "target": 9.0,
+      "achieved": 7.0181818181818185,
+      "met": false
+    },
+    "cfr_part11_compliance": {
+      "target": 100.0,
+      "achieved": 100.0,
+      "met": true
+    },
+    "gamp5_compliance": {
+      "target": 100.0,
+      "achieved": 66.66666666666666,
+      "met": false
+    }
+  },
+  "detailed_validation_results": {
+    "audit_trail_coverage": {
+      "success": false,
+      "error": "'overall_coverage'",
+      "score": 0.0
+    },
+    "alcoa_plus_scores": {
+      "success": true,
+      "alcoa_scores": {
+        "attributable": 0.1,
+        "legible": 10.0,
+        "contemporaneous": 8.0,
+        "original": 10.0,
+        "accurate": 3.7,
+        "complete": 3.7,
+        "consistent": 8.0,
+        "enduring": 10.0,
+        "available": 10.0
+      },
+      "weighted_score": 7.0181818181818185,
+      "target_score": 9.0,
+      "score_achieved": false,
+      "score": 70.18181818181819,
+      "scoring_weights": {
+        "original": 2.0,
+        "accurate": 2.0,
+        "attributable": 1.0,
+        "legible": 1.0,
+        "contemporaneous": 1.0,
+        "complete": 1.0,
+        "consistent": 1.0,
+        "enduring": 1.0,
+        "available": 1.0
+      },
+      "evidence": {
+        "audit_events": 1,
+        "session_duration": 0.006636,
+        "cryptographic_protection": true
+      }
+    },
+    "cfr_part11_compliance": {
+      "success": true,
+      "total_tests": 4,
+      "passed_tests": 4,
+      "compliance_percentage": 100.0,
+      "target_compliance": 100.0,
+      "compliance_achieved": true,
+      "score": 100.0,
+      "test_results": [
+        {
+          "test_case_id": "TC-PART11-001",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.183886+00:00"
+        },
+        {
+          "test_case_id": "TC-PART11-002",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.185064+00:00"
+        },
+        {
+          "test_case_id": "TC-PART11-003",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.185857+00:00"
+        },
+        {
+          "test_case_id": "TC-PART11-004",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.187796+00:00"
+        }
+      ],
+      "validation_report": {
+        "report_timestamp": "2025-08-14T07:11:28.188821+00:00",
+        "system_information": {
+          "system_name": "Pharmaceutical Test Generation System",
+          "system_version": "1.0.0",
+          "gamp_category": "Category 5",
+          "validation_approach": "Full_Lifecycle_Validation"
+        },
+        "validation_summary": {
+          "total_requirements": 4,
+          "total_test_cases": 4,
+          "requirement_coverage_percentage": 100.0,
+          "test_case_coverage_percentage": 100.0,
+          "overall_validation_status": "In Progress"
+        },
+        "requirements_analysis": {
+          "by_status": {
+            "completed": 4
+          },
+          "by_type": {
+            "regulatory": 4
+          },
+          "regulatory_requirements": 4,
+          "regulatory_compliance_rate": 100.0
+        },
+        "test_case_analysis": {
+          "by_status": {
+            "completed": 4
+          },
+          "by_result": {
+            "pass": 4
+          },
+          "by_phase": {
+            "oq": 4
+          }
+        },
+        "execution_metrics": {
+          "total_executions": 4,
+          "pass_rate": 100.0,
+          "recent_executions_30d": 4
+        },
+        "traceability_matrix": {
+          "REQ-PART11-001": {
+            "title": "Electronic Signature Binding",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-001"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-001",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.183886+00:00"
+              }
+            ]
+          },
+          "REQ-PART11-002": {
+            "title": "Access Control",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-002"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-002",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.185064+00:00"
+              }
+            ]
+          },
+          "REQ-PART11-003": {
+            "title": "Audit Trail Integrity",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-003"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-003",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.185857+00:00"
+              }
+            ]
+          },
+          "REQ-PART11-004": {
+            "title": "Record Integrity",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-004"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-004",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.187796+00:00"
+              }
+            ]
+          }
+        },
+        "compliance_status": {
+          "part11_validation_compliant": true,
+          "gamp5_methodology_followed": true,
+          "validation_documentation_current": true,
+          "audit_trail_complete": true,
+          "regulatory_ready": true
+        }
+      }
+    },
+    "gamp5_compliance": {
+      "success": true,
+      "gamp5_criteria": {
+        "validation_documentation": true,
+        "audit_trail_complete": false,
+        "gamp5_methodology": true,
+        "regulatory_ready": true,
+        "risk_based_approach": true,
+        "computerized_system_validation": false
+      },
+      "total_criteria": 6,
+      "met_criteria": 4,
+      "compliance_percentage": 66.66666666666666,
+      "target_compliance": 100.0,
+      "compliance_achieved": false,
+      "score": 66.66666666666666,
+      "system_classification": "Category 5 - Custom Application",
+      "validation_approach": "Full Lifecycle Validation"
+    },
+    "cryptographic_integrity": {
+      "success": true,
+      "signatures_enabled": true,
+      "signature_count": 1,
+      "signature_verification": true,
+      "integrity_score": 100.0,
+      "score": 100.0,
+      "crypto_test_details": {
+        "success": true,
+        "signature_generated": true,
+        "signature_verified": true,
+        "coverage": 100.0,
+        "test_duration": 0.000503,
+        "details": "Ed25519 cryptographic signatures working correctly"
+      }
+    }
+  },
+  "regulatory_evidence": {
+    "audit_trail_completeness": {
+      "success": false,
+      "error": "'overall_coverage'",
+      "score": 0.0
+    },
+    "alcoa_plus_documentation": {
+      "success": true,
+      "alcoa_scores": {
+        "attributable": 0.1,
+        "legible": 10.0,
+        "contemporaneous": 8.0,
+        "original": 10.0,
+        "accurate": 3.7,
+        "complete": 3.7,
+        "consistent": 8.0,
+        "enduring": 10.0,
+        "available": 10.0
+      },
+      "weighted_score": 7.0181818181818185,
+      "target_score": 9.0,
+      "score_achieved": false,
+      "score": 70.18181818181819,
+      "scoring_weights": {
+        "original": 2.0,
+        "accurate": 2.0,
+        "attributable": 1.0,
+        "legible": 1.0,
+        "contemporaneous": 1.0,
+        "complete": 1.0,
+        "consistent": 1.0,
+        "enduring": 1.0,
+        "available": 1.0
+      },
+      "evidence": {
+        "audit_events": 1,
+        "session_duration": 0.006636,
+        "cryptographic_protection": true
+      }
+    },
+    "part11_validation_evidence": {
+      "success": true,
+      "total_tests": 4,
+      "passed_tests": 4,
+      "compliance_percentage": 100.0,
+      "target_compliance": 100.0,
+      "compliance_achieved": true,
+      "score": 100.0,
+      "test_results": [
+        {
+          "test_case_id": "TC-PART11-001",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.183886+00:00"
+        },
+        {
+          "test_case_id": "TC-PART11-002",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.185064+00:00"
+        },
+        {
+          "test_case_id": "TC-PART11-003",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.185857+00:00"
+        },
+        {
+          "test_case_id": "TC-PART11-004",
+          "result": "pass",
+          "execution_date": "2025-08-14T07:11:28.187796+00:00"
+        }
+      ],
+      "validation_report": {
+        "report_timestamp": "2025-08-14T07:11:28.188821+00:00",
+        "system_information": {
+          "system_name": "Pharmaceutical Test Generation System",
+          "system_version": "1.0.0",
+          "gamp_category": "Category 5",
+          "validation_approach": "Full_Lifecycle_Validation"
+        },
+        "validation_summary": {
+          "total_requirements": 4,
+          "total_test_cases": 4,
+          "requirement_coverage_percentage": 100.0,
+          "test_case_coverage_percentage": 100.0,
+          "overall_validation_status": "In Progress"
+        },
+        "requirements_analysis": {
+          "by_status": {
+            "completed": 4
+          },
+          "by_type": {
+            "regulatory": 4
+          },
+          "regulatory_requirements": 4,
+          "regulatory_compliance_rate": 100.0
+        },
+        "test_case_analysis": {
+          "by_status": {
+            "completed": 4
+          },
+          "by_result": {
+            "pass": 4
+          },
+          "by_phase": {
+            "oq": 4
+          }
+        },
+        "execution_metrics": {
+          "total_executions": 4,
+          "pass_rate": 100.0,
+          "recent_executions_30d": 4
+        },
+        "traceability_matrix": {
+          "REQ-PART11-001": {
+            "title": "Electronic Signature Binding",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-001"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-001",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.183886+00:00"
+              }
+            ]
+          },
+          "REQ-PART11-002": {
+            "title": "Access Control",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-002"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-002",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.185064+00:00"
+              }
+            ]
+          },
+          "REQ-PART11-003": {
+            "title": "Audit Trail Integrity",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-003"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-003",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.185857+00:00"
+              }
+            ]
+          },
+          "REQ-PART11-004": {
+            "title": "Record Integrity",
+            "type": "regulatory",
+            "status": "completed",
+            "test_cases": [
+              "TC-PART11-004"
+            ],
+            "verification_results": [
+              {
+                "test_case_id": "TC-PART11-004",
+                "result": "pass",
+                "execution_date": "2025-08-14T07:11:28.187796+00:00"
+              }
+            ]
+          }
+        },
+        "compliance_status": {
+          "part11_validation_compliant": true,
+          "gamp5_methodology_followed": true,
+          "validation_documentation_current": true,
+          "audit_trail_complete": true,
+          "regulatory_ready": true
+        }
+      }
+    },
+    "gamp5_compliance_evidence": {
+      "success": true,
+      "gamp5_criteria": {
+        "validation_documentation": true,
+        "audit_trail_complete": false,
+        "gamp5_methodology": true,
+        "regulatory_ready": true,
+        "risk_based_approach": true,
+        "computerized_system_validation": false
+      },
+      "total_criteria": 6,
+      "met_criteria": 4,
+      "compliance_percentage": 66.66666666666666,
+      "target_compliance": 100.0,
+      "compliance_achieved": false,
+      "score": 66.66666666666666,
+      "system_classification": "Category 5 - Custom Application",
+      "validation_approach": "Full Lifecycle Validation"
+    },
+    "cryptographic_integrity": {
+      "success": true,
+      "signatures_enabled": true,
+      "signature_count": 1,
+      "signature_verification": true,
+      "integrity_score": 100.0,
+      "score": 100.0,
+      "crypto_test_details": {
+        "success": true,
+        "signature_generated": true,
+        "signature_verified": true,
+        "coverage": 100.0,
+        "test_duration": 0.000503,
+        "details": "Ed25519 cryptographic signatures working correctly"
+      }
+    }
+  },
+  "compliance_gaps": [
+    "audit_trail_coverage",
+    "alcoa_plus_scores",
+    "gamp5_compliance"
+  ],
+  "recommendations": [
+    "Address audit_trail_coverage validation failure: 'overall_coverage'",
+    "Improve alcoa_plus_scores score from 70.2% to 100%",
+    "Improve gamp5_compliance score from 66.7% to 100%"
+  ],
+  "regulatory_statements": {
+    "gamp5_statement": "GAMP-5 validation incomplete",
+    "part11_statement": "21 CFR Part 11 compliance incomplete",
+    "alcoa_plus_statement": "ALCOA+ compliance below target"
+  }
+}

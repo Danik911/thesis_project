@@ -1,0 +1,51 @@
+{
+  "fold_number": 1,
+  "execution_type": "minimal_validation",
+  "test_documents": [
+    "URS-001",
+    "URS-002",
+    "URS-003",
+    "URS-004"
+  ],
+  "execution_time_seconds": 4.582832,
+  "successful_documents": 0,
+  "success_rate": 0.0,
+  "detailed_results": [
+    {
+      "document": "URS-001",
+      "status": "failed",
+      "duration": 0.138054,
+      "error": "Error in step 'categorize_document': 1 validation error for FunctionAgent\nllm\n  Input should be a valid dictionary or instance of LLM [type=model_type, input_value=SecureLLMWrapper(wrapped_...ation', audit_records=0), input_type=SecureLLMWrapper]\n    For further information visit https://errors.pydantic.dev/2.11/v/model_type",
+      "path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md"
+    },
+    {
+      "document": "URS-002",
+      "status": "failed",
+      "duration": 0.014113,
+      "error": "Error in step 'categorize_document': 1 validation error for FunctionAgent\nllm\n  Input should be a valid dictionary or instance of LLM [type=model_type, input_value=SecureLLMWrapper(wrapped_...ation', audit_records=0), input_type=SecureLLMWrapper]\n    For further information visit https://errors.pydantic.dev/2.11/v/model_type",
+      "path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_4\\URS-002.md"
+    },
+    {
+      "document": "URS-003",
+      "status": "failed",
+      "duration": 0.0153,
+      "error": "Error in step 'categorize_document': 1 validation error for FunctionAgent\nllm\n  Input should be a valid dictionary or instance of LLM [type=model_type, input_value=SecureLLMWrapper(wrapped_...ation', audit_records=0), input_type=SecureLLMWrapper]\n    For further information visit https://errors.pydantic.dev/2.11/v/model_type",
+      "path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_5\\URS-003.md"
+    },
+    {
+      "document": "URS-004",
+      "status": "failed",
+      "duration": 0.014077,
+      "error": "Error in step 'categorize_document': 1 validation error for FunctionAgent\nllm\n  Input should be a valid dictionary or instance of LLM [type=model_type, input_value=SecureLLMWrapper(wrapped_...ation', audit_records=0), input_type=SecureLLMWrapper]\n    For further information visit https://errors.pydantic.dev/2.11/v/model_type",
+      "path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\ambiguous\\URS-004.md"
+    }
+  ],
+  "validation_mode_enabled": true,
+  "model_used": "deepseek/deepseek-chat",
+  "execution_timestamp": "2025-08-13T22:09:32.631260",
+  "environment_info": {
+    "validation_mode": "true",
+    "validation_mode_explicit": "true",
+    "bypass_consultation_threshold": "0.7"
+  }
+}
