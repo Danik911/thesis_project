@@ -1,0 +1,21 @@
+{
+  "fold_id": "test_fold",
+  "current_batch": 1,
+  "total_batches": 1,
+  "processed_documents": [],
+  "failed_documents": [
+    "TEST-001"
+  ],
+  "batch_results": [
+    {
+      "batch_num": 1,
+      "successful_docs": [],
+      "failed_docs": [
+        "TEST-001"
+      ],
+      "batch_time_seconds": 151.1214509010315,
+      "docs_per_second": 0.006617194276773413
+    }
+  ],
+  "timestamp": "2025-08-19T07:09:12.313072+00:00"
+}

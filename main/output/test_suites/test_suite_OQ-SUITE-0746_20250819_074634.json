@@ -1,0 +1,635 @@
+{
+  "suite_id": "OQ-SUITE-0746",
+  "gamp_category": 3,
+  "document_name": "URS-001.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify Continuous Temperature Monitoring Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the system continuously monitors temperature in GMP storage areas as per URS-EMS-001.",
+      "prerequisites": [
+        "System installed and powered on",
+        "Sensors calibrated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up the system to monitor temperature in a GMP storage area.",
+          "expected_result": "System displays real-time temperature readings.",
+          "data_to_capture": [
+            "Temperature readings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify temperature readings are recorded at intervals not exceeding 5 minutes.",
+          "expected_result": "Temperature data is logged every 5 minutes.",
+          "data_to_capture": [
+            "Log interval"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "System continuously monitors temperature",
+        "Temperature readings logged every 5 minutes"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be accurate and complete"
+      ],
+      "urs_requirements": [
+        "URS-EMS-001",
+        "URS-EMS-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "GMP compliance"
+      ]
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validate Alarm Generation for Temperature Deviations",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To confirm the system generates alerts when temperature deviates \u00b12\u00b0C from setpoint as per URS-EMS-005.",
+      "prerequisites": [
+        "System operational",
+        "Setpoint configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the temperature setpoint to 25\u00b0C.",
+          "expected_result": "Setpoint is successfully configured.",
+          "data_to_capture": [
+            "Setpoint value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a temperature deviation to 27\u00b0C.",
+          "expected_result": "System generates an alert for the deviation.",
+          "data_to_capture": [
+            "Alert details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm is generated for temperature deviation",
+        "Response time is within 30 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Alarm data must be accurate and timely"
+      ],
+      "urs_requirements": [
+        "URS-EMS-005",
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Alarm management"
+      ]
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Temperature Monitoring Accuracy Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the system accurately monitors temperature within the specified range of -80\u00b0C to +50\u00b0C with \u00b10.5\u00b0C accuracy.",
+      "prerequisites": [
+        "System installed and powered on",
+        "Calibrated temperature reference device available",
+        "Test environment set to known temperature values"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the test environment to a known temperature within the range (e.g., 25\u00b0C).",
+          "expected_result": "System displays temperature reading within \u00b10.5\u00b0C of the reference device.",
+          "data_to_capture": [
+            "Recorded temperature value",
+            "Reference device temperature value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Repeat the test at -20\u00b0C and +40\u00b0C.",
+          "expected_result": "System maintains accuracy within \u00b10.5\u00b0C at all tested temperatures.",
+          "data_to_capture": [
+            "Recorded temperature values",
+            "Reference device temperature values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "All temperature readings must be within \u00b10.5\u00b0C of the reference device values.",
+        "System must record and display temperatures correctly at all tested points."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All test data must be stored in the vendor's standard database format."
+      ],
+      "urs_requirements": [
+        "URS-EMS-004"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Quality Assurance",
+        "Calibration Technician"
+      ]
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Alarm Notification Integration Test",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify that the system correctly integrates with the site paging system to send alarm notifications when temperature deviates \u00b12\u00b0C from setpoint.",
+      "prerequisites": [
+        "System installed and configured",
+        "Site paging system operational",
+        "Test temperature setpoint configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set a temperature setpoint (e.g., 25\u00b0C) and induce a deviation of +2.5\u00b0C.",
+          "expected_result": "System generates an alarm and sends notification to the site paging system within 30 seconds.",
+          "data_to_capture": [
+            "Alarm generation timestamp",
+            "Paging system notification timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Repeat the test with a deviation of -2.5\u00b0C.",
+          "expected_result": "System generates an alarm and sends notification to the site paging system within 30 seconds.",
+          "data_to_capture": [
+            "Alarm generation timestamp",
+            "Paging system notification timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm notifications must be sent to the paging system within 30 seconds of deviation.",
+        "All alarm events must be recorded in the system's audit trail."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All alarm events must be recorded in the audit trail."
+      ],
+      "urs_requirements": [
+        "URS-EMS-005",
+        "URS-EMS-015"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Quality Assurance",
+        "IT Integration Specialist"
+      ]
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify Temperature Monitoring Accuracy",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the EMS accurately monitors temperature within the specified range of -80\u00b0C to +50\u00b0C with an accuracy of \u00b10.5\u00b0C.",
+      "prerequisites": [
+        "EMS installed and operational",
+        "Calibrated temperature reference device available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the EMS to monitor temperature in a controlled environment.",
+          "expected_result": "EMS displays temperature readings within the specified range.",
+          "data_to_capture": [
+            "Temperature readings from EMS",
+            "Temperature readings from reference device"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Compare EMS temperature readings with the reference device readings.",
+          "expected_result": "EMS readings are within \u00b10.5\u00b0C of the reference device readings.",
+          "data_to_capture": [
+            "Deviation between EMS and reference readings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS temperature readings are within \u00b10.5\u00b0C of the reference device readings."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all temperature readings are accurately recorded and stored."
+      ],
+      "urs_requirements": [
+        "URS-EMS-004"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature calibration"
+      ]
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate Alarm Notification Integration",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To validate that the EMS alarm notifications are correctly integrated with the site paging system using the vendor API.",
+      "prerequisites": [
+        "EMS installed and operational",
+        "Site paging system configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a temperature deviation of \u00b12\u00b0C from the setpoint in the EMS.",
+          "expected_result": "EMS generates an alarm condition.",
+          "data_to_capture": [
+            "Alarm condition details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Verify that the alarm notification is received by the site paging system.",
+          "expected_result": "Site paging system receives and displays the alarm notification.",
+          "data_to_capture": [
+            "Alarm notification details on paging system"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm notifications are correctly received by the site paging system."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all alarm notifications are accurately transmitted and logged."
+      ],
+      "urs_requirements": [
+        "URS-EMS-005",
+        "URS-EMS-015"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "API integration"
+      ]
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Integration Test: Alarm Notification with Site Paging System",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS correctly integrates with the site paging system to send alarm notifications using the vendor API.",
+      "prerequisites": [
+        "EMS installed and operational",
+        "Site paging system configured and ready for integration"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a temperature deviation exceeding \u00b12\u00b0C from the setpoint.",
+          "expected_result": "EMS detects the deviation and triggers an alarm.",
+          "data_to_capture": [
+            "Alarm status",
+            "Timestamp of alarm trigger"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Check the site paging system for the alarm notification.",
+          "expected_result": "Alarm notification is received on the site paging system within 30 seconds.",
+          "data_to_capture": [
+            "Notification timestamp",
+            "Message content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm notification is successfully sent to the site paging system within 30 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure alarm notifications are accurately logged and timestamped."
+      ],
+      "urs_requirements": [
+        "URS-EMS-015"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "API integration"
+      ]
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Performance Test: System Response Time for Alarm Conditions",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS responds to alarm conditions within the specified 30-second timeframe.",
+      "prerequisites": [
+        "EMS installed and operational",
+        "Alarm conditions configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a temperature deviation exceeding \u00b12\u00b0C from the setpoint.",
+          "expected_result": "EMS detects the deviation and triggers an alarm.",
+          "data_to_capture": [
+            "Alarm status",
+            "Timestamp of alarm trigger"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Measure the time taken from deviation detection to alarm trigger.",
+          "expected_result": "Alarm is triggered within 30 seconds of deviation detection.",
+          "data_to_capture": [
+            "Response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS responds to alarm conditions within 30 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure response times are accurately logged and timestamped."
+      ],
+      "urs_requirements": [
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Performance testing"
+      ]
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Temperature Alert Generation Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the system generates alerts when temperature deviates \u00b12\u00b0C from the setpoint.",
+      "prerequisites": [
+        "System is installed and operational",
+        "Temperature sensors are calibrated",
+        "Alert thresholds are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the temperature setpoint to 25\u00b0C in the system configuration.",
+          "expected_result": "System accepts the setpoint and displays it correctly.",
+          "data_to_capture": [
+            "Setpoint value",
+            "System response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a temperature reading of 27.1\u00b0C (exceeding +2\u00b0C deviation).",
+          "expected_result": "System generates an alert within 30 seconds.",
+          "data_to_capture": [
+            "Alert timestamp",
+            "Alert message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a temperature reading of 22.9\u00b0C (exceeding -2\u00b0C deviation).",
+          "expected_result": "System generates an alert within 30 seconds.",
+          "data_to_capture": [
+            "Alert timestamp",
+            "Alert message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Alerts are generated within 30 seconds of deviation",
+        "Alert messages include correct temperature values",
+        "Alerts are logged in the audit trail"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Alert data must be stored with timestamp and value",
+        "Audit trail must record alert generation"
+      ],
+      "urs_requirements": [
+        "URS-EMS-005",
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature monitoring"
+      ]
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Facility Management System Integration Test",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify successful integration between EMS and facility management system using standard protocols.",
+      "prerequisites": [
+        "Both systems are operational",
+        "Integration interface is configured",
+        "Test account with appropriate permissions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send a test temperature reading from EMS to facility management system.",
+          "expected_result": "Facility system receives and displays the reading within 60 seconds.",
+          "data_to_capture": [
+            "Transmission timestamp",
+            "Received value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger an alarm condition in EMS and verify notification in facility system.",
+          "expected_result": "Facility system displays alarm notification within 60 seconds.",
+          "data_to_capture": [
+            "Alarm transmission time",
+            "Facility system response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transmission occurs within 60 seconds",
+        "All transmitted values match source data",
+        "Alarm conditions are properly propagated"
+      ],
+      "regulatory_basis": [
+        "GAMP5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Transmitted data must match source values",
+        "Interface must maintain data integrity during transmission"
+      ],
+      "urs_requirements": [
+        "URS-EMS-014"
+      ],
+      "related_tests": [
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "Network protocols"
+      ]
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 300,
+  "generation_timestamp": "2025-08-19T07:46:34.077461+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T07:46:34.446693+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T07:41:08.601736+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

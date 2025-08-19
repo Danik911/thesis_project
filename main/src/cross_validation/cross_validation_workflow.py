@@ -386,9 +386,28 @@ class CrossValidationWorkflow(Workflow):
             error_message = None
             error_type = None
 
-            # Check if workflow completed successfully
+            # Check if workflow completed successfully - ENHANCED TYPE HANDLING
+            # Handle different return types from UnifiedTestGenerationWorkflow
             if hasattr(workflow_result, "result"):
+                # Standard WorkflowResult object
                 workflow_result = workflow_result.result
+            elif isinstance(workflow_result, str):
+                # String error message returned instead of WorkflowResult
+                if "error" in workflow_result.lower() or "failed" in workflow_result.lower():
+                    success = False
+                    error_message = workflow_result
+                    error_type = "workflow_string_error_response"
+                    workflow_result = None  # Clear invalid result
+                    self.logger.warning(f"Workflow returned string error: {workflow_result}")
+                else:
+                    # String result that might be valid - wrap it properly
+                    workflow_result = {"status": "completed", "message": workflow_result}
+            elif workflow_result is None:
+                # Null result indicates failure
+                success = False
+                error_message = "Workflow returned None result"
+                error_type = "workflow_null_response"
+                self.logger.warning("Workflow returned None result")
 
             # Calculate processing time
             end_time = asyncio.get_event_loop().time()

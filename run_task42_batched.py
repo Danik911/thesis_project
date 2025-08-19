@@ -146,7 +146,7 @@ async def process_single_document(doc: Dict[str, str], timeout_seconds: int = 30
     
     return result
 
-async def run_batched_cross_validation(batch_size: int = 2, timeout_per_doc: int = 300):
+async def run_batched_cross_validation(batch_size: int = 1, timeout_per_doc: int = 600):
     """Run cross-validation in batches."""
     print("=" * 60)
     print("TASK 42: BATCHED CROSS-VALIDATION EXECUTION")
@@ -234,8 +234,8 @@ if __name__ == "__main__":
     print("This will process documents in small batches to avoid timeouts.\n")
     
     # Run with configurable parameters
-    batch_size = 2  # Process 2 documents at a time
-    timeout_per_doc = 180  # 3 minutes per document (reduced from 9)
+    batch_size = 1  # Process 1 document at a time (sequential for reliability)
+    timeout_per_doc = 600  # 10 minutes per document (matches successful end-to-end test)
     
     try:
         results = asyncio.run(run_batched_cross_validation(batch_size, timeout_per_doc))

@@ -1,0 +1,73 @@
+{
+  "task_id": "Task 42",
+  "description": "Cross-Validation with Full Phoenix Monitoring",
+  "execution_time": {
+    "start": "2025-08-19T06:51:17.866628+00:00",
+    "end": null,
+    "duration_seconds": 0
+  },
+  "configuration": {
+    "folds": 1,
+    "batch_size": 1,
+    "timeout_per_doc": 600,
+    "phoenix_enabled": true
+  },
+  "results": {
+    "total_documents": 0,
+    "total_spans": 0,
+    "fold_metrics": [
+      {
+        "fold_id": "fold_1",
+        "duration_seconds": 0.47031497955322266,
+        "documents_processed": 0,
+        "documents_failed": 4,
+        "success_rate": 0.0
+      },
+      {
+        "fold_id": "fold_2",
+        "duration_seconds": 0.45398855209350586,
+        "documents_processed": 0,
+        "documents_failed": 4,
+        "success_rate": 0.0
+      },
+      {
+        "fold_id": "fold_3",
+        "duration_seconds": 0.35164403915405273,
+        "documents_processed": 0,
+        "documents_failed": 3,
+        "success_rate": 0.0
+      },
+      {
+        "fold_id": "fold_4",
+        "duration_seconds": 0.3481004238128662,
+        "documents_processed": 0,
+        "documents_failed": 3,
+        "success_rate": 0.0
+      },
+      {
+        "fold_id": "fold_5",
+        "duration_seconds": 0.35782647132873535,
+        "documents_processed": 0,
+        "documents_failed": 3,
+        "success_rate": 0.0
+      }
+    ],
+    "overall_success_rate": 0.0
+  },
+  "evidence": {
+    "traces_exported": true,
+    "trace_files": [
+      "THESIS_EVIDENCE_PACKAGE\\01_TEST_EXECUTION_EVIDENCE\\task42_phoenix_cv_20250819_065117\\phoenix_traces_20250819_065129.jsonl"
+    ],
+    "metrics_exported": false,
+    "checkpoint_files": [
+      "THESIS_EVIDENCE_PACKAGE\\01_TEST_EXECUTION_EVIDENCE\\task42_phoenix_cv_20250819_065117\\checkpoints\\checkpoint_fold_1.json",
+      "THESIS_EVIDENCE_PACKAGE\\01_TEST_EXECUTION_EVIDENCE\\task42_phoenix_cv_20250819_065117\\checkpoints\\checkpoint_fold_2.json",
+      "THESIS_EVIDENCE_PACKAGE\\01_TEST_EXECUTION_EVIDENCE\\task42_phoenix_cv_20250819_065117\\checkpoints\\checkpoint_fold_3.json",
+      "THESIS_EVIDENCE_PACKAGE\\01_TEST_EXECUTION_EVIDENCE\\task42_phoenix_cv_20250819_065117\\checkpoints\\checkpoint_fold_4.json",
+      "THESIS_EVIDENCE_PACKAGE\\01_TEST_EXECUTION_EVIDENCE\\task42_phoenix_cv_20250819_065117\\checkpoints\\checkpoint_fold_5.json"
+    ]
+  },
+  "output_directory": "THESIS_EVIDENCE_PACKAGE\\01_TEST_EXECUTION_EVIDENCE\\task42_phoenix_cv_20250819_065117",
+  "status": "FAILED"
+}

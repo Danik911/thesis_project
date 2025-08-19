@@ -707,9 +707,10 @@ JSON Schema:
             )
     
     def _fix_missing_commas(self, json_str: str) -> str:
-        """Fix missing commas between JSON elements."""
+        """Fix missing commas between JSON elements with enhanced patterns for large DeepSeek V3 responses."""
         import re
         
+        # Original patterns - preserve existing functionality
         # Fix missing commas between object elements: }" -> }",
         json_str = re.sub(r'}\s*{', '},{', json_str)
         
@@ -723,6 +724,48 @@ JSON Schema:
         # Fix missing commas after quoted strings before opening brace/bracket  
         json_str = re.sub(r'"\s*{', '",{', json_str)
         json_str = re.sub(r'"\s*\[', '",[', json_str)
+        
+        # ENHANCED PATTERNS for large DeepSeek V3 responses (22,474+ characters)
+        
+        # Fix missing commas after numbers before opening brace/bracket
+        json_str = re.sub(r'(\d+)\s*{', r'\1,{', json_str)
+        json_str = re.sub(r'(\d+)\s*\[', r'\1,[', json_str)
+        
+        # Fix missing commas after boolean values before opening brace/bracket
+        json_str = re.sub(r'(true|false)\s*{', r'\1,{', json_str)
+        json_str = re.sub(r'(true|false)\s*\[', r'\1,[', json_str)
+        
+        # Fix missing commas after closing structures before numbers/booleans
+        json_str = re.sub(r'}\s*(\d+)', r'},\1', json_str)
+        json_str = re.sub(r']\s*(\d+)', r'],\1', json_str)
+        json_str = re.sub(r'}\s*(true|false)', r'},\1', json_str)
+        json_str = re.sub(r']\s*(true|false)', r'],\1', json_str)
+        
+        # Fix missing commas across line breaks (common in large multi-line responses)
+        # Pattern: }\n    " -> },\n    "
+        json_str = re.sub(r'}\s*\n\s*"', '},\n    "', json_str)
+        json_str = re.sub(r']\s*\n\s*"', '],\n    "', json_str)
+        
+        # Fix missing commas after quoted values across line breaks
+        # Pattern: "value"\n    " -> "value",\n    "
+        json_str = re.sub(r'"\s*\n\s*"', '",\n    "', json_str)
+        
+        # Fix missing commas after numbers/booleans across line breaks
+        json_str = re.sub(r'(\d+)\s*\n\s*"', r'\1,\n    "', json_str)
+        json_str = re.sub(r'(true|false)\s*\n\s*"', r'\1,\n    "', json_str)
+        
+        # Fix complex nested structure comma issues
+        # Pattern: } { -> },{
+        json_str = re.sub(r'}\s+{', '},{', json_str)
+        json_str = re.sub(r']\s+\[', '],[', json_str)
+        
+        # Fix missing commas in array of objects patterns
+        # Common DeepSeek V3 pattern: }  { -> },{
+        json_str = re.sub(r'}\s{2,}{', '},{', json_str)
+        
+        # Fix missing commas after array closing before object/array start
+        json_str = re.sub(r']\s{2,}"', '],"', json_str)
+        json_str = re.sub(r']\s{2,}{', '],[', json_str)
         
         return json_str
     
