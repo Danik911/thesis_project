@@ -1,5 +1,5 @@
 {
-  "created": "2025-08-19T13:33:30.209995+00:00",
+  "created": "2025-08-19T17:02:32.617957+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -27,7 +27,72 @@
       "signature_value": "c395347357fb397becbc11c5fba3d4014cd18d2b11894044d09ae4246b9f96e3ae3d31d3f3b71ecf8f9e607ecf8a4c30ccf6a3c61257f3a1bd16072c90526008",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "c9c109d028568f99ff4c08417f3a1cf0282ce308c24f38f2f8e63473e655028f",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "a1fe38cfbb074b6acfb2e540a138c0c4c25924bf0f47f8551b26d64fe98220e7",
+      "record_id": "cat_unified_workflow_2025-08-19T13:54:20.879244+00:00",
+      "signature_id": "aaa985bd-de65-4607-980f-432d8edf62c3",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-19T13:54:21.077638+00:00",
+      "signature_value": "d831ae980cb5c8cacd34f4c953e07c5476054efdc570facce5eaa58fb27386a78ff636b131864e08e7e35397fdcbe37dce5e9894241e181407a90a0585cfda02",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "da662236485b9209457bdebd02358d57c78e6ba26a9585c0aad236f019aebd62",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "01601ed62c59c1eaff17ec9020ad8c6cf2b3a1ea5a99baf75c9ebc4e98bcd3b0",
+      "record_id": "cat_unified_workflow_2025-08-19T15:34:09.484775+00:00",
+      "signature_id": "01bb84f1-9fe7-44f5-993f-e1830b78a078",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-19T15:34:09.705202+00:00",
+      "signature_value": "1033d26090bdbf8dcea18d0f4e2efdf7e7e859d2d22b6df54419f0de9551b728ded1d684f30052b1946354ab3bca5ef5ea78726516615abf33ad4f20a0e1920d",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "6b08bc69d2eb410ae8b0531791078ff9c87bbc200278ce38103fa8411e10d860",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "38b1d6240b981d37dee367c5e0841f0d9861a62dbe80521bbfa522010f61f0a3",
+      "record_id": "cat_unified_workflow_2025-08-19T16:50:08.956711+00:00",
+      "signature_id": "b2b901d4-0ac4-425a-9c1e-929b08e810a0",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-19T16:50:09.283609+00:00",
+      "signature_value": "84fb674d0ee69436099e7e525ebe794e7a4e842c0ac014d65b03ad5d929892adbe566ac34be94fdde019194fe58e657f01f0453ee55bc864cac5aed112b7fa00",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "04c496dcf914a7570bd103b7403e09460b31b3cd214477c598f5bf386f31d218",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "84d72fb424a5fcb5d260c6fecf3aeae74d979c2486475533756d26f97ba68db7",
+      "record_id": "cat_unified_workflow_2025-08-19T16:57:39.821211+00:00",
+      "signature_id": "fc45f113-a130-43b2-8812-692ddc500b2f",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-19T16:57:45.008990+00:00",
+      "signature_value": "01a924bef3a656e7ffec631ef1b2b6cc4b2018d8b0756b04929cc50a617a90eb156c132d438e81142b225c7ca6064baf48bbfbbebe25b4ca4ff3b2e95d94c301",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "6a16822bca74270df8ce96126b33422c8f57f3b51f8d90ed2547662fa0ba5060",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "533251469f919348f3bc1dfa08bec2996b5b9c8af04371a8e8de5bc2bc45d8dd",
+      "record_id": "cat_unified_workflow_2025-08-19T17:02:32.576682+00:00",
+      "signature_id": "9288bd0a-36c3-4b5b-a352-826a01bc5966",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-19T17:02:32.617957+00:00",
+      "signature_value": "c096662173e51bd1179b27cae096aa9e6b53d419c6efcdd52a50fac2547334a037f19e4bbded73c7bf94c1573ca23570adfa4635bc302533b6c3c889883fae0a",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 2
+  "total_signatures": 7
 }

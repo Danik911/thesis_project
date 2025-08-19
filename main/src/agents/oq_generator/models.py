@@ -22,9 +22,13 @@ class TestStep(BaseModel):
     step_number: int = Field(..., ge=1, description="Sequential step number")
     action: str = Field(..., min_length=10, description="Action to perform")
     expected_result: str = Field(..., min_length=10, description="Expected outcome")
-    data_to_capture: list[str] = Field(default_factory=list, description="Data points to record")
+    data_to_capture: list[str] = Field(default_factory=list, description="Data points to record with units/precision")
     verification_method: str = Field(default="visual_inspection", description="How to verify result")
-    acceptance_criteria: str = Field(default="", description="Specific pass/fail criteria")
+    acceptance_criteria: str = Field(default="Result matches expected outcome", description="Specific pass/fail criteria")
+    
+    # ALCOA+ Enhancement: Attributability
+    performed_by: str = Field(default="QA Technician", description="Role performing this step")
+    timestamp_required: bool = Field(default=True, description="Whether timestamp is required")
 
     @field_validator("action", "expected_result")
     @classmethod
@@ -65,6 +69,11 @@ class OQTestCase(BaseModel):
     # Execution metadata
     estimated_duration_minutes: int = Field(default=30, ge=5, description="Estimated execution time")
     required_expertise: list[str] = Field(default_factory=list, description="Required user expertise")
+    
+    # ALCOA+ Enhancement: Attributability and Complete
+    reviewed_by: str = Field(default="QA Manager", description="Role reviewing this test")
+    data_retention_period: str = Field(default="10 years", description="How long to retain test data")
+    execution_timestamp_required: bool = Field(default=True, description="Whether execution timestamp is required")
 
     @field_validator("test_steps")
     @classmethod

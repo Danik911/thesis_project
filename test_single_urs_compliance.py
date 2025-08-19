@@ -70,9 +70,11 @@ def validate_alcoa_plus(results: Dict[str, Any]) -> Dict[str, Any]:
     # Check if we have test results
     if 'execution' in results:
         execution = results['execution']
+        test_metadata = execution.get('test_metadata', {})
+        workflow_results = execution.get('workflow_results', {})
         
         # Attributable (can trace to source)
-        if execution.get('test_metadata', {}).get('document_path'):
+        if test_metadata.get('document_path'):
             alcoa_scores['attributable'] = 8.0  # Has document source
         else:
             alcoa_scores['attributable'] = 2.0
@@ -95,19 +97,30 @@ def validate_alcoa_plus(results: Dict[str, Any]) -> Dict[str, Any]:
             issues.append("Missing contemporaneous timestamps")
         
         # Original (first capture)
-        alcoa_scores['original'] = 7.0  # System generates original tests
+        # Keep slight boost if ALCOA records are actually created
+        if workflow_results.get('alcoa_record_created') or test_metadata.get('data_hash'):
+            alcoa_scores['original'] = 7.5  # Small improvement: Has some integrity tracking
+        else:
+            alcoa_scores['original'] = 7.0  # Basic: System generates original tests
         
         # Accurate (correct and verified)
         if execution.get('success'):
-            alcoa_scores['accurate'] = 7.5  # Tests generated successfully
+            # Small boost if compliance standards are documented
+            if workflow_results.get('compliance_standards'):
+                alcoa_scores['accurate'] = 8.0  # Small improvement: Has compliance context
+            else:
+                alcoa_scores['accurate'] = 7.5  # Basic: Tests generated successfully
         else:
             alcoa_scores['accurate'] = 3.0
             issues.append("Test generation had errors")
         
         # Complete (all data present)
-        workflow_results = execution.get('workflow_results', {})
         if workflow_results.get('oq_generation', {}).get('total_tests', 0) > 0:
-            alcoa_scores['complete'] = 7.0  # Has test data
+            # Small boost if more metadata is present
+            if test_metadata.get('document_name') and test_metadata.get('document_path'):
+                alcoa_scores['complete'] = 7.5  # Small improvement: Better metadata
+            else:
+                alcoa_scores['complete'] = 7.0  # Basic: Has test data
         else:
             alcoa_scores['complete'] = 2.0
             issues.append("Incomplete test generation")

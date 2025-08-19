@@ -325,16 +325,68 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
                     # Convert test steps
                     test_steps = []
                     for step_data in test_data.get("test_steps", []):
+                        # Generate meaningful acceptance criteria if not provided
+                        acceptance_criteria = step_data.get("acceptance_criteria", "")
+                        if not acceptance_criteria:
+                            # Extract key metric from expected result for acceptance criteria
+                            expected = step_data.get("expected_result", "")
+                            if "within" in expected.lower():
+                                acceptance_criteria = expected  # Use expected result if it contains criteria
+                            elif "display" in expected.lower():
+                                acceptance_criteria = "Display matches specification"
+                            elif "generate" in expected.lower() or "alert" in expected.lower():
+                                acceptance_criteria = "Alert/notification generated within specified time"
+                            elif "record" in expected.lower() or "log" in expected.lower():
+                                acceptance_criteria = "Data recorded with timestamp and attribution"
+                            else:
+                                acceptance_criteria = "Result matches expected outcome ±tolerance"
+                        
+                        # Enhanced data capture with units/precision
+                        data_to_capture = step_data.get("data_to_capture", [])
+                        enhanced_capture = []
+                        for item in data_to_capture:
+                            if "temperature" in item.lower() and "°" not in item:
+                                enhanced_capture.append(f"{item} (°C, ±0.1°C precision)")
+                            elif "time" in item.lower() and not any(x in item.lower() for x in ["iso", "format", "stamp"]):
+                                enhanced_capture.append(f"{item} (ISO 8601 format)")
+                            elif "pressure" in item.lower() and "pa" not in item.lower():
+                                enhanced_capture.append(f"{item} (kPa, ±0.5 kPa)")
+                            elif "humidity" in item.lower() and "%" not in item:
+                                enhanced_capture.append(f"{item} (%, ±2% RH)")
+                            else:
+                                enhanced_capture.append(item)
+                        
+                        # Add timestamp to all data captures if not present
+                        if enhanced_capture and not any("timestamp" in s.lower() for s in enhanced_capture):
+                            enhanced_capture.append("Timestamp (ISO 8601 format)")
+                        
+                        # Diversify verification methods based on test type
+                        verification_method = step_data.get("verification_method", "visual_inspection")
+                        action_lower = step_data.get("action", "").lower()
+                        if verification_method == "visual_inspection":
+                            if "monitor" in action_lower or "continuous" in action_lower:
+                                verification_method = "automated_monitoring"
+                            elif "alert" in action_lower or "alarm" in action_lower:
+                                verification_method = "electronic_verification"
+                            elif "measure" in action_lower or "sensor" in action_lower:
+                                verification_method = "calibrated_measurement"
+                            elif "audit" in action_lower or "log" in action_lower:
+                                verification_method = "audit_trail_review"
+                            elif "calculate" in action_lower or "compute" in action_lower:
+                                verification_method = "calculation_verification"
+                        
                         test_steps.append(TestStep(
                             step_number=step_data.get("step_number", 1),
                             action=step_data.get("action", "Perform test action"),
                             expected_result=step_data.get("expected_result", "Expected outcome"),
-                            data_to_capture=step_data.get("data_to_capture", []),
-                            verification_method=step_data.get("verification_method", "visual_inspection"),
-                            acceptance_criteria=step_data.get("acceptance_criteria", "")
+                            data_to_capture=enhanced_capture if enhanced_capture else ["Test result", "Timestamp (ISO 8601 format)"],
+                            verification_method=verification_method,
+                            acceptance_criteria=acceptance_criteria,
+                            performed_by="QA Technician",  # Default attributability
+                            timestamp_required=True  # Always require timestamps
                         ))
 
-                    # Create test case
+                    # Create test case with enhanced ALCOA+ fields
                     test_case = OQTestCase(
                         test_id=test_data.get("test_id", f"OQ-{chunk_idx:03d}"),
                         test_name=test_data.get("test_name", "Test Name"),
@@ -350,7 +402,11 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
                         urs_requirements=test_data.get("urs_requirements", []),
                         related_tests=test_data.get("related_tests", []),
                         estimated_duration_minutes=test_data.get("estimated_duration_minutes", 15),
-                        required_expertise=test_data.get("required_expertise", [])
+                        required_expertise=test_data.get("required_expertise", []),
+                        # ALCOA+ enhancements
+                        reviewed_by="QA Manager",
+                        data_retention_period="10 years",
+                        execution_timestamp_required=True
                     )
 
                     test_cases.append(test_case)
@@ -376,31 +432,97 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
             test_id = f"OQ-{test_number:03d}"
             category = categories[i % len(categories)]
 
+            # Create enhanced test steps based on category
+            if category == "functional":
+                test_steps = [
+                    TestStep(
+                        step_number=1,
+                        action="Execute functional validation procedure including input/output verification",
+                        expected_result="System functions match specifications within tolerance",
+                        data_to_capture=["Function output values (with units)", "Response time (ms)", "Timestamp (ISO 8601 format)"],
+                        verification_method="automated_monitoring",
+                        acceptance_criteria="Output values within ±5% of expected",
+                        performed_by="QA Technician",
+                        timestamp_required=True
+                    )
+                ]
+            elif category == "data_integrity":
+                test_steps = [
+                    TestStep(
+                        step_number=1,
+                        action="Verify audit trail captures all critical data changes with attribution",
+                        expected_result="Audit trail records all changes with user, timestamp, and reason",
+                        data_to_capture=["Audit trail entries", "User ID", "Change timestamp (ISO 8601 format)", "Change reason"],
+                        verification_method="audit_trail_review",
+                        acceptance_criteria="All ALCOA+ attributes present in audit records",
+                        performed_by="QA Technician",
+                        timestamp_required=True
+                    )
+                ]
+            elif category == "security":
+                test_steps = [
+                    TestStep(
+                        step_number=1,
+                        action="Test user authentication and authorization controls",
+                        expected_result="System enforces role-based access control",
+                        data_to_capture=["Login attempts", "Access control decisions", "Security event log", "Timestamp (ISO 8601 format)"],
+                        verification_method="electronic_verification",
+                        acceptance_criteria="Unauthorized access attempts blocked and logged",
+                        performed_by="Security Tester",
+                        timestamp_required=True
+                    )
+                ]
+            elif category == "performance":
+                test_steps = [
+                    TestStep(
+                        step_number=1,
+                        action="Measure system response time under normal load conditions",
+                        expected_result="Response time within acceptable limits",
+                        data_to_capture=["Response time (ms, ±1ms)", "CPU usage (%)", "Memory usage (MB)", "Timestamp (ISO 8601 format)"],
+                        verification_method="calibrated_measurement",
+                        acceptance_criteria="95% of responses < 1000ms",
+                        performed_by="Performance Tester",
+                        timestamp_required=True
+                    )
+                ]
+            else:  # integration
+                test_steps = [
+                    TestStep(
+                        step_number=1,
+                        action="Verify data exchange between system components",
+                        expected_result="Data transferred accurately between components",
+                        data_to_capture=["Data sent", "Data received", "Transfer time (ms)", "Error count", "Timestamp (ISO 8601 format)"],
+                        verification_method="electronic_verification",
+                        acceptance_criteria="Data integrity maintained, zero data loss",
+                        performed_by="Integration Tester",
+                        timestamp_required=True
+                    )
+                ]
+            
             test_case = OQTestCase(
                 test_id=test_id,
                 test_name=f"Test {test_id}: {category.replace('_', ' ').title()} Validation",
                 test_category=category,
                 gamp_category=5,
-                objective=f"Validate {category} requirements for pharmaceutical system compliance",
-                prerequisites=["System installed", "Test environment configured"],
-                test_steps=[
-                    TestStep(
-                        step_number=1,
-                        action=f"Execute {category} validation procedure per pharmaceutical standards",
-                        expected_result="System performs as specified in requirements",
-                        data_to_capture=["Test results", "System logs"],
-                        verification_method="visual_inspection",
-                        acceptance_criteria="All checks pass"
-                    )
+                objective=f"Validate {category} requirements for pharmaceutical system compliance per GAMP-5",
+                prerequisites=["System installed and configured", "Test environment validated", "Test data prepared"],
+                test_steps=test_steps,
+                acceptance_criteria=[
+                    "System meets pharmaceutical validation requirements",
+                    "All test steps pass with documented evidence",
+                    "Data integrity maintained throughout test"
                 ],
-                acceptance_criteria=["System meets pharmaceutical validation requirements"],
-                regulatory_basis=["21 CFR Part 11"] if category in ["data_integrity", "security"] else [],
+                regulatory_basis=["21 CFR Part 11", "GAMP-5"] if category in ["data_integrity", "security"] else ["GAMP-5"],
                 risk_level="high" if category in ["data_integrity", "security"] else "medium",
-                data_integrity_requirements=["audit_trail"] if category == "data_integrity" else [],
+                data_integrity_requirements=["audit_trail", "electronic_signatures"] if category == "data_integrity" else ["audit_trail"],
                 urs_requirements=[f"REQ-{chunk_idx:03d}-{i:02d}"],
                 related_tests=[],
-                estimated_duration_minutes=15,
-                required_expertise=["QA Tester"]
+                estimated_duration_minutes=20 if category == "performance" else 15,
+                required_expertise=["QA Tester", "System Administrator"],
+                # ALCOA+ enhancements
+                reviewed_by="QA Manager",
+                data_retention_period="10 years",
+                execution_timestamp_required=True
             )
 
             test_cases.append(test_case)

@@ -1,7 +1,7 @@
 ================================================================================
 COMPLIANCE VALIDATION REPORT - SINGLE DOCUMENT TEST
 ================================================================================
-Generated: 2025-08-19T13:04:09.736418+00:00
+Generated: 2025-08-19T14:14:14.044229+00:00
 
 EXECUTIVE SUMMARY
 ----------------------------------------
@@ -9,7 +9,7 @@ EXECUTIVE SUMMARY
 
 1. ALCOA+ DATA INTEGRITY
 ----------------------------------------
-Overall Score: 8.00/10
+Overall Score: 8.06/10
 Target: >=9.0/10
 Status: [FAIL]
 
@@ -19,7 +19,7 @@ Attribute Scores:
   [OK] Contemporaneous: 8.0/10
   [OK] Original: 7.0/10
   [OK] Accurate: 7.5/10
-  [OK] Complete: 7.0/10
+  [OK] Complete: 7.5/10
   [OK] Consistent: 8.0/10
   [OK] Enduring: 8.5/10
   [OK] Available: 9.0/10

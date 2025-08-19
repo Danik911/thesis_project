@@ -42,6 +42,7 @@ from src.compliance import (
     get_worm_storage,
 )
 from src.compliance.part11_signatures import SignatureMeaning
+from src.compliance.alcoa_validator import ALCOAPlusValidator
 
 # from llama_index.llms.openai import OpenAI  # Migrated to centralized LLM config
 from src.config.llm_config import LLMConfig
@@ -808,6 +809,48 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 # Continue without signature in case of error
         elif config.validation_mode.validation_mode:
             self.logger.info("[SIGNATURE] Skipping categorization signature in validation mode")
+        
+        # Add ALCOA+ record for categorization with enhanced metadata
+        try:
+            import sys
+            import platform
+            import os
+            
+            alcoa_validator = ALCOAPlusValidator()
+            alcoa_record = alcoa_validator.create_data_record(
+                data={
+                    "action": "gamp_categorization",
+                    "category": ev.category,
+                    "confidence": ev.confidence,
+                    "risk_assessment": ev.risk_assessment,
+                    "regulatory_basis": "GAMP-5",
+                    "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"],
+                    "document_name": getattr(ev, 'document_name', 'Unknown'),
+                    "categorization_rationale": ev.risk_assessment.get("rationale", ""),
+                    "system_type": ev.risk_assessment.get("system_type", ""),
+                    "timestamp": datetime.now(UTC).isoformat()
+                },
+                user_id=getattr(config, 'user_name', 'System'),
+                agent_name="categorization_agent",
+                activity="gamp_categorization",
+                metadata={
+                    "workflow_id": str(self.workflow_id),
+                    "document_id": getattr(ev, 'document_name', 'Unknown'),
+                    "confidence_score": ev.confidence,
+                    "risk_level": ev.risk_assessment.get("risk_level", "Unknown"),
+                    "risk_factors": ev.risk_assessment.get("risk_factors", []),
+                    "mitigation_required": ev.risk_assessment.get("mitigation_required", False),
+                    # System context for traceability
+                    "python_version": sys.version.split()[0],
+                    "platform": platform.system(),
+                    "hostname": platform.node(),
+                    "environment": os.environ.get("VALIDATION_MODE", "production"),
+                    "timestamp": datetime.now(UTC).isoformat()
+                }
+            )
+            self.logger.info(f"[ALCOA+] Created categorization record with hash: {alcoa_record.get('data_hash', 'N/A')[:8]}...")
+        except Exception as e:
+            self.logger.warning(f"[ALCOA+] Failed to create categorization record: {e}")
         
         return categorization_event
 
@@ -1711,6 +1754,72 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 self.logger.info("[SIGNATURE] Skipping signature in validation mode")
                 oq_results["signed"] = False
                 oq_results["signature_reason"] = "validation_mode"
+            
+            # Add ALCOA+ record for test suite generation with complete metadata
+            try:
+                import sys
+                import platform
+                import os
+                
+                alcoa_validator = ALCOAPlusValidator()
+                
+                # Capture ALL test IDs for complete traceability
+                all_test_ids = [t.test_id for t in ev.test_suite.test_cases]
+                test_categories_count = {}
+                for t in ev.test_suite.test_cases:
+                    cat = t.test_category
+                    test_categories_count[cat] = test_categories_count.get(cat, 0) + 1
+                
+                alcoa_record = alcoa_validator.create_data_record(
+                    data={
+                        "action": "test_suite_generation",
+                        "test_suite_id": ev.test_suite.suite_id,
+                        "test_count": len(ev.test_suite.test_cases),
+                        "gamp_category": ev.test_suite.gamp_category,
+                        "regulatory_basis": "GAMP-5, 21 CFR Part 11",
+                        "compliance_standards": compliance_standards,
+                        "document": ev.test_suite.document_name,
+                        "all_test_ids": all_test_ids,  # Complete list of ALL test IDs
+                        "test_categories": test_categories_count,  # Distribution of test types
+                        "timestamp": datetime.now(UTC).isoformat()
+                    },
+                    user_id=getattr(config, 'user_name', 'System'),
+                    agent_name="oq_generator",
+                    activity="test_suite_generation",
+                    metadata={
+                        "workflow_id": str(self.workflow_id),
+                        "document_id": ev.test_suite.document_name,
+                        "suite_id": ev.test_suite.suite_id,
+                        "test_count": len(ev.test_suite.test_cases),
+                        "execution_start": execution_start.isoformat() if execution_start else None,
+                        "execution_duration_seconds": (datetime.now(UTC) - execution_start).total_seconds() if execution_start else None,
+                        "document_path": str(output_file) if output_file else None,
+                        # System environment for complete traceability
+                        "python_version": sys.version,
+                        "platform": platform.platform(),
+                        "hostname": platform.node(),
+                        "processor": platform.processor(),
+                        "llamaindex_version": "0.12.0",  # Should import and check
+                        "environment": os.environ.get("VALIDATION_MODE", "production"),
+                        "user": os.environ.get("USER", "unknown"),
+                        # Complete test coverage info
+                        "total_test_steps": sum(len(t.test_steps) for t in ev.test_suite.test_cases),
+                        "avg_steps_per_test": sum(len(t.test_steps) for t in ev.test_suite.test_cases) / len(ev.test_suite.test_cases) if ev.test_suite.test_cases else 0,
+                        "risk_distribution": {"low": 0, "medium": 0, "high": 0, "critical": 0}  # Will be populated
+                    }
+                )
+                
+                # Populate risk distribution
+                for t in ev.test_suite.test_cases:
+                    risk = t.risk_level
+                    if risk in alcoa_record["metadata"]["risk_distribution"]:
+                        alcoa_record["metadata"]["risk_distribution"][risk] += 1
+                self.logger.info(f"[ALCOA+] Created test suite record with hash: {alcoa_record.get('data_hash', 'N/A')[:8]}...")
+                oq_results["alcoa_record_created"] = True
+                oq_results["data_hash"] = alcoa_record.get('data_hash', '')[:16]  # Store partial hash
+            except Exception as alcoa_e:
+                self.logger.warning(f"[ALCOA+] Failed to create test suite record: {alcoa_e}")
+                oq_results["alcoa_record_created"] = False
             
         except Exception as e:
             self.logger.error(f"❌ CRITICAL: Failed to save test suite to file: {e}")
