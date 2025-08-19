@@ -1,0 +1,2289 @@
+{
+  "summary": {
+    "total_suites_analyzed": 18,
+    "successful_analyses": 18,
+    "aggregate_statistics": {
+      "test_counts": {
+        "mean": 6.667,
+        "median": 10.0,
+        "stdev": 5.941,
+        "min": 0,
+        "max": 20
+      },
+      "alcoa_scores": {
+        "mean": 4.884,
+        "median": 5.905,
+        "stdev": 1.732,
+        "min": 2.89,
+        "max": 8.36
+      },
+      "specificity_scores": {
+        "mean": 0.579,
+        "median": 0.989,
+        "stdev": 0.492,
+        "min": 0,
+        "max": 1.0
+      },
+      "clarity_scores": {
+        "mean": 0.999,
+        "median": 1.0,
+        "stdev": 0.002,
+        "min": 0.995,
+        "max": 1.0
+      }
+    }
+  },
+  "individual_results": [
+    {
+      "suite_id": "OQ-SUITE-0728",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-0728_20250819_072855.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 25,
+        "avg_steps_per_test": 2.5,
+        "min_steps": 1,
+        "max_steps": 4,
+        "total_data_points": 42,
+        "avg_data_points_per_test": 4.2,
+        "total_prerequisites": 24,
+        "avg_prerequisites_per_test": 2.4,
+        "risk_distribution": {
+          "medium": 6,
+          "high": 4
+        },
+        "category_distribution": {
+          "functional": 5,
+          "data_integrity": 2,
+          "integration": 2,
+          "performance": 1
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 345
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 20,
+          "total": 20
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 25
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 8,
+        "total_action_verbs": 25,
+        "verb_diversity_ratio": 0.32,
+        "top_5_verbs": {
+          "simulate": 8,
+          "set": 5,
+          "verify": 4,
+          "repeat": 2,
+          "generate": 2
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.8,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 6.0,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 35
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 25
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 20,
+            "measurable_criteria": 12,
+            "total_criteria": 20
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 816,
+        "technical_term_count": 91,
+        "technical_density": 0.1115,
+        "measurement_term_count": 64,
+        "measurement_density": 0.0784,
+        "vague_term_count": 1,
+        "clarity_score": 0.999,
+        "top_technical_terms": {
+          "temperature": 39,
+          "system": 29,
+          "deviation": 13,
+          "accuracy": 5,
+          "audit": 3
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-0746",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-0746_20250819_074634.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 21,
+        "avg_steps_per_test": 2.1,
+        "min_steps": 2,
+        "max_steps": 3,
+        "total_data_points": 34,
+        "avg_data_points_per_test": 3.4,
+        "total_prerequisites": 24,
+        "avg_prerequisites_per_test": 2.4,
+        "risk_distribution": {
+          "medium": 6,
+          "high": 4
+        },
+        "category_distribution": {
+          "functional": 5,
+          "integration": 4,
+          "performance": 1
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 300
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 18,
+          "total": 18
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 21
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 9,
+        "total_action_verbs": 21,
+        "verb_diversity_ratio": 0.429,
+        "top_5_verbs": {
+          "set": 6,
+          "simulate": 6,
+          "verify": 2,
+          "repeat": 2,
+          "compare": 1
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.75,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.94,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 31
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 21
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 18,
+            "measurable_criteria": 9,
+            "total_criteria": 18
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 754,
+        "technical_term_count": 103,
+        "technical_density": 0.1366,
+        "measurement_term_count": 60,
+        "measurement_density": 0.0796,
+        "vague_term_count": 1,
+        "clarity_score": 0.999,
+        "top_technical_terms": {
+          "system": 39,
+          "temperature": 38,
+          "deviation": 17,
+          "accuracy": 5,
+          "gmp": 2
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-0815",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-0815_20250819_081542.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 22,
+        "avg_steps_per_test": 2.2,
+        "min_steps": 2,
+        "max_steps": 3,
+        "total_data_points": 35,
+        "avg_data_points_per_test": 3.5,
+        "total_prerequisites": 23,
+        "avg_prerequisites_per_test": 2.3,
+        "risk_distribution": {
+          "medium": 7,
+          "high": 3
+        },
+        "category_distribution": {
+          "functional": 3,
+          "integration": 4,
+          "data_integrity": 2,
+          "performance": 1
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 300
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 15,
+          "total": 15
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 22
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 12,
+        "total_action_verbs": 22,
+        "verb_diversity_ratio": 0.545,
+        "top_5_verbs": {
+          "simulate": 6,
+          "verify": 3,
+          "access": 2,
+          "set": 2,
+          "configure": 2
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.73,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.93,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 32
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 22
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 15,
+            "measurable_criteria": 7,
+            "total_criteria": 15
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 765,
+        "technical_term_count": 75,
+        "technical_density": 0.098,
+        "measurement_term_count": 32,
+        "measurement_density": 0.0418,
+        "vague_term_count": 0,
+        "clarity_score": 1.0,
+        "top_technical_terms": {
+          "temperature": 29,
+          "system": 29,
+          "deviation": 12,
+          "gmp": 2,
+          "accuracy": 2
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-1006",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1006_20250819_100613.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 23,
+        "avg_steps_per_test": 2.3,
+        "min_steps": 2,
+        "max_steps": 3,
+        "total_data_points": 35,
+        "avg_data_points_per_test": 3.5,
+        "total_prerequisites": 25,
+        "avg_prerequisites_per_test": 2.5,
+        "risk_distribution": {
+          "medium": 7,
+          "high": 3
+        },
+        "category_distribution": {
+          "functional": 5,
+          "integration": 3,
+          "performance": 1,
+          "data_integrity": 1
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 315
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 18,
+          "total": 18
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 23
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 9,
+        "total_action_verbs": 23,
+        "verb_diversity_ratio": 0.391,
+        "top_5_verbs": {
+          "set": 8,
+          "verify": 5,
+          "simulate": 4,
+          "expose": 1,
+          "gradually": 1
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.75,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.94,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 33
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 23
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 18,
+            "measurable_criteria": 9,
+            "total_criteria": 18
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 816,
+        "technical_term_count": 87,
+        "technical_density": 0.1066,
+        "measurement_term_count": 73,
+        "measurement_density": 0.0895,
+        "vague_term_count": 1,
+        "clarity_score": 0.999,
+        "top_technical_terms": {
+          "temperature": 40,
+          "system": 32,
+          "accuracy": 8,
+          "deviation": 7
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-1025",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1025_20250819_102522.json",
+      "basic_metrics": {
+        "test_count": 20,
+        "total_steps": 46,
+        "avg_steps_per_test": 2.3,
+        "min_steps": 1,
+        "max_steps": 5,
+        "total_data_points": 82,
+        "avg_data_points_per_test": 4.1,
+        "total_prerequisites": 50,
+        "avg_prerequisites_per_test": 2.5,
+        "risk_distribution": {
+          "medium": 10,
+          "high": 8,
+          "low": 2
+        },
+        "category_distribution": {
+          "functional": 8,
+          "integration": 9,
+          "performance": 3
+        },
+        "gamp_category": 4,
+        "estimated_total_duration_minutes": 615
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 1,
+          "specific": 44,
+          "total": 45
+        },
+        "specificity_score": 0.978,
+        "verification_methods": {
+          "visual_inspection": 46
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 15,
+        "total_action_verbs": 46,
+        "verb_diversity_ratio": 0.326,
+        "top_5_verbs": {
+          "verify": 7,
+          "initiate": 6,
+          "select": 5,
+          "log": 4,
+          "navigate": 4
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.52,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.69,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 66
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 46
+          },
+          "original": {
+            "data_integrity_specified": 20,
+            "total_checks": 20
+          },
+          "accurate": {
+            "specific_criteria": 45,
+            "measurable_criteria": 2,
+            "total_criteria": 45
+          },
+          "complete": {
+            "all_required_fields": 20,
+            "missing_fields": [],
+            "total_checks": 20
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 20
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 1552,
+        "technical_term_count": 21,
+        "technical_density": 0.0135,
+        "measurement_term_count": 2,
+        "measurement_density": 0.0013,
+        "vague_term_count": 5,
+        "clarity_score": 0.997,
+        "top_technical_terms": {
+          "system": 16,
+          "audit": 3,
+          "temperature": 1,
+          "humidity": 1
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-1111",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1111_20250819_111144.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 24,
+        "avg_steps_per_test": 2.4,
+        "min_steps": 2,
+        "max_steps": 3,
+        "total_data_points": 43,
+        "avg_data_points_per_test": 4.3,
+        "total_prerequisites": 25,
+        "avg_prerequisites_per_test": 2.5,
+        "risk_distribution": {
+          "medium": 8,
+          "high": 2
+        },
+        "category_distribution": {
+          "functional": 5,
+          "integration": 4,
+          "data_integrity": 1
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 300
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 23,
+          "total": 23
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 24
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 11,
+        "total_action_verbs": 24,
+        "verb_diversity_ratio": 0.458,
+        "top_5_verbs": {
+          "simulate": 6,
+          "set": 5,
+          "configure": 3,
+          "generate": 3,
+          "monitor": 1
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.74,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.93,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 34
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 24
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 23,
+            "measurable_criteria": 11,
+            "total_criteria": 23
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 790,
+        "technical_term_count": 95,
+        "technical_density": 0.1203,
+        "measurement_term_count": 55,
+        "measurement_density": 0.0696,
+        "vague_term_count": 2,
+        "clarity_score": 0.997,
+        "top_technical_terms": {
+          "system": 44,
+          "temperature": 33,
+          "deviation": 12,
+          "accuracy": 3,
+          "gmp": 2
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "unknown",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1155_20250812_125553.json",
+      "basic_metrics": {
+        "test_count": 0,
+        "total_steps": 0,
+        "avg_steps_per_test": 0,
+        "min_steps": 0,
+        "max_steps": 0,
+        "total_data_points": 0,
+        "avg_data_points_per_test": 0,
+        "total_prerequisites": 0,
+        "avg_prerequisites_per_test": 0,
+        "risk_distribution": {},
+        "category_distribution": {},
+        "gamp_category": "unspecified",
+        "estimated_total_duration_minutes": 0
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 0,
+          "total": 0
+        },
+        "specificity_score": 0,
+        "verification_methods": {},
+        "verification_diversity_index": 0,
+        "unique_action_verbs": 0,
+        "total_action_verbs": 0,
+        "verb_diversity_ratio": 0,
+        "top_5_verbs": {}
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0,
+          "legible": 0.9,
+          "contemporaneous": 0,
+          "original": 0,
+          "accurate": 0,
+          "complete": 0,
+          "consistent": 0.8,
+          "enduring": 0,
+          "available": 0.9
+        },
+        "overall_score": 2.89,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 0
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 0
+          },
+          "original": {
+            "data_integrity_specified": 0,
+            "total_checks": 0
+          },
+          "accurate": {
+            "specific_criteria": 0,
+            "measurable_criteria": 0,
+            "total_criteria": 0
+          },
+          "complete": {
+            "all_required_fields": 0,
+            "missing_fields": [],
+            "total_checks": 0
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 0
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 0,
+        "technical_term_count": 0,
+        "technical_density": 0,
+        "measurement_term_count": 0,
+        "measurement_density": 0,
+        "vague_term_count": 0,
+        "clarity_score": 1,
+        "top_technical_terms": {}
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [],
+        "common_field_count": 0,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "unknown",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1224_20250810_132400.json",
+      "basic_metrics": {
+        "test_count": 0,
+        "total_steps": 0,
+        "avg_steps_per_test": 0,
+        "min_steps": 0,
+        "max_steps": 0,
+        "total_data_points": 0,
+        "avg_data_points_per_test": 0,
+        "total_prerequisites": 0,
+        "avg_prerequisites_per_test": 0,
+        "risk_distribution": {},
+        "category_distribution": {},
+        "gamp_category": "unspecified",
+        "estimated_total_duration_minutes": 0
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 0,
+          "total": 0
+        },
+        "specificity_score": 0,
+        "verification_methods": {},
+        "verification_diversity_index": 0,
+        "unique_action_verbs": 0,
+        "total_action_verbs": 0,
+        "verb_diversity_ratio": 0,
+        "top_5_verbs": {}
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0,
+          "legible": 0.9,
+          "contemporaneous": 0,
+          "original": 0,
+          "accurate": 0,
+          "complete": 0,
+          "consistent": 0.8,
+          "enduring": 0,
+          "available": 0.9
+        },
+        "overall_score": 2.89,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 0
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 0
+          },
+          "original": {
+            "data_integrity_specified": 0,
+            "total_checks": 0
+          },
+          "accurate": {
+            "specific_criteria": 0,
+            "measurable_criteria": 0,
+            "total_criteria": 0
+          },
+          "complete": {
+            "all_required_fields": 0,
+            "missing_fields": [],
+            "total_checks": 0
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 0
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 0,
+        "technical_term_count": 0,
+        "technical_density": 0,
+        "measurement_term_count": 0,
+        "measurement_density": 0,
+        "vague_term_count": 0,
+        "clarity_score": 1,
+        "top_technical_terms": {}
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [],
+        "common_field_count": 0,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "unknown",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1230_20250806_133014.json",
+      "basic_metrics": {
+        "test_count": 0,
+        "total_steps": 0,
+        "avg_steps_per_test": 0,
+        "min_steps": 0,
+        "max_steps": 0,
+        "total_data_points": 0,
+        "avg_data_points_per_test": 0,
+        "total_prerequisites": 0,
+        "avg_prerequisites_per_test": 0,
+        "risk_distribution": {},
+        "category_distribution": {},
+        "gamp_category": "unspecified",
+        "estimated_total_duration_minutes": 0
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 0,
+          "total": 0
+        },
+        "specificity_score": 0,
+        "verification_methods": {},
+        "verification_diversity_index": 0,
+        "unique_action_verbs": 0,
+        "total_action_verbs": 0,
+        "verb_diversity_ratio": 0,
+        "top_5_verbs": {}
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0,
+          "legible": 0.9,
+          "contemporaneous": 0,
+          "original": 0,
+          "accurate": 0,
+          "complete": 0,
+          "consistent": 0.8,
+          "enduring": 0,
+          "available": 0.9
+        },
+        "overall_score": 2.89,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 0
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 0
+          },
+          "original": {
+            "data_integrity_specified": 0,
+            "total_checks": 0
+          },
+          "accurate": {
+            "specific_criteria": 0,
+            "measurable_criteria": 0,
+            "total_criteria": 0
+          },
+          "complete": {
+            "all_required_fields": 0,
+            "missing_fields": [],
+            "total_checks": 0
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 0
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 0,
+        "technical_term_count": 0,
+        "technical_density": 0,
+        "measurement_term_count": 0,
+        "measurement_density": 0,
+        "vague_term_count": 0,
+        "clarity_score": 1,
+        "top_technical_terms": {}
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [],
+        "common_field_count": 0,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "unknown",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1252_20250806_135224.json",
+      "basic_metrics": {
+        "test_count": 0,
+        "total_steps": 0,
+        "avg_steps_per_test": 0,
+        "min_steps": 0,
+        "max_steps": 0,
+        "total_data_points": 0,
+        "avg_data_points_per_test": 0,
+        "total_prerequisites": 0,
+        "avg_prerequisites_per_test": 0,
+        "risk_distribution": {},
+        "category_distribution": {},
+        "gamp_category": "unspecified",
+        "estimated_total_duration_minutes": 0
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 0,
+          "total": 0
+        },
+        "specificity_score": 0,
+        "verification_methods": {},
+        "verification_diversity_index": 0,
+        "unique_action_verbs": 0,
+        "total_action_verbs": 0,
+        "verb_diversity_ratio": 0,
+        "top_5_verbs": {}
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0,
+          "legible": 0.9,
+          "contemporaneous": 0,
+          "original": 0,
+          "accurate": 0,
+          "complete": 0,
+          "consistent": 0.8,
+          "enduring": 0,
+          "available": 0.9
+        },
+        "overall_score": 2.89,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 0
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 0
+          },
+          "original": {
+            "data_integrity_specified": 0,
+            "total_checks": 0
+          },
+          "accurate": {
+            "specific_criteria": 0,
+            "measurable_criteria": 0,
+            "total_criteria": 0
+          },
+          "complete": {
+            "all_required_fields": 0,
+            "missing_fields": [],
+            "total_checks": 0
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 0
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 0,
+        "technical_term_count": 0,
+        "technical_density": 0,
+        "measurement_term_count": 0,
+        "measurement_density": 0,
+        "vague_term_count": 0,
+        "clarity_score": 1,
+        "top_technical_terms": {}
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [],
+        "common_field_count": 0,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-1317",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1317_20250819_131740.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 21,
+        "avg_steps_per_test": 2.1,
+        "min_steps": 2,
+        "max_steps": 3,
+        "total_data_points": 28,
+        "avg_data_points_per_test": 2.8,
+        "total_prerequisites": 22,
+        "avg_prerequisites_per_test": 2.2,
+        "risk_distribution": {
+          "medium": 8,
+          "high": 2
+        },
+        "category_distribution": {
+          "functional": 5,
+          "integration": 4,
+          "data_integrity": 1
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 300
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 14,
+          "total": 14
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 21
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 11,
+        "total_action_verbs": 21,
+        "verb_diversity_ratio": 0.524,
+        "top_5_verbs": {
+          "set": 6,
+          "simulate": 5,
+          "configure": 2,
+          "monitor": 1,
+          "access": 1
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.75,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.94,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 31
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 21
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 14,
+            "measurable_criteria": 7,
+            "total_criteria": 14
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 719,
+        "technical_term_count": 88,
+        "technical_density": 0.1224,
+        "measurement_term_count": 43,
+        "measurement_density": 0.0598,
+        "vague_term_count": 0,
+        "clarity_score": 1.0,
+        "top_technical_terms": {
+          "temperature": 37,
+          "system": 36,
+          "deviation": 11,
+          "gmp": 2,
+          "accuracy": 2
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "unknown",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1326_20250806_142658.json",
+      "basic_metrics": {
+        "test_count": 0,
+        "total_steps": 0,
+        "avg_steps_per_test": 0,
+        "min_steps": 0,
+        "max_steps": 0,
+        "total_data_points": 0,
+        "avg_data_points_per_test": 0,
+        "total_prerequisites": 0,
+        "avg_prerequisites_per_test": 0,
+        "risk_distribution": {},
+        "category_distribution": {},
+        "gamp_category": "unspecified",
+        "estimated_total_duration_minutes": 0
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 0,
+          "total": 0
+        },
+        "specificity_score": 0,
+        "verification_methods": {},
+        "verification_diversity_index": 0,
+        "unique_action_verbs": 0,
+        "total_action_verbs": 0,
+        "verb_diversity_ratio": 0,
+        "top_5_verbs": {}
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0,
+          "legible": 0.9,
+          "contemporaneous": 0,
+          "original": 0,
+          "accurate": 0,
+          "complete": 0,
+          "consistent": 0.8,
+          "enduring": 0,
+          "available": 0.9
+        },
+        "overall_score": 2.89,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 0
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 0
+          },
+          "original": {
+            "data_integrity_specified": 0,
+            "total_checks": 0
+          },
+          "accurate": {
+            "specific_criteria": 0,
+            "measurable_criteria": 0,
+            "total_criteria": 0
+          },
+          "complete": {
+            "all_required_fields": 0,
+            "missing_fields": [],
+            "total_checks": 0
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 0
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 0,
+        "technical_term_count": 0,
+        "technical_density": 0,
+        "measurement_term_count": 0,
+        "measurement_density": 0,
+        "vague_term_count": 0,
+        "clarity_score": 1,
+        "top_technical_terms": {}
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [],
+        "common_field_count": 0,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-1327",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1327_20250819_132750.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 22,
+        "avg_steps_per_test": 2.2,
+        "min_steps": 1,
+        "max_steps": 4,
+        "total_data_points": 28,
+        "avg_data_points_per_test": 2.8,
+        "total_prerequisites": 23,
+        "avg_prerequisites_per_test": 2.3,
+        "risk_distribution": {
+          "medium": 7,
+          "high": 3
+        },
+        "category_distribution": {
+          "functional": 6,
+          "integration": 3,
+          "performance": 1
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 300
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 13,
+          "total": 13
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 22
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 9,
+        "total_action_verbs": 22,
+        "verb_diversity_ratio": 0.409,
+        "top_5_verbs": {
+          "set": 7,
+          "simulate": 5,
+          "verify": 3,
+          "repeat": 2,
+          "compare": 1
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.88,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 6.09,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 32
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 22
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 13,
+            "measurable_criteria": 10,
+            "total_criteria": 13
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 750,
+        "technical_term_count": 100,
+        "technical_density": 0.1333,
+        "measurement_term_count": 68,
+        "measurement_density": 0.0907,
+        "vague_term_count": 3,
+        "clarity_score": 0.996,
+        "top_technical_terms": {
+          "temperature": 44,
+          "system": 34,
+          "deviation": 12,
+          "accuracy": 8,
+          "gmp": 1
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-1338",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1338_20250819_133818.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 21,
+        "avg_steps_per_test": 2.1,
+        "min_steps": 1,
+        "max_steps": 3,
+        "total_data_points": 33,
+        "avg_data_points_per_test": 3.3,
+        "total_prerequisites": 24,
+        "avg_prerequisites_per_test": 2.4,
+        "risk_distribution": {
+          "medium": 7,
+          "high": 3
+        },
+        "category_distribution": {
+          "functional": 5,
+          "integration": 5
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 315
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 21,
+          "total": 21
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 21
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 8,
+        "total_action_verbs": 21,
+        "verb_diversity_ratio": 0.381,
+        "top_5_verbs": {
+          "set": 7,
+          "simulate": 5,
+          "configure": 3,
+          "verify": 2,
+          "compare": 1
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.69,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.88,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 31
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 21
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 21,
+            "measurable_criteria": 8,
+            "total_criteria": 21
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 737,
+        "technical_term_count": 92,
+        "technical_density": 0.1248,
+        "measurement_term_count": 50,
+        "measurement_density": 0.0678,
+        "vague_term_count": 0,
+        "clarity_score": 1.0,
+        "top_technical_terms": {
+          "system": 39,
+          "temperature": 35,
+          "deviation": 10,
+          "accuracy": 5,
+          "gmp": 2
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-1702",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1702_20250819_170230.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 22,
+        "avg_steps_per_test": 2.2,
+        "min_steps": 2,
+        "max_steps": 3,
+        "total_data_points": 40,
+        "avg_data_points_per_test": 4.0,
+        "total_prerequisites": 26,
+        "avg_prerequisites_per_test": 2.6,
+        "risk_distribution": {
+          "medium": 7,
+          "high": 3
+        },
+        "category_distribution": {
+          "functional": 4,
+          "integration": 4,
+          "data_integrity": 2
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 315
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 22,
+          "specific": 18,
+          "total": 40
+        },
+        "specificity_score": 0.45,
+        "verification_methods": {
+          "visual_inspection": 22
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 11,
+        "total_action_verbs": 22,
+        "verb_diversity_ratio": 0.5,
+        "top_5_verbs": {
+          "verify": 4,
+          "set": 4,
+          "simulate": 4,
+          "access": 2,
+          "configure": 2
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.5,
+          "legible": 0.9,
+          "contemporaneous": 0.73,
+          "original": 1.0,
+          "accurate": 0.69,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 1.0,
+          "available": 0.9
+        },
+        "overall_score": 8.36,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 22,
+            "reviewed_by_present": 10,
+            "total_checks": 32
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 22,
+            "execution_timestamp": 10,
+            "total_checks": 22
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 18,
+            "measurable_criteria": 7,
+            "total_criteria": 18
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 10,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 923,
+        "technical_term_count": 86,
+        "technical_density": 0.0932,
+        "measurement_term_count": 33,
+        "measurement_density": 0.0358,
+        "vague_term_count": 1,
+        "clarity_score": 0.999,
+        "top_technical_terms": {
+          "system": 36,
+          "temperature": 35,
+          "deviation": 12,
+          "accuracy": 2,
+          "gmp": 1
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 18,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "unknown",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-1814_20250809_191402.json",
+      "basic_metrics": {
+        "test_count": 0,
+        "total_steps": 0,
+        "avg_steps_per_test": 0,
+        "min_steps": 0,
+        "max_steps": 0,
+        "total_data_points": 0,
+        "avg_data_points_per_test": 0,
+        "total_prerequisites": 0,
+        "avg_prerequisites_per_test": 0,
+        "risk_distribution": {},
+        "category_distribution": {},
+        "gamp_category": "unspecified",
+        "estimated_total_duration_minutes": 0
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 0,
+          "total": 0
+        },
+        "specificity_score": 0,
+        "verification_methods": {},
+        "verification_diversity_index": 0,
+        "unique_action_verbs": 0,
+        "total_action_verbs": 0,
+        "verb_diversity_ratio": 0,
+        "top_5_verbs": {}
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0,
+          "legible": 0.9,
+          "contemporaneous": 0,
+          "original": 0,
+          "accurate": 0,
+          "complete": 0,
+          "consistent": 0.8,
+          "enduring": 0,
+          "available": 0.9
+        },
+        "overall_score": 2.89,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 0
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 0
+          },
+          "original": {
+            "data_integrity_specified": 0,
+            "total_checks": 0
+          },
+          "accurate": {
+            "specific_criteria": 0,
+            "measurable_criteria": 0,
+            "total_criteria": 0
+          },
+          "complete": {
+            "all_required_fields": 0,
+            "missing_fields": [],
+            "total_checks": 0
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 0
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 0,
+        "technical_term_count": 0,
+        "technical_density": 0,
+        "measurement_term_count": 0,
+        "measurement_density": 0,
+        "vague_term_count": 0,
+        "clarity_score": 1,
+        "top_technical_terms": {}
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [],
+        "common_field_count": 0,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "unknown",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-2106_20250812_220635.json",
+      "basic_metrics": {
+        "test_count": 0,
+        "total_steps": 0,
+        "avg_steps_per_test": 0,
+        "min_steps": 0,
+        "max_steps": 0,
+        "total_data_points": 0,
+        "avg_data_points_per_test": 0,
+        "total_prerequisites": 0,
+        "avg_prerequisites_per_test": 0,
+        "risk_distribution": {},
+        "category_distribution": {},
+        "gamp_category": "unspecified",
+        "estimated_total_duration_minutes": 0
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 0,
+          "total": 0
+        },
+        "specificity_score": 0,
+        "verification_methods": {},
+        "verification_diversity_index": 0,
+        "unique_action_verbs": 0,
+        "total_action_verbs": 0,
+        "verb_diversity_ratio": 0,
+        "top_5_verbs": {}
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0,
+          "legible": 0.9,
+          "contemporaneous": 0,
+          "original": 0,
+          "accurate": 0,
+          "complete": 0,
+          "consistent": 0.8,
+          "enduring": 0,
+          "available": 0.9
+        },
+        "overall_score": 2.89,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 0
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 0
+          },
+          "original": {
+            "data_integrity_specified": 0,
+            "total_checks": 0
+          },
+          "accurate": {
+            "specific_criteria": 0,
+            "measurable_criteria": 0,
+            "total_criteria": 0
+          },
+          "complete": {
+            "all_required_fields": 0,
+            "missing_fields": [],
+            "total_checks": 0
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 0
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 0,
+        "technical_term_count": 0,
+        "technical_density": 0,
+        "measurement_term_count": 0,
+        "measurement_density": 0,
+        "vague_term_count": 0,
+        "clarity_score": 1,
+        "top_technical_terms": {}
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [],
+        "common_field_count": 0,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    },
+    {
+      "suite_id": "OQ-SUITE-2240",
+      "file_path": "output/test_suites\\test_suite_OQ-SUITE-2240_20250818_224045.json",
+      "basic_metrics": {
+        "test_count": 10,
+        "total_steps": 27,
+        "avg_steps_per_test": 2.7,
+        "min_steps": 2,
+        "max_steps": 4,
+        "total_data_points": 48,
+        "avg_data_points_per_test": 4.8,
+        "total_prerequisites": 22,
+        "avg_prerequisites_per_test": 2.2,
+        "risk_distribution": {
+          "medium": 9,
+          "high": 1
+        },
+        "category_distribution": {
+          "functional": 10
+        },
+        "gamp_category": 3,
+        "estimated_total_duration_minutes": 450
+      },
+      "quality_metrics": {
+        "acceptance_criteria_analysis": {
+          "empty": 0,
+          "generic": 0,
+          "specific": 19,
+          "total": 19
+        },
+        "specificity_score": 1.0,
+        "verification_methods": {
+          "visual_inspection": 27
+        },
+        "verification_diversity_index": 0.25,
+        "unique_action_verbs": 12,
+        "total_action_verbs": 27,
+        "verb_diversity_ratio": 0.444,
+        "top_5_verbs": {
+          "set": 11,
+          "verify": 2,
+          "simulate": 2,
+          "increase": 2,
+          "decrease": 2
+        }
+      },
+      "alcoa_compliance": {
+        "individual_scores": {
+          "attributable": 0.0,
+          "legible": 0.9,
+          "contemporaneous": 0.0,
+          "original": 1.0,
+          "accurate": 0.79,
+          "complete": 1.0,
+          "consistent": 0.8,
+          "enduring": 0.0,
+          "available": 0.9
+        },
+        "overall_score": 5.99,
+        "detailed_checks": {
+          "attributable": {
+            "performed_by_present": 0,
+            "reviewed_by_present": 0,
+            "total_checks": 37
+          },
+          "legible": {
+            "clear_format": true,
+            "score": 1.0
+          },
+          "contemporaneous": {
+            "timestamp_required": 0,
+            "execution_timestamp": 0,
+            "total_checks": 27
+          },
+          "original": {
+            "data_integrity_specified": 10,
+            "total_checks": 10
+          },
+          "accurate": {
+            "specific_criteria": 19,
+            "measurable_criteria": 11,
+            "total_criteria": 19
+          },
+          "complete": {
+            "all_required_fields": 10,
+            "missing_fields": [],
+            "total_checks": 10
+          },
+          "consistent": {
+            "format_consistency": true,
+            "naming_consistency": true
+          },
+          "enduring": {
+            "retention_period_specified": 0,
+            "total_checks": 10
+          },
+          "available": {
+            "accessible_format": true,
+            "score": 1.0
+          }
+        }
+      },
+      "linguistic_metrics": {
+        "total_word_count": 846,
+        "technical_term_count": 114,
+        "technical_density": 0.1348,
+        "measurement_term_count": 84,
+        "measurement_density": 0.0993,
+        "vague_term_count": 4,
+        "clarity_score": 0.995,
+        "top_technical_terms": {
+          "temperature": 76,
+          "system": 13,
+          "deviation": 11,
+          "accuracy": 8,
+          "calibration": 3
+        }
+      },
+      "consistency_metrics": {
+        "consistency_score": 1.0,
+        "id_patterns": [
+          "XX-NNN"
+        ],
+        "common_field_count": 15,
+        "consistency_checks": {
+          "id_pattern_consistent": true,
+          "naming_convention_consistent": true,
+          "field_presence_consistent": true,
+          "formatting_issues": []
+        }
+      }
+    }
+  ],
+  "timestamp": "2025-08-19T19:16:15.164296"
+}
