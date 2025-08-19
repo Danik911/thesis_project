@@ -1,0 +1,47 @@
+[
+  {
+    "document": "URS-001",
+    "path": "../datasets/urs_corpus/category_3/URS-001.md",
+    "success": false,
+    "duration": 0.13472390174865723,
+    "category": null,
+    "tests_generated": 0,
+    "returncode": 1
+  },
+  {
+    "document": "URS-002",
+    "path": "../datasets/urs_corpus/category_4/URS-002.md",
+    "success": false,
+    "duration": 0.1311793327331543,
+    "category": null,
+    "tests_generated": 0,
+    "returncode": 1
+  },
+  {
+    "document": "URS-003",
+    "path": "../datasets/urs_corpus/category_5/URS-003.md",
+    "success": false,
+    "duration": 0.13063788414001465,
+    "category": null,
+    "tests_generated": 0,
+    "returncode": 1
+  },
+  {
+    "document": "URS-004",
+    "path": "../datasets/urs_corpus/ambiguous/URS-004.md",
+    "success": false,
+    "duration": 0.13714933395385742,
+    "category": null,
+    "tests_generated": 0,
+    "returncode": 1
+  },
+  {
+    "document": "URS-005",
+    "path": "../datasets/urs_corpus/ambiguous/URS-005.md",
+    "success": false,
+    "duration": 0.13083958625793457,
+    "category": null,
+    "tests_generated": 0,
+    "returncode": 1
+  }
+]

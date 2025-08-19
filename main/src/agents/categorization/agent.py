@@ -628,20 +628,40 @@ def context_provider_tool(
         )
 
         # Execute context provider query with async-to-sync bridge
-        # Use asyncio.run() to handle the async call
+        # Check if we're in an existing event loop
         try:
-            context_result = asyncio.run(context_provider.process_request(agent_request))
-        except RuntimeError as e:
-            if "asyncio.run() cannot be called from a running event loop" in str(e):
-                # Alternative approach for nested event loops
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # We're already in an async context, use run_coroutine_threadsafe
                 import concurrent.futures
+                import threading
+                
+                # Create a new event loop in a separate thread
+                def run_in_new_loop():
+                    new_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(new_loop)
+                    try:
+                        return new_loop.run_until_complete(
+                            context_provider.process_request(agent_request)
+                        )
+                    finally:
+                        new_loop.close()
+                
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(
-                        lambda: asyncio.run(context_provider.process_request(agent_request))
-                    )
+                    future = executor.submit(run_in_new_loop)
                     context_result = future.result(timeout=120)
             else:
-                raise
+                # No event loop running, safe to use asyncio.run()
+                context_result = asyncio.run(context_provider.process_request(agent_request))
+        except Exception as e:
+            # If all else fails, skip context augmentation
+            print(f"Warning: Context augmentation failed: {e}")
+            # Return a minimal result to allow workflow to continue
+            context_result = type('obj', (object,), {
+                'success': False,
+                'error_message': str(e),
+                'result_data': {}
+            })
 
         # Check if context retrieval was successful
         if not context_result.success:
