@@ -37,7 +37,9 @@ from .templates import (
     OQPromptTemplates,
     TestCategoryTemplates,
 )
-from .workflow import OQTestGenerationWorkflow
+from .workflow import OQGenerationWorkflow
+# For backwards compatibility, create an alias
+OQTestGenerationWorkflow = OQGenerationWorkflow
 
 # Module metadata
 __version__ = "1.0.0"

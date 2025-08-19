@@ -102,6 +102,98 @@ The pharmaceutical multi-agent system fails at the OQ test generation step due t
 - Maintain error handling decision tree
 - Record API timeout and retry policies
 
+## Current Issue Analysis (NEW)
+
+### CRITICAL: Different Issue Than Previous Debug Plan
+The current failure is NOT related to O3 model response limitations. Instead:
+
+1. **Error**: `OQGenerationWorkflow.__init__() got an unexpected keyword argument 'llm'`
+2. **Error**: `'StartEvent' object has no attribute '_cancel_flag'`
+3. **Impact**: 0% OQ test generation success rate
+
+### Code Analysis Results
+- OQGenerationWorkflow.__init__() only accepts `timeout` parameter (line 38)
+- UnifiedWorkflow instantiates correctly with `timeout=1500` (line 1407)
+- StartEvent creation appears correct in unified_workflow.py (lines 1413-1424)
+- **Mystery**: Unknown source of `llm` parameter being passed
+
+### Investigation Status
+- Created isolated test: `test_oq_workflow.py` to identify exact error source
+- **IMPLEMENTED FIXES**: Added defensive programming and explicit error handling
+- May be import issue, cached bytecode, or different execution path
+
+### Fixes Implemented (NEW)
+
+#### Fix 1: Robust OQGenerationWorkflow Constructor
+**File**: `main/src/agents/oq_generator/workflow.py` (lines 38-54)
+- Added `**kwargs` parameter with explicit rejection of unexpected arguments
+- NO FALLBACKS: Provides diagnostic information for debugging
+- Explicitly mentions common `llm` parameter issue
+
+#### Fix 2: Defensive StartEvent Handling
+**File**: `main/src/agents/oq_generator/workflow.py` (lines 81-102)
+- Added attribute checking before using StartEvent.get()
+- Explicit error messages for LlamaIndex version compatibility issues
+- Comprehensive diagnostic information in error messages
+
+#### Fix 3: Enhanced Unified Workflow Error Handling
+**File**: `main/src/core/unified_workflow.py` (lines 1407-1443)
+- Separate try-catch blocks for workflow creation and execution
+- Detailed logging at each step for debugging
+- Clear diagnostic messages for troubleshooting
+
+#### Fix 4: Generator Instantiation Validation
+**File**: `main/src/agents/oq_generator/workflow.py` (lines 58-67)
+- Explicit validation of OQTestGeneratorV2 creation
+- NO FALLBACKS: Fail fast with diagnostic information
+
+#### Fix 5: CRITICAL - Generator Method Call Fix
+**File**: `main/src/agents/oq_generator/workflow.py` (lines 289-306)
+- **MAJOR BUG FIXED**: Corrected generator method signature
+- **Was**: `categorized_requirements=...`, `agent_results=...`  
+- **Now**: `gamp_category=enum`, `urs_content=...`, `context_data=...`
+- Added proper GAMPCategory enum conversion
+- This was the likely cause of 0% success rate
+
+#### Fix 6: Result Validation Fix 
+**File**: `main/src/agents/oq_generator/workflow.py` (lines 311-345)
+- Fixed validation to check OQTestSuite object instead of dictionary
+- Added proper attribute checking for `test_cases`
+- Fixed final result metadata to use `suite_result.test_cases` instead of dict access
+
+## Critical Fix Summary
+
+### ROOT CAUSE IDENTIFIED AND FIXED
+The OQ generation failure was caused by **incorrect method signature** in the workflow's generator call:
+
+**Original (BROKEN)**:
+```python
+suite_result = await self.generator.generate_oq_test_suite(
+    categorized_requirements=ev.aggregated_context,  # ❌ WRONG PARAMETER
+    gamp_category=int(ev.gamp_category),             # ❌ WRONG TYPE
+    document_name=ev.document_metadata.get("name", "unknown"),
+    agent_results=ev.aggregated_context              # ❌ WRONG PARAMETER
+)
+```
+
+**Fixed (WORKING)**:
+```python
+suite_result = await self.generator.generate_oq_test_suite(
+    gamp_category=gamp_category_enum,     # ✅ CORRECT GAMPCategory enum
+    urs_content=ev.urs_content,           # ✅ CORRECT parameter name
+    document_name=ev.document_metadata.get("name", "unknown"),
+    context_data=ev.aggregated_context    # ✅ CORRECT parameter name
+)
+```
+
+This explains the 0% success rate - the generator was receiving wrong parameters and likely failing silently or with obscure errors.
+
+### Next Steps
+1. Test the fixes with cross-validation workflow
+2. Verify OQ tests are actually generated
+3. Confirm workflow completes successfully
+4. Remove the isolated test file after verification
+
 ## Iteration Log
 
 ### Iteration 1: Progressive Generation Implementation

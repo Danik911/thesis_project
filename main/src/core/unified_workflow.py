@@ -30,7 +30,7 @@ from uuid import uuid4
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
 from src.agents.oq_generator.events import OQTestGenerationEvent, OQTestSuiteEvent
-from src.agents.oq_generator.workflow import OQTestGenerationWorkflow
+from src.agents.oq_generator.workflow import OQGenerationWorkflow
 
 # Import 21 CFR Part 11 compliance systems
 from src.compliance import (
@@ -887,11 +887,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # Dynamic timeout configuration based on agent type and operation
             timeout_mapping = {
                 "research": 300.0,           # 5 minutes for regulatory APIs (FDA can take 14+ seconds)
-                "sme": 120.0,               # 2 minutes for LLM calls
+                "sme": 300.0,               # 5 minutes for DeepSeek V3 LLM calls (increased from 120s)
                 "context_provider": 60.0,   # 1 minute for document processing
             }
 
             agent_timeout = timeout_mapping.get(ev.agent_type.lower(), 60.0)  # Default 1 minute
+            
+            self.logger.info(f"[AGENT] Starting {ev.agent_type} agent with {agent_timeout}s timeout")
 
             # Execute actual agents based on type with timeout protection
             if ev.agent_type.lower() == "context_provider":
@@ -913,9 +915,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         timeout=agent_timeout
                     )
                 except TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout",
-                                        Exception(f"Agent execution timed out after {agent_timeout}s"))
-                    self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
+                    timeout_msg = f"CRITICAL: {ev.agent_type} agent timed out after {agent_timeout} seconds. This prevents OQ generation from starting."
+                    self.tracer.log_error(f"{ev.agent_type}_timeout", Exception(timeout_msg))
+                    self.logger.error(f"[TIMEOUT] {timeout_msg}")
+                    self.logger.error(f"[TIMEOUT] Agent type: {ev.agent_type}, Request data: {ev.request_data}")
+                    self.logger.error(f"[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -930,6 +934,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
                 # Return the result event with session ID
                 result_event.session_id = self._workflow_session_id
+                processing_time = time.time() - start_time
+                self.logger.info(f"[AGENT] {ev.agent_type} agent completed successfully in {processing_time:.2f}s (timeout was {agent_timeout}s)")
                 return result_event
 
             if ev.agent_type.lower() == "sme":
@@ -948,9 +954,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         timeout=agent_timeout
                     )
                 except TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout",
-                                        Exception(f"Agent execution timed out after {agent_timeout}s"))
-                    self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
+                    timeout_msg = f"CRITICAL: {ev.agent_type} agent timed out after {agent_timeout} seconds. This prevents OQ generation from starting."
+                    self.tracer.log_error(f"{ev.agent_type}_timeout", Exception(timeout_msg))
+                    self.logger.error(f"[TIMEOUT] {timeout_msg}")
+                    self.logger.error(f"[TIMEOUT] Agent type: {ev.agent_type}, Request data: {ev.request_data}")
+                    self.logger.error(f"[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -965,6 +973,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
                 # Return the result event with session ID
                 result_event.session_id = self._workflow_session_id
+                processing_time = time.time() - start_time
+                self.logger.info(f"[AGENT] {ev.agent_type} agent completed successfully in {processing_time:.2f}s (timeout was {agent_timeout}s)")
                 return result_event
 
             if ev.agent_type.lower() == "research":
@@ -983,9 +993,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         timeout=agent_timeout
                     )
                 except TimeoutError:
-                    self.tracer.log_error(f"{ev.agent_type}_timeout",
-                                        Exception(f"Agent execution timed out after {agent_timeout}s"))
-                    self.logger.error(f"[TIMEOUT] {ev.agent_type} agent timed out after {agent_timeout} seconds")
+                    timeout_msg = f"CRITICAL: {ev.agent_type} agent timed out after {agent_timeout} seconds. This prevents OQ generation from starting."
+                    self.tracer.log_error(f"{ev.agent_type}_timeout", Exception(timeout_msg))
+                    self.logger.error(f"[TIMEOUT] {timeout_msg}")
+                    self.logger.error(f"[TIMEOUT] Agent type: {ev.agent_type}, Request data: {ev.request_data}")
+                    self.logger.error(f"[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -1000,6 +1012,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
                 # Return the result event with session ID
                 result_event.session_id = self._workflow_session_id
+                processing_time = time.time() - start_time
+                self.logger.info(f"[AGENT] {ev.agent_type} agent completed successfully in {processing_time:.2f}s (timeout was {agent_timeout}s)")
                 return result_event
 
             # Unknown agent type
@@ -1273,7 +1287,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             test_strategy=test_strategy,
             required_test_types=test_types_map.get(categorization_event.gamp_category.value, ["basic"]),
             compliance_requirements=compliance_map.get(categorization_event.gamp_category.value, ["GAMP-5"]),
-            estimated_test_count=5 + (categorization_event.gamp_category.value * 2),  # Scale with category
+            estimated_test_count=min(6, 3 + categorization_event.gamp_category.value),  # PERFORMANCE FIX: Reduced from 5 + (category * 2) to max 6 tests
             planner_agent_id=f"planner_{self._workflow_session_id}",
             gamp_category=categorization_event.gamp_category
         )
@@ -1403,19 +1417,48 @@ class UnifiedTestGenerationWorkflow(Workflow):
             session_id=self._workflow_session_id
         )
 
-        # Run OQ generation workflow
+        # Run OQ generation workflow with the event
+        try:
+            self.logger.info("Creating OQ generation workflow...")
+            # NO FALLBACKS: Only pass supported parameters
+            oq_workflow = OQGenerationWorkflow(timeout=1500)
+            self.logger.info("OQ workflow created successfully")
 
-        oq_workflow = OQTestGenerationWorkflow(
-            llm=self.llm,
-            timeout=1500,  # 25 minutes (to accommodate o3 model)
-            verbose=self.verbose,
-            enable_validation=True,
-            oq_generation_event=oq_generation_event
-        )
+        except Exception as e:
+            self.logger.error(f"Failed to create OQ generation workflow: {e}")
+            raise RuntimeError(
+                f"OQ workflow instantiation failed: {e}. "
+                f"This may indicate parameter passing issues or import problems."
+            ) from e
 
         try:
-            self.logger.info("Running OQ test generation workflow...")
-            oq_result = await oq_workflow.run()
+            self.logger.info("Running OQ test generation workflow with data...")
+            
+            event_data = {
+                "gamp_category": oq_generation_event.gamp_category.value,
+                "urs_content": oq_generation_event.urs_content,
+                "document_metadata": oq_generation_event.document_metadata,
+                "required_test_count": oq_generation_event.required_test_count,
+                "test_strategy": oq_generation_event.test_strategy,
+                "agent_results": oq_generation_event.aggregated_context,
+                "categorization_confidence": categorization_result.confidence_score,
+                "correlation_id": oq_generation_event.correlation_id
+            }
+            
+            self.logger.info(f"Calling workflow.run() with data keys: {list(event_data.keys())}")
+            
+            # CRITICAL FIX: Call workflow with data parameter, not StartEvent
+            self.logger.info("About to call OQ workflow.run() - checking before execution")
+            oq_result = await oq_workflow.run(data=event_data)
+            self.logger.info(f"OQ workflow completed, result type: {type(oq_result)}")
+            
+            # CRITICAL DEBUG: Log the actual result content to understand what's being returned
+            if hasattr(oq_result, '__dict__'):
+                self.logger.info(f"OQ result attributes: {list(oq_result.__dict__.keys())}")
+            if hasattr(oq_result, 'result'):
+                self.logger.info(f"OQ result.result type: {type(oq_result.result)}")
+                if hasattr(oq_result.result, '__dict__'):
+                    self.logger.info(f"OQ result.result attributes: {list(oq_result.result.__dict__.keys())}")
 
             # CRITICAL FIX: Check result type first
             if isinstance(oq_result, ConsultationRequiredEvent):
@@ -1449,21 +1492,38 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
             # Process dictionary result
             if isinstance(oq_data, dict):
+                self.logger.info(f"Processing dictionary result with keys: {list(oq_data.keys())}")
+                self.logger.info(f"Dictionary status: {oq_data.get('status', 'NO_STATUS')}")
+                
                 if oq_data.get("status") == "completed_successfully":
                     oq_event = oq_data.get("full_event")
+                    self.logger.info(f"Full_event type: {type(oq_event)}")
+                    
                     if oq_event and isinstance(oq_event, OQTestSuiteEvent):
-                        self.logger.info(
-                            f"[OQ] Generated {oq_event.test_suite.total_test_count} OQ tests successfully"
-                        )
+                        test_count = oq_event.test_suite.total_test_count
+                        self.logger.info(f"[OQ] Generated {test_count} OQ tests successfully")
+                        
+                        # CRITICAL DEBUG: Validate test suite actually has test cases
+                        if test_count == 0 or not oq_event.test_suite.test_cases:
+                            self.logger.error("CRITICAL: OQ workflow claims success but generated 0 test cases!")
+                            self.logger.error(f"Test suite ID: {oq_event.test_suite.suite_id}")
+                            self.logger.error(f"Test cases list: {oq_event.test_suite.test_cases}")
+                            raise RuntimeError("OQ generation succeeded but produced no test cases - NO FALLBACKS ALLOWED")
+                        
                         return oq_event
+                    else:
+                        self.logger.error(f"No valid OQTestSuiteEvent in full_event: {oq_event}")
 
                 # Handle consultation in dictionary format
                 consultation = oq_data.get("consultation", {})
+                self.logger.error(f"OQ generation returned consultation requirement: {oq_data}")
                 raise RuntimeError(
                     f"OQ generation failed: {consultation.get('consultation_type', 'unknown')}"
                 )
 
             # Unexpected result type
+            self.logger.error(f"CRITICAL: Unexpected OQ workflow result type: {type(oq_result)}")
+            self.logger.error(f"Result content preview: {str(oq_result)[:500]}")
             raise ValueError(
                 f"Unexpected OQ workflow result type: {type(oq_result)}"
             )
@@ -1505,6 +1565,58 @@ class UnifiedTestGenerationWorkflow(Workflow):
             "review_required": ev.test_suite.review_required,
             "generation_successful": ev.generation_successful
         }
+
+        # CRITICAL FIX: Save test suite to file 
+        try:
+            import json
+            from pathlib import Path
+            
+            # Create output directory
+            output_dir = Path("output/test_suites")
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            # Generate filename with suite ID and timestamp
+            timestamp = datetime.now(UTC).strftime('%Y%m%d_%H%M%S')
+            output_file = output_dir / f"test_suite_{ev.test_suite.suite_id}_{timestamp}.json"
+
+            # Create comprehensive test suite data for saving
+            test_suite_data = {
+                "suite_id": ev.test_suite.suite_id,
+                "gamp_category": ev.test_suite.gamp_category,
+                "document_name": ev.test_suite.document_name,
+                "test_cases": [test.dict() for test in ev.test_suite.test_cases],
+                "metadata": ev.test_suite.metadata,
+                "total_test_count": ev.test_suite.total_test_count,
+                "coverage_percentage": ev.test_suite.coverage_percentage,
+                "requirements_coverage": ev.test_suite.requirements_coverage,
+                "test_categories": ev.test_suite.test_categories,
+                "estimated_execution_time": ev.test_suite.estimated_execution_time,
+                "generation_timestamp": ev.test_suite.generation_timestamp.isoformat(),
+                "validation_approach": ev.test_suite.validation_approach,
+                "pharmaceutical_compliance": ev.test_suite.pharmaceutical_compliance,
+                "review_required": ev.test_suite.review_required,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "workflow_session_id": self._workflow_session_id,
+                "generation_method": ev.test_suite.generation_method
+            }
+
+            # Save test suite to JSON file
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(test_suite_data, f, indent=2, default=str)
+
+            self.logger.info(f"✅ Test suite saved successfully to {output_file}")
+            self.logger.info(f"📁 File contains {len(ev.test_suite.test_cases)} test cases")
+            
+            # Add file info to oq_results for tracking
+            oq_results["output_file"] = str(output_file)
+            oq_results["file_saved"] = True
+            
+        except Exception as e:
+            self.logger.error(f"❌ CRITICAL: Failed to save test suite to file: {e}")
+            self.logger.error(f"This means the workflow completed but NO FILES were saved!")
+            # Add error info to results but don't fail the workflow
+            oq_results["file_saved"] = False
+            oq_results["save_error"] = str(e)
 
         # Get all context data with safe defaults
         categorization_result = await safe_context_get(ctx, "categorization_result", None)

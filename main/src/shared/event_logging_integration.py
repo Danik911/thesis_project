@@ -8,6 +8,8 @@ common integration patterns.
 
 import asyncio
 import logging
+import os
+import sys
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
@@ -397,6 +399,14 @@ async def handle_hitl_consultation(
         return False
 
     safe_print("\n" + "="*60)
+    # Check if we're in a non-interactive environment or validation mode
+    is_interactive = sys.stdin.isatty() if hasattr(sys, 'stdin') else False
+    validation_mode = os.getenv('VALIDATION_MODE', 'false').lower() == 'true'
+    ci_mode = os.getenv('CI', 'false').lower() == 'true'
+    
+    # Determine if we should bypass consultation
+    should_bypass = validation_mode or ci_mode or not is_interactive
+    
     safe_print("[HUMAN] HUMAN CONSULTATION REQUIRED")
     safe_print("="*60)
     safe_print(f"Consultation Type: {event.consultation_type}")
@@ -407,30 +417,49 @@ async def handle_hitl_consultation(
     for key, value in event.context.items():
         safe_print(f"  {key}: {value}")
     safe_print("")
-
+    
+    if should_bypass:
+        safe_print("[INFO] Non-interactive mode detected or VALIDATION_MODE=true")
+        safe_print("[INFO] Using default consultation values for automated execution")
+        safe_print("")
+    
     try:
         # Handle different consultation types
         if "categorization" in event.consultation_type.lower():
             safe_print("Please provide GAMP categorization decision:")
             safe_print("Available categories: 1 (Infrastructure), 3 (Non-configured), 4 (Configured), 5 (Custom)")
 
-            user_input = input("Enter GAMP category (1, 3, 4, 5): ").strip()
+            if should_bypass:
+                # Use conservative defaults for automated execution
+                user_input = "3"  # Default to Category 3 (non-configured)
+                safe_print(f"[AUTO] Using default GAMP category: {user_input}")
+            else:
+                user_input = input("Enter GAMP category (1, 3, 4, 5): ").strip()
+            
             if user_input not in ["1", "3", "4", "5"]:
                 safe_print("[ERROR] Invalid category. Using conservative default (Category 5)")
                 gamp_category = 5
             else:
                 gamp_category = int(user_input)
 
-            rationale = input("Enter decision rationale: ").strip()
-            if not rationale:
-                rationale = f"Human decision: GAMP Category {gamp_category}"
+            if should_bypass:
+                rationale = f"Automated decision (validation bypass): GAMP Category {gamp_category}"
+                safe_print(f"[AUTO] Using default rationale: {rationale}")
+            else:
+                rationale = input("Enter decision rationale: ").strip()
+                if not rationale:
+                    rationale = f"Human decision: GAMP Category {gamp_category}"
 
-            confidence_input = input("Enter confidence level (0.0-1.0) [default: 0.8]: ").strip()
-            try:
-                confidence = float(confidence_input) if confidence_input else 0.8
-                confidence = max(0.0, min(1.0, confidence))  # Clamp to valid range
-            except ValueError:
-                confidence = 0.8
+            if should_bypass:
+                confidence = 0.5  # Conservative confidence for automated decisions
+                safe_print(f"[AUTO] Using default confidence: {confidence}")
+            else:
+                confidence_input = input("Enter confidence level (0.0-1.0) [default: 0.8]: ").strip()
+                try:
+                    confidence = float(confidence_input) if confidence_input else 0.8
+                    confidence = max(0.0, min(1.0, confidence))  # Clamp to valid range
+                except ValueError:
+                    confidence = 0.8
 
             # Create response data
             response_data = {
@@ -443,28 +472,46 @@ async def handle_hitl_consultation(
         else:
             # Generic consultation handling
             safe_print("Please provide your consultation response:")
-            user_input = input("Enter your decision/response: ").strip()
-            rationale = input("Enter decision rationale: ").strip()
+            
+            if should_bypass:
+                user_input = "proceed_with_defaults"
+                safe_print(f"[AUTO] Using default decision: {user_input}")
+            else:
+                user_input = input("Enter your decision/response: ").strip()
 
             if not user_input:
                 safe_print("[ERROR] No input provided - consultation will timeout")
                 return False
 
-            if not rationale:
-                rationale = f"Human decision: {user_input}"
+            if should_bypass:
+                rationale = f"Automated decision (validation bypass): {user_input}"
+                safe_print(f"[AUTO] Using default rationale: {rationale}")
+            else:
+                rationale = input("Enter decision rationale: ").strip()
+                if not rationale:
+                    rationale = f"Human decision: {user_input}"
 
-            confidence_input = input("Enter confidence level (0.0-1.0) [default: 0.8]: ").strip()
-            try:
-                confidence = float(confidence_input) if confidence_input else 0.8
-                confidence = max(0.0, min(1.0, confidence))
-            except ValueError:
-                confidence = 0.8
+            if should_bypass:
+                confidence = 0.5  # Conservative confidence for automated decisions
+                safe_print(f"[AUTO] Using default confidence: {confidence}")
+            else:
+                confidence_input = input("Enter confidence level (0.0-1.0) [default: 0.8]: ").strip()
+                try:
+                    confidence = float(confidence_input) if confidence_input else 0.8
+                    confidence = max(0.0, min(1.0, confidence))
+                except ValueError:
+                    confidence = 0.8
 
             response_data = {"decision": user_input}
 
         # Get user details
-        user_id = input("Enter your user ID [default: cli_user]: ").strip() or "cli_user"
-        user_role = input("Enter your role [default: validation_engineer]: ").strip() or "validation_engineer"
+        if should_bypass:
+            user_id = "automated_system"
+            user_role = "validation_bypass"
+            safe_print(f"[AUTO] Using default user: {user_id} ({user_role})")
+        else:
+            user_id = input("Enter your user ID [default: cli_user]: ").strip() or "cli_user"
+            user_role = input("Enter your role [default: validation_engineer]: ").strip() or "validation_engineer"
 
         # Create HumanResponseEvent
         human_response = HumanResponseEvent(

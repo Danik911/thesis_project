@@ -18,6 +18,7 @@ from src.core.events import GAMPCategory
 
 from .models import OQGenerationConfig, OQTestSuite
 from .templates import GAMPCategoryConfig, OQPromptTemplates
+from .yaml_parser import extract_yaml_from_response, validate_yaml_data
 
 
 def clean_unicode_characters(text: str) -> str:
@@ -100,10 +101,10 @@ class OQTestGeneratorV2:
             GAMPCategory.CATEGORY_5: "deepseek/deepseek-chat"  # DeepSeek for ALL categories
         }
 
-        # Timeout mapping per category
+        # Timeout mapping per category - increased for progressive generation
         self.timeout_mapping = {
             GAMPCategory.CATEGORY_1: 120,   # 2 minutes
-            GAMPCategory.CATEGORY_3: 180,   # 3 minutes
+            GAMPCategory.CATEGORY_3: 300,   # 5 minutes (increased for 10 tests in 5 batches)
             GAMPCategory.CATEGORY_4: 300,   # 5 minutes
             GAMPCategory.CATEGORY_5: 1200   # 20 minutes for o3 (increased)
         }
@@ -165,7 +166,7 @@ class OQTestGeneratorV2:
             # Use DeepSeek for all generation (o3 models not in scope)
             if "deepseek" in model_name.lower():
                 # Check if progressive generation needed for DeepSeek with many tests
-                if test_count > 10:
+                if test_count > 8:  # PERFORMANCE FIX: Reduced threshold from 10 to 8 to keep most generations in single batch mode
                     self.logger.info(
                         f"Using progressive generation for DeepSeek model with {test_count} tests"
                     )
@@ -299,10 +300,47 @@ class OQTestGeneratorV2:
                 {"model": llm.model, "timeout": self.timeout_mapping[gamp_category]}
             )
         except (json.JSONDecodeError, ValidationError) as e:
-            raise TestGenerationFailure(
-                f"Failed to parse o3 model output: {e}",
-                {"parse_error": str(e), "model": llm.model, "json_content": json_str[:500] if 'json_str' in locals() else "N/A"}
-            )
+            # JSON parsing failed - try YAML fallback for DeepSeek V3 compatibility
+            self.logger.info(f"JSON parsing failed for main generation, attempting YAML fallback: {str(e)[:100]}...")
+            
+            try:
+                # Use yaml_parser module for YAML extraction and validation
+                yaml_data = extract_yaml_from_response(response_text)
+                validated_yaml = validate_yaml_data(yaml_data)
+                
+                # Apply same field normalization as JSON flow
+                test_data = self._normalize_deepseek_json_fields(validated_yaml)
+                
+                # Add pharmaceutical-compliant defaults for missing critical fields
+                test_data = self._add_pharmaceutical_defaults(test_data, gamp_category, document_name)
+                
+                # Validate and create test suite
+                test_suite = OQTestSuite(**test_data)
+                
+                self.logger.info(f"Successfully parsed main generation with YAML fallback: {len(test_data.get('test_cases', []))} tests")
+                return test_suite
+                
+            except Exception as yaml_error:
+                # Both JSON and YAML parsing failed - NO FALLBACKS, fail explicitly
+                self.logger.error(f"Both JSON and YAML parsing failed for main generation")
+                self.logger.error(f"JSON error: {str(e)}")
+                self.logger.error(f"YAML error: {str(yaml_error)}")
+                self.logger.error(f"Response preview: {response_text[:300]}...")
+                
+                raise TestGenerationFailure(
+                    f"Failed to parse o3 model output with both JSON and YAML parsers. "
+                    f"JSON error: {str(e)}. YAML error: {str(yaml_error)}. "
+                    f"NO FALLBACKS available - response format incompatible with both parsers.",
+                    {
+                        "json_parse_error": str(e), 
+                        "yaml_parse_error": str(yaml_error),
+                        "model": llm.model, 
+                        "response_preview": response_text[:500],
+                        "json_content": json_str[:500] if 'json_str' in locals() else "N/A",
+                        "parsing_strategies_failed": ["json", "yaml"],
+                        "requires_format_analysis": True
+                    }
+                )
 
     async def _generate_with_o3_model(
         self,
@@ -329,9 +367,9 @@ class OQTestGeneratorV2:
     ) -> OQTestSuite:
         """
         Progressive generation for o3 model to handle response size limitations.
-        Generates tests in batches of 10, then merges results.
+        Generates tests in small batches of 2 for faster response times.
         """
-        batch_size = 10  # O3 model limitation
+        batch_size = 2  # PERFORMANCE FIX: Reduced from 10 to 2 for faster generation
         num_batches = (total_tests + batch_size - 1) // batch_size
 
         all_test_cases = []
@@ -345,7 +383,8 @@ class OQTestGeneratorV2:
             batch_end = min(batch_start + batch_size, total_tests)
             batch_count = batch_end - batch_start
 
-            self.logger.info(f"Generating batch {batch_num + 1}/{num_batches}: Tests {batch_start + 1}-{batch_end}")
+            estimated_time_remaining = (num_batches - batch_num) * 60  # Use realistic 60s per batch estimate
+            self.logger.info(f"🔄 PROGRESS: Generating batch {batch_num + 1}/{num_batches}: Tests {batch_start + 1}-{batch_end} (ETA: {estimated_time_remaining}s)")
 
             # Generate batch with context from previous batches
             batch_context = {
@@ -368,7 +407,11 @@ class OQTestGeneratorV2:
                 )
 
                 # Execute batch generation with appropriate timeout
-                batch_timeout = self.timeout_mapping[gamp_category] // num_batches
+                # Ensure minimum 60s per batch for DeepSeek V3 to generate 2 tests
+                base_timeout = self.timeout_mapping[gamp_category] // num_batches
+                batch_timeout = max(60, base_timeout)
+                
+                self.logger.info(f"⏱️  BATCH TIMEOUT: {batch_timeout}s (base: {base_timeout}s, minimum: 60s)")
                 async with asyncio.timeout(batch_timeout):
                     response = await llm.acomplete(batch_prompt)
 
@@ -384,15 +427,29 @@ class OQTestGeneratorV2:
 
                     # Add tests to collection
                     all_test_cases.extend(batch_test_cases)
+                    
+                    # Progress update after successful batch
+                    progress_percentage = ((batch_num + 1) / num_batches) * 100
+                    self.logger.info(f"✅ BATCH COMPLETE: {batch_num + 1}/{num_batches} ({progress_percentage:.1f}%) - {len(all_test_cases)} tests generated so far")
 
                     # Brief delay between batches to avoid rate limits
                     if batch_num < num_batches - 1:
                         await asyncio.sleep(2)
 
             except TimeoutError:
+                self.logger.error(f"💥 BATCH TIMEOUT: Batch {batch_num + 1}/{num_batches} timed out after {batch_timeout}s")
+                self.logger.error(f"🔍 DEBUG INFO: Total timeout={self.timeout_mapping[gamp_category]}s, Base timeout={base_timeout}s, Tests in batch={batch_count}")
                 raise TestGenerationFailure(
-                    f"Batch {batch_num + 1} timed out after {batch_timeout}s",
-                    {"batch": batch_num + 1, "timeout": batch_timeout}
+                    f"Batch {batch_num + 1} timed out after {batch_timeout}s - DeepSeek V3 unable to generate {batch_count} tests in time",
+                    {
+                        "batch": batch_num + 1, 
+                        "timeout": batch_timeout,
+                        "base_timeout": base_timeout,
+                        "total_timeout": self.timeout_mapping[gamp_category],
+                        "tests_in_batch": batch_count,
+                        "model": "deepseek-chat",
+                        "diagnostic": "Consider increasing batch timeout or reducing batch size"
+                    }
                 )
             except Exception as e:
                 raise TestGenerationFailure(
@@ -1141,10 +1198,48 @@ EXACT JSON Schema for this batch:
             return normalized_test_cases
 
         except (json.JSONDecodeError, ValidationError) as e:
-            raise TestGenerationFailure(
-                f"Failed to parse batch {batch_num + 1} response: {e}",
-                {"batch": batch_num + 1, "parse_error": str(e)}
-            )
+            # JSON parsing failed - try YAML fallback for DeepSeek V3 compatibility
+            self.logger.info(f"JSON parsing failed for batch {batch_num + 1}, attempting YAML fallback: {str(e)[:100]}...")
+            
+            try:
+                # Use yaml_parser module for YAML extraction and validation
+                yaml_data = extract_yaml_from_response(response_text)
+                validated_yaml = validate_yaml_data(yaml_data)
+                
+                # Extract test cases from YAML structure
+                test_cases = validated_yaml.get("test_cases", [])
+                if not test_cases:
+                    raise ValueError(f"No test_cases found in YAML batch {batch_num + 1} response")
+                
+                # Normalize test case fields for consistency with JSON flow
+                normalized_test_cases = []
+                for test_case in test_cases:
+                    normalized_case = self._normalize_deepseek_json_fields(test_case) if isinstance(test_case, dict) else test_case
+                    normalized_test_cases.append(normalized_case)
+                
+                self.logger.info(f"Successfully parsed batch {batch_num + 1} with YAML fallback: {len(normalized_test_cases)} tests")
+                return normalized_test_cases
+                
+            except Exception as yaml_error:
+                # Both JSON and YAML parsing failed - NO FALLBACKS, fail explicitly
+                self.logger.error(f"Both JSON and YAML parsing failed for batch {batch_num + 1}")
+                self.logger.error(f"JSON error: {str(e)}")
+                self.logger.error(f"YAML error: {str(yaml_error)}")
+                self.logger.error(f"Response preview: {response_text[:300]}...")
+                
+                raise TestGenerationFailure(
+                    f"Failed to parse batch {batch_num + 1} response with both JSON and YAML parsers. "
+                    f"JSON error: {str(e)}. YAML error: {str(yaml_error)}. "
+                    f"NO FALLBACKS available - response format incompatible with both parsers.",
+                    {
+                        "batch": batch_num + 1, 
+                        "json_parse_error": str(e),
+                        "yaml_parse_error": str(yaml_error),
+                        "response_preview": response_text[:500],
+                        "parsing_strategies_failed": ["json", "yaml"],
+                        "requires_format_analysis": True
+                    }
+                )
 
     def _merge_progressive_batches(
         self,

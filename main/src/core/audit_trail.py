@@ -38,6 +38,7 @@ class AuditEventType(str, Enum):
     DATA_TRANSFORMATION = "data_transformation"
     DATA_VALIDATION = "data_validation"
     DATA_INTEGRITY_CHECK = "data_integrity_check"
+    DATA_ACCESS = "data_access"
 
     # State transition events
     STATE_TRANSITION = "state_transition"
@@ -771,6 +772,48 @@ class ComprehensiveAuditTrail:
         if "compliance" in error_type.lower():
             return "medium"
         return "low"
+    
+    def log_data_access(
+        self,
+        source: str,
+        access_type: str = "read",
+        data_category: str | None = None,
+        access_status: str = "success",
+        access_metadata: dict[str, Any] | None = None,
+        error_message: str | None = None
+    ) -> str:
+        """
+        Log data access event for audit trail.
+        
+        Args:
+            source: Data source being accessed
+            access_type: Type of access (read, write, delete)
+            data_category: Category of data accessed
+            access_status: Status of the access attempt
+            access_metadata: Additional metadata about the access
+            error_message: Error message if access failed
+            
+        Returns:
+            Audit entry ID for tracking
+        """
+        event_data = {
+            "source": source,
+            "access_type": access_type,
+            "data_category": data_category,
+            "access_status": access_status,
+            "access_metadata": access_metadata or {},
+            "error_message": error_message,
+            "access_timestamp": datetime.now(UTC).isoformat()
+        }
+        
+        severity = AuditSeverity.ERROR if access_status != "success" else AuditSeverity.INFO
+        
+        return self._write_audit_event(
+            event_type=AuditEventType.DATA_ACCESS,
+            event_data=event_data,
+            severity=severity,
+            workflow_context={"data_access_audit": True}
+        )
 
 
 # Global comprehensive audit trail instance

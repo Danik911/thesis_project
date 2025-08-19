@@ -1,143 +1,154 @@
 #!/usr/bin/env python3
 """
-ChromaDB Document Ingestion for Context Agent
-Ingests GAMP-5 and FDA regulatory documents into ChromaDB for context retrieval
+Document Ingestion Script for ChromaDB
+
+This script ingests regulatory documents into ChromaDB for RAG functionality.
 """
 
 import os
 import sys
-
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-# Add the main directory to the path
-sys.path.append(os.path.join(os.path.dirname(__file__), "."))
+from pathlib import Path
+from typing import List
 
 import chromadb
-from chromadb.config import Settings as ChromaSettings
-from llama_index.core import (
-    Settings,
-    SimpleDirectoryReader,
-    StorageContext,
-    VectorStoreIndex,
-)
+from chromadb.config import Settings
+from llama_index.core import Document, SimpleDirectoryReader
+from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.vector_stores.chroma import ChromaVectorStore
 
 
-def ingest_documents():
-    """Ingest regulatory documents into ChromaDB."""
-
-    print("\n" + "="*80)
-    print("ChromaDB Document Ingestion for Context Agent")
-    print("="*80)
-
-    # Document paths
-    doc_paths = [
-        r"C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\tests\test_data\ISPE - GAMP 5_ A Risk-Based Approach to Compliant GxP Computerized_short.md",
-        r"C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\tests\test_data\FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md",
-        r"C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\tests\test_data\ISPE Baseline® Guide Commissioning and Qualification_short.md"
-    ]
-
-    # Verify all documents exist
-    print("\n1. Verifying documents...")
-    for path in doc_paths:
-        if os.path.exists(path):
-            size = os.path.getsize(path) / 1024  # KB
-            print(f"   FOUND: {os.path.basename(path)} ({size:.1f} KB)")
-        else:
-            print(f"   MISSING: {path}")
-            return False
-
-    # Initialize ChromaDB
-    print("\n2. Initializing ChromaDB...")
-    chroma_path = "./chroma_db"
-    os.makedirs(chroma_path, exist_ok=True)
-
+def ingest_documents(doc_paths: List[str], collection_name: str = "pharmaceutical_regulations"):
+    """
+    Ingest documents into ChromaDB for RAG.
+    
+    Args:
+        doc_paths: List of document paths to ingest
+        collection_name: Name of the ChromaDB collection
+    """
+    print(f"Starting document ingestion for {len(doc_paths)} documents...")
+    
+    # Check for OpenAI API key
+    if not os.getenv("OPENAI_API_KEY"):
+        print("ERROR: OPENAI_API_KEY not found in environment")
+        print("Please set the API key before running ingestion")
+        sys.exit(1)
+    
+    # Initialize ChromaDB client
+    print(f"Initializing ChromaDB client...")
     chroma_client = chromadb.PersistentClient(
-        path=chroma_path,
-        settings=ChromaSettings(
-            anonymized_telemetry=False,
-            allow_reset=True
-        )
+        path="./chroma_db",
+        settings=Settings(anonymized_telemetry=False)
     )
-
-    # Delete existing collection if it exists
+    
+    # Create or get collection
     try:
-        chroma_client.delete_collection("pharmaceutical_regulations")
-        print("   Deleted existing collection")
-    except:
-        pass
-
-    # Create new collection
-    collection = chroma_client.create_collection(
-        name="pharmaceutical_regulations",
-        metadata={"description": "GAMP-5 and FDA regulatory documents"}
-    )
-    print("   Created collection: pharmaceutical_regulations")
-
-    # Initialize embeddings
-    print("\n3. Initializing OpenAI embeddings...")
+        collection = chroma_client.create_collection(
+            name=collection_name,
+            metadata={"description": "Pharmaceutical regulatory documents for GAMP-5 compliance"}
+        )
+        print(f"Created new collection: {collection_name}")
+    except Exception:
+        # Collection already exists, delete and recreate for fresh ingestion
+        chroma_client.delete_collection(collection_name)
+        collection = chroma_client.create_collection(
+            name=collection_name,
+            metadata={"description": "Pharmaceutical regulatory documents for GAMP-5 compliance"}
+        )
+        print(f"Recreated collection: {collection_name}")
+    
+    # Initialize embedding model
+    print("Initializing OpenAI embedding model...")
     embed_model = OpenAIEmbedding(
         model="text-embedding-3-small",
-        api_key=os.getenv("OPENAI_API_KEY")
+        embed_batch_size=10
     )
-    Settings.embed_model = embed_model
-
-    # Create vector store
-    vector_store = ChromaVectorStore(
-        chroma_collection=collection
-    )
-    storage_context = StorageContext.from_defaults(
-        vector_store=vector_store
-    )
-
-    # Load and index documents
-    print("\n4. Loading and indexing documents...")
-    documents = []
-    for path in doc_paths:
-        print(f"   Loading: {os.path.basename(path)}")
-        reader = SimpleDirectoryReader(
-            input_files=[path]
+    
+    # Process each document
+    total_chunks = 0
+    for doc_path in doc_paths:
+        if not Path(doc_path).exists():
+            print(f"Warning: Document not found: {doc_path}")
+            continue
+        
+        print(f"\nProcessing: {Path(doc_path).name}")
+        
+        # Read document content
+        with open(doc_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Create Document object
+        doc = Document(
+            text=content,
+            metadata={
+                "filename": Path(doc_path).name,
+                "filepath": str(doc_path),
+                "document_type": "regulatory_standard"
+            }
         )
-        docs = reader.load_data()
-        documents.extend(docs)
-        print(f"      Loaded {len(docs)} document chunks")
+        
+        # Parse into chunks
+        parser = SimpleNodeParser.from_defaults(
+            chunk_size=1500,
+            chunk_overlap=200
+        )
+        nodes = parser.get_nodes_from_documents([doc])
+        print(f"  Created {len(nodes)} chunks")
+        
+        # Generate embeddings and store
+        for i, node in enumerate(nodes):
+            # Generate embedding
+            embedding = embed_model.get_text_embedding(node.text)
+            
+            # Store in ChromaDB
+            collection.add(
+                ids=[f"{Path(doc_path).stem}_chunk_{i}"],
+                embeddings=[embedding],
+                documents=[node.text],
+                metadatas=[{
+                    "source": Path(doc_path).name,
+                    "chunk_index": i,
+                    "total_chunks": len(nodes)
+                }]
+            )
+        
+        total_chunks += len(nodes)
+        print(f"  Stored {len(nodes)} chunks in ChromaDB")
+    
+    print(f"\n✅ Ingestion complete!")
+    print(f"Total documents: {len(doc_paths)}")
+    print(f"Total chunks: {total_chunks}")
+    print(f"Collection: {collection_name}")
+    
+    # Verify collection
+    result = collection.peek(1)
+    if result['ids']:
+        print(f"✅ Verification successful - collection contains data")
+    else:
+        print(f"⚠️ Warning: Collection appears to be empty")
 
-    print(f"\n   Total documents to index: {len(documents)}")
-
-    # Create index
-    print("\n5. Creating vector index...")
-    index = VectorStoreIndex.from_documents(
-        documents,
-        storage_context=storage_context,
-        show_progress=True
-    )
-
-    # Test retrieval
-    print("\n6. Testing retrieval...")
-    query_engine = index.as_query_engine()
-    test_query = "What are the GAMP-5 categories for computerized systems?"
-    response = query_engine.query(test_query)
-
-    print(f"   Test query: {test_query}")
-    print(f"   Response preview: {str(response)[:200]}...")
-
-    # Verify collection stats
-    print("\n7. Collection Statistics:")
-    collection_data = collection.get()
-    print(f"   Total embeddings: {len(collection_data['ids'])}")
-    print(f"   Metadata keys: {list(collection_data['metadatas'][0].keys()) if collection_data['metadatas'] else 'None'}")
-
-    print("\n" + "="*80)
-    print("SUCCESS: ChromaDB ingestion complete!")
-    print(f"Collection 'pharmaceutical_regulations' ready with {len(collection_data['ids'])} embeddings")
-    print("="*80)
-
-    return True
 
 if __name__ == "__main__":
-    success = ingest_documents()
-    sys.exit(0 if success else 1)
+    # Define documents to ingest
+    base_path = Path(__file__).parent / "tests" / "test_data"
+    
+    documents = [
+        str(base_path / "FDA Part-11--Electronic-Records--Electronic-Signatures---Scope-and-Application-(PDF).md"),
+        str(base_path / "ISPE - GAMP 5_ A Risk-Based Approach to Compliant GxP Computerized_short.md"),
+    ]
+    
+    # Additional documents if they exist
+    optional_docs = [
+        str(base_path / "ISPE Baseline® Guide Commissioning and Qualification_short.md"),
+        str(base_path / "gamp5_test_data" / "testing_data.md"),
+    ]
+    
+    for doc in optional_docs:
+        if Path(doc).exists():
+            documents.append(doc)
+    
+    print("Documents to ingest:")
+    for doc in documents:
+        print(f"  - {Path(doc).name}")
+    
+    # Run ingestion
+    ingest_documents(documents)
