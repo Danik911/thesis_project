@@ -419,6 +419,26 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if enable_phoenix:
             setup_phoenix()
             self.logger.info("[PHOENIX] Phoenix observability enabled")
+        
+        # Initialize agent cache to prevent resource leaks
+        self._cached_research_agent = None
+        self.logger.debug("[AGENTS] Agent caching initialized for resource management")
+    
+    def close(self) -> None:
+        """Close workflow and clean up resources."""
+        self.logger.debug(f"[CLEANUP] Closing UnifiedWorkflow: {self._workflow_session_id}")
+        if self._cached_research_agent:
+            self.logger.debug("[CLEANUP] Closing cached research agent")
+            self._cached_research_agent.close()
+            self._cached_research_agent = None
+    
+    def __del__(self):
+        """Destructor cleanup as safety net."""
+        try:
+            self.close()
+        except Exception:
+            # Ignore cleanup errors in destructor
+            pass
 
     def _check_user_access(self, required_permission: str) -> bool:
         """
@@ -978,13 +998,17 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 return result_event
 
             if ev.agent_type.lower() == "research":
-                # Use the actual research agent
-                from src.agents.parallel.research_agent import create_research_agent
-
-                agent = create_research_agent(
-                    # research_focus parameter doesn't exist in create_research_agent
-                    verbose=self.verbose
-                )
+                # Use cached research agent to prevent resource leaks
+                if self._cached_research_agent is None:
+                    from src.agents.parallel.research_agent import create_research_agent
+                    self._cached_research_agent = create_research_agent(
+                        verbose=self.verbose
+                    )
+                    self.logger.debug(f"[AGENTS] Created cached research agent: {id(self._cached_research_agent)}")
+                else:
+                    self.logger.debug(f"[AGENTS] Reusing cached research agent: {id(self._cached_research_agent)}")
+                
+                agent = self._cached_research_agent
 
                 # Process the request with timeout
                 try:

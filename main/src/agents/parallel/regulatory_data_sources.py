@@ -152,6 +152,33 @@ class FDAAPIClient:
             "failed_requests": 0,
             "rate_limit_hits": 0
         }
+        
+        # Resource tracking for debugging
+        self._session_created = True
+        self.logger.debug(f"FDAAPIClient session created: {id(self.session)}")
+    
+    def close(self) -> None:
+        """Close the session and clean up resources."""
+        if hasattr(self, 'session') and self.session and self._session_created:
+            self.logger.debug(f"Closing FDAAPIClient session: {id(self.session)}")
+            self.session.close()
+            self._session_created = False
+    
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit with cleanup."""
+        self.close()
+    
+    def __del__(self):
+        """Destructor cleanup as safety net."""
+        try:
+            self.close()
+        except Exception:
+            # Ignore cleanup errors in destructor
+            pass
 
     async def search_drug_labels(
         self,

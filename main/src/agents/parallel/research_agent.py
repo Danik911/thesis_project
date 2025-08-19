@@ -133,6 +133,31 @@ class ResearchAgent:
             "high_quality_results": 0,
             "research_coverage": {}
         }
+        
+        # Resource tracking for debugging
+        self.logger.debug(f"ResearchAgent created: {id(self)} with FDAClient: {id(self.fda_client)}")
+    
+    def close(self) -> None:
+        """Close resources and clean up."""
+        self.logger.debug(f"Closing ResearchAgent: {id(self)}")
+        if hasattr(self, 'fda_client') and self.fda_client:
+            self.fda_client.close()
+    
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit with cleanup."""
+        self.close()
+    
+    def __del__(self):
+        """Destructor cleanup as safety net."""
+        try:
+            self.close()
+        except Exception:
+            # Ignore cleanup errors in destructor
+            pass
 
     @trace_agent_method(
         span_name="research_agent.process_request",
@@ -285,23 +310,29 @@ class ResearchAgent:
             response = ResearchAgentResponse()
 
             # Step 1: Regulatory Updates Research
+            self.logger.info(f"[HEARTBEAT] Starting regulatory updates research for {len(request.research_focus)} focus areas")
             with self.tracer.start_as_current_span("research.regulatory_updates"):
                 regulatory_updates = await self._research_regulatory_updates(request)
                 response.regulatory_updates = regulatory_updates
                 span.set_attribute("research.regulatory_updates_count", len(regulatory_updates))
+                self.logger.info(f"[HEARTBEAT] Completed regulatory updates research: {len(regulatory_updates)} updates found")
 
             # Step 2: Best Practices Research
+            self.logger.info(f"[HEARTBEAT] Starting best practices research")
             with self.tracer.start_as_current_span("research.best_practices"):
                 best_practices = await self._research_best_practices(request)
                 response.best_practices = best_practices
                 span.set_attribute("research.best_practices_count", len(best_practices))
+                self.logger.info(f"[HEARTBEAT] Completed best practices research: {len(best_practices)} practices found")
 
             # Step 3: Industry Trends Research
             if request.include_trends:
+                self.logger.info(f"[HEARTBEAT] Starting industry trends research")
                 with self.tracer.start_as_current_span("research.industry_trends"):
                     industry_trends = await self._research_industry_trends(request)
                     response.industry_trends = industry_trends
                     span.set_attribute("research.industry_trends_count", len(industry_trends))
+                    self.logger.info(f"[HEARTBEAT] Completed industry trends research: {len(industry_trends)} trends found")
 
             # Step 4: Compile Research Results
             with self.tracer.start_as_current_span("research.compile_results"):
@@ -355,6 +386,7 @@ class ResearchAgent:
         updates = []
 
         try:
+            self.logger.info(f"[HEARTBEAT] Starting FDA regulatory data search for {len(request.research_focus)} focus areas")
             # Research FDA regulatory updates for relevant focus areas
             for regulatory_body in request.regulatory_scope:
                 if regulatory_body.upper() in ["FDA", "US"]:

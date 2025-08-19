@@ -1,0 +1,694 @@
+{
+  "suite_id": "OQ-SUITE-0531",
+  "gamp_category": 3,
+  "document_name": "testing_data.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Environmental Monitoring System Temperature Accuracy Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the Environmental Monitoring System (EMS) accurately measures temperature within the specified range of -80\u00b0C to +50\u00b0C with an accuracy of \u00b10.5\u00b0C.",
+      "prerequisites": [
+        "EMS system installed and powered on",
+        "Calibrated temperature reference device available",
+        "Test environment prepared with controlled temperature settings"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the test environment to -80\u00b0C using the temperature reference device.",
+          "expected_result": "EMS displays temperature within -80.5\u00b0C to -79.5\u00b0C.",
+          "data_to_capture": [
+            "EMS temperature reading"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Set the test environment to +50\u00b0C using the temperature reference device.",
+          "expected_result": "EMS displays temperature within +49.5\u00b0C to +50.5\u00b0C.",
+          "data_to_capture": [
+            "EMS temperature reading"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS temperature readings must be within \u00b10.5\u00b0C of the reference device readings at both test points."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU GMP Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All temperature readings must be stored in the vendor's standard database format.",
+        "Audit trail must be maintained for all temperature readings."
+      ],
+      "urs_requirements": [
+        "URS-EMS-004",
+        "URS-EMS-006"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature calibration"
+      ]
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "EMS Alert Generation Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the Environmental Monitoring System (EMS) generates alerts when temperature deviates \u00b12\u00b0C from the setpoint.",
+      "prerequisites": [
+        "EMS system installed and powered on",
+        "Temperature setpoint configured",
+        "Test environment prepared with controlled temperature settings"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the temperature setpoint to +25\u00b0C.",
+          "expected_result": "EMS displays temperature setpoint as +25\u00b0C.",
+          "data_to_capture": [
+            "EMS temperature setpoint"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Increase the test environment temperature to +27\u00b0C.",
+          "expected_result": "EMS generates an alert indicating temperature deviation.",
+          "data_to_capture": [
+            "EMS alert message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Decrease the test environment temperature to +23\u00b0C.",
+          "expected_result": "EMS generates an alert indicating temperature deviation.",
+          "data_to_capture": [
+            "EMS alert message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS must generate alerts when temperature deviates \u00b12\u00b0C from the setpoint."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU GMP Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All alerts must be stored in the vendor's standard database format.",
+        "Audit trail must be maintained for all alert events."
+      ],
+      "urs_requirements": [
+        "URS-EMS-005",
+        "URS-EMS-006"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature control"
+      ]
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Environmental Monitoring System - Temperature Data Recording Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS correctly records temperature data at specified intervals and maintains accuracy within \u00b10.5\u00b0C.",
+      "prerequisites": [
+        "EMS installed and configured",
+        "Temperature sensors calibrated",
+        "Test data set prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up test environment with known temperature values (-20\u00b0C, +5\u00b0C, +25\u00b0C).",
+          "expected_result": "System accepts test temperature values without errors.",
+          "data_to_capture": [
+            "Initial temperature readings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor system for 30 minutes, recording temperature values every 5 minutes.",
+          "expected_result": "System records temperature at exact 5-minute intervals.",
+          "data_to_capture": [
+            "Timestamped temperature readings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Compare recorded values against reference thermometer readings.",
+          "expected_result": "All recorded values within \u00b10.5\u00b0C of reference values.",
+          "data_to_capture": [
+            "Deviation calculations"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "100% of temperature readings recorded at correct intervals",
+        "All readings within \u00b10.5\u00b0C accuracy requirement",
+        "No missing data points during test period"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU GMP Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be complete and accurate",
+        "Timestamps must be correct and immutable"
+      ],
+      "urs_requirements": [
+        "URS-EMS-001",
+        "URS-EMS-002",
+        "URS-EMS-004"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature measurement",
+        "GxP compliance"
+      ]
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Chromatography Data System - Custom Calculation Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that custom calculations implemented in the CDS produce accurate results for non-standard impurity calculations.",
+      "prerequisites": [
+        "CDS installed and configured",
+        "Test chromatograms prepared",
+        "Custom calculation formulas implemented"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load test chromatogram with known impurity profile into CDS.",
+          "expected_result": "System correctly identifies all peaks in chromatogram.",
+          "data_to_capture": [
+            "Peak detection results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Apply custom impurity calculation formula to test data.",
+          "expected_result": "System executes formula without errors.",
+          "data_to_capture": [
+            "Calculation results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Compare CDS results with manually calculated values.",
+          "expected_result": "Results match within acceptable tolerance (\u00b10.1%).",
+          "data_to_capture": [
+            "Deviation values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "All custom calculations execute without errors",
+        "Results match manual calculations within \u00b10.1%",
+        "System maintains data integrity throughout process"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ICH Q2(R1)"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Calculation formulas must be locked after validation",
+        "Raw data must remain unchanged during processing"
+      ],
+      "urs_requirements": [
+        "URS-CDS-004",
+        "URS-CDS-006"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Chromatography analysis",
+        "CDS operation",
+        "Pharmaceutical calculations"
+      ]
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Environmental Monitoring System Temperature Accuracy Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the Environmental Monitoring System (EMS) accurately measures temperature within the specified range of -80\u00b0C to +50\u00b0C with an accuracy of \u00b10.5\u00b0C.",
+      "prerequisites": [
+        "EMS installed and operational",
+        "Calibrated temperature reference device available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the EMS to monitor temperature in a controlled environment.",
+          "expected_result": "EMS displays temperature readings.",
+          "data_to_capture": [
+            "Temperature readings from EMS"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Compare EMS temperature readings with the calibrated reference device at various temperature points.",
+          "expected_result": "EMS readings are within \u00b10.5\u00b0C of the reference device readings.",
+          "data_to_capture": [
+            "Reference device readings",
+            "EMS readings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS temperature readings are within \u00b10.5\u00b0C of the reference device readings at all tested points"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all temperature readings are recorded and stored accurately"
+      ],
+      "urs_requirements": [
+        "URS-EMS-004"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Calibration",
+        "Temperature monitoring"
+      ]
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "EMS Alert Generation Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS generates alerts when temperature deviates \u00b12\u00b0C from the setpoint.",
+      "prerequisites": [
+        "EMS installed and operational",
+        "Temperature setpoint configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the EMS temperature setpoint to a specific value.",
+          "expected_result": "EMS displays the configured setpoint.",
+          "data_to_capture": [
+            "Setpoint value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a temperature deviation of \u00b12\u00b0C from the setpoint.",
+          "expected_result": "EMS generates an alert for the temperature deviation.",
+          "data_to_capture": [
+            "Alert details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS generates alerts for temperature deviations of \u00b12\u00b0C from the setpoint"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alerts are recorded and stored accurately"
+      ],
+      "urs_requirements": [
+        "URS-EMS-005"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Temperature monitoring",
+        "Alert system configuration"
+      ]
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Verify Continuous Temperature Monitoring Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the Environmental Monitoring System (EMS) continuously monitors temperature in all GMP storage areas as specified in URS-EMS-001.",
+      "prerequisites": [
+        "EMS installed and configured",
+        "Temperature sensors calibrated",
+        "System powered on"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set temperature setpoint to 25\u00b0C in the EMS configuration.",
+          "expected_result": "System accepts the setpoint and displays it correctly.",
+          "data_to_capture": [
+            "Setpoint value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor temperature readings for 30 minutes.",
+          "expected_result": "Temperature readings are recorded at intervals not exceeding 5 minutes as per URS-EMS-002.",
+          "data_to_capture": [
+            "Temperature readings",
+            "Recording intervals"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a temperature deviation of +3\u00b0C.",
+          "expected_result": "System generates an alert as specified in URS-EMS-005.",
+          "data_to_capture": [
+            "Alert generation time",
+            "Deviation value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Temperature readings are continuous and within specified intervals.",
+        "Alerts are generated for deviations."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all temperature data is stored securely and cannot be altered."
+      ],
+      "urs_requirements": [
+        "URS-EMS-001",
+        "URS-EMS-002",
+        "URS-EMS-005"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature monitoring"
+      ]
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Verify Vendor-Supplied Software Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the EMS uses vendor-supplied software without modification as specified in URS-EMS-003.",
+      "prerequisites": [
+        "EMS software installed",
+        "System powered on"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Launch the EMS software.",
+          "expected_result": "Software launches successfully without errors.",
+          "data_to_capture": [
+            "Software version"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate through the software menus.",
+          "expected_result": "All menus and functions are accessible and function as expected.",
+          "data_to_capture": [
+            "Menu accessibility",
+            "Functionality"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a standard report using vendor's reporting engine.",
+          "expected_result": "Report is generated successfully and matches the vendor's standard format.",
+          "data_to_capture": [
+            "Report generation time",
+            "Report format"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Software functions without modification.",
+        "Standard reports are generated correctly."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure all software functions are unaltered from vendor's standard."
+      ],
+      "urs_requirements": [
+        "URS-EMS-003",
+        "URS-EMS-007"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS software operation",
+        "Report generation"
+      ]
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Environmental Monitoring System (EMS) Temperature Accuracy",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the EMS accurately measures and records temperature within the specified range of -80\u00b0C to +50\u00b0C with an accuracy of \u00b10.5\u00b0C.",
+      "prerequisites": [
+        "EMS installed and configured",
+        "Calibrated temperature reference device available",
+        "Test environment set to specific temperature points"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the test environment to -80\u00b0C using the reference device.",
+          "expected_result": "EMS displays temperature within -80.5\u00b0C to -79.5\u00b0C.",
+          "data_to_capture": [
+            "EMS temperature reading",
+            "Reference device reading"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Set the test environment to +50\u00b0C using the reference device.",
+          "expected_result": "EMS displays temperature within +49.5\u00b0C to +50.5\u00b0C.",
+          "data_to_capture": [
+            "EMS temperature reading",
+            "Reference device reading"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS temperature readings are within \u00b10.5\u00b0C of the reference device at all test points."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for electronic records",
+        "GMP requirements for environmental monitoring"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all temperature readings are recorded and stored without modification.",
+        "Verify audit trail captures all temperature data entries."
+      ],
+      "urs_requirements": [
+        "URS-EMS-004: Temperature range: -80\u00b0C to +50\u00b0C with accuracy of \u00b10.5\u00b0C."
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature calibration"
+      ]
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Validate Chromatography Data System (CDS) Custom Calculations",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To validate that the CDS correctly performs custom calculations for non-standard impurity calculations and proprietary relative response factor adjustments.",
+      "prerequisites": [
+        "CDS installed and configured",
+        "Test chromatographic data available",
+        "Custom calculation formulas implemented"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load test chromatographic data into the CDS.",
+          "expected_result": "Data is successfully loaded and displayed in the CDS interface.",
+          "data_to_capture": [
+            "Data load status",
+            "Initial chromatogram display"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 2,
+          "action": "Apply custom impurity calculation formula to the data.",
+          "expected_result": "CDS calculates impurity values according to the custom formula.",
+          "data_to_capture": [
+            "Calculated impurity values",
+            "Formula application status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        },
+        {
+          "step_number": 3,
+          "action": "Apply proprietary relative response factor adjustments.",
+          "expected_result": "CDS adjusts response factors as per the proprietary algorithm.",
+          "data_to_capture": [
+            "Adjusted response factors",
+            "Algorithm application status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": ""
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculations match expected results based on predefined test data.",
+        "Proprietary adjustments are correctly applied and reflected in the final results."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for electronic records",
+        "GMP requirements for analytical data integrity"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all calculations are performed without data loss or corruption.",
+        "Verify audit trail captures all calculation steps and adjustments."
+      ],
+      "urs_requirements": [
+        "URS-CDS-004: Implement custom calculations using vendor's formula editor."
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS operation",
+        "Chromatographic data analysis"
+      ]
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 345,
+  "generation_timestamp": "2025-08-19T05:31:05.641946+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T05:31:06.189908+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T05:26:37.445285+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

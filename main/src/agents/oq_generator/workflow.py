@@ -10,6 +10,8 @@ import json
 import logging
 import time
 import traceback
+import psutil
+import gc
 from datetime import datetime, UTC
 from typing import Dict, Any, Optional
 from uuid import uuid4
@@ -26,6 +28,11 @@ from src.agents.oq_generator.generator_v2 import OQTestGeneratorV2
 
 logger = logging.getLogger(__name__)
 
+# Enhanced traceability logging
+TRACE_PREFIX = "[OQ-TRACE]"
+RESOURCE_PREFIX = "[OQ-RESOURCE]"
+BATCH_PREFIX = "[OQ-BATCH]"
+
 
 class OQGenerationWorkflow(Workflow):
     """
@@ -37,12 +44,21 @@ class OQGenerationWorkflow(Workflow):
 
     def __init__(self, timeout: int = 1800, **kwargs):
         """
-        Initialize the OQ generation workflow.
+        Initialize the OQ generation workflow with enhanced traceability.
         
         Args:
             timeout: Maximum execution time in seconds (default: 30 minutes)
             **kwargs: Additional parameters (ignored with explicit error for debugging)
         """
+        # Track workflow instance creation
+        self.workflow_id = str(uuid4())[:8]
+        logger.info(f"{TRACE_PREFIX} Creating OQ workflow instance: {self.workflow_id}")
+        
+        # Track initial resource state
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+        logger.info(f"{RESOURCE_PREFIX} Initial memory usage: {initial_memory:.2f} MB")
+        
         # NO FALLBACKS: Explicitly reject unexpected parameters with diagnostic info
         if kwargs:
             unexpected_params = list(kwargs.keys())
@@ -57,16 +73,20 @@ class OQGenerationWorkflow(Workflow):
         
         # NO FALLBACKS: Ensure generator creation succeeds
         try:
+            logger.info(f"{TRACE_PREFIX} Creating OQTestGeneratorV2 for workflow {self.workflow_id}")
             self.generator = OQTestGeneratorV2()
-            logger.info("OQTestGeneratorV2 instantiated successfully")
+            logger.info(f"{TRACE_PREFIX} OQTestGeneratorV2 instantiated successfully")
         except Exception as e:
-            logger.error(f"Failed to create OQTestGeneratorV2: {e}")
+            logger.error(f"{TRACE_PREFIX} Failed to create OQTestGeneratorV2: {e}")
             raise RuntimeError(
                 f"OQ generator instantiation failed: {e}. "
                 f"Check OQTestGeneratorV2 constructor and dependencies."
             ) from e
             
         self.workflow_start_time = None
+        self.step_timings = {}
+        self.batch_progress = []
+        self.resource_snapshots = []
         
     @step
     async def start_oq_generation(
@@ -75,7 +95,7 @@ class OQGenerationWorkflow(Workflow):
         ev: StartEvent
     ) -> OQTestGenerationEvent:
         """
-        Start the OQ test generation process.
+        Start the OQ test generation process with enhanced traceability.
         
         Args:
             ctx: Workflow context
@@ -84,8 +104,15 @@ class OQGenerationWorkflow(Workflow):
         Returns:
             OQTestGenerationEvent
         """
-        logger.info("Starting OQ test generation workflow")
+        step_start = time.time()
+        logger.info(f"{TRACE_PREFIX} [Workflow {self.workflow_id}] STEP 1/3: start_oq_generation")
+        logger.info(f"{TRACE_PREFIX} Starting OQ test generation workflow")
         self.workflow_start_time = datetime.now(UTC)
+        
+        # Resource snapshot
+        process = psutil.Process()
+        memory_mb = process.memory_info().rss / 1024 / 1024
+        logger.info(f"{RESOURCE_PREFIX} Memory at step start: {memory_mb:.2f} MB")
         
         # Handle StartEvent by extracting relevant data with defensive programming
         try:
@@ -132,6 +159,11 @@ class OQGenerationWorkflow(Workflow):
         # Store the event for later use
         await ctx.set("generation_event", generation_event)
         
+        # Track step completion
+        step_duration = time.time() - step_start
+        self.step_timings['start_oq_generation'] = step_duration
+        logger.info(f"{TRACE_PREFIX} Step 'start_oq_generation' completed in {step_duration:.2f}s")
+        
         return generation_event
 
     @step
@@ -141,7 +173,7 @@ class OQGenerationWorkflow(Workflow):
         ev: OQTestGenerationEvent
     ) -> OQTestSuiteEvent | ConsultationRequiredEvent:
         """
-        Generate OQ test suite using the dedicated generator.
+        Generate OQ test suite with comprehensive traceability.
         
         Args:
             ctx: Workflow context
@@ -150,19 +182,36 @@ class OQGenerationWorkflow(Workflow):
         Returns:
             OQTestSuiteEvent on success, ConsultationRequiredEvent if intervention needed
         """
+        step_start = time.time()
+        logger.info(f"{TRACE_PREFIX} [Workflow {self.workflow_id}] STEP 2/3: generate_oq_tests")
+        
+        # Resource tracking
+        process = psutil.Process()
+        memory_before = process.memory_info().rss / 1024 / 1024
+        logger.info(f"{RESOURCE_PREFIX} Memory before generation: {memory_before:.2f} MB")
+        
         try:
-            logger.info(f"🚀 STARTING OQ GENERATION: GAMP Category {ev.gamp_category}, Target: {ev.required_test_count} tests")
-            logger.info(f"📋 PROGRESS: Initializing test generation workflow...")
+            logger.info(f"{TRACE_PREFIX} 🚀 STARTING OQ GENERATION: GAMP Category {ev.gamp_category}, Target: {ev.required_test_count} tests")
+            logger.info(f"{TRACE_PREFIX} 📋 PROGRESS: Initializing test generation workflow...")
+            logger.info(f"{BATCH_PREFIX} Batch configuration: {ev.required_test_count} tests in batches of 2")
             
             # Use the dedicated OQ generator
             result = await self._generate_oq_test_suite_impl(ctx, ev)
             
+            # Track memory after generation
+            memory_after = process.memory_info().rss / 1024 / 1024
+            memory_delta = memory_after - memory_before
+            logger.info(f"{RESOURCE_PREFIX} Memory after generation: {memory_after:.2f} MB (delta: {memory_delta:+.2f} MB)")
+            
             # Handle different result types
             if isinstance(result, ConsultationRequiredEvent):
-                logger.warning("OQ generation requires consultation")
+                logger.warning(f"{TRACE_PREFIX} OQ generation requires consultation")
                 return result
             elif isinstance(result, OQTestSuiteEvent):
-                logger.info("OQ test suite generated successfully")
+                step_duration = time.time() - step_start
+                self.step_timings['generate_oq_tests'] = step_duration
+                logger.info(f"{TRACE_PREFIX} OQ test suite generated successfully in {step_duration:.2f}s")
+                logger.info(f"{BATCH_PREFIX} Generation summary: {len(self.batch_progress)} batches processed")
                 return result
             else:
                 # Fallback: create consultation event
@@ -277,7 +326,7 @@ class OQGenerationWorkflow(Workflow):
         ev: OQTestGenerationEvent
     ) -> OQTestSuiteEvent | ConsultationRequiredEvent:
         """
-        Implementation of OQ test suite generation.
+        Implementation of OQ test suite generation with batch tracking.
         
         Args:
             ctx: Workflow context
@@ -288,6 +337,7 @@ class OQGenerationWorkflow(Workflow):
         """
         try:
             start_time = time.time()
+            logger.info(f"{TRACE_PREFIX} Starting batch generation implementation")
             
             # Generate OQ tests using the dedicated generator
             # CRITICAL FIX: Use correct method signature for OQTestGeneratorV2
@@ -299,19 +349,43 @@ class OQGenerationWorkflow(Workflow):
             else:
                 gamp_category_enum = ev.gamp_category
             
-            logger.info(f"🔧 GENERATING: Using DeepSeek V3 for GAMP Category {gamp_category_enum.value}")
-            logger.info(f"📄 DOCUMENT: {ev.document_metadata.get('name', 'unknown')}")
-            logger.info(f"🎯 TARGET COUNT: {ev.required_test_count} tests")
+            logger.info(f"{TRACE_PREFIX} 🔧 GENERATING: Using DeepSeek V3 for GAMP Category {gamp_category_enum.value}")
+            logger.info(f"{TRACE_PREFIX} 📄 DOCUMENT: {ev.document_metadata.get('name', 'unknown')}")
+            logger.info(f"{TRACE_PREFIX} 🎯 TARGET COUNT: {ev.required_test_count} tests")
             
-            suite_result = await self.generator.generate_oq_test_suite(
-                gamp_category=gamp_category_enum,  # Correct parameter name
-                urs_content=ev.urs_content,        # Correct parameter name
-                document_name=ev.document_metadata.get("name", "unknown"),
-                context_data=ev.aggregated_context  # Correct parameter name
-            )
+            # Track batch progress
+            num_batches = (ev.required_test_count + 1) // 2  # 2 tests per batch
+            logger.info(f"{BATCH_PREFIX} Expected batches: {num_batches}")
+            
+            # Add heartbeat logging for long-running generation
+            async def log_heartbeat():
+                """Log periodic heartbeat during generation"""
+                elapsed = 0
+                while elapsed < 300:  # Max 5 minutes
+                    await asyncio.sleep(10)
+                    elapsed += 10
+                    logger.info(f"{TRACE_PREFIX} ⏱️ Generation in progress... {elapsed}s elapsed")
+            
+            # Start heartbeat task
+            heartbeat_task = asyncio.create_task(log_heartbeat())
+            
+            try:
+                suite_result = await self.generator.generate_oq_test_suite(
+                    gamp_category=gamp_category_enum,  # Correct parameter name
+                    urs_content=ev.urs_content,        # Correct parameter name
+                    document_name=ev.document_metadata.get("name", "unknown"),
+                    context_data=ev.aggregated_context  # Correct parameter name
+                )
+            finally:
+                # Cancel heartbeat task
+                heartbeat_task.cancel()
+                try:
+                    await heartbeat_task
+                except asyncio.CancelledError:
+                    pass
             
             generation_time = time.time() - start_time
-            logger.info(f"🎉 SUCCESS: OQ generation completed in {generation_time:.2f} seconds!")
+            logger.info(f"{TRACE_PREFIX} 🎉 SUCCESS: OQ generation completed in {generation_time:.2f} seconds!")
             
             # Check if generation was successful
             # CRITICAL FIX: Check OQTestSuite object, not dictionary
@@ -389,6 +463,38 @@ class OQGenerationWorkflow(Workflow):
                 triggering_step="_generate_oq_test_suite_impl",
                 consultation_id=uuid4()
             )
+    
+    def cleanup(self):
+        """
+        Clean up workflow resources to prevent state accumulation.
+        """
+        logger.info(f"{TRACE_PREFIX} [Workflow {self.workflow_id}] Cleaning up resources")
+        
+        # Clear batch progress
+        self.batch_progress.clear()
+        
+        # Clear resource snapshots
+        self.resource_snapshots.clear()
+        
+        # Clear step timings
+        self.step_timings.clear()
+        
+        # Force garbage collection
+        gc.collect()
+        
+        # Log final memory state
+        process = psutil.Process()
+        final_memory = process.memory_info().rss / 1024 / 1024
+        logger.info(f"{RESOURCE_PREFIX} Final memory after cleanup: {final_memory:.2f} MB")
+        
+        logger.info(f"{TRACE_PREFIX} Workflow cleanup complete")
+    
+    def __del__(self):
+        """Ensure cleanup on workflow destruction."""
+        try:
+            self.cleanup()
+        except Exception:
+            pass  # Ignore errors in destructor
 
 
 # Create workflow instance for external use
