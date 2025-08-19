@@ -41,6 +41,7 @@ from src.compliance import (
     get_validation_framework,
     get_worm_storage,
 )
+from src.compliance.part11_signatures import SignatureMeaning
 
 # from llama_index.llms.openai import OpenAI  # Migrated to centralized LLM config
 from src.config.llm_config import LLMConfig
@@ -769,6 +770,45 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 session_id=self._workflow_session_id
             )
             self.logger.info(f"[GAMP5] GAMP-5 Category: {categorization_data.gamp_category.value}")
+        
+        # Add electronic signature for categorization (21 CFR Part 11)
+        config = get_config()
+        if self.enable_part11_compliance and self.signature_service and not config.validation_mode.validation_mode:
+            try:
+                # Extract document name from content or use default
+                doc_name = "document"
+                if hasattr(ev, 'file_path'):
+                    doc_name = Path(ev.file_path).name
+                elif hasattr(ev, 'urs_content') and ev.urs_content:
+                    # Try to extract from URS content
+                    doc_name = str(ev.urs_content)[:50] if ev.urs_content else "document"
+                
+                signature_binding = self.signature_service.bind_signature_to_record(
+                    record_id=f"cat_{self._workflow_session_id}",
+                    record_content={
+                        "action": "gamp_categorization",
+                        "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, 'value') else str(categorization_event.gamp_category),
+                        "confidence": categorization_event.confidence_score,
+                        "document": doc_name,
+                        "timestamp": datetime.now(UTC).isoformat()
+                    },
+                    signer_name=getattr(config, 'user_name', 'System'),
+                    signer_id=getattr(config, 'user_id', 'system'),
+                    signature_meaning=SignatureMeaning.REVIEWED,
+                    additional_context={
+                        "workflow_session": self._workflow_session_id,
+                        "risk_assessment": categorization_event.risk_assessment
+                    }
+                )
+                
+                self.logger.info(f"[SIGNATURE] Categorization signed: {signature_binding.signature_id}")
+                
+            except Exception as sig_e:
+                self.logger.warning(f"[SIGNATURE] Electronic signature failed for categorization: {sig_e}")
+                # Continue without signature in case of error
+        elif config.validation_mode.validation_mode:
+            self.logger.info("[SIGNATURE] Skipping categorization signature in validation mode")
+        
         return categorization_event
 
     @step
@@ -1634,6 +1674,43 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # Add file info to oq_results for tracking
             oq_results["output_file"] = str(output_file)
             oq_results["file_saved"] = True
+            
+            # Add electronic signature for test generation (21 CFR Part 11)
+            config = get_config()
+            if self.enable_part11_compliance and self.signature_service and not config.validation_mode.validation_mode:
+                try:
+                    signature_binding = self.signature_service.bind_signature_to_record(
+                        record_id=ev.test_suite.suite_id,
+                        record_content={
+                            "action": "test_suite_generation",
+                            "test_suite_id": ev.test_suite.suite_id,
+                            "test_count": len(ev.test_suite.test_cases),
+                            "gamp_category": ev.test_suite.gamp_category,
+                            "document": ev.test_suite.document_name,
+                            "timestamp": datetime.now(UTC).isoformat()
+                        },
+                        signer_name=getattr(config, 'user_name', 'System'),
+                        signer_id=getattr(config, 'user_id', 'system'),
+                        signature_meaning=SignatureMeaning.APPROVED,
+                        additional_context={
+                            "workflow_session": self._workflow_session_id,
+                            "confidence_score": ev.test_suite.quality_metrics.get("confidence_score", 0.0)
+                        }
+                    )
+                    
+                    self.logger.info(f"[SIGNATURE] Test suite signed: {signature_binding.signature_id}")
+                    oq_results["signature_id"] = signature_binding.signature_id
+                    oq_results["signed"] = True
+                    
+                except Exception as sig_e:
+                    self.logger.warning(f"[SIGNATURE] Electronic signature failed: {sig_e}")
+                    # Continue without signature in case of error
+                    oq_results["signed"] = False
+                    oq_results["signature_error"] = str(sig_e)
+            elif config.validation_mode.validation_mode:
+                self.logger.info("[SIGNATURE] Skipping signature in validation mode")
+                oq_results["signed"] = False
+                oq_results["signature_reason"] = "validation_mode"
             
         except Exception as e:
             self.logger.error(f"❌ CRITICAL: Failed to save test suite to file: {e}")

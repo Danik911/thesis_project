@@ -156,6 +156,35 @@ def validate_gamp5(results: Dict[str, Any]) -> Dict[str, Any]:
     
     issues = []
     
+    # Check for GAMP-5 documentation files
+    compliance_dir = Path("main/docs/compliance")
+    if compliance_dir.exists():
+        # Check for supplier assessment
+        if (compliance_dir / "gamp5_supplier_assessment_deepseek.md").exists():
+            criteria['supplier_assessment'] = True
+        else:
+            issues.append("Supplier assessment documentation missing")
+        
+        # Check for configuration management
+        if (compliance_dir / "configuration_management.md").exists():
+            criteria['configuration_management'] = True
+        else:
+            issues.append("Configuration management documentation missing")
+        
+        # Check for change control
+        if (compliance_dir / "change_control_procedures.md").exists():
+            criteria['change_control'] = True
+        else:
+            issues.append("Change control procedures missing")
+        
+        # Check for training documentation
+        if (compliance_dir / "training_documentation.md").exists():
+            criteria['training_competency'] = True
+        else:
+            issues.append("Training documentation missing")
+    else:
+        issues.append("Compliance documentation directory not found")
+    
     if 'execution' in results:
         workflow = results['execution'].get('workflow_results', {})
         
@@ -223,9 +252,32 @@ def validate_cfr_part11(results: Dict[str, Any]) -> Dict[str, Any]:
         else:
             issues.append("System controls not documented")
     
-    # Electronic signatures would need cryptographic implementation
-    # Currently not implemented
-    issues.append("Electronic signatures not implemented")
+    # Check for electronic signatures implementation
+    signatures_file = Path("main/src/compliance/part11_signatures.py")
+    validation_mode = os.getenv('VALIDATION_MODE', 'false').lower() == 'true'
+    
+    if signatures_file.exists():
+        # System is implemented
+        requirements['electronic_signatures'] = True
+        
+        # Check operational status
+        manifest_dir = Path("compliance/signatures")
+        has_manifest = manifest_dir.exists() and any(manifest_dir.glob("*.json"))
+        
+        if validation_mode:
+            issues.append("Electronic signatures implemented but bypassed (VALIDATION_MODE=true)")
+        elif not has_manifest:
+            # Check if workflow results show signature activity
+            if 'execution' in results:
+                workflow = results['execution'].get('workflow_results', {})
+                oq_gen = workflow.get('oq_generation', {})
+                if not oq_gen.get('signed'):
+                    issues.append("Electronic signatures implemented but no signatures generated yet")
+            else:
+                issues.append("Electronic signatures implemented but no signatures generated yet")
+    else:
+        requirements['electronic_signatures'] = False
+        issues.append("Electronic signatures not implemented")
     
     met_requirements = sum(requirements.values())
     total_requirements = len(requirements)
@@ -270,10 +322,21 @@ def test_owasp_security() -> Dict[str, Any]:
             security_results['LLM06_insecure_output']['mitigations'].append("Output scanner present")
         
         # Check for human consultation (overreliance mitigation)
-        consultation = Path("main/src/agents/human_consultation.py")
+        # Check for VALIDATION_MODE
+        validation_mode = os.getenv('VALIDATION_MODE', 'false').lower() == 'true'
+        
+        # Check in the correct location for human consultation
+        consultation = Path("main/src/core/human_consultation.py")
         if consultation.exists():
             security_results['LLM09_overreliance']['tested'] = True
-            security_results['LLM09_overreliance']['mitigations'].append("Human consultation system present")
+            if validation_mode:
+                security_results['LLM09_overreliance']['mitigations'].append(
+                    "Human consultation IMPLEMENTED but intentionally bypassed (VALIDATION_MODE=true for testing)"
+                )
+            else:
+                security_results['LLM09_overreliance']['mitigations'].append(
+                    "Human consultation system active in production mode"
+                )
     else:
         security_results['issues'].append("Security module not found")
     

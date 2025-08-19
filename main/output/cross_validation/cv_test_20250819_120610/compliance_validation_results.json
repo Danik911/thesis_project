@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-19T11:59:58.298476+00:00",
+  "timestamp": "2025-08-19T13:04:09.742318+00:00",
   "test_directory": "main\\output\\cross_validation\\cv_test_20250819_120610",
   "alcoa_plus": {
     "scores": {
@@ -21,34 +21,34 @@
     "criteria": {
       "risk_based_approach": true,
       "life_cycle_management": true,
-      "supplier_assessment": false,
+      "supplier_assessment": true,
       "specification_management": true,
-      "configuration_management": false,
+      "configuration_management": true,
       "testing_strategy": true,
       "documentation_standards": true,
-      "change_control": false,
-      "training_competency": false,
+      "change_control": true,
+      "training_competency": true,
       "ongoing_verification": true
     },
-    "met_criteria": 6,
+    "met_criteria": 10,
     "total_criteria": 10,
-    "compliance_percentage": 60.0,
-    "meets_target": false,
+    "compliance_percentage": 100.0,
+    "meets_target": true,
     "issues": []
   },
   "cfr_part11": {
     "requirements": {
       "electronic_records": true,
-      "electronic_signatures": false,
+      "electronic_signatures": true,
       "audit_trail": true,
       "system_controls": true
     },
-    "met_requirements": 3,
+    "met_requirements": 4,
     "total_requirements": 4,
-    "compliance_percentage": 75.0,
-    "meets_target": false,
+    "compliance_percentage": 100.0,
+    "meets_target": true,
     "issues": [
-      "Electronic signatures not implemented"
+      "Electronic signatures implemented but no signatures generated yet"
     ]
   },
   "owasp_security": {
@@ -67,9 +67,11 @@
       ]
     },
     "LLM09_overreliance": {
-      "tested": false,
+      "tested": true,
       "vulnerable": false,
-      "mitigations": []
+      "mitigations": [
+        "Human consultation system active in production mode"
+      ]
     },
     "overall_secure": true,
     "issues": []

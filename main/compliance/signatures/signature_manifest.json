@@ -1,5 +1,5 @@
 {
-  "created": "2025-08-13T15:35:51.843409+00:00",
+  "created": "2025-08-19T13:33:30.209995+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -14,7 +14,20 @@
       "signature_value": "be2e39771b5bc886f1c9a654ebb3bfcbbfd6ffb7919d6401ffb266445b45144c7204e85e2ccf06da4a9c660baedbcdb0787717dc84c58965f826e96a3d99f90b",
       "signer_id": "jsmith_qa",
       "signer_name": "John Smith, QA Manager"
+    },
+    {
+      "binding_proof": "3695ac545fece1fb2551c1cb3fb828d0ec4d0185daaed6809cc75c4a507f3876",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "1a771098a6c6565d65a27531ee73241c252a2f1e735d3aab9302a708c6169509",
+      "record_id": "cat_unified_workflow_2025-08-19T13:33:30.027134+00:00",
+      "signature_id": "e056d415-e415-4386-b90f-5dd14f696903",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-19T13:33:30.209995+00:00",
+      "signature_value": "c395347357fb397becbc11c5fba3d4014cd18d2b11894044d09ae4246b9f96e3ae3d31d3f3b71ecf8f9e607ecf8a4c30ccf6a3c61257f3a1bd16072c90526008",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 1
+  "total_signatures": 2
 }
