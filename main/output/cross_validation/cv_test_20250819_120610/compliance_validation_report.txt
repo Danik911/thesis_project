@@ -1,0 +1,82 @@
+================================================================================
+COMPLIANCE VALIDATION REPORT - SINGLE DOCUMENT TEST
+================================================================================
+Generated: 2025-08-19T11:59:58.297974+00:00
+
+EXECUTIVE SUMMARY
+----------------------------------------
+[WARNING] COMPLIANCE ISSUES FOUND - Address before full testing
+
+1. ALCOA+ DATA INTEGRITY
+----------------------------------------
+Overall Score: 8.00/10
+Target: >=9.0/10
+Status: [FAIL]
+
+Attribute Scores:
+  [OK] Attributable: 8.0/10
+  [OK] Legible: 9.0/10
+  [OK] Contemporaneous: 8.0/10
+  [OK] Original: 7.0/10
+  [OK] Accurate: 7.5/10
+  [OK] Complete: 7.0/10
+  [OK] Consistent: 8.0/10
+  [OK] Enduring: 8.5/10
+  [OK] Available: 9.0/10
+
+2. GAMP-5 COMPLIANCE
+----------------------------------------
+Compliance: 60.0%
+Criteria Met: 6/10
+Status: [FAIL]
+
+Criteria Status:
+  [OK] Risk Based Approach
+  [OK] Life Cycle Management
+  [FAIL] Supplier Assessment
+  [OK] Specification Management
+  [FAIL] Configuration Management
+  [OK] Testing Strategy
+  [OK] Documentation Standards
+  [FAIL] Change Control
+  [FAIL] Training Competency
+  [OK] Ongoing Verification
+
+3. 21 CFR PART 11 COMPLIANCE
+----------------------------------------
+Compliance: 75.0%
+Requirements Met: 3/4
+Status: [FAIL]
+
+Requirements Status:
+  [OK] Electronic Records
+  [FAIL] Electronic Signatures
+  [OK] Audit Trail
+  [OK] System Controls
+
+Issues to Address:
+  - Electronic signatures not implemented
+
+4. OWASP LLM TOP 10 SECURITY
+----------------------------------------
+Status: [SECURE]
+
+Critical Risks:
+  [OK] LLM01 PROMPT INJECTION
+      - Input validator present
+  [OK] LLM06 INSECURE OUTPUT
+      - Output scanner present
+  [FAIL] LLM09 OVERRELIANCE
+
+RECOMMENDATIONS
+----------------------------------------
+1. Improve ALCOA+ compliance:
+2. Complete GAMP-5 requirements:
+   - Implement supplier assessment
+   - Implement configuration management
+   - Implement change control
+   - Implement training competency
+3. Address 21 CFR Part 11 gaps:
+   - Implement electronic signatures
+
+================================================================================
