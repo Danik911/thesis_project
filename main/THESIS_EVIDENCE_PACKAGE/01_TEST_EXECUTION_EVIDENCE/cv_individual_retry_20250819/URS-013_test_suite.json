@@ -1,0 +1,1723 @@
+{
+  "suite_id": "OQ-SUITE-2107",
+  "gamp_category": 4,
+  "document_name": "URS-013.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Batch Control Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the batch control system is properly configured according to ISA-88 standards and URS-DCS-003 requirements.",
+      "prerequisites": [
+        "DCS system is installed and powered on",
+        "Batch control configuration is loaded",
+        "Test recipes are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the recipe management interface and verify version control functionality",
+          "expected_result": "Recipe versions are displayed correctly and can be selected",
+          "data_to_capture": [
+            "Recipe version numbers",
+            "Selection functionality"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a test batch and verify phase logic execution",
+          "expected_result": "Batch progresses through phases according to configured logic",
+          "data_to_capture": [
+            "Phase transition times",
+            "Equipment arbitration results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a batch report and verify genealogy tracking",
+          "expected_result": "Report contains complete batch genealogy information",
+          "data_to_capture": [
+            "Report contents",
+            "Genealogy data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Simulate an exception condition and verify operator intervention handling",
+          "expected_result": "System properly handles exceptions and allows operator intervention",
+          "data_to_capture": [
+            "Exception handling time",
+            "Operator intervention options"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All recipe management functions operate as specified",
+        "Batch phases execute according to configured logic",
+        "Batch reports contain complete and accurate information",
+        "Exception handling functions properly"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-88 batch control standard"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Electronic signatures for critical parameters",
+        "Audit trail for all batch operations"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Batch control systems",
+        "ISA-88 standards",
+        "DCS configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Alarm Management System Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the alarm management system is properly configured according to rationalized alarm philosophy and URS-DCS-004 requirements.",
+      "prerequisites": [
+        "DCS system is installed and powered on",
+        "Alarm configuration is loaded",
+        "Test alarm scenarios are prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Trigger a critical alarm and verify priority classification and response",
+          "expected_result": "Critical alarm is displayed with correct priority and requires acknowledgment",
+          "data_to_capture": [
+            "Alarm priority",
+            "Response time",
+            "Acknowledgment requirement"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate startup sequence and verify alarm suppression functionality",
+          "expected_result": "Configured alarms are suppressed during startup sequence",
+          "data_to_capture": [
+            "Suppressed alarms",
+            "Startup sequence timing"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Trigger multiple alarms simultaneously to test flood suppression",
+          "expected_result": "System properly suppresses alarm floods according to configuration",
+          "data_to_capture": [
+            "Number of alarms triggered",
+            "Suppression behavior"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Access alarm performance metrics and verify data collection",
+          "expected_result": "Alarm performance metrics are available and accurate",
+          "data_to_capture": [
+            "Metrics displayed",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarms are properly classified by priority",
+        "Alarm suppression functions as configured during startup/shutdown",
+        "Flood suppression prevents alarm storms",
+        "Performance metrics are available and accurate"
+      ],
+      "regulatory_basis": [
+        "ISA-18.2 alarm management standard",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for alarm acknowledgments",
+        "Historical alarm data storage"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Alarm management systems",
+        "DCS configuration",
+        "Process safety"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Batch Control Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the batch control system is properly configured according to ISA-88 standards and URS-DCS-003 requirements.",
+      "prerequisites": [
+        "System is installed and powered on",
+        "Batch control software is loaded and operational",
+        "Test recipes are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the batch control configuration interface in the DCS.",
+          "expected_result": "Batch control configuration interface is accessible and displays all configured recipes.",
+          "data_to_capture": [
+            "List of available recipes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select a test recipe and verify its version control settings.",
+          "expected_result": "Recipe version control is enabled and previous versions are archived.",
+          "data_to_capture": [
+            "Recipe version history"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Initiate a test batch and monitor phase logic execution.",
+          "expected_result": "Batch executes according to phase logic with proper equipment arbitration.",
+          "data_to_capture": [
+            "Phase transition logs",
+            "Equipment arbitration logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Simulate an exception condition and verify operator intervention capabilities.",
+          "expected_result": "System properly handles exceptions and allows for operator intervention as configured.",
+          "data_to_capture": [
+            "Exception handling logs",
+            "Operator action records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All configured recipes are accessible and properly version controlled",
+        "Batch execution follows ISA-88 phase logic standards",
+        "Exception handling functions as specified in URS-DCS-003"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-88 batch control standards"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All batch records must be complete and unaltered",
+        "Electronic signatures must be properly implemented"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Batch control systems",
+        "ISA-88 standards",
+        "DCS configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Alarm Management System Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the alarm management system is properly configured according to rationalized alarm philosophy and URS-DCS-004 requirements.",
+      "prerequisites": [
+        "System is installed and powered on",
+        "Alarm management software is loaded and operational",
+        "Test alarm scenarios are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the alarm management configuration interface in the DCS.",
+          "expected_result": "Alarm configuration interface is accessible and displays all configured alarms.",
+          "data_to_capture": [
+            "List of configured alarms"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify alarm priority classifications for critical process parameters.",
+          "expected_result": "Alarms are properly classified according to the rationalized alarm philosophy.",
+          "data_to_capture": [
+            "Alarm priority settings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate an alarm storm condition and verify flood suppression functionality.",
+          "expected_result": "System properly suppresses non-critical alarms during alarm storm conditions.",
+          "data_to_capture": [
+            "Alarm suppression logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Initiate a startup sequence and verify alarm suppression during startup.",
+          "expected_result": "Configured alarms are properly suppressed during startup sequences.",
+          "data_to_capture": [
+            "Startup alarm suppression logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All alarms are properly classified according to priority",
+        "Alarm flood suppression functions as specified",
+        "Startup/shutdown alarm suppression works as configured"
+      ],
+      "regulatory_basis": [
+        "ISA-18.2 alarm management standard",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Alarm records must be complete and unaltered",
+        "Alarm configuration changes must be properly documented"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Alarm management systems",
+        "ISA-18.2 standards",
+        "DCS configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verification of Batch Control Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the batch control system is correctly configured according to ISA-88 batch standard and URS-DCS-003 requirements.",
+      "prerequisites": [
+        "System configuration completed",
+        "Batch control software installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the batch control system interface.",
+          "expected_result": "Batch control interface is accessible and displays correctly.",
+          "data_to_capture": [
+            "Interface screenshot"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new batch recipe and configure phase logic.",
+          "expected_result": "Recipe is created successfully with correct phase logic.",
+          "data_to_capture": [
+            "Recipe configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a batch process execution.",
+          "expected_result": "Batch process executes according to configured recipe and phase logic.",
+          "data_to_capture": [
+            "Batch execution logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Batch control system operates as per ISA-88 standards",
+        "All configured phases execute correctly"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all batch data is accurately recorded"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Batch control system configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validation of Alarm Management Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To validate that the alarm management system is configured according to the rationalized alarm philosophy and URS-DCS-004 requirements.",
+      "prerequisites": [
+        "Alarm management configuration completed",
+        "Alarm rationalization document available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the alarm management system interface.",
+          "expected_result": "Alarm management interface is accessible and displays correctly.",
+          "data_to_capture": [
+            "Interface screenshot"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger a high-priority alarm and verify its classification.",
+          "expected_result": "Alarm is correctly classified as high-priority.",
+          "data_to_capture": [
+            "Alarm classification details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate an alarm storm and verify flood suppression.",
+          "expected_result": "Flood suppression is activated correctly to prevent alarm storms.",
+          "data_to_capture": [
+            "Alarm suppression logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm management system operates as per rationalized alarm philosophy",
+        "All alarms are correctly classified and suppressed"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alarm data is accurately recorded"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Alarm management system configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Batch Control Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the batch control system is properly configured according to ISA-88 standards and URS-DCS-003 requirements.",
+      "prerequisites": [
+        "DCS system is installed and powered on",
+        "Batch control configuration is loaded",
+        "Test recipes are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the batch control configuration interface in the DCS.",
+          "expected_result": "Batch control configuration interface is accessible and displays all configured recipes.",
+          "data_to_capture": [
+            "List of available recipes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select a test recipe and initiate a batch run.",
+          "expected_result": "Batch run initiates successfully with proper phase logic execution.",
+          "data_to_capture": [
+            "Batch execution status",
+            "Phase transition logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate an exception condition during batch execution.",
+          "expected_result": "System correctly handles the exception with proper operator intervention prompts.",
+          "data_to_capture": [
+            "Exception handling logs",
+            "Operator intervention records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate a batch report after completion.",
+          "expected_result": "Batch report is generated with complete genealogy tracking and all required data fields.",
+          "data_to_capture": [
+            "Batch report content",
+            "Data completeness check"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All configured recipes are accessible and executable",
+        "Phase logic executes correctly according to ISA-88 standards",
+        "Exception handling functions as designed",
+        "Batch reports contain all required information with proper genealogy tracking"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-88 batch control standard",
+        "GMP requirements for batch documentation"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Electronic signatures for critical parameters",
+        "Audit trail for all batch operations",
+        "Data backup and recovery procedures"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "DCS configuration",
+        "ISA-88 batch control",
+        "Pharmaceutical manufacturing processes"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Alarm Management System Validation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate that the alarm management system is configured according to the rationalized alarm philosophy and meets URS-DCS-004 requirements.",
+      "prerequisites": [
+        "DCS system is operational",
+        "Alarm configuration is loaded",
+        "Test scenarios prepared for alarm testing"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the alarm management configuration interface.",
+          "expected_result": "Alarm configuration interface displays all configured alarms with proper priorities.",
+          "data_to_capture": [
+            "List of configured alarms",
+            "Priority assignments"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger a critical alarm condition and verify response.",
+          "expected_result": "Alarm is displayed within 1 second with correct priority and annunciation.",
+          "data_to_capture": [
+            "Alarm trigger timestamp",
+            "Display response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate an alarm flood condition (10+ alarms in 10 seconds).",
+          "expected_result": "Flood suppression activates and only critical alarms are displayed.",
+          "data_to_capture": [
+            "Alarm flood count",
+            "Suppression behavior"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate an alarm performance report for the test period.",
+          "expected_result": "Report contains all required metrics including alarm rates, response times, and suppression events.",
+          "data_to_capture": [
+            "Alarm performance metrics",
+            "Report completeness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All alarms are properly classified and prioritized",
+        "Alarm response time meets 1-second requirement",
+        "Flood suppression functions as designed",
+        "Alarm performance metrics are correctly captured and reported"
+      ],
+      "regulatory_basis": [
+        "ISA-18.2 alarm management standard",
+        "21 CFR Part 11 for alarm records",
+        "GMP requirements for critical alarms"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Alarm history retention",
+        "Audit trail for alarm configuration changes",
+        "Secure storage of alarm records"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Alarm management systems",
+        "DCS configuration",
+        "Process safety requirements"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Batch Control Configuration Compliance with ISA-88",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure the batch control system is correctly configured according to the ISA-88 batch standard, including recipe management, phase logic, and batch reporting.",
+      "prerequisites": [
+        "System is operational",
+        "Batch control software is installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the batch control system and navigate to recipe management.",
+          "expected_result": "Recipe management interface is accessible and displays version control options.",
+          "data_to_capture": [
+            "Recipe version displayed"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new batch recipe and configure phase logic.",
+          "expected_result": "Phase logic is correctly configured with equipment arbitration.",
+          "data_to_capture": [
+            "Phase logic configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Initiate a batch process and monitor batch reporting.",
+          "expected_result": "Batch reporting includes genealogy tracking and exception handling.",
+          "data_to_capture": [
+            "Batch report generated"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Batch control system complies with ISA-88 standards",
+        "All configured features function as expected"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all batch data is accurately recorded and traceable"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Batch process control",
+        "ISA-88 standards"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Validate Alarm Management Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To validate that the alarm management system is configured according to the rationalized alarm philosophy, including priority classification and flood suppression.",
+      "prerequisites": [
+        "System is operational",
+        "Alarm management software is installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the alarm management system and review alarm priorities.",
+          "expected_result": "Alarms are classified correctly as Critical, High, Medium, or Low.",
+          "data_to_capture": [
+            "Alarm priority classification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate an alarm storm and observe flood suppression.",
+          "expected_result": "Flood suppression activates to prevent alarm storms.",
+          "data_to_capture": [
+            "Flood suppression activation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review alarm performance metrics.",
+          "expected_result": "Performance metrics indicate effective alarm management.",
+          "data_to_capture": [
+            "Alarm performance metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm management system complies with rationalized alarm philosophy",
+        "All configured features function as expected"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alarm data is accurately recorded"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Alarm management",
+        "Process control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Verification of Batch Control Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the batch control system is correctly configured according to ISA-88 standards and URS-DCS-003 requirements.",
+      "prerequisites": [
+        "System installation completed",
+        "Batch control software installed",
+        "Test recipes available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a test recipe into the batch control system.",
+          "expected_result": "Recipe loads successfully with all parameters visible.",
+          "data_to_capture": [
+            "Recipe parameters",
+            "Loading time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the batch process using the loaded recipe.",
+          "expected_result": "Batch process executes according to the defined phase logic and equipment arbitration.",
+          "data_to_capture": [
+            "Phase execution times",
+            "Equipment status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a batch report after completion.",
+          "expected_result": "Batch report includes all required data with genealogy tracking.",
+          "data_to_capture": [
+            "Report content",
+            "Genealogy data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Batch process executes without errors",
+        "All phases complete as expected",
+        "Batch report is accurate and complete"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-88"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all batch data is accurately recorded",
+        "Verify data integrity during recipe execution"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Batch process control",
+        "ISA-88 standards"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Validation of Alarm Management Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To validate that the alarm management system is configured according to the rationalized alarm philosophy and URS-DCS-004 requirements.",
+      "prerequisites": [
+        "System installation completed",
+        "Alarm management software installed",
+        "Test alarms configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Trigger a test alarm in the system.",
+          "expected_result": "Alarm is displayed with the correct priority and classification.",
+          "data_to_capture": [
+            "Alarm details",
+            "Priority level"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate an alarm storm by triggering multiple alarms.",
+          "expected_result": "Flood suppression activates to prevent alarm overload.",
+          "data_to_capture": [
+            "Number of alarms triggered",
+            "Flood suppression status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review alarm performance metrics.",
+          "expected_result": "Metrics indicate effective alarm management and response.",
+          "data_to_capture": [
+            "Alarm response times",
+            "Performance metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarms are correctly classified and prioritized",
+        "Flood suppression functions as expected",
+        "Performance metrics meet defined criteria"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-18.2"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alarm data is accurately recorded",
+        "Verify data integrity during alarm events"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Alarm management",
+        "ISA-18.2 standards"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Batch Control Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the batch control system is correctly configured according to ISA-88 standards and URS-DCS-003 requirements.",
+      "prerequisites": [
+        "System installation completed",
+        "Batch control software installed",
+        "URS-DCS-003 available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the batch control configuration interface.",
+          "expected_result": "Batch control configuration interface is accessible.",
+          "data_to_capture": [
+            "Interface accessibility status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify recipe management configuration.",
+          "expected_result": "Recipe management is configured with version control.",
+          "data_to_capture": [
+            "Recipe management configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Check phase logic configuration.",
+          "expected_result": "Phase logic is configured with equipment arbitration.",
+          "data_to_capture": [
+            "Phase logic configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Validate batch reporting configuration.",
+          "expected_result": "Batch reporting is configured with genealogy tracking.",
+          "data_to_capture": [
+            "Batch reporting configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Test exception handling configuration.",
+          "expected_result": "Exception handling is configured with operator intervention.",
+          "data_to_capture": [
+            "Exception handling configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Batch control system meets all URS-DCS-003 requirements",
+        "Configuration matches ISA-88 standards"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GMP compliance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all batch data is accurately captured and stored",
+        "Verify data integrity controls are in place"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Batch control systems",
+        "ISA-88 standards"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Alarm Management Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the alarm management system is correctly configured according to URS-DCS-004 requirements.",
+      "prerequisites": [
+        "System installation completed",
+        "Alarm management software installed",
+        "URS-DCS-004 available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the alarm management configuration interface.",
+          "expected_result": "Alarm management configuration interface is accessible.",
+          "data_to_capture": [
+            "Interface accessibility status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify priority-based alarm classification.",
+          "expected_result": "Alarms are classified as Critical, High, Medium, Low.",
+          "data_to_capture": [
+            "Alarm classification details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Check alarm suppression during startup/shutdown sequences.",
+          "expected_result": "Alarm suppression is configured correctly.",
+          "data_to_capture": [
+            "Alarm suppression configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Validate flood suppression configuration.",
+          "expected_result": "Flood suppression is configured to prevent alarm storms.",
+          "data_to_capture": [
+            "Flood suppression configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Test performance metrics for alarm effectiveness.",
+          "expected_result": "Performance metrics are configured and functional.",
+          "data_to_capture": [
+            "Performance metrics configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm management system meets all URS-DCS-004 requirements",
+        "Configuration matches rationalized alarm philosophy"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GMP compliance"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alarm data is accurately captured and stored",
+        "Verify data integrity controls are in place"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Alarm management systems",
+        "Rationalized alarm philosophy"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Verify Control Loop Execution Determinism",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure control loop execution is deterministic with a 100ms cycle time as specified in URS-DCS-016.",
+      "prerequisites": [
+        "System configuration completed",
+        "Control loops configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate control loop execution and monitor cycle time.",
+          "expected_result": "Control loop cycle time should not exceed 100ms.",
+          "data_to_capture": [
+            "Cycle time measurements"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Control loop cycle time is within 100ms"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure accurate cycle time measurements"
+      ],
+      "urs_requirements": [
+        "URS-DCS-016"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Control Systems Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Validate Operator Interface Response Time",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that operator interface response time does not exceed 2 seconds as specified in URS-DCS-017.",
+      "prerequisites": [
+        "Operator interfaces configured",
+        "System operational"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform various operator actions and measure response time.",
+          "expected_result": "Operator interface response time should not exceed 2 seconds.",
+          "data_to_capture": [
+            "Response time measurements"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Operator interface response time is within 2 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure accurate response time measurements"
+      ],
+      "urs_requirements": [
+        "URS-DCS-017"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Human-Machine Interface Specialist"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Verify Batch Control Configuration with ISA-88 Standard",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure the batch control system is correctly configured according to ISA-88 standards, including recipe management, phase logic, and exception handling.",
+      "prerequisites": [
+        "System is installed and powered on",
+        "Batch control software is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a new batch recipe with version control enabled.",
+          "expected_result": "Recipe is successfully created and version is recorded.",
+          "data_to_capture": [
+            "Recipe name",
+            "Version number"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute a batch process using the created recipe.",
+          "expected_result": "Batch process executes according to the defined phase logic.",
+          "data_to_capture": [
+            "Batch ID",
+            "Phase execution status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate an exception during batch execution and verify operator intervention.",
+          "expected_result": "System correctly handles the exception and allows operator intervention.",
+          "data_to_capture": [
+            "Exception type",
+            "Operator action"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Recipe management functions correctly",
+        "Phase logic executes as defined",
+        "Exception handling is effective"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-88"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all batch data is accurately recorded",
+        "Maintain audit trail for all operator actions"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Batch control systems",
+        "ISA-88 standards"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Validate Alarm Management Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the alarm management system is configured correctly, including priority classification, suppression, and performance metrics.",
+      "prerequisites": [
+        "System is installed and powered on",
+        "Alarm management software is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Trigger a critical alarm and verify its classification.",
+          "expected_result": "Alarm is correctly classified as critical and displayed to the operator.",
+          "data_to_capture": [
+            "Alarm type",
+            "Priority level"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a startup sequence and verify alarm suppression.",
+          "expected_result": "Alarms are suppressed during the startup sequence as configured.",
+          "data_to_capture": [
+            "Suppressed alarms",
+            "Startup sequence status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate multiple alarms simultaneously and verify flood suppression.",
+          "expected_result": "System prevents alarm storms by suppressing non-critical alarms.",
+          "data_to_capture": [
+            "Number of alarms triggered",
+            "Alarms suppressed"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarms are correctly classified",
+        "Alarm suppression works as intended",
+        "Flood suppression is effective"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-18.2"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alarm events are logged",
+        "Maintain audit trail for alarm management actions"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Alarm management systems",
+        "ISA-18.2 standards"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Verify Batch Control Configuration Compliance with ISA-88",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the batch control system is correctly configured according to the ISA-88 batch standard, including recipe management, phase logic, batch reporting, and exception handling.",
+      "prerequisites": [
+        "System configuration completed",
+        "Test recipes loaded",
+        "Operator training completed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a batch process using a predefined recipe.",
+          "expected_result": "Batch process starts correctly with all phases executing as per the recipe.",
+          "data_to_capture": [
+            "Batch ID",
+            "Phase execution times",
+            "Recipe parameters"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate an exception during the batch process.",
+          "expected_result": "System correctly handles the exception with appropriate operator intervention prompts.",
+          "data_to_capture": [
+            "Exception type",
+            "Operator actions",
+            "Resolution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the batch process and generate a batch report.",
+          "expected_result": "Batch report is generated with accurate genealogy tracking and all required data fields.",
+          "data_to_capture": [
+            "Batch report content",
+            "Genealogy tracking data",
+            "Batch completion time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Batch process executes all phases correctly",
+        "Exceptions are handled appropriately",
+        "Batch report contains all required data"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-88"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all batch data is accurately recorded",
+        "Verify data integrity in batch reports"
+      ],
+      "urs_requirements": [
+        "URS-DCS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Batch process control",
+        "ISA-88 standard"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Validate Alarm Management Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the alarm management system is configured according to the rationalized alarm philosophy, ensuring proper alarm classification, suppression, and performance metrics.",
+      "prerequisites": [
+        "Alarm rationalization completed",
+        "System configuration completed",
+        "Operator training completed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Trigger a critical alarm in the system.",
+          "expected_result": "Alarm is correctly classified as critical and displayed to the operator.",
+          "data_to_capture": [
+            "Alarm type",
+            "Classification",
+            "Operator response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate an alarm storm by triggering multiple alarms simultaneously.",
+          "expected_result": "System implements flood suppression to prevent alarm storms.",
+          "data_to_capture": [
+            "Number of alarms triggered",
+            "Flood suppression effectiveness",
+            "Operator response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review alarm performance metrics.",
+          "expected_result": "Performance metrics accurately reflect alarm effectiveness and response times.",
+          "data_to_capture": [
+            "Alarm performance metrics",
+            "Response times",
+            "Alarm suppression data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarms are correctly classified and displayed",
+        "Flood suppression prevents alarm storms",
+        "Performance metrics are accurate"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ISA-18.2"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alarm data is accurately recorded",
+        "Verify data integrity in alarm performance metrics"
+      ],
+      "urs_requirements": [
+        "URS-DCS-004"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Alarm management",
+        "ISA-18.2 standard"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 735,
+  "generation_timestamp": "2025-08-19T21:07:58.936949+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T21:07:59.373555+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T21:00:31.458596+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

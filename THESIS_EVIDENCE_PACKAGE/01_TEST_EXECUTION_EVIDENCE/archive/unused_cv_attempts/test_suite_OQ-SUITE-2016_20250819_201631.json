@@ -1,0 +1,1479 @@
+{
+  "suite_id": "OQ-SUITE-2016",
+  "gamp_category": 4,
+  "document_name": "URS-005.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Custom API Integration Test for Wearable Devices",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the custom API integration with wearable devices for real-time data exchange as specified in URS-CTMS-005.",
+      "prerequisites": [
+        "Veeva CTMS platform installed and configured",
+        "Wearable device simulator or actual device available",
+        "Network connectivity established"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the wearable device simulator to send test data to the CTMS API endpoint.",
+          "expected_result": "Device simulator successfully connects to the API endpoint.",
+          "data_to_capture": [
+            "Connection status",
+            "Timestamp of connection"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a predefined set of test data from the wearable device simulator to the CTMS.",
+          "expected_result": "Test data is received and stored in the CTMS database.",
+          "data_to_capture": [
+            "Data received",
+            "Timestamp of data receipt",
+            "Database storage confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the data in the CTMS matches the sent test data.",
+          "expected_result": "Data in CTMS matches the test data sent from the wearable device.",
+          "data_to_capture": [
+            "Data comparison results",
+            "Discrepancies if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Wearable device data is successfully received by the CTMS.",
+        "Data integrity is maintained during transmission and storage.",
+        "System logs confirm successful data exchange."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR Article 32 (Data Security)"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must not be altered during transmission.",
+        "All data exchanges must be logged."
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005",
+        "URS-CTMS-017"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API development",
+        "Clinical data management",
+        "Network security"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Custom Adaptive Trial Design Module Functionality Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality of the custom adaptive trial design module as per URS-CTMS-003.",
+      "prerequisites": [
+        "Custom adaptive trial design module installed",
+        "Test trial protocol loaded",
+        "User with appropriate permissions logged in"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a test adaptive trial protocol into the CTMS.",
+          "expected_result": "Protocol is successfully loaded and displayed in the system.",
+          "data_to_capture": [
+            "Protocol loading status",
+            "Display confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate patient enrollment data to trigger adaptive design changes.",
+          "expected_result": "System correctly processes enrollment data and suggests design modifications.",
+          "data_to_capture": [
+            "Enrollment data processed",
+            "Suggested modifications",
+            "Timestamp of processing"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Apply suggested design modifications and verify system updates.",
+          "expected_result": "System updates trial parameters according to adaptive design rules.",
+          "data_to_capture": [
+            "Updated trial parameters",
+            "Confirmation of changes",
+            "Audit trail entries"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System correctly implements adaptive trial design algorithms.",
+        "All modifications are properly logged in the audit trail.",
+        "User interface reflects current trial design parameters accurately."
+      ],
+      "regulatory_basis": [
+        "ICH E6 (R2) Good Clinical Practice",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "All trial design changes must be traceable.",
+        "Original protocol must be preserved in read-only format."
+      ],
+      "urs_requirements": [
+        "URS-CTMS-003",
+        "URS-CTMS-008",
+        "URS-CTMS-015"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Clinical trial design",
+        "Biostatistics",
+        "System validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the functionality and reliability of custom APIs developed for real-time data exchange with wearable devices and AI-based image analysis systems.",
+      "prerequisites": [
+        "CTMS system installed",
+        "Wearable devices connected",
+        "AI image analysis system operational"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate data transmission from wearable devices to CTMS via custom API.",
+          "expected_result": "Data is successfully received and processed by CTMS.",
+          "data_to_capture": [
+            "Data transmission logs",
+            "API response times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send image analysis results from AI system to CTMS using custom API.",
+          "expected_result": "Image analysis data is accurately integrated into CTMS.",
+          "data_to_capture": [
+            "Data accuracy",
+            "Integration success rate"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data transmissions are successful",
+        "Data integrity is maintained"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure no data loss during transmission",
+        "Verify data accuracy post-integration"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API development",
+        "Data integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Custom Dashboard Functionality Check",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality and accuracy of custom dashboards with advanced visualizations.",
+      "prerequisites": [
+        "CTMS system installed",
+        "Custom dashboards configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access custom dashboard and verify all visualizations are displayed correctly.",
+          "expected_result": "All visualizations are accurate and up-to-date.",
+          "data_to_capture": [
+            "Visualization accuracy",
+            "Dashboard response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform a trial data update and check dashboard refresh.",
+          "expected_result": "Dashboard updates within 5 minutes of data changes.",
+          "data_to_capture": [
+            "Refresh time",
+            "Data consistency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All visualizations are accurate",
+        "Dashboard updates within specified time"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data consistency across visualizations"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-006"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Dashboard development",
+        "Data visualization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the functionality and reliability of custom APIs developed for real-time data exchange with wearable devices and AI-based image analysis systems.",
+      "prerequisites": [
+        "API documentation",
+        "Test environment setup",
+        "Sample data sets"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send test data from wearable device simulator to CTMS via custom API.",
+          "expected_result": "Data is successfully received and processed by CTMS.",
+          "data_to_capture": [
+            "API response time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send test image data from AI-based image analysis system to CTMS via custom API.",
+          "expected_result": "Image data is successfully received and processed by CTMS.",
+          "data_to_capture": [
+            "API response time",
+            "Data integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All test data is accurately processed and stored in CTMS.",
+        "API response time meets performance requirements."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission and storage.",
+        "Verify data encryption standards."
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005",
+        "URS-CTMS-017"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API testing",
+        "Data security"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Custom Dashboard Functionality Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify the functionality and accuracy of custom dashboards with advanced visualizations.",
+      "prerequisites": [
+        "Dashboard configuration",
+        "Sample data sets",
+        "Test environment setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load sample data into CTMS and navigate to custom dashboard.",
+          "expected_result": "Dashboard displays data accurately with advanced visualizations.",
+          "data_to_capture": [
+            "Dashboard load time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Filter and sort data using dashboard controls.",
+          "expected_result": "Dashboard updates visualizations based on applied filters and sorts.",
+          "data_to_capture": [
+            "Filter response time",
+            "Visualization accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboard displays data accurately and updates visualizations in real-time.",
+        "Filter and sort functions work as expected."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GCP"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during visualization updates.",
+        "Verify data accuracy in visualizations."
+      ],
+      "urs_requirements": [
+        "URS-CTMS-006",
+        "URS-CTMS-020"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Dashboard testing",
+        "Data visualization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Custom Adaptive Trial Design Module Functionality Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the custom adaptive trial design module correctly implements proprietary algorithms and integrates with the in-house randomization system.",
+      "prerequisites": [
+        "Custom adaptive trial design module installed",
+        "In-house randomization system accessible",
+        "Test trial data loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a test adaptive trial design using the proprietary algorithms.",
+          "expected_result": "System accepts configuration and displays correct trial parameters.",
+          "data_to_capture": [
+            "Trial configuration parameters",
+            "Algorithm output"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate patient randomization through the integrated system.",
+          "expected_result": "Randomization occurs according to protocol with correct integration.",
+          "data_to_capture": [
+            "Randomization results",
+            "Integration logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All adaptive trial design configurations function as specified",
+        "Randomization integration works without errors",
+        "System maintains data integrity throughout"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ICH GCP E6(R2)"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All trial design changes must be audit trailed",
+        "Randomization data must be immutable once committed"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-003",
+        "URS-CTMS-008"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Clinical trial design",
+        "System integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Real-time Wearable Device Data Integration Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Validate that custom APIs correctly receive and process real-time data from wearable devices.",
+      "prerequisites": [
+        "Custom API endpoints configured",
+        "Test wearable device connected",
+        "Data validation rules defined"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate continuous data transmission from test wearable device.",
+          "expected_result": "System receives and acknowledges all data packets without loss.",
+          "data_to_capture": [
+            "Data transmission logs",
+            "API response times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify data appears in patient records within 5 minutes of receipt.",
+          "expected_result": "All wearable data correctly associated with patient records and visible in UI.",
+          "data_to_capture": [
+            "Data timestamps",
+            "Patient record updates"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "100% of test data received and processed",
+        "Data appears in system within specified 5-minute window",
+        "All data properly associated with correct patient records"
+      ],
+      "regulatory_basis": [
+        "HIPAA",
+        "GDPR",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "All wearable data must maintain provenance metadata",
+        "No patient data mixing allowed"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005",
+        "URS-CTMS-020"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "API development",
+        "Real-time data processing",
+        "Clinical data management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the functionality of custom APIs developed for real-time data exchange with wearable devices and AI-based image analysis systems.",
+      "prerequisites": [
+        "CTMS platform installed",
+        "Custom APIs deployed",
+        "Test wearable devices available",
+        "AI image analysis system accessible"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate data transmission from wearable device to CTMS via custom API.",
+          "expected_result": "Data is successfully received and processed by CTMS.",
+          "data_to_capture": [
+            "Transmission timestamp",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send image data from AI-based image analysis system to CTMS via custom API.",
+          "expected_result": "Image data is correctly integrated and displayed in CTMS.",
+          "data_to_capture": [
+            "Integration timestamp",
+            "Data integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data transmissions are successful",
+        "Data integrity is maintained"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data accuracy and completeness",
+        "Maintain audit trails"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005",
+        "URS-CTMS-017"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API development",
+        "Data integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Custom Dashboard Functionality Check",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality and accuracy of custom dashboards with advanced visualizations.",
+      "prerequisites": [
+        "CTMS platform installed",
+        "Custom dashboards configured",
+        "Test data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access custom dashboard and verify visualizations.",
+          "expected_result": "Visualizations accurately represent the underlying data.",
+          "data_to_capture": [
+            "Visualization accuracy",
+            "Data representation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Update test data and refresh dashboard.",
+          "expected_result": "Dashboard updates reflect the changes within 5 minutes.",
+          "data_to_capture": [
+            "Update timestamp",
+            "Refresh latency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Visualizations are accurate",
+        "Dashboard updates within specified time"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GCP"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data accuracy",
+        "Maintain audit trails"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-006",
+        "URS-CTMS-020"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Dashboard development",
+        "Data visualization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Custom API Integration Test for Wearable Devices",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the functionality of custom APIs for real-time data exchange with wearable devices as specified in URS-CTMS-005.",
+      "prerequisites": [
+        "CTMS system is installed and operational",
+        "Wearable device simulator is configured",
+        "Test data for wearable device output is prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the wearable device simulator to send test data to the CTMS via the custom API.",
+          "expected_result": "CTMS receives the test data without errors.",
+          "data_to_capture": [
+            "API response time",
+            "Data accuracy in CTMS"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the received data in the CTMS dashboard.",
+          "expected_result": "Data from the wearable device is displayed correctly in the dashboard.",
+          "data_to_capture": [
+            "Dashboard update time",
+            "Data consistency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "API successfully receives and processes data from wearable devices",
+        "Data is accurately reflected in the CTMS dashboard within 5 minutes"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "HIPAA"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must be encrypted during transmission",
+        "All data exchanges must be logged"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005",
+        "URS-CTMS-020"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API development",
+        "Clinical data management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Custom Adaptive Trial Design Module Validation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality of the custom adaptive trial design module as specified in URS-CTMS-003.",
+      "prerequisites": [
+        "CTMS system is installed and operational",
+        "Test adaptive trial protocol is loaded",
+        "Test patient data is available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test adaptive trial protocol into the CTMS.",
+          "expected_result": "Protocol is successfully loaded and recognized by the system.",
+          "data_to_capture": [
+            "Protocol loading time",
+            "System response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate patient enrollment and data input to trigger adaptive design changes.",
+          "expected_result": "System correctly applies adaptive design changes based on input data.",
+          "data_to_capture": [
+            "Adaptive changes applied",
+            "System response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System correctly implements adaptive trial design changes",
+        "All changes are logged in the audit trail"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GCP"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "All adaptive changes must be traceable",
+        "Patient data must remain consistent"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-003",
+        "URS-CTMS-015"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Clinical trial design",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the functionality of custom APIs developed for real-time data exchange with wearable devices and AI-based image analysis systems.",
+      "prerequisites": [
+        "CTMS system installed",
+        "Wearable devices connected",
+        "AI image analysis system operational"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate data transmission from wearable devices to CTMS.",
+          "expected_result": "Data is received and processed by CTMS without errors.",
+          "data_to_capture": [
+            "Data transmission logs",
+            "Error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send image analysis results from AI system to CTMS.",
+          "expected_result": "Image analysis data is integrated into CTMS and available for reporting.",
+          "data_to_capture": [
+            "Integration logs",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data transmissions are successful",
+        "No data loss or corruption"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission",
+        "Verify data accuracy post-integration"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API development",
+        "Data integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Custom Dashboard Functionality Check",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality and accuracy of custom dashboards with advanced visualizations.",
+      "prerequisites": [
+        "CTMS system operational",
+        "Custom dashboards configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access custom dashboard for patient enrollment tracking.",
+          "expected_result": "Dashboard displays accurate enrollment data with advanced visualizations.",
+          "data_to_capture": [
+            "Dashboard display",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a specialized report combining CTMS data with external real-world evidence.",
+          "expected_result": "Report is generated successfully and includes accurate combined data.",
+          "data_to_capture": [
+            "Report content",
+            "Data integration accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboards display accurate data",
+        "Reports include correct combined data"
+      ],
+      "regulatory_basis": [
+        "GCP requirements",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data accuracy in dashboards",
+        "Verify report data integrity"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-006",
+        "URS-CTMS-007"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Dashboard development",
+        "Data visualization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the functionality and reliability of custom APIs developed for real-time data exchange with wearable devices, AI-based image analysis systems, and proprietary biomarker databases.",
+      "prerequisites": [
+        "CTMS system installed",
+        "Custom APIs developed",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate data exchange with wearable devices using the custom API.",
+          "expected_result": "Data from wearable devices is successfully received and processed by the CTMS.",
+          "data_to_capture": [
+            "API response time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send image data to the AI-based image analysis system via the custom API.",
+          "expected_result": "Image analysis results are returned and integrated into the CTMS.",
+          "data_to_capture": [
+            "API response time",
+            "Analysis accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Query proprietary biomarker databases using the custom API.",
+          "expected_result": "Biomarker data is retrieved and displayed in the CTMS.",
+          "data_to_capture": [
+            "API response time",
+            "Data completeness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All custom APIs function as expected",
+        "Data integrity is maintained",
+        "Response times meet performance requirements"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR",
+        "HIPAA"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data accuracy and completeness",
+        "Maintain audit trails"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API development",
+        "Data integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Custom Dashboard Functionality Check",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality and accuracy of custom dashboards with advanced visualizations developed for the CTMS.",
+      "prerequisites": [
+        "CTMS system installed",
+        "Custom dashboards developed",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the custom dashboard for patient enrollment tracking.",
+          "expected_result": "Dashboard displays accurate and up-to-date enrollment data.",
+          "data_to_capture": [
+            "Data accuracy",
+            "Visualization clarity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the custom dashboard for safety signal detection.",
+          "expected_result": "Dashboard correctly identifies and visualizes safety signals.",
+          "data_to_capture": [
+            "Signal detection accuracy",
+            "Visualization clarity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Use the custom dashboard for trial financial management.",
+          "expected_result": "Dashboard provides accurate financial data and visualizations.",
+          "data_to_capture": [
+            "Data accuracy",
+            "Visualization clarity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All custom dashboards function as expected",
+        "Data visualizations are accurate and clear",
+        "Dashboards update in real-time"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GCP"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data accuracy",
+        "Maintain audit trails"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-006"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Dashboard development",
+        "Data visualization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the functionality and reliability of custom APIs developed for real-time data exchange with wearable devices, AI-based image analysis systems, and proprietary biomarker databases.",
+      "prerequisites": [
+        "Access to wearable devices",
+        "AI-based image analysis system",
+        "Proprietary biomarker databases",
+        "API documentation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate data exchange from wearable devices to CTMS via custom API.",
+          "expected_result": "Data from wearable devices is successfully received and processed by CTMS.",
+          "data_to_capture": [
+            "Timestamp of data exchange",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send image analysis results from AI system to CTMS via custom API.",
+          "expected_result": "Image analysis results are accurately integrated into CTMS.",
+          "data_to_capture": [
+            "Image analysis results",
+            "Integration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Connect CTMS to proprietary biomarker databases using custom API.",
+          "expected_result": "Biomarker data is successfully retrieved and displayed in CTMS.",
+          "data_to_capture": [
+            "Biomarker data",
+            "Retrieval time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All custom APIs function as expected",
+        "Data integrity is maintained throughout the process"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data accuracy and completeness",
+        "Maintain audit trails"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API integration",
+        "Data validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Custom Dashboards and Advanced Visualizations Validation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality and accuracy of custom dashboards and advanced visualizations developed for CTMS.",
+      "prerequisites": [
+        "Access to CTMS",
+        "Custom dashboard configurations",
+        "Sample data sets"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load sample data sets into CTMS.",
+          "expected_result": "Sample data is successfully loaded and displayed in CTMS.",
+          "data_to_capture": [
+            "Data loading time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to custom dashboards and verify visualizations.",
+          "expected_result": "Custom dashboards display accurate and meaningful visualizations.",
+          "data_to_capture": [
+            "Visualization accuracy",
+            "Dashboard responsiveness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Perform real-time updates on sample data and observe dashboard changes.",
+          "expected_result": "Dashboards update within 5 minutes of data changes.",
+          "data_to_capture": [
+            "Update time",
+            "Data consistency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom dashboards function as expected",
+        "Visualizations are accurate and meaningful"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GCP"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data accuracy and completeness",
+        "Maintain audit trails"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-006"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-012"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Dashboard validation",
+        "Data visualization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Real-time Dashboard Update Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that the CTMS dashboard updates within 5 minutes of data changes as per URS-CTMS-020.",
+      "prerequisites": [
+        "CTMS system deployed",
+        "Test data prepared",
+        "Dashboard configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a data change in the CTMS system.",
+          "expected_result": "Dashboard reflects the change within 5 minutes.",
+          "data_to_capture": [
+            "Timestamp of data change",
+            "Timestamp of dashboard update"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboard updates within 5 minutes of data changes"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data accuracy during updates"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-020"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "CTMS system knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Custom API Integration Test for Wearable Devices",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Validate the real-time data exchange between the CTMS and wearable devices via custom APIs as per URS-CTMS-005.",
+      "prerequisites": [
+        "CTMS system deployed",
+        "Wearable device connected",
+        "Custom API configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send test data from a wearable device to the CTMS via the custom API.",
+          "expected_result": "CTMS receives and processes the data correctly.",
+          "data_to_capture": [
+            "Data sent from wearable device",
+            "Data received by CTMS"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data is accurately exchanged between wearable device and CTMS"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDPR"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission"
+      ],
+      "urs_requirements": [
+        "URS-CTMS-005"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API testing",
+        "Integration testing",
+        "Wearable device knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 660,
+  "generation_timestamp": "2025-08-19T20:16:31.047567+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T20:16:31.276459+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T20:10:03.821906+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

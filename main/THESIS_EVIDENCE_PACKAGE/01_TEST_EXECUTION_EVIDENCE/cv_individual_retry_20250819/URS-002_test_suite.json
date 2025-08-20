@@ -1,0 +1,1340 @@
+{
+  "suite_id": "OQ-SUITE-2032",
+  "gamp_category": 4,
+  "document_name": "URS-002.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "LIMS Sample Login Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the LIMS sample login screens are correctly configured to capture site-specific attributes as specified in URS-LIMS-004.",
+      "prerequisites": [
+        "LIMS system installed and configured",
+        "Test user with Analyst role created",
+        "Sample data available for testing"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the LIMS system using Analyst credentials.",
+          "expected_result": "User successfully logs in and is presented with the main LIMS dashboard.",
+          "data_to_capture": [
+            "Login timestamp",
+            "User role"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the sample login screen and attempt to register a new sample.",
+          "expected_result": "Sample login screen displays all required fields as specified in URS-LIMS-004.",
+          "data_to_capture": [
+            "Field names",
+            "Field types"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Enter test data into all fields and submit the sample registration.",
+          "expected_result": "System accepts the data and stores it correctly, including expiry date calculation.",
+          "data_to_capture": [
+            "Submitted values",
+            "System response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All required fields from URS-LIMS-004 are present and functional",
+        "System correctly calculates expiry date based on product master data",
+        "Storage conditions dropdown contains all specified options"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All data entered must be accurately stored and retrievable",
+        "Audit trail must record all sample registration activities"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-004"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS configuration",
+        "Quality control processes"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "LIMS SAP ERP Integration Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that the LIMS system correctly integrates with SAP ERP using the vendor's standard adapter as specified in URS-LIMS-003.",
+      "prerequisites": [
+        "LIMS system installed and configured",
+        "SAP ERP test environment available",
+        "Test data for integration available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the LIMS system using Analyst credentials.",
+          "expected_result": "User successfully logs in and is presented with the main LIMS dashboard.",
+          "data_to_capture": [
+            "Login timestamp",
+            "User role"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a sample registration that requires data from SAP ERP.",
+          "expected_result": "LIMS successfully retrieves required master data from SAP ERP.",
+          "data_to_capture": [
+            "Data retrieved",
+            "Response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the sample registration and verify data synchronization.",
+          "expected_result": "Sample data is correctly synchronized between LIMS and SAP ERP.",
+          "data_to_capture": [
+            "Data in LIMS",
+            "Corresponding data in SAP"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "LIMS successfully connects to SAP ERP using standard adapter",
+        "All required master data is correctly retrieved",
+        "Data synchronization occurs without errors"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data transferred between systems must maintain integrity",
+        "Audit trail must record all integration activities"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS integration",
+        "SAP ERP knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Integration Test with SAP ERP System",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the successful integration of the LIMS with the SAP ERP system using the vendor's standard adapter.",
+      "prerequisites": [
+        "SAP ERP system operational",
+        "LIMS configured with SAP adapter",
+        "Network connectivity established"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample data transfer from LIMS to SAP ERP.",
+          "expected_result": "Data is successfully transferred without errors.",
+          "data_to_capture": [
+            "Transfer status",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the received data in SAP ERP matches the sent data from LIMS.",
+          "expected_result": "Data integrity is maintained with no discrepancies.",
+          "data_to_capture": [
+            "Data comparison results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer completes successfully",
+        "No data discrepancies found"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must be accurate and complete",
+        "Audit trail must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SAP ERP knowledge",
+        "LIMS configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Performance Test for Sample Throughput",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure the LIMS can handle a throughput of 500 samples per day as specified.",
+      "prerequisites": [
+        "LIMS configured for sample management",
+        "Test samples prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load 500 sample records into the LIMS.",
+          "expected_result": "All samples are registered without system lag or errors.",
+          "data_to_capture": [
+            "Registration time",
+            "System response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Process all samples through the configured workflows.",
+          "expected_result": "Samples are processed within acceptable time frames.",
+          "data_to_capture": [
+            "Processing time",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All samples are processed within the day",
+        "System performance remains stable"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Sample data must be accurate",
+        "Audit trail must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-012"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS performance testing",
+        "Sample management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Integration with SAP ERP via Vendor Adapter",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the LIMS successfully integrates with SAP ERP using the vendor's standard adapter for data exchange.",
+      "prerequisites": [
+        "LIMS system is installed and configured",
+        "SAP ERP system is available and accessible",
+        "Vendor adapter is properly installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the LIMS system with appropriate credentials.",
+          "expected_result": "User successfully logs into the LIMS system.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the integration settings and configure the SAP ERP connection using the vendor adapter.",
+          "expected_result": "Configuration settings are saved without errors.",
+          "data_to_capture": [
+            "Configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Send a test batch record from LIMS to SAP ERP.",
+          "expected_result": "Batch record is successfully transmitted and appears in SAP ERP.",
+          "data_to_capture": [
+            "Transmission status",
+            "Data accuracy in SAP ERP"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "LIMS successfully connects to SAP ERP via the vendor adapter.",
+        "Data transmitted matches the expected format and content in SAP ERP."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must be accurately transmitted without corruption.",
+        "Audit trail must record all integration events."
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS administration",
+        "SAP ERP knowledge",
+        "Integration expertise"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Sample Login Screen Configuration Validation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Ensure the sample login screens are correctly configured to capture site-specific attributes as specified.",
+      "prerequisites": [
+        "LIMS system is installed and configured",
+        "Sample login screens are configured per URS"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the LIMS system with Analyst credentials.",
+          "expected_result": "User successfully logs into the LIMS system.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the sample login screen and attempt to register a new sample.",
+          "expected_result": "Sample login screen displays all required fields.",
+          "data_to_capture": [
+            "Field presence and correctness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Enter a batch number (alphanumeric, 10 characters), manufacturing date, and select storage conditions from the dropdown.",
+          "expected_result": "All fields accept input as specified, and expiry date is calculated correctly based on product master data.",
+          "data_to_capture": [
+            "Input validation",
+            "Expiry date calculation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All specified fields are present and functional.",
+        "Expiry date is calculated correctly based on product master data.",
+        "Storage conditions dropdown contains all required options."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All entered data must be accurately saved and retrievable.",
+        "Audit trail must record all sample login events."
+      ],
+      "urs_requirements": [
+        "URS-LIMS-004"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS administration",
+        "Quality Control knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Integration Testing with SAP ERP",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the successful integration of LIMS with SAP ERP using the vendor's standard adapter.",
+      "prerequisites": [
+        "SAP ERP system operational",
+        "LIMS configured with SAP adapter"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample data transfer from LIMS to SAP ERP.",
+          "expected_result": "Data should be successfully transferred and reflected in SAP ERP.",
+          "data_to_capture": [
+            "Transfer status",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer completes without errors",
+        "Data integrity maintained"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-003"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data consistency between LIMS and SAP ERP"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SAP ERP",
+        "LIMS integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Performance Testing for Sample Throughput",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure the LIMS can handle a sample throughput of 500 samples per day as specified.",
+      "prerequisites": [
+        "LIMS configured for sample processing",
+        "Test samples prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load 500 samples into the LIMS for processing.",
+          "expected_result": "All samples should be processed within the expected timeframe.",
+          "data_to_capture": [
+            "Processing time",
+            "System response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All samples processed within 24 hours",
+        "No system crashes or errors"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-012"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all sample data is accurately processed"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-012"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS performance testing",
+        "Sample management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Integration Testing with SAP ERP",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the LIMS system's integration with SAP ERP using the vendor's standard adapter.",
+      "prerequisites": [
+        "SAP ERP system operational",
+        "LIMS system configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample registration in LIMS",
+          "expected_result": "Sample data should be successfully transmitted to SAP ERP",
+          "data_to_capture": [
+            "Sample ID",
+            "Batch number",
+            "Transmission status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Sample data is accurately reflected in SAP ERP",
+        "No transmission errors"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-003"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data consistency between LIMS and SAP ERP"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SAP ERP",
+        "LIMS integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Performance Testing for Sample Throughput",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure the LIMS system can handle 500 samples per day as specified in the URS.",
+      "prerequisites": [
+        "LIMS system operational",
+        "Sample data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Register 500 samples in LIMS",
+          "expected_result": "All samples should be registered without errors",
+          "data_to_capture": [
+            "Sample IDs",
+            "Registration time",
+            "Error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All 500 samples are registered successfully",
+        "System response time within acceptable limits"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-012"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all sample data is accurately recorded"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-012"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Integration with SAP ERP via Vendor Adapter",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the successful integration of the LIMS with the existing SAP ERP system using the vendor's standard adapter.",
+      "prerequisites": [
+        "SAP ERP system is operational",
+        "Vendor adapter is installed and configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample data transfer from LIMS to SAP ERP.",
+          "expected_result": "Data is successfully transferred to SAP ERP without errors.",
+          "data_to_capture": [
+            "Transfer status",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer completes within expected time frame",
+        "No errors are logged during transfer"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-003"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transfer",
+        "Verify data accuracy post-transfer"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SAP ERP",
+        "LIMS integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Concurrent User Performance Testing",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that the LIMS can support concurrent use by 50 users without performance degradation.",
+      "prerequisites": [
+        "50 user accounts are created",
+        "Test environment is set up"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate 50 users logging into the LIMS simultaneously.",
+          "expected_result": "All users can log in and perform tasks without significant delays.",
+          "data_to_capture": [
+            "Login times",
+            "System response times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All users can log in within 10 seconds",
+        "System response time remains under 2 seconds"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-014"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure no data corruption during high load",
+        "Verify user session integrity"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-014"
+      ],
+      "related_tests": [
+        "OQ-006",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "LIMS configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Verify LIMS Sample Login Screen Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the sample login screen is correctly configured to capture site-specific attributes as per URS-LIMS-004.",
+      "prerequisites": [
+        "LIMS system installed",
+        "Sample login screen configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the sample login screen in LIMS.",
+          "expected_result": "Sample login screen is displayed with all required fields visible.",
+          "data_to_capture": [
+            "Field names",
+            "Field types"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Enter test data into each field on the sample login screen.",
+          "expected_result": "All fields accept input as per configured specifications.",
+          "data_to_capture": [
+            "Input data",
+            "Field validation messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Submit the sample login form.",
+          "expected_result": "Form is submitted successfully and data is saved in the system.",
+          "data_to_capture": [
+            "Submission status",
+            "Saved data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All fields are correctly configured and accept input as per URS-LIMS-004.",
+        "Form submission is successful and data is saved accurately."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all data entered is accurately saved and retrievable."
+      ],
+      "urs_requirements": [
+        "URS-LIMS-004"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS configuration",
+        "Quality Control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Validate LIMS Integration with SAP ERP",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate the integration between LIMS and SAP ERP using the vendor's standard adapter as per URS-LIMS-003.",
+      "prerequisites": [
+        "LIMS system installed",
+        "SAP ERP system available",
+        "Integration adapter configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a test sample in LIMS with relevant data.",
+          "expected_result": "Sample is created successfully in LIMS.",
+          "data_to_capture": [
+            "Sample data",
+            "Creation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger the data transfer from LIMS to SAP ERP.",
+          "expected_result": "Data is transferred successfully to SAP ERP.",
+          "data_to_capture": [
+            "Transfer status",
+            "Transferred data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the received data in SAP ERP.",
+          "expected_result": "Data in SAP ERP matches the data sent from LIMS.",
+          "data_to_capture": [
+            "Received data",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer from LIMS to SAP ERP is successful.",
+        "Received data in SAP ERP matches the sent data."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity is maintained during transfer."
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS integration",
+        "SAP ERP"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Integration with SAP ERP via Vendor Adapter",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the LIMS system successfully integrates with SAP ERP using the vendor's standard adapter.",
+      "prerequisites": [
+        "SAP ERP system is operational",
+        "Vendor adapter is installed and configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample data transfer from LIMS to SAP ERP.",
+          "expected_result": "Data is successfully transferred without errors.",
+          "data_to_capture": [
+            "Transfer status",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer completes within expected time frame",
+        "No errors in transfer logs"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-003"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transfer"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SAP ERP",
+        "LIMS integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Performance Test for Concurrent User Access",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure the LIMS system supports concurrent use by 50 users without performance degradation.",
+      "prerequisites": [
+        "50 user accounts are created",
+        "System is configured for load testing"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate 50 users logging into the LIMS system simultaneously.",
+          "expected_result": "All users can log in and perform tasks without delays.",
+          "data_to_capture": [
+            "Login times",
+            "System response times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All users can access the system within 5 seconds",
+        "No system crashes or errors"
+      ],
+      "regulatory_basis": [
+        "URS-LIMS-014"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data consistency during high load"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-014"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Load testing",
+        "System performance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Integration with SAP ERP via Vendor Standard Adapter",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify successful data exchange between LIMS and SAP ERP using the vendor's standard adapter.",
+      "prerequisites": [
+        "SAP ERP system available",
+        "Vendor adapter installed and configured",
+        "Test data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to LIMS and navigate to the integration settings.",
+          "expected_result": "Integration settings page displays with SAP ERP adapter configuration options.",
+          "data_to_capture": [
+            "Configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a test batch record from LIMS to SAP ERP.",
+          "expected_result": "Batch record appears in SAP ERP within 2 minutes with all fields intact.",
+          "data_to_capture": [
+            "Transmission time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transmission completes within 2 minutes",
+        "All fields in the test record match between systems"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must remain unchanged during transmission",
+        "Audit trail must record transmission events"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-003"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS configuration",
+        "SAP ERP basics"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Stability Study Protocol Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate that stability study protocols are correctly configured using vendor tools.",
+      "prerequisites": [
+        "Stability study module enabled",
+        "Test protocol defined",
+        "Configuration tools accessible"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a new stability study protocol in LIMS using vendor configuration tools.",
+          "expected_result": "Protocol creation wizard opens with all required fields available.",
+          "data_to_capture": [
+            "Available fields"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure sampling intervals and test parameters per predefined requirements.",
+          "expected_result": "System saves protocol with all parameters correctly applied.",
+          "data_to_capture": [
+            "Configured parameters"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Protocol executes according to configured intervals",
+        "All test parameters are enforced during execution"
+      ],
+      "regulatory_basis": [
+        "ICH Q1A",
+        "FDA Guidance for Industry"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Protocol parameters must be locked after QA approval",
+        "Version control must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-005"
+      ],
+      "related_tests": [
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Stability study requirements",
+        "LIMS configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Verify LIMS Sample Login Screen Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the sample login screen is correctly configured to capture site-specific attributes as per URS-LIMS-004.",
+      "prerequisites": [
+        "LIMS installed and configured",
+        "Sample data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the sample login screen in LIMS.",
+          "expected_result": "Sample login screen is displayed with fields for batch number, manufacturing date, expiry date, and storage conditions.",
+          "data_to_capture": [
+            "Screen layout",
+            "Field labels"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Enter sample data including batch number, manufacturing date, and select storage conditions.",
+          "expected_result": "Data is accepted and expiry date is calculated correctly based on product master data.",
+          "data_to_capture": [
+            "Entered data",
+            "Calculated expiry date"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All fields are present and correctly labeled",
+        "Expiry date calculation is accurate"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data entered is accurately captured and stored"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-004"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS configuration",
+        "Quality Control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Validate LIMS Report Generation Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To validate that report generation completes within the specified time frame of 5 minutes for standard templates as per URS-LIMS-013.",
+      "prerequisites": [
+        "LIMS installed and configured",
+        "Sample reports available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Select a standard report template in LIMS.",
+          "expected_result": "Report template is selected and ready for generation.",
+          "data_to_capture": [
+            "Report template name"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate report generation and record the time taken.",
+          "expected_result": "Report generation completes within 5 minutes.",
+          "data_to_capture": [
+            "Time taken for report generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Report generation completes within 5 minutes"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure generated report is accurate and complete"
+      ],
+      "urs_requirements": [
+        "URS-LIMS-013"
+      ],
+      "related_tests": [
+        "OQ-008",
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS reporting",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 615,
+  "generation_timestamp": "2025-08-19T20:32:56.654803+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T20:32:57.887796+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T20:24:19.750612+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

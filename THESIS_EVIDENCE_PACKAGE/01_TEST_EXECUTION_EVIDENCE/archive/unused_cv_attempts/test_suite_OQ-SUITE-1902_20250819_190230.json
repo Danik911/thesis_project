@@ -1,0 +1,2110 @@
+{
+  "suite_id": "OQ-SUITE-1902",
+  "gamp_category": 5,
+  "document_name": "URS-003.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Custom Workflow Engine Functionality Verification",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify that the custom workflow engine correctly handles parallel processing paths, complex exception handling, and site-specific business rules as specified in URS-MES-004.",
+      "prerequisites": [
+        "System installation completed",
+        "Test environment configured",
+        "Sample batch records available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a batch record with parallel processing paths.",
+          "expected_result": "System correctly processes parallel paths without errors.",
+          "data_to_capture": [
+            "Processing time",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a deviation and trigger exception handling.",
+          "expected_result": "System correctly handles the deviation according to predefined rules.",
+          "data_to_capture": [
+            "Deviation handling time",
+            "Resolution status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Apply site-specific business rules to a batch record.",
+          "expected_result": "System enforces site-specific rules accurately.",
+          "data_to_capture": [
+            "Rule enforcement status",
+            "Batch record updates"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All parallel paths processed correctly",
+        "Deviations handled as per rules",
+        "Site-specific rules enforced accurately"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all data changes are logged",
+        "Audit trail must capture all actions"
+      ],
+      "urs_requirements": [
+        "URS-MES-004"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "MES system knowledge",
+        "Batch record management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Custom Mobile Application Data Entry Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Validate that the custom mobile application correctly captures and processes shop floor data entry as specified in URS-MES-006.",
+      "prerequisites": [
+        "Mobile application installed",
+        "Test environment configured",
+        "Sample data entry forms available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Enter sample data using the mobile application.",
+          "expected_result": "Data is captured accurately and transmitted to the MES.",
+          "data_to_capture": [
+            "Data entry time",
+            "Transmission status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify data integrity in the MES.",
+          "expected_result": "Data in MES matches the entered data.",
+          "data_to_capture": [
+            "Data integrity status",
+            "MES data records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate network interruption during data entry.",
+          "expected_result": "Application handles interruption and resumes data entry correctly.",
+          "data_to_capture": [
+            "Interruption handling time",
+            "Data recovery status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data captured accurately",
+        "Data integrity maintained",
+        "Network interruptions handled correctly"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all data entries are logged",
+        "Audit trail must capture all actions"
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "Data integrity validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Custom Dynamic In-Process Control Limits Verification",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify that the custom algorithms for dynamic in-process control limits based on multivariate analysis function as intended.",
+      "prerequisites": [
+        "System installation completed",
+        "Test batch data loaded",
+        "Multivariate analysis model configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a test batch record with predefined process parameters.",
+          "expected_result": "Batch record is successfully created and displayed in the system.",
+          "data_to_capture": [
+            "Batch ID",
+            "Initial process parameters"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate process deviations by altering input parameters.",
+          "expected_result": "System dynamically adjusts control limits based on multivariate analysis.",
+          "data_to_capture": [
+            "Adjusted control limits",
+            "Timestamp of adjustment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the adjusted control limits against expected values.",
+          "expected_result": "Adjusted control limits match the expected values from the multivariate model.",
+          "data_to_capture": [
+            "Expected values",
+            "Actual values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System correctly adjusts control limits in real-time.",
+        "All adjustments are logged in the audit trail."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All adjustments must be traceable and auditable.",
+        "No unauthorized changes to control limits."
+      ],
+      "urs_requirements": [
+        "URS-MES-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Process engineering",
+        "Data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Custom Mobile Application Data Entry Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Validate that the custom mobile application correctly captures and transmits shop floor data to the MES.",
+      "prerequisites": [
+        "Mobile application installed on test device",
+        "Test batch record created",
+        "Network connectivity verified"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the mobile application using test credentials.",
+          "expected_result": "User is successfully authenticated and granted access to the application.",
+          "data_to_capture": [
+            "Login timestamp",
+            "User ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Enter sample data for a test batch record using the mobile application.",
+          "expected_result": "Data is captured without errors and displayed in the application.",
+          "data_to_capture": [
+            "Entered data",
+            "Timestamp of entry"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Submit the entered data to the MES.",
+          "expected_result": "Data is successfully transmitted and appears in the MES batch record.",
+          "data_to_capture": [
+            "Transmission timestamp",
+            "MES batch record update status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All entered data is accurately transmitted to the MES.",
+        "Data integrity is maintained throughout the process."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All data entries must be traceable to the user.",
+        "No data loss during transmission."
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "Data integrity"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Custom MES Integration with Proprietary Equipment",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify the custom MES successfully integrates with proprietary equipment using custom interfaces and protocols.",
+      "prerequisites": [
+        "Proprietary equipment connected",
+        "Custom MES installed",
+        "Test batch records prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a test batch record in the MES.",
+          "expected_result": "Batch record is successfully created and visible in the MES interface.",
+          "data_to_capture": [
+            "Batch ID",
+            "Creation timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a command from the MES to the proprietary equipment.",
+          "expected_result": "Equipment receives the command and initiates the process as expected.",
+          "data_to_capture": [
+            "Command sent",
+            "Equipment response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor real-time data exchange between MES and equipment.",
+          "expected_result": "Data is exchanged with a maximum latency of 2 seconds.",
+          "data_to_capture": [
+            "Data exchange timestamp",
+            "Latency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "MES successfully integrates with all proprietary equipment",
+        "Data exchange latency is within 2 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission",
+        "Verify no data loss or corruption"
+      ],
+      "urs_requirements": [
+        "URS-MES-001",
+        "URS-MES-003",
+        "URS-MES-012"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "MES integration",
+        "Proprietary equipment protocols"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Custom Workflow Engine Handling Parallel Processing Paths",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Validate the custom workflow engine's ability to handle parallel processing paths unique to the manufacturing process.",
+      "prerequisites": [
+        "Custom workflow engine configured",
+        "Test batch records prepared",
+        "Parallel processing paths defined"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a test batch record with parallel processing paths.",
+          "expected_result": "Batch record is successfully created and parallel paths are initiated.",
+          "data_to_capture": [
+            "Batch ID",
+            "Parallel path initiation timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the execution of parallel processing paths.",
+          "expected_result": "All parallel paths execute without errors and complete as expected.",
+          "data_to_capture": [
+            "Path execution status",
+            "Completion timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify exception handling for deviations in parallel paths.",
+          "expected_result": "Exceptions are handled according to predefined rules and logged appropriately.",
+          "data_to_capture": [
+            "Exception details",
+            "Handling actions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Workflow engine handles parallel processing paths correctly",
+        "Exceptions are handled as per predefined rules"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure data integrity during parallel processing",
+        "Verify no data loss or corruption"
+      ],
+      "urs_requirements": [
+        "URS-MES-004",
+        "URS-MES-008"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Workflow engine configuration",
+        "Parallel processing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Custom MES Integration with Proprietary Equipment",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify the custom MES successfully integrates with proprietary equipment using custom interfaces and protocols.",
+      "prerequisites": [
+        "Proprietary equipment is operational",
+        "Custom MES software is installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate data transfer from proprietary equipment to MES",
+          "expected_result": "Data is received by MES within 2 seconds",
+          "data_to_capture": [
+            "Data transfer latency",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer latency does not exceed 2 seconds",
+        "Data accuracy is 100%"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transfer",
+        "Audit trail captures all data transactions"
+      ],
+      "urs_requirements": [
+        "URS-MES-003",
+        "URS-MES-015"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "MES integration",
+        "Proprietary equipment protocols"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Custom Workflow Engine Handling Parallel Processing Paths",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Validate the custom workflow engine handles parallel processing paths unique to the manufacturing process.",
+      "prerequisites": [
+        "Custom workflow engine is configured",
+        "Test batch records are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate parallel processing paths in the workflow engine",
+          "expected_result": "All paths are processed correctly without errors",
+          "data_to_capture": [
+            "Processing time",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All parallel paths are processed correctly",
+        "No errors are logged"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure data integrity across all paths",
+        "Audit trail captures all workflow actions"
+      ],
+      "urs_requirements": [
+        "URS-MES-004"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Workflow engine configuration",
+        "Batch record management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify the custom APIs developed for third-party system integration function as intended.",
+      "prerequisites": [
+        "Third-party systems available",
+        "API documentation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate API call to third-party system with test data",
+          "expected_result": "Third-party system responds with expected data",
+          "data_to_capture": [
+            "Response time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "API calls return correct data within expected time"
+      ],
+      "regulatory_basis": [
+        "URS-MES-014"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission"
+      ],
+      "urs_requirements": [
+        "URS-MES-014"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API testing",
+        "System integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Real-Time Data Collection Latency Check",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Ensure real-time data collection operates with a maximum latency of 2 seconds.",
+      "prerequisites": [
+        "System operational",
+        "Data collection tools"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate data collection from multiple sources simultaneously",
+          "expected_result": "Data is collected and processed within 2 seconds",
+          "data_to_capture": [
+            "Latency time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data collected within 2 seconds"
+      ],
+      "regulatory_basis": [
+        "URS-MES-012"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure no data loss during high-speed collection"
+      ],
+      "urs_requirements": [
+        "URS-MES-012"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Custom Mobile Application Shop Floor Data Entry Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "To verify that the custom mobile application correctly captures and processes shop floor data entries in real-time.",
+      "prerequisites": [
+        "Mobile application installed",
+        "Shop floor equipment operational",
+        "Test batch record created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Enter sample data into the mobile application fields.",
+          "expected_result": "Data is captured accurately and displayed in the application interface.",
+          "data_to_capture": [
+            "Data entry time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Submit the data through the mobile application.",
+          "expected_result": "Data is successfully transmitted to the MES and appears in the batch record.",
+          "data_to_capture": [
+            "Transmission time",
+            "Data integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data entries are accurately captured and transmitted to the MES.",
+        "No data loss or corruption occurs during transmission."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be complete, consistent, and accurate.",
+        "Audit trail must capture all data entries and transmissions."
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-012"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "Data integrity validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Custom Analytics Module Real-Time Process Monitoring",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "To validate that the custom analytics module provides real-time process monitoring with accurate data analysis.",
+      "prerequisites": [
+        "Analytics module installed",
+        "Process data available",
+        "Test batch record created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a test batch process and monitor using the analytics module.",
+          "expected_result": "Real-time data is displayed accurately in the analytics module interface.",
+          "data_to_capture": [
+            "Data accuracy",
+            "Display latency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Analyze the process data using the module's proprietary algorithms.",
+          "expected_result": "Analysis results are consistent with expected process parameters.",
+          "data_to_capture": [
+            "Analysis accuracy",
+            "Algorithm performance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Real-time data is displayed with a maximum latency of 2 seconds.",
+        "Analysis results match expected process parameters."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must be complete, consistent, and accurate.",
+        "Audit trail must capture all analysis activities."
+      ],
+      "urs_requirements": [
+        "URS-MES-007"
+      ],
+      "related_tests": [
+        "OQ-011"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Analytics module testing",
+        "Process monitoring validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Custom API Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify the custom APIs developed for third-party system integration function as intended.",
+      "prerequisites": [
+        "Third-party systems available",
+        "API documentation",
+        "Test environment setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate API call to third-party system with test data.",
+          "expected_result": "API call is successful and data is correctly received by the third-party system.",
+          "data_to_capture": [
+            "API response time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "API calls are successful",
+        "Data integrity is maintained"
+      ],
+      "regulatory_basis": [
+        "URS-MES-014"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data is not altered during transmission"
+      ],
+      "urs_requirements": [
+        "URS-MES-014"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API testing",
+        "System integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Custom Mobile Application Data Entry Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Validate the functionality of the custom mobile application for shop floor data entry.",
+      "prerequisites": [
+        "Mobile application installed",
+        "Test data prepared",
+        "Shop floor environment setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Enter test data into the mobile application on the shop floor.",
+          "expected_result": "Data is accurately captured and transmitted to the MES system.",
+          "data_to_capture": [
+            "Data entry time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data is accurately captured",
+        "Data is transmitted without errors"
+      ],
+      "regulatory_basis": [
+        "URS-MES-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data is not altered during entry or transmission"
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "Data entry validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Custom API Integration Test for Third-Party Systems",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify the custom-developed APIs can successfully integrate with third-party systems as specified in URS-MES-014.",
+      "prerequisites": [
+        "Third-party system test environment available",
+        "Custom APIs deployed and configured",
+        "Test data prepared for integration scenarios"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Invoke the custom API to send a test batch record to the third-party system.",
+          "expected_result": "Third-party system receives the batch record without errors.",
+          "data_to_capture": [
+            "API response time",
+            "Data payload integrity",
+            "Error logs if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Retrieve a batch record from the third-party system using the custom API.",
+          "expected_result": "Batch record is successfully retrieved and matches the sent data.",
+          "data_to_capture": [
+            "Data consistency",
+            "Retrieval time",
+            "Error logs if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All API calls complete successfully within expected timeframes.",
+        "Data integrity is maintained during transmission.",
+        "Error handling is properly implemented for failed transactions."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must not be altered during transmission.",
+        "All transactions must be logged with timestamps."
+      ],
+      "urs_requirements": [
+        "URS-MES-014"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API development",
+        "System integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Proprietary Message Queuing for Equipment Communication",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Validate the proprietary message queuing system can handle real-time communication with manufacturing equipment as per URS-MES-015.",
+      "prerequisites": [
+        "Manufacturing equipment connected to test environment",
+        "Message queuing system configured",
+        "Test messages prepared for various scenarios"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send a test message from the MES to a manufacturing equipment unit.",
+          "expected_result": "Equipment receives the message and processes it correctly.",
+          "data_to_capture": [
+            "Message delivery time",
+            "Equipment response",
+            "Error logs if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a high-load scenario with multiple concurrent messages.",
+          "expected_result": "All messages are processed without loss or corruption.",
+          "data_to_capture": [
+            "System performance metrics",
+            "Message queue status",
+            "Error logs if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All messages are delivered within the 2-second latency requirement.",
+        "No message loss or corruption occurs during transmission.",
+        "System recovers gracefully from communication failures."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Messages must maintain integrity during transmission.",
+        "All message transactions must be logged for audit purposes."
+      ],
+      "urs_requirements": [
+        "URS-MES-015"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Real-time systems",
+        "Equipment communication protocols"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Custom Workflow Engine Parallel Processing Verification",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the custom workflow engine handles parallel processing paths unique to the manufacturing process.",
+      "prerequisites": [
+        "System installation completed",
+        "Test batch records created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a batch record with parallel processing paths.",
+          "expected_result": "System processes all parallel paths without errors.",
+          "data_to_capture": [
+            "Processing time",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All parallel processing paths are executed correctly",
+        "No errors in the system logs"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all data entries are accurate and complete"
+      ],
+      "urs_requirements": [
+        "URS-MES-004"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "MES System Knowledge",
+        "Batch Processing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Custom APIs for Third-Party System Integration Validation",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Validate the custom APIs for seamless integration with third-party systems.",
+      "prerequisites": [
+        "API endpoints configured",
+        "Third-party system available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send a test data request via the custom API to the third-party system.",
+          "expected_result": "Third-party system receives and processes the request correctly.",
+          "data_to_capture": [
+            "Response time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data is accurately exchanged between systems",
+        "Response time meets performance requirements"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission"
+      ],
+      "urs_requirements": [
+        "URS-MES-014"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API Integration",
+        "System Architecture"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Custom Mobile Application Shop Floor Data Entry Verification",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the custom mobile application correctly captures and processes shop floor data entry in real-time.",
+      "prerequisites": [
+        "Mobile application installed on device",
+        "Shop floor data entry forms available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Enter sample data into the mobile application form.",
+          "expected_result": "Data is captured without errors and displayed correctly.",
+          "data_to_capture": [
+            "Data entered",
+            "Timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Submit the data through the mobile application.",
+          "expected_result": "Data is successfully transmitted to the MES and stored in the database.",
+          "data_to_capture": [
+            "Transmission status",
+            "Database entry"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data is accurately captured and transmitted",
+        "No data loss or corruption"
+      ],
+      "regulatory_basis": [
+        "URS-MES-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission",
+        "Verify data accuracy"
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-020"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "Data integrity verification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Custom APIs Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify the custom APIs correctly integrate with third-party systems and handle data exchange.",
+      "prerequisites": [
+        "Third-party systems available",
+        "Custom APIs configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send a test data request from the MES to a third-party system using the custom API.",
+          "expected_result": "Third-party system receives the request and processes it correctly.",
+          "data_to_capture": [
+            "Request status",
+            "Response data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Receive a response from the third-party system and verify data integrity.",
+          "expected_result": "Response data is accurately received and processed by the MES.",
+          "data_to_capture": [
+            "Response status",
+            "Data integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data exchange is accurate and complete",
+        "No data loss or corruption"
+      ],
+      "regulatory_basis": [
+        "URS-MES-014"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during exchange",
+        "Verify data accuracy"
+      ],
+      "urs_requirements": [
+        "URS-MES-014"
+      ],
+      "related_tests": [
+        "OQ-019"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API testing",
+        "Integration testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-021",
+      "test_name": "Custom Workflow Engine Parallel Processing Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the custom workflow engine correctly handles parallel processing paths unique to the manufacturing process.",
+      "prerequisites": [
+        "System installation completed",
+        "Test batch records created",
+        "User credentials with appropriate permissions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate two parallel batch processing paths in the workflow engine.",
+          "expected_result": "System successfully creates and manages both parallel processing paths without conflicts.",
+          "data_to_capture": [
+            "Timestamp of process initiation",
+            "Path execution status",
+            "System resource utilization"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Introduce a deviation in one processing path while the other continues.",
+          "expected_result": "System correctly handles the exception without affecting the parallel path.",
+          "data_to_capture": [
+            "Deviation handling time",
+            "Parallel path completion status",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All parallel paths complete as designed",
+        "Exceptions are handled without cross-path interference",
+        "System maintains all required audit trails"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Complete audit trail of parallel path execution",
+        "No data corruption between paths"
+      ],
+      "urs_requirements": [
+        "URS-MES-004"
+      ],
+      "related_tests": [
+        "OQ-015",
+        "OQ-018"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "MES workflow configuration",
+        "Pharmaceutical manufacturing processes"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-022",
+      "test_name": "Real-time Data Collection Latency Verification",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Validate that real-time data collection meets the 2-second maximum latency requirement.",
+      "prerequisites": [
+        "System fully operational",
+        "Connected to test equipment",
+        "Performance monitoring tools installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate process data generation from 10 equipment units simultaneously.",
+          "expected_result": "System captures all data points within 2 seconds of generation.",
+          "data_to_capture": [
+            "Data generation timestamp",
+            "System receipt timestamp",
+            "Network latency measurements"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Increase load to 100 concurrent data streams and measure latency.",
+          "expected_result": "System maintains sub-2-second latency under maximum load.",
+          "data_to_capture": [
+            "Peak load timestamp",
+            "Worst-case latency measurement",
+            "System resource metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "100% of data points collected within 2 seconds",
+        "No data loss during peak loads",
+        "System remains stable under stress"
+      ],
+      "regulatory_basis": [
+        "FDA Process Validation Guidance",
+        "ISPE GAMP 5"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Complete data capture verification",
+        "Timestamp accuracy validation"
+      ],
+      "urs_requirements": [
+        "URS-MES-012"
+      ],
+      "related_tests": [
+        "OQ-011",
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "Real-time systems engineering"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-023",
+      "test_name": "Custom Mobile Application Shop Floor Data Entry Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the custom mobile application correctly captures and transmits shop floor data entry to the MES system.",
+      "prerequisites": [
+        "Mobile application installed on device",
+        "MES system operational",
+        "Test batch record created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Launch the custom mobile application on the shop floor device.",
+          "expected_result": "Application launches successfully and displays the login screen.",
+          "data_to_capture": [
+            "Application version",
+            "Device ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Log in to the application using valid credentials.",
+          "expected_result": "User successfully logs in and is directed to the main menu.",
+          "data_to_capture": [
+            "User ID",
+            "Login timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Enter test data into the batch record fields.",
+          "expected_result": "Data is entered correctly and displayed in the application.",
+          "data_to_capture": [
+            "Batch ID",
+            "Data entered"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Submit the data to the MES system.",
+          "expected_result": "Data is successfully transmitted and appears in the MES system.",
+          "data_to_capture": [
+            "Transmission timestamp",
+            "MES confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data entered is accurately captured and transmitted to the MES system.",
+        "No data loss or corruption during transmission."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be complete, consistent, and accurate.",
+        "Audit trail must capture all data entry actions."
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-012"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "MES system knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-024",
+      "test_name": "Custom Analytics Module Real-Time Process Monitoring",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Validate the custom analytics module's ability to monitor and analyze process data in real-time.",
+      "prerequisites": [
+        "Analytics module installed",
+        "MES system operational",
+        "Test process data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Start the manufacturing process and generate real-time process data.",
+          "expected_result": "Process data is generated and available for monitoring.",
+          "data_to_capture": [
+            "Process ID",
+            "Data generation timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Launch the custom analytics module.",
+          "expected_result": "Module launches successfully and displays the monitoring dashboard.",
+          "data_to_capture": [
+            "Module version",
+            "Dashboard status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor the real-time process data using the analytics module.",
+          "expected_result": "Module correctly displays and analyzes the process data.",
+          "data_to_capture": [
+            "Process parameters",
+            "Analysis results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate a real-time process monitoring report.",
+          "expected_result": "Report is generated successfully and contains accurate analysis.",
+          "data_to_capture": [
+            "Report timestamp",
+            "Report content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Real-time process data is accurately monitored and analyzed.",
+        "Reports are generated within the specified time frame."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must be complete, consistent, and accurate.",
+        "Audit trail must capture all monitoring actions."
+      ],
+      "urs_requirements": [
+        "URS-MES-007"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Analytics module testing",
+        "Process monitoring knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-025",
+      "test_name": "Custom Workflow Engine Parallel Processing Verification",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the custom workflow engine's ability to handle parallel processing paths unique to the manufacturing process.",
+      "prerequisites": [
+        "System installation completed",
+        "Test batch records prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate multiple parallel processing paths in the workflow engine.",
+          "expected_result": "All parallel paths are processed without errors or conflicts.",
+          "data_to_capture": [
+            "Processing time",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All parallel paths complete successfully",
+        "No errors reported in logs"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all data is accurately captured and stored"
+      ],
+      "urs_requirements": [
+        "URS-MES-004"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "MES System Knowledge",
+        "Workflow Engineering"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-026",
+      "test_name": "Custom API Integration with Third-Party Systems",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Validate the custom APIs developed for third-party system integration.",
+      "prerequisites": [
+        "Third-party systems available",
+        "API documentation reviewed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute API calls to integrate with a third-party system.",
+          "expected_result": "Data is successfully exchanged between systems without errors.",
+          "data_to_capture": [
+            "API response time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data exchange is accurate and complete",
+        "API response time within acceptable limits"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transfer"
+      ],
+      "urs_requirements": [
+        "URS-MES-014"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API Development",
+        "System Integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-027",
+      "test_name": "Custom Mobile Application Data Entry Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify that the custom mobile application correctly captures and processes shop floor data entry as per URS-MES-006.",
+      "prerequisites": [
+        "Mobile application installed",
+        "Test batch record created",
+        "Shop floor user credentials"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the mobile application using shop floor user credentials.",
+          "expected_result": "User successfully logs in and accesses the data entry interface.",
+          "data_to_capture": [
+            "Login status",
+            "User role"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Enter test data into the mobile application for a batch record.",
+          "expected_result": "Data is correctly entered and saved in the system.",
+          "data_to_capture": [
+            "Data entry accuracy",
+            "Save status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the entered data in the MES system.",
+          "expected_result": "Data matches the input from the mobile application.",
+          "data_to_capture": [
+            "Data consistency",
+            "System verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data entries must match the input from the mobile application.",
+        "No data loss or corruption during transfer."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be accurate and complete.",
+        "Audit trail must capture all data entries."
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-028"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "Data integrity validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-028",
+      "test_name": "Custom Analytics Module Process Monitoring",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Validate that the custom analytics module provides real-time process monitoring as per URS-MES-007.",
+      "prerequisites": [
+        "Analytics module installed",
+        "Test batch process running",
+        "Real-time data feed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Start a test batch process and ensure real-time data feed is active.",
+          "expected_result": "Batch process starts successfully and data feed is active.",
+          "data_to_capture": [
+            "Batch start status",
+            "Data feed status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the process using the custom analytics module.",
+          "expected_result": "Module displays real-time process data accurately.",
+          "data_to_capture": [
+            "Data accuracy",
+            "Display latency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the analytics module's response to process deviations.",
+          "expected_result": "Module correctly identifies and alerts on deviations.",
+          "data_to_capture": [
+            "Deviation detection",
+            "Alert accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Real-time data must be displayed with maximum 2-second latency.",
+        "All process deviations must be correctly identified and alerted."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must be accurate and timely.",
+        "Audit trail must capture all process monitoring events."
+      ],
+      "urs_requirements": [
+        "URS-MES-007"
+      ],
+      "related_tests": [
+        "OQ-027"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Analytics module testing",
+        "Process monitoring validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-029",
+      "test_name": "Custom Mobile Application Shop Floor Data Entry Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the custom mobile application correctly captures and processes shop floor data entry in real-time.",
+      "prerequisites": [
+        "Mobile application installed",
+        "Shop floor equipment connected",
+        "Test batch record created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Enter test data into the mobile application.",
+          "expected_result": "Data is captured and displayed correctly in the application interface.",
+          "data_to_capture": [
+            "Data entry timestamp",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Submit the data to the MES.",
+          "expected_result": "Data is successfully transmitted and stored in the MES database.",
+          "data_to_capture": [
+            "Transmission latency",
+            "Data integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All data entries are accurately captured and stored.",
+        "Data transmission latency is within 2 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission.",
+        "Verify data accuracy post-submission."
+      ],
+      "urs_requirements": [
+        "URS-MES-006"
+      ],
+      "related_tests": [
+        "OQ-012",
+        "OQ-018"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Mobile application testing",
+        "MES integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-030",
+      "test_name": "Custom Reporting Module Performance Validation",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Validate the performance of the custom reporting module for complex queries.",
+      "prerequisites": [
+        "Reporting module installed",
+        "Test data populated in MES",
+        "Complex query defined"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute a complex query using the reporting module.",
+          "expected_result": "Query execution starts immediately.",
+          "data_to_capture": [
+            "Query start time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the query execution.",
+          "expected_result": "Query completes within 10 minutes.",
+          "data_to_capture": [
+            "Query completion time",
+            "Result accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Complex queries complete within 10 minutes.",
+        "Query results are accurate and complete."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during query execution.",
+        "Verify result accuracy post-execution."
+      ],
+      "urs_requirements": [
+        "URS-MES-013"
+      ],
+      "related_tests": [
+        "OQ-013",
+        "OQ-025"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "MES reporting"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 30,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020",
+      "OQ-021",
+      "OQ-022",
+      "OQ-023",
+      "OQ-024",
+      "OQ-025",
+      "OQ-026",
+      "OQ-027",
+      "OQ-028",
+      "OQ-029",
+      "OQ-030"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 960,
+  "generation_timestamp": "2025-08-19T19:02:29.108555+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T19:02:30.268432+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T18:55:05.900599+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}
