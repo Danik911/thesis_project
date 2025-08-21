@@ -2,9 +2,9 @@
 
 ## Overview
 
-This dataset contains 15 User Requirements Specifications (URS) documents designed for k-fold cross-validation testing of LLM-driven pharmaceutical test generation systems. The dataset supports GAMP-5 compliance validation and provides baseline metrics for evaluating automated test generation performance.
+This dataset contains 30 User Requirements Specifications (URS) documents designed for k-fold cross-validation testing of LLM-driven pharmaceutical test generation systems. The dataset supports GAMP-5 compliance validation and provides baseline metrics for evaluating automated test generation performance.
 
-**Dataset Version**: 1.0  
+**Dataset Version**: 1.1  
 **Creation Date**: August 2025  
 **GAMP-5 Compliance**: Full compliance with pharmaceutical validation standards  
 **Intended Use**: Cross-validation testing of automated OQ test generation systems  
@@ -15,16 +15,17 @@ This dataset contains 15 User Requirements Specifications (URS) documents design
 
 | GAMP Category | Count | Complexity Levels | Domains Covered |
 |---------------|-------|-------------------|-----------------|
-| **Category 3** (Standard Software) | 5 | Low | Environmental Control, Warehouse Management, Document Management, Laboratory Operations |
-| **Category 4** (Configured Products) | 5 | Medium, Medium-High, High | Quality Control, Enterprise Management, Quality Assurance, Supply Chain, Process Control |
-| **Category 5** (Custom Applications) | 5 | High, Very High | Manufacturing Operations, Process Analytics, Regulatory Affairs, Supply Chain Analytics |
-| **Ambiguous** (3/4 or 4/5) | 2 | Medium, High | Analytical Chemistry, Clinical Operations |
-| **Total** | **17** | **Varied** | **12 Domains** |
+| **Category 3** (Standard Software) | 7 | Low | Environmental Control, Warehouse Management, Document Management, Laboratory Operations, Quality Analytics, Quality Management |
+| **Category 4** (Configured Products) | 9 | Medium, Medium-High, High | Quality Control, Enterprise Management, Quality Assurance, Supply Chain, Process Control, Stability Management, Serialization, Clinical Operations |
+| **Category 5** (Custom Applications) | 7 | High, Very High | Manufacturing Operations, Process Analytics, Regulatory Affairs, Supply Chain Analytics, R&D/Computational Chemistry |
+| **Ambiguous** (3/4 or 4/5) | 6 | Medium, High | Analytical Chemistry, Clinical Operations, Precision Medicine / Cell & Gene Therapy |
+| **Special Cases** (Migration/Legacy) | 1 | High | Enterprise IT / Quality Systems |
+| **Total** | **30** | **Varied** | **15+ Domains** |
 
 ### Document Sources
 
 - **5 documents**: Extracted and enhanced from existing test data (`main/tests/test_data/gamp5_test_data/testing_data.md`)
-- **12 documents**: Newly authored synthetic URS documents with pharmaceutical domain expertise
+- **25 documents**: Newly authored synthetic URS documents with pharmaceutical domain expertise
 - **All documents**: Anonymized, consistent formatting, complete requirement coverage
 
 ## Directory Structure
@@ -32,33 +33,56 @@ This dataset contains 15 User Requirements Specifications (URS) documents design
 ```
 datasets/
 ├── DATASET_README.md                 # This file
-├── urs_corpus/                       # URS document collection
-│   ├── category_3/                   # GAMP Category 3 documents
+├── urs_corpus/                       # Original URS document collection (n=17)
+│   ├── category_3/
 │   │   ├── URS-001.md               # Environmental Monitoring System
 │   │   ├── URS-006.md               # Standard Inventory Management
 │   │   ├── URS-007.md               # Basic Temperature Monitoring
 │   │   ├── URS-008.md               # Standard Document Control
 │   │   └── URS-009.md               # Basic Laboratory Equipment Integration
-│   ├── category_4/                   # GAMP Category 4 documents
+│   ├── category_4/
 │   │   ├── URS-002.md               # LIMS
 │   │   ├── URS-010.md               # Configured ERP System
 │   │   ├── URS-011.md               # Configured Quality Management
 │   │   ├── URS-012.md               # Configured Warehouse Management
 │   │   └── URS-013.md               # Configured Process Control System
-│   ├── category_5/                   # GAMP Category 5 documents
+│   ├── category_5/
 │   │   ├── URS-003.md               # Manufacturing Execution System
 │   │   ├── URS-014.md               # Custom Batch Release System
 │   │   ├── URS-015.md               # Custom PAT System
 │   │   ├── URS-016.md               # Custom Regulatory Submission Platform
 │   │   └── URS-017.md               # Custom Supply Chain Optimization
-│   └── ambiguous/                    # Ambiguous category documents
+│   └── ambiguous/
 │       ├── URS-004.md               # Chromatography Data System (3/4)
 │       └── URS-005.md               # Clinical Trial Management System (4/5)
-├── metrics/                          # Complexity calculation tools
-│   └── complexity_calculator.py      # Metrics calculation module
-├── baselines/                        # Manual baseline protocols
+├── urs_corpus_v2/                   # Expanded corpus (n=8)
+│   ├── category_3/
+│   │   ├── URS-020.md               # SPC Dashboard (QA Labs)
+│   │   └── URS-021.md               # Document Acknowledgment Tracker
+│   ├── category_4/
+│   │   ├── URS-022.md               # Configured Deviation Management
+│   │   ├── URS-023.md               # Configured Stability Study Manager
+│   │   └── URS-024.md               # Configured Serialization Aggregation
+│   ├── category_5/
+│   │   └── URS-025.md               # Custom Batch Release Orchestrator
+│   └── ambiguous/
+│       ├── URS-018.md               # Chromatography Sample Scheduling (3/4)
+│       └── URS-019.md               # eTMF Index Harmonization (4/5)
+├── corpus_3/                        # Latest additions (n=5)
+│   ├── category_4/
+│   │   └── URS-027.md               # Clinical Trial Management System (CTMS)
+│   ├── category_5/
+│   │   └── URS-029.md               # Novel Drug Discovery AI System
+│   ├── ambiguous/
+│   │   ├── URS-026.md               # Pharmaceutical Data Analytics Platform (3/4)
+│   │   └── URS-028.md               # Personalized Medicine Orchestration (4/5)
+│   └── special_cases/
+│       └── URS-030.md               # Legacy System Migration (Mainframe→Cloud)
+├── metrics/
+│   └── complexity_calculator.py     # Metrics calculation module
+├── baselines/
 │   └── timing_protocol.md           # Manual timing methodology
-└── cross_validation/                 # Cross-validation configuration
+└── cross_validation/
     └── fold_assignments.json        # 5-fold stratified assignments
 ```
 
@@ -220,9 +244,9 @@ The dataset uses stratified k-fold cross-validation with the following character
 
 **Fold Configuration**:
 - **5 folds** total
-- **12 training documents** per fold (80%)
-- **3 test documents** per fold (20%)
-- **Balanced representation** of all GAMP categories
+- **24 training documents** per fold (80%)
+- **6 test documents** per fold (20%)
+- **Balanced representation** of all GAMP categories and special cases
 
 **Validation Checks**:
 - No document appears in multiple test sets
@@ -410,7 +434,7 @@ When using this dataset in research or publications, please cite:
 
 ```
 URS Cross-Validation Dataset for Pharmaceutical Test Generation Systems
-Version 1.0, August 2025
+Version 1.1, August 2025
 GAMP-5 Compliant User Requirements Specifications for LLM-Driven Test Automation
 ```
 
