@@ -48,13 +48,18 @@ main/logs/traces/
 ### 3. UI-Exported Datasets
 ```
 screenshots/Dataset_*.csv    # Phoenix UI exports
+```
+
+### 4. OpenRouter API Analytics
+```
+openrouter_activity_*.csv    # API call logs with costs, tokens, timing
 THESIS_EVIDENCE_PACKAGE/     # Historical traces
 └── phoenix_traces/*.jsonl
 ```
 
-## 🔧 Analysis Protocol
+## 🔧 Enhanced Analysis Protocol
 
-### Phase 1: Data Collection
+### Phase 1: Data Collection & Deep Metrics Extraction
 ```bash
 # Collect all CV results
 cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main
@@ -74,9 +79,9 @@ if exist %LATEST_CV%\results.json (
 )
 ```
 
-### Phase 2: Statistical Analysis
+### Phase 2: Enhanced Statistical Analysis
 
-#### A. Categorization Accuracy
+#### A. Advanced Categorization Metrics
 ```python
 analysis = {
     "total_documents": 17,
@@ -91,12 +96,15 @@ analysis = {
         "precision_per_category": {},
         "recall_per_category": {},
         "f1_score": 0.0,
-        "confidence_correlation": 0.0
+        "confidence_correlation": 0.0,
+        "matthews_correlation_coefficient": 0.0,
+        "cohen_kappa": 0.0,
+        "weighted_kappa": 0.0
     }
 }
 ```
 
-#### B. Performance Metrics
+#### B. Enhanced Performance & Cost Metrics
 ```python
 performance = {
     "execution_times": {
@@ -105,19 +113,29 @@ performance = {
         "std_dev": 0.0,
         "min": 0.0,
         "max": 0.0,
-        "per_category": {}
+        "p50": 0.0, "p75": 0.0, "p90": 0.0, "p95": 0.0, "p99": 0.0,
+        "per_category": {},
+        "bootstrap_ci_95": []
     },
     "test_generation": {
         "total_tests": 0,
         "avg_per_document": 0.0,
         "avg_per_category": {},
-        "quality_scores": []
+        "quality_scores": [],
+        "complexity_metrics": {
+            "avg_steps_per_test": 0.0,
+            "avg_data_capture_points": 0.0,
+            "avg_decision_points": 0.0
+        }
     },
     "api_usage": {
         "total_calls": 0,
         "total_tokens": 0,
         "estimated_cost": 0.0,
-        "cost_per_document": 0.0
+        "cost_per_document": 0.0,
+        "cost_per_1k_tokens": 0.0,
+        "provider_distribution": {},
+        "token_efficiency_ratio": 0.0
     }
 }
 ```
@@ -489,10 +507,25 @@ except json.JSONDecodeError:
 "
 ```
 
-### Deep Analysis
+### Deep Analysis with Enhanced Scripts
 ```bash
-# Run comprehensive analysis
-uv run python scripts/analyze_cv_results.py --latest --verbose --export-report
+# Run comprehensive analysis using new enhanced scripts
+cd C:\Users\anteb\Desktop\Courses\Projects\thesis_project\THESIS_EVIDENCE_PACKAGE\01_TEST_EXECUTION_EVIDENCE\scripts
+
+# 1. Analyze OpenRouter API calls
+python analyze_openrouter_api.py
+
+# 2. Extract test metrics
+python extract_test_metrics.py
+
+# 3. Analyze Phoenix traces
+python trace_deep_analysis.py
+
+# 4. Perform statistical validation
+python statistical_validation.py
+
+# Generate combined report
+echo All analysis complete - check JSON reports
 ```
 
 ## ⚠️ Common Analysis Pitfalls

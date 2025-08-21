@@ -1,0 +1,263 @@
+{
+  "validation_metadata": {
+    "validation_date": "2025-08-20",
+    "documents_analyzed": 17,
+    "test_suites_reviewed": 17,
+    "total_tests_generated": 102,
+    "classification_accuracy": 88.2,
+    "validation_method": "evidence-based verification"
+  },
+  "compliance_scores": {
+    "gamp5": {
+      "claimed_score": 100.0,
+      "claimed_criteria_met": "10/10",
+      "verified_score": 60.0,
+      "verified_criteria_met": "6/10",
+      "status": "FAIL",
+      "verified_criteria": {
+        "category_assignment": true,
+        "test_generation": true,
+        "structured_testing": true,
+        "risk_based_approach": true,
+        "requirements_traceability": true,
+        "documentation_format": true,
+        "lifecycle_management": false,
+        "configuration_management": false,
+        "validation_master_plan": false,
+        "supplier_assessment": false
+      },
+      "critical_gaps": [
+        "No lifecycle management documentation",
+        "Missing configuration control",
+        "No validation master plan",
+        "No supplier qualification"
+      ]
+    },
+    "alcoa_plus": {
+      "claimed_score": 97.8,
+      "verified_score": 40.0,
+      "status": "FAIL",
+      "principle_scores": {
+        "attributable": {
+          "score": 5,
+          "max": 10,
+          "evidence": "System-level attribution only, no user tracking"
+        },
+        "legible": {
+          "score": 8,
+          "max": 10,
+          "evidence": "JSON format is machine-readable"
+        },
+        "contemporaneous": {
+          "score": 9,
+          "max": 10,
+          "evidence": "Timestamps present and accurate"
+        },
+        "original": {
+          "score": 2,
+          "max": 10,
+          "evidence": "No source data preservation"
+        },
+        "accurate": {
+          "score": 5,
+          "max": 10,
+          "evidence": "88.2% accuracy with 2 misclassifications"
+        },
+        "complete": {
+          "score": 3,
+          "max": 10,
+          "evidence": "Missing console outputs and incomplete traces"
+        },
+        "consistent": {
+          "score": 6,
+          "max": 10,
+          "evidence": "Format consistent but results vary"
+        },
+        "enduring": {
+          "score": 0,
+          "max": 10,
+          "evidence": "No long-term storage strategy documented"
+        },
+        "available": {
+          "score": 7,
+          "max": 10,
+          "evidence": "Data accessible but some traces unreadable"
+        }
+      },
+      "average_score": 4.5,
+      "critical_failures": [
+        "Original data not preserved",
+        "Incomplete data capture",
+        "No enduring storage evidence"
+      ]
+    },
+    "owasp_security": {
+      "claimed_effectiveness": 90.97,
+      "verified_score": 30.0,
+      "status": "FAIL",
+      "security_controls": {
+        "input_validation": {
+          "present": true,
+          "functional": false,
+          "evidence": "Basic validation present but not tested"
+        },
+        "prompt_injection_prevention": {
+          "present": false,
+          "functional": false,
+          "evidence": "No injection testing found"
+        },
+        "access_control": {
+          "present": false,
+          "functional": false,
+          "evidence": "No authentication/authorization"
+        },
+        "data_encryption": {
+          "present": false,
+          "functional": false,
+          "evidence": "No encryption evidence"
+        },
+        "security_logging": {
+          "present": false,
+          "functional": false,
+          "evidence": "No dedicated security logs"
+        },
+        "rate_limiting": {
+          "present": false,
+          "functional": false,
+          "evidence": "No rate limiting implementation"
+        },
+        "vulnerability_testing": {
+          "present": false,
+          "functional": false,
+          "evidence": "No security testing results"
+        }
+      },
+      "threat_assessment": {
+        "placeholder_values": true,
+        "actual_testing": false,
+        "threat_level": "low (hardcoded)"
+      }
+    },
+    "cfr_21_part_11": {
+      "claimed_compliance": 100.0,
+      "verified_score": 25.0,
+      "status": "FAIL",
+      "requirements": {
+        "electronic_signatures": {
+          "required": true,
+          "implemented": false,
+          "score": 0,
+          "evidence": "No signature implementation found"
+        },
+        "audit_trail": {
+          "required": true,
+          "implemented": "partial",
+          "score": 3,
+          "evidence": "Basic timestamps only, no user actions"
+        },
+        "access_controls": {
+          "required": true,
+          "implemented": false,
+          "score": 0,
+          "evidence": "No user management or permissions"
+        },
+        "data_integrity_controls": {
+          "required": true,
+          "implemented": "partial",
+          "score": 2,
+          "evidence": "JSON structure only, no verification"
+        },
+        "system_validation": {
+          "required": true,
+          "implemented": false,
+          "score": 0,
+          "evidence": "No IQ/OQ/PQ documentation"
+        },
+        "change_control": {
+          "required": true,
+          "implemented": false,
+          "score": 0,
+          "evidence": "No version control evidence"
+        },
+        "backup_recovery": {
+          "required": true,
+          "implemented": false,
+          "score": 0,
+          "evidence": "No backup strategy documented"
+        },
+        "record_retention": {
+          "required": true,
+          "implemented": "partial",
+          "score": 2.5,
+          "evidence": "Field present but not implemented"
+        }
+      },
+      "audit_trail_analysis": {
+        "claimed_events": 2537,
+        "verified_events": "unknown",
+        "event_types": "basic workflow only",
+        "user_attribution": false
+      }
+    }
+  },
+  "overall_compliance": {
+    "average_compliance_percentage": 38.75,
+    "gxp_ready": false,
+    "production_ready": false,
+    "validation_status": "NOT_VALIDATED",
+    "regulatory_approval_possible": false
+  },
+  "evidence_quality": {
+    "test_suites_complete": true,
+    "trace_files_accessible": "partial",
+    "console_outputs_present": false,
+    "documentation_complete": false,
+    "hardcoded_compliance_flags": true
+  },
+  "statistical_validation": {
+    "classification_performance": {
+      "accuracy": 88.23529411764706,
+      "cohen_kappa": 0.8172043010752688,
+      "mcc_score": 0.8312094145936335,
+      "confidence_interval_95": [70.6, 100.0]
+    },
+    "confusion_matrix": {
+      "category_3": {"correct": 4, "misclassified_as_4": 1},
+      "category_4": {"correct": 7, "misclassified": 0},
+      "category_5": {"correct": 4, "misclassified_as_4": 1}
+    },
+    "execution_metrics": {
+      "total_documents": 17,
+      "successful": 17,
+      "failed": 0,
+      "category_time_correlation": 0.863
+    }
+  },
+  "risk_assessment": {
+    "compliance_risk": "CRITICAL",
+    "data_integrity_risk": "HIGH",
+    "security_risk": "HIGH",
+    "validation_risk": "CRITICAL",
+    "business_impact": "System cannot be used for GxP activities"
+  },
+  "recommendations": {
+    "immediate": [
+      "Remove false compliance claims",
+      "Implement proper audit trail",
+      "Add user authentication",
+      "Create validation documentation"
+    ],
+    "long_term": [
+      "Implement electronic signatures",
+      "Develop security framework",
+      "Create data integrity monitoring",
+      "Establish change control"
+    ]
+  },
+  "verdict": {
+    "overall_status": "NON_COMPLIANT",
+    "can_be_remediated": true,
+    "estimated_effort": "6-12 months",
+    "recommendation": "Major architectural changes required before GxP use"
+  }
+}

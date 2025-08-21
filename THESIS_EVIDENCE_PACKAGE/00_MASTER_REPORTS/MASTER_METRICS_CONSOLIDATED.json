@@ -1,0 +1,414 @@
+{
+  "metadata": {
+    "generation_date": "2025-08-20",
+    "analysis_type": "Cross-Validation Master Consolidation",
+    "documents_analyzed": 17,
+    "total_tests_generated": 330,
+    "total_api_calls": 686,
+    "total_trace_spans": 517,
+    "total_execution_time_hours": 15.9,
+    "overall_system_grade": "D+",
+    "production_ready": false,
+    "thesis_validation": "partial"
+  },
+  
+  "performance_metrics": {
+    "accuracy": {
+      "overall_accuracy": 0.882,
+      "correct_classifications": 15,
+      "total_documents": 17,
+      "by_category": {
+        "category_3": {
+          "accuracy": 0.80,
+          "correct": 4,
+          "total": 5
+        },
+        "category_4": {
+          "accuracy": 1.00,
+          "correct": 7,
+          "total": 7
+        },
+        "category_5": {
+          "accuracy": 0.60,
+          "correct": 3,
+          "total": 5
+        }
+      }
+    },
+    "execution_time": {
+      "total_minutes": 952.7,
+      "total_hours": 15.9,
+      "average_minutes_per_document": 56.0,
+      "target_minutes_per_document": 5,
+      "overrun_factor": 11.2,
+      "bottlenecks": {
+        "oq_generator_max_ms": 104172,
+        "research_agent_avg_ms": 28300,
+        "llm_call_avg_ms": 15600,
+        "chromadb_avg_ms": 384
+      }
+    },
+    "api_usage": {
+      "total_calls": 686,
+      "calls_per_document": 40.4,
+      "target_calls_per_document": 4,
+      "overrun_factor": 10.1,
+      "by_provider": {
+        "deepinfra": {
+          "calls": 375,
+          "percentage": 54.7,
+          "avg_duration_ms": 10900
+        },
+        "nebius": {
+          "calls": 180,
+          "percentage": 26.2,
+          "avg_duration_ms": 19900
+        },
+        "novita": {
+          "calls": 131,
+          "percentage": 19.1,
+          "avg_duration_ms": 32200
+        }
+      }
+    },
+    "token_usage": {
+      "total_tokens": 1078644,
+      "prompt_tokens": 633509,
+      "completion_tokens": 445135,
+      "tokens_per_document": 63450,
+      "target_tokens_per_document": 1000,
+      "overrun_factor": 63.45,
+      "average_prompt_size": 923,
+      "average_completion_size": 649
+    }
+  },
+  
+  "quality_metrics": {
+    "overall_quality_score": 0.118,
+    "test_generation": {
+      "total_tests": 330,
+      "tests_per_document": 19.4,
+      "target_tests_per_document": 10,
+      "achievement_rate": 1.94
+    },
+    "test_complexity": {
+      "average_steps_per_test": 2.6,
+      "target_steps_per_test": 6,
+      "achievement_rate": 0.43,
+      "total_test_steps": 865
+    },
+    "test_clarity": {
+      "clarity_score": 0.118,
+      "completeness_score": 1.00,
+      "traceability_score": 1.00,
+      "uniqueness_score": 0.40,
+      "duplicate_test_names": 199,
+      "duplicate_percentage": 0.60
+    },
+    "verification_methods": {
+      "visual_inspection_count": 330,
+      "visual_inspection_percentage": 1.00,
+      "measurement_comparison_count": 0,
+      "data_validation_count": 0,
+      "automated_check_count": 0
+    },
+    "acceptance_criteria": {
+      "specific_criteria_count": 0,
+      "generic_criteria_count": 330,
+      "generic_percentage": 1.00
+    },
+    "risk_distribution": {
+      "critical": {
+        "count": 58,
+        "percentage": 0.176
+      },
+      "high": {
+        "count": 135,
+        "percentage": 0.409
+      },
+      "medium": {
+        "count": 115,
+        "percentage": 0.348
+      },
+      "low": {
+        "count": 22,
+        "percentage": 0.067
+      }
+    }
+  },
+  
+  "compliance_metrics": {
+    "overall_compliance_score": 0.3875,
+    "gamp5": {
+      "claimed_score": 1.00,
+      "actual_score": 0.60,
+      "verified_criteria": 6,
+      "total_criteria": 10,
+      "gaps": [
+        "life_cycle_management",
+        "configuration_management",
+        "validation_master_plan",
+        "supplier_assessment"
+      ]
+    },
+    "alcoa_plus": {
+      "claimed_score": 0.978,
+      "actual_score": 0.40,
+      "principles": {
+        "attributable": 0.50,
+        "legible": 0.80,
+        "contemporaneous": 0.90,
+        "original": 0.20,
+        "accurate": 0.50,
+        "complete": 0.30,
+        "consistent": 0.60,
+        "enduring": 0.00,
+        "available": 0.70
+      }
+    },
+    "owasp_security": {
+      "claimed_score": 0.9097,
+      "actual_score": 0.30,
+      "verified_controls": 3,
+      "total_controls": 10,
+      "missing": [
+        "prompt_injection_testing",
+        "access_control",
+        "data_encryption",
+        "security_logging",
+        "rate_limiting",
+        "input_sanitization",
+        "vulnerability_assessment"
+      ]
+    },
+    "cfr_part_11": {
+      "claimed_score": 1.00,
+      "actual_score": 0.25,
+      "electronic_signatures": false,
+      "audit_trail": "minimal",
+      "access_controls": false,
+      "data_integrity_controls": "basic",
+      "system_validation": false,
+      "change_control": false,
+      "backup_recovery": false,
+      "record_retention": "field_only"
+    }
+  },
+  
+  "statistical_metrics": {
+    "classification": {
+      "accuracy": 0.882,
+      "cohens_kappa": 0.817,
+      "weighted_kappa": 0.850,
+      "matthews_correlation_coefficient": 0.831,
+      "percentage_agreement": 0.8824
+    },
+    "confidence_intervals_95": {
+      "accuracy": [0.706, 1.000],
+      "kappa": [0.535, 1.000],
+      "mcc": [0.617, 1.000]
+    },
+    "hypothesis_tests": {
+      "vs_random_baseline": {
+        "null_hypothesis": "accuracy = 0.333",
+        "p_value": 4.48e-6,
+        "significance": "highly_significant",
+        "decision": "reject_null"
+      },
+      "meets_target": {
+        "target": 0.80,
+        "observed": 0.882,
+        "achieved": true
+      },
+      "independence_test": {
+        "chi_square": 24.18,
+        "p_value": 7.36e-5,
+        "significance": "highly_significant",
+        "interpretation": "systematic_error_pattern"
+      }
+    },
+    "correlations": {
+      "category_vs_time": {
+        "pearson_r": 0.863,
+        "p_value": 8.20e-6,
+        "significance": "highly_significant"
+      },
+      "category_vs_cost": {
+        "pearson_r": 0.802,
+        "p_value": 1.06e-4,
+        "significance": "highly_significant"
+      },
+      "time_vs_cost": {
+        "pearson_r": 0.992,
+        "p_value": 9.10e-15,
+        "significance": "highly_significant"
+      },
+      "category_vs_accuracy": {
+        "pearson_r": 0.000,
+        "p_value": 1.000,
+        "significance": "not_significant"
+      }
+    },
+    "confusion_matrix": [
+      [4, 1, 0],
+      [0, 7, 0],
+      [0, 1, 4]
+    ],
+    "per_class_metrics": {
+      "category_3": {
+        "precision": 1.00,
+        "recall": 0.80,
+        "f1_score": 0.889,
+        "support": 5
+      },
+      "category_4": {
+        "precision": 0.778,
+        "recall": 1.00,
+        "f1_score": 0.875,
+        "support": 7
+      },
+      "category_5": {
+        "precision": 1.00,
+        "recall": 0.80,
+        "f1_score": 0.889,
+        "support": 5
+      }
+    },
+    "effect_size": {
+      "cohens_w": 1.19,
+      "interpretation": "very_large"
+    },
+    "statistical_power": 0.99
+  },
+  
+  "cost_analysis": {
+    "total_cost_usd": 0.7775,
+    "target_cost_usd": 0.0095,
+    "overrun_factor": 81.7,
+    "cost_per_document": 0.0457,
+    "target_cost_per_document": 0.00056,
+    "cost_per_1k_tokens": 0.0007,
+    "by_provider": {
+      "deepinfra": {
+        "total_cost": 0.304,
+        "avg_cost_per_call": 0.0008,
+        "percentage_of_total": 39.1
+      },
+      "nebius": {
+        "total_cost": 0.242,
+        "avg_cost_per_call": 0.0013,
+        "percentage_of_total": 31.1
+      },
+      "novita": {
+        "total_cost": 0.232,
+        "avg_cost_per_call": 0.0018,
+        "percentage_of_total": 29.8
+      }
+    },
+    "optimization_potential": {
+      "if_80_percent_deepinfra": 0.544,
+      "potential_savings": 0.234,
+      "savings_percentage": 0.30
+    }
+  },
+  
+  "trace_analysis": {
+    "total_spans": 517,
+    "span_distribution": {
+      "chromadb": 238,
+      "llm_call": 84,
+      "oq_generator": 55,
+      "categorization": 50,
+      "research": 32,
+      "sme": 23,
+      "context_provider": 5
+    },
+    "chromadb_metrics": {
+      "total_queries": 238,
+      "unique_documents": 9,
+      "queries_per_document": 26.4,
+      "avg_duration_ms": 384,
+      "max_duration_ms": 4400,
+      "cache_hits": 0,
+      "redundant_queries_percentage": 0.60
+    },
+    "execution_window": {
+      "start_time": "2025-08-19T05:23:47",
+      "end_time": "2025-08-19T21:16:31",
+      "duration_minutes": 952.7,
+      "peak_hour": 19,
+      "peak_hour_calls": 399
+    }
+  },
+  
+  "critical_issues": {
+    "quality": {
+      "test_clarity_score": 0.118,
+      "duplicate_test_names": 0.60,
+      "insufficient_steps": 0.43,
+      "visual_inspection_only": 1.00,
+      "generic_acceptance_criteria": 1.00
+    },
+    "cost": {
+      "overrun_factor": 81.7,
+      "token_explosion": 63.45,
+      "api_call_multiplication": 10.1,
+      "suboptimal_routing": 0.453
+    },
+    "compliance": {
+      "false_compliance_claims": true,
+      "hardcoded_flags": true,
+      "missing_audit_trail": true,
+      "no_electronic_signatures": true,
+      "no_access_control": true,
+      "no_data_integrity": true
+    },
+    "performance": {
+      "serial_processing": true,
+      "no_parallelization": true,
+      "oq_generator_timeout": true,
+      "no_caching": true
+    }
+  },
+  
+  "recommendations": {
+    "immediate": [
+      "fix_test_quality",
+      "implement_cost_controls",
+      "remove_false_compliance_claims"
+    ],
+    "short_term": [
+      "parallelize_agents",
+      "add_caching",
+      "implement_audit_trail",
+      "add_quality_gates"
+    ],
+    "long_term": [
+      "electronic_signatures",
+      "full_compliance_package",
+      "architecture_redesign",
+      "continuous_validation"
+    ],
+    "estimated_time_to_production": "6-8 weeks"
+  },
+  
+  "thesis_validation": {
+    "hypothesis": "LLM-based multi-agent systems can generate pharmaceutical-grade validation tests",
+    "result": "partially_validated",
+    "proven": [
+      "categorization_accuracy",
+      "statistical_reliability",
+      "multi_agent_coordination",
+      "conservative_failure_mode"
+    ],
+    "disproven": [
+      "test_usability",
+      "regulatory_compliance",
+      "cost_efficiency",
+      "production_speed"
+    ],
+    "academic_contribution": "significant",
+    "practical_applicability": "limited_without_fixes",
+    "recommendation": "conditional_acceptance"
+  }
+}

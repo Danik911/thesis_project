@@ -1,0 +1,135 @@
+{
+  "total_suites": 17,
+  "total_tests": 330,
+  "category_distribution": {
+    "3": 4,
+    "4": 10,
+    "5": 3
+  },
+  "category_accuracy": {
+    "3": {
+      "expected": 5,
+      "actual": 4,
+      "mismatched": [
+        "URS-008: got 4"
+      ]
+    },
+    "4": {
+      "expected": 5,
+      "actual": 5,
+      "mismatched": []
+    },
+    "5": {
+      "expected": 5,
+      "actual": 3,
+      "mismatched": [
+        "URS-003: got 4",
+        "URS-014: got 4"
+      ]
+    },
+    "ambiguous": {
+      "expected": 2,
+      "actual": 2,
+      "mismatched": []
+    }
+  },
+  "risk_distribution": {
+    "medium": 115,
+    "high": 135,
+    "low": 22,
+    "critical": 58
+  },
+  "quality_scores": [
+    {
+      "document": "URS-001",
+      "clarity": 50,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-006",
+      "clarity": 50,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-007",
+      "clarity": 50,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-008",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-009",
+      "clarity": 50,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-002",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-010",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-011",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-012",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-013",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-003",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-014",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-015",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-016",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-017",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-004",
+      "clarity": 0,
+      "completeness": 100.0
+    },
+    {
+      "document": "URS-005",
+      "clarity": 0,
+      "completeness": 100.0
+    }
+  ],
+  "clarity_issues_count": 330,
+  "test_complexity_summary": {
+    "suites_analyzed": 17,
+    "avg_tests_per_suite": 19.41176470588235,
+    "total_steps": 865
+  }
+}

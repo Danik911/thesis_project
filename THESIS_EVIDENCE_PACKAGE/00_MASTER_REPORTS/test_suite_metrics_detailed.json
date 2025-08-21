@@ -1,0 +1,321 @@
+{
+  "analysis_metadata": {
+    "timestamp": "2025-08-20T10:00:00Z",
+    "documents_analyzed": 17,
+    "total_test_cases": 330,
+    "total_test_steps": 865,
+    "data_source": "main_cv_execution",
+    "analysis_version": "1.0"
+  },
+  
+  "coverage_metrics": {
+    "documents": {
+      "expected": 17,
+      "actual": 17,
+      "percentage": 100.0
+    },
+    "test_generation": {
+      "target_tests": 170,
+      "actual_tests": 330,
+      "achievement_rate": 194.1
+    },
+    "per_category": {
+      "category_3": {
+        "documents": 5,
+        "tests": 100,
+        "avg_per_doc": 20.0
+      },
+      "category_4": {
+        "documents": 5,
+        "tests": 95,
+        "avg_per_doc": 19.0
+      },
+      "category_5": {
+        "documents": 5,
+        "tests": 95,
+        "avg_per_doc": 19.0
+      },
+      "ambiguous": {
+        "documents": 2,
+        "tests": 40,
+        "avg_per_doc": 20.0
+      }
+    }
+  },
+  
+  "categorization_accuracy": {
+    "overall_accuracy": 82.4,
+    "per_category": {
+      "category_3": {
+        "expected": 5,
+        "correct": 4,
+        "accuracy": 80.0,
+        "misclassified": ["URS-008 -> category_4"]
+      },
+      "category_4": {
+        "expected": 5,
+        "correct": 5,
+        "accuracy": 100.0,
+        "misclassified": []
+      },
+      "category_5": {
+        "expected": 5,
+        "correct": 3,
+        "accuracy": 60.0,
+        "misclassified": ["URS-003 -> category_4", "URS-014 -> category_4"]
+      },
+      "ambiguous": {
+        "expected": 2,
+        "correct": 2,
+        "accuracy": 100.0,
+        "misclassified": []
+      }
+    },
+    "confusion_matrix": {
+      "actual_3_predicted_3": 4,
+      "actual_3_predicted_4": 1,
+      "actual_3_predicted_5": 0,
+      "actual_4_predicted_3": 0,
+      "actual_4_predicted_4": 5,
+      "actual_4_predicted_5": 0,
+      "actual_5_predicted_3": 0,
+      "actual_5_predicted_4": 2,
+      "actual_5_predicted_5": 3
+    }
+  },
+  
+  "test_complexity_metrics": {
+    "steps_analysis": {
+      "total_steps": 865,
+      "avg_steps_per_test": 2.62,
+      "target_steps_per_test_min": 5,
+      "target_steps_per_test_max": 7,
+      "achievement_vs_min": 52.4,
+      "achievement_vs_max": 37.4,
+      "distribution": {
+        "1_step": 0,
+        "2_steps": 165,
+        "3_steps": 110,
+        "4_steps": 33,
+        "5_plus_steps": 22
+      }
+    },
+    "test_count_analysis": {
+      "total_tests": 330,
+      "avg_per_document": 19.41,
+      "target_per_document": 10,
+      "achievement_rate": 194.1,
+      "min_tests_in_suite": 10,
+      "max_tests_in_suite": 40
+    }
+  },
+  
+  "quality_scores": {
+    "overall": {
+      "completeness": 100.0,
+      "traceability": 100.0,
+      "clarity": 11.8,
+      "combined_quality": 70.6
+    },
+    "clarity_breakdown": {
+      "total_issues": 330,
+      "issue_types": {
+        "visual_inspection_only": 330,
+        "duplicate_test_names": 199,
+        "generic_acceptance_criteria": 330,
+        "vague_expected_results": 247,
+        "insufficient_steps": 308
+      },
+      "issues_per_test": 4.28
+    },
+    "per_document_scores": {
+      "URS-001": {"clarity": 50.0, "completeness": 100.0, "tests": 10},
+      "URS-002": {"clarity": 0.0, "completeness": 100.0, "tests": 40},
+      "URS-003": {"clarity": 0.0, "completeness": 100.0, "tests": 40},
+      "URS-004": {"clarity": 0.0, "completeness": 100.0, "tests": 20},
+      "URS-005": {"clarity": 0.0, "completeness": 100.0, "tests": 20},
+      "URS-006": {"clarity": 50.0, "completeness": 100.0, "tests": 10},
+      "URS-007": {"clarity": 50.0, "completeness": 100.0, "tests": 10},
+      "URS-008": {"clarity": 0.0, "completeness": 100.0, "tests": 50},
+      "URS-009": {"clarity": 50.0, "completeness": 100.0, "tests": 10},
+      "URS-010": {"clarity": 0.0, "completeness": 100.0, "tests": 15},
+      "URS-011": {"clarity": 0.0, "completeness": 100.0, "tests": 15},
+      "URS-012": {"clarity": 0.0, "completeness": 100.0, "tests": 15},
+      "URS-013": {"clarity": 0.0, "completeness": 100.0, "tests": 15},
+      "URS-014": {"clarity": 0.0, "completeness": 100.0, "tests": 15},
+      "URS-015": {"clarity": 0.0, "completeness": 100.0, "tests": 15},
+      "URS-016": {"clarity": 0.0, "completeness": 100.0, "tests": 15},
+      "URS-017": {"clarity": 0.0, "completeness": 100.0, "tests": 15}
+    }
+  },
+  
+  "verification_methods": {
+    "distribution": {
+      "visual_inspection": 330,
+      "measurement_comparison": 0,
+      "data_validation": 0,
+      "automated_check": 0,
+      "calculation_verification": 0,
+      "manual_verification": 0
+    },
+    "visual_inspection_percentage": 100.0,
+    "diversity_score": 0.0,
+    "pharmaceutical_standard_compliance": false
+  },
+  
+  "risk_distribution": {
+    "counts": {
+      "critical": 58,
+      "high": 135,
+      "medium": 115,
+      "low": 22
+    },
+    "percentages": {
+      "critical": 17.6,
+      "high": 40.9,
+      "medium": 34.8,
+      "low": 6.7
+    },
+    "expected_pharma_ranges": {
+      "critical": "10-15%",
+      "high": "20-30%",
+      "medium": "40-50%",
+      "low": "15-25%"
+    },
+    "compliance_status": {
+      "critical": "slightly_high",
+      "high": "significantly_high",
+      "medium": "below_expected",
+      "low": "below_expected"
+    }
+  },
+  
+  "compliance_metrics": {
+    "gamp5": {
+      "category_accuracy": 82.4,
+      "test_completeness": 100.0,
+      "test_clarity": 11.8,
+      "risk_based_approach": 65.0,
+      "overall_compliance": 64.8
+    },
+    "cfr_21_part_11": {
+      "audit_trail_testing": 0.0,
+      "electronic_signatures": 0.0,
+      "data_integrity": 30.0,
+      "access_controls": 45.0,
+      "overall_compliance": 18.75
+    },
+    "alcoa_plus": {
+      "attributable": 100.0,
+      "legible": 11.8,
+      "contemporaneous": 100.0,
+      "original": 0.0,
+      "accurate": 0.0,
+      "complete": 100.0,
+      "consistent": 60.0,
+      "enduring": 100.0,
+      "available": 100.0,
+      "overall_score": 63.5
+    }
+  },
+  
+  "duplication_analysis": {
+    "duplicate_test_names": {
+      "total_duplicates": 199,
+      "percentage_of_tests": 60.3,
+      "most_duplicated": [
+        {"name": "Temperature Monitoring Accuracy Verification", "count": 3},
+        {"name": "Verify Integration with Facility Management System", "count": 4},
+        {"name": "Custom Dashboard Functionality Check", "count": 3}
+      ]
+    },
+    "unique_test_names": 131,
+    "duplication_ratio": 2.52
+  },
+  
+  "traceability_metrics": {
+    "urs_requirements": {
+      "tests_with_requirements": 330,
+      "tests_without_requirements": 0,
+      "coverage_percentage": 100.0
+    },
+    "regulatory_basis": {
+      "tests_with_regulatory": 330,
+      "tests_without_regulatory": 0,
+      "coverage_percentage": 100.0,
+      "most_cited": [
+        {"regulation": "21 CFR Part 11", "count": 330},
+        {"regulation": "EU Annex 11", "count": 145},
+        {"regulation": "GMP", "count": 98}
+      ]
+    }
+  },
+  
+  "execution_time_estimates": {
+    "total_minutes": 9900,
+    "total_hours": 165.0,
+    "avg_per_test": 30.0,
+    "avg_per_document": 582.4,
+    "distribution": {
+      "30_min": 330,
+      "45_min": 0,
+      "60_min": 0,
+      "over_60_min": 0
+    }
+  },
+  
+  "specific_quality_issues": {
+    "critical_failures": [
+      "100% reliance on visual inspection",
+      "60.3% test name duplication",
+      "100% generic acceptance criteria",
+      "93.3% tests with insufficient steps (<5)",
+      "0% automated verification methods"
+    ],
+    "major_issues": [
+      "2.62 average steps per test (target: 5-7)",
+      "11.8% clarity score (target: >80%)",
+      "40.9% high-risk classification (target: 20-30%)",
+      "0% test diversity in verification methods"
+    ],
+    "minor_issues": [
+      "17.6% categorization errors",
+      "All tests estimated at exactly 30 minutes",
+      "No test-specific data capture definitions"
+    ]
+  },
+  
+  "recommendations_priority": {
+    "critical": [
+      "Implement diverse verification methods",
+      "Eliminate test name duplication",
+      "Increase test steps to minimum 5 per test",
+      "Replace generic acceptance criteria"
+    ],
+    "high": [
+      "Improve clarity score to >80%",
+      "Correct risk level distribution",
+      "Add specific data capture requirements",
+      "Implement automated verification where applicable"
+    ],
+    "medium": [
+      "Improve GAMP categorization accuracy",
+      "Add test execution time variability",
+      "Enhance test descriptions",
+      "Add error handling test steps"
+    ]
+  },
+  
+  "statistical_summary": {
+    "mean_tests_per_suite": 19.41,
+    "median_tests_per_suite": 15,
+    "std_dev_tests": 10.23,
+    "mean_steps_per_test": 2.62,
+    "median_steps_per_test": 3,
+    "std_dev_steps": 0.89,
+    "confidence_interval_95": {
+      "tests_per_suite": [14.2, 24.6],
+      "steps_per_test": [2.4, 2.8]
+    }
+  }
+}
