@@ -1,0 +1,16 @@
+# Table 4.5: Cross-Corpus Performance Comparison
+
+| Metric              | Corpus 1         | Corpus 2   | Corpus 3        | Combined   |
+|:--------------------|:-----------------|:-----------|:----------------|:-----------|
+| Documents           | 17               | 8          | 5               | 30         |
+| Success Rate        | 100%             | 87.5%      | 100%            | 96.7%      |
+| Avg Time (min)      | 5.2              | 6.1        | 7.6             | 6.2        |
+| Total Tests         | 102              | 120        | 95              | 317        |
+| GAMP Accuracy       | 88.2%            | 100%       | 80%             | 83.3%      |
+| Confidence Score    | 98.5%            | 100%       | 90%             | 94.5%      |
+| API Cost            | $0.24            | $0.11      | $0.07           | $0.42      |
+| Human Consultations | 0                | 1          | 0               | 1          |
+| Phoenix Spans       | 1,441            | 490        | 793             | 2,724      |
+| Execution Strategy  | Parallel + Retry | Sequential | CV-Tester Agent | Mixed      |
+
+*Generated: 2025-08-21T20:00:31.710302*

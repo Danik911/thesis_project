@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-08-21T20:00:25.350403",
+  "statistics_summary": {
+    "total_suites": 0,
+    "total_tests": 0,
+    "total_steps": 0,
+    "total_estimated_duration_minutes": 0,
+    "gamp_category_distribution": {},
+    "complexity_statistics": {
+      "mean": 0,
+      "median": 0,
+      "std": 0,
+      "min": 0,
+      "max": 0,
+      "q25": 0,
+      "q75": 0
+    },
+    "steps_per_test_statistics": {
+      "mean": 0,
+      "median": 0,
+      "std": 0,
+      "min": 0,
+      "max": 0
+    },
+    "risk_level_distribution": {},
+    "verification_methods_distribution": {}
+  },
+  "quality_scores": [],
+  "suite_details": []
+}

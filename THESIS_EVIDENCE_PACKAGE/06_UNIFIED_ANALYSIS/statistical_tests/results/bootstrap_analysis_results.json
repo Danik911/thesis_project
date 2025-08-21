@@ -1,0 +1,80 @@
+{
+  "success_rate": {
+    "point_estimate": 0.7666666666666667,
+    "bootstrap_mean": 0.7674433333333334,
+    "bootstrap_std": 0.07667070358936907,
+    "ci_95": [
+      0.6,
+      0.9
+    ],
+    "percentiles": {
+      "5th": 0.6333333333333333,
+      "25th": 0.7333333333333333,
+      "50th": 0.7666666666666667,
+      "75th": 0.8333333333333334,
+      "95th": 0.9
+    }
+  },
+  "processing_time": {
+    "point_estimate": 7.543478260869565,
+    "bootstrap_mean": 7.538253043478262,
+    "ci_95": [
+      6.7825,
+      8.34358695652174
+    ],
+    "median": 7.4
+  },
+  "cost_per_doc": {
+    "point_estimate": 0.04296666666666667,
+    "bootstrap_mean": 0.0429284,
+    "ci_95": [
+      0.037000000000000005,
+      0.04893333333333332
+    ],
+    "total_cost": 1.289
+  },
+  "tests_per_doc": {
+    "point_estimate": 18.304347826086957,
+    "bootstrap_mean": 18.30545652173913,
+    "ci_95": [
+      16.652173913043477,
+      19.652173913043477
+    ],
+    "total_tests": "421"
+  },
+  "categorization_accuracy": {
+    "point_estimate": 0.6521739130434783,
+    "bootstrap_mean": 0.6508521739130434,
+    "ci_95": [
+      0.43478260869565216,
+      0.8260869565217391
+    ]
+  },
+  "hypothesis_tests": {
+    "success_gt_70": {
+      "hypothesis": "Success rate > 70%",
+      "p_value": 0.24929999999999997,
+      "conclusion": "Not supported"
+    },
+    "success_gte_85": {
+      "hypothesis": "Success rate >= 85%",
+      "p_value": 0.8624,
+      "conclusion": "Not supported"
+    },
+    "success_ne_80": {
+      "hypothesis": "Success rate != 80%",
+      "p_value": 0.5358,
+      "conclusion": "Not different"
+    }
+  },
+  "correlations": {
+    "confidence_vs_success": {
+      "estimate": 0.023688809920192268,
+      "ci_95": [
+        -0.18678201381266005,
+        0.46065830871782787
+      ],
+      "significant": "False"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "api_cost_analysis": {
+    "total_cost": 0.7775,
+    "total_calls": 686,
+    "avg_cost_per_call": 0.001133,
+    "cost_per_document": 0.0457,
+    "total_tokens": 1078644,
+    "prompt_tokens": 633509,
+    "completion_tokens": 445135,
+    "cost_per_1k_tokens": 0.0007,
+    "provider_distribution": {
+      "DeepInfra": 375,
+      "Nebius": 180,
+      "Novita": 131
+    }
+  },
+  "efficiency_metrics": {
+    "tokens_per_test": 16343.1,
+    "tokens_per_document": 98058.5,
+    "prompt_completion_ratio": 1.42
+  }
+}

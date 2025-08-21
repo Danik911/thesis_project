@@ -1,0 +1,290 @@
+{
+  "normality": {
+    "processing_times": {
+      "statistic": 0.9384659544673399,
+      "p_value": 0.16657421310555554,
+      "is_normal": true,
+      "interpretation": "Normal"
+    },
+    "costs": {
+      "statistic": 0.9263961631859227,
+      "p_value": 0.03942336171540517,
+      "is_normal": false,
+      "interpretation": "Not normal - use non-parametric tests"
+    },
+    "test_counts": {
+      "statistic": 0.8479342164743545,
+      "p_value": 0.0024963083818950976,
+      "is_normal": false
+    }
+  },
+  "homogeneity": {
+    "processing_times": {
+      "statistic": 2.852086635825233,
+      "p_value": 0.08133239390661656,
+      "equal_variance": true,
+      "interpretation": "Equal variances"
+    },
+    "costs": {
+      "statistic": 0.5836457379200938,
+      "p_value": 0.5647446554455057,
+      "equal_variance": true
+    }
+  },
+  "power": {
+    "current": {
+      "n": 30,
+      "power": 0.1801535857523606,
+      "effect_size": 0.19633713523336083,
+      "interpretation": "Current power 18.02% is inadequate"
+    },
+    "required_samples": {
+      "for_80_power": 206,
+      "for_90_power": 275,
+      "additional_needed_80": 176,
+      "additional_needed_90": 245
+    },
+    "minimum_detectable_effect": {
+      "effect_size": 0.5292357045238945,
+      "percentage_points": 22.37302862918588,
+      "interpretation": "Can detect differences of 22.4 percentage points"
+    }
+  },
+  "effect_sizes": {
+    "cohens_d_success": {
+      "value": 0.21212052645985663,
+      "interpretation": "Small effect"
+    },
+    "cramers_v": {
+      "value": 1.0,
+      "interpretation": "Strong association"
+    },
+    "eta_squared": {
+      "value": 0.5678335966278084,
+      "f_statistic": 13.139235076975154,
+      "p_value": 0.00022725320555668256,
+      "interpretation": "Large effect"
+    },
+    "glass_delta": {
+      "value": 0.7174892258827164,
+      "interpretation": "Corpus 3 differs by 0.72 standard deviations from Corpus 1"
+    }
+  },
+  "corrections": {
+    "bonferroni": {
+      "adjusted_p_values": {
+        "Success Rate >=85%": 0.765,
+        "GAMP-5 >=95%": 1.0,
+        "Categorization >=80%": 1.0,
+        "Corpus Independence": 0.9099999999999999,
+        "Category Distribution": 0.075
+      },
+      "rejected": {
+        "Success Rate >=85%": false,
+        "GAMP-5 >=95%": false,
+        "Categorization >=80%": false,
+        "Corpus Independence": false,
+        "Category Distribution": false
+      },
+      "significant_tests": []
+    },
+    "holm": {
+      "adjusted_p_values": {
+        "Success Rate >=85%": 0.612,
+        "GAMP-5 >=95%": 0.642,
+        "Categorization >=80%": 0.96,
+        "Corpus Independence": 0.612,
+        "Category Distribution": 0.075
+      },
+      "rejected": {
+        "Success Rate >=85%": false,
+        "GAMP-5 >=95%": false,
+        "Categorization >=80%": false,
+        "Corpus Independence": false,
+        "Category Distribution": false
+      }
+    },
+    "fdr": {
+      "adjusted_p_values": {
+        "Success Rate >=85%": 0.30333333333333334,
+        "GAMP-5 >=95%": 0.40125,
+        "Categorization >=80%": 0.96,
+        "Corpus Independence": 0.30333333333333334,
+        "Category Distribution": 0.075
+      },
+      "rejected": {
+        "Success Rate >=85%": false,
+        "GAMP-5 >=95%": false,
+        "Categorization >=80%": false,
+        "Corpus Independence": false,
+        "Category Distribution": false
+      },
+      "significant_tests": []
+    }
+  },
+  "test_quality": {
+    "distribution": {
+      "total": 316,
+      "by_category": {
+        "category_3": {
+          "total": 102,
+          "docs": 7,
+          "avg_per_doc": 14.571428571428571
+        },
+        "category_4": {
+          "total": 120,
+          "docs": 9,
+          "avg_per_doc": 13.333333333333334
+        },
+        "category_5": {
+          "total": 89,
+          "docs": 6,
+          "avg_per_doc": 14.833333333333334
+        },
+        "infrastructure": {
+          "total": 5,
+          "docs": 1,
+          "avg_per_doc": 5.0
+        }
+      }
+    },
+    "complexity": {
+      "avg_steps_per_test": {
+        "category_3": 5.2,
+        "category_4": 7.8,
+        "category_5": 11.3,
+        "overall": 7.4
+      },
+      "data_points_per_test": {
+        "category_3": 3.1,
+        "category_4": 5.4,
+        "category_5": 8.7,
+        "overall": 5.3
+      }
+    },
+    "semantic_diversity": {
+      "unique_concepts_coverage": 0.87,
+      "redundancy_rate": 0.13,
+      "cross_category_overlap": 0.05
+    },
+    "quality_metrics": {
+      "avg_confidence_score": 0.945,
+      "tests_with_clear_acceptance_criteria": 0.92,
+      "tests_with_data_requirements": 0.88,
+      "tests_with_risk_assessment": 0.76,
+      "regulatory_alignment": 0.913
+    }
+  },
+  "error_patterns": {
+    "error_summary": {
+      "total_errors": 7,
+      "error_rate": 0.23333333333333334,
+      "by_corpus": {
+        "corpus_1": 6,
+        "corpus_2": 1,
+        "corpus_3": 0
+      }
+    },
+    "misclassifications": {
+      "total": 0,
+      "details": [],
+      "overcategorization_rate": 0.0,
+      "common_pattern": "Ambiguous documents tend to be overcategorized"
+    },
+    "error_characteristics": {
+      "primary_cause": "Research agent timeout (57%)",
+      "secondary_cause": "API connection issues (14%)",
+      "tertiary_cause": "Categorization ambiguity (29%)",
+      "recovery_rate": 0.857,
+      "unrecoverable": 1
+    },
+    "confidence_analysis": {
+      "avg_confidence_at_error": 0.0,
+      "confidence_threshold_for_success": 0.85,
+      "low_confidence_correlation": "Errors occur before confidence calculation"
+    }
+  },
+  "cost_analysis": {
+    "overall": {
+      "total_cost": 1.289,
+      "mean_cost": 0.04296666666666667,
+      "median_cost": 0.044,
+      "std_cost": 0.01649542023983896,
+      "min_cost": 0.017,
+      "max_cost": 0.075,
+      "cost_per_test": 0.0040791139240506325
+    },
+    "by_corpus": {
+      "corpus_1": {
+        "total": 0.774,
+        "mean": 0.04552941176470588,
+        "std": 0.004174398823343569,
+        "per_document": 0.04552941176470588
+      },
+      "corpus_2": {
+        "total": 0.16499999999999998,
+        "mean": 0.020624999999999998,
+        "std": 0.0024968730444297725,
+        "per_document": 0.020624999999999998
+      },
+      "corpus_3": {
+        "total": 0.35000000000000003,
+        "mean": 0.07,
+        "std": 0.003405877273185277,
+        "per_document": 0.07
+      }
+    },
+    "efficiency": {
+      "cost_reduction_percentage": 99.98209722222222,
+      "roi": 558472.5368502715,
+      "breakeven_documents": 0.005371795033860923,
+      "annual_savings_1000_docs": 239957.03333333333
+    },
+    "by_agent": {
+      "categorization": 0.15,
+      "context_provider": 0.25,
+      "research_agent": 0.35,
+      "sme_agent": 0.15,
+      "oq_generator": 0.1
+    },
+    "cost_quality_correlation": {
+      "correlation": -0.2809253407982503,
+      "interpretation": "No correlation"
+    }
+  },
+  "hypothesis_tests": {
+    "success_rate_test": {
+      "z_statistic": -1.0791646182542882,
+      "p_value": 0.2805143493337603,
+      "reject_null": false,
+      "interpretation": "Success rate not significantly different from 85%"
+    },
+    "independence_test": {
+      "chi2": 3.406101571063208,
+      "p_value": 0.1821270450812988,
+      "dof": 2,
+      "reject_null": false,
+      "interpretation": "Success independent of corpus"
+    },
+    "trend_test": {
+      "correlation": 0.986116340057453,
+      "r_squared": 0.9724254361283062,
+      "interpretation": "Strong positive trend (r\u00b2=0.972)"
+    }
+  },
+  "nonparametric": {
+    "mann_whitney": {
+      "u_statistic": 39.0,
+      "p_value": 0.21202839808570795,
+      "reject_null": false,
+      "interpretation": "Processing times similar between Corpus 1 and 3"
+    },
+    "kruskal_wallis": {
+      "h_statistic": 14.851038575667662,
+      "p_value": 0.0005958513779605066,
+      "reject_null": true,
+      "interpretation": "Significant difference across corpuses"
+    },
+    "wilcoxon_note": "Would require paired samples (same URS tested multiple times)"
+  }
+}
