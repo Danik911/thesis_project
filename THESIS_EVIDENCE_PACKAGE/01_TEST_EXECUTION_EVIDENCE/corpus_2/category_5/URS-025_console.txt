@@ -1,0 +1,72 @@
+Starting URS-025 test generation at Thu, Aug 21, 2025  1:20:24 PM
+GAMP-5 Test: OK
+[HUMAN][SUCCESS][LIST]
+🔭 Phoenix observability initialized - LLM calls will be traced
+🏥 GAMP-5 Pharmaceutical Test Generation System
+[START] Running Unified Test Generation Workflow
+============================================================
+[DATA] Setting up event logging system...
+📄 Loading document: ..\datasets\urs_corpus_v2\category_5\URS-025.md
+
+[START] Running unified test generation workflow with event logging...
+Running step start_unified_workflow
+Step start_unified_workflow produced event URSIngestionEvent
+Running step categorize_document
+Running step start
+Step start produced event URSIngestionEvent
+Running step categorize_document
+Step categorize_document produced event GAMPCategorizationEvent
+Running step check_consultation_required
+Step check_consultation_required produced event WorkflowCompletionEvent
+Running step complete_workflow
+Step complete_workflow produced event StopEvent
+Running step process_document
+Step process_document produced no event
+Step categorize_document produced event GAMPCategorizationEvent
+Running step check_consultation_required
+Step check_consultation_required produced event ConsultationBypassedEvent
+Running step handle_consultation_bypassed
+Step handle_consultation_bypassed produced event PlanningEvent
+Running step run_planning_workflow
+Step run_planning_workflow produced event AgentRequestEvent
+Running step execute_agent_request
+[API] openai - embeddings - 1.13s - OK
+Step execute_agent_request produced event AgentResultEvent
+Running step collect_agent_results
+Step collect_agent_results produced event AgentRequestEvent
+Running step execute_agent_request
+Step execute_agent_request produced event AgentResultEvent
+Running step collect_agent_results
+Step collect_agent_results produced event AgentRequestEvent
+Running step execute_agent_request
+Step execute_agent_request produced event AgentResultEvent
+Running step collect_agent_results
+Step collect_agent_results produced event AgentResultsEvent
+Running step generate_oq_tests
+
+[ERROR] CRITICAL FAILURE - SSL CONNECTION ISSUE WITH OPENROUTER
+Error Details:
+- Failure occurred during batch 12 generation
+- SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol
+- OpenRouter API connection failed
+- NO FALLBACK LOGIC TRIGGERED (compliance requirement met)
+- Human consultation required for network/API resolution
+
+System Status:
+- Phoenix observability: ACTIVE (traces captured until failure)
+- GAMP-5 categorization: COMPLETED (Category 5 confirmed)
+- Document processing: COMPLETED 
+- Context collection: COMPLETED
+- Research phase: COMPLETED
+- Test generation: FAILED at batch 12
+
+Execution Metrics:
+- Start time: 2025-08-21 13:20:24
+- Failure time: 2025-08-21 13:29:03
+- Duration: 8 minutes 39 seconds
+- Batches completed: 11 of 12
+- Estimated completion: 91.7% before SSL failure
+
+[ERROR] Workflow failed to produce results
+⏳ Waiting for span export completion...
+🔒 Phoenix observability shutdown complete

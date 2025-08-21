@@ -1,0 +1,62 @@
+{
+  "document_id": "URS-021",
+  "document_path": "../datasets/urs_corpus_v2/category_3/URS-021.md",
+  "expected_category": 3,
+  "detected_category": 3,
+  "confidence": 45.0,
+  "review_required": true,
+  "execution_details": {
+    "start_time": "2025-08-21T12:56:00",
+    "end_time": "2025-08-21T13:00:27",
+    "total_duration_seconds": 267.49,
+    "duration_minutes": 4.46,
+    "success": true,
+    "status": "completed_with_oq_tests"
+  },
+  "test_generation": {
+    "tests_generated": 10,
+    "estimated_tests": 6,
+    "generation_rate": 1.67,
+    "test_suite_file": "test_suite_OQ-SUITE-1200_20250821_120027.json",
+    "suite_id": "OQ-SUITE-1200"
+  },
+  "agent_execution": {
+    "agents_executed": 3,
+    "agent_success_rate": 100.0,
+    "context_provider": "executed",
+    "sme_agent": "executed", 
+    "research_agent": "executed"
+  },
+  "compliance_metrics": {
+    "gamp5_compliance": true,
+    "audit_entries": 582,
+    "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"],
+    "data_integrity_validated": true
+  },
+  "observability": {
+    "phoenix_traces_file": "all_spans_20250821_125600.jsonl",
+    "events_captured": 1,
+    "events_processed": 1,
+    "processing_rate_per_sec": 0.00
+  },
+  "api_usage": {
+    "model_used": "DeepSeek V3 (via OpenRouter)",
+    "embeddings_calls": 1,
+    "embedding_duration": "1.43s",
+    "llm_calls_traced": true,
+    "validation_mode": true
+  },
+  "warnings_noted": [
+    "ALCOA+ Failed to create categorization record: 'URSIngestionEvent' object has no attribute 'category'",
+    "EMA integration not yet implemented - skipping EMA queries",
+    "ICH integration not yet implemented - skipping ICH queries",
+    "ALCOA+ Failed to create test suite record: name 'compliance_standards' is not defined"
+  ],
+  "file_outputs": {
+    "console_output": "urs021_full_output.txt",
+    "test_suite": "test_suite_OQ-SUITE-1200_20250821_120027.json",
+    "traces": "all_spans_20250821_125600.jsonl",
+    "audit_logs": "logs/audit/",
+    "event_logs": "logs/"
+  }
+}

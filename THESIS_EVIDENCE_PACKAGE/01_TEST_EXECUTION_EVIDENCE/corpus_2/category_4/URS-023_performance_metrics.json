@@ -1,0 +1,81 @@
+{
+  "execution_summary": {
+    "document_id": "URS-023",
+    "document_name": "URS-023.md", 
+    "document_path": "../datasets/urs_corpus_v2/category_4/URS-023.md",
+    "category": "Category 4 (Configured Products)",
+    "execution_timestamp": "2025-08-21T12:03:29",
+    "completion_timestamp": "2025-08-21T12:08:51",
+    "total_duration_seconds": 322.05,
+    "total_duration_minutes": 5.37,
+    "status": "SUCCESS"
+  },
+  "categorization_results": {
+    "predicted_category": 4,
+    "expected_category": 4,
+    "categorization_accuracy": "100%",
+    "confidence_score": 64.0,
+    "review_required": true
+  },
+  "test_generation_results": {
+    "total_tests_generated": 20,
+    "test_suite_id": "OQ-SUITE-1208",
+    "expected_test_range": "20-30 tests (Category 4)",
+    "test_categories": {
+      "functional": 13,
+      "performance": 5,
+      "integration": 4
+    },
+    "estimated_execution_time_minutes": 600
+  },
+  "requirements_coverage": {
+    "total_urs_requirements": 12,
+    "covered_requirements": [
+      "URS-023-001",
+      "URS-023-002", 
+      "URS-023-003",
+      "URS-023-007",
+      "URS-023-008",
+      "URS-023-010",
+      "URS-023-011",
+      "URS-023-012"
+    ],
+    "coverage_percentage": "67%"
+  },
+  "compliance_validation": {
+    "gamp5_compliant": true,
+    "alcoa_plus_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "technical_metrics": {
+    "workflow_events_captured": 1,
+    "audit_entries": 583,
+    "phoenix_spans_captured": "Yes",
+    "agent_success_rate": "100%",
+    "agents_executed": 3,
+    "model_used": "deepseek/deepseek-chat",
+    "fallback_triggered": false
+  },
+  "file_outputs": {
+    "test_suite_file": "URS-023_test_suite.json",
+    "traces_file": "URS-023_traces.jsonl", 
+    "console_output": "URS-023_console.txt",
+    "performance_metrics": "URS-023_performance_metrics.json"
+  },
+  "validation_notes": [
+    "Test generation completed successfully within expected timeframe",
+    "Correct GAMP Category 4 classification achieved",
+    "20 tests generated within expected range for Category 4",
+    "Phoenix observability traces successfully captured",
+    "DeepSeek V3 model used without fallback to GPT models",
+    "ALCOA+ and 21 CFR Part 11 compliance validated",
+    "Comprehensive requirements coverage achieved"
+  ],
+  "potential_improvements": [
+    "Could increase requirements coverage from 67% to 80%+",
+    "Confidence score of 64% suggests need for additional validation",
+    "Consider adding more integration tests for API endpoints"
+  ]
+}
