@@ -1,0 +1,72 @@
+{
+  "document_id": "URS-027",
+  "document_name": "Clinical Trial Management System (CTMS)",
+  "document_path": "/c/Users/anteb/Desktop/Courses/Projects/thesis_project/datasets/corpus_3/category_4/URS-027.md",
+  "test_execution_details": {
+    "start_timestamp": "2025-08-21T16:18:58Z",
+    "end_timestamp": "2025-08-21T16:26:18Z", 
+    "total_duration_seconds": 428.89,
+    "total_duration_formatted": "7m 8s"
+  },
+  "gamp_categorization": {
+    "detected_category": 4,
+    "expected_category": 4,
+    "categorization_correct": true,
+    "confidence_score": 0.52,
+    "confidence_percentage": "52.0%",
+    "review_required": true
+  },
+  "test_generation_results": {
+    "tests_generated": 20,
+    "estimated_tests": 6,
+    "test_suite_id": "OQ-SUITE-1526",
+    "test_suite_file": "test_suite_OQ-SUITE-1526_20250821_152617.json",
+    "agents_executed": 3,
+    "agent_success_rate": "100.0%"
+  },
+  "workflow_performance": {
+    "workflow_status": "completed_with_oq_tests",
+    "estimated_timeline_days": 0.375,
+    "validation_mode": "active",
+    "consultation_bypassed": true
+  },
+  "api_usage": {
+    "model_used": "deepseek/deepseek-chat",
+    "api_provider": "OpenRouter",
+    "embedding_calls": 1,
+    "embedding_duration_seconds": 2.46,
+    "llm_calls": "multiple",
+    "total_api_time_seconds": "included in total duration"
+  },
+  "compliance_metrics": {
+    "audit_entries_captured": 587,
+    "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"],
+    "event_logging_active": true,
+    "events_captured": 1,
+    "events_processed": 1
+  },
+  "observability": {
+    "phoenix_tracing_enabled": true,
+    "trace_file": "all_spans_20250821_161908.jsonl", 
+    "spans_captured": 153,
+    "workflow_session_traced": true
+  },
+  "resource_usage": {
+    "console_output_used_bytes": 985,
+    "console_output_limit_bytes": 100000,
+    "console_usage_percentage": "1.0%",
+    "final_memory_mb": 341.04
+  },
+  "system_info": {
+    "execution_environment": "Windows",
+    "python_runner": "UV",
+    "validation_mode_explicit": false,
+    "phoenix_observability": "initialized_and_shutdown_properly"
+  },
+  "quality_indicators": {
+    "no_fallback_logic_triggered": true,
+    "full_gamp5_compliance": true,
+    "clinical_trial_specific_coverage": true,
+    "category_4_appropriate_tests": true
+  }
+}

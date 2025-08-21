@@ -1,0 +1,86 @@
+C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.venv\Lib\site-packages\pydantic\_internal\_fields.py:198: UserWarning: Field name "schema" in "OQTestSuite" shadows an attribute in parent "BaseModel"
+  warnings.warn(
+VALIDATION MODE ACTIVE: This bypasses consultation requirements for testing. Ensure this is intentional and not in production environment. Set VALIDATION_MODE_EXPLICIT=true to suppress this warning.
+2025-08-21 16:46:01,649 - src.core.unified_workflow - WARNING - [ALCOA+] Failed to create categorization record: 'URSIngestionEvent' object has no attribute 'category'
+2025-08-21 16:46:01,649 - src.core.unified_workflow - WARNING - AUDIT TRAIL: Consultation bypassed for c7bdf996-9b55-4a95-b613-857c382606f7 due to validation mode. Original consultation: categorization_review
+2025-08-21 16:47:22,147 - src.agents.parallel.research_agent - WARNING - EMA integration not yet implemented - skipping EMA queries
+2025-08-21 16:47:22,149 - src.agents.parallel.research_agent - WARNING - ICH integration not yet implemented - skipping ICH queries
+2025-08-21 16:54:34,552 - src.core.unified_workflow - WARNING - [ALCOA+] Failed to create test suite record: name 'compliance_standards' is not defined
+GAMP-5 Test: OK
+[HUMAN][SUCCESS][LIST]
+🔭 Phoenix observability initialized - LLM calls will be traced
+🏥 GAMP-5 Pharmaceutical Test Generation System
+[START] Running Unified Test Generation Workflow
+============================================================
+[DATA] Setting up event logging system...
+📄 Loading document: ..\datasets\corpus_3\category_5\URS-029.md
+
+[START] Running unified test generation workflow with event logging...
+Running step start_unified_workflow
+Step start_unified_workflow produced event URSIngestionEvent
+Running step categorize_document
+Running step start
+Step start produced event URSIngestionEvent
+Running step categorize_document
+Step categorize_document produced event GAMPCategorizationEvent
+Running step check_consultation_required
+Step check_consultation_required produced event WorkflowCompletionEvent
+Running step complete_workflow
+Step complete_workflow produced event StopEvent
+Running step process_document
+Step process_document produced no event
+Step categorize_document produced event GAMPCategorizationEvent
+Running step check_consultation_required
+Step check_consultation_required produced event ConsultationBypassedEvent
+Running step handle_consultation_bypassed
+Step handle_consultation_bypassed produced event PlanningEvent
+Running step run_planning_workflow
+Step run_planning_workflow produced event AgentRequestEvent
+Running step execute_agent_request
+[API] openai - embeddings - 1.26s - OK
+Step execute_agent_request produced event AgentResultEvent
+Running step collect_agent_results
+Step collect_agent_results produced event AgentRequestEvent
+Running step execute_agent_request
+Step execute_agent_request produced event AgentResultEvent
+Running step collect_agent_results
+Step collect_agent_results produced event AgentRequestEvent
+Running step execute_agent_request
+Step execute_agent_request produced event AgentResultEvent
+Running step collect_agent_results
+Step collect_agent_results produced event AgentResultsEvent
+Running step generate_oq_tests
+Step generate_oq_tests produced event OQTestSuiteEvent
+Running step complete_workflow
+Step complete_workflow produced event StopEvent
+
+[SUCCESS] Unified Test Generation Complete!
+  - Status: completed_with_oq_tests
+  - Duration: 512.88s
+  - GAMP Category: 5
+  - Confidence: 40.0%
+  - Review Required: True
+  - Estimated Tests: 6
+  - Timeline: 0.375 days
+  - Agents Executed: 3
+  - Agent Success Rate: 100.0%
+
+[DATA] Event Logging Summary:
+  - Events Captured: 1
+  - Events Processed: 1
+  - Processing Rate: 0.00 events/sec
+
+🔒 GAMP-5 Compliance:
+  - Audit Entries: 588
+  - Compliance Standards: GAMP-5, 21 CFR Part 11, ALCOA+
+
+[FILE] Log Files:
+  - Events: logs/
+  - Audit: logs/audit/
+
+📈 Output Management:
+  - Console Output Used: 933 / 100000 bytes
+  - Usage: 0.9%
+⏳ Waiting for span export completion...
+
+🔒 Phoenix observability shutdown complete

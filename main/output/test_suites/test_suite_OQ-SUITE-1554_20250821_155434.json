@@ -1,0 +1,2188 @@
+{
+  "suite_id": "OQ-SUITE-1554",
+  "gamp_category": 5,
+  "document_name": "URS-029.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Proprietary Transformer Model Molecule Generation Test",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify that the proprietary transformer models correctly generate molecules with valid chemical structures and desired properties.",
+      "prerequisites": [
+        "System installation completed",
+        "Access to proprietary transformer models",
+        "Sample input dataset for molecule generation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the proprietary transformer model into the AI platform.",
+          "expected_result": "Model loads successfully without errors.",
+          "data_to_capture": [
+            "Model load time",
+            "Error logs if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Input a seed molecule and generate 100 candidate molecules.",
+          "expected_result": "System generates 100 valid molecules with correct SMILES notation.",
+          "data_to_capture": [
+            "Generated molecules",
+            "Generation time",
+            "Validation errors"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Validate generated molecules using a chemical structure validator.",
+          "expected_result": "All generated molecules pass chemical structure validation.",
+          "data_to_capture": [
+            "Validation results",
+            "Invalid molecules if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All generated molecules are chemically valid.",
+        "Generation completes within expected time frame (\u2264 5 minutes)."
+      ],
+      "regulatory_basis": [
+        "URS-029-001: Implement proprietary transformer models for molecule generation.",
+        "URS-029-007: Maintain data integrity per ALCOA+ for training datasets and outputs."
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All generated molecules must be traceable to the input seed.",
+        "Model version and parameters must be logged."
+      ],
+      "urs_requirements": [
+        "URS-029-001",
+        "URS-029-007"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Computational Chemistry",
+        "AI Model Validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Multi-Parameter Optimization Pipeline Test",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Validate that the system can optimize molecules against multiple parameters (potency, selectivity, PK, tox) within the required time frame.",
+      "prerequisites": [
+        "System installation completed",
+        "Access to multi-parameter optimization module",
+        "Sample dataset of 1000 molecules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure optimization parameters for potency, selectivity, PK, and tox.",
+          "expected_result": "Parameters are set successfully with no configuration errors.",
+          "data_to_capture": [
+            "Parameter settings",
+            "Configuration logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Run optimization pipeline on the sample dataset.",
+          "expected_result": "Pipeline completes optimization within 4 hours.",
+          "data_to_capture": [
+            "Start and end time",
+            "Resource usage",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review optimized molecules and their scores.",
+          "expected_result": "Optimized molecules meet predefined score thresholds for all parameters.",
+          "data_to_capture": [
+            "Optimized molecules",
+            "Scores per parameter",
+            "Threshold compliance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pipeline completes within 4 hours as specified in URS-029-011.",
+        "Optimized molecules meet or exceed score thresholds for all parameters."
+      ],
+      "regulatory_basis": [
+        "URS-029-004: Support multi-parameter optimization (potency, selectivity, PK, tox).",
+        "URS-029-011: End-to-end pipeline completion < 4 hours per target."
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "All optimization steps must be logged with timestamps.",
+        "Input and output molecules must be traceable."
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 240,
+      "required_expertise": [
+        "Computational Chemistry",
+        "Performance Testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Proprietary Transformer Model Molecule Generation Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "To verify that the proprietary transformer models correctly generate molecules as per the specified requirements.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Predefined molecule generation parameters"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the proprietary transformer model with predefined parameters.",
+          "expected_result": "Model configuration completes without errors.",
+          "data_to_capture": [
+            "Configuration parameters",
+            "Model output"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the molecule generation process.",
+          "expected_result": "Molecules are generated according to the predefined parameters.",
+          "data_to_capture": [
+            "Generated molecules",
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Molecules generated match the predefined parameters",
+        "Execution time is within acceptable limits"
+      ],
+      "regulatory_basis": [
+        "URS-029-001"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all generated molecules are traceable and verifiable"
+      ],
+      "urs_requirements": [
+        "URS-029-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "AI model configuration",
+        "Computational chemistry"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Physics-Informed Simulations Integration Test",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "To ensure the physics-informed simulations are correctly integrated for docking and dynamics.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Predefined docking and dynamics parameters"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the physics-informed simulations with predefined parameters.",
+          "expected_result": "Simulation configuration completes without errors.",
+          "data_to_capture": [
+            "Configuration parameters",
+            "Simulation output"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the docking and dynamics simulations.",
+          "expected_result": "Simulations complete successfully and produce valid results.",
+          "data_to_capture": [
+            "Simulation results",
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Simulation results are valid and match predefined parameters",
+        "Execution time is within acceptable limits"
+      ],
+      "regulatory_basis": [
+        "URS-029-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all simulation results are traceable and verifiable"
+      ],
+      "urs_requirements": [
+        "URS-029-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Physics-informed simulations",
+        "Computational chemistry"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Proprietary Transformer Model Molecule Generation Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "To verify the proprietary transformer models correctly generate molecules as per the specified requirements.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Prepared dataset for molecule generation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the transformer model with the specified parameters.",
+          "expected_result": "Model configuration completes without errors.",
+          "data_to_capture": [
+            "Configuration parameters",
+            "Model output"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the molecule generation process.",
+          "expected_result": "Molecules are generated according to the specified criteria.",
+          "data_to_capture": [
+            "Generated molecules",
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Molecules generated meet the predefined criteria",
+        "Execution time is within acceptable limits"
+      ],
+      "regulatory_basis": [
+        "URS-029-001"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all generated molecules are traceable",
+        "Maintain integrity of training datasets"
+      ],
+      "urs_requirements": [
+        "URS-029-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "AI model configuration",
+        "Computational chemistry"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Integration with ELN and LIMS Systems",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "To ensure seamless integration between the AI platform and ELN/LIMS systems for data exchange.",
+      "prerequisites": [
+        "Access to ELN and LIMS systems",
+        "Configured AI platform"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the AI platform to connect with ELN and LIMS systems.",
+          "expected_result": "Connection established successfully.",
+          "data_to_capture": [
+            "Connection parameters",
+            "Status logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform data exchange between the AI platform and ELN/LIMS systems.",
+          "expected_result": "Data is exchanged accurately and completely.",
+          "data_to_capture": [
+            "Exchanged data",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data exchange is accurate and complete",
+        "No data loss or corruption"
+      ],
+      "regulatory_basis": [
+        "URS-029-012"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during exchange",
+        "Maintain audit trails"
+      ],
+      "urs_requirements": [
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "Data management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Proprietary Transformer Model Molecule Generation Verification",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the implementation of proprietary transformer models for molecule generation as specified in URS-029-001.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Prepared training datasets"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate molecule generation process using the transformer model.",
+          "expected_result": "Model generates molecules without errors.",
+          "data_to_capture": [
+            "Number of molecules generated",
+            "Generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Model generates at least 10k candidate molecules/day as per URS-029-010."
+      ],
+      "regulatory_basis": [
+        "URS-029-007: Maintain data integrity per ALCOA+ for training datasets and outputs."
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all generated molecules are traceable and logged."
+      ],
+      "urs_requirements": [
+        "URS-029-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "AI model training",
+        "Computational chemistry"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Integration with ELN and LIMS Systems",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Ensure the AI platform integrates seamlessly with ELN and LIMS systems as per URS-029-012.",
+      "prerequisites": [
+        "Access to ELN and LIMS systems",
+        "Configured integration settings"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send a test molecule data from AI platform to ELN.",
+          "expected_result": "Data appears in ELN without discrepancies.",
+          "data_to_capture": [
+            "Data transfer time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data integrity maintained during transfer as per ALCOA+."
+      ],
+      "regulatory_basis": [
+        "URS-029-007: Maintain data integrity per ALCOA+ for training datasets and outputs."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data consistency between systems."
+      ],
+      "urs_requirements": [
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "Data management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Multi-Parameter Optimization Performance Test",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Verify the system can perform multi-parameter optimization (potency, selectivity, PK, tox) within the required time frame.",
+      "prerequisites": [
+        "System installed and configured",
+        "Test dataset with known parameters available",
+        "HPC/Cloud resources allocated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test dataset into the system and configure the optimization parameters.",
+          "expected_result": "Dataset is loaded successfully and parameters are configured without errors.",
+          "data_to_capture": [
+            "Load time",
+            "Configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the multi-parameter optimization process.",
+          "expected_result": "Optimization completes within 4 hours per target as specified in URS-029-011.",
+          "data_to_capture": [
+            "Execution time",
+            "Optimization results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the results meet the predefined criteria for potency, selectivity, PK, and tox.",
+          "expected_result": "Results are within acceptable ranges for all parameters.",
+          "data_to_capture": [
+            "Parameter values",
+            "Validation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Optimization completes within 4 hours per target.",
+        "Results meet all predefined parameter criteria."
+      ],
+      "regulatory_basis": [
+        "URS-029-004: Support multi-parameter optimization (potency, selectivity, PK, tox).",
+        "URS-029-011: End-to-end pipeline completion < 4 hours per target."
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All optimization parameters and results must be traceable and unaltered.",
+        "Provenance of generated molecules must be retained."
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 240,
+      "required_expertise": [
+        "Computational Chemistry",
+        "AI Optimization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Integration with ELN and LIMS Systems",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Validate the seamless integration between the AI platform and ELN/LIMS systems for data exchange.",
+      "prerequisites": [
+        "System installed and configured",
+        "ELN and LIMS systems available and accessible",
+        "Test data for integration available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the AI platform to connect with the ELN and LIMS systems.",
+          "expected_result": "Connection is established without errors.",
+          "data_to_capture": [
+            "Connection status",
+            "Configuration logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a test dataset from the AI platform to the ELN system.",
+          "expected_result": "Dataset is successfully transferred and visible in the ELN system.",
+          "data_to_capture": [
+            "Transfer time",
+            "Data integrity checks"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Retrieve experimental results from the LIMS system and verify integration.",
+          "expected_result": "Results are successfully retrieved and processed by the AI platform.",
+          "data_to_capture": [
+            "Retrieval time",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer between systems is successful and accurate.",
+        "All integrated systems maintain data integrity and traceability."
+      ],
+      "regulatory_basis": [
+        "URS-029-012: Integrate with ELN, LIMS, and compound registration systems.",
+        "URS-029-007: Maintain data integrity per ALCOA+ for training datasets and outputs."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All transferred data must be complete, accurate, and unaltered.",
+        "Provenance of data must be maintained throughout the integration process."
+      ],
+      "urs_requirements": [
+        "URS-029-007",
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "System Integration",
+        "Data Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Proprietary Transformer Model Molecule Generation Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "To verify the proprietary transformer models correctly generate molecules as per the specified chemical properties and constraints.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Predefined chemical properties and constraints"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the transformer model with predefined chemical properties.",
+          "expected_result": "Model configuration completes without errors.",
+          "data_to_capture": [
+            "Configuration settings",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate molecule generation process.",
+          "expected_result": "Molecules are generated within the specified constraints.",
+          "data_to_capture": [
+            "Generated molecules",
+            "Generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All generated molecules meet the predefined chemical properties."
+      ],
+      "regulatory_basis": [
+        "URS-029-001"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all generated molecules are logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-029-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Computational Chemistry",
+        "AI Model Validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Physics-Informed Simulations Integration Test",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "To ensure the physics-informed simulations are correctly integrated for docking and dynamics within the AI platform.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Predefined docking and dynamics parameters"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the physics-informed simulations with predefined parameters.",
+          "expected_result": "Simulation configuration completes without errors.",
+          "data_to_capture": [
+            "Configuration settings",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Run the docking and dynamics simulations.",
+          "expected_result": "Simulations complete successfully with accurate results.",
+          "data_to_capture": [
+            "Simulation results",
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All simulations produce accurate and reliable results."
+      ],
+      "regulatory_basis": [
+        "URS-029-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all simulation results are logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-029-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Molecular Dynamics",
+        "Simulation Integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Multi-Parameter Optimization Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the system's ability to optimize molecules across multiple parameters (potency, selectivity, PK, tox) simultaneously.",
+      "prerequisites": [
+        "System installed and configured",
+        "Sample target protein loaded",
+        "Training datasets available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure optimization parameters for potency, selectivity, PK, and tox.",
+          "expected_result": "System accepts all parameters without errors.",
+          "data_to_capture": [
+            "Parameter settings",
+            "System logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate multi-parameter optimization run with test dataset.",
+          "expected_result": "System completes optimization within expected timeframe.",
+          "data_to_capture": [
+            "Optimization results",
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review generated molecules against optimization criteria.",
+          "expected_result": "Molecules meet all specified optimization criteria.",
+          "data_to_capture": [
+            "Molecule properties",
+            "Score distributions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System successfully optimizes molecules across all specified parameters",
+        "Optimization completes within 4 hours",
+        "Generated molecules meet all optimization criteria"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All optimization parameters must be traceable",
+        "Generated molecules must have complete provenance"
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-006"
+      ],
+      "related_tests": [
+        "OQ-007",
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Computational chemistry",
+        "AI model optimization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "HPC/Cloud Autoscaling Verification",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Validate the system's ability to automatically scale computational resources in HPC/Cloud environment.",
+      "prerequisites": [
+        "Cloud/HPC environment configured",
+        "Load testing tools installed",
+        "Monitoring system in place"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure monitoring for resource utilization and scaling events.",
+          "expected_result": "All monitoring tools are active and collecting data.",
+          "data_to_capture": [
+            "Initial resource allocation",
+            "Monitoring status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate batch processing of 10,000 molecules.",
+          "expected_result": "System automatically scales up resources as load increases.",
+          "data_to_capture": [
+            "Scaling events",
+            "Resource utilization"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor system during processing completion.",
+          "expected_result": "System scales down resources after processing completes.",
+          "data_to_capture": [
+            "Processing time",
+            "Final resource allocation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System scales up within 5 minutes of increased load",
+        "All 10,000 molecules processed within 4 hours",
+        "System scales down within 15 minutes of load reduction"
+      ],
+      "regulatory_basis": [
+        "GAMP 5 Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All scaling events must be logged",
+        "Processing results must be complete and accurate"
+      ],
+      "urs_requirements": [
+        "URS-029-010",
+        "URS-029-013"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-011"
+      ],
+      "estimated_duration_minutes": 180,
+      "required_expertise": [
+        "Cloud computing",
+        "Performance engineering"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Multi-Parameter Optimization Performance Test",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Verify the system can optimize molecules against multiple parameters (potency, selectivity, PK, tox) within the required timeframe.",
+      "prerequisites": [
+        "System installed and configured",
+        "Test dataset with known parameters available",
+        "HPC/Cloud resources allocated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load test dataset into the system for multi-parameter optimization.",
+          "expected_result": "Dataset is successfully loaded and parameters are recognized.",
+          "data_to_capture": [
+            "Dataset load time",
+            "Parameter recognition status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate multi-parameter optimization process with predefined constraints.",
+          "expected_result": "Optimization process starts without errors and progresses as expected.",
+          "data_to_capture": [
+            "Optimization start time",
+            "Process status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor and record the time taken to complete the optimization process.",
+          "expected_result": "Optimization completes within 4 hours per target as specified in URS-029-011.",
+          "data_to_capture": [
+            "Completion time",
+            "Optimization results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Optimization process completes within 4 hours per target.",
+        "Generated molecules meet predefined parameter constraints."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All optimization results must be traceable and unaltered.",
+        "Provenance of generated molecules must be retained."
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-010",
+        "OQ-012"
+      ],
+      "estimated_duration_minutes": 240,
+      "required_expertise": [
+        "Computational Chemistry",
+        "Performance Testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Integration with ELN and LIMS Systems",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Validate the seamless integration of the AI platform with ELN and LIMS systems for data exchange and feedback loops.",
+      "prerequisites": [
+        "System installed and configured",
+        "ELN and LIMS systems available and accessible",
+        "Test data for integration available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the AI platform to connect with ELN and LIMS systems using provided APIs.",
+          "expected_result": "Connection is established without errors and systems are recognized.",
+          "data_to_capture": [
+            "Connection status",
+            "API response times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send test data from the AI platform to ELN and LIMS systems.",
+          "expected_result": "Data is successfully transmitted and appears correctly in ELN and LIMS.",
+          "data_to_capture": [
+            "Data transmission time",
+            "Data accuracy in ELN/LIMS"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Retrieve feedback data from ELN and LIMS systems to the AI platform.",
+          "expected_result": "Feedback data is successfully received and processed by the AI platform.",
+          "data_to_capture": [
+            "Feedback reception time",
+            "Data processing status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data exchange between systems is accurate and complete.",
+        "Feedback loops are functional and data integrity is maintained."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All exchanged data must be traceable and unaltered.",
+        "Provenance of feedback data must be retained."
+      ],
+      "urs_requirements": [
+        "URS-029-003",
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-007",
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "System Integration",
+        "Data Integrity"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Multi-parameter Optimization Performance Test",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Verify the system can optimize molecules across potency, selectivity, PK, and tox parameters within specified timeframes.",
+      "prerequisites": [
+        "Target protein structure loaded",
+        "Initial compound dataset available",
+        "HPC/Cloud resources allocated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure optimization parameters for potency, selectivity, PK, and tox thresholds",
+          "expected_result": "System accepts all parameter thresholds and constraints",
+          "data_to_capture": [
+            "Parameter validation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute multi-parameter optimization run for target",
+          "expected_result": "Optimization completes within 4 hours with valid output molecules",
+          "data_to_capture": [
+            "Execution time",
+            "Number of candidates generated",
+            "Parameter scores"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Optimization completes within 4 hours",
+        "Output molecules meet all specified parameter thresholds",
+        "System maintains traceability of optimization decisions"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ICH Q9 Quality Risk Management"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance for optimization parameters",
+        "Audit trail of all parameter adjustments"
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 240,
+      "required_expertise": [
+        "Computational chemistry",
+        "HPC/Cloud infrastructure"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Active Learning Loop Integration Test",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Validate the system correctly incorporates ELN feedback into active learning cycles for model improvement.",
+      "prerequisites": [
+        "ELN system connected",
+        "Initial training dataset available",
+        "Active learning model deployed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Submit experimental results from ELN for 10 compounds",
+          "expected_result": "System acknowledges receipt of experimental data",
+          "data_to_capture": [
+            "Data transfer logs",
+            "Validation messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger active learning cycle incorporating new data",
+          "expected_result": "System generates updated model with improved predictions",
+          "data_to_capture": [
+            "Model version",
+            "Performance metrics",
+            "Training logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Experimental data is correctly ingested from ELN",
+        "Active learning cycle completes successfully",
+        "Model performance improves with new data"
+      ],
+      "regulatory_basis": [
+        "FDA 21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Chain of custody for experimental data",
+        "Model version control documentation"
+      ],
+      "urs_requirements": [
+        "URS-029-003",
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-007",
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Machine learning operations",
+        "ELN system knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Integration with ELN System Verification",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Verify the seamless integration of the Novel Drug Discovery AI System with the Electronic Lab Notebook (ELN) system to ensure data flow and feedback loops are functioning correctly.",
+      "prerequisites": [
+        "ELN system access",
+        "AI platform access",
+        "Test molecule dataset"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the AI platform and initiate a molecule generation process.",
+          "expected_result": "Molecule generation process starts successfully.",
+          "data_to_capture": [
+            "Process initiation timestamp",
+            "Generated molecule IDs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Check the ELN system for the generated molecules and feedback data.",
+          "expected_result": "Generated molecules and feedback data are visible in the ELN system.",
+          "data_to_capture": [
+            "ELN entry timestamp",
+            "Feedback data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All generated molecules are correctly logged in the ELN system.",
+        "Feedback data is accurately reflected in the AI platform."
+      ],
+      "regulatory_basis": [
+        "URS-029-003",
+        "URS-029-012"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all data entries are timestamped and traceable.",
+        "Verify data consistency between AI platform and ELN system."
+      ],
+      "urs_requirements": [
+        "URS-029-003",
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Integration testing",
+        "ELN system knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Multi-Parameter Optimization Performance Test",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Evaluate the AI platform's ability to perform multi-parameter optimization for potency, selectivity, PK, and toxicity within the specified time frame.",
+      "prerequisites": [
+        "AI platform access",
+        "Test target dataset",
+        "Performance metrics"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test target dataset into the AI platform.",
+          "expected_result": "Dataset is successfully loaded and ready for optimization.",
+          "data_to_capture": [
+            "Dataset loading timestamp",
+            "Target IDs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate the multi-parameter optimization process.",
+          "expected_result": "Optimization process starts successfully.",
+          "data_to_capture": [
+            "Process initiation timestamp",
+            "Optimization parameters"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor the optimization process and record completion time.",
+          "expected_result": "Optimization process completes within 4 hours.",
+          "data_to_capture": [
+            "Completion timestamp",
+            "Optimized molecule IDs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Optimization process completes within the specified time frame.",
+        "Optimized molecules meet predefined criteria for potency, selectivity, PK, and toxicity."
+      ],
+      "regulatory_basis": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all optimization parameters are logged and traceable.",
+        "Verify the accuracy of optimization results."
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Computational chemistry"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-021",
+      "test_name": "Multi-Parameter Optimization Performance Validation",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Verify the system's ability to optimize molecules across multiple parameters (potency, selectivity, PK, tox) within the specified time frame.",
+      "prerequisites": [
+        "System installed and configured",
+        "Test dataset with known parameters available",
+        "HPC/Cloud resources allocated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load test dataset into the system and configure multi-parameter optimization settings.",
+          "expected_result": "Dataset loaded successfully and optimization settings applied.",
+          "data_to_capture": [
+            "Dataset load time",
+            "Optimization settings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the multi-parameter optimization process for a predefined target.",
+          "expected_result": "Optimization process completes within 4 hours.",
+          "data_to_capture": [
+            "Start time",
+            "End time",
+            "Optimization results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Analyze the optimization results for compliance with predefined criteria.",
+          "expected_result": "Results meet or exceed predefined criteria for potency, selectivity, PK, and tox.",
+          "data_to_capture": [
+            "Optimization metrics",
+            "Compliance status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Optimization process completes within 4 hours.",
+        "Results meet predefined criteria for all parameters."
+      ],
+      "regulatory_basis": [
+        "URS-029-004: Support multi-parameter optimization (potency, selectivity, PK, tox)",
+        "URS-029-011: End-to-end pipeline completion < 4 hours per target"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all optimization parameters and results are accurately recorded and traceable."
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-015",
+        "OQ-018"
+      ],
+      "estimated_duration_minutes": 240,
+      "required_expertise": [
+        "Computational Chemistry",
+        "AI/ML Optimization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-022",
+      "test_name": "Integration with ELN for Active Learning Feedback",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Validate the system's ability to integrate with ELN for active learning feedback loops.",
+      "prerequisites": [
+        "System installed and configured",
+        "ELN system accessible and configured for integration",
+        "Test dataset with ELN feedback available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the system to connect with the ELN system using predefined API endpoints.",
+          "expected_result": "Connection established successfully with ELN system.",
+          "data_to_capture": [
+            "Connection status",
+            "API response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate ELN feedback by sending test data to the system.",
+          "expected_result": "Test data received and processed by the system.",
+          "data_to_capture": [
+            "Data reception status",
+            "Processing time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify that the system updates its models based on the ELN feedback.",
+          "expected_result": "Models updated successfully and feedback incorporated into active learning loops.",
+          "data_to_capture": [
+            "Model update status",
+            "Feedback incorporation metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Connection with ELN system established successfully.",
+        "ELN feedback processed and incorporated into active learning loops."
+      ],
+      "regulatory_basis": [
+        "URS-029-003: Provide active learning loops with ELN feedback",
+        "URS-029-012: Integrate with ELN, LIMS, and compound registration systems"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all ELN feedback data is accurately recorded and traceable."
+      ],
+      "urs_requirements": [
+        "URS-029-003",
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-009",
+        "OQ-014"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "System Integration",
+        "ELN Systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-023",
+      "test_name": "Proprietary Transformer Model Molecule Generation Validation",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "To verify the proprietary transformer models correctly generate molecules as per URS-029-001.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Prepared training datasets"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate molecule generation process using the transformer models.",
+          "expected_result": "Molecules are generated without errors.",
+          "data_to_capture": [
+            "Number of molecules generated",
+            "Generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Validate the generated molecules against predefined criteria.",
+          "expected_result": "Molecules meet the predefined criteria for validity.",
+          "data_to_capture": [
+            "Validation results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Molecules are generated successfully",
+        "Generated molecules meet validity criteria"
+      ],
+      "regulatory_basis": [
+        "URS-029-001"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity per ALCOA+"
+      ],
+      "urs_requirements": [
+        "URS-029-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "AI model validation",
+        "Computational chemistry"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-024",
+      "test_name": "Integration with ELN and LIMS Systems Verification",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "To ensure the AI platform integrates seamlessly with ELN and LIMS systems as per URS-029-012.",
+      "prerequisites": [
+        "Access to ELN and LIMS systems",
+        "Configured integration settings"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send generated molecule data from the AI platform to ELN.",
+          "expected_result": "Data is successfully received and recorded in ELN.",
+          "data_to_capture": [
+            "Data transfer status",
+            "ELN entry details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send molecule data from the AI platform to LIMS.",
+          "expected_result": "Data is successfully received and recorded in LIMS.",
+          "data_to_capture": [
+            "Data transfer status",
+            "LIMS entry details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data is correctly transferred to ELN",
+        "Data is correctly transferred to LIMS"
+      ],
+      "regulatory_basis": [
+        "URS-029-012"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity per ALCOA+"
+      ],
+      "urs_requirements": [
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-012",
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "Data management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-025",
+      "test_name": "Verify Multi-Parameter Optimization Functionality",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Ensure the system correctly optimizes molecules based on potency, selectivity, PK, and toxicity parameters.",
+      "prerequisites": [
+        "System installed and configured",
+        "Test dataset available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a test dataset into the system.",
+          "expected_result": "Dataset is successfully loaded and processed.",
+          "data_to_capture": [
+            "Dataset loading time",
+            "Processing status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Run multi-parameter optimization on the dataset.",
+          "expected_result": "Optimization process completes without errors.",
+          "data_to_capture": [
+            "Optimization time",
+            "Optimization results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the optimized molecules.",
+          "expected_result": "Molecules meet the specified potency, selectivity, PK, and toxicity criteria.",
+          "data_to_capture": [
+            "Optimized molecule properties",
+            "Criteria compliance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Optimization process completes within expected time",
+        "Optimized molecules meet all specified criteria"
+      ],
+      "regulatory_basis": [
+        "URS-029-004"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity per ALCOA+ for all inputs and outputs"
+      ],
+      "urs_requirements": [
+        "URS-029-004"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Computational Chemistry",
+        "AI Optimization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-026",
+      "test_name": "Validate Integration with ELN and LIMS Systems",
+      "test_category": "integration",
+      "gamp_category": 5,
+      "objective": "Confirm seamless data exchange between the AI platform and ELN/LIMS systems.",
+      "prerequisites": [
+        "ELN and LIMS systems configured",
+        "Test data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send test data from the AI platform to ELN.",
+          "expected_result": "Data is successfully received and stored in ELN.",
+          "data_to_capture": [
+            "Data transfer time",
+            "ELN storage status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Retrieve data from LIMS and process it in the AI platform.",
+          "expected_result": "Data is successfully retrieved and processed.",
+          "data_to_capture": [
+            "Data retrieval time",
+            "Processing status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify data consistency between systems.",
+          "expected_result": "Data remains consistent across AI platform, ELN, and LIMS.",
+          "data_to_capture": [
+            "Data consistency check results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer and retrieval complete without errors",
+        "Data consistency maintained across systems"
+      ],
+      "regulatory_basis": [
+        "URS-029-012"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity per ALCOA+ for all transferred data"
+      ],
+      "urs_requirements": [
+        "URS-029-012"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Integration",
+        "Data Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-027",
+      "test_name": "Proprietary Transformer Model Molecule Generation Test",
+      "test_category": "functional",
+      "gamp_category": 5,
+      "objective": "Verify the implementation of proprietary transformer models for molecule generation as specified in URS-029-001.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Prepared dataset for molecule generation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate molecule generation process using the proprietary transformer model.",
+          "expected_result": "Model generates a set of candidate molecules.",
+          "data_to_capture": [
+            "Number of molecules generated",
+            "Time taken for generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Model generates at least 10k candidate molecules/day"
+      ],
+      "regulatory_basis": [
+        "URS-029-001"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity per ALCOA+ for training datasets and outputs"
+      ],
+      "urs_requirements": [
+        "URS-029-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "AI model expertise",
+        "Computational chemistry"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-028",
+      "test_name": "End-to-End Pipeline Completion Time Test",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Validate the end-to-end pipeline completion time is less than 4 hours per target as per URS-029-011.",
+      "prerequisites": [
+        "Access to the AI platform",
+        "Prepared target dataset"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Run the end-to-end pipeline for a specified target.",
+          "expected_result": "Pipeline completes processing within 4 hours.",
+          "data_to_capture": [
+            "Time taken for pipeline completion"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pipeline completes within 4 hours"
+      ],
+      "regulatory_basis": [
+        "URS-029-011"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity per ALCOA+ for training datasets and outputs"
+      ],
+      "urs_requirements": [
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Pipeline optimization",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-029",
+      "test_name": "Multi-parameter Optimization Performance Validation",
+      "test_category": "performance",
+      "gamp_category": 5,
+      "objective": "Verify the system can optimize molecules against multiple parameters (potency, selectivity, PK, tox) within specified timeframes.",
+      "prerequisites": [
+        "System installed and configured",
+        "Test dataset with known parameters loaded",
+        "HPC/Cloud resources allocated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure optimization job with 5 simultaneous parameters and constraints",
+          "expected_result": "System accepts configuration without errors",
+          "data_to_capture": [
+            "Configuration parameters",
+            "System response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute optimization run with 100 seed molecules",
+          "expected_result": "Completed run within 2 hours with valid Pareto front",
+          "data_to_capture": [
+            "Execution time",
+            "Number of optimized molecules",
+            "Parameter trade-off metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Optimization completes within 4 hours",
+        "At least 50 viable candidates generated",
+        "All parameters properly weighted in results"
+      ],
+      "regulatory_basis": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance for all optimization inputs/outputs",
+        "Full traceability of parameter weights"
+      ],
+      "urs_requirements": [
+        "URS-029-004",
+        "URS-029-011"
+      ],
+      "related_tests": [
+        "OQ-015",
+        "OQ-022"
+      ],
+      "estimated_duration_minutes": 240,
+      "required_expertise": [
+        "Computational chemistry",
+        "Multi-objective optimization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-030",
+      "test_name": "Model Versioning and Change Control Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 5,
+      "objective": "Validate proper version control and approval workflows for proprietary AI model updates.",
+      "prerequisites": [
+        "Model registry deployed",
+        "At least 2 model versions exist",
+        "Change control procedures documented"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Submit new model version through approval workflow",
+          "expected_result": "System enforces required approval steps before activation",
+          "data_to_capture": [
+            "Approval workflow steps",
+            "User roles enforced"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to use unapproved model in production pipeline",
+          "expected_result": "System prevents execution with proper audit trail",
+          "data_to_capture": [
+            "Access control logs",
+            "Audit trail entries"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All model changes require documented approval",
+        "Production system only uses approved versions",
+        "Full audit trail maintained for 10 years"
+      ],
+      "regulatory_basis": [
+        "URS-029-008",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Immutable model version records",
+        "Cryptographic signing of approved models"
+      ],
+      "urs_requirements": [
+        "URS-029-007",
+        "URS-029-008"
+      ],
+      "related_tests": [
+        "OQ-007",
+        "OQ-019"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "MLOps",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 30,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020",
+      "OQ-021",
+      "OQ-022",
+      "OQ-023",
+      "OQ-024",
+      "OQ-025",
+      "OQ-026",
+      "OQ-027",
+      "OQ-028",
+      "OQ-029",
+      "OQ-030"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 2760,
+  "generation_timestamp": "2025-08-21T15:54:31.433791+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T15:54:34.521439+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T15:46:01.453857+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

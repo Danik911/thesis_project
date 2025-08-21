@@ -1,0 +1,1453 @@
+{
+  "suite_id": "OQ-SUITE-1512",
+  "gamp_category": 4,
+  "document_name": "URS-026.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify Dashboard Access and Pre-built Templates",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that users can access pre-built dashboards for deviations, CAPA, batch yield, OEE, and complaints using vendor templates.",
+      "prerequisites": [
+        "System is installed and configured",
+        "User credentials are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the pharmaceutical analytics platform using valid credentials.",
+          "expected_result": "User is successfully logged in and the dashboard interface is displayed.",
+          "data_to_capture": [
+            "Login status",
+            "Dashboard interface display"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the pre-built dashboards section.",
+          "expected_result": "Pre-built dashboards for deviations, CAPA, batch yield, OEE, and complaints are displayed.",
+          "data_to_capture": [
+            "Dashboard availability",
+            "Dashboard content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All pre-built dashboards are accessible and display correct data"
+      ],
+      "regulatory_basis": [
+        "URS-026-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data displayed is accurate and consistent"
+      ],
+      "urs_requirements": [
+        "URS-026-001"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Pharmaceutical analytics",
+        "System navigation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validate KPI Threshold Configuration and Alert Rules",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To validate that the system allows configuration of KPI thresholds and alert rules using vendor tools.",
+      "prerequisites": [
+        "System is installed and configured",
+        "User credentials are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the pharmaceutical analytics platform using valid credentials.",
+          "expected_result": "User is successfully logged in and the dashboard interface is displayed.",
+          "data_to_capture": [
+            "Login status",
+            "Dashboard interface display"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Access the configuration tools for KPI thresholds and alert rules.",
+          "expected_result": "Configuration interface for KPI thresholds and alert rules is displayed.",
+          "data_to_capture": [
+            "Configuration interface availability"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a KPI threshold and an alert rule using the vendor tools.",
+          "expected_result": "KPI threshold and alert rule are successfully configured and saved.",
+          "data_to_capture": [
+            "Configuration status",
+            "Saved configurations"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "KPI thresholds and alert rules are configurable and saved correctly"
+      ],
+      "regulatory_basis": [
+        "URS-026-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure configurations are accurately saved and applied"
+      ],
+      "urs_requirements": [
+        "URS-026-002"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Pharmaceutical analytics",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verification of KPI Threshold and Alert Rule Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system allows configuration of KPI thresholds and alert rules using vendor tools as specified in URS-026-002.",
+      "prerequisites": [
+        "Access to the analytics platform with admin privileges",
+        "Predefined KPI thresholds and alert rules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the analytics platform with admin credentials.",
+          "expected_result": "User successfully logs in and accesses the admin dashboard.",
+          "data_to_capture": [
+            "Login status",
+            "Dashboard access"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the KPI threshold configuration section using vendor tools.",
+          "expected_result": "KPI threshold configuration interface is displayed.",
+          "data_to_capture": [
+            "Interface accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a new KPI threshold and save the settings.",
+          "expected_result": "KPI threshold is successfully saved and appears in the list of configured thresholds.",
+          "data_to_capture": [
+            "Threshold configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Navigate to the alert rule configuration section and create a new alert rule.",
+          "expected_result": "Alert rule is successfully created and appears in the list of configured rules.",
+          "data_to_capture": [
+            "Alert rule configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "KPI thresholds can be configured and saved without errors.",
+        "Alert rules can be created and saved without errors.",
+        "Configured thresholds and rules are visible in their respective lists."
+      ],
+      "regulatory_basis": [
+        "URS-026-002",
+        "URS-026-013"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configured thresholds and rules are accurately stored and retrievable."
+      ],
+      "urs_requirements": [
+        "URS-026-002",
+        "URS-026-013"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Admin access to the analytics platform",
+        "Knowledge of KPI and alert rule configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Verification of Row-Level Security Enforcement",
+      "test_category": "security",
+      "gamp_category": 4,
+      "objective": "Verify that the system enforces row-level security using configured roles as specified in URS-026-005.",
+      "prerequisites": [
+        "Access to the analytics platform with different user roles",
+        "Predefined row-level security rules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the analytics platform with a user role that has restricted access.",
+          "expected_result": "User successfully logs in and accesses the dashboard with restricted data visibility.",
+          "data_to_capture": [
+            "Login status",
+            "Data visibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to access data rows that are restricted for the user role.",
+          "expected_result": "User is unable to view or access restricted data rows.",
+          "data_to_capture": [
+            "Access attempt result"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Log in with a different user role that has access to the restricted data rows.",
+          "expected_result": "User successfully logs in and can view the previously restricted data rows.",
+          "data_to_capture": [
+            "Login status",
+            "Data visibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Row-level security rules are enforced correctly based on user roles.",
+        "Restricted data rows are not accessible to unauthorized users.",
+        "Authorized users can access all permitted data rows."
+      ],
+      "regulatory_basis": [
+        "URS-026-005",
+        "URS-026-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure that data access is strictly controlled based on configured roles."
+      ],
+      "urs_requirements": [
+        "URS-026-005",
+        "URS-026-011"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Knowledge of user role configuration",
+        "Understanding of row-level security principles"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify Row-Level Security Enforcement",
+      "test_category": "security",
+      "gamp_category": 4,
+      "objective": "Ensure that the platform enforces row-level security based on configured roles.",
+      "prerequisites": [
+        "Configured roles and permissions",
+        "Access to test accounts with different roles"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the platform using a test account with a specific role.",
+          "expected_result": "User should only see data rows accessible by their role.",
+          "data_to_capture": [
+            "Visible data rows"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to access data rows outside the user's role.",
+          "expected_result": "Access should be denied or restricted.",
+          "data_to_capture": [
+            "Access attempt result"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Row-level security is enforced correctly based on configured roles."
+      ],
+      "regulatory_basis": [
+        "URS-026-005"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data access is restricted appropriately."
+      ],
+      "urs_requirements": [
+        "URS-026-005"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Security Testing",
+        "Role-Based Access Control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate Dashboard Performance for Large Datasets",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that dashboards load within the specified time for large datasets.",
+      "prerequisites": [
+        "Access to a dashboard with a 50M-row dataset",
+        "Normal system load conditions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to a pre-built dashboard with a 50M-row dataset.",
+          "expected_result": "Dashboard should load within 5 seconds.",
+          "data_to_capture": [
+            "Dashboard load time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Repeat the test under varying system load conditions.",
+          "expected_result": "Dashboard should consistently load within 5 seconds.",
+          "data_to_capture": [
+            "Dashboard load time under varying conditions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboards load within 5 seconds for 50M-row datasets under normal load."
+      ],
+      "regulatory_basis": [
+        "URS-026-015"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure dashboard data is accurate and complete."
+      ],
+      "urs_requirements": [
+        "URS-026-015"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance Testing",
+        "Data Analytics"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Verify Row-Level Security Enforcement",
+      "test_category": "security",
+      "gamp_category": 4,
+      "objective": "To ensure that the platform enforces row-level security based on configured roles, preventing unauthorized access to sensitive data.",
+      "prerequisites": [
+        "Configured roles and permissions",
+        "Access to test accounts with different roles"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the platform using a test account with limited access.",
+          "expected_result": "The user should only see data rows permitted by their role.",
+          "data_to_capture": [
+            "Visible data rows"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to access restricted data rows.",
+          "expected_result": "Access should be denied, and an appropriate error message should be displayed.",
+          "data_to_capture": [
+            "Error message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Row-level security is enforced correctly",
+        "Unauthorized access attempts are blocked"
+      ],
+      "regulatory_basis": [
+        "URS-026-005"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity by preventing unauthorized access"
+      ],
+      "urs_requirements": [
+        "URS-026-005"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Security Testing",
+        "Role Configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Validate Dashboard Loading Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To verify that dashboards load within the specified time frame for large datasets under normal load conditions.",
+      "prerequisites": [
+        "Access to a dashboard with a 50M-row dataset",
+        "Normal load conditions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to a pre-built dashboard with a 50M-row dataset.",
+          "expected_result": "The dashboard should load completely within 5 seconds.",
+          "data_to_capture": [
+            "Loading time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Repeat the process for multiple dashboards.",
+          "expected_result": "All dashboards should load within the specified time frame.",
+          "data_to_capture": [
+            "Loading times for each dashboard"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboards load within 5 seconds",
+        "Consistent performance across multiple dashboards"
+      ],
+      "regulatory_basis": [
+        "URS-026-015"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure accurate and timely data display"
+      ],
+      "urs_requirements": [
+        "URS-026-015"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance Testing",
+        "Dashboard Configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Dashboard Performance Validation for Large Datasets",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that dashboards load within 5 seconds for datasets containing 50 million rows under normal system load.",
+      "prerequisites": [
+        "System is fully installed and configured",
+        "Test dataset with 50M rows is available",
+        "Normal system load conditions are simulated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with a user account that has access to the test dashboard.",
+          "expected_result": "User successfully logs in and gains access to the dashboard interface.",
+          "data_to_capture": [
+            "Login time",
+            "Dashboard access time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the pre-built dashboard configured for the 50M-row dataset.",
+          "expected_result": "Dashboard loads completely within 5 seconds.",
+          "data_to_capture": [
+            "Dashboard load time",
+            "System resource usage during load"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboard loads within 5 seconds for the 50M-row dataset.",
+        "No system errors or timeouts occur during the test."
+      ],
+      "regulatory_basis": [
+        "URS-026-015"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must remain consistent and accurate during dashboard loading."
+      ],
+      "urs_requirements": [
+        "URS-026-015"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "System administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Row-Level Security Configuration Validation",
+      "test_category": "security",
+      "gamp_category": 4,
+      "objective": "Ensure that row-level security is correctly enforced based on configured user roles.",
+      "prerequisites": [
+        "System is fully installed and configured",
+        "Test user accounts with different roles are created",
+        "Row-level security rules are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with a user account assigned to Role A.",
+          "expected_result": "User successfully logs in and can access only the data rows permitted for Role A.",
+          "data_to_capture": [
+            "Data rows displayed",
+            "Access logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Log in to the system with a user account assigned to Role B.",
+          "expected_result": "User successfully logs in and can access only the data rows permitted for Role B.",
+          "data_to_capture": [
+            "Data rows displayed",
+            "Access logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Users can only access data rows permitted by their assigned roles.",
+        "No unauthorized data access occurs during the test."
+      ],
+      "regulatory_basis": [
+        "URS-026-005",
+        "URS-026-011"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Data access must be strictly controlled based on user roles."
+      ],
+      "urs_requirements": [
+        "URS-026-005",
+        "URS-026-011"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Security testing",
+        "Role-based access control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Verification of KPI Threshold Configuration and Alert Rules",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system allows configuration of KPI thresholds and alert rules using vendor tools as specified in URS-026-002.",
+      "prerequisites": [
+        "Access to the analytics platform with admin privileges",
+        "Predefined KPI thresholds and alert rules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the analytics platform with admin credentials.",
+          "expected_result": "Successful login and access to admin tools.",
+          "data_to_capture": [
+            "Login status",
+            "Admin tool accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the KPI threshold configuration section using vendor tools.",
+          "expected_result": "KPI threshold configuration interface is accessible.",
+          "data_to_capture": [
+            "Interface accessibility",
+            "Available configuration options"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a new KPI threshold and alert rule for a GxP-relevant metric.",
+          "expected_result": "KPI threshold and alert rule are successfully configured and saved.",
+          "data_to_capture": [
+            "Configuration status",
+            "Alert rule activation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Trigger the configured alert by simulating a breach of the KPI threshold.",
+          "expected_result": "Alert is triggered and notification is received as configured.",
+          "data_to_capture": [
+            "Alert trigger status",
+            "Notification receipt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "KPI thresholds and alert rules can be configured using vendor tools.",
+        "Configured alerts are triggered upon threshold breach."
+      ],
+      "regulatory_basis": [
+        "URS-026-002",
+        "URS-026-013"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configured thresholds and rules are accurately stored and applied."
+      ],
+      "urs_requirements": [
+        "URS-026-002",
+        "URS-026-013"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Admin access to the analytics platform",
+        "Knowledge of KPI configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Validation of Row-Level Security Enforcement",
+      "test_category": "security",
+      "gamp_category": 4,
+      "objective": "Validate that the system enforces row-level security using configured roles as specified in URS-026-005.",
+      "prerequisites": [
+        "Access to the analytics platform with multiple user roles",
+        "Predefined row-level security rules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the analytics platform with a user role configured for restricted access.",
+          "expected_result": "Successful login and access to restricted dashboards.",
+          "data_to_capture": [
+            "Login status",
+            "Dashboard accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to access data rows outside the configured security scope.",
+          "expected_result": "Access to restricted data rows is denied.",
+          "data_to_capture": [
+            "Access attempt result",
+            "Error message if applicable"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Log in with a different user role configured for broader access.",
+          "expected_result": "Successful login and access to additional data rows.",
+          "data_to_capture": [
+            "Login status",
+            "Data row accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify that the data rows accessible match the configured security rules.",
+          "expected_result": "Only data rows within the security scope are accessible.",
+          "data_to_capture": [
+            "Data row accessibility",
+            "Security rule compliance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Row-level security is enforced based on configured roles.",
+        "Users cannot access data rows outside their security scope."
+      ],
+      "regulatory_basis": [
+        "URS-026-005",
+        "URS-026-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all data access is strictly controlled by role-based security rules."
+      ],
+      "urs_requirements": [
+        "URS-026-005",
+        "URS-026-011"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-008"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Knowledge of role-based access control",
+        "Access to multiple user roles"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Row-Level Security Enforcement Verification",
+      "test_category": "security",
+      "gamp_category": 4,
+      "objective": "Verify that the platform enforces row-level security as configured in roles for GxP datasets.",
+      "prerequisites": [
+        "Configured roles with row-level security rules",
+        "Test user accounts with assigned roles",
+        "Sample GxP dataset with restricted rows"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a test user with restricted row-level access.",
+          "expected_result": "User successfully authenticates and accesses the platform.",
+          "data_to_capture": [
+            "Login success/failure"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to query a GxP dataset with restricted rows.",
+          "expected_result": "Only rows permitted by the role's security rules are displayed.",
+          "data_to_capture": [
+            "Rows returned vs. expected restrictions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify audit trail captures the access attempt.",
+          "expected_result": "Audit log shows user access with timestamp and dataset queried.",
+          "data_to_capture": [
+            "Audit log entry details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Row-level security rules are enforced correctly for all test roles.",
+        "No unauthorized data access occurs.",
+        "Audit trail captures all access attempts."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records",
+        "EU Annex 11 - Computerized Systems"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data access must be restricted per configured roles.",
+        "Audit trail must be complete and tamper-evident."
+      ],
+      "urs_requirements": [
+        "URS-026-005: The system shall enforce row-level security using configured roles.",
+        "URS-026-013: Audit trail shall capture changes to dashboards, alerts, and roles."
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Security Configuration",
+        "GxP Compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Governed Export Functionality Validation",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Validate that governed export to CSV/PDF functions correctly and maintains data integrity.",
+      "prerequisites": [
+        "Configured export permissions for test roles",
+        "Sample GxP dataset with known values",
+        "Export destination with write permissions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Select a governed dataset and initiate export to CSV.",
+          "expected_result": "Export completes successfully with all expected data.",
+          "data_to_capture": [
+            "Export success/failure",
+            "File integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Compare exported data to source records for accuracy.",
+          "expected_result": "Exported data matches source records without modification.",
+          "data_to_capture": [
+            "Data discrepancies if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify PDF export renders all data correctly.",
+          "expected_result": "PDF output matches screen display with proper formatting.",
+          "data_to_capture": [
+            "PDF rendering quality"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Exported data matches source records exactly.",
+        "PDF rendering preserves all data and formatting.",
+        "Export function honors role-based permissions."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records",
+        "EU Annex 11 - Computerized Systems"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Exported data must be complete and unaltered.",
+        "Export must include all required metadata."
+      ],
+      "urs_requirements": [
+        "URS-026-009: The platform shall provide governed export to CSV/PDF using vendor export features.",
+        "URS-026-011: Access to GxP semantic layers shall be read-only for end-users."
+      ],
+      "related_tests": [
+        "OQ-008",
+        "OQ-012"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Data Export Validation",
+        "GxP Compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Verify Dashboard Load Performance for 50M-Row Datasets",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure dashboards load within 5 seconds for datasets containing 50 million rows under normal load conditions.",
+      "prerequisites": [
+        "50M-row dataset available",
+        "Dashboard configured with the dataset",
+        "Normal system load conditions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the pre-built dashboard for deviations.",
+          "expected_result": "Dashboard loads within 5 seconds.",
+          "data_to_capture": [
+            "Load time in seconds"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboard loads within 5 seconds"
+      ],
+      "regulatory_basis": [
+        "URS-026-015"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data displayed is accurate and consistent with the dataset"
+      ],
+      "urs_requirements": [
+        "URS-026-015"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Data analytics"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Validate Integration with SSO and AD Groups for Role Mapping",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the platform integrates with SSO (SAML/OIDC) and AD groups to map user roles correctly.",
+      "prerequisites": [
+        "SSO configured",
+        "AD groups configured",
+        "User roles defined in the platform"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in using SSO credentials.",
+          "expected_result": "User is authenticated and role is mapped correctly based on AD group.",
+          "data_to_capture": [
+            "Authentication status",
+            "Mapped role"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "User is authenticated via SSO",
+        "Role is mapped correctly based on AD group"
+      ],
+      "regulatory_basis": [
+        "URS-026-018"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure role mapping is accurate and consistent with AD group membership"
+      ],
+      "urs_requirements": [
+        "URS-026-018"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SSO integration",
+        "Active Directory management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Integration with SSO and AD Groups for Role Mapping",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the platform integrates with SSO (SAML/OIDC) and AD groups for accurate role mapping.",
+      "prerequisites": [
+        "SSO configured",
+        "AD groups set up",
+        "Roles defined in the platform"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the platform using SSO credentials.",
+          "expected_result": "User is successfully authenticated and logged in.",
+          "data_to_capture": [
+            "Login status",
+            "User role"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the user role matches the AD group membership.",
+          "expected_result": "User role is correctly mapped based on AD group.",
+          "data_to_capture": [
+            "User role",
+            "AD group membership"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "SSO login is successful",
+        "User role is correctly mapped to AD group"
+      ],
+      "regulatory_basis": [
+        "URS-026-018"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure role mapping is accurate and consistent"
+      ],
+      "urs_requirements": [
+        "URS-026-018"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SSO configuration",
+        "AD group management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Performance of Scheduled Report Generation",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that scheduled report generation completes within 10 minutes for enterprise distributions.",
+      "prerequisites": [
+        "Scheduled report configured",
+        "Enterprise distribution list set up"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Schedule a report for enterprise distribution.",
+          "expected_result": "Report is successfully scheduled.",
+          "data_to_capture": [
+            "Scheduling status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the report generation process and record the time taken.",
+          "expected_result": "Report generation completes within 10 minutes.",
+          "data_to_capture": [
+            "Report generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Report is scheduled successfully",
+        "Report generation completes within 10 minutes"
+      ],
+      "regulatory_basis": [
+        "URS-026-016"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure report data is accurate and complete"
+      ],
+      "urs_requirements": [
+        "URS-026-016"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Report scheduling",
+        "Performance monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Verify Row-Level Security Enforcement",
+      "test_category": "security",
+      "gamp_category": 4,
+      "objective": "Ensure that row-level security is enforced based on configured roles to restrict data access appropriately.",
+      "prerequisites": [
+        "Configured roles and permissions",
+        "Test dataset with row-level security rules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a user with a restricted role.",
+          "expected_result": "User should only see data rows permitted by their role.",
+          "data_to_capture": [
+            "Visible data rows",
+            "User role details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to access data rows outside the user's role.",
+          "expected_result": "Access to restricted data rows should be denied.",
+          "data_to_capture": [
+            "Error messages",
+            "Access logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Row-level security is enforced correctly for all configured roles."
+      ],
+      "regulatory_basis": [
+        "URS-026-005",
+        "URS-026-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data access is restricted as per role configurations."
+      ],
+      "urs_requirements": [
+        "URS-026-005"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Security configuration",
+        "Role-based access control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Validate Scheduled Report Generation Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that scheduled report generation completes within the specified time frame for enterprise distributions.",
+      "prerequisites": [
+        "Configured report scheduler",
+        "Test dataset with 50M rows"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Schedule a standard report for generation.",
+          "expected_result": "Report generation should be initiated successfully.",
+          "data_to_capture": [
+            "Report generation start time",
+            "Report details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the report generation process.",
+          "expected_result": "Report generation should complete within 10 minutes.",
+          "data_to_capture": [
+            "Report generation end time",
+            "Report file size"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Scheduled report generation completes within 10 minutes for enterprise distributions."
+      ],
+      "regulatory_basis": [
+        "URS-026-016"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure report data is accurate and complete."
+      ],
+      "urs_requirements": [
+        "URS-026-016"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Report scheduling",
+        "Performance monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 600,
+  "generation_timestamp": "2025-08-21T15:12:39.997881+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T15:12:40.328032+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T15:03:55.493171+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}
