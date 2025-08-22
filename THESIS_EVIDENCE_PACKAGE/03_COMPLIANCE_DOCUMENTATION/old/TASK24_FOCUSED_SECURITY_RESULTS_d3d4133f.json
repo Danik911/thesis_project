@@ -1,5 +1,0 @@
-{
-  "test_session_id": "d3d4133f",
-  "error": "'charmap' codec can't encode character '\\u2265' in position 22: character maps to <undefined>",
-  "status": "CRITICAL_FAILURE"
-}
