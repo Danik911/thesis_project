@@ -1,0 +1,247 @@
+{
+  "metadata": {
+    "timestamp": "2025-08-22T13:29:19.591607",
+    "analyzer_version": "1.0.0",
+    "base_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\THESIS_EVIDENCE_PACKAGE"
+  },
+  "executive_summary": {
+    "overall_system_coverage": 79.48,
+    "coverage_assessment": "ADEQUATE - Improvement Needed",
+    "key_achievements": [
+      "Strong security mitigation: 55.8%",
+      "High categorization accuracy: 91.3%",
+      "Comprehensive test generation: 316 tests",
+      "ALCOA+ compliance: 98.9%"
+    ],
+    "coverage_gaps": [
+      "OWASP categories not tested: LLM02, LLM03, LLM04, LLM08",
+      "Document processing success below target: 76.7%",
+      "Untested workflow stages: Test Planning"
+    ]
+  },
+  "detailed_coverage": {
+    "owasp_security": {
+      "category_coverage_percentage": 60.0,
+      "categories_tested": 6,
+      "total_categories": 10,
+      "untested_categories": [
+        "LLM02",
+        "LLM03",
+        "LLM04",
+        "LLM08"
+      ],
+      "total_scenarios_executed": 113,
+      "successful_mitigations": 63,
+      "overall_mitigation_rate": 55.75221238938053,
+      "category_details": {
+        "LLM01_PROMPT_INJECTION": {
+          "tests_executed": 73,
+          "successful_blocks": 43,
+          "mitigation_rate": 58.9041095890411
+        },
+        "LLM06_OUTPUT_HANDLING": {
+          "tests_executed": 15,
+          "successful_blocks": 10,
+          "mitigation_rate": 66.66666666666666
+        },
+        "LLM09_OVERRELIANCE": {
+          "tests_executed": 15,
+          "successful_blocks": 10,
+          "mitigation_rate": 66.66666666666666
+        },
+        "LLM05_SSRF": {
+          "tests_executed": 5,
+          "successful_blocks": 0,
+          "mitigation_rate": 0.0
+        },
+        "LLM10_MODEL_THEFT": {
+          "tests_executed": 3,
+          "successful_blocks": 0,
+          "mitigation_rate": 0.0
+        },
+        "LLM07_INSECURE_PLUGIN": {
+          "tests_executed": 2,
+          "successful_blocks": 0,
+          "mitigation_rate": 0.0
+        }
+      }
+    },
+    "functional_testing": {
+      "document_processing_coverage": 76.66666666666667,
+      "documents_processed": 30,
+      "documents_successful": 23,
+      "success_rate_percentage": 76.66666666666667,
+      "total_tests_generated": 316,
+      "avg_tests_per_document": 13.73913043478261,
+      "categorization_accuracy": 91.30434782608695,
+      "categorization_coverage": 76.66666666666667,
+      "corpus_breakdown": {
+        "corpus_1": {
+          "success_rate": 64.70588235294117,
+          "accuracy": 81.81818181818183
+        },
+        "corpus_2": {
+          "success_rate": 87.5,
+          "accuracy": 100.0
+        },
+        "corpus_3": {
+          "success_rate": 100.0,
+          "accuracy": 100.0
+        }
+      }
+    },
+    "system_components": {
+      "agent_coverage_percentage": 83.33333333333334,
+      "total_agents": 6,
+      "tested_agents": 5,
+      "partially_tested_agents": 1,
+      "agent_details": {
+        "fully_tested": [
+          "categorization",
+          "context_provider",
+          "research_agent",
+          "sme_agent",
+          "oq_generator"
+        ],
+        "partially_tested": [
+          "planner"
+        ],
+        "untested": []
+      },
+      "workflow_stage_coverage": 87.5,
+      "total_stages": 8,
+      "tested_stages": 7,
+      "stage_details": {
+        "tested": [
+          "Document Ingestion",
+          "GAMP-5 Categorization",
+          "Parallel Agent Execution",
+          "Test Generation",
+          "Result Compilation",
+          "Compliance Validation",
+          "Output Management"
+        ],
+        "untested": [
+          "Test Planning"
+        ]
+      }
+    },
+    "regulatory_compliance": {
+      "overall_compliance_coverage": 80.23434939364142,
+      "gamp5": {
+        "coverage_percentage": 77.87610619469027,
+        "compliant": true,
+        "components_tested": 4,
+        "component_scores": {
+          "security_controls": 55.75221238938053,
+          "risk_assessment": 55.75221238938053,
+          "validation_completeness": 100,
+          "audit_trail": 100.0
+        }
+      },
+      "cfr_21_part_11": {
+        "coverage_percentage": 63.93805309734513,
+        "compliant": false,
+        "components_tested": 4,
+        "component_scores": {
+          "access_controls": 100.0,
+          "audit_trails": 100.0,
+          "electronic_signatures": 0.0,
+          "data_integrity": 55.75221238938053
+        }
+      },
+      "alcoa_plus": {
+        "coverage_percentage": 98.88888888888889,
+        "compliant": true,
+        "components_tested": 9,
+        "component_scores": {
+          "attributable": 100.0,
+          "legible": 100.0,
+          "contemporaneous": 100.0,
+          "original": 100.0,
+          "accurate": 90.0,
+          "complete": 100,
+          "consistent": 100.0,
+          "enduring": 100.0,
+          "available": 100.0
+        }
+      }
+    },
+    "requirements": {
+      "document_coverage_percentage": 96.66666666666667,
+      "unique_documents_tested": 29,
+      "total_documents": 30,
+      "estimated_requirements": 300,
+      "tests_generated": 316,
+      "avg_tests_per_document": 10.89655172413793,
+      "urs_ids_tested": [
+        "URS-001",
+        "URS-002",
+        "URS-003",
+        "URS-004",
+        "URS-005",
+        "URS-006",
+        "URS-007",
+        "URS-008",
+        "URS-009",
+        "URS-010",
+        "URS-011",
+        "URS-012",
+        "URS-013",
+        "URS-014",
+        "URS-015",
+        "URS-016",
+        "URS-017",
+        "URS-018",
+        "URS-019",
+        "URS-020",
+        "URS-021",
+        "URS-022",
+        "URS-023",
+        "URS-024",
+        "URS-026",
+        "URS-027",
+        "URS-028",
+        "URS-029",
+        "URS-030"
+      ]
+    },
+    "test_types": {
+      "test_type_coverage_percentage": 80.0,
+      "total_test_types": 10,
+      "covered_types": 8,
+      "type_details": {
+        "covered": [
+          "Installation Verification",
+          "System Configuration",
+          "Integration Testing",
+          "Security Testing",
+          "User Access Control",
+          "Data Integrity",
+          "Audit Trail",
+          "Compliance Verification"
+        ],
+        "not_covered": [
+          "Performance Testing",
+          "Backup and Recovery"
+        ]
+      }
+    }
+  },
+  "statistical_confidence": {
+    "sample_size": 30,
+    "confidence_level": "95%",
+    "margin_of_error": "\u00b18.3%",
+    "statistical_power": 0.5,
+    "interpretation": "Adequate for initial validation, larger sample recommended for production"
+  },
+  "recommendations": [
+    "Complete testing for remaining OWASP LLM Top 10 categories (LLM02, LLM03, LLM04, LLM08)",
+    "Improve document processing reliability to achieve 85% or higher success rate",
+    "Complete testing for planner agent and verify full integration",
+    "Implement electronic signatures for full 21 CFR Part 11 compliance",
+    "Expand testing to cover all 30 URS documents",
+    "Add coverage for: Performance Testing, Backup and Recovery",
+    "Increase sample size to 114+ documents for 80% statistical power"
+  ]
+}

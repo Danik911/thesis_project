@@ -1,0 +1,54 @@
+{
+  "overall_coverage": {
+    "system_coverage": 79.5,
+    "components_tested": "5 of 6 agents",
+    "documents_processed": "23 of 30",
+    "tests_generated": 316,
+    "security_scenarios": 113
+  },
+  "coverage_breakdown": {
+    "requirements": 96.7,
+    "system_components": 83.3,
+    "regulatory_compliance": 80.2,
+    "test_types": 80.0,
+    "functional_tests": 76.7,
+    "owasp_security": 60.0
+  },
+  "owasp_coverage": {
+    "categories_tested": 6,
+    "total_categories": 10,
+    "percentage": 60.0,
+    "tested": [
+      "LLM01",
+      "LLM05",
+      "LLM06",
+      "LLM07",
+      "LLM09",
+      "LLM10"
+    ],
+    "not_tested": [
+      "LLM02",
+      "LLM03",
+      "LLM04",
+      "LLM08"
+    ]
+  },
+  "performance_metrics": {
+    "time_reduction": 99.79,
+    "cost_reduction": 99.97,
+    "roi_percentage": 362370,
+    "break_even_tests": 3
+  },
+  "quality_metrics": {
+    "semantic_preservation": 100.0,
+    "mitigation_effectiveness": 100.0,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.0
+  },
+  "statistical_analysis": {
+    "sample_size": 113,
+    "statistical_power": 50.0,
+    "confidence_level": 95.0,
+    "average_confidence_score": 90.0
+  }
+}
