@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "description": "Limited test manifest with 3 documents for real API validation",
+    "total_documents": 3,
+    "folds": 1,
+    "stratification": "One fold with 3 test documents only",
+    "created_date": "2025-08-12",
+    "validation_strategy": "Single fold test validation"
+  },
+  "document_inventory": [
+    "URS-002", "URS-003", "URS-007"
+  ],
+  "folds": {
+    "fold_1": {
+      "train_documents": [],
+      "test_documents": [
+        "URS-002",
+        "URS-003",
+        "URS-007"
+      ],
+      "train_count": 0,
+      "test_count": 3,
+      "distribution": {
+        "category_3": 1,
+        "category_4": 1,
+        "category_5": 1
+      }
+    }
+  },
+  "validation_summary": {
+    "total_unique_documents": 3,
+    "documents_per_test_set": "All 3 documents in single test fold",
+    "train_test_split": "0% train, 100% test",
+    "category_distribution": {
+      "category_3": 1,
+      "category_4": 1,
+      "category_5": 1
+    }
+  }
+}
