@@ -1,0 +1,18 @@
+doc_id,gamp_category,complexity_score,estimated_baseline_hours,estimation_method,assumptions
+URS-001,3,0.1892,15.7,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-002,4,0.2445,17.3,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-003,5,0.4287,22.9,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-004,ambiguous,0.2156,16.5,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-005,ambiguous,0.2089,16.3,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-006,3,0.1798,15.4,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-007,3,0.1923,15.8,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-008,3,0.1867,15.6,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-009,3,0.1823,15.5,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-010,4,0.2398,17.2,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-011,4,0.2467,17.4,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-012,4,0.2378,17.1,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-013,4,0.2434,17.3,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-014,5,0.4156,22.5,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-015,5,0.4234,22.7,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-016,5,0.4312,22.9,synthetic_complexity_based,10 base hours + 30 hours per complexity point
+URS-017,5,0.4198,22.6,synthetic_complexity_based,10 base hours + 30 hours per complexity point

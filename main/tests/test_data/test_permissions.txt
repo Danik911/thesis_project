@@ -1,0 +1,1 @@
+Testing permission notifications for Claude Code hooks

@@ -1,0 +1,10 @@
+{
+  "alcoa_score": 2.9545454545454546,
+  "alcoa_meets_target": false,
+  "alcoa_status": "ComplianceStatus.NON_COMPLIANT",
+  "gamp5_status": "compliant",
+  "gamp5_validation_score": 0,
+  "gamp5_category_match": false,
+  "original_weight": 2.0,
+  "accurate_weight": 2.0
+}

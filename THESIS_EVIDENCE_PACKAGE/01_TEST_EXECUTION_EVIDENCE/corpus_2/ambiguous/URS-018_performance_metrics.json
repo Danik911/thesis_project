@@ -1,0 +1,61 @@
+{
+  "document_id": "URS-018",
+  "document_path": "../datasets/urs_corpus_v2/ambiguous/URS-018.md",
+  "category": "ambiguous",
+  "expected_gamp_category": "ambiguous_between_categories",
+  "detected_gamp_category": 4,
+  "confidence": 1.0,
+  "execution_summary": {
+    "start_time": "2025-08-21 12:16:25",
+    "end_time": "2025-08-21 12:22:14",
+    "total_duration_seconds": 348.92,
+    "duration_minutes": 5.82,
+    "success": true,
+    "bypass_mode": "validation_mode_active"
+  },
+  "test_generation_results": {
+    "suite_id": "OQ-SUITE-1122",
+    "total_tests_generated": 20,
+    "exceeded_target": true,
+    "target_range": "6-8 tests",
+    "actual_vs_target": "250% of target",
+    "estimated_execution_time_minutes": 600
+  },
+  "model_usage": {
+    "primary_model": "deepseek/deepseek-chat",
+    "fallback_used": false,
+    "api_calls_detected": 1,
+    "embedding_calls": 1
+  },
+  "observability_metrics": {
+    "phoenix_traces_captured": 70,
+    "trace_file_size_kb": 328,
+    "audit_entries": 577,
+    "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"]
+  },
+  "compliance_validation": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "performance_characteristics": {
+    "agents_executed": 3,
+    "agent_success_rate": "100.0%",
+    "event_processing_rate": "0.00 events/sec",
+    "console_output_usage": "0.9%"
+  },
+  "quality_metrics": {
+    "test_categories": ["functional", "performance", "integration"],
+    "regulatory_basis_coverage": ["21 CFR Part 11", "ALCOA+", "URS requirements"],
+    "risk_levels_covered": ["low", "medium", "high"],
+    "requirements_mapped": ["URS-018-001", "URS-018-002", "URS-018-007", "URS-018-023", "URS-018-025"]
+  },
+  "system_validation": {
+    "no_fallback_logic_triggered": true,
+    "deepseek_model_used": true,
+    "phoenix_instrumentation_active": true,
+    "validation_mode_confirmed": true
+  }
+}

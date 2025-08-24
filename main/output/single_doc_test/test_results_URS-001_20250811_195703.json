@@ -1,0 +1,10 @@
+{
+  "urs_id": "URS-001",
+  "timestamp": "2025-08-11T19:57:01.147262+00:00",
+  "status": "failed",
+  "metrics": {},
+  "validation": {},
+  "errors": [
+    "Error in step 'start_unified_workflow': Document path is required to start workflow"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "fixes_applied": [
+    {
+      "description": "Downgrade NumPy to <2.0 for Phoenix compatibility",
+      "command": "uv add numpy<2.0 --resolution=highest",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Install Arize Phoenix",
+      "command": "uv add arize-phoenix",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Install OpenTelemetry API",
+      "command": "uv add opentelemetry-api",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Install OpenTelemetry SDK",
+      "command": "uv add opentelemetry-sdk",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Install OTLP Exporter",
+      "command": "uv add opentelemetry-exporter-otlp",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Install LlamaIndex Instrumentation",
+      "command": "uv add openinference-instrumentation-llama-index",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Install OpenAI Instrumentation",
+      "command": "uv add openinference-instrumentation-openai",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Install Requests library",
+      "command": "uv add requests",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Sync UV environment",
+      "command": "uv sync",
+      "success": true,
+      "output": ""
+    },
+    {
+      "description": "Phoenix import test",
+      "success": true,
+      "phoenix_version": "11.10.1"
+    }
+  ],
+  "errors": [
+    {
+      "description": "Create validation script",
+      "error": "'charmap' codec can't encode character '\\u2705' in position 266: character maps to <undefined>",
+      "exception_type": "UnicodeEncodeError"
+    }
+  ],
+  "success": false
+}

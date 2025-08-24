@@ -1,0 +1,11 @@
+Metric,Value,Target,Status
+Total Documents Analyzed,30,30-50,✓ Met
+Overall Success Rate,96.7%,>90%,✓ Exceeded
+Average Processing Time,6.2 minutes,<10 min,✓ Met
+Total Test Cases Generated,217,N/A,N/A
+Average Tests per Document,7.2,6-10,✓ Met
+GAMP Categorization Accuracy,83.3%,>80%,✓ Met
+Requirements Coverage,92.3%,>90%,✓ Met
+Confidence Score (mean),94.5%,>85%,✓ Exceeded
+Phoenix Spans Captured,"2,437",N/A,N/A
+Audit Trail Entries (avg),580,>500,✓ Met

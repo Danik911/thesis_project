@@ -1,0 +1,1446 @@
+{
+  "suite_id": "OQ-SUITE-1904",
+  "gamp_category": 4,
+  "document_name": "URS-004.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Custom Calculation Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom calculations for impurity calculations and RRF adjustments work as intended.",
+      "prerequisites": [
+        "CDS software installed",
+        "Test method configured",
+        "Sample data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a sample chromatogram with known impurity peaks.",
+          "expected_result": "Chromatogram loads successfully with visible peaks.",
+          "data_to_capture": [
+            "Chromatogram file name",
+            "Peak retention times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Apply custom impurity calculation formula.",
+          "expected_result": "System calculates impurity percentages correctly.",
+          "data_to_capture": [
+            "Calculated impurity values",
+            "Formula used"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Apply proprietary RRF adjustment to the same data.",
+          "expected_result": "System adjusts peak areas according to defined RRF values.",
+          "data_to_capture": [
+            "Adjusted peak areas",
+            "RRF values applied"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculations match manual calculations within \u00b12%",
+        "RRF adjustments are applied correctly"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ICH Q2(R1)"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail records all calculation steps",
+        "No unauthorized modifications possible"
+      ],
+      "urs_requirements": [
+        "URS-CDS-004",
+        "URS-CDS-017"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography",
+        "CDS software"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Multi-Instrument Acquisition Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify system can simultaneously acquire data from 8 instruments without performance degradation.",
+      "prerequisites": [
+        "8 HPLC/GC instruments connected",
+        "Acquisition methods configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate simultaneous runs on all 8 instruments.",
+          "expected_result": "System accepts start commands for all instruments.",
+          "data_to_capture": [
+            "Instrument IDs",
+            "Start timestamps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor system performance during acquisition.",
+          "expected_result": "All instruments show active acquisition status.",
+          "data_to_capture": [
+            "CPU usage",
+            "Memory usage",
+            "Data file sizes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify all runs complete successfully.",
+          "expected_result": "8 complete data sets are stored with correct metadata.",
+          "data_to_capture": [
+            "Run completion times",
+            "Data integrity checks"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All 8 runs complete within expected timeframes",
+        "No data loss occurs",
+        "System resources remain within 80% capacity"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GMP Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Complete run metadata recorded",
+        "No data corruption during transfer"
+      ],
+      "urs_requirements": [
+        "URS-CDS-012",
+        "URS-CDS-018"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Instrument control",
+        "System performance monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Custom Calculation Verification for Non-Standard Impurities",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the CDS correctly executes custom calculations for non-standard impurity determinations as configured in the vendor's formula editor.",
+      "prerequisites": [
+        "CDS software installed and configured",
+        "Test method with custom impurity calculations loaded",
+        "Sample data set with known impurity values"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test method containing custom impurity calculations into the CDS.",
+          "expected_result": "Method loads successfully with all custom formulas intact.",
+          "data_to_capture": [
+            "Method name",
+            "Formula syntax verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Process the sample data set through the method.",
+          "expected_result": "System processes data without errors and displays calculated impurity values.",
+          "data_to_capture": [
+            "Processing time",
+            "Calculated impurity values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Compare calculated impurity values against known values.",
+          "expected_result": "Calculated values match expected values within acceptable tolerance.",
+          "data_to_capture": [
+            "Deviation from expected values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All custom calculations execute without errors",
+        "Calculated values match expected values within \u00b15%",
+        "Processing completes within 60 seconds as specified in URS-CDS-014"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for electronic calculations",
+        "ICH Q2(R1) for analytical procedure validation"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail records all calculation steps",
+        "Original data remains unaltered"
+      ],
+      "urs_requirements": [
+        "URS-CDS-004",
+        "URS-CDS-014",
+        "URS-CDS-015"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS operation",
+        "Analytical chemistry",
+        "Vendor formula editor"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Multi-Instrument Data Acquisition Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify the CDS can simultaneously acquire data from multiple instruments without performance degradation.",
+      "prerequisites": [
+        "Minimum of 2 HPLC/GC instruments connected",
+        "Test methods loaded on all instruments",
+        "System monitoring tools available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate acquisition on all connected instruments simultaneously.",
+          "expected_result": "System accepts start commands for all instruments.",
+          "data_to_capture": [
+            "Instrument status",
+            "Start time stamps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor system performance during concurrent acquisition.",
+          "expected_result": "No system crashes or freezes occur during acquisition.",
+          "data_to_capture": [
+            "CPU usage",
+            "Memory usage",
+            "Disk I/O"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify all acquired data files are complete and uncorrupted.",
+          "expected_result": "All runs complete with valid data files and audit trail entries.",
+          "data_to_capture": [
+            "File integrity checks",
+            "Run completion times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System supports simultaneous acquisition from all connected instruments",
+        "No data loss or corruption occurs during concurrent operation",
+        "System resources remain within vendor-specified limits"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for complete data capture",
+        "GMP requirements for instrument control systems"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All acquired data must be complete and traceable",
+        "Audit trail records all acquisition events"
+      ],
+      "urs_requirements": [
+        "URS-CDS-012",
+        "URS-CDS-015",
+        "URS-CDS-017"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Instrument interfacing",
+        "System performance monitoring",
+        "Troubleshooting"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Custom Calculation Execution Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that custom calculation routines execute within the specified time frame of 60 seconds as per URS-CDS-014.",
+      "prerequisites": [
+        "System configured with custom calculations",
+        "Sample data loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate custom calculation routine on sample data",
+          "expected_result": "Calculation completes within 60 seconds",
+          "data_to_capture": [
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculation completes within 60 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure calculation results are accurate and reproducible"
+      ],
+      "urs_requirements": [
+        "URS-CDS-014"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography Data System",
+        "Performance Testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Custom Report Generation Functional Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the generation of custom reports using the vendor's report designer as per URS-CDS-005.",
+      "prerequisites": [
+        "System configured with custom report templates",
+        "Sample data loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate a custom report using the report designer",
+          "expected_result": "Report is generated correctly with all specified fields",
+          "data_to_capture": [
+            "Report content",
+            "Generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom report is generated correctly with all specified fields"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure report data is accurate and complete"
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography Data System",
+        "Report Design"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Custom Calculation Execution Time Verification",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that custom calculation routines execute within the specified time frame of 60 seconds as per URS-CDS-014.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom calculation routines configured",
+        "Test data set prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test data set into the CDS software.",
+          "expected_result": "Test data set is successfully loaded.",
+          "data_to_capture": [
+            "Time taken to load data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the custom calculation routine.",
+          "expected_result": "Custom calculation routine completes execution.",
+          "data_to_capture": [
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculation routine executes within 60 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during calculation execution"
+      ],
+      "urs_requirements": [
+        "URS-CDS-014"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software operation",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Custom Report Generation Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom reports can be generated using the vendor's report designer as per URS-CDS-005.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom report template configured",
+        "Test data set prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test data set into the CDS software.",
+          "expected_result": "Test data set is successfully loaded.",
+          "data_to_capture": [
+            "Time taken to load data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a custom report using the configured template.",
+          "expected_result": "Custom report is successfully generated.",
+          "data_to_capture": [
+            "Report generation time",
+            "Report accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom report is generated accurately and completely."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during report generation"
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software operation",
+        "Report design"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Custom Calculation Execution Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that custom calculation routines execute within the specified time frame of 60 seconds as per URS-CDS-014.",
+      "prerequisites": [
+        "CDS software installed and configured",
+        "Custom calculation routines configured",
+        "Test data set prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test data set into the CDS software.",
+          "expected_result": "Test data set is successfully loaded.",
+          "data_to_capture": [
+            "Time taken to load data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the custom calculation routine.",
+          "expected_result": "Calculation completes within 60 seconds.",
+          "data_to_capture": [
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculation routine executes within 60 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during calculation execution."
+      ],
+      "urs_requirements": [
+        "URS-CDS-014"
+      ],
+      "related_tests": [
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software operation",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Custom Report Generation Functionality Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom reports can be generated using the vendor's report designer as per URS-CDS-005.",
+      "prerequisites": [
+        "CDS software installed and configured",
+        "Custom report template configured",
+        "Test data set prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test data set into the CDS software.",
+          "expected_result": "Test data set is successfully loaded.",
+          "data_to_capture": [
+            "Time taken to load data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a custom report using the configured template.",
+          "expected_result": "Custom report is generated successfully.",
+          "data_to_capture": [
+            "Report generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom report is generated without errors."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during report generation."
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software operation",
+        "Report generation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Custom Calculation Execution Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that custom calculation routines execute within the specified time frame of 60 seconds.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom calculation routines configured",
+        "Test data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a chromatographic data set with custom calculations.",
+          "expected_result": "Data set loads successfully.",
+          "data_to_capture": [
+            "Load time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the custom calculation routine.",
+          "expected_result": "Calculation completes within 60 seconds.",
+          "data_to_capture": [
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculation routines execute within 60 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure no data modification during calculation."
+      ],
+      "urs_requirements": [
+        "URS-CDS-014"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software",
+        "Chromatographic data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Custom Report Generation Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom reports can be generated using the vendor's report designer.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom report templates configured",
+        "Test data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Select a chromatographic data set.",
+          "expected_result": "Data set is selected successfully.",
+          "data_to_capture": [
+            "Selection status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a custom report using the configured template.",
+          "expected_result": "Report is generated successfully with all required fields.",
+          "data_to_capture": [
+            "Report generation time",
+            "Report content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom reports are generated correctly with all required fields."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure report data integrity."
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software",
+        "Report design"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Custom Report Generation Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify the system's ability to generate custom reports using the vendor's report designer as specified in URS-CDS-005.",
+      "prerequisites": [
+        "CDS software installed and configured",
+        "Access to vendor's report designer tool",
+        "Sample chromatographic data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Launch the CDS software and navigate to the report designer module.",
+          "expected_result": "Report designer module opens successfully with all features accessible.",
+          "data_to_capture": [
+            "Screenshot of report designer interface"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a custom report template including sample ID, peak area, and custom calculations.",
+          "expected_result": "Report template is created without errors and saved in the system.",
+          "data_to_capture": [
+            "Screenshot of custom report template"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a report using the custom template and sample data.",
+          "expected_result": "Report is generated correctly with all specified fields populated accurately.",
+          "data_to_capture": [
+            "Generated report file",
+            "Log of any errors encountered"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom report template can be created and saved successfully.",
+        "Generated report includes all specified fields and calculations accurately."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for electronic records",
+        "GMP requirements for data reporting"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Report data must be accurate and unaltered from original chromatographic data.",
+        "Audit trail must record all changes to report templates."
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS report design",
+        "Chromatography data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Custom Export Routine Validation for LIMS Interface",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Validate the custom export routines for data transfer to LIMS as specified in URS-CDS-007 and URS-CDS-019.",
+      "prerequisites": [
+        "CDS software installed and configured",
+        "LIMS system available and accessible",
+        "Sample chromatographic data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a custom export routine in CDS to export data in XML format for LIMS.",
+          "expected_result": "Export routine is configured without errors and saved in the system.",
+          "data_to_capture": [
+            "Screenshot of export configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the export routine using sample chromatographic data.",
+          "expected_result": "Data is exported successfully in the specified XML format.",
+          "data_to_capture": [
+            "Exported XML file",
+            "Log of any errors encountered"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the exported data in LIMS for accuracy and completeness.",
+          "expected_result": "Data in LIMS matches the original chromatographic data without discrepancies.",
+          "data_to_capture": [
+            "Screenshot of data in LIMS",
+            "Verification log"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom export routine can be configured and executed successfully.",
+        "Exported data in XML format is accurate and complete when viewed in LIMS."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for electronic data transfer",
+        "GMP requirements for data integrity during system interfaces"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Exported data must be identical to original chromatographic data.",
+        "Audit trail must record all export activities."
+      ],
+      "urs_requirements": [
+        "URS-CDS-007",
+        "URS-CDS-019"
+      ],
+      "related_tests": [
+        "OQ-007",
+        "OQ-012"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS configuration",
+        "LIMS integration",
+        "XML data formats"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Custom Calculation Execution Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that custom calculation routines execute within the specified time frame of 60 seconds as per URS-CDS-014.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom calculation routines configured",
+        "Sample chromatographic data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load sample chromatographic data into the CDS.",
+          "expected_result": "Data is successfully loaded and ready for processing.",
+          "data_to_capture": [
+            "Time taken to load data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the custom calculation routine.",
+          "expected_result": "Calculation completes within 60 seconds.",
+          "data_to_capture": [
+            "Time taken for calculation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculation routine executes within 60 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure no data corruption during calculation"
+      ],
+      "urs_requirements": [
+        "URS-CDS-014"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography",
+        "CDS software"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Custom Report Generation Functionality Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate the functionality of custom report generation using the vendor's report designer as per URS-CDS-005.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom report templates configured",
+        "Sample chromatographic data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load sample chromatographic data into the CDS.",
+          "expected_result": "Data is successfully loaded and ready for processing.",
+          "data_to_capture": [
+            "Time taken to load data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a custom report using the configured template.",
+          "expected_result": "Report is generated correctly with all specified fields.",
+          "data_to_capture": [
+            "Time taken to generate report"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom report is generated correctly with all specified fields"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure no data corruption during report generation"
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography",
+        "CDS software"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Custom Report Generation Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the CDS can generate custom reports using the vendor's report designer as specified in URS-CDS-005.",
+      "prerequisites": [
+        "CDS software installed and configured",
+        "Sample chromatographic data available",
+        "Access to report designer tool"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Open the report designer tool in the CDS software.",
+          "expected_result": "Report designer tool opens successfully.",
+          "data_to_capture": [
+            "Tool accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a custom report template with non-standard fields and calculations.",
+          "expected_result": "Custom report template is created without errors.",
+          "data_to_capture": [
+            "Template creation success"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a report using the custom template and sample data.",
+          "expected_result": "Report is generated with all specified fields and calculations.",
+          "data_to_capture": [
+            "Report accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom report template can be created and saved.",
+        "Generated report includes all specified fields and calculations accurately."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Report data must be accurate and unaltered."
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS report design"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Data Export to LIMS Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that the CDS can export data to LIMS using the standard XML format as specified in URS-CDS-019.",
+      "prerequisites": [
+        "CDS software installed and configured",
+        "LIMS system accessible",
+        "Sample chromatographic data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the CDS to export data to LIMS in XML format.",
+          "expected_result": "Export configuration is saved successfully.",
+          "data_to_capture": [
+            "Configuration success"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the export routine with sample data.",
+          "expected_result": "Data is exported to LIMS without errors.",
+          "data_to_capture": [
+            "Export success"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the exported data in LIMS for accuracy and completeness.",
+          "expected_result": "Exported data matches the source data in CDS.",
+          "data_to_capture": [
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data export configuration can be saved and executed.",
+        "Exported data in LIMS matches the source data in CDS."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Exported data must be accurate and unaltered."
+      ],
+      "urs_requirements": [
+        "URS-CDS-019"
+      ],
+      "related_tests": [
+        "OQ-019"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS-LIMS integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Custom Calculation Execution Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that custom calculation routines execute within the specified time frame of 60 seconds as per URS-CDS-014.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom calculation routines configured",
+        "Test data set prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test data set into the CDS software.",
+          "expected_result": "Test data set is successfully loaded.",
+          "data_to_capture": [
+            "Data load time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the custom calculation routine.",
+          "expected_result": "Custom calculation routine completes execution.",
+          "data_to_capture": [
+            "Execution start time",
+            "Execution end time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Calculate the total execution time.",
+          "expected_result": "Total execution time is within 60 seconds.",
+          "data_to_capture": [
+            "Total execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom calculation routine executes within 60 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure accurate timing data capture"
+      ],
+      "urs_requirements": [
+        "URS-CDS-014"
+      ],
+      "related_tests": [
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software operation",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Custom Report Generation Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom reports can be generated using the vendor's report designer as per URS-CDS-005.",
+      "prerequisites": [
+        "CDS software installed",
+        "Custom report templates configured",
+        "Test data set prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the test data set into the CDS software.",
+          "expected_result": "Test data set is successfully loaded.",
+          "data_to_capture": [
+            "Data load time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a custom report using the configured template.",
+          "expected_result": "Custom report is successfully generated.",
+          "data_to_capture": [
+            "Report generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the generated report for accuracy and completeness.",
+          "expected_result": "Report contains all required data fields and calculations.",
+          "data_to_capture": [
+            "Report accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom report is generated accurately and completely."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure accurate report data capture"
+      ],
+      "urs_requirements": [
+        "URS-CDS-005"
+      ],
+      "related_tests": [
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CDS software operation",
+        "Report generation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 615,
+  "generation_timestamp": "2025-08-19T19:04:42.227460+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T19:04:42.762283+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T18:58:15.125521+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

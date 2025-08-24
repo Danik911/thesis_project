@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-08-07T22:49:00.951748",
+  "provider": "openrouter",
+  "results": {
+    "direct_llm": false,
+    "context_provider": false,
+    "research_agent": false,
+    "sme_agent": false,
+    "planning_agent": false,
+    "oq_generator": true
+  },
+  "summary": "1/6 passed"
+}

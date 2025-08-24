@@ -1,0 +1,99 @@
+{
+	"mcpServers": {
+		"sequential-thinking": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"@modelcontextprotocol/server-sequential-thinking"
+			]
+		},
+		"filesystem": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"@modelcontextprotocol/server-filesystem",
+				"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project"
+			]
+		},
+		"context7": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"@upstash/context7-mcp"
+			]
+		},
+		"puppeteer": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"puppeteer-mcp-server"
+			]
+		},
+		"perplexity-mcp": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"perplexity-mcp"
+			],
+			"env": {
+				"PERPLEXITY_API_KEY": "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",
+				"PERPLEXITY_MODEL": "sonar"
+			}
+		},
+		"one-search-mcp": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"one-search-mcp"
+			],
+			"env": {
+				"SEARCH_PROVIDER": "tavily",
+				"SEARCH_API_KEY": "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",
+				"FIRECRAWL_API_KEY": "fc-c6514ba933e64dc9aa10be5f786a84df",
+				"SEARCH_API_URL": "https://api.tavily.com/search",
+				"FIRECRAWL_API_URL": "https://api.firecrawl.dev"
+			}
+		},
+		"task-master-ai": {
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"task-master-ai"
+			],
+			"env": {
+				"PERPLEXITY_API_KEY": "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"
+			}
+		},
+		"serena": {
+			"type": "stdio",
+			"command": "uvx",
+			"args": [
+				"--from",
+				"git+https://github.com/oraios/serena",
+				"serena",
+				"start-mcp-server"
+			]
+		}
+	}
+}

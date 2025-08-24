@@ -1,0 +1,118 @@
+{
+  "REQ-PART11-001": {
+    "acceptance_criteria": [
+      "Electronic signatures must be linked to their respective records",
+      "Signatures cannot be excised, copied, or transferred",
+      "Cryptographic binding must be verifiable"
+    ],
+    "description": "System shall bind electronic signatures to records per 21 CFR 11.70",
+    "priority": "High",
+    "regulatory_reference": "21 CFR 11.70",
+    "requirement_id": "REQ-PART11-001",
+    "requirement_type": "regulatory",
+    "test_cases": [
+      "TC-PART11-001"
+    ],
+    "title": "Electronic Signature Binding",
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.183886+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-001"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.404726+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-001"
+      }
+    ]
+  },
+  "REQ-PART11-002": {
+    "acceptance_criteria": [
+      "Only authorized users can access the system",
+      "User authentication must be verified",
+      "Role-based permissions must be enforced"
+    ],
+    "description": "System shall limit access to authorized individuals per 21 CFR 11.10(d)",
+    "priority": "High",
+    "regulatory_reference": "21 CFR 11.10(d)",
+    "requirement_id": "REQ-PART11-002",
+    "requirement_type": "regulatory",
+    "test_cases": [
+      "TC-PART11-002"
+    ],
+    "title": "Access Control",
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.185064+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-002"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.406268+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-002"
+      }
+    ]
+  },
+  "REQ-PART11-003": {
+    "acceptance_criteria": [
+      "All user actions must be logged",
+      "Audit trail must be tamper-evident",
+      "Cryptographic signatures must protect audit records"
+    ],
+    "description": "System shall maintain secure, computer-generated audit trail",
+    "priority": "High",
+    "regulatory_reference": "21 CFR 11.10(e)",
+    "requirement_id": "REQ-PART11-003",
+    "requirement_type": "regulatory",
+    "test_cases": [
+      "TC-PART11-003"
+    ],
+    "title": "Audit Trail Integrity",
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.185857+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-003"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.407263+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-003"
+      }
+    ]
+  },
+  "REQ-PART11-004": {
+    "acceptance_criteria": [
+      "Records must be protected from modification",
+      "WORM storage must be implemented",
+      "Integrity verification must be available"
+    ],
+    "description": "System shall protect records to enable accurate retrieval",
+    "priority": "High",
+    "regulatory_reference": "21 CFR 11.10(c)",
+    "requirement_id": "REQ-PART11-004",
+    "requirement_type": "regulatory",
+    "test_cases": [
+      "TC-PART11-004"
+    ],
+    "title": "Record Integrity",
+    "validation_status": "completed",
+    "verification_results": [
+      {
+        "execution_date": "2025-08-14T07:11:28.187796+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-004"
+      },
+      {
+        "execution_date": "2025-08-14T07:14:54.408825+00:00",
+        "result": "pass",
+        "test_case_id": "TC-PART11-004"
+      }
+    ]
+  }
+}

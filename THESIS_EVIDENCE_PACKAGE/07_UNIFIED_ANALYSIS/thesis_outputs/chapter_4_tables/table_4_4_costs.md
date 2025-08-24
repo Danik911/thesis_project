@@ -1,0 +1,21 @@
+# Table 4.4: Cost-Benefit Analysis
+
+| Cost Component              | Value          | Notes                          |
+|:----------------------------|:---------------|:-------------------------------|
+| API Costs (30 documents)    | $0.42          | DeepSeek V3 via OpenRouter     |
+| - Corpus 1 (17 docs)        | $0.24          | 100% success with retries      |
+| - Corpus 2 (8 docs)         | $0.11          | 87.5% success + 1 consultation |
+| - Corpus 3 (5 docs)         | $0.07          | 100% success                   |
+| Infrastructure Costs        | $0.00          | Cloud API (no local)           |
+| Development Time (one-time) | $0.00          | Excluded from analysis         |
+| Total Implementation Cost   | $0.42          | Variable costs only            |
+|                             |                |                                |
+| Manual Process Equivalent   |                |                                |
+| - Per document (8 hours)    | $240           | Industry standard              |
+| - Total (30 documents)      | $7,200         | 30 × $240                      |
+|                             |                |                                |
+| Cost Savings                | $7,199.58      | 99.994% reduction              |
+| ROI Percentage              | 1,714,185%     | Exceptional ROI                |
+| Payback Period              | First document | Immediate                      |
+
+*Generated: 2025-08-21T20:00:31.706438*

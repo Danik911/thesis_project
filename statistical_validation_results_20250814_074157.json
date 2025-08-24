@@ -1,0 +1,91 @@
+{
+  "experiment_id": "STATISTICAL_VALIDATION_20250814_074157",
+  "timestamp": "2025-08-14T07:41:57.543958",
+  "data_sources": {
+    "performance_metrics_count": 53,
+    "dual_mode_documents": 4,
+    "real_data_used": true,
+    "no_mocking_or_simulation": true
+  },
+  "statistical_tests": {
+    "cost_efficiency": {
+      "test_name": "cost_efficiency_validation",
+      "sample_size": 120,
+      "automated_cost_mean": 0.0019900064683770367,
+      "manual_baseline": 150.0,
+      "t_statistic": -9008618.657305595,
+      "p_value": 0.0,
+      "effect_size_cohens_d": -822370.6084280292,
+      "is_significant": "True",
+      "cost_reduction_percentage": 99.99867332902107,
+      "confidence_interval": {
+        "lower": 0.0019583803407249747,
+        "upper": 0.0020242809396563846,
+        "level": 0.95
+      }
+    },
+    "time_efficiency": {
+      "test_name": "time_efficiency_validation",
+      "sample_size": 5,
+      "automated_time_mean": 0.5357266742996766,
+      "manual_baseline": 240.0,
+      "t_statistic": -4239.545593206211,
+      "p_value": 1.857264889460546e-14,
+      "effect_size_cohens_d": -1895.9824280237522,
+      "is_significant": "True",
+      "time_reduction_percentage": 99.77678055237514,
+      "confidence_interval": {
+        "lower": 0.43657479698007035,
+        "upper": 0.6348785516192826,
+        "level": 0.95
+      }
+    },
+    "dual_mode_comparison": {
+      "test_name": "dual_mode_comparison",
+      "sample_size": 4,
+      "production_mean": 79.75839364528656,
+      "validation_mean": 79.9631085395813,
+      "mean_difference": -0.20471489429473877,
+      "t_statistic": -0.2255844508937967,
+      "p_value": 0.8360187974540947,
+      "effect_size_cohens_d": -0.11279222544689835,
+      "is_significant": "False",
+      "confidence_interval": {
+        "lower": -1.495784044265747,
+        "upper": 1.6573612689971924,
+        "level": 0.95
+      },
+      "interpretation": "production_faster"
+    },
+    "quality_metrics": {
+      "test_name": "quality_metrics_validation",
+      "sample_size": 5,
+      "tests_per_suite_actual": 24.0,
+      "tests_per_suite_minimum": 15,
+      "total_tests_generated": 120,
+      "total_test_suites": 5,
+      "t_statistic": Infinity,
+      "p_value": 0.0,
+      "effect_size_cohens_d": 999.0,
+      "is_significant": "True",
+      "exceeds_minimum": true
+    }
+  },
+  "summary": {
+    "total_tests_performed": 4,
+    "significant_tests_count": 3,
+    "significant_tests": [
+      "cost_efficiency",
+      "time_efficiency",
+      "quality_metrics"
+    ],
+    "large_effect_tests_count": 3,
+    "large_effect_tests": [
+      "cost_efficiency",
+      "time_efficiency",
+      "quality_metrics"
+    ],
+    "target_significance_achieved": true,
+    "target_effect_size_achieved": true
+  }
+}

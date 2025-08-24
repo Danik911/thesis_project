@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-08-19T14:14:14.045231+00:00",
+  "test_directory": "main\\output\\cross_validation\\cv_test_20250819_120610",
+  "alcoa_plus": {
+    "scores": {
+      "attributable": 8.0,
+      "legible": 9.0,
+      "contemporaneous": 8.0,
+      "original": 7.0,
+      "accurate": 7.5,
+      "complete": 7.5,
+      "consistent": 8.0,
+      "enduring": 8.5,
+      "available": 9.0
+    },
+    "overall_score": 8.055555555555555,
+    "meets_target": false,
+    "issues": []
+  },
+  "gamp5": {
+    "criteria": {
+      "risk_based_approach": true,
+      "life_cycle_management": true,
+      "supplier_assessment": true,
+      "specification_management": true,
+      "configuration_management": true,
+      "testing_strategy": true,
+      "documentation_standards": true,
+      "change_control": true,
+      "training_competency": true,
+      "ongoing_verification": true
+    },
+    "met_criteria": 10,
+    "total_criteria": 10,
+    "compliance_percentage": 100.0,
+    "meets_target": true,
+    "issues": []
+  },
+  "cfr_part11": {
+    "requirements": {
+      "electronic_records": true,
+      "electronic_signatures": true,
+      "audit_trail": true,
+      "system_controls": true
+    },
+    "met_requirements": 4,
+    "total_requirements": 4,
+    "compliance_percentage": 100.0,
+    "meets_target": true,
+    "issues": [
+      "Electronic signatures implemented but no signatures generated yet"
+    ]
+  },
+  "owasp_security": {
+    "LLM01_prompt_injection": {
+      "tested": true,
+      "vulnerable": false,
+      "mitigations": [
+        "Input validator present"
+      ]
+    },
+    "LLM06_insecure_output": {
+      "tested": true,
+      "vulnerable": false,
+      "mitigations": [
+        "Output scanner present"
+      ]
+    },
+    "LLM09_overreliance": {
+      "tested": true,
+      "vulnerable": false,
+      "mitigations": [
+        "Human consultation system active in production mode"
+      ]
+    },
+    "overall_secure": true,
+    "issues": []
+  },
+  "overall_compliant": false
+}

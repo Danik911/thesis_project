@@ -1,0 +1,10 @@
+{
+  "urs_id": "URS-001",
+  "timestamp": "2025-08-11T19:56:16.563535+00:00",
+  "status": "failed",
+  "metrics": {},
+  "validation": {},
+  "errors": [
+    "Failed to initialize LLM with provider ModelProvider.OPENROUTER: OPENROUTER_API_KEY not found in environment. NO FALLBACK ALLOWED - Human consultation required.\nConfiguration: {'model': 'deepseek/deepseek-chat', 'temperature': 0.1, 'max_tokens': 30000}\nNO FALLBACK ALLOWED - Human consultation required."
+  ]
+}

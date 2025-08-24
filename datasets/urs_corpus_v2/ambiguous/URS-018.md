@@ -1,0 +1,43 @@
+# URS-018: Chromatography Sample Scheduling Module
+**GAMP Category**: Ambiguous
+**System Type**: Scheduling and reporting add-on for CDS/LIMS
+**Domain**: Analytical Chemistry (QC Lab)
+**Complexity Level**: Medium
+
+## 1. Introduction
+This module provides laboratory analysts with a standardized way to schedule chromatography sample runs and generate compliance-ready reports. The capability can be realized using the vendor's built-in scheduling and reporting features (commercial off-the-shelf) or by configuring workflow templates and parameters via the supplier's configuration tools for lab-specific routing.
+
+## 2. Functional Requirements
+- URS-018-001: Users shall create sample run schedules with priority, instrument, and method selections.
+- URS-018-002: The system shall enforce method-version locking for scheduled runs.
+- URS-018-003: The module shall provide vendor's standard reporting engine with configured templates for batch results.
+- URS-018-004: Users shall route samples to instruments based on configured availability rules.
+- URS-018-005: The system shall support pause/resume and re-queue of failed runs with reason capture.
+- URS-018-006: Audit trail entries shall be generated for all changes to schedule entries.
+- URS-018-007: Users shall receive alerts for instrument readiness and run completion.
+- URS-018-008: Role-based access shall control schedule creation, approval, and execution.
+- URS-018-009: The system shall support configured hold rules when stability chambers report excursions.
+- URS-018-010: Configurable approvals shall be required prior to execution of GMP runs.
+- URS-018-011: The system shall generate exception summaries for out-of-trend runs.
+- URS-018-012: The system shall provide a schedule Gantt view filtered by instrument and analyst.
+
+## 3. Regulatory Requirements
+- URS-018-013: Electronic records shall comply with 21 CFR Part 11 including electronic signatures.
+- URS-018-014: All actions shall be captured in a secure, time-stamped audit trail (ALCOA+).
+- URS-018-015: Report templates shall be controlled artifacts under document control.
+- URS-018-016: Access controls shall follow least privilege with periodic review.
+- URS-018-017: System shall support retention and retrieval for the required regulatory period.
+
+## 4. Performance Requirements
+- URS-018-018: Load 500-sample schedules in < 3 seconds in typical conditions.
+- URS-018-019: Generate standard batch report within 10 seconds for 200 injections.
+- URS-018-020: Support concurrent access by 30 users with no functional degradation.
+- URS-018-021: System availability shall be ≥ 99.5% during lab operating hours.
+- URS-018-022: Alerts shall be delivered within 5 seconds of event detection.
+- URS-018-023: Gantt view refresh shall complete in < 2 seconds.
+
+## 5. Integration Requirements
+- URS-018-024: Integrate with vendor CDS/LIMS via standard APIs or vendor-approved connectors.
+- URS-018-025: Pull instrument availability and calibration status from asset system.
+- URS-018-026: Push finalized batch reports to the controlled document repository.
+- URS-018-027: Support LDAP/AD for user authentication and role sync.

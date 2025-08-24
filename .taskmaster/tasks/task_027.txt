@@ -1,0 +1,19 @@
+# Task ID: 27
+# Title: Create Validation Execution Framework
+# Status: done
+# Dependencies: 26
+# Priority: high
+# Description: Build automated cross-validation runner with parallel processing, metrics collection, and error recovery.
+# Details:
+Framework requirements:
+- run_full_validation.py main script
+- Parallel processing for 3 concurrent documents
+- Comprehensive metrics collection
+- Progress tracking and logging
+- Error recovery mechanisms
+- Integration with validation_mode from Task 21
+
+This automates the entire cross-validation process.
+
+# Test Strategy:
+

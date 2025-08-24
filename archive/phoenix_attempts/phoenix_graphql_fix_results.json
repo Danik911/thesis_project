@@ -1,0 +1,65 @@
+{
+  "fixes_attempted": [],
+  "test_results": {
+    "server_status": {
+      "running": true,
+      "version": "11.10.1",
+      "response_time": 2.065752
+    },
+    "schema_access": {
+      "success": true,
+      "schema_data": {
+        "queryType": {
+          "name": "Query"
+        },
+        "mutationType": {
+          "name": "Mutation"
+        }
+      }
+    },
+    "simple_queries": {
+      "Version Query": {
+        "success": true,
+        "data": {
+          "__typename": "Query"
+        }
+      },
+      "Projects Count": {
+        "success": false,
+        "errors": [
+          {
+            "message": "an unexpected error occurred",
+            "locations": [
+              {
+                "line": 1,
+                "column": 14
+              }
+            ]
+          }
+        ]
+      },
+      "Basic Projects": {
+        "success": true,
+        "data": {
+          "projects": {
+            "edges": [
+              {
+                "node": {
+                  "id": "UHJvamVjdDox"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "data_integrity": {
+      "data_dir": "C:\\Users\\anteb\\.phoenix",
+      "db_files": [
+        "C:\\Users\\anteb\\.phoenix\\phoenix.db"
+      ],
+      "issues": []
+    }
+  },
+  "success": true
+}

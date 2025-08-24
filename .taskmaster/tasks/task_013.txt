@@ -1,0 +1,85 @@
+# Task ID: 13
+# Title: Enhance Phoenix Observability
+# Status: in-progress
+# Dependencies: 10, 11, 12
+# Priority: medium
+# Description: Critical gaps have been identified in Phoenix observability: the Phoenix server is not running (port 6006 is down), required dependencies (plotly, networkx, aiohttp, pandas) are missing, the enhanced observability module (phoenix_enhanced.py) is not integrated with production code, and compliance monitoring is non-functional. The current state creates a false sense of regulatory compliance and operational security. Immediate remediation is required: install all missing dependencies, ensure the Phoenix server is running and accessible, integrate the enhanced observability features into the production workflow, and verify that compliance monitoring and reporting are fully operational and provide real value. All claims of production readiness and compliance must be validated with live, end-to-end tests.
+# Details:
+The Phoenix observability enhancements are NOT operational. The PhoenixGraphQLClient cannot connect because the Phoenix server is not running (port 6006 is down). The enhanced observability module (phoenix_enhanced.py) cannot be imported due to missing dependencies (plotly, networkx, aiohttp, pandas). There is no integration of the enhanced observability features with the production codebase—phoenix_enhanced.py is never invoked in any workflow. Compliance monitoring, including GAMP-5 and 21 CFR Part 11 checks, is completely non-functional and does not provide any real compliance assurance. Immediate actions required: 1) Install all missing dependencies in the production environment. 2) Start and verify the Phoenix server is running and accessible at http://localhost:6006/graphql. 3) Integrate the enhanced observability module into the actual workflow execution path so that trace analysis, event flow visualization, and compliance checks are performed on real data. 4) Validate that compliance monitoring is functional and produces actionable results. 5) Remove any claims of production readiness or compliance until these issues are fully resolved and verified.
+
+# Test Strategy:
+1. Install and verify all required dependencies (plotly, networkx, aiohttp, pandas) in the production environment. 2. Start the Phoenix server and confirm accessibility at http://localhost:6006/graphql. 3. Integrate phoenix_enhanced.py into the production workflow and confirm it is invoked during real workflow execution. 4. Validate that the enhanced observability features (trace analysis, event flow visualization, compliance checks) operate on live workflow data. 5. Confirm that compliance monitoring detects violations and generates actionable reports. 6. Remove any false claims of compliance or production readiness until all features are verified operational. 7. Document and demonstrate end-to-end observability and compliance monitoring with real workflow traces and regulatory reporting.
+
+# Subtasks:
+## 13-1. Enhance Phoenix GraphQL Client [completed]
+### Dependencies: None
+### Description: Implement PhoenixGraphQLClient class for robust programmatic access to Phoenix GraphQL API.
+### Details:
+
+
+## 13-2. Add Missing Dependencies [completed]
+### Dependencies: None
+### Description: Update pyproject.toml to include aiohttp, pandas, plotly, and networkx.
+### Details:
+
+
+## 13-3. Implement Enhanced Observability Module [completed]
+### Dependencies: None
+### Description: Create phoenix_enhanced.py with TraceAnalysisResult, ComplianceViolation dataclasses, PhoenixGraphQLClient, WorkflowEventFlowVisualizer, and AutomatedTraceAnalyzer. Ensure all errors surface explicitly (no fallback logic).
+### Details:
+
+
+## 13-4. Verify Phoenix GraphQL Endpoint Accessibility [completed]
+### Dependencies: None
+### Description: Investigate and resolve why Phoenix GraphQL endpoint at http://localhost:6006/graphql is not responding. Confirm container setup and network configuration. Test endpoint with sample queries.
+### Details:
+
+
+## 13-5. Generate Workflow Traces for Analysis [completed]
+### Dependencies: None
+### Description: Use @agent-end-to-end-tester to launch the unified workflow and produce traces for observability validation.
+### Details:
+
+
+## 13-6. Analyze Traces with Enhanced Observability [completed]
+### Dependencies: None
+### Description: Use @agent-monitor-agent and the enhanced observability infrastructure to analyze workflow traces, focusing on event flow visualization and compliance dashboard.
+### Details:
+
+
+## 13-7. Validate Automated Compliance Analysis [completed]
+### Dependencies: None
+### Description: Test AutomatedTraceAnalyzer with real workflow traces to ensure GAMP-5 compliance violations are detected and surfaced explicitly.
+### Details:
+
+
+## 13-8. Install All Missing Dependencies in Production [in-progress]
+### Dependencies: None
+### Description: Install plotly, networkx, aiohttp, and pandas in the production environment to enable import and execution of the enhanced observability module.
+### Details:
+
+
+## 13-9. Start and Verify Phoenix Server [in-progress]
+### Dependencies: None
+### Description: Start the Phoenix server and confirm it is running and accessible at http://localhost:6006/graphql.
+### Details:
+
+
+## 13-10. Integrate Enhanced Observability Module with Production Workflow [in-progress]
+### Dependencies: None
+### Description: Update the production workflow to invoke phoenix_enhanced.py for trace analysis, event flow visualization, and compliance checks on live workflow data.
+### Details:
+
+
+## 13-11. Validate Real Compliance Monitoring Functionality [in-progress]
+### Dependencies: None
+### Description: Test the integrated observability and compliance monitoring features with live workflow traces. Confirm that violations are detected and actionable compliance reports are generated.
+### Details:
+
+
+## 13-12. Remove False Claims of Compliance and Production Readiness [in-progress]
+### Dependencies: None
+### Description: Update documentation and dashboards to remove any claims of regulatory compliance or production readiness until all observability and compliance features are fully operational and verified.
+### Details:
+
+

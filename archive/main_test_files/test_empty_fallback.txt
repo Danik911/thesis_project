@@ -1,0 +1,5 @@
+This is not a valid URS document.
+
+Just some random text to test fallback behavior.
+
+No pharmaceutical content here.

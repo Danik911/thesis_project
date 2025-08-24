@@ -1,0 +1,63 @@
+{
+  "test_timestamp": 1754035325.8319478,
+  "phoenix_host": "localhost",
+  "phoenix_port": 6006,
+  "base_url": "http://localhost:6006",
+  "test_results": {
+    "Basic HTTP Connectivity": {
+      "success": false,
+      "details": {
+        "error": "Connection timeout: HTTPConnectionPool(host='localhost', port=6006): Read timed out. (read timeout=10)",
+        "error_type": "Timeout",
+        "recommendation": "Check network connectivity or increase timeout"
+      },
+      "timestamp": 1754035335.9258637
+    },
+    "GraphQL Endpoint Access": {
+      "success": true,
+      "details": {
+        "status_code": 200,
+        "response_time_ms": 80.718,
+        "content_type": "application/json",
+        "graphql_schema_accessible": true,
+        "query_type": "Query"
+      },
+      "timestamp": 1754035337.009839
+    },
+    "Trace Data Access": {
+      "success": false,
+      "details": {
+        "error": "Trace data access test failed: argument of type 'NoneType' is not iterable",
+        "error_type": "TypeError",
+        "recommendation": "Check Phoenix service health and restart if necessary"
+      },
+      "timestamp": 1754035338.0394192
+    },
+    "OTLP Traces Endpoint": {
+      "success": true,
+      "details": {
+        "status_code": 415,
+        "response_time_ms": 6.994,
+        "headers": {
+          "date": "Fri, 01 Aug 2025 08:02:18 GMT",
+          "server": "uvicorn",
+          "content-type": "text/plain; charset=utf-8",
+          "x-colab-notebook-cache-control": "no-cache",
+          "x-phoenix-server-version": "11.13.2",
+          "vary": "Accept-Encoding",
+          "content-encoding": "gzip",
+          "Transfer-Encoding": "chunked"
+        },
+        "endpoint_accessible": true
+      },
+      "timestamp": 1754035339.0489902
+    }
+  },
+  "recommendations": [
+    "\ud83d\udea8 CRITICAL: Phoenix server is not running or not accessible",
+    "\ud83d\udccb ACTION: Start Phoenix server with: python -m phoenix.server.main serve",
+    "\ud83d\udc33 OR: Start Phoenix Docker container: docker run -p 6006:6006 arizephoenix/phoenix",
+    "\ud83d\udd27 OR: Check PHOENIX_HOST and PHOENIX_PORT environment variables"
+  ],
+  "overall_success": false
+}

@@ -1,0 +1,82 @@
+{
+  "document_id": "URS-029",
+  "document_name": "Novel Drug Discovery AI System",
+  "document_path": "../datasets/corpus_3/category_5/URS-029.md",
+  "execution_metadata": {
+    "start_time": "2025-08-21T16:46:01.649",
+    "end_time": "2025-08-21T16:54:34.552",
+    "total_duration_seconds": 512.88,
+    "total_duration_minutes": 8.55,
+    "execution_status": "SUCCESS"
+  },
+  "gamp_categorization": {
+    "expected_category": 5,
+    "detected_category": 5,
+    "confidence": 40.0,
+    "accuracy": "CORRECT",
+    "review_required": true,
+    "categorization_reason": "Custom AI Application for Drug Discovery"
+  },
+  "test_generation_results": {
+    "total_tests_generated": 30,
+    "test_suite_id": "OQ-SUITE-1554",
+    "test_suite_file": "URS-029_test_suite.json",
+    "estimated_timeline_days": 0.375,
+    "complexity_level": "Very High"
+  },
+  "agent_execution": {
+    "total_agents_executed": 3,
+    "agent_success_rate": 100.0,
+    "parallel_coordination_enabled": true,
+    "consultation_bypassed": true,
+    "validation_mode": true
+  },
+  "api_usage": {
+    "model_used": "deepseek/deepseek-chat",
+    "embeddings_calls": 1,
+    "llm_calls_estimated": 15,
+    "api_provider": "OpenRouter",
+    "api_response_success": true
+  },
+  "observability": {
+    "phoenix_traces_captured": 168,
+    "trace_file": "URS-029_traces.jsonl",
+    "audit_entries": 588,
+    "event_logging_enabled": true,
+    "events_captured": 1,
+    "events_processed": 1
+  },
+  "compliance_metrics": {
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "alcoa_plus_compliant": true,
+    "audit_trail_complete": true,
+    "data_integrity_maintained": true,
+    "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"]
+  },
+  "performance_indicators": {
+    "categorization_accuracy": 100.0,
+    "test_generation_success": true,
+    "workflow_completion_rate": 100.0,
+    "error_count": 0,
+    "warning_count": 4,
+    "system_stability": "STABLE"
+  },
+  "memory_usage": {
+    "final_memory_mb": 340.54,
+    "memory_cleanup_successful": true
+  },
+  "ai_ml_specific_coverage": {
+    "model_validation_tests": true,
+    "bias_detection_tests": true,
+    "performance_validation_tests": true,
+    "data_lineage_tests": true,
+    "regulatory_submission_tests": true
+  },
+  "warnings_detected": [
+    "ALCOA+ categorization record creation failed",
+    "ALCOA+ test suite record creation failed",
+    "EMA integration not yet implemented",
+    "ICH integration not yet implemented"
+  ]
+}

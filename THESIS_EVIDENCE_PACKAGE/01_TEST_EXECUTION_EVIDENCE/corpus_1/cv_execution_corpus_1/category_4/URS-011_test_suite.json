@@ -1,0 +1,1826 @@
+{
+  "suite_id": "OQ-SUITE-2059",
+  "gamp_category": 4,
+  "document_name": "URS-011.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Deviation Management Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the deviation management workflows are correctly configured with multi-stage approvals and CAPA tracking as per URS-QMS-002.",
+      "prerequisites": [
+        "System access credentials",
+        "Pre-configured deviation workflow"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with valid credentials.",
+          "expected_result": "User successfully logs in and accesses the main dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the deviation management module and initiate a new deviation.",
+          "expected_result": "New deviation form is displayed with required fields.",
+          "data_to_capture": [
+            "Form availability"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the initial classification (Critical, Major, Minor) and submit for approval.",
+          "expected_result": "Deviation is successfully submitted and moves to the next approval stage.",
+          "data_to_capture": [
+            "Submission status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Assign root cause analysis and track CAPA implementation.",
+          "expected_result": "Root cause analysis is assigned and CAPA tracking is initiated.",
+          "data_to_capture": [
+            "Assignment status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Verify management review and closure of the deviation.",
+          "expected_result": "Deviation is reviewed and closed with all approvals.",
+          "data_to_capture": [
+            "Closure status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Deviation workflow functions as per URS-QMS-002",
+        "All stages are correctly configured and approvals are tracked"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for all deviation activities"
+      ],
+      "urs_requirements": [
+        "URS-QMS-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "Deviation management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Change Control Process Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the change control processes are correctly configured with impact assessment workflows as per URS-QMS-003.",
+      "prerequisites": [
+        "System access credentials",
+        "Pre-configured change control workflow"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with valid credentials.",
+          "expected_result": "User successfully logs in and accesses the main dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the change control module and initiate a new change request.",
+          "expected_result": "New change request form is displayed with required fields.",
+          "data_to_capture": [
+            "Form availability"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the impact assessment and submit for approval.",
+          "expected_result": "Change request is successfully submitted and moves to the next approval stage.",
+          "data_to_capture": [
+            "Submission status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Track the change request through the approval workflow.",
+          "expected_result": "Change request is approved and implemented with all approvals tracked.",
+          "data_to_capture": [
+            "Approval status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Change control workflow functions as per URS-QMS-003",
+        "Impact assessment is correctly configured and approvals are tracked"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for all change control activities"
+      ],
+      "urs_requirements": [
+        "URS-QMS-003"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "Change control management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Deviation Management Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the deviation management workflows are correctly configured with multi-stage approvals and tracking capabilities.",
+      "prerequisites": [
+        "QMS system installed and configured",
+        "Test user accounts with appropriate permissions",
+        "Sample deviation data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with a user account having deviation management permissions.",
+          "expected_result": "User successfully logs in and can access the deviation management module.",
+          "data_to_capture": [
+            "Login success status",
+            "Module accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new deviation record and classify it as Critical.",
+          "expected_result": "Deviation record is created and correctly classified as Critical.",
+          "data_to_capture": [
+            "Deviation record creation status",
+            "Classification accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Initiate the workflow and verify the multi-stage approval process (RCA assignment, CAPA tracking, management review).",
+          "expected_result": "Workflow progresses through all configured stages with appropriate approvals and tracking.",
+          "data_to_capture": [
+            "Workflow progression status",
+            "Approval steps completed"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Deviation workflow progresses through all configured stages without errors.",
+        "All approval steps are correctly triggered and recorded.",
+        "CAPA tracking and verification steps are functional."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail must capture all workflow steps and approvals.",
+        "Data must be securely stored and retrievable."
+      ],
+      "urs_requirements": [
+        "URS-QMS-002",
+        "URS-QMS-017",
+        "URS-QMS-028"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "QMS configuration",
+        "Deviation management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Performance Testing for Concurrent User Load",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that the QMS system can support 200 concurrent users across quality functions without performance degradation.",
+      "prerequisites": [
+        "QMS system installed and configured",
+        "Load testing tool configured",
+        "200 test user accounts"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the load testing tool to simulate 200 concurrent users performing typical quality functions (e.g., document searches, workflow approvals).",
+          "expected_result": "Load testing tool is correctly configured and ready to execute the test.",
+          "data_to_capture": [
+            "Load test configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the load test for a duration of 30 minutes.",
+          "expected_result": "System remains responsive and functional under the specified load.",
+          "data_to_capture": [
+            "System response times",
+            "Error rates"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor system performance metrics (CPU, memory, network usage) during the test.",
+          "expected_result": "System resources remain within acceptable thresholds.",
+          "data_to_capture": [
+            "CPU usage",
+            "Memory usage",
+            "Network latency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System supports 200 concurrent users without crashing or becoming unresponsive.",
+        "Document searches return results within 10 seconds.",
+        "Workflow notifications are delivered within 15 minutes."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All transactions must be completed without data loss.",
+        "Audit trails must remain intact under load."
+      ],
+      "urs_requirements": [
+        "URS-QMS-023",
+        "URS-QMS-024",
+        "URS-QMS-026"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "QMS system architecture"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify Deviation Management Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure the deviation management workflow is correctly configured with multi-stage approvals and tracking.",
+      "prerequisites": [
+        "System access credentials",
+        "Test deviation record"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with valid credentials.",
+          "expected_result": "User successfully logs in and accesses the dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new deviation record and classify it as Critical.",
+          "expected_result": "Deviation record is created and classified correctly.",
+          "data_to_capture": [
+            "Deviation classification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Assign root cause analysis and initiate CAPA tracking.",
+          "expected_result": "Root cause analysis is assigned and CAPA tracking is initiated.",
+          "data_to_capture": [
+            "Root cause analysis status",
+            "CAPA initiation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Complete management review and close the deviation.",
+          "expected_result": "Deviation is reviewed and closed successfully.",
+          "data_to_capture": [
+            "Management review status",
+            "Deviation closure status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Deviation workflow functions as per URS-QMS-002",
+        "All stages are completed without errors"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail for all actions",
+        "Data integrity checks"
+      ],
+      "urs_requirements": [
+        "URS-QMS-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "Deviation management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate Integration with LIMS for Test Result Evaluation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify the integration between QMS and LIMS for accurate test result evaluation.",
+      "prerequisites": [
+        "System access credentials",
+        "Test LIMS record"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with valid credentials.",
+          "expected_result": "User successfully logs in and accesses the dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new test result evaluation record in LIMS.",
+          "expected_result": "Test result evaluation record is created in LIMS.",
+          "data_to_capture": [
+            "LIMS record creation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the test result evaluation record is visible in QMS.",
+          "expected_result": "Test result evaluation record is correctly displayed in QMS.",
+          "data_to_capture": [
+            "QMS record visibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Perform a data integrity check on the transferred record.",
+          "expected_result": "Data integrity is maintained during the transfer.",
+          "data_to_capture": [
+            "Data integrity status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Integration functions as per URS-QMS-034",
+        "Data integrity is maintained"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for all actions",
+        "Data integrity checks"
+      ],
+      "urs_requirements": [
+        "URS-QMS-034"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "LIMS integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Deviation Management Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the deviation management workflows are correctly configured with multi-stage approvals, including classification, root cause analysis, CAPA tracking, and closure.",
+      "prerequisites": [
+        "QMS system is installed and accessible",
+        "Test user accounts with appropriate permissions are created",
+        "Deviation management module is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with a test user account.",
+          "expected_result": "User is successfully logged in and can access the deviation management module.",
+          "data_to_capture": [
+            "Login success status",
+            "Module accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new deviation record and classify it as 'Critical'.",
+          "expected_result": "Deviation record is created and classified correctly.",
+          "data_to_capture": [
+            "Deviation record creation status",
+            "Classification accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Assign root cause analysis to a designated user.",
+          "expected_result": "Root cause analysis task is assigned and visible in the designated user's task list.",
+          "data_to_capture": [
+            "Task assignment status",
+            "Task visibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Complete the root cause analysis and initiate CAPA tracking.",
+          "expected_result": "CAPA tracking is initiated and linked to the deviation record.",
+          "data_to_capture": [
+            "CAPA initiation status",
+            "Linkage to deviation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Submit the deviation for management review and closure.",
+          "expected_result": "Deviation is submitted for review and closure workflow is initiated.",
+          "data_to_capture": [
+            "Submission status",
+            "Closure workflow initiation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All deviation workflow steps are executed without errors.",
+        "Each stage of the workflow is correctly recorded in the audit trail.",
+        "Notifications are delivered within 15 minutes of trigger events."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail must capture all workflow steps.",
+        "Data must be protected from unauthorized modifications."
+      ],
+      "urs_requirements": [
+        "URS-QMS-002",
+        "URS-QMS-017",
+        "URS-QMS-024"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "Deviation management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Integration with LIMS for Test Result Evaluation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that the QMS system correctly integrates with the LIMS for test result evaluation and data exchange.",
+      "prerequisites": [
+        "QMS system is installed and accessible",
+        "LIMS system is installed and accessible",
+        "Integration configuration is completed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with a test user account.",
+          "expected_result": "User is successfully logged in and can access the integration settings.",
+          "data_to_capture": [
+            "Login success status",
+            "Integration settings accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a test record in the LIMS with sample test results.",
+          "expected_result": "Test record is created in the LIMS with sample results.",
+          "data_to_capture": [
+            "Test record creation status",
+            "Sample results accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Trigger the integration to pull test results from LIMS to QMS.",
+          "expected_result": "Test results are successfully pulled into the QMS and displayed correctly.",
+          "data_to_capture": [
+            "Integration trigger status",
+            "Test results display accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify that the test results are linked to the correct deviation or batch record in QMS.",
+          "expected_result": "Test results are correctly linked to the appropriate records in QMS.",
+          "data_to_capture": [
+            "Linkage accuracy",
+            "Record association"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Check the audit trail in both systems for integration events.",
+          "expected_result": "All integration events are recorded in the audit trails of both systems.",
+          "data_to_capture": [
+            "Audit trail completeness",
+            "Event recording accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Test results are accurately transferred from LIMS to QMS.",
+        "Integration events are recorded in the audit trails of both systems.",
+        "Data integrity is maintained during transfer."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be accurately transferred without corruption.",
+        "Audit trails must capture all integration events."
+      ],
+      "urs_requirements": [
+        "URS-QMS-034",
+        "URS-QMS-028",
+        "URS-QMS-029"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "LIMS and QMS operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Deviation Management Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the deviation management workflows are correctly configured with multi-stage approvals, including initial classification, root cause analysis, CAPA tracking, and closure.",
+      "prerequisites": [
+        "System access credentials",
+        "Pre-configured deviation workflow templates"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with appropriate credentials.",
+          "expected_result": "User successfully logs in and accesses the deviation management module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new deviation record and initiate the workflow.",
+          "expected_result": "Deviation record is created and workflow is initiated with initial classification stage.",
+          "data_to_capture": [
+            "Deviation record ID",
+            "Workflow status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Proceed through each stage of the workflow (root cause analysis, CAPA tracking, closure).",
+          "expected_result": "Each stage is completed successfully with appropriate approvals and data captured.",
+          "data_to_capture": [
+            "Stage completion status",
+            "Approval details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All workflow stages are completed successfully",
+        "Approvals are recorded accurately"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for all workflow actions"
+      ],
+      "urs_requirements": [
+        "URS-QMS-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "Deviation management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Integration with LIMS for Test Result Evaluation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that the QMS system is correctly integrated with the LIMS for test result evaluation and data exchange.",
+      "prerequisites": [
+        "System access credentials",
+        "Pre-configured LIMS integration settings"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system with appropriate credentials.",
+          "expected_result": "User successfully logs in and accesses the integration settings module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a test result evaluation request from the QMS to the LIMS.",
+          "expected_result": "Request is sent successfully and test results are returned to the QMS.",
+          "data_to_capture": [
+            "Request status",
+            "Test results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the test results in the QMS.",
+          "expected_result": "Test results are accurately displayed and recorded in the QMS.",
+          "data_to_capture": [
+            "Test result accuracy",
+            "Data integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Test results are accurately exchanged between QMS and LIMS",
+        "Data integrity is maintained"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail for data exchange"
+      ],
+      "urs_requirements": [
+        "URS-QMS-034"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS integration",
+        "LIMS configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Deviation Management Workflow Configuration Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the deviation management workflows are correctly configured with multi-stage approvals and CAPA tracking.",
+      "prerequisites": [
+        "QMS system is installed and configured",
+        "Test user accounts with appropriate roles are created",
+        "Deviation management module is enabled"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a quality user and initiate a new deviation record.",
+          "expected_result": "Deviation record is created and initial classification options (Critical, Major, Minor) are available.",
+          "data_to_capture": [
+            "Deviation ID",
+            "Classification selected"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Assign root cause analysis to a designated user and submit for approval.",
+          "expected_result": "Root cause analysis task is assigned and workflow progresses to next stage.",
+          "data_to_capture": [
+            "Assigned user",
+            "Workflow status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify CAPA tracking and management review steps are triggered.",
+          "expected_result": "CAPA record is linked to deviation and management review is initiated.",
+          "data_to_capture": [
+            "CAPA ID",
+            "Review status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All deviation workflow stages are executed as configured",
+        "CAPA tracking is properly linked to deviations",
+        "Approval routing follows configured sequence"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail must capture all workflow transitions",
+        "Electronic signatures must be enforced for approvals"
+      ],
+      "urs_requirements": [
+        "URS-QMS-002",
+        "URS-QMS-017",
+        "URS-QMS-028"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-008"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Quality Management Systems",
+        "Deviation Handling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Integration with LIMS for Test Result Evaluation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Validate that the QMS system correctly integrates with LIMS for test result evaluation and deviation triggering.",
+      "prerequisites": [
+        "QMS and LIMS systems are installed and configured",
+        "Integration interface is established",
+        "Test data available in LIMS"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a test result in LIMS that should trigger a deviation in QMS.",
+          "expected_result": "Test result is successfully created in LIMS with out-of-specification flag.",
+          "data_to_capture": [
+            "Test result ID",
+            "OOS status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify QMS receives the test result and automatically creates a deviation record.",
+          "expected_result": "Deviation record is created in QMS with correct linkage to LIMS test result.",
+          "data_to_capture": [
+            "Deviation ID",
+            "Linked test result"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Check data mapping and transformation between systems.",
+          "expected_result": "All relevant test data is accurately transferred between systems.",
+          "data_to_capture": [
+            "Data fields mapped",
+            "Transformation accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Test results successfully trigger deviations in QMS",
+        "All required data fields are correctly mapped between systems",
+        "Integration maintains data integrity during transfer"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "FDA Data Integrity Guidance"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Data must not be altered during transfer",
+        "Audit trail must capture integration events"
+      ],
+      "urs_requirements": [
+        "URS-QMS-034",
+        "URS-QMS-020",
+        "URS-QMS-029"
+      ],
+      "related_tests": [
+        "OQ-007",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System Integration",
+        "Laboratory Information Systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Deviation Management Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the deviation management workflows are correctly configured with multi-stage approvals and tracking capabilities.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Test user accounts with appropriate permissions are created",
+        "Deviation management module is enabled"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a quality user and initiate a new deviation record.",
+          "expected_result": "Deviation record is created with fields for classification (Critical, Major, Minor).",
+          "data_to_capture": [
+            "Deviation ID",
+            "Classification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Assign root cause analysis to a designated user and submit for approval.",
+          "expected_result": "Root cause analysis task is assigned and visible in the workflow.",
+          "data_to_capture": [
+            "Assigned User",
+            "Task Status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete CAPA tracking and verification steps.",
+          "expected_result": "CAPA is tracked and verified within the workflow.",
+          "data_to_capture": [
+            "CAPA ID",
+            "Verification Status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Submit deviation for management review and closure.",
+          "expected_result": "Deviation is reviewed and closed with all required approvals.",
+          "data_to_capture": [
+            "Approval Status",
+            "Closure Date"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All deviation workflow stages are functional and correctly configured.",
+        "Approvals are recorded in the audit trail.",
+        "Notifications are sent at each workflow stage."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail must capture all workflow actions.",
+        "Electronic signatures must be enforced for approvals."
+      ],
+      "urs_requirements": [
+        "URS-QMS-002",
+        "URS-QMS-017",
+        "URS-QMS-028"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Quality Management Systems",
+        "Deviation Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Integration with LIMS for Test Result Evaluation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that the QMS correctly integrates with the LIMS for test result evaluation and tracking.",
+      "prerequisites": [
+        "System is installed and configured",
+        "LIMS integration is enabled and configured",
+        "Test data is available in LIMS"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a quality user and initiate a test result evaluation request.",
+          "expected_result": "Request is sent to LIMS and test results are retrieved.",
+          "data_to_capture": [
+            "Request ID",
+            "Test Results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Review the retrieved test results in the QMS.",
+          "expected_result": "Test results are displayed correctly in the QMS interface.",
+          "data_to_capture": [
+            "Result Status",
+            "Display Accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Approve or reject the test results within the QMS.",
+          "expected_result": "Approval/rejection is recorded in both QMS and LIMS.",
+          "data_to_capture": [
+            "Approval Status",
+            "LIMS Sync Status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Test results are accurately retrieved from LIMS.",
+        "Approval actions are synchronized between systems.",
+        "Data integrity is maintained during transfer."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data transferred must be accurate and complete.",
+        "Audit trail must capture integration events."
+      ],
+      "urs_requirements": [
+        "URS-QMS-034",
+        "URS-QMS-028",
+        "URS-QMS-020"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "LIMS Integration",
+        "Quality Management Systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Verify Deviation Management Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the deviation management workflows are correctly configured with multi-stage approvals, including initial classification, root cause analysis, CAPA tracking, and closure.",
+      "prerequisites": [
+        "Access to QMS system",
+        "Test deviation record"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system and navigate to the deviation management module.",
+          "expected_result": "User successfully logs in and accesses the deviation management module.",
+          "data_to_capture": [
+            "Login status",
+            "Module access"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new deviation record and classify it as Critical.",
+          "expected_result": "Deviation record is created and classified as Critical.",
+          "data_to_capture": [
+            "Record creation",
+            "Classification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Assign root cause analysis and initiate CAPA tracking.",
+          "expected_result": "Root cause analysis is assigned and CAPA tracking is initiated.",
+          "data_to_capture": [
+            "Root cause assignment",
+            "CAPA initiation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Complete the management review and close the deviation.",
+          "expected_result": "Deviation is reviewed and closed successfully.",
+          "data_to_capture": [
+            "Review completion",
+            "Closure status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Deviation workflow functions as configured",
+        "All stages are completed successfully"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for all actions"
+      ],
+      "urs_requirements": [
+        "URS-QMS-002"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "Deviation management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Validate Change Control Process Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To validate that the change control processes are correctly configured with impact assessment workflows.",
+      "prerequisites": [
+        "Access to QMS system",
+        "Test change control record"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS system and navigate to the change control module.",
+          "expected_result": "User successfully logs in and accesses the change control module.",
+          "data_to_capture": [
+            "Login status",
+            "Module access"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new change control record and initiate impact assessment.",
+          "expected_result": "Change control record is created and impact assessment is initiated.",
+          "data_to_capture": [
+            "Record creation",
+            "Impact assessment initiation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the impact assessment and approve the change.",
+          "expected_result": "Impact assessment is completed and change is approved.",
+          "data_to_capture": [
+            "Assessment completion",
+            "Approval status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Change control process functions as configured",
+        "Impact assessment is completed successfully"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for all actions"
+      ],
+      "urs_requirements": [
+        "URS-QMS-003"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS configuration",
+        "Change control management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Verify Deviation Management Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure the deviation management workflow is correctly configured with multi-stage approvals and tracking.",
+      "prerequisites": [
+        "System is installed and operational",
+        "User roles and permissions are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a user with deviation management permissions.",
+          "expected_result": "User successfully logs in and accesses the deviation management module.",
+          "data_to_capture": [
+            "Login status",
+            "Module access"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new deviation record and classify it as Critical.",
+          "expected_result": "Deviation record is created and classified correctly.",
+          "data_to_capture": [
+            "Record creation status",
+            "Classification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Assign root cause analysis and initiate CAPA tracking.",
+          "expected_result": "Root cause analysis is assigned and CAPA tracking is initiated.",
+          "data_to_capture": [
+            "Root cause assignment",
+            "CAPA initiation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Submit the deviation for management review and closure.",
+          "expected_result": "Deviation is submitted for review and closure process is initiated.",
+          "data_to_capture": [
+            "Review submission",
+            "Closure initiation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Deviation workflow functions as per URS-QMS-002",
+        "All stages are correctly tracked and approved"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EMA Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail for all deviation actions",
+        "Data integrity checks for workflow steps"
+      ],
+      "urs_requirements": [
+        "URS-QMS-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Quality Management Systems",
+        "Pharmaceutical Compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Validate Integration with LIMS for Test Result Evaluation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify the integration between the QMS and LIMS for accurate test result evaluation.",
+      "prerequisites": [
+        "QMS and LIMS are operational",
+        "Integration points are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the QMS and navigate to the test result evaluation module.",
+          "expected_result": "User successfully accesses the test result evaluation module.",
+          "data_to_capture": [
+            "Login status",
+            "Module access"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a test result evaluation request from the QMS.",
+          "expected_result": "Request is sent to LIMS for processing.",
+          "data_to_capture": [
+            "Request initiation",
+            "LIMS receipt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the test results returned from LIMS in the QMS.",
+          "expected_result": "Test results are accurately displayed in the QMS.",
+          "data_to_capture": [
+            "Result accuracy",
+            "Display status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Confirm the integration audit trail for the test result evaluation.",
+          "expected_result": "Audit trail records all integration steps correctly.",
+          "data_to_capture": [
+            "Audit trail completeness",
+            "Integration steps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Integration functions as per URS-QMS-034",
+        "Test results are accurately evaluated and displayed"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EMA Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for integration steps",
+        "Data integrity checks for test results"
+      ],
+      "urs_requirements": [
+        "URS-QMS-034"
+      ],
+      "related_tests": [
+        "OQ-010",
+        "OQ-014"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Integration",
+        "Laboratory Information Management Systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Verify Deviation Management Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure the deviation management workflows are correctly configured with multi-stage approvals and CAPA tracking.",
+      "prerequisites": [
+        "Access to QMS platform",
+        "Test deviation records"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a test deviation record in the QMS.",
+          "expected_result": "Deviation record is created and initial classification is assigned.",
+          "data_to_capture": [
+            "Deviation ID",
+            "Classification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Assign root cause analysis to the deviation.",
+          "expected_result": "Root cause analysis is assigned and tracked.",
+          "data_to_capture": [
+            "Root Cause Analysis Status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Initiate CAPA tracking for the deviation.",
+          "expected_result": "CAPA is initiated and linked to the deviation.",
+          "data_to_capture": [
+            "CAPA ID",
+            "CAPA Status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Complete management review and closure.",
+          "expected_result": "Deviation is reviewed and closed.",
+          "data_to_capture": [
+            "Closure Status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All workflow stages are completed successfully.",
+        "CAPA is tracked and verified."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail for all deviation activities"
+      ],
+      "urs_requirements": [
+        "URS-QMS-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS Configuration",
+        "Deviation Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Validate Integration with LIMS for Test Result Evaluation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate the integration between QMS and LIMS for accurate test result evaluation.",
+      "prerequisites": [
+        "Access to QMS and LIMS",
+        "Test batch data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a test batch in the QMS.",
+          "expected_result": "Batch record is created in QMS.",
+          "data_to_capture": [
+            "Batch ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send test results from LIMS to QMS.",
+          "expected_result": "Test results are received in QMS.",
+          "data_to_capture": [
+            "Test Result Status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Evaluate test results in QMS.",
+          "expected_result": "Test results are evaluated and batch disposition is determined.",
+          "data_to_capture": [
+            "Evaluation Status",
+            "Batch Disposition"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Test results are accurately received and evaluated in QMS.",
+        "Batch disposition is correctly determined."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail for test result integration"
+      ],
+      "urs_requirements": [
+        "URS-QMS-034"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "QMS Integration",
+        "LIMS Configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 690,
+  "generation_timestamp": "2025-08-19T20:59:35.330731+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-19T20:59:35.797337+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-19T20:51:44.779564+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

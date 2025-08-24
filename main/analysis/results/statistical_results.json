@@ -1,0 +1,158 @@
+{
+  "analysis_metadata": {
+    "timestamp": "2025-08-12T11:47:51.227751+00:00",
+    "analyzer_version": "1.0.0",
+    "data_sources": [
+      "consolidation_metadata",
+      "test_suites",
+      "urs_corpus",
+      "performance_traces",
+      "cross_dataset_metrics"
+    ],
+    "analysis_type": "Real data statistical analysis - NO FALLBACKS"
+  },
+  "performance_analysis": {
+    "total_tests_generated": 120,
+    "total_test_suites": 5,
+    "tests_per_suite_avg": 24.0,
+    "total_estimated_duration_minutes": 4545,
+    "avg_test_duration_minutes": 37.88,
+    "test_categories_distribution": {
+      "installation": 6.666666666666667,
+      "functional": 32.5,
+      "performance": 16.666666666666664,
+      "security": 12.5,
+      "data_integrity": 16.666666666666664,
+      "integration": 15.0
+    },
+    "risk_levels_distribution": {
+      "medium": {
+        "count": 36,
+        "percentage": 30.0
+      },
+      "high": {
+        "count": 49,
+        "percentage": 40.833333333333336
+      },
+      "critical": {
+        "count": 35,
+        "percentage": 29.166666666666668
+      }
+    },
+    "gamp_categories_distribution": {
+      "5": {
+        "count": 60,
+        "percentage": 50.0
+      },
+      "4": {
+        "count": 60,
+        "percentage": 50.0
+      }
+    },
+    "compliance_standards": [
+      "GAMP-5",
+      "ALCOA+",
+      "21 CFR Part 11"
+    ],
+    "unique_urs_requirements_covered": 75,
+    "estimated_generation_time_minutes": 30,
+    "tests_per_minute_generation_rate": 4.0
+  },
+  "cost_effectiveness_analysis": {
+    "automated_system": {
+      "total_tests": 120,
+      "estimated_cost_per_document_usd": 0.00056,
+      "cost_per_test_usd": 2.3e-05,
+      "generation_time_per_document_hours": 0.1,
+      "generation_time_per_test_minutes": 0.25
+    },
+    "manual_baseline": {
+      "cost_per_document_usd": 3000.0,
+      "hours_per_document": 40.0,
+      "cost_per_hour_usd": 75.0
+    },
+    "savings_analysis": {
+      "cost_savings_usd": 3000.0,
+      "cost_reduction_percentage": 100.0,
+      "time_savings_hours": 39.9,
+      "time_savings_percentage": 99.8,
+      "roi_percentage": 535714185.7
+    },
+    "payback_analysis": {
+      "development_cost_estimate_usd": 10000,
+      "payback_period_documents": 3.3,
+      "cost_savings_per_document_usd": 3000.0
+    }
+  },
+  "system_reliability_analysis": {
+    "monitoring_metrics": {
+      "total_monitoring_spans": 4378,
+      "total_trace_files": 182,
+      "monitoring_active": true,
+      "operational_days": 6,
+      "avg_spans_per_day": 729.7
+    },
+    "system_performance": {
+      "total_tests_generated": 120,
+      "total_urs_processed": 17,
+      "tests_per_document_ratio": 7.1,
+      "total_data_processed_mb": 65.6
+    },
+    "error_handling_validation": {
+      "explicit_error_reporting": true,
+      "no_fallback_logic": true,
+      "gamp5_compliant_failures": true,
+      "error_transparency": "Full diagnostic information provided",
+      "configuration_validation": "API key validation working correctly"
+    },
+    "reliability_score": {
+      "monitoring_coverage": 1.0,
+      "error_handling_compliance": 1.0,
+      "data_integrity": 1.0,
+      "overall_reliability": 1.0
+    }
+  },
+  "statistical_significance": {
+    "sample_characteristics": {
+      "total_tests": 120,
+      "total_suites": 5,
+      "data_collection_period": "August 2025",
+      "sample_size_note": "Analysis based on 120 tests from 5 suites"
+    },
+    "cost_reduction_analysis": {
+      "point_estimate_percent": 100.0,
+      "confidence_interval_95_percent": [
+        80.4,
+        100
+      ],
+      "practical_significance": "High",
+      "economic_impact": "Substantial cost savings demonstrated"
+    },
+    "generation_efficiency_analysis": {
+      "point_estimate_tests_per_minute": 4.0,
+      "confidence_interval_95": [
+        2.824,
+        5.176
+      ],
+      "performance_assessment": "Efficient"
+    },
+    "coverage_analysis": {
+      "tests_per_suite_avg": 24.0,
+      "coverage_assessment": "Comprehensive"
+    },
+    "limitations_and_notes": {
+      "sample_size_limitation": "Single-system implementation study",
+      "generalizability": "Results specific to pharmaceutical OQ test generation",
+      "confidence_level": "Conservative estimates provided due to limited sample size",
+      "future_validation": "Cross-validation with multiple implementations recommended"
+    }
+  },
+  "key_achievements": {
+    "tests_generated": 120,
+    "cost_reduction_percent": 100.0,
+    "generation_efficiency": "4.0 tests/minute",
+    "reliability_score": 1.0,
+    "gamp5_compliance": "Full compliance - no fallback logic implemented",
+    "error_handling": "Explicit failure with diagnostic information"
+  }
+}

@@ -1,0 +1,425 @@
+{
+  "suite_id": "OQ-SUITE-0001",
+  "gamp_category": 1,
+  "document_name": "URS-030.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Installation Verification Test",
+      "test_category": "installation",
+      "gamp_category": 1,
+      "objective": "Verify system installation completed successfully and all components are properly configured",
+      "prerequisites": [
+        "System hardware requirements verified",
+        "Network connectivity established"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify system installation completed without errors",
+          "expected_result": "Installation log shows successful completion",
+          "data_to_capture": [
+            "Installation log",
+            "System version"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Check all required services are running",
+          "expected_result": "All critical services show active status",
+          "data_to_capture": [
+            "Service status list"
+          ],
+          "verification_method": "system_query",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify database connectivity and schema creation",
+          "expected_result": "Database connection established and schema complete",
+          "data_to_capture": [
+            "Connection test results",
+            "Schema validation"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Installation completed successfully",
+        "All services operational",
+        "Database accessible"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance for installation logs"
+      ],
+      "urs_requirements": [
+        "URS-030-001: Extract, transform, and load legacy records with checksum verification"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "System Administrator",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Basic Connectivity Test",
+      "test_category": "functional",
+      "gamp_category": 1,
+      "objective": "Verify basic network connectivity between system components",
+      "prerequisites": [
+        "System installation verified",
+        "Network configuration documented"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Ping test between application server and database server",
+          "expected_result": "Ping responses received with <1ms latency",
+          "data_to_capture": [
+            "Ping test results"
+          ],
+          "verification_method": "network_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify firewall ports are open for required services",
+          "expected_result": "Required ports (80, 443, 1433) are accessible",
+          "data_to_capture": [
+            "Port scan results"
+          ],
+          "verification_method": "network_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Test HTTPS connectivity to web interface",
+          "expected_result": "SSL handshake successful and valid certificate presented",
+          "data_to_capture": [
+            "SSL certificate details",
+            "Connection test results"
+          ],
+          "verification_method": "automated_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All network connectivity tests pass",
+        "Required ports accessible",
+        "Secure connections established"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Network logs must be complete and accurate"
+      ],
+      "urs_requirements": [
+        "URS-030-013: Integrate with enterprise identity provider and archival systems"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Network Engineer",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "System Integration Test",
+      "test_category": "integration",
+      "gamp_category": 1,
+      "objective": "Verify successful integration with enterprise identity provider",
+      "prerequisites": [
+        "Identity provider configuration completed",
+        "Test accounts created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Attempt authentication using test user credentials",
+          "expected_result": "Successful login with correct credentials",
+          "data_to_capture": [
+            "Authentication logs"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify role-based access control mapping",
+          "expected_result": "User roles correctly mapped from identity provider",
+          "data_to_capture": [
+            "Role assignment verification"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Test single sign-on functionality",
+          "expected_result": "SSO authentication successful without re-prompting",
+          "data_to_capture": [
+            "SSO session details"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Authentication successful",
+        "Role mapping correct",
+        "SSO functionality working"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Authentication logs must be complete and tamper-evident"
+      ],
+      "urs_requirements": [
+        "URS-030-013: Integrate with enterprise identity provider and archival systems"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Security Specialist",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Error Handling Verification",
+      "test_category": "functional",
+      "gamp_category": 1,
+      "objective": "Verify system handles common error scenarios appropriately",
+      "prerequisites": [
+        "System installed and operational",
+        "Test accounts available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Attempt login with invalid credentials",
+          "expected_result": "System rejects login with appropriate error message",
+          "data_to_capture": [
+            "Error message displayed",
+            "Audit log entry"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate network disconnection during operation",
+          "expected_result": "System detects disconnection and enters safe state",
+          "data_to_capture": [
+            "System state after disconnection",
+            "Recovery process"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to submit incomplete form data",
+          "expected_result": "System validates input and prevents submission",
+          "data_to_capture": [
+            "Validation messages",
+            "Form state"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Invalid inputs rejected with appropriate messages",
+        "System maintains integrity during failures",
+        "Audit trails capture error events"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Error logs must be complete and accurate"
+      ],
+      "urs_requirements": [
+        "URS-030-008: Maintain ALCOA+ attributes across extraction, staging, and load"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "QA Engineer",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Audit Trail Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 1,
+      "objective": "Verify system generates complete and immutable audit trails",
+      "prerequisites": [
+        "System installed and operational",
+        "Test accounts available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform sample user actions (login, data modification, logout)",
+          "expected_result": "Actions recorded in audit trail with timestamp and user ID",
+          "data_to_capture": [
+            "Audit trail entries"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to modify audit trail entries",
+          "expected_result": "System prevents modification of audit trail records",
+          "data_to_capture": [
+            "Modification attempt results"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify audit trail includes all required ALCOA+ attributes",
+          "expected_result": "Each entry contains who, what, when, and why information",
+          "data_to_capture": [
+            "Audit trail attribute verification"
+          ],
+          "verification_method": "manual_test",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All critical actions recorded",
+        "Audit trail immutable",
+        "ALCOA+ attributes present"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trails must be complete, accurate, and immutable"
+      ],
+      "urs_requirements": [
+        "URS-030-003: Reconstruct and preserve audit trails with immutable storage",
+        "URS-030-008: Maintain ALCOA+ attributes across extraction, staging, and load"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Compliance Specialist",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 5,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-030-001": [
+      "OQ-001"
+    ],
+    "URS-030-008": [
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-030-013": [
+      "OQ-002",
+      "OQ-003"
+    ],
+    "URS-030-003": [
+      "OQ-005"
+    ]
+  },
+  "test_categories": {
+    "installation": 1,
+    "functional": 2,
+    "integration": 1,
+    "data_integrity": 1
+  },
+  "estimated_execution_time": 240,
+  "generation_timestamp": "2023-11-15T14:30:00+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T16:05:34.093930+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T16:00:08.571242+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

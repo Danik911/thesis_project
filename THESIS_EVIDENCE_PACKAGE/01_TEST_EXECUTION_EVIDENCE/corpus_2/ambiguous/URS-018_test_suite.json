@@ -1,0 +1,1463 @@
+{
+  "suite_id": "OQ-SUITE-1122",
+  "gamp_category": 4,
+  "document_name": "URS-018.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Sample Run Schedule Creation and Method Locking",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that users can create sample run schedules with priority, instrument, and method selections, and that the system enforces method-version locking for scheduled runs.",
+      "prerequisites": [
+        "Access to the Chromatography Sample Scheduling Module",
+        "Configured instruments and methods"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate credentials.",
+          "expected_result": "User successfully logs in and gains access to the scheduling module.",
+          "data_to_capture": [
+            "Login timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new sample run schedule with priority, instrument, and method selections.",
+          "expected_result": "Schedule is created and displayed in the system.",
+          "data_to_capture": [
+            "Schedule details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to modify the method version for the scheduled run.",
+          "expected_result": "System prevents modification and enforces method-version locking.",
+          "data_to_capture": [
+            "Error message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Schedule is created successfully",
+        "Method-version locking is enforced"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries for schedule changes"
+      ],
+      "urs_requirements": [
+        "URS-018-001",
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Instrument Routing and Availability Rules",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system routes samples to instruments based on configured availability rules and supports pause/resume and re-queue of failed runs with reason capture.",
+      "prerequisites": [
+        "Access to the Chromatography Sample Scheduling Module",
+        "Configured availability rules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate credentials.",
+          "expected_result": "User successfully logs in and gains access to the scheduling module.",
+          "data_to_capture": [
+            "Login timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a sample run schedule and assign it to an instrument based on availability rules.",
+          "expected_result": "Schedule is assigned to the correct instrument based on availability.",
+          "data_to_capture": [
+            "Schedule details",
+            "Instrument assignment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a failed run and attempt to pause/resume and re-queue the run.",
+          "expected_result": "System allows pause/resume and re-queue with reason capture.",
+          "data_to_capture": [
+            "Reason for failure",
+            "Re-queue details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Samples are routed correctly based on availability rules",
+        "Failed runs can be paused/resumed and re-queued"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries for run changes"
+      ],
+      "urs_requirements": [
+        "URS-018-004",
+        "URS-018-005"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify Method-Version Locking for Scheduled Runs",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the system enforces method-version locking for scheduled runs as per URS-018-002.",
+      "prerequisites": [
+        "System is installed and operational",
+        "Sample run schedules are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a sample run schedule with a specific method version.",
+          "expected_result": "Schedule is created successfully with the selected method version.",
+          "data_to_capture": [
+            "Method version selected",
+            "Schedule creation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to modify the method version for the scheduled run.",
+          "expected_result": "System prevents modification of the method version and displays an error message.",
+          "data_to_capture": [
+            "Error message displayed",
+            "Method version status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Method-version locking is enforced for scheduled runs"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Method version integrity must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography system knowledge",
+        "Scheduling module expertise"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Gantt View Refresh Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To verify that the Gantt view refresh completes within the specified time limit as per URS-018-023.",
+      "prerequisites": [
+        "System is installed and operational",
+        "Sample run schedules are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load the Gantt view with a schedule containing 500 samples.",
+          "expected_result": "Gantt view is displayed with all 500 samples.",
+          "data_to_capture": [
+            "Time taken to load Gantt view",
+            "Number of samples displayed"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Refresh the Gantt view and measure the time taken.",
+          "expected_result": "Gantt view refresh completes in less than 2 seconds.",
+          "data_to_capture": [
+            "Time taken to refresh Gantt view"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Gantt view refresh completes within 2 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Gantt view data must be accurate and up-to-date"
+      ],
+      "urs_requirements": [
+        "URS-018-023"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing knowledge",
+        "Scheduling module expertise"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify Sample Run Schedule Creation with Priority and Method Selection",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that users can create sample run schedules with priority, instrument, and method selections as per URS-018-001.",
+      "prerequisites": [
+        "Access to the chromatography sample scheduling module",
+        "Valid user credentials with schedule creation permissions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the chromatography sample scheduling module.",
+          "expected_result": "User successfully logs in and accesses the scheduling interface.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new sample run schedule with priority, instrument, and method selections.",
+          "expected_result": "Schedule is successfully created with the specified priority, instrument, and method.",
+          "data_to_capture": [
+            "Schedule details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Schedule is created with correct priority, instrument, and method selections"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure schedule details are accurately captured and stored"
+      ],
+      "urs_requirements": [
+        "URS-018-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate Method-Version Locking Enforcement for Scheduled Runs",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To validate that the system enforces method-version locking for scheduled runs as per URS-018-002.",
+      "prerequisites": [
+        "Access to the chromatography sample scheduling module",
+        "Existing sample run schedule"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the chromatography sample scheduling module.",
+          "expected_result": "User successfully logs in and accesses the scheduling interface.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to modify the method version of an existing scheduled run.",
+          "expected_result": "System prevents modification and enforces method-version locking.",
+          "data_to_capture": [
+            "Modification attempt status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Method-version locking is enforced for scheduled runs"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure method-version locking is accurately enforced"
+      ],
+      "urs_requirements": [
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Method Version Locking Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system enforces method-version locking for scheduled runs as per URS-018-002.",
+      "prerequisites": [
+        "System is installed and configured",
+        "User with scheduling permissions is logged in",
+        "At least one instrument and method are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a new sample run schedule and select a method version.",
+          "expected_result": "Method version is successfully selected and locked for the schedule.",
+          "data_to_capture": [
+            "Method version selected",
+            "Lock status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to modify the method version after scheduling.",
+          "expected_result": "System prevents modification of the locked method version.",
+          "data_to_capture": [
+            "Error message displayed",
+            "Audit trail entry"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Method version is locked upon scheduling",
+        "Modification of locked method version is prevented",
+        "Audit trail entry is generated for the lock action"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Method version integrity must be maintained",
+        "Audit trail must capture all changes"
+      ],
+      "urs_requirements": [
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Schedule Gantt View Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that the Gantt view refreshes within the required time frame as per URS-018-023.",
+      "prerequisites": [
+        "System is installed and configured",
+        "User with scheduling permissions is logged in",
+        "At least 100 sample runs are scheduled"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the Gantt view and apply a filter by instrument.",
+          "expected_result": "Gantt view displays filtered schedule within 2 seconds.",
+          "data_to_capture": [
+            "Load time",
+            "Filter applied"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Apply a second filter by analyst and observe refresh time.",
+          "expected_result": "Gantt view updates with new filter within 2 seconds.",
+          "data_to_capture": [
+            "Refresh time",
+            "Filter applied"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Gantt view refreshes within 2 seconds for all filters",
+        "Filtered data is accurately displayed"
+      ],
+      "regulatory_basis": [
+        "URS-018-023"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Data displayed must be accurate and current"
+      ],
+      "urs_requirements": [
+        "URS-018-023"
+      ],
+      "related_tests": [
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Chromatography scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Schedule Creation and Method Version Locking",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that users can create sample run schedules with priority, instrument, and method selections, and that the system enforces method-version locking for scheduled runs.",
+      "prerequisites": [
+        "Access to the Chromatography Sample Scheduling Module",
+        "Configured instruments and methods"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate user credentials.",
+          "expected_result": "User successfully logs in and gains access to the scheduling module.",
+          "data_to_capture": [
+            "User credentials",
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new sample run schedule with priority, instrument, and method selections.",
+          "expected_result": "Schedule is successfully created with specified parameters.",
+          "data_to_capture": [
+            "Schedule details",
+            "Priority",
+            "Instrument",
+            "Method"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to modify the method version for the scheduled run.",
+          "expected_result": "System prevents modification and enforces method-version locking.",
+          "data_to_capture": [
+            "Method version",
+            "Modification attempt status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Schedule creation is successful",
+        "Method-version locking is enforced"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries for schedule changes"
+      ],
+      "urs_requirements": [
+        "URS-018-001",
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling",
+        "Method version control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Instrument Readiness Alerts and Run Completion Notifications",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Ensure that users receive alerts for instrument readiness and run completion as specified in the requirements.",
+      "prerequisites": [
+        "Access to the Chromatography Sample Scheduling Module",
+        "Configured instruments and methods"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate user credentials.",
+          "expected_result": "User successfully logs in and gains access to the scheduling module.",
+          "data_to_capture": [
+            "User credentials",
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Schedule a sample run and wait for instrument readiness.",
+          "expected_result": "User receives an alert indicating instrument readiness.",
+          "data_to_capture": [
+            "Alert details",
+            "Instrument readiness status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the scheduled run and wait for run completion notification.",
+          "expected_result": "User receives a notification indicating run completion.",
+          "data_to_capture": [
+            "Notification details",
+            "Run completion status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alerts for instrument readiness are received",
+        "Notifications for run completion are received"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries for alerts and notifications"
+      ],
+      "urs_requirements": [
+        "URS-018-007"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling",
+        "Alert and notification systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Verify Schedule Creation with Priority and Method Locking",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that users can create sample run schedules with priority, instrument, and method selections, and that method-version locking is enforced.",
+      "prerequisites": [
+        "System is installed and configured",
+        "User roles and permissions are set up",
+        "Instrument and method data are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with a user account that has schedule creation permissions.",
+          "expected_result": "User is successfully logged in and can access the scheduling module.",
+          "data_to_capture": [
+            "User login status",
+            "Access to scheduling module"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new sample run schedule with priority, instrument, and method selections.",
+          "expected_result": "Schedule is created successfully with the specified priority, instrument, and method.",
+          "data_to_capture": [
+            "Schedule details",
+            "Priority, instrument, and method selections"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to modify the method version for the scheduled run.",
+          "expected_result": "System enforces method-version locking and prevents modification.",
+          "data_to_capture": [
+            "Method version locking status",
+            "Error message if modification is attempted"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Schedule is created with correct priority, instrument, and method",
+        "Method-version locking is enforced"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries are generated for all changes to schedule entries"
+      ],
+      "urs_requirements": [
+        "URS-018-001",
+        "URS-018-002",
+        "URS-018-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "User role management",
+        "Method version control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Validate Integration with Asset System for Instrument Availability",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate that the system can pull instrument availability and calibration status from the asset system.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Asset system is available and configured",
+        "Instrument data is available in the asset system"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with a user account that has integration permissions.",
+          "expected_result": "User is successfully logged in and can access the integration module.",
+          "data_to_capture": [
+            "User login status",
+            "Access to integration module"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a request to pull instrument availability and calibration status from the asset system.",
+          "expected_result": "System successfully retrieves instrument availability and calibration status.",
+          "data_to_capture": [
+            "Instrument availability status",
+            "Calibration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify that the retrieved data is correctly displayed in the system.",
+          "expected_result": "Instrument availability and calibration status are correctly displayed in the system.",
+          "data_to_capture": [
+            "Displayed instrument availability",
+            "Displayed calibration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Instrument availability and calibration status are successfully retrieved",
+        "Retrieved data is correctly displayed in the system"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries are generated for all integration actions"
+      ],
+      "urs_requirements": [
+        "URS-018-025"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "Asset system configuration",
+        "Data validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Verify Schedule Creation with Priority and Method Locking",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Ensure that users can create sample run schedules with priority, instrument, and method selections, and that method-version locking is enforced.",
+      "prerequisites": [
+        "Access to the scheduling module",
+        "Configured instruments and methods"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate credentials.",
+          "expected_result": "User successfully logs in and accesses the scheduling module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new sample run schedule with priority, instrument, and method selections.",
+          "expected_result": "Schedule is created with the specified priority, instrument, and method.",
+          "data_to_capture": [
+            "Schedule details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to modify the method version for the scheduled run.",
+          "expected_result": "System prevents modification and enforces method-version locking.",
+          "data_to_capture": [
+            "Method version status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Schedule is created successfully",
+        "Method-version locking is enforced"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all schedule changes are logged in the audit trail"
+      ],
+      "urs_requirements": [
+        "URS-018-001",
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-014"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Validate Instrument Readiness Alerts and Run Completion Notifications",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that users receive alerts for instrument readiness and run completion within the specified time frame.",
+      "prerequisites": [
+        "Access to the scheduling module",
+        "Configured instruments"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate credentials.",
+          "expected_result": "User successfully logs in and accesses the scheduling module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Schedule a sample run and monitor for instrument readiness alert.",
+          "expected_result": "Alert is received within 5 seconds of instrument readiness.",
+          "data_to_capture": [
+            "Alert timing"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the sample run and monitor for run completion notification.",
+          "expected_result": "Notification is received within 5 seconds of run completion.",
+          "data_to_capture": [
+            "Notification timing"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alerts and notifications are received within 5 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all alerts and notifications are logged in the audit trail"
+      ],
+      "urs_requirements": [
+        "URS-018-007"
+      ],
+      "related_tests": [
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Verify Schedule Gantt View Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure the Gantt view refreshes within the specified time limit under typical load conditions.",
+      "prerequisites": [
+        "System is operational",
+        "Sample schedules are loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a schedule with 500 samples into the system.",
+          "expected_result": "Schedule is loaded successfully without errors.",
+          "data_to_capture": [
+            "Load time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Open the Gantt view and filter by instrument and analyst.",
+          "expected_result": "Gantt view displays the filtered schedule correctly.",
+          "data_to_capture": [
+            "Refresh time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Gantt view refresh completes in < 2 seconds"
+      ],
+      "regulatory_basis": [
+        "URS-018-023"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data displayed in Gantt view is accurate and consistent"
+      ],
+      "urs_requirements": [
+        "URS-018-012",
+        "URS-018-023"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Validate Integration with Asset System",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Confirm the system correctly pulls instrument availability and calibration status from the asset system.",
+      "prerequisites": [
+        "Asset system is operational",
+        "Integration is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the system to connect to the asset system.",
+          "expected_result": "Connection is established successfully.",
+          "data_to_capture": [
+            "Connection status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Request instrument availability and calibration status from the asset system.",
+          "expected_result": "Correct instrument status is retrieved and displayed in the system.",
+          "data_to_capture": [
+            "Retrieved data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Instrument availability and calibration status are accurately pulled from the asset system"
+      ],
+      "regulatory_basis": [
+        "URS-018-025"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data retrieved from the asset system is accurate and consistent"
+      ],
+      "urs_requirements": [
+        "URS-018-025"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Integration testing",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Verify Schedule Creation with Method-Version Locking",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the system enforces method-version locking when creating sample run schedules.",
+      "prerequisites": [
+        "System is operational",
+        "User has appropriate role-based access",
+        "Method versions are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with a user account that has schedule creation permissions.",
+          "expected_result": "User successfully logs in and navigates to the schedule creation interface.",
+          "data_to_capture": [
+            "Login status",
+            "User role"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to create a sample run schedule with a locked method version.",
+          "expected_result": "System prevents the creation of the schedule and displays an error message indicating method-version locking.",
+          "data_to_capture": [
+            "Error message",
+            "Method version status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System enforces method-version locking as expected",
+        "Error message is clear and accurate"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries for schedule creation attempts"
+      ],
+      "urs_requirements": [
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Validate Gantt View Refresh Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To verify that the Gantt view refreshes within the specified time limit under typical conditions.",
+      "prerequisites": [
+        "System is operational",
+        "Sample schedules are loaded",
+        "Gantt view is accessible"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with a user account that has access to the Gantt view.",
+          "expected_result": "User successfully logs in and navigates to the Gantt view interface.",
+          "data_to_capture": [
+            "Login status",
+            "User role"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a refresh of the Gantt view and measure the time taken to complete.",
+          "expected_result": "Gantt view refreshes in less than 2 seconds.",
+          "data_to_capture": [
+            "Refresh time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Gantt view refresh completes within 2 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Audit trail entries for Gantt view access"
+      ],
+      "urs_requirements": [
+        "URS-018-023"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Verify Schedule Creation with Priority and Method Locking",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that users can create sample run schedules with priority, instrument, and method selections, and that method-version locking is enforced for scheduled runs.",
+      "prerequisites": [
+        "Access to the Chromatography Sample Scheduling Module",
+        "Configured instruments and methods"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate credentials.",
+          "expected_result": "User successfully logs in and accesses the scheduling module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new sample run schedule with priority, instrument, and method selections.",
+          "expected_result": "Schedule is created with the specified priority, instrument, and method.",
+          "data_to_capture": [
+            "Schedule details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to modify the method version for the scheduled run.",
+          "expected_result": "System prevents modification and enforces method-version locking.",
+          "data_to_capture": [
+            "Method version status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Schedule is created successfully",
+        "Method-version locking is enforced"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail entries for schedule changes"
+      ],
+      "urs_requirements": [
+        "URS-018-001",
+        "URS-018-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography",
+        "Scheduling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Validate Gantt View Refresh Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To verify that the Gantt view refresh completes within the specified time frame of less than 2 seconds.",
+      "prerequisites": [
+        "Access to the Chromatography Sample Scheduling Module",
+        "Existing schedules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system with appropriate credentials.",
+          "expected_result": "User successfully logs in and accesses the scheduling module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the Gantt view and apply filters by instrument and analyst.",
+          "expected_result": "Gantt view displays filtered schedules.",
+          "data_to_capture": [
+            "Filtered schedules"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Measure the time taken for the Gantt view to refresh.",
+          "expected_result": "Gantt view refresh completes in less than 2 seconds.",
+          "data_to_capture": [
+            "Refresh time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Gantt view refresh completes within 2 seconds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Audit trail entries for view changes"
+      ],
+      "urs_requirements": [
+        "URS-018-023"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Chromatography",
+        "Performance Testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 600,
+  "generation_timestamp": "2025-08-21T11:22:13.970840+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T11:22:14.112351+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T11:16:25.098445+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

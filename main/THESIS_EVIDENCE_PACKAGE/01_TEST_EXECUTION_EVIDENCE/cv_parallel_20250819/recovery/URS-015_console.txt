@@ -1,0 +1,7 @@
+C:\Users\anteb\Desktop\Courses\Projects\thesis_project\.venv\Lib\site-packages\pydantic\_internal\_fields.py:198: UserWarning: Field name "schema" in "OQTestSuite" shadows an attribute in parent "BaseModel"
+  warnings.warn(
+VALIDATION MODE ACTIVE: This bypasses consultation requirements for testing. Ensure this is intentional and not in production environment. Set VALIDATION_MODE_EXPLICIT=true to suppress this warning.
+2025-08-19 21:05:55,332 - src.core.unified_workflow - WARNING - [ALCOA+] Failed to create categorization record: 'URSIngestionEvent' object has no attribute 'category'
+2025-08-19 21:05:55,340 - src.core.unified_workflow - WARNING - AUDIT TRAIL: Consultation bypassed for a1ff437d-7b4c-40d1-8d16-9c7a1da56d3c due to validation mode. Original consultation: categorization_review
+2025-08-19 21:07:15,137 - src.agents.parallel.research_agent - WARNING - EMA integration not yet implemented - skipping EMA queries
+2025-08-19 21:07:15,138 - src.agents.parallel.research_agent - WARNING - ICH integration not yet implemented - skipping ICH queries

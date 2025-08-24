@@ -1,0 +1,47 @@
+# Task ID: 5
+# Title: Implement OQ Test-Script Generation Agent
+# Status: done
+# Dependencies: 4
+# Priority: high
+# Description: Create test-script generation agent focused on OQ (Operational Qualification) tests only
+# Details:
+Implement the critical test-script generation agent using LlamaIndex Workflow with event-driven architecture. Focus ONLY on OQ test generation (no IQ/PQ/RTM). Use Pydantic models for structured test output. Implement GAMP category-specific OQ templates (5-10 tests for Cat 3, 15-20 for Cat 4, 25-30 for Cat 5). Must aggregate context from all upstream agents. NO response_format json_object - use LLMTextCompletionProgram.
+
+# Test Strategy:
+1. Unit test Pydantic models for schema correctness and validation logic.
+2. Integration test the OQTestGenerationWorkflow to ensure correct event-driven orchestration and output structure.
+3. Validate generated OQ test scripts against GAMP requirements for each category (3, 4, 5).
+4. Test context aggregation by simulating upstream agent outputs (URS, categorization, planning, parallel agents).
+5. Review generated test scripts for pharmaceutical compliance and completeness.
+
+# Subtasks:
+## 5. Create Pydantic Models for OQ Test Structure [done]
+### Dependencies: None
+### Description: Define Pydantic models for OQTestStep, OQTestScript, and any related entities to ensure structured, validated test output.
+### Details:
+Design and implement Pydantic models representing individual OQ test steps and complete OQ test scripts. Ensure models capture all required fields for pharmaceutical OQ compliance and support validation logic.
+
+## 6. Implement OQ Test Generation Workflow [done]
+### Dependencies: 5.5
+### Description: Develop the OQTestGenerationWorkflow using LlamaIndex event-driven patterns to orchestrate OQ test creation.
+### Details:
+Use LlamaIndex Workflow to define event-driven steps for OQ test generation. Ensure each step processes and emits events as required, and the workflow produces structured OQ test scripts using the defined Pydantic models.
+
+## 7. Develop GAMP-Specific OQ Templates [done]
+### Dependencies: 5.6
+### Description: Create OQ test templates for GAMP categories: 5-10 tests for Cat 3, 15-20 for Cat 4, 25-30 for Cat 5.
+### Details:
+Design and implement OQ test templates tailored to GAMP category requirements. Ensure templates are parameterized and can be populated dynamically within the workflow.
+
+## 8. Integrate Context from Upstream Agents [done]
+### Dependencies: 5.7
+### Description: Aggregate and utilize context from URS, categorization, planning, and parallel agent outputs in the OQ test generation process.
+### Details:
+Implement logic to collect and merge relevant context from all upstream agents. Ensure the workflow uses this context to generate accurate and complete OQ test scripts.
+
+## 9. Validate Test Output Quality [done]
+### Dependencies: 5.8
+### Description: Ensure generated OQ test scripts meet pharmaceutical standards and comprehensively cover all requirements.
+### Details:
+Develop validation logic and review processes to check that OQ test scripts are compliant, complete, and aligned with GAMP and regulatory expectations.
+

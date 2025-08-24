@@ -1,0 +1,87 @@
+{
+  "test_metadata": {
+    "document_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md",
+    "document_name": "URS-001.md",
+    "execution_start": "2025-08-19T11:06:10.352385+00:00",
+    "output_directory": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\main\\output\\cross_validation\\cv_test_20250819_120610",
+    "model_used": "deepseek/deepseek-chat",
+    "test_type": "single_document_validation"
+  },
+  "execution_metrics": {
+    "total_duration_seconds": 334.21,
+    "workflow_duration_seconds": 329.98,
+    "execution_end": "2025-08-19T11:11:44.562620+00:00",
+    "peak_memory_usage": "Not measured",
+    "api_calls_made": "Not counted"
+  },
+  "workflow_results": {
+    "categorization": {
+      "category": 3,
+      "confidence": 1.0,
+      "reasoning": "",
+      "compliant": false
+    },
+    "oq_generation": {
+      "total_tests": 10,
+      "coverage_percentage": 0.0,
+      "test_suite_id": "",
+      "generated_successfully": true
+    },
+    "raw_result": {
+      "summary": {
+        "status": "completed_with_oq_tests",
+        "workflow_duration_seconds": 329.926611,
+        "category": 3,
+        "confidence": 1.0,
+        "review_required": false,
+        "estimated_test_count": 6,
+        "timeline_estimate_days": 0.375,
+        "agents_coordinated": 3,
+        "coordination_success_rate": 1.0
+      },
+      "workflow_metadata": {
+        "session_id": "unified_workflow_2025-08-19T11:06:10.460002+00:00",
+        "document_path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\urs_corpus\\category_3\\URS-001.md",
+        "start_time": "2025-08-19T11:06:14.618420+00:00",
+        "completion_time": "2025-08-19T11:11:44.554519+00:00",
+        "total_processing_time": 329.926611,
+        "phoenix_enabled": true
+      },
+      "status": "completed_with_oq_tests",
+      "categorization": {
+        "category": 3,
+        "gamp_category": 3,
+        "confidence": 1.0,
+        "confidence_score": 1.0,
+        "review_required": false
+      },
+      "planning": {
+        "estimated_test_count": 6,
+        "test_strategy": {
+          "approach": "category_based",
+          "category": 3,
+          "validation_rigor": "standard",
+          "confidence_score": 1.0
+        },
+        "agent_requests_processed": 3
+      },
+      "agent_coordination": {
+        "total_agents": 3,
+        "successful_agents": 3,
+        "failed_agents": 0
+      },
+      "oq_generation": {
+        "test_suite_id": "OQ-SUITE-1111",
+        "total_tests": 10,
+        "coverage_percentage": 0.0,
+        "review_required": true,
+        "generation_successful": true,
+        "output_file": "output\\test_suites\\test_suite_OQ-SUITE-1111_20250819_111144.json",
+        "file_saved": true
+      },
+      "workflow_results": null
+    }
+  },
+  "errors": [],
+  "success": true
+}

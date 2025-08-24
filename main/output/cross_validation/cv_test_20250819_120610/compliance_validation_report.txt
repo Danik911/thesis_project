@@ -1,0 +1,76 @@
+================================================================================
+COMPLIANCE VALIDATION REPORT - SINGLE DOCUMENT TEST
+================================================================================
+Generated: 2025-08-19T14:14:14.044229+00:00
+
+EXECUTIVE SUMMARY
+----------------------------------------
+[WARNING] COMPLIANCE ISSUES FOUND - Address before full testing
+
+1. ALCOA+ DATA INTEGRITY
+----------------------------------------
+Overall Score: 8.06/10
+Target: >=9.0/10
+Status: [FAIL]
+
+Attribute Scores:
+  [OK] Attributable: 8.0/10
+  [OK] Legible: 9.0/10
+  [OK] Contemporaneous: 8.0/10
+  [OK] Original: 7.0/10
+  [OK] Accurate: 7.5/10
+  [OK] Complete: 7.5/10
+  [OK] Consistent: 8.0/10
+  [OK] Enduring: 8.5/10
+  [OK] Available: 9.0/10
+
+2. GAMP-5 COMPLIANCE
+----------------------------------------
+Compliance: 100.0%
+Criteria Met: 10/10
+Status: [PASS]
+
+Criteria Status:
+  [OK] Risk Based Approach
+  [OK] Life Cycle Management
+  [OK] Supplier Assessment
+  [OK] Specification Management
+  [OK] Configuration Management
+  [OK] Testing Strategy
+  [OK] Documentation Standards
+  [OK] Change Control
+  [OK] Training Competency
+  [OK] Ongoing Verification
+
+3. 21 CFR PART 11 COMPLIANCE
+----------------------------------------
+Compliance: 100.0%
+Requirements Met: 4/4
+Status: [PASS]
+
+Requirements Status:
+  [OK] Electronic Records
+  [OK] Electronic Signatures
+  [OK] Audit Trail
+  [OK] System Controls
+
+Issues to Address:
+  - Electronic signatures implemented but no signatures generated yet
+
+4. OWASP LLM TOP 10 SECURITY
+----------------------------------------
+Status: [SECURE]
+
+Critical Risks:
+  [OK] LLM01 PROMPT INJECTION
+      - Input validator present
+  [OK] LLM06 INSECURE OUTPUT
+      - Output scanner present
+  [OK] LLM09 OVERRELIANCE
+      - Human consultation system active in production mode
+
+RECOMMENDATIONS
+----------------------------------------
+1. Improve ALCOA+ compliance:
+
+================================================================================

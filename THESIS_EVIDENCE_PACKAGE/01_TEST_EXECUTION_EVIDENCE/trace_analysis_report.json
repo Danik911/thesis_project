@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-08-21T20:00:25.852600",
+  "summary": {
+    "total_spans": 0,
+    "unique_documents": 0,
+    "span_types": {}
+  },
+  "agent_performance": {},
+  "chromadb_operations": {
+    "message": "No ChromaDB operations found"
+  },
+  "workflow_patterns": {},
+  "bottlenecks": {
+    "slowest_operations": [],
+    "most_frequent_operations": [],
+    "error_prone_operations": []
+  },
+  "parallel_efficiency": {}
+}

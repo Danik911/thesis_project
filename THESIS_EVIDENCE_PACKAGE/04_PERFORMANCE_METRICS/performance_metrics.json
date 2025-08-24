@@ -1,0 +1,285 @@
+{
+  "analysis_metadata": {
+    "timestamp": "2025-08-20T10:50:00Z",
+    "data_sources": [
+      "openrouter_activity_2025-08-20.csv",
+      "20_08_2025_final_test_launch_phoenix_ui.csv",
+      "trace_analysis_report.json",
+      "openrouter_analysis_report.json"
+    ],
+    "documents_analyzed": 17,
+    "unique_documents_in_traces": 9,
+    "total_spans": 517,
+    "total_api_calls": 686
+  },
+  "cost_metrics": {
+    "actual_costs": {
+      "total_cost_usd": 0.7775,
+      "cost_per_document": 0.0457,
+      "cost_per_1k_tokens": 0.0007,
+      "cost_per_api_call": 0.00113
+    },
+    "target_costs": {
+      "total_cost_usd": 0.0095,
+      "cost_per_document": 0.00056,
+      "estimated_tokens_budget": 13000
+    },
+    "overrun_analysis": {
+      "cost_overrun_factor": 81.7,
+      "cost_overrun_percentage": 8084,
+      "token_overrun_factor": 83,
+      "api_call_overrun_factor": 8
+    },
+    "provider_costs": {
+      "deepinfra": {
+        "total_cost": 0.304076,
+        "calls": 375,
+        "avg_cost_per_call": 0.000811,
+        "percentage_of_total": 39.1
+      },
+      "nebius": {
+        "total_cost": 0.24166,
+        "calls": 180,
+        "avg_cost_per_call": 0.001343,
+        "percentage_of_total": 31.1
+      },
+      "novita": {
+        "total_cost": 0.231744,
+        "calls": 131,
+        "avg_cost_per_call": 0.001769,
+        "percentage_of_total": 29.8
+      }
+    }
+  },
+  "performance_metrics": {
+    "execution_time": {
+      "total_minutes": 952.74,
+      "total_hours": 15.88,
+      "avg_minutes_per_document": 56.04,
+      "start_time": "2025-08-19T05:23:47.735Z",
+      "end_time": "2025-08-19T21:16:31.972Z"
+    },
+    "agent_performance": {
+      "oq_generator": {
+        "span_count": 55,
+        "avg_duration_ms": 14322.71,
+        "p50_duration_ms": 9.01,
+        "p95_duration_ms": 93163.86,
+        "max_duration_ms": 104172.12,
+        "documents_processed": 5,
+        "critical_bottleneck": true
+      },
+      "research_agent": {
+        "span_count": 32,
+        "avg_duration_ms": 28268.21,
+        "p50_duration_ms": 24582.35,
+        "p95_duration_ms": 75441.36,
+        "max_duration_ms": 85734.52,
+        "efficiency_rating": "poor"
+      },
+      "categorization_agent": {
+        "span_count": 50,
+        "avg_duration_ms": 64.45,
+        "p50_duration_ms": 0.51,
+        "p95_duration_ms": 610.64,
+        "max_duration_ms": 683.16,
+        "efficiency_rating": "excellent"
+      },
+      "sme_agent": {
+        "span_count": 23,
+        "avg_duration_ms": 8745.32,
+        "p50_duration_ms": 7234.15,
+        "p95_duration_ms": 15234.78,
+        "efficiency_rating": "moderate"
+      },
+      "context_provider": {
+        "span_count": 5,
+        "avg_duration_ms": 3772.53,
+        "p50_duration_ms": 3741.12,
+        "p95_duration_ms": 4395.73,
+        "efficiency_rating": "good"
+      }
+    },
+    "llm_performance": {
+      "total_llm_calls": 84,
+      "avg_duration_ms": 15622.10,
+      "p50_duration_ms": 13245.67,
+      "p95_duration_ms": 39090.41,
+      "tokens_per_second": 37.40
+    },
+    "chromadb_performance": {
+      "total_operations": 238,
+      "avg_duration_ms": 384.47,
+      "p50_duration_ms": 333.96,
+      "p95_duration_ms": 1392.78,
+      "queries_per_document": 26.4,
+      "cache_hit_rate": 0.0
+    }
+  },
+  "api_usage_metrics": {
+    "total_api_calls": 686,
+    "calls_per_document": 40.35,
+    "call_distribution": {
+      "deepinfra": {
+        "calls": 375,
+        "percentage": 54.66,
+        "avg_generation_time_s": 10.94
+      },
+      "nebius": {
+        "calls": 180,
+        "percentage": 26.24,
+        "avg_generation_time_s": 19.91
+      },
+      "novita": {
+        "calls": 131,
+        "percentage": 19.10,
+        "avg_generation_time_s": 32.19
+      }
+    },
+    "temporal_patterns": {
+      "calls_per_minute_avg": 0.72,
+      "peak_hour": 19,
+      "peak_hour_calls": 208,
+      "execution_distribution": {
+        "hour_5": 52,
+        "hour_6": 9,
+        "hour_7": 41,
+        "hour_8": 12,
+        "hour_10": 29,
+        "hour_11": 12,
+        "hour_13": 41,
+        "hour_15": 1,
+        "hour_16": 16,
+        "hour_17": 4,
+        "hour_18": 31,
+        "hour_19": 208,
+        "hour_20": 191,
+        "hour_21": 39
+      }
+    }
+  },
+  "token_metrics": {
+    "total_tokens": 1078644,
+    "tokens_per_document": 63449.65,
+    "token_distribution": {
+      "prompt_tokens": 633509,
+      "completion_tokens": 445135,
+      "prompt_completion_ratio": 0.703
+    },
+    "token_statistics": {
+      "prompt": {
+        "mean": 923.48,
+        "median": 959,
+        "std": 507.74,
+        "min": 241,
+        "max": 2237
+      },
+      "completion": {
+        "mean": 648.88,
+        "median": 672.5,
+        "std": 285.53,
+        "min": 90,
+        "max": 1320
+      }
+    },
+    "efficiency": {
+      "tokens_per_second_avg": 37.40,
+      "tokens_per_api_call_avg": 1572.37
+    }
+  },
+  "bottleneck_analysis": {
+    "critical_bottlenecks": [
+      {
+        "component": "oq_generator",
+        "issue": "Timeout on complex documents",
+        "max_duration_ms": 104172,
+        "affected_documents": ["URS-007"],
+        "impact": "critical",
+        "recommendation": "Implement 30s timeout with retry"
+      },
+      {
+        "component": "research_agent",
+        "issue": "Serial processing without parallelization",
+        "avg_duration_ms": 28268,
+        "impact": "high",
+        "recommendation": "Parallelize with other agents"
+      },
+      {
+        "component": "chromadb",
+        "issue": "Excessive redundant queries",
+        "queries_per_document": 26.4,
+        "impact": "moderate",
+        "recommendation": "Implement caching layer"
+      }
+    ],
+    "performance_issues": [
+      {
+        "issue": "Serial execution",
+        "evidence": "15.9 hours for parallelizable work",
+        "potential_savings": "70% time reduction"
+      },
+      {
+        "issue": "No caching",
+        "evidence": "238 ChromaDB queries for 9 documents",
+        "potential_savings": "60% query reduction"
+      },
+      {
+        "issue": "Provider routing",
+        "evidence": "Only 54.7% to cheapest provider",
+        "potential_savings": "30% cost reduction"
+      }
+    ]
+  },
+  "optimization_potential": {
+    "cost_savings": {
+      "current_cost": 0.7775,
+      "optimized_cost_estimate": 0.40,
+      "savings_percentage": 48.6,
+      "savings_usd": 0.3775
+    },
+    "time_savings": {
+      "current_hours": 15.88,
+      "optimized_hours_estimate": 5.0,
+      "savings_percentage": 68.5,
+      "savings_hours": 10.88
+    },
+    "token_reduction": {
+      "current_tokens": 1078644,
+      "optimized_tokens_estimate": 647186,
+      "savings_percentage": 40.0,
+      "savings_tokens": 431458
+    },
+    "api_call_reduction": {
+      "current_calls": 686,
+      "optimized_calls_estimate": 400,
+      "savings_percentage": 41.7,
+      "savings_calls": 286
+    }
+  },
+  "validation_metrics": {
+    "document_completion_rate": 0.529,
+    "unique_documents_processed": 9,
+    "expected_documents": 17,
+    "missing_documents": 8,
+    "retry_rate_estimate": 0.471,
+    "error_rate_reported": 0.0,
+    "silent_failure_suspected": true
+  },
+  "recommendations": {
+    "immediate": [
+      "Optimize provider routing to 80% DeepInfra",
+      "Implement ChromaDB query caching",
+      "Add 30-second timeout to OQ Generator"
+    ],
+    "short_term": [
+      "Parallelize agent operations",
+      "Implement context pruning",
+      "Add retry logic with exponential backoff"
+    ],
+    "long_term": [
+      "Redesign agent communication protocol",
+      "Implement document streaming",
+      "Add predictive cost monitoring"
+    ]
+  }
+}

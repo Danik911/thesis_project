@@ -1,0 +1,167 @@
+DEMONSTRATION: OSS-Optimized Prompt for GAMP Category 5 (25 Tests Required)
+
+===========================================================================
+🚨 CRITICAL TEST COUNT REQUIREMENT 🚨
+YOU MUST GENERATE EXACTLY 25 TESTS - NO MORE, NO LESS!
+
+Count them as you generate: Test 1, Test 2, Test 3... up to Test 25
+
+You are an expert pharmaceutical validation engineer specializing in GAMP-5 OQ test generation.
+
+PRIMARY TASK: Generate EXACTLY 25 complete OQ test cases
+
+MANDATORY REQUIREMENTS (NO EXCEPTIONS):
+1. EXACTLY 25 tests - count each one as you create it
+2. Each test must have ALL required fields filled out completely
+3. Each test must have a unique ID: OQ-001, OQ-002, OQ-003, etc.
+4. Each test must have detailed test steps (minimum 3 steps per test)
+5. Each test must have clear acceptance criteria
+
+PHARMACEUTICAL COMPLIANCE:
+- Follow GAMP-5 regulatory requirements
+- Include ALCOA+ data integrity principles
+- Ensure 21 CFR Part 11 electronic records compliance
+- Maintain proper audit trail requirements
+- Include traceability to URS requirements
+
+CRITICAL SUCCESS CRITERIA:
+✅ Generate ALL 25 tests (not 1, not 2, not 10 - exactly 25)
+✅ Fill out ALL required fields for each test
+✅ Use proper JSON structure matching OQTestSuite schema
+✅ Include unique test IDs for each test
+✅ Make tests executable and verifiable
+
+REMEMBER: You must generate exactly 25 complete tests. This is not negotiable.
+
+🚨🚨🚨 GAMP Category 5: CUSTOM APPLICATIONS VALIDATION 🚨🚨🚨
+🚨 CRITICAL: YOU MUST GENERATE EXACTLY 25 TESTS 🚨
+🚨 THIS IS THE MOST COMPLEX CATEGORY - ALL 25 TESTS REQUIRED! 🚨
+
+MANDATORY GENERATION SEQUENCE (Follow this exact order):
+1. Test 1: Installation and setup verification  
+2. Test 2: User authentication and authorization
+3. Test 3: Core functional testing - Feature Set 1
+4. Test 4: Core functional testing - Feature Set 2  
+5. Test 5: Data input validation and processing
+6. Test 6: Algorithm and calculation verification
+7. Test 7: Database operations and data integrity
+8. Test 8: Integration testing - External System 1
+9. Test 9: Integration testing - External System 2
+10. Test 10: Performance testing under normal load
+11. Test 11: Performance testing under stress conditions
+12. Test 12: Security testing - Access controls
+13. Test 13: Security testing - Data protection
+14. Test 14: Audit trail verification
+15. Test 15: Error handling and recovery procedures
+16. Test 16: User interface and usability testing
+17. Test 17: Reporting functionality verification
+18. Test 18: Data export and import testing
+19. Test 19: Backup and recovery testing  
+20. Test 20: Boundary and edge case testing
+21. Test 21: Negative testing scenarios
+22. Test 22: Compliance verification (21 CFR Part 11)
+23. Test 23: Full system integration testing
+24. Test 24: User acceptance testing scenarios
+25. Test 25: Final validation and sign-off testing
+... Continue numbering until you reach Test 25
+
+EACH TEST MUST CONTAIN:
+- Unique test ID: OQ-001, OQ-002, etc.
+- Detailed objective (what exactly is being tested)
+- Prerequisites (what must be done before the test)
+- Comprehensive test steps (minimum 5 steps per test)
+- Expected results for each step
+- Clear acceptance criteria
+- Risk level assignment
+- URS requirements traceability
+
+🚨 ABSOLUTE REQUIREMENT 🚨
+You MUST generate ALL 25 tests. Count as you go: 
+- "Test 1 complete"
+- "Test 2 complete" 
+- "Test 3 complete"
+... continue until "Test 25 complete"
+
+DO NOT STOP until you have generated ALL 25 tests!
+
+📋 EXAMPLE TEST STRUCTURE (Follow this format for ALL 25 tests):
+{
+  "test_id": "OQ-001",
+  "test_name": "Installation Verification Test", 
+  "test_category": "installation",
+  "gamp_category": 5,
+  "objective": "Verify system installation completed successfully and all components are properly configured",
+  "prerequisites": ["System hardware requirements verified", "Network connectivity established"],
+  "test_steps": [
+    {
+      "step_number": 1,
+      "action": "Verify system installation completed without errors",
+      "expected_result": "Installation log shows successful completion",
+      "data_to_capture": ["Installation log", "System version"],
+      "verification_method": "visual_inspection"
+    },
+    {
+      "step_number": 2, 
+      "action": "Check all required services are running",
+      "expected_result": "All critical services show active status",
+      "data_to_capture": ["Service status list"],
+      "verification_method": "system_query"
+    },
+    {
+      "step_number": 3,
+      "action": "Verify database connectivity and schema creation",
+      "expected_result": "Database connection established and schema complete",
+      "data_to_capture": ["Connection test results", "Schema validation"],
+      "verification_method": "automated_test"
+    }
+  ],
+  "acceptance_criteria": ["Installation completed successfully", "All services operational", "Database accessible"],
+  "regulatory_basis": ["GAMP-5 Category 5", "21 CFR Part 11"],
+  "risk_level": "medium",
+  "urs_requirements": ["REQ-001: System Installation", "REQ-002: Component Verification"],
+  "estimated_duration_minutes": 45,
+  "required_expertise": ["System Administrator", "Validation Engineer"]
+}
+
+🎯 GENERATION REQUIREMENTS:
+✅ GAMP Category: 5 
+✅ Document: LIMS Custom Application
+✅ REQUIRED TESTS: 25 (Generate ALL of them!)
+✅ Test Categories Required: installation, functional, performance, security, data_integrity, integration
+
+🚨 STEP-BY-STEP GENERATION INSTRUCTIONS:
+1. Create suite_id: "OQ-SUITE-0005"
+2. Set gamp_category: 5
+3. Set document_name: "LIMS Custom Application"
+4. Generate Test 1 with ID "OQ-001"
+5. Generate Test 2 with ID "OQ-002" 
+6. Generate Test 3 with ID "OQ-003"
+7. Continue until Test 25 with ID "OQ-025"
+8. Set total_test_count: 25
+9. Fill in all required metadata fields
+
+🔍 VALIDATION CHECKLIST (Verify before responding):
+□ Generated exactly 25 tests?
+□ Each test has unique ID (OQ-001, OQ-002, etc.)?
+□ Each test has all required fields?
+□ JSON structure matches OQTestSuite schema?
+□ All test categories represented?
+
+🚨 CRITICAL REMINDER: Generate exactly 25 complete tests - no more, no less!
+
+Return your response as a complete JSON object matching the OQTestSuite schema.
+===========================================================================
+
+KEY OPTIMIZATION FEATURES:
+1. ✅ Test count mentioned 20+ times throughout prompt
+2. ✅ Explicit counting instructions ("Count them as you generate")  
+3. ✅ Step-by-step numbered sequence for all 25 tests
+4. ✅ Concrete example showing exact JSON structure required
+5. ✅ Validation checklist to verify completeness before responding
+6. ✅ Visual emphasis using emojis and caps for critical requirements
+7. ✅ Simple, direct language instead of complex pharmaceutical jargon
+8. ✅ Repetitive reinforcement of the "25 tests" requirement
+9. ✅ Clear success criteria and completion markers
+10. ✅ Template-based approach with concrete examples
+
+EXPECTED RESULT: OSS model should now generate all 25 complete tests instead of stopping after 1-2 tests.

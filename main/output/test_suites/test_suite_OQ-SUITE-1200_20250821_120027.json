@@ -1,0 +1,799 @@
+{
+  "suite_id": "OQ-SUITE-1200",
+  "gamp_category": 3,
+  "document_name": "URS-021.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify Document Assignment via Vendor UI",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Ensure the system correctly assigns documents to users and groups using the vendor-provided UI.",
+      "prerequisites": [
+        "Access to the vendor UI",
+        "Test user accounts and groups configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the vendor UI with admin credentials.",
+          "expected_result": "Admin dashboard is displayed successfully.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the document assignment section.",
+          "expected_result": "Document assignment interface is accessible.",
+          "data_to_capture": [
+            "UI accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Assign a test document to a user and a group.",
+          "expected_result": "Document is successfully assigned to the user and group.",
+          "data_to_capture": [
+            "Assignment status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Document assignment is confirmed in the system logs.",
+        "User and group receive notification of assignment."
+      ],
+      "regulatory_basis": [
+        "URS-021-001"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure assigned documents are accurately recorded."
+      ],
+      "urs_requirements": [
+        "URS-021-001"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validate Automated Reminder Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the system sends automated reminders for document acknowledgment as per the vendor scheduler.",
+      "prerequisites": [
+        "Test document assigned to a user",
+        "Vendor scheduler configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up a test document with a due date for acknowledgment.",
+          "expected_result": "Document is configured with a due date.",
+          "data_to_capture": [
+            "Document configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled reminder time.",
+          "expected_result": "Reminder is sent to the user at the scheduled time.",
+          "data_to_capture": [
+            "Reminder delivery status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Check the user's inbox for the reminder.",
+          "expected_result": "Reminder email is received by the user.",
+          "data_to_capture": [
+            "Email receipt confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reminder is sent at the correct time.",
+        "User receives the reminder email."
+      ],
+      "regulatory_basis": [
+        "URS-021-002"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure reminders are logged in the system."
+      ],
+      "urs_requirements": [
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Document Assignment and Reminder Functionality Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that documents can be assigned to users/groups and automated reminders are sent as configured.",
+      "prerequisites": [
+        "System is installed and operational",
+        "Test users and groups are configured",
+        "Sample documents are uploaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as an administrator and assign a test document to a user group using the vendor UI.",
+          "expected_result": "Document is successfully assigned to the specified group.",
+          "data_to_capture": [
+            "Assignment confirmation message",
+            "Timestamp of assignment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure the scheduler to send reminders for unacknowledged documents after 24 hours.",
+          "expected_result": "Reminder configuration is saved successfully.",
+          "data_to_capture": [
+            "Scheduler configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Wait 24 hours and verify that reminder notifications are sent to the assigned users.",
+          "expected_result": "Reminders are sent to all users who have not acknowledged the document.",
+          "data_to_capture": [
+            "Notification logs",
+            "Timestamp of reminders"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Documents are correctly assigned to specified users/groups.",
+        "Automated reminders are sent according to the configured schedule."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records",
+        "EU Annex 11 - Computerized Systems"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Assignment records must be tamper-evident",
+        "Reminder logs must include timestamps and recipient details"
+      ],
+      "urs_requirements": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Administrator",
+        "Quality Assurance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Acknowledgment Reporting and Audit Trail Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Validate that acknowledgment reports are accurate and audit trails capture all required events.",
+      "prerequisites": [
+        "Documents have been assigned to test users",
+        "Some users have acknowledged documents"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate a standard acknowledgment report for a test document.",
+          "expected_result": "Report displays all users who have/have not acknowledged the document.",
+          "data_to_capture": [
+            "Report generation time",
+            "Report contents"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Export the audit trail for document assignments and acknowledgments.",
+          "expected_result": "Audit log contains complete records of all assignment and acknowledgment events.",
+          "data_to_capture": [
+            "Audit log contents",
+            "Timestamp of events"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify report generation time with 50,000 test records.",
+          "expected_result": "Report completes generation in under 10 seconds.",
+          "data_to_capture": [
+            "Report generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reports accurately reflect acknowledgment statuses.",
+        "Audit trails contain complete, unaltered records of all relevant events.",
+        "Performance meets the 10-second requirement for large datasets."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Audit Trails",
+        "FDA Data Integrity Guidance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Reports must reflect current system state",
+        "Audit trails must be immutable"
+      ],
+      "urs_requirements": [
+        "URS-021-003",
+        "URS-021-007",
+        "URS-021-009"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Quality Assurance",
+        "Compliance Specialist"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify document assignment and acknowledgment tracking",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Ensure the system correctly assigns documents to users/groups and tracks acknowledgments as per URS-021-001 and URS-021-005.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Test users and groups are created",
+        "Sample documents are uploaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as an administrator and assign a test document to a user group via the vendor UI.",
+          "expected_result": "Document is successfully assigned to the specified group.",
+          "data_to_capture": [
+            "Assignment confirmation message",
+            "Timestamp of assignment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Log in as a test user from the assigned group and acknowledge the document.",
+          "expected_result": "Document acknowledgment is recorded with electronic signature.",
+          "data_to_capture": [
+            "Acknowledgment timestamp",
+            "User signature details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate an acknowledgment report for the assigned document.",
+          "expected_result": "Report displays the test user's acknowledgment status and details.",
+          "data_to_capture": [
+            "Report generation time",
+            "Acknowledgment status in report"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Document assignment is successful",
+        "Acknowledgment is recorded with signature",
+        "Report reflects accurate acknowledgment data"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Acknowledgment records must be tamper-proof",
+        "Audit trail must capture all assignment and acknowledgment events"
+      ],
+      "urs_requirements": [
+        "URS-021-001",
+        "URS-021-005",
+        "URS-021-007"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate AD group synchronization for document assignments",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify the system correctly synchronizes user groups from Active Directory for document assignments as per URS-021-010.",
+      "prerequisites": [
+        "AD connector is configured",
+        "Test AD groups exist",
+        "System is connected to AD"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a new test group in Active Directory.",
+          "expected_result": "Group is successfully created in AD.",
+          "data_to_capture": [
+            "AD group creation timestamp",
+            "Group membership details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger a manual synchronization of AD groups in the document control system.",
+          "expected_result": "New AD group appears in the system's group list.",
+          "data_to_capture": [
+            "Sync completion timestamp",
+            "List of synchronized groups"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Assign a document to the synchronized AD group via vendor UI.",
+          "expected_result": "Document is successfully assigned to the AD-synchronized group.",
+          "data_to_capture": [
+            "Assignment confirmation",
+            "Group membership in assignment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "AD group is synchronized successfully",
+        "Document can be assigned to synchronized group",
+        "Group membership matches AD"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Group synchronization must maintain data accuracy",
+        "Assignment records must reflect correct group membership"
+      ],
+      "urs_requirements": [
+        "URS-021-010"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Active Directory administration",
+        "System integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Document Assignment and Reminder Functionality Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that documents can be assigned to users and groups and that automated reminders are sent as configured.",
+      "prerequisites": [
+        "Access to vendor UI",
+        "Configured user groups",
+        "Test documents"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Assign a test document to a user group using the vendor UI.",
+          "expected_result": "Document is successfully assigned to the user group.",
+          "data_to_capture": [
+            "Assignment confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure and trigger an automated reminder using the vendor scheduler.",
+          "expected_result": "Reminder is sent to the assigned user group.",
+          "data_to_capture": [
+            "Reminder confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Document assignment is successful",
+        "Automated reminder is sent"
+      ],
+      "regulatory_basis": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure assignment records are accurate"
+      ],
+      "urs_requirements": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Vendor UI navigation",
+        "Scheduler configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Acknowledgment Report Generation Test",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "Verify that standard acknowledgment reports can be generated within the specified time frame.",
+      "prerequisites": [
+        "Access to vendor UI",
+        "Test acknowledgment data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate a standard acknowledgment report for 50,000 records.",
+          "expected_result": "Report is generated in less than 10 seconds.",
+          "data_to_capture": [
+            "Report generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Report generation time is less than 10 seconds"
+      ],
+      "regulatory_basis": [
+        "URS-021-009"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure report data is accurate"
+      ],
+      "urs_requirements": [
+        "URS-021-009"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Report generation",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Document Assignment and Reminder Functionality Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that documents can be assigned to users/groups and automated reminders are sent as configured.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Test users and groups are created",
+        "Sample documents are uploaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as an administrator and assign a test document to a user group using the vendor UI.",
+          "expected_result": "Document is successfully assigned to the specified group.",
+          "data_to_capture": [
+            "Assignment confirmation message",
+            "Group members listed in assignment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure and enable automated reminders for the assignment using the vendor scheduler.",
+          "expected_result": "Reminder settings are saved and scheduler is activated.",
+          "data_to_capture": [
+            "Reminder configuration details",
+            "Scheduler status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify that test users in the group receive the reminder email at the scheduled time.",
+          "expected_result": "Reminder emails are delivered to all group members as expected.",
+          "data_to_capture": [
+            "Email delivery timestamps",
+            "Recipient list"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Documents can be successfully assigned to users and groups",
+        "Automated reminders are sent according to configured schedule",
+        "All expected recipients receive reminders"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Assignment records must be complete and accurate",
+        "Reminder logs must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Email server configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Large-Scale Document Assignment Performance Test",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "Verify system can handle 10,000 document assignments per day while maintaining acceptable performance.",
+      "prerequisites": [
+        "Performance test environment is available",
+        "Test user accounts are created in bulk"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Prepare a test script to simulate 10,000 document assignments to various user groups.",
+          "expected_result": "Test script is ready for execution with proper monitoring in place.",
+          "data_to_capture": [
+            "Script validation results",
+            "Monitoring tool configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the test script to perform mass assignments over a 24-hour period.",
+          "expected_result": "All assignments are processed without system failures.",
+          "data_to_capture": [
+            "Assignment success rate",
+            "System resource utilization"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate acknowledgment reports during peak load periods.",
+          "expected_result": "Reports are generated in less than 10 seconds for 50k records.",
+          "data_to_capture": [
+            "Report generation time",
+            "Database query performance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System processes 10,000 assignments within 24 hours",
+        "Report generation time remains under 10 seconds during peak loads",
+        "System remains stable and responsive throughout test"
+      ],
+      "regulatory_basis": [
+        "FDA Computerized Systems Guidance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All assignments must be accurately recorded",
+        "No data loss during high-volume operations"
+      ],
+      "urs_requirements": [
+        "URS-021-008",
+        "URS-021-009"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "Database monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 330,
+  "generation_timestamp": "2025-08-21T12:00:27.777000+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T12:00:27.940467+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T11:56:00.249533+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

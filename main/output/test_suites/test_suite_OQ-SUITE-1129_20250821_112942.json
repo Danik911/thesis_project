@@ -1,0 +1,688 @@
+{
+  "suite_id": "OQ-SUITE-1129",
+  "gamp_category": 3,
+  "document_name": "URS-020.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify X-bar/R Chart Creation from CSV Input",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the SPC dashboard correctly creates X-bar/R charts from CSV inputs as specified in URS-020-001.",
+      "prerequisites": [
+        "CSV file with QC data",
+        "SPC dashboard installed and configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Import a CSV file containing QC data into the SPC dashboard.",
+          "expected_result": "The CSV file is successfully imported and the data is displayed in the dashboard.",
+          "data_to_capture": [
+            "CSV file name",
+            "Import status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select the option to create an X-bar/R chart from the imported data.",
+          "expected_result": "An X-bar/R chart is generated and displayed correctly.",
+          "data_to_capture": [
+            "Chart type",
+            "Chart display status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "X-bar/R chart is correctly generated from CSV input"
+      ],
+      "regulatory_basis": [
+        "URS-020-001"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure data integrity during CSV import"
+      ],
+      "urs_requirements": [
+        "URS-020-001"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SPC dashboard operation",
+        "QC data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Verify Scheduled Report Email Functionality",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To verify that the SPC dashboard correctly schedules and sends report emails as specified in URS-020-006.",
+      "prerequisites": [
+        "SPC dashboard installed and configured",
+        "Email server configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a scheduled report email in the SPC dashboard.",
+          "expected_result": "The scheduled report email is successfully configured.",
+          "data_to_capture": [
+            "Report configuration",
+            "Schedule details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time and check the email inbox.",
+          "expected_result": "The report email is received at the scheduled time.",
+          "data_to_capture": [
+            "Email receipt status",
+            "Report content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Report email is received at the scheduled time"
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure report content integrity"
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SPC dashboard operation",
+        "Email server configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify X-bar/R Chart Creation from CSV Input",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the system correctly creates X-bar/R charts from CSV inputs as specified in URS-020-001.",
+      "prerequisites": [
+        "CSV file with QC data",
+        "Access to the SPC dashboard"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a CSV file containing QC data to the SPC dashboard.",
+          "expected_result": "The system should successfully upload the CSV file and display the data.",
+          "data_to_capture": [
+            "Upload status",
+            "Data display"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select the option to create an X-bar/R chart from the uploaded data.",
+          "expected_result": "The system should generate an X-bar/R chart based on the uploaded data.",
+          "data_to_capture": [
+            "Chart generation status",
+            "Chart display"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "The X-bar/R chart is correctly generated and matches the data in the CSV file."
+      ],
+      "regulatory_basis": [
+        "URS-020-001"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure data integrity during CSV upload and chart generation."
+      ],
+      "urs_requirements": [
+        "URS-020-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SPC dashboard usage",
+        "QC data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Verify Scheduled Report Email Functionality",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To verify that the system correctly schedules and sends report emails using the vendor scheduler as specified in URS-020-006.",
+      "prerequisites": [
+        "Configured email settings",
+        "Access to the SPC dashboard"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a scheduled report email using the vendor scheduler in the SPC dashboard.",
+          "expected_result": "The system should successfully save the scheduled report email configuration.",
+          "data_to_capture": [
+            "Configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time and check the email inbox for the report.",
+          "expected_result": "The system should send the report email at the scheduled time.",
+          "data_to_capture": [
+            "Email receipt status",
+            "Report content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "The scheduled report email is sent at the correct time and contains the expected report."
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during report generation and email transmission."
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SPC dashboard usage",
+        "Email configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify CSV Data Import and Chart Creation",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the system correctly imports CSV data and creates X-bar/R and p-charts as specified.",
+      "prerequisites": [
+        "CSV file with QC data",
+        "Access to the SPC dashboard"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a CSV file containing QC data to the SPC dashboard.",
+          "expected_result": "The system should successfully import the CSV data without errors.",
+          "data_to_capture": [
+            "File upload status",
+            "Error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select the option to create an X-bar/R chart from the imported data.",
+          "expected_result": "The system should generate an X-bar/R chart based on the imported data.",
+          "data_to_capture": [
+            "Chart generation status",
+            "Chart accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Select the option to create a p-chart from the imported data.",
+          "expected_result": "The system should generate a p-chart based on the imported data.",
+          "data_to_capture": [
+            "Chart generation status",
+            "Chart accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "CSV data is imported successfully",
+        "X-bar/R and p-charts are generated accurately"
+      ],
+      "regulatory_basis": [
+        "URS-020-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during CSV import"
+      ],
+      "urs_requirements": [
+        "URS-020-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SPC dashboard usage",
+        "QC data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate Scheduled Report Email Functionality",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To verify that the system can schedule and send report emails as configured.",
+      "prerequisites": [
+        "Configured email scheduler",
+        "Access to the SPC dashboard"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the email scheduler to send a report at a specific time.",
+          "expected_result": "The scheduler should accept the configuration without errors.",
+          "data_to_capture": [
+            "Scheduler configuration status",
+            "Error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time and check the configured email inbox.",
+          "expected_result": "The report email should be received at the scheduled time.",
+          "data_to_capture": [
+            "Email receipt status",
+            "Report content accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Email scheduler is configured successfully",
+        "Report email is received at the scheduled time"
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure report data integrity during email transmission"
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Email scheduler configuration",
+        "Report generation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Verify Role-Based View Access Functionality",
+      "test_category": "security",
+      "gamp_category": 3,
+      "objective": "To ensure that the SPC dashboard correctly enforces role-based view access as per user roles.",
+      "prerequisites": [
+        "User accounts with different roles configured",
+        "SPC dashboard installed and operational"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the SPC dashboard with a user account having limited access.",
+          "expected_result": "User should only see views and data permitted by their role.",
+          "data_to_capture": [
+            "Screenshots of accessible views"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to access restricted views or data.",
+          "expected_result": "Access should be denied or restricted views should not be visible.",
+          "data_to_capture": [
+            "Error messages or access denial notifications"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Role-based access controls are correctly enforced as per configured roles."
+      ],
+      "regulatory_basis": [
+        "URS-020-004"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure no unauthorized access to data."
+      ],
+      "urs_requirements": [
+        "URS-020-004"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Security testing",
+        "User role management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Test Scheduled Report Email Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the SPC dashboard can send scheduled reports via email as configured.",
+      "prerequisites": [
+        "Email server configured",
+        "Scheduled report configured in SPC dashboard"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a scheduled report in the SPC dashboard to send at a specific time.",
+          "expected_result": "Report configuration should be saved without errors.",
+          "data_to_capture": [
+            "Screenshot of scheduled report configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time and check the configured email inbox.",
+          "expected_result": "Email with the report should be received at the scheduled time.",
+          "data_to_capture": [
+            "Screenshot of received email",
+            "Timestamp of email receipt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Scheduled reports are sent via email at the correct time and contain the correct data."
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure report data is accurate and complete."
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Email server configuration",
+        "Scheduled task management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Scheduled Report Email Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the system can send scheduled report emails using the vendor scheduler as per URS-020-006.",
+      "prerequisites": [
+        "Configured email settings in the system",
+        "Scheduled report set up in the vendor scheduler"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up a scheduled report in the vendor scheduler.",
+          "expected_result": "Report is scheduled successfully without errors.",
+          "data_to_capture": [
+            "Scheduler configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time and check the email inbox.",
+          "expected_result": "Email with the report is received at the scheduled time.",
+          "data_to_capture": [
+            "Email receipt time",
+            "Report attachment details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Email with the report is received at the scheduled time."
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure the report data in the email matches the system data."
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Email setup"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Test Role-Based View Access",
+      "test_category": "security",
+      "gamp_category": 3,
+      "objective": "To verify that the dashboard allows role-based view access as per URS-020-004.",
+      "prerequisites": [
+        "User roles configured in the system",
+        "Test users with different roles"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a user with view-only access.",
+          "expected_result": "User can view but not modify any data or configurations.",
+          "data_to_capture": [
+            "User role",
+            "Access permissions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Log in as a user with full access.",
+          "expected_result": "User can view and modify data and configurations.",
+          "data_to_capture": [
+            "User role",
+            "Access permissions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Users can only access data and features based on their roles."
+      ],
+      "regulatory_basis": [
+        "URS-020-004"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure no unauthorized access to data or configurations."
+      ],
+      "urs_requirements": [
+        "URS-020-004"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "User role management",
+        "Security testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 300,
+  "generation_timestamp": "2025-08-21T11:29:42.544041+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T11:29:42.714985+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T11:25:43.043919+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

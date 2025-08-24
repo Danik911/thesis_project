@@ -1,0 +1,41 @@
+{
+  "fold_id": "fold_4",
+  "current_batch": 3,
+  "total_batches": 3,
+  "processed_documents": [],
+  "failed_documents": [
+    "URS-016",
+    "URS-012",
+    "URS-008"
+  ],
+  "batch_results": [
+    {
+      "batch_num": 1,
+      "successful_docs": [],
+      "failed_docs": [
+        "URS-008"
+      ],
+      "batch_time_seconds": 0.0,
+      "docs_per_second": 0
+    },
+    {
+      "batch_num": 2,
+      "successful_docs": [],
+      "failed_docs": [
+        "URS-012"
+      ],
+      "batch_time_seconds": 0.0020084381103515625,
+      "docs_per_second": 497.8993352326686
+    },
+    {
+      "batch_num": 3,
+      "successful_docs": [],
+      "failed_docs": [
+        "URS-016"
+      ],
+      "batch_time_seconds": 0.0010104179382324219,
+      "docs_per_second": 989.6894761680038
+    }
+  ],
+  "timestamp": "2025-08-19T07:34:42.736206+00:00"
+}

@@ -1,0 +1,153 @@
+{
+  "timestamp": "2025-08-20T10:47:56.411748",
+  "basic_statistics": {
+    "total_api_calls": 686,
+    "total_cost": 0.77748,
+    "avg_cost_per_call": 0.0011333527696793001,
+    "std_cost_per_call": 0.000572399549890586,
+    "total_tokens": "1078644",
+    "total_prompt_tokens": "633509",
+    "total_completion_tokens": "445135",
+    "avg_tokens_per_call": 1572.3673469387754,
+    "avg_generation_time_seconds": 17.351873177842563,
+    "median_generation_time_seconds": 15.185500000000001,
+    "avg_time_to_first_token_ms": 698.1997084548105
+  },
+  "provider_analysis": {
+    "DeepInfra": {
+      "calls": 375,
+      "percentage": 54.66472303206997,
+      "avg_cost": 0.0008108693333333334,
+      "total_cost": 0.304076,
+      "avg_generation_time": 10.943837333333335,
+      "median_generation_time": 8.725,
+      "avg_tokens": 1386.032,
+      "failure_rate": 0.0
+    },
+    "Nebius": {
+      "calls": 180,
+      "percentage": 26.239067055393583,
+      "avg_cost": 0.0013425555555555554,
+      "total_cost": 0.24165999999999999,
+      "avg_generation_time": 19.905033333333332,
+      "median_generation_time": 20.705,
+      "avg_tokens": 1505.6833333333334,
+      "failure_rate": 0.0
+    },
+    "Novita": {
+      "calls": 131,
+      "percentage": 19.096209912536445,
+      "avg_cost": 0.0017690381679389313,
+      "total_cost": 0.231744,
+      "avg_generation_time": 32.18732824427481,
+      "median_generation_time": 32.125,
+      "avg_tokens": 2197.3969465648856,
+      "failure_rate": 0.0
+    }
+  },
+  "token_economics": {
+    "prompt_completion_ratio": 0.7026498439643319,
+    "cost_per_1k_tokens": 0.0007207938856564353,
+    "tokens_distribution": {
+      "prompt": {
+        "mean": 923.4825072886298,
+        "median": 959.0,
+        "std": 507.74435962406784,
+        "min": "241",
+        "max": "2237",
+        "q25": 359.0,
+        "q75": 1144.5
+      },
+      "completion": {
+        "mean": 648.8848396501458,
+        "median": 672.5,
+        "std": 285.534938873115,
+        "min": "90",
+        "max": "1320",
+        "q25": 483.25,
+        "q75": 875.5
+      }
+    },
+    "generation_efficiency": {
+      "tokens_per_second": 37.39566518263503,
+      "avg_tokens_per_second": 50.612572382225196
+    }
+  },
+  "temporal_analysis": {
+    "execution_window": {
+      "start": "2025-08-19 05:23:47.735000",
+      "end": "2025-08-19 21:16:31.972000",
+      "duration_minutes": 952.7372833333334
+    },
+    "calls_per_minute": 0.7200306023502071,
+    "avg_time_between_calls_seconds": -83.4514408759124,
+    "peak_usage_hour": "19",
+    "calls_by_hour": {
+      "5": 52,
+      "6": 9,
+      "7": 41,
+      "8": 12,
+      "10": 29,
+      "11": 12,
+      "13": 41,
+      "15": 1,
+      "16": 16,
+      "17": 4,
+      "18": 31,
+      "19": 208,
+      "20": 191,
+      "21": 39
+    }
+  },
+  "cost_variance": {
+    "cost_variance": 3.276412447149454e-07,
+    "cost_std": 0.000572399549890586,
+    "cost_cv": 0.5050497649134924,
+    "cost_percentiles": {
+      "p10": 0.0003595,
+      "p25": 0.000626,
+      "p50": 0.0011064999999999998,
+      "p75": 0.001569,
+      "p90": 0.001949,
+      "p95": 0.00210675,
+      "p99": 0.0023036499999999995
+    },
+    "outliers": {
+      "count": 0,
+      "percentage": 0.0
+    },
+    "cost_correlations": {
+      "prompt_tokens": 0.7985919562541031,
+      "completion_tokens": 0.8823979626197851,
+      "generation_time": 0.7809382301617721
+    }
+  },
+  "performance_patterns": {
+    "latency_analysis": {
+      "p50": 15185.5,
+      "p75": 27648.75,
+      "p90": 33891.0,
+      "p95": 36647.75,
+      "p99": 44403.149999999994
+    },
+    "throughput": {
+      "calls_per_minute_max": "14",
+      "calls_per_minute_avg": 3.5
+    },
+    "efficiency_metrics": {
+      "fast_calls_percentage": 37.46355685131195,
+      "slow_calls_percentage": 18.367346938775512,
+      "very_slow_calls_percentage": 0.0
+    }
+  },
+  "thesis_metrics": {
+    "cost_per_document": 0.04573411764705882,
+    "api_calls_per_document": 40.35294117647059,
+    "tokens_per_document": 63449.64705882353,
+    "actual_vs_target_cost_ratio": 81.66806722689076,
+    "execution_efficiency": {
+      "total_time_minutes": 952.7372833333334,
+      "avg_time_per_document": 56.04336960784314
+    }
+  }
+}

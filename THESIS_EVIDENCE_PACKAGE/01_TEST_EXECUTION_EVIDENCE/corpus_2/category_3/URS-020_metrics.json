@@ -1,0 +1,95 @@
+{
+  "execution_metadata": {
+    "document_id": "URS-020",
+    "document_path": "../datasets/urs_corpus_v2/category_3/URS-020.md",
+    "execution_timestamp": "2025-08-21T12:25:38",
+    "completion_timestamp": "2025-08-21T12:29:53",
+    "corpus_version": "corpus_2",
+    "category": "category_3"
+  },
+  "performance_metrics": {
+    "total_duration_seconds": 239.61,
+    "total_duration_minutes": 3.99,
+    "expected_category": 3,
+    "detected_category": 3,
+    "categorization_accuracy": 1.0,
+    "confidence_score": 1.0,
+    "tests_estimated": 6,
+    "tests_generated": 10,
+    "test_generation_efficiency": 1.67,
+    "agents_executed": 3,
+    "agent_success_rate": 1.0
+  },
+  "api_usage": {
+    "primary_model": "deepseek/deepseek-chat",
+    "embedding_api_calls": 1,
+    "embedding_duration_seconds": 1.57,
+    "validation_mode": true,
+    "fallback_logic_used": false
+  },
+  "compliance_metrics": {
+    "audit_entries_generated": 578,
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "observability": {
+    "phoenix_traces_captured": true,
+    "trace_file": "trace_20250821_122543.jsonl",
+    "workflow_session_id": "unified_workflow_2025-08-21T11:25:43.043919+00:00",
+    "event_logging_active": true,
+    "events_captured": 1,
+    "events_processed": 1
+  },
+  "test_suite_analysis": {
+    "suite_id": "OQ-SUITE-1129",
+    "total_test_count": 10,
+    "estimated_execution_time_minutes": 300,
+    "coverage_percentage": 100.0,
+    "requirements_mapped": [
+      "URS-020-001",
+      "URS-020-002", 
+      "URS-020-003",
+      "URS-020-004",
+      "URS-020-005",
+      "URS-020-006",
+      "URS-020-007",
+      "URS-020-008",
+      "URS-020-009",
+      "URS-020-010",
+      "URS-020-011",
+      "URS-020-012",
+      "URS-020-013"
+    ],
+    "risk_levels": {
+      "low": 7,
+      "medium": 3,
+      "high": 0
+    },
+    "test_categories": {
+      "functional": 6,
+      "security": 2,
+      "performance": 2,
+      "integration": 0
+    }
+  },
+  "quality_indicators": {
+    "no_fallback_logic": true,
+    "real_api_used": true,
+    "deepseek_model_confirmed": true,
+    "phoenix_observability": true,
+    "complete_audit_trail": true,
+    "pharmaceutical_compliance": true
+  },
+  "success_criteria_met": {
+    "test_suite_generated": true,
+    "category_3_correctly_identified": true,
+    "10_to_15_tests_generated": true,
+    "deepseek_model_used": true,
+    "phoenix_traces_captured": true,
+    "no_errors_encountered": true,
+    "duration_under_15_minutes": true
+  }
+}

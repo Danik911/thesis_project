@@ -1,0 +1,29 @@
+{
+  "evidence_id": "ad1a6f51-3464-4a23-878c-2493dbcf8315",
+  "evidence_type": "process_record",
+  "title": "Process Record from perf_test_medium",
+  "description": "Evidence collected from perf_test_medium using automated_alcoa_original_assessment",
+  "source_system": "perf_test_medium",
+  "source_document": null,
+  "source_section": null,
+  "collected_by": "alcoa_scorer",
+  "collection_timestamp": "2025-08-13T13:29:25.929443+00:00",
+  "collection_method": "automated_alcoa_original_assessment",
+  "evidence_content": {
+    "system_name": "perf_test_medium",
+    "process_name": "test_generation",
+    "execution_records": [],
+    "data_lineage": {},
+    "quality_controls": {},
+    "approval_records": []
+  },
+  "file_attachments": [],
+  "is_verified": false,
+  "verified_by": null,
+  "verification_timestamp": null,
+  "verification_notes": null,
+  "requirement_ids": [],
+  "test_case_ids": [],
+  "completeness_score": 1.0,
+  "reliability_score": 0.7
+}

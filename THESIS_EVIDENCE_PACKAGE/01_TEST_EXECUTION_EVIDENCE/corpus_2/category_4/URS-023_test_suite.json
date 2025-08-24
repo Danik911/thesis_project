@@ -1,0 +1,1591 @@
+{
+  "suite_id": "OQ-SUITE-1208",
+  "gamp_category": 4,
+  "document_name": "URS-023.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Configured Stability Study Manager - Protocol Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the stability study management module can correctly configure product, lot, storage condition, and pull schedules as per URS-023-001.",
+      "prerequisites": [
+        "System installed and configured",
+        "Access to stability study management module"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the stability study management module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the protocol configuration section.",
+          "expected_result": "Protocol configuration section is accessible.",
+          "data_to_capture": [
+            "Section accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a new stability study protocol with product, lot, storage condition, and pull schedules.",
+          "expected_result": "Protocol is successfully configured and saved.",
+          "data_to_capture": [
+            "Protocol configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Protocol configuration is saved without errors",
+        "All configured fields are correctly populated"
+      ],
+      "regulatory_basis": [
+        "URS-023-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configured data is accurately stored"
+      ],
+      "urs_requirements": [
+        "URS-023-001"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability study management",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Configured Stability Study Manager - Pull List Generation",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that the stability study management module can generate pull lists for 500 samples in less than 5 seconds as per URS-023-010.",
+      "prerequisites": [
+        "System installed and configured",
+        "Access to stability study management module",
+        "Pre-configured stability study protocol"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the stability study management module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the pull list generation section.",
+          "expected_result": "Pull list generation section is accessible.",
+          "data_to_capture": [
+            "Section accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a pull list for 500 samples.",
+          "expected_result": "Pull list is generated in less than 5 seconds.",
+          "data_to_capture": [
+            "Time taken to generate pull list"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pull list is generated in less than 5 seconds",
+        "Pull list contains all 500 samples"
+      ],
+      "regulatory_basis": [
+        "URS-023-010"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all pull list data is accurately generated"
+      ],
+      "urs_requirements": [
+        "URS-023-010"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability study management",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify Stability Study Manager Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the Stability Study Manager is correctly configured to define protocols, pull schedules, and reporting templates.",
+      "prerequisites": [
+        "URS-023.md",
+        "System access credentials",
+        "Configured templates"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager system.",
+          "expected_result": "Successful login with appropriate user permissions.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the protocol configuration section.",
+          "expected_result": "Protocol configuration section is accessible.",
+          "data_to_capture": [
+            "Section accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a new protocol with product, lot, storage condition, and pull schedules.",
+          "expected_result": "Protocol is successfully configured and saved.",
+          "data_to_capture": [
+            "Protocol configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate a pull list using the configured template.",
+          "expected_result": "Pull list is generated correctly and matches the configured schedule.",
+          "data_to_capture": [
+            "Pull list details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Protocol configuration is saved successfully.",
+        "Pull list matches the configured schedule."
+      ],
+      "regulatory_basis": [
+        "URS-023-001",
+        "URS-023-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configurations are logged in the audit trail."
+      ],
+      "urs_requirements": [
+        "URS-023-001",
+        "URS-023-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Stability study management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Stability Study Manager Integration with LIMS and WMS",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate the integration of the Stability Study Manager with LIMS and WMS via standard APIs.",
+      "prerequisites": [
+        "URS-023.md",
+        "System access credentials",
+        "Configured APIs"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager system.",
+          "expected_result": "Successful login with appropriate user permissions.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the integration settings section.",
+          "expected_result": "Integration settings section is accessible.",
+          "data_to_capture": [
+            "Section accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure the integration with LIMS and WMS using standard APIs.",
+          "expected_result": "Integration settings are successfully configured and saved.",
+          "data_to_capture": [
+            "Integration configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Test the data exchange between Stability Study Manager and LIMS/WMS.",
+          "expected_result": "Data is successfully exchanged between systems without errors.",
+          "data_to_capture": [
+            "Data exchange status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Integration settings are saved successfully.",
+        "Data exchange between systems is successful."
+      ],
+      "regulatory_basis": [
+        "URS-023-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all data exchanges are logged in the audit trail."
+      ],
+      "urs_requirements": [
+        "URS-023-011"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "API configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Stability Study Pull List Generation Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that the system can generate a pull list for 500 samples in less than 5 seconds as per URS-023-010.",
+      "prerequisites": [
+        "System is configured with at least 500 stability samples",
+        "Pull list template is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the pull list generation module in the Stability Study Manager.",
+          "expected_result": "Pull list generation interface is accessible.",
+          "data_to_capture": [
+            "Time taken to load the interface"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select 500 samples and initiate the pull list generation.",
+          "expected_result": "Pull list is generated successfully.",
+          "data_to_capture": [
+            "Time taken to generate the pull list"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pull list is generated in less than 5 seconds.",
+        "All selected samples are included in the pull list."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "ALCOA+ principles must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-023-010"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Stability study management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Stability Study Method Version Control Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Ensure that the system enforces method-version control for stability tests as per URS-023-003.",
+      "prerequisites": [
+        "System is configured with at least one stability study",
+        "Multiple versions of a test method are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the stability study protocol and attempt to assign an outdated test method version.",
+          "expected_result": "System prevents assignment of outdated method versions.",
+          "data_to_capture": [
+            "Error message displayed"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Assign the latest approved method version to the stability study.",
+          "expected_result": "Latest method version is successfully assigned.",
+          "data_to_capture": [
+            "Method version assigned",
+            "Date of assignment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System enforces use of current approved method versions.",
+        "Audit trail records method version assignments."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ICH Q7"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ principles must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-023-003",
+        "URS-023-007"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Quality control",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Integration with LIMS and WMS via Standard APIs",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the system's ability to integrate with LIMS and WMS using standard APIs for seamless data exchange.",
+      "prerequisites": [
+        "LIMS and WMS systems available",
+        "API credentials configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure API endpoints for LIMS and WMS in the stability study manager.",
+          "expected_result": "API endpoints are successfully configured and validated.",
+          "data_to_capture": [
+            "API endpoint configurations",
+            "Validation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a test data packet from the stability study manager to LIMS.",
+          "expected_result": "Data is successfully received and processed by LIMS.",
+          "data_to_capture": [
+            "Data packet sent",
+            "LIMS response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Retrieve a sample record from WMS via the configured API.",
+          "expected_result": "Sample record is successfully retrieved and displayed in the stability study manager.",
+          "data_to_capture": [
+            "Sample record retrieved",
+            "WMS response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data exchange between systems is seamless and accurate.",
+        "API configurations are validated and functional."
+      ],
+      "regulatory_basis": [
+        "URS-023-011"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission.",
+        "Maintain audit trail for API transactions."
+      ],
+      "urs_requirements": [
+        "URS-023-011"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API integration",
+        "LIMS and WMS systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Performance Test for Pull List Generation",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate the system's ability to generate a pull list for 500 samples in less than 5 seconds.",
+      "prerequisites": [
+        "500 sample records available in the system",
+        "Pull list template configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate the pull list generation process for 500 samples.",
+          "expected_result": "Pull list is generated successfully within 5 seconds.",
+          "data_to_capture": [
+            "Time taken for generation",
+            "Pull list output"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the accuracy of the generated pull list.",
+          "expected_result": "Pull list contains all 500 samples with correct details.",
+          "data_to_capture": [
+            "Sample details in pull list",
+            "Verification logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pull list is generated in less than 5 seconds.",
+        "Pull list is accurate and complete."
+      ],
+      "regulatory_basis": [
+        "URS-023-010"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data accuracy in the pull list.",
+        "Maintain audit trail for pull list generation."
+      ],
+      "urs_requirements": [
+        "URS-023-010"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Stability study management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Stability Study Manager Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the Stability Study Manager is correctly configured to manage product, lot, storage condition, and pull schedules as per URS-023-001.",
+      "prerequisites": [
+        "System access credentials",
+        "Configured stability study templates"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager.",
+          "expected_result": "User successfully logs in and accesses the main dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the configuration section and select a product.",
+          "expected_result": "Product details are displayed correctly.",
+          "data_to_capture": [
+            "Product details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a new stability study with a specific lot and storage condition.",
+          "expected_result": "Stability study is successfully configured and saved.",
+          "data_to_capture": [
+            "Configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Set up a pull schedule for the configured study.",
+          "expected_result": "Pull schedule is correctly set up and displayed.",
+          "data_to_capture": [
+            "Pull schedule details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Stability study configuration is verified and matches the URS requirements."
+      ],
+      "regulatory_basis": [
+        "URS-023-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configurations are accurately recorded and traceable."
+      ],
+      "urs_requirements": [
+        "URS-023-001"
+      ],
+      "related_tests": [
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Stability study management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Validate Pull List Generation",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To validate that the Stability Study Manager can generate pull lists for 500 samples in less than 5 seconds as per URS-023-010.",
+      "prerequisites": [
+        "Configured stability study with 500 samples"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager.",
+          "expected_result": "User successfully logs in and accesses the main dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the pull list generation section.",
+          "expected_result": "Pull list generation interface is displayed.",
+          "data_to_capture": [
+            "Interface status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Select the configured stability study with 500 samples.",
+          "expected_result": "Study details are displayed correctly.",
+          "data_to_capture": [
+            "Study details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate the pull list.",
+          "expected_result": "Pull list is generated in less than 5 seconds.",
+          "data_to_capture": [
+            "Generation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pull list is generated within the specified time frame."
+      ],
+      "regulatory_basis": [
+        "URS-023-010"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure pull list data is accurate and complete."
+      ],
+      "urs_requirements": [
+        "URS-023-010"
+      ],
+      "related_tests": [
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Stability study management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Verify Stability Study Protocol Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the stability study management module correctly configures protocols, including product, lot, storage condition, and pull schedules.",
+      "prerequisites": [
+        "System access credentials",
+        "Pre-configured stability study templates"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the stability study management module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new stability study protocol using the configured templates.",
+          "expected_result": "Protocol is created with all specified parameters (product, lot, storage condition, pull schedules).",
+          "data_to_capture": [
+            "Protocol details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Save and submit the protocol for approval.",
+          "expected_result": "Protocol is saved and submitted successfully, triggering the approval workflow.",
+          "data_to_capture": [
+            "Submission status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Protocol is configured correctly and submitted for approval without errors."
+      ],
+      "regulatory_basis": [
+        "URS-023-001",
+        "URS-023-007"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all protocol data is accurately captured and stored."
+      ],
+      "urs_requirements": [
+        "URS-023-001",
+        "URS-023-007"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability study management",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Validate Pull List Generation and Chain-of-Custody Forms",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the system correctly generates pull lists and chain-of-custody forms based on configured templates.",
+      "prerequisites": [
+        "Pre-configured stability study protocol",
+        "Access to pull list generation module"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the stability study management module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select a configured stability study protocol and generate a pull list.",
+          "expected_result": "Pull list is generated correctly based on the protocol's pull schedule.",
+          "data_to_capture": [
+            "Pull list details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a chain-of-custody form from the pull list.",
+          "expected_result": "Chain-of-custody form is generated correctly and matches the pull list.",
+          "data_to_capture": [
+            "Form details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pull list and chain-of-custody forms are generated correctly and match the protocol's pull schedule."
+      ],
+      "regulatory_basis": [
+        "URS-023-002",
+        "URS-023-008"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all pull list and form data is accurately captured and stored."
+      ],
+      "urs_requirements": [
+        "URS-023-002",
+        "URS-023-008"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability study management",
+        "System reporting"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Verify Stability Study Manager Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the Stability Study Manager is correctly configured to define protocols, pull schedules, and reporting templates.",
+      "prerequisites": [
+        "Access to the Stability Study Manager module",
+        "Configured templates and sampling plans"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the protocol configuration section.",
+          "expected_result": "Protocol configuration section is accessible.",
+          "data_to_capture": [
+            "Accessibility status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a new protocol with product, lot, storage condition, and pull schedules.",
+          "expected_result": "Protocol is successfully configured and saved.",
+          "data_to_capture": [
+            "Protocol configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate a pull list using the configured template.",
+          "expected_result": "Pull list is generated and displayed correctly.",
+          "data_to_capture": [
+            "Pull list details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Protocol configuration is saved correctly",
+        "Pull list is generated accurately"
+      ],
+      "regulatory_basis": [
+        "URS-023-001",
+        "URS-023-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configurations are saved with ALCOA+ audit trail"
+      ],
+      "urs_requirements": [
+        "URS-023-001",
+        "URS-023-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability Study Management",
+        "System Configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Verify Integration with LIMS and WMS",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify that the Stability Study Manager integrates correctly with LIMS and WMS via standard APIs.",
+      "prerequisites": [
+        "Access to LIMS and WMS",
+        "Configured API endpoints"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the integration settings section.",
+          "expected_result": "Integration settings section is accessible.",
+          "data_to_capture": [
+            "Accessibility status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure API endpoints for LIMS and WMS integration.",
+          "expected_result": "API endpoints are successfully configured.",
+          "data_to_capture": [
+            "API endpoint details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Test data exchange between Stability Study Manager and LIMS.",
+          "expected_result": "Data is successfully exchanged between systems.",
+          "data_to_capture": [
+            "Data exchange status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Test data exchange between Stability Study Manager and WMS.",
+          "expected_result": "Data is successfully exchanged between systems.",
+          "data_to_capture": [
+            "Data exchange status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "API endpoints are configured correctly",
+        "Data exchange between systems is successful"
+      ],
+      "regulatory_basis": [
+        "URS-023-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during exchange"
+      ],
+      "urs_requirements": [
+        "URS-023-011"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API Integration",
+        "System Configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Verify Stability Study Protocol Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the stability study management module correctly configures product, lot, storage condition, and pull schedules as per URS-023-001.",
+      "prerequisites": [
+        "Access to configured stability study management module",
+        "Sample product and lot data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the stability study management module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure a new stability study protocol with product, lot, storage condition, and pull schedules.",
+          "expected_result": "Protocol is successfully configured and saved in the system.",
+          "data_to_capture": [
+            "Protocol configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the configured protocol details.",
+          "expected_result": "All configured details match the input data.",
+          "data_to_capture": [
+            "Protocol verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Protocol configuration matches input data",
+        "Protocol is saved without errors"
+      ],
+      "regulatory_basis": [
+        "URS-023-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configured data is accurately captured and stored"
+      ],
+      "urs_requirements": [
+        "URS-023-001"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability study management",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Validate Pull List Generation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the system generates pull lists and chain-of-custody forms from configured templates as per URS-023-002.",
+      "prerequisites": [
+        "Configured stability study protocol",
+        "Sample pull schedule"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the stability study management module.",
+          "expected_result": "User successfully logs in and accesses the module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a pull list for a configured stability study protocol.",
+          "expected_result": "Pull list is successfully generated and displayed.",
+          "data_to_capture": [
+            "Pull list details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the generated pull list against the configured template.",
+          "expected_result": "Pull list matches the configured template and includes all required details.",
+          "data_to_capture": [
+            "Pull list verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pull list is generated without errors",
+        "Pull list matches configured template"
+      ],
+      "regulatory_basis": [
+        "URS-023-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all pull list data is accurately captured and stored"
+      ],
+      "urs_requirements": [
+        "URS-023-002"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability study management",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Stability Study Pull List Generation Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify the system can generate a pull list for 500 samples in less than 5 seconds as per URS-023-010.",
+      "prerequisites": [
+        "Configured stability study with at least 500 active samples",
+        "Access to the stability study management module"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the pull list generation section of the stability study management module.",
+          "expected_result": "Pull list generation interface is accessible and functional.",
+          "data_to_capture": [
+            "Time taken to load the interface"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select 500 samples and initiate the pull list generation process.",
+          "expected_result": "Pull list is generated successfully.",
+          "data_to_capture": [
+            "Time taken to generate the pull list"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Pull list is generated in less than 5 seconds.",
+        "All selected samples are included in the pull list."
+      ],
+      "regulatory_basis": [
+        "URS-023-010"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all sample data is accurately reflected in the pull list."
+      ],
+      "urs_requirements": [
+        "URS-023-010"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Stability study management",
+        "Performance testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Stability Study Chamber Conditions Integration Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the system correctly receives and processes chamber conditions from the EMS as per URS-023-012.",
+      "prerequisites": [
+        "Configured integration between stability study management and EMS",
+        "Active chamber conditions data in EMS"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a chamber condition update in the EMS.",
+          "expected_result": "Chamber condition update is sent to the stability study management system.",
+          "data_to_capture": [
+            "Timestamp of update",
+            "Chamber condition data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Check the stability study management system for the updated chamber conditions.",
+          "expected_result": "Updated chamber conditions are displayed correctly in the stability study management system.",
+          "data_to_capture": [
+            "Displayed chamber conditions",
+            "Timestamp of update in stability system"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Chamber conditions are updated in the stability study management system within 1 minute of EMS update.",
+        "All chamber condition data is accurately reflected."
+      ],
+      "regulatory_basis": [
+        "URS-023-012"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure chamber condition data is accurately transferred and displayed."
+      ],
+      "urs_requirements": [
+        "URS-023-012"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Integration testing",
+        "EMS systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Verify Stability Study Manager Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the Stability Study Manager is correctly configured to define protocols, pull schedules, and reporting templates.",
+      "prerequisites": [
+        "System access credentials",
+        "Configured templates and sampling plans"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager with valid credentials.",
+          "expected_result": "User is successfully logged in and the main dashboard is displayed.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the protocol configuration section and define a new protocol.",
+          "expected_result": "New protocol is successfully created and saved in the system.",
+          "data_to_capture": [
+            "Protocol details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a pull list using the configured template.",
+          "expected_result": "Pull list is generated and displayed correctly.",
+          "data_to_capture": [
+            "Pull list details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Protocol is correctly configured and saved.",
+        "Pull list is generated accurately."
+      ],
+      "regulatory_basis": [
+        "URS-023-001",
+        "URS-023-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all data entries are accurate and traceable."
+      ],
+      "urs_requirements": [
+        "URS-023-001",
+        "URS-023-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Stability study management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Validate Stability Study Manager Integration",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate the integration of the Stability Study Manager with LIMS and WMS via standard APIs.",
+      "prerequisites": [
+        "System access credentials",
+        "Configured APIs"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the Stability Study Manager with valid credentials.",
+          "expected_result": "User is successfully logged in and the main dashboard is displayed.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the integration settings and configure the LIMS and WMS APIs.",
+          "expected_result": "APIs are successfully configured and connected.",
+          "data_to_capture": [
+            "API configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Send a test data request from the Stability Study Manager to LIMS.",
+          "expected_result": "Data is successfully received and processed by LIMS.",
+          "data_to_capture": [
+            "Data transfer status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "APIs are correctly configured and connected.",
+        "Data is successfully transferred between systems."
+      ],
+      "regulatory_basis": [
+        "URS-023-011"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all data transfers are accurate and traceable."
+      ],
+      "urs_requirements": [
+        "URS-023-011"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API integration",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 600,
+  "generation_timestamp": "2025-08-21T12:08:51.634321+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T12:08:51.747258+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T12:03:29.635135+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

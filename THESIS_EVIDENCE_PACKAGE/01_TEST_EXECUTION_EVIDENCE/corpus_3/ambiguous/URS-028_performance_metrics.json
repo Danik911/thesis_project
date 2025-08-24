@@ -1,0 +1,85 @@
+{
+  "document_info": {
+    "urs_id": "URS-028",
+    "document_name": "URS-028.md",
+    "document_path": "datasets/corpus_3/ambiguous/URS-028.md",
+    "system_type": "Personalized Medicine Orchestration Platform",
+    "expected_category": "Ambiguous (4/5)",
+    "complexity": "Very High"
+  },
+  "execution_metadata": {
+    "start_time": "2025-08-21T16:31:41",
+    "end_time": "2025-08-21T16:40:31",
+    "total_duration_seconds": 483.50,
+    "total_duration_minutes": 8.06,
+    "model_used": "deepseek/deepseek-chat",
+    "validation_mode": true,
+    "phoenix_tracing": true
+  },
+  "categorization_results": {
+    "detected_category": 4,
+    "confidence_percentage": 100.0,
+    "expected_ambiguous": true,
+    "category_rationale": "Category 4 - Configured workflow engine with rules-based matching",
+    "review_required": false
+  },
+  "test_generation_metrics": {
+    "total_tests_generated": 20,
+    "expected_range": "15-25",
+    "within_expected_range": true,
+    "test_categories": {
+      "functional": 9,
+      "data_integrity": 5,
+      "installation": 2,
+      "integration": 4
+    },
+    "estimated_execution_days": 0.375
+  },
+  "workflow_performance": {
+    "agents_executed": 3,
+    "agent_success_rate": 100.0,
+    "parallel_coordination": true,
+    "consultation_bypassed": true
+  },
+  "observability_metrics": {
+    "phoenix_spans_captured": 151,
+    "span_types": ["LLM", "chain", "retriever", "ChromaDB"],
+    "trace_file": "URS-028_traces.jsonl",
+    "trace_file_size_bytes": 3453964,
+    "workflow_session_id": "6dabf973-4616-43df-85fc-cc1bb288b6e2"
+  },
+  "api_usage": {
+    "primary_model": "deepseek/deepseek-chat",
+    "embedding_model": "text-embedding-ada-002",
+    "total_api_calls": "Multiple (captured in traces)",
+    "embedding_call_duration": 1.37,
+    "estimated_cost_reduction": "91% vs OpenAI GPT-4"
+  },
+  "compliance_validation": {
+    "gamp5_compliant": true,
+    "audit_entries": 32,
+    "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"],
+    "electronic_signatures": "Required for critical actions",
+    "gdp_compliance": "Cold-chain records maintained"
+  },
+  "quality_metrics": {
+    "personalized_medicine_coverage": true,
+    "chain_of_custody_tests": true,
+    "temperature_excursion_handling": true,
+    "patient_journey_orchestration": true,
+    "custom_algorithm_modules": true,
+    "explainability_requirements": true
+  },
+  "system_resources": {
+    "final_memory_usage_mb": 339.92,
+    "console_output_bytes": 930,
+    "console_utilization_percentage": 0.9
+  },
+  "validation_success": {
+    "execution_successful": true,
+    "no_fallback_logic": true,
+    "full_gamp5_compliance": true,
+    "phoenix_traces_complete": true,
+    "audit_trail_maintained": true
+  }
+}

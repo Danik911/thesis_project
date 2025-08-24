@@ -1,0 +1,51 @@
+{
+  "fold_id": "fold_1",
+  "total_documents": 4,
+  "processed_documents": [],
+  "failed_documents": [
+    "URS-002",
+    "URS-004",
+    "URS-001",
+    "URS-003"
+  ],
+  "batch_results": [
+    {
+      "batch_num": 1,
+      "successful_docs": [],
+      "failed_docs": [
+        "URS-001"
+      ],
+      "batch_time_seconds": 0.0,
+      "docs_per_second": 0
+    },
+    {
+      "batch_num": 2,
+      "successful_docs": [],
+      "failed_docs": [
+        "URS-002"
+      ],
+      "batch_time_seconds": 0.0014657974243164062,
+      "docs_per_second": 682.2225113858166
+    },
+    {
+      "batch_num": 3,
+      "successful_docs": [],
+      "failed_docs": [
+        "URS-003"
+      ],
+      "batch_time_seconds": 0.0,
+      "docs_per_second": 0
+    },
+    {
+      "batch_num": 4,
+      "successful_docs": [],
+      "failed_docs": [
+        "URS-004"
+      ],
+      "batch_time_seconds": 0.0,
+      "docs_per_second": 0
+    }
+  ],
+  "total_time_seconds": 0.47031497955322266,
+  "batches_processed": 4
+}

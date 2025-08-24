@@ -1,0 +1,37 @@
+# Task ID: 1
+# Title: Fix Categorization Agent Fallback Violations
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Remove ALL fallback logic from categorization agent that violates NO FALLBACKS policy
+# Details:
+The categorization agent currently has prohibited fallback logic that hides real failures by automatically assigning Category 5 and artificial confidence scores. Must remove all fallback mechanisms (lines 309-316, 378-379, 769-770, system prompt line 478) and replace with explicit failure modes that expose full diagnostic information. This is CRITICAL as it blocks all downstream work.
+
+# Test Strategy:
+For each fallback mechanism removed, verify that: (1) no automatic Category 5 assignment occurs on exceptions, (2) no artificial confidence values (0.3 or 0.7) are injected, (3) the system prompt contains no fallback instructions, and (4) explicit error or failure information is surfaced in logs or outputs. Add unit and integration tests to confirm that failures are not masked and that diagnostic information is available.
+
+# Subtasks:
+## 5. Remove automatic Category 5 fallback (lines 309-316) [done]
+### Dependencies: None
+### Description: Remove the error handler that returns Category 5 on any exception. Ensure that exceptions are surfaced explicitly and not masked by fallback categorization.
+### Details:
+Locate and delete the code block (lines 309-316) that catches exceptions and returns Category 5. Replace with logic that surfaces the exception and provides diagnostic information without assigning a fallback category.
+
+## 6. Remove artificial confidence injection (lines 378-379) [done]
+### Dependencies: None
+### Description: Remove the code that returns a default confidence value of 0.3. Ensure that confidence is only set based on actual model output or explicit error reporting.
+### Details:
+Delete lines 378-379 where a default confidence of 0.3 is returned. Update logic to avoid assigning confidence unless it is derived from a valid categorization process.
+
+## 7. Remove default confidence on parse failure (lines 769-770) [done]
+### Dependencies: None
+### Description: Remove the code that assigns a default confidence of 0.7 on parse failure. Ensure parse failures are reported explicitly.
+### Details:
+Delete lines 769-770 where a default confidence of 0.7 is assigned on parse failure. Update error handling to surface parse errors without assigning fallback confidence.
+
+## 8. Update system prompt to remove fallback instructions (line 478) [done]
+### Dependencies: None
+### Description: Remove the instruction in the system prompt that directs the agent to assign Category 5 on low confidence.
+### Details:
+Edit the system prompt at line 478 to eliminate any mention of assigning Category 5 as a fallback or on low confidence. Ensure the prompt reflects the NO FALLBACKS policy.
+

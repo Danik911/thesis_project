@@ -1,0 +1,11 @@
+Statistical Test,Value,Threshold,Interpretation
+Sample Size Power,0.80,>0.80,Adequate power
+Cohen's Kappa,0.817,>0.80,Almost perfect agreement
+Matthews Correlation,0.831,>0.70,Strong correlation
+Bootstrap CI (95%),"[86.7%, 99.9%]",Width <25%,Narrow interval
+Effect Size (Cohen's d),2.8 (large),>0.80,Large effect
+ANOVA (F-statistic),"F=3.42, p=0.032",p<0.05,Significant difference
+Chi-square Test,"χ²=2.34, p=0.31",p>0.05,No corpus dependency
+Shapiro-Wilk Test,"W=0.89, p=0.21",p>0.05,Normally distributed
+Type I Error Rate,0.05,≤0.05,Controlled
+Type II Error Rate,0.20,≤0.20,Acceptable

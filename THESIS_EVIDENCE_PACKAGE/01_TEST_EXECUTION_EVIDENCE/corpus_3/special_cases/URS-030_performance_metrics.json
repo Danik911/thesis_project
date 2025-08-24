@@ -1,0 +1,112 @@
+{
+  "document_id": "URS-030",
+  "document_name": "Legacy System Migration (Mainframe to Cloud)",
+  "document_path": "datasets/corpus_3/special_cases/URS-030.md",
+  "execution_summary": {
+    "start_timestamp": "2025-08-21T16:05:54.776165+00:00",
+    "end_timestamp": "2025-08-21T16:11:32.082892+00:00",
+    "total_duration_seconds": 337.11,
+    "status": "completed_with_oq_tests",
+    "success": true
+  },
+  "gamp_categorization": {
+    "detected_category": 1,
+    "confidence_score": 0.90,
+    "categorization_method": "DeepSeek V3",
+    "review_required": false,
+    "initial_confidence": 0.20,
+    "final_confidence": 0.90,
+    "categorization_notes": "Initial low confidence (0.20) below threshold (0.4) triggered consultation bypass in validation mode, final categorization achieved 90% confidence for Category 1 (Infrastructure Software)"
+  },
+  "test_generation_metrics": {
+    "tests_generated": 5,
+    "estimated_tests": 4,
+    "actual_vs_estimated_ratio": 1.25,
+    "test_categories": {
+      "installation": 1,
+      "functional": 2,
+      "integration": 1,
+      "performance": 0,
+      "security": 0,
+      "data_integrity": 0
+    },
+    "total_estimated_execution_time_minutes": 285,
+    "average_test_duration_minutes": 57
+  },
+  "requirements_coverage": {
+    "total_urs_requirements": 17,
+    "covered_requirements": 6,
+    "coverage_percentage": 35.3,
+    "covered_requirement_ids": [
+      "URS-030-001",
+      "URS-030-005", 
+      "URS-030-008",
+      "URS-030-013",
+      "URS-030-014",
+      "URS-030-015"
+    ]
+  },
+  "api_usage": {
+    "model_used": "deepseek/deepseek-chat",
+    "llm_provider": "OpenRouter", 
+    "embedding_provider": "OpenAI",
+    "total_api_calls": 168,
+    "embedding_calls": 1,
+    "completion_calls": 167,
+    "embedding_duration_seconds": 1.85,
+    "estimated_tokens": 25000,
+    "estimated_cost_usd": 0.35
+  },
+  "workflow_execution": {
+    "workflow_session_id": "unified_workflow_2025-08-21T16:05:54.776165+00:00",
+    "agents_executed": 3,
+    "agent_success_rate": 1.0,
+    "events_captured": 1,
+    "events_processed": 1,
+    "audit_entries": 590
+  },
+  "observability_metrics": {
+    "phoenix_traces_captured": 168,
+    "trace_file": "all_spans_20250821_164601.jsonl",
+    "trace_file_size_bytes": 4150917,
+    "span_types": [
+      "LLM",
+      "chain", 
+      "retriever",
+      "ChromaDB",
+      "workflow"
+    ]
+  },
+  "compliance_validation": {
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "alcoa_plus_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "compliance_standards": [
+      "GAMP-5",
+      "21 CFR Part 11", 
+      "ALCOA+"
+    ]
+  },
+  "special_case_analysis": {
+    "migration_specific_coverage": true,
+    "data_integrity_validation": true,
+    "rollback_procedures_covered": true,
+    "cutover_planning_addressed": true,
+    "legacy_system_considerations": true,
+    "cloud_migration_aspects": true
+  },
+  "system_performance": {
+    "memory_usage_final_mb": 341.50,
+    "console_output_bytes": 936,
+    "console_usage_percentage": 0.9,
+    "log_files_generated": 3
+  },
+  "validation_mode": {
+    "validation_mode_active": true,
+    "consultation_bypassed": true,
+    "human_review_required": false,
+    "automated_execution": true
+  }
+}

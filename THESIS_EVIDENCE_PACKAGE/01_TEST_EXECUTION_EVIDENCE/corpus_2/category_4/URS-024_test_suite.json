@@ -1,0 +1,1564 @@
+{
+  "suite_id": "OQ-SUITE-1217",
+  "gamp_category": 4,
+  "document_name": "URS-024.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Serialization and Aggregation Workflow Configuration Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system correctly configures serialization and aggregation workflows using the vendor's configuration studio.",
+      "prerequisites": [
+        "Vendor configuration studio is installed and accessible",
+        "Packaging line hardware is connected and operational",
+        "User has administrative privileges for configuration"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the vendor configuration studio with admin credentials.",
+          "expected_result": "User successfully logs in and gains access to the configuration studio.",
+          "data_to_capture": [
+            "Login timestamp",
+            "User ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure a new packaging line workflow with station roles and verification steps.",
+          "expected_result": "Workflow is saved without errors and station roles are correctly assigned.",
+          "data_to_capture": [
+            "Workflow configuration details",
+            "Error messages (if any)"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a rework flow with reason capture and verify the configuration.",
+          "expected_result": "Rework flow is functional and reason capture is recorded in the audit trail.",
+          "data_to_capture": [
+            "Rework flow details",
+            "Audit trail entries"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Workflow configuration is saved and retrievable without errors",
+        "Station roles and verification steps are correctly applied",
+        "Rework flow captures and stores reasons as required"
+      ],
+      "regulatory_basis": [
+        "DSCSA compliance for serialization",
+        "EU FMD requirements for aggregation"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All configuration changes must be logged in the audit trail",
+        "No unauthorized modifications to workflows are permitted"
+      ],
+      "urs_requirements": [
+        "URS-024-001",
+        "URS-024-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Serialization and aggregation knowledge",
+        "Vendor configuration tool proficiency"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Regulatory EPCIS Event Generation Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Ensure the system correctly generates and transmits regulatory EPCIS events for shipments as per compliance requirements.",
+      "prerequisites": [
+        "EPCIS event generation is configured in the system",
+        "Integration with external partners is set up",
+        "Test shipment data is available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Create a test shipment in the system with serialized units and aggregated cases.",
+          "expected_result": "Shipment is created and serialization/aggregation data is stored.",
+          "data_to_capture": [
+            "Shipment ID",
+            "Serial numbers",
+            "Aggregation details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger EPCIS event generation for the test shipment.",
+          "expected_result": "EPCIS events are generated and stored in the system.",
+          "data_to_capture": [
+            "EPCIS event IDs",
+            "Generation timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify EPCIS events are transmitted to the configured partner systems.",
+          "expected_result": "EPCIS events are successfully transmitted and acknowledged by partners.",
+          "data_to_capture": [
+            "Transmission logs",
+            "Partner acknowledgments"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EPCIS events are generated for all required shipment events",
+        "Events contain all mandatory data fields as per regulatory requirements",
+        "Events are successfully transmitted to partner systems"
+      ],
+      "regulatory_basis": [
+        "DSCSA electronic event reporting",
+        "EU FMD serialization reporting"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "EPCIS events must be immutable once generated",
+        "All transmissions must be logged with timestamps and status"
+      ],
+      "urs_requirements": [
+        "URS-024-005",
+        "URS-024-011"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "EPCIS standard knowledge",
+        "Integration testing experience"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify Packaging Line Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the packaging line workflows are correctly configured with station roles and verification processes.",
+      "prerequisites": [
+        "Access to vendor configuration studio",
+        "Packaging line setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the vendor configuration studio and navigate to the packaging line workflow settings.",
+          "expected_result": "The packaging line workflow settings are accessible and configurable.",
+          "data_to_capture": [
+            "Workflow configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure station roles and verification processes for the packaging line.",
+          "expected_result": "Station roles and verification processes are correctly configured and saved.",
+          "data_to_capture": [
+            "Station roles",
+            "Verification process details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a packaging line workflow with the configured settings.",
+          "expected_result": "The workflow executes as expected with proper station roles and verification.",
+          "data_to_capture": [
+            "Workflow execution logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Packaging line workflows are correctly configured and verified."
+      ],
+      "regulatory_basis": [
+        "URS-024-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configuration changes are logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-024-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Vendor configuration studio",
+        "Packaging line operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Regulatory EPCIS Event Generation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify that the system correctly generates regulatory EPCIS events for shipments.",
+      "prerequisites": [
+        "Access to EPCIS event generation module",
+        "Sample shipment data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the EPCIS event generation module in the system.",
+          "expected_result": "The EPCIS event generation module is accessible and functional.",
+          "data_to_capture": [
+            "Module access logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Input sample shipment data into the EPCIS event generation module.",
+          "expected_result": "The system accepts the sample shipment data and processes it.",
+          "data_to_capture": [
+            "Sample shipment data",
+            "Processing logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate EPCIS events for the sample shipment data.",
+          "expected_result": "EPCIS events are correctly generated and formatted according to regulatory standards.",
+          "data_to_capture": [
+            "Generated EPCIS events"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EPCIS events are generated correctly and comply with regulatory standards."
+      ],
+      "regulatory_basis": [
+        "URS-024-005"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all EPCIS events are accurately logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-024-005"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EPCIS standards",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Serialization Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the serialization workflow is correctly configured according to URS-024-001 and URS-024-002.",
+      "prerequisites": [
+        "System is installed and operational",
+        "Vendor configuration tools are accessible",
+        "Test packaging line setup is available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the vendor configuration studio and load the serialization workflow.",
+          "expected_result": "Workflow configuration is displayed without errors.",
+          "data_to_capture": [
+            "Configuration status",
+            "Error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a packaging line workflow with station roles and verification.",
+          "expected_result": "Workflow executes as configured with proper station roles and verification.",
+          "data_to_capture": [
+            "Workflow execution logs",
+            "Verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Trigger a rework flow and capture the reason for rework.",
+          "expected_result": "Rework flow is executed and reason is captured in the audit trail.",
+          "data_to_capture": [
+            "Rework event logs",
+            "Reason captured"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Serialization workflow executes without errors.",
+        "Station roles and verification are correctly applied.",
+        "Rework reason is captured in the audit trail."
+      ],
+      "regulatory_basis": [
+        "DSCSA compliance (URS-024-007)",
+        "EU FMD compliance (URS-024-007)"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All serial events must be logged in the audit trail.",
+        "Rework reasons must be accurately recorded."
+      ],
+      "urs_requirements": [
+        "URS-024-001",
+        "URS-024-002",
+        "URS-024-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Serialization configuration",
+        "Packaging line operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Regulatory EPCIS Event Generation Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that the system correctly generates and exchanges EPCIS events for regulatory compliance as per URS-024-005 and URS-024-011.",
+      "prerequisites": [
+        "System is installed and operational",
+        "EPCIS partner endpoint is configured",
+        "Test shipment data is available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a test shipment in the system and trigger EPCIS event generation.",
+          "expected_result": "EPCIS events are generated for the shipment.",
+          "data_to_capture": [
+            "EPCIS event logs",
+            "Generation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the EPCIS events are correctly formatted and contain all required data.",
+          "expected_result": "EPCIS events meet regulatory standards and include all mandatory fields.",
+          "data_to_capture": [
+            "EPCIS event content",
+            "Validation results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate EPCIS event exchange with a partner endpoint.",
+          "expected_result": "EPCIS events are successfully transmitted and acknowledged by the partner.",
+          "data_to_capture": [
+            "Transmission logs",
+            "Partner acknowledgment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EPCIS events are generated for each shipment.",
+        "EPCIS events comply with regulatory standards.",
+        "EPCIS events are successfully exchanged with partners."
+      ],
+      "regulatory_basis": [
+        "DSCSA compliance (URS-024-007)",
+        "EU FMD compliance (URS-024-007)"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "EPCIS events must be accurately generated and logged.",
+        "All regulatory data fields must be included."
+      ],
+      "urs_requirements": [
+        "URS-024-005",
+        "URS-024-011",
+        "URS-024-006"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "EPCIS standards",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Serialization Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the configured serialization workflows correctly handle unit-level serialization and aggregation as per URS-024-001 and URS-024-002.",
+      "prerequisites": [
+        "System configuration completed",
+        "Test serial numbers and aggregation data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a test packaging line workflow with station roles and verification steps.",
+          "expected_result": "Workflow configuration is saved without errors and station roles are correctly assigned.",
+          "data_to_capture": [
+            "Configuration logs",
+            "Error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a rework flow with reason capture and verify the system behavior.",
+          "expected_result": "Rework flow is executed correctly, and the reason for rework is captured in the audit trail.",
+          "data_to_capture": [
+            "Rework logs",
+            "Audit trail entries"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Workflow configuration matches URS-024-001 requirements",
+        "Rework flow captures reasons as per URS-024-002"
+      ],
+      "regulatory_basis": [
+        "DSCSA compliance",
+        "EU FMD compliance"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All serialization events must be logged and traceable"
+      ],
+      "urs_requirements": [
+        "URS-024-001",
+        "URS-024-002",
+        "URS-024-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Serialization configuration",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Performance Testing for Serialization System",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that the serialization system meets the performance requirements of 300 UPH with zero missed scans and latency under 100 ms per scan as per URS-024-008 and URS-024-009.",
+      "prerequisites": [
+        "System fully configured and operational",
+        "High-volume test data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a high-volume scan scenario with 300 units per hour.",
+          "expected_result": "System processes all scans without missing any and maintains latency below 100 ms per scan.",
+          "data_to_capture": [
+            "Scan timestamps",
+            "System latency metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor system performance during peak load and verify OEE dashboards.",
+          "expected_result": "OEE dashboards accurately reflect system performance and exception rates.",
+          "data_to_capture": [
+            "OEE dashboard data",
+            "Exception rates"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System achieves 300 UPH with zero missed scans",
+        "Latency per scan remains under 100 ms"
+      ],
+      "regulatory_basis": [
+        "DSCSA compliance",
+        "EU FMD compliance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All scan events must be accurately recorded and timestamped"
+      ],
+      "urs_requirements": [
+        "URS-024-008",
+        "URS-024-009",
+        "URS-024-004"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "System monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Packaging Line Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the packaging line workflows are correctly configured with station roles and verification processes as per URS-024-001.",
+      "prerequisites": [
+        "Access to vendor configuration studio",
+        "Packaging line setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the vendor configuration studio and navigate to the packaging line workflow settings.",
+          "expected_result": "Packaging line workflow settings are accessible and displayed correctly.",
+          "data_to_capture": [
+            "Workflow configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure station roles and verification processes for each packaging line station.",
+          "expected_result": "Station roles and verification processes are configured accurately as per the requirements.",
+          "data_to_capture": [
+            "Station roles",
+            "Verification processes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All station roles and verification processes are correctly configured and functional."
+      ],
+      "regulatory_basis": [
+        "DSCSA",
+        "EU FMD"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configurations are saved and logged in the audit trail."
+      ],
+      "urs_requirements": [
+        "URS-024-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Serialization and aggregation workflows",
+        "Vendor configuration tools"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Validate Regulatory EPCIS Event Generation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify that the system correctly generates regulatory EPCIS events for shipments as per URS-024-005.",
+      "prerequisites": [
+        "Access to EPCIS event generation module",
+        "Shipment data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a shipment process and trigger EPCIS event generation.",
+          "expected_result": "EPCIS events are generated and logged correctly.",
+          "data_to_capture": [
+            "EPCIS event details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the generated EPCIS events against regulatory requirements.",
+          "expected_result": "EPCIS events comply with DSCSA and EU FMD regulations.",
+          "data_to_capture": [
+            "Regulatory compliance details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All EPCIS events are generated and comply with regulatory requirements."
+      ],
+      "regulatory_basis": [
+        "DSCSA",
+        "EU FMD"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all EPCIS events are accurately logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-024-005"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EPCIS standards",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Verify Packaging Line Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the packaging line workflows are correctly configured with station roles and verification processes as per URS-024-001.",
+      "prerequisites": [
+        "Access to vendor configuration studio",
+        "Packaging line setup completed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the vendor configuration studio.",
+          "expected_result": "Successful login and access to configuration settings.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the packaging line workflow configuration section.",
+          "expected_result": "Configuration settings for packaging line workflows are displayed.",
+          "data_to_capture": [
+            "Configuration settings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify station roles and verification processes are correctly configured.",
+          "expected_result": "Station roles and verification processes match the requirements specified in URS-024-001.",
+          "data_to_capture": [
+            "Station roles",
+            "Verification processes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All station roles and verification processes are correctly configured as per URS-024-001."
+      ],
+      "regulatory_basis": [
+        "DSCSA",
+        "EU FMD"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configurations are accurately captured and stored."
+      ],
+      "urs_requirements": [
+        "URS-024-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Configuration Studio",
+        "Packaging Line Workflows"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Validate Regulatory EPCIS Event Generation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate that the system correctly generates regulatory EPCIS events for shipments as per URS-024-005.",
+      "prerequisites": [
+        "Access to EPCIS event generation module",
+        "Shipment data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system and navigate to the EPCIS event generation module.",
+          "expected_result": "Successful access to the EPCIS event generation module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Input shipment data and initiate EPCIS event generation.",
+          "expected_result": "EPCIS events are generated for the shipment.",
+          "data_to_capture": [
+            "EPCIS events"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the generated EPCIS events against regulatory requirements.",
+          "expected_result": "EPCIS events comply with DSCSA and EU FMD regulations.",
+          "data_to_capture": [
+            "Compliance status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EPCIS events are correctly generated and comply with regulatory requirements."
+      ],
+      "regulatory_basis": [
+        "DSCSA",
+        "EU FMD"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all EPCIS events are accurately captured and stored."
+      ],
+      "urs_requirements": [
+        "URS-024-005"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EPCIS Standards",
+        "Regulatory Compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Verify Packaging Line Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the packaging line workflows are correctly configured with station roles and verification processes.",
+      "prerequisites": [
+        "Access to vendor configuration studio",
+        "Packaging line setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the vendor configuration studio and navigate to the packaging line workflow settings.",
+          "expected_result": "Packaging line workflow settings are accessible and configurable.",
+          "data_to_capture": [
+            "Workflow configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure station roles and verification processes for the packaging line.",
+          "expected_result": "Station roles and verification processes are correctly configured and saved.",
+          "data_to_capture": [
+            "Station roles",
+            "Verification processes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a packaging line workflow to verify the configuration.",
+          "expected_result": "Packaging line workflow operates as expected with correct station roles and verification.",
+          "data_to_capture": [
+            "Workflow simulation results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Packaging line workflows are correctly configured with station roles and verification processes."
+      ],
+      "regulatory_basis": [
+        "URS-024-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configuration changes are logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-024-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Vendor configuration studio",
+        "Packaging line workflows"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Validate Regulatory EPCIS Event Generation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify that the system correctly generates regulatory EPCIS events for shipments.",
+      "prerequisites": [
+        "Access to EPCIS event generation module",
+        "Shipment data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the EPCIS event generation module and configure the settings for regulatory compliance.",
+          "expected_result": "EPCIS event generation module is accessible and configurable.",
+          "data_to_capture": [
+            "EPCIS configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a shipment and generate EPCIS events.",
+          "expected_result": "EPCIS events are generated correctly for the shipment.",
+          "data_to_capture": [
+            "Generated EPCIS events"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the generated EPCIS events against regulatory requirements.",
+          "expected_result": "EPCIS events comply with regulatory requirements.",
+          "data_to_capture": [
+            "Compliance verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Regulatory EPCIS events are correctly generated for shipments."
+      ],
+      "regulatory_basis": [
+        "URS-024-005"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all EPCIS events are logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-024-005"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EPCIS event generation",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Verify Packaging Line Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the packaging line workflows are correctly configured with station roles and verification processes.",
+      "prerequisites": [
+        "Access to vendor configuration studio",
+        "Packaging line setup completed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the vendor configuration studio and navigate to the packaging line workflow settings.",
+          "expected_result": "Packaging line workflow settings are accessible and configurable.",
+          "data_to_capture": [
+            "Workflow configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure station roles and verification processes as per URS-024-001.",
+          "expected_result": "Station roles and verification processes are correctly configured and saved.",
+          "data_to_capture": [
+            "Station roles",
+            "Verification process details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a packaging line workflow to verify the configuration.",
+          "expected_result": "Workflow executes as expected with correct station roles and verification.",
+          "data_to_capture": [
+            "Workflow execution logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Packaging line workflows are correctly configured with station roles and verification processes."
+      ],
+      "regulatory_basis": [
+        "URS-024-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configuration changes are logged and auditable."
+      ],
+      "urs_requirements": [
+        "URS-024-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Vendor configuration studio",
+        "Packaging line workflows"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Validate Regulatory EPCIS Event Generation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate that the system correctly generates regulatory EPCIS events for shipments as per URS-024-005.",
+      "prerequisites": [
+        "Access to EPCIS event generation module",
+        "Shipment data available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the EPCIS event generation module in the system.",
+          "expected_result": "EPCIS event generation module is accessible and functional.",
+          "data_to_capture": [
+            "Module access logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure the system to generate EPCIS events for a sample shipment.",
+          "expected_result": "EPCIS events are correctly configured and ready for generation.",
+          "data_to_capture": [
+            "Event configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate EPCIS events for the sample shipment.",
+          "expected_result": "EPCIS events are generated and comply with regulatory requirements.",
+          "data_to_capture": [
+            "Generated EPCIS events"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EPCIS events are correctly generated and comply with regulatory requirements."
+      ],
+      "regulatory_basis": [
+        "URS-024-007"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all EPCIS events are accurately logged and auditable."
+      ],
+      "urs_requirements": [
+        "URS-024-005"
+      ],
+      "related_tests": [
+        "OQ-010",
+        "OQ-011"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EPCIS event generation",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Verify Packaging Line Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the packaging line workflows are correctly configured with station roles and verification processes as per URS-024-001.",
+      "prerequisites": [
+        "Access to vendor configuration studio",
+        "Packaging line setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the vendor configuration studio.",
+          "expected_result": "Successfully logged in to the configuration studio.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the packaging line workflow configuration section.",
+          "expected_result": "Packaging line workflow configuration section is displayed.",
+          "data_to_capture": [
+            "Section display status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the station roles and verification processes.",
+          "expected_result": "Station roles and verification processes match the requirements specified in URS-024-001.",
+          "data_to_capture": [
+            "Station roles",
+            "Verification processes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Station roles and verification processes are correctly configured."
+      ],
+      "regulatory_basis": [
+        "DSCSA",
+        "EU FMD"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all configurations are accurately captured and stored."
+      ],
+      "urs_requirements": [
+        "URS-024-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Serialization and aggregation workflows"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Validate Regulatory EPCIS Event Generation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To validate that the system correctly generates regulatory EPCIS events for shipments as per URS-024-005.",
+      "prerequisites": [
+        "Access to EPCIS event generation module",
+        "Shipment data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the EPCIS event generation module.",
+          "expected_result": "Successfully logged in to the EPCIS event generation module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Input shipment data into the module.",
+          "expected_result": "Shipment data is successfully inputted.",
+          "data_to_capture": [
+            "Shipment data"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate EPCIS events for the shipment.",
+          "expected_result": "EPCIS events are generated and match the regulatory requirements specified in URS-024-005.",
+          "data_to_capture": [
+            "EPCIS events"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EPCIS events are correctly generated and comply with regulatory requirements."
+      ],
+      "regulatory_basis": [
+        "DSCSA",
+        "EU FMD"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all EPCIS events are accurately captured and stored."
+      ],
+      "urs_requirements": [
+        "URS-024-005"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EPCIS event generation",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Serialization and Aggregation Workflow Configuration Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the configured workflows for unit-level serialization and aggregation function as intended.",
+      "prerequisites": [
+        "System configuration completed as per URS-024",
+        "Test environment with packaging line simulation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a simulated packaging line workflow with unit-level serialization.",
+          "expected_result": "Units are serialized correctly according to configured rules.",
+          "data_to_capture": [
+            "Serial numbers generated",
+            "Timestamp of serialization"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Proceed to case aggregation and verify the aggregation process.",
+          "expected_result": "Cases are aggregated correctly with parent-child relationships maintained.",
+          "data_to_capture": [
+            "Case IDs",
+            "Associated unit serial numbers"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a rework flow and capture the reason for rework.",
+          "expected_result": "Rework flow is executed, and the reason is logged in the audit trail.",
+          "data_to_capture": [
+            "Rework reason",
+            "User who initiated rework"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All serialization and aggregation steps complete without errors.",
+        "Rework reasons are captured and stored in the audit trail."
+      ],
+      "regulatory_basis": [
+        "DSCSA compliance",
+        "EU FMD compliance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All serialization events must be logged with timestamps.",
+        "Parent-child relationships must be accurately maintained."
+      ],
+      "urs_requirements": [
+        "URS-024-001",
+        "URS-024-002",
+        "URS-024-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Serialization configuration",
+        "Packaging line operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Regulatory EPCIS Event Generation and Integration Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that the system correctly generates and transmits EPCIS events for regulatory compliance.",
+      "prerequisites": [
+        "EPCIS integration configured",
+        "Test partner system available for EPCIS exchange"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a shipment event in the system.",
+          "expected_result": "EPCIS event for the shipment is generated.",
+          "data_to_capture": [
+            "EPCIS event type",
+            "Timestamp of event generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Transmit the EPCIS event to the test partner system.",
+          "expected_result": "EPCIS event is successfully transmitted and acknowledged.",
+          "data_to_capture": [
+            "Transmission status",
+            "Partner system response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the EPCIS event content against regulatory requirements.",
+          "expected_result": "EPCIS event contains all required fields for DSCSA/EU FMD compliance.",
+          "data_to_capture": [
+            "EPCIS event fields",
+            "Regulatory compliance check results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EPCIS events are generated and transmitted without errors.",
+        "EPCIS event content meets all regulatory requirements."
+      ],
+      "regulatory_basis": [
+        "DSCSA compliance",
+        "EU FMD compliance"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "EPCIS events must be immutable once generated.",
+        "All transmitted events must be logged with acknowledgments."
+      ],
+      "urs_requirements": [
+        "URS-024-005",
+        "URS-024-007",
+        "URS-024-011"
+      ],
+      "related_tests": [
+        "OQ-010",
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EPCIS standards",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 690,
+  "generation_timestamp": "2025-08-21T12:17:50.186155+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T12:17:50.386357+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T12:10:53.631944+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

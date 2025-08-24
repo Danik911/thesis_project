@@ -1,0 +1,104 @@
+[
+  {
+    "document": "URS-001",
+    "success": false,
+    "duration": 11.990929365158081,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-002",
+    "success": false,
+    "duration": 0.016041040420532227,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-003",
+    "success": false,
+    "duration": 0.015564918518066406,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-004",
+    "success": false,
+    "duration": 0.015495777130126953,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-005",
+    "success": false,
+    "duration": 0.01242518424987793,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-006",
+    "success": false,
+    "duration": 0.01384878158569336,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-007",
+    "success": false,
+    "duration": 0.008882284164428711,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-008",
+    "success": false,
+    "duration": 0.01474142074584961,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-009",
+    "success": false,
+    "duration": 0.0164334774017334,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-010",
+    "success": false,
+    "duration": 0.005901813507080078,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-011",
+    "success": false,
+    "duration": 0.015924692153930664,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-012",
+    "success": false,
+    "duration": 0.01063990592956543,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-013",
+    "success": false,
+    "duration": 0.004127979278564453,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-014",
+    "success": false,
+    "duration": 0.01430654525756836,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-015",
+    "success": false,
+    "duration": 0.01155400276184082,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-016",
+    "success": false,
+    "duration": 0.003040790557861328,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-017",
+    "success": false,
+    "duration": 0.012199640274047852,
+    "error": "no running event loop"
+  }
+]

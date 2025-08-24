@@ -1,0 +1,10 @@
+{
+  "sample_size": 5,
+  "success_rate": 1.0,
+  "confidence_interval": {
+    "lower": 0.47817624989501856,
+    "upper": 1
+  },
+  "mean_duration_seconds": 457.404,
+  "mean_tests_per_document": 19.0
+}

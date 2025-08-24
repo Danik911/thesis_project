@@ -1,0 +1,100 @@
+{
+  "assessments": [
+    {
+      "assessment_id": "part11_basic_001",
+      "level": "basic",
+      "module": "21_cfr_part11_overview",
+      "passing_score": 75.0,
+      "questions": [
+        {
+          "correct_answer": "Electronic records and electronic signatures",
+          "options": [
+            "Electronic records and electronic signatures",
+            "Good Manufacturing Practices only",
+            "Clinical trial regulations",
+            "Environmental regulations"
+          ],
+          "question": "What does 21 CFR Part 11 regulate?",
+          "question_id": "q1",
+          "type": "multiple_choice"
+        },
+        {
+          "correct_answer": "\u00a711.10(d)",
+          "options": [
+            "\u00a711.10(a)",
+            "\u00a711.10(d)",
+            "\u00a711.50",
+            "\u00a711.70"
+          ],
+          "question": "Which section requires limiting system access to authorized individuals?",
+          "question_id": "q2",
+          "type": "multiple_choice"
+        },
+        {
+          "correct_answer": "Name, date/time, and meaning of signature",
+          "options": [
+            "Only the user's name",
+            "Name, date/time, and meaning of signature",
+            "Just a digital certificate",
+            "Password verification only"
+          ],
+          "question": "What must electronic signatures include per \u00a711.50?",
+          "question_id": "q3",
+          "type": "multiple_choice"
+        },
+        {
+          "correct_answer": false,
+          "question": "True or False: Electronic signatures can be copied to falsify other records.",
+          "question_id": "q4",
+          "type": "true_false"
+        },
+        {
+          "correct_answer": "Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available",
+          "options": [
+            "Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available",
+            "Automated, Logical, Compliant, Organized, Accessible",
+            "Audit, Legal, Control, Operations, Analysis",
+            "Administrative, Laboratory, Clinical, Operational, Analytical"
+          ],
+          "question": "What does ALCOA+ stand for in data integrity?",
+          "question_id": "q5",
+          "type": "multiple_choice"
+        }
+      ],
+      "time_limit_minutes": null
+    },
+    {
+      "assessment_id": "esig_intermediate_001",
+      "level": "intermediate",
+      "module": "electronic_signatures",
+      "passing_score": 80.0,
+      "questions": [
+        {
+          "correct_answer": "Ed25519",
+          "options": [
+            "RSA",
+            "Ed25519",
+            "ECDSA",
+            "DSA"
+          ],
+          "question": "What cryptographic algorithm is used for signature binding in this system?",
+          "question_id": "q1",
+          "type": "multiple_choice"
+        },
+        {
+          "correct_answer": "Cryptographic binding to record content",
+          "options": [
+            "Password protection",
+            "Cryptographic binding to record content",
+            "User authorization",
+            "Timestamp verification"
+          ],
+          "question": "What prevents signature transfer between records?",
+          "question_id": "q2",
+          "type": "multiple_choice"
+        }
+      ],
+      "time_limit_minutes": null
+    }
+  ]
+}

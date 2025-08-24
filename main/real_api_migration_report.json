@@ -1,0 +1,115 @@
+{
+  "migration_validation_summary": {
+    "timestamp": "2025-08-07T22:42:05.031197",
+    "total_execution_time": 8.408949,
+    "total_tests": 6,
+    "successful_tests": 2,
+    "failed_tests": 4,
+    "success_rate_percentage": 33.33,
+    "api_calls_made": 2
+  },
+  "agent_test_results": {
+    "Basic LLM": {
+      "total_tests": 1,
+      "successful_tests": 1,
+      "failed_tests": 0,
+      "success_rate_percentage": 100.0,
+      "avg_execution_time": 1.05
+    },
+    "Context Provider": {
+      "total_tests": 1,
+      "successful_tests": 0,
+      "failed_tests": 1,
+      "success_rate_percentage": 0.0,
+      "avg_execution_time": 0.57
+    },
+    "Research Agent": {
+      "total_tests": 1,
+      "successful_tests": 0,
+      "failed_tests": 1,
+      "success_rate_percentage": 0.0,
+      "avg_execution_time": 0.93
+    },
+    "SME Agent": {
+      "total_tests": 1,
+      "successful_tests": 0,
+      "failed_tests": 1,
+      "success_rate_percentage": 0.0,
+      "avg_execution_time": 0.01
+    },
+    "Planning Agent": {
+      "total_tests": 1,
+      "successful_tests": 0,
+      "failed_tests": 1,
+      "success_rate_percentage": 0.0,
+      "avg_execution_time": 0.02
+    },
+    "OQ Generator": {
+      "total_tests": 1,
+      "successful_tests": 1,
+      "failed_tests": 0,
+      "success_rate_percentage": 100.0,
+      "avg_execution_time": 5.81
+    }
+  },
+  "detailed_results": [
+    {
+      "agent_name": "Basic LLM",
+      "test_name": "OpenRouter API Connection",
+      "success": true,
+      "execution_time": 1.05,
+      "api_call_made": true,
+      "error_message": null,
+      "response_preview": "OpenRouter LLM integration successful for GAMP-5 compliance testing.\n\nOperational Qualification (OQ) testing verifies that a system performs consistently according to its design specifications under defined conditions, ensuring reliability and reproducibility. It is a critical step in demonstrating ..."
+    },
+    {
+      "agent_name": "Context Provider",
+      "test_name": "Context Extraction",
+      "success": false,
+      "execution_time": 0.57,
+      "api_call_made": false,
+      "error_message": "NameError: name 'OpenAI' is not defined",
+      "response_preview": null
+    },
+    {
+      "agent_name": "Research Agent",
+      "test_name": "Regulatory Research",
+      "success": false,
+      "execution_time": 0.93,
+      "api_call_made": false,
+      "error_message": "ModuleNotFoundError: No module named 'pdfplumber'",
+      "response_preview": null
+    },
+    {
+      "agent_name": "SME Agent",
+      "test_name": "Domain Expertise",
+      "success": false,
+      "execution_time": 0.01,
+      "api_call_made": false,
+      "error_message": "ModuleNotFoundError: No module named 'pdfplumber'",
+      "response_preview": null
+    },
+    {
+      "agent_name": "Planning Agent",
+      "test_name": "Test Strategy Planning",
+      "success": false,
+      "execution_time": 0.02,
+      "api_call_made": false,
+      "error_message": "ImportError: cannot import name 'PlanningAgent' from 'src.agents.planner.agent' (C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\main\\src\\agents\\planner\\agent.py)",
+      "response_preview": null
+    },
+    {
+      "agent_name": "OQ Generator",
+      "test_name": "Test Case Generation",
+      "success": true,
+      "execution_time": 5.81,
+      "api_call_made": true,
+      "error_message": null,
+      "response_preview": "{\n  \"test_id\": \"OQ-001\",\n  \"test_title\": \"Chamber Temperature Verification\",\n  \"procedure\": \"1. Power on the autoclave and allow it to complete its self\u2011diagnostic routine.\\n2. Load the autoclave with a calibrated temperature probe (e.g., PT100) placed at the center of the chamber.\\n3. Connect the p..."
+    }
+  ],
+  "critical_findings": [
+    "4 out of 6 tests failed",
+    "Success rate (33.3%) below 75% threshold"
+  ]
+}

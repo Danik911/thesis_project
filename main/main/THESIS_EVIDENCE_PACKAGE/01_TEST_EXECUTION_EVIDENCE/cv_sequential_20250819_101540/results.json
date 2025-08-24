@@ -1,0 +1,44 @@
+[
+  {
+    "document": "URS-001",
+    "success": false,
+    "duration": 8.6033194065094,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-002",
+    "success": false,
+    "duration": 0.004099369049072266,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-003",
+    "success": false,
+    "duration": 0.004372835159301758,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-004",
+    "success": false,
+    "duration": 0.003506898880004883,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-005",
+    "success": false,
+    "duration": 0.0036597251892089844,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-006",
+    "success": false,
+    "duration": 0.004519939422607422,
+    "error": "no running event loop"
+  },
+  {
+    "document": "URS-007",
+    "success": false,
+    "duration": 0.0029447078704833984,
+    "error": "no running event loop"
+  }
+]

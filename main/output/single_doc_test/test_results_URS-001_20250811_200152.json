@@ -1,0 +1,10 @@
+{
+  "urs_id": "URS-001",
+  "timestamp": "2025-08-11T19:57:37.417532+00:00",
+  "status": "failed",
+  "metrics": {},
+  "validation": {},
+  "errors": [
+    "Error in step 'generate_oq_tests': OQ generation failed: oq_generation_system_error"
+  ]
+}

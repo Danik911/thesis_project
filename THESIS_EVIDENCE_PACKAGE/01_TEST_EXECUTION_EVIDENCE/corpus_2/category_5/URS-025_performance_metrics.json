@@ -1,0 +1,103 @@
+{
+  "document_info": {
+    "doc_id": "URS-025",
+    "path": "../datasets/urs_corpus_v2/category_5/URS-025.md",
+    "expected_category": 5,
+    "document_type": "Custom Batch Release Orchestrator",
+    "domain": "Manufacturing Operations",
+    "complexity_level": "High"
+  },
+  "execution_summary": {
+    "start_time": "2025-08-21T13:20:24",
+    "failure_time": "2025-08-21T13:29:03",
+    "total_duration_seconds": 519,
+    "total_duration_minutes": 8.65,
+    "status": "FAILED",
+    "failure_reason": "SSL connection error with OpenRouter API during batch 12 generation",
+    "completion_percentage": 91.7
+  },
+  "gamp_categorization": {
+    "detected_category": 5,
+    "confidence": "High",
+    "category_match": true,
+    "risk_level": "High",
+    "validation_required": true,
+    "change_control": true
+  },
+  "workflow_progress": {
+    "phases_completed": [
+      "Document ingestion",
+      "GAMP-5 categorization", 
+      "Context collection",
+      "Research phase",
+      "Test generation planning"
+    ],
+    "phases_failed": [
+      "OQ test generation (batch 12 of 12)"
+    ],
+    "batches_completed": 11,
+    "batches_total": 12,
+    "estimated_tests_generated": 25
+  },
+  "api_usage": {
+    "openai_embeddings": {
+      "calls": 1,
+      "duration_seconds": 1.13,
+      "status": "SUCCESS"
+    },
+    "openrouter_completions": {
+      "successful_batches": 11,
+      "failed_batches": 1,
+      "failure_type": "SSL_EOF_ERROR",
+      "error_details": "HTTPSConnectionPool(host='openrouter.ai', port=443): Max retries exceeded with url: /api/v1/chat/completions"
+    }
+  },
+  "compliance_tracking": {
+    "alcoa_plus_compliance": {
+      "attributable": true,
+      "legible": true,
+      "contemporaneous": true,
+      "original": true,
+      "accurate": true,
+      "complete": false,
+      "consistent": true,
+      "enduring": true,
+      "available": true
+    },
+    "cfr_part_11_compliance": {
+      "electronic_signature": null,
+      "audit_trail": true,
+      "tamper_evident": true,
+      "record_integrity": true
+    },
+    "validation_mode_active": true,
+    "consultation_bypassed": true,
+    "no_fallback_logic": true
+  },
+  "observability": {
+    "phoenix_traces_captured": true,
+    "trace_file": "URS-025_traces.jsonl",
+    "audit_trail_file": "gamp5_audit_20250821_001.jsonl",
+    "workflow_events_logged": true
+  },
+  "error_analysis": {
+    "error_type": "Network/SSL",
+    "error_category": "External API Failure",
+    "system_behavior": "Explicit failure with full diagnostic information",
+    "fallback_triggered": false,
+    "human_consultation_required": true,
+    "consultation_id": "a3afc876-9322-4669-85df-cb00fe1cbcf8"
+  },
+  "recommendations": {
+    "immediate_actions": [
+      "Retry execution with stable network connection",
+      "Verify OpenRouter API status and SSL certificate validity",
+      "Consider implementing retry logic with exponential backoff for SSL errors"
+    ],
+    "system_improvements": [
+      "Add network connectivity validation before batch processing",
+      "Implement graceful degradation for partial batch completion",
+      "Add SSL certificate validation and health checks"
+    ]
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "timestamp": "2025-08-12T12:00:00Z",
+  "overall_result": "PASS",
+  "test_results": [
+    {
+      "test_name": "Dataset Loading",
+      "passed": true,
+      "errors": [],
+      "details": {
+        "metrics_count": 17,
+        "baseline_count": 17,
+        "fold_count": 5,
+        "manifest_entries": 0
+      }
+    },
+    {
+      "test_name": "Metrics Calculation",
+      "passed": true,
+      "errors": [],
+      "details": {
+        "complexity_stats": {
+          "mean": 0.2756294117647059,
+          "median": 0.2398,
+          "min": 0.1798,
+          "max": 0.4312,
+          "stdev": 0.10114273802840397
+        },
+        "gamp_distribution": {
+          "3": 5,
+          "4": 5,
+          "5": 5,
+          "ambiguous": 2
+        }
+      }
+    },
+    {
+      "test_name": "Baseline Timing Estimates",
+      "passed": true,
+      "errors": [],
+      "details": {
+        "timing_stats": {
+          "mean": 18.276470588235295,
+          "median": 17.2,
+          "min": 15.4,
+          "max": 22.9,
+          "stdev": 3.0316104242969413
+        }
+      }
+    },
+    {
+      "test_name": "Cross-Validation Integration",
+      "passed": true,
+      "errors": [],
+      "details": {
+        "fold_statistics": [
+          {
+            "fold": "fold_1",
+            "train_count": 14,
+            "test_count": 3,
+            "train_gamp_dist": {
+              "3": 4,
+              "4": 4,
+              "5": 4,
+              "ambiguous": 2
+            },
+            "test_gamp_dist": {
+              "3": 1,
+              "4": 1,
+              "5": 1
+            }
+          },
+          {
+            "fold": "fold_2",
+            "train_count": 14,
+            "test_count": 3,
+            "train_gamp_dist": {
+              "3": 4,
+              "4": 5,
+              "5": 5
+            },
+            "test_gamp_dist": {
+              "3": 1,
+              "ambiguous": 2
+            }
+          },
+          {
+            "fold": "fold_3",
+            "train_count": 14,
+            "test_count": 3,
+            "train_gamp_dist": {
+              "3": 2,
+              "4": 5,
+              "ambiguous": 2,
+              "5": 5
+            },
+            "test_gamp_dist": {
+              "3": 3
+            }
+          },
+          {
+            "fold": "fold_4",
+            "train_count": 14,
+            "test_count": 3,
+            "train_gamp_dist": {
+              "3": 5,
+              "4": 2,
+              "ambiguous": 2,
+              "5": 5
+            },
+            "test_gamp_dist": {
+              "4": 3
+            }
+          },
+          {
+            "fold": "fold_5",
+            "train_count": 12,
+            "test_count": 5,
+            "train_gamp_dist": {
+              "3": 5,
+              "4": 4,
+              "ambiguous": 2,
+              "5": 1
+            },
+            "test_gamp_dist": {
+              "4": 1,
+              "5": 4
+            }
+          }
+        ]
+      }
+    },
+    {
+      "test_name": "GAMP Stratification Analysis",
+      "passed": true,
+      "errors": [],
+      "details": {
+        "category_statistics": {
+          "3": {
+            "count": 5,
+            "mean_complexity": 0.18606,
+            "min_complexity": 0.1798,
+            "max_complexity": 0.1923,
+            "stdev_complexity": 0.005062904304843225
+          },
+          "4": {
+            "count": 5,
+            "mean_complexity": 0.24244000000000002,
+            "min_complexity": 0.2378,
+            "max_complexity": 0.2467,
+            "stdev_complexity": 0.0035990276464623
+          },
+          "5": {
+            "count": 5,
+            "mean_complexity": 0.42374,
+            "min_complexity": 0.4156,
+            "max_complexity": 0.4312,
+            "stdev_complexity": 0.006366945892655289
+          },
+          "ambiguous": {
+            "count": 2,
+            "mean_complexity": 0.21225,
+            "min_complexity": 0.2089,
+            "max_complexity": 0.2156,
+            "stdev_complexity": 0.004737615433949877
+          }
+        },
+        "total_documents": 17
+      }
+    }
+  ]
+}

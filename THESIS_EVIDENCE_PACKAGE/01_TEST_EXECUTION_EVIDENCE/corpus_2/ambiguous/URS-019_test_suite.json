@@ -1,0 +1,1618 @@
+{
+  "suite_id": "OQ-SUITE-1151",
+  "gamp_category": 4,
+  "document_name": "URS-019.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify Document Classification with Vendor Scripting",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure the system correctly classifies documents using the vendor's rule-based scripting.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Sample documents are available",
+        "Vendor scripting rules are defined"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a set of sample documents to the system.",
+          "expected_result": "Documents are successfully uploaded and queued for classification.",
+          "data_to_capture": [
+            "Document IDs",
+            "Upload status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Apply the vendor's rule-based scripting to classify the documents.",
+          "expected_result": "Documents are classified according to the defined rules.",
+          "data_to_capture": [
+            "Classification results",
+            "Rule applied"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the classification results in the validation queue.",
+          "expected_result": "Classification results are accurate and available for review.",
+          "data_to_capture": [
+            "Validation queue status",
+            "Reviewer comments"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Documents are classified correctly based on vendor scripting rules",
+        "Classification results are available in the validation queue"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure document metadata integrity during classification"
+      ],
+      "urs_requirements": [
+        "URS-019-002",
+        "URS-019-006"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Clinical operations",
+        "eTMF indexing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validate Duplicate Detection and Resolution Workflow",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify the system's ability to detect and resolve duplicate documents in the eTMF.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Sample documents with duplicates are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a set of sample documents, including duplicates, to the system.",
+          "expected_result": "Documents are successfully uploaded and queued for processing.",
+          "data_to_capture": [
+            "Document IDs",
+            "Upload status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Run the duplicate detection process on the uploaded documents.",
+          "expected_result": "Duplicates are detected and flagged by the system.",
+          "data_to_capture": [
+            "Duplicate detection results",
+            "Flagged document IDs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Resolve the flagged duplicates using the provided workflow.",
+          "expected_result": "Duplicates are resolved according to the defined workflow.",
+          "data_to_capture": [
+            "Resolution status",
+            "Resolved document IDs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Duplicates are detected and flagged correctly",
+        "Duplicates are resolved according to the workflow"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure document metadata integrity during duplicate resolution"
+      ],
+      "urs_requirements": [
+        "URS-019-004",
+        "URS-019-007"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Clinical operations",
+        "eTMF indexing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify Document Classification Plugin Integration",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To ensure that custom-developed classification plugins integrate correctly with the eTMF indexing service and classify documents accurately.",
+      "prerequisites": [
+        "Custom classification plugin installed",
+        "Test documents available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a test document to the eTMF indexing service.",
+          "expected_result": "Document is successfully uploaded and visible in the validation queue.",
+          "data_to_capture": [
+            "Document ID",
+            "Upload status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Apply the custom classification plugin to the uploaded document.",
+          "expected_result": "Document is classified according to the plugin's rules.",
+          "data_to_capture": [
+            "Classification result",
+            "Plugin version"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the classification result in the validation queue.",
+          "expected_result": "Classification result matches expected output based on plugin rules.",
+          "data_to_capture": [
+            "Reviewer name",
+            "Review timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Document is classified correctly",
+        "Classification result is traceable"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure classification results are accurate and traceable"
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-007"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Clinical Operations",
+        "Software Integration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Duplicate Detection Workflow",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the duplicate detection and resolution workflow functions as intended.",
+      "prerequisites": [
+        "Duplicate documents available",
+        "Workflow configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a duplicate document to the eTMF indexing service.",
+          "expected_result": "Duplicate document is detected and flagged.",
+          "data_to_capture": [
+            "Document ID",
+            "Duplicate flag"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate the duplicate resolution workflow.",
+          "expected_result": "Workflow prompts for resolution action.",
+          "data_to_capture": [
+            "Workflow status",
+            "Resolution options"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Resolve the duplicate document.",
+          "expected_result": "Duplicate document is resolved according to workflow rules.",
+          "data_to_capture": [
+            "Resolution action",
+            "Resolution timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Duplicate document is detected",
+        "Resolution workflow functions correctly"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure duplicate resolution is traceable"
+      ],
+      "urs_requirements": [
+        "URS-019-004",
+        "URS-019-007"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Clinical Operations",
+        "Workflow Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Custom Plugin Integration and Classification Validation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that custom-developed classification plugins can be integrated and correctly classify edge-case documents according to sponsor-specific taxonomies.",
+      "prerequisites": [
+        "Custom plugin developed and available",
+        "Test documents with edge-case classifications",
+        "System configured for plugin integration"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload the custom plugin to the eTMF Index Harmonization service.",
+          "expected_result": "Plugin is successfully uploaded and recognized by the system.",
+          "data_to_capture": [
+            "Plugin upload status",
+            "System logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Process test documents with edge-case classifications using the custom plugin.",
+          "expected_result": "Documents are correctly classified according to sponsor-specific taxonomies.",
+          "data_to_capture": [
+            "Classification results",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify traceability from source entry to final TMF artifact.",
+          "expected_result": "Full traceability is maintained for all processed documents.",
+          "data_to_capture": [
+            "Traceability logs",
+            "Audit trail"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom plugin is successfully integrated and functional.",
+        "Edge-case documents are correctly classified.",
+        "Traceability is maintained for all processed documents."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all metadata transformations are traceable and auditable.",
+        "Maintain ALCOA+ integrity for document metadata."
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-007",
+        "URS-019-013"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Plugin development",
+        "Clinical document classification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Performance Testing for Document Processing",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that the system can process 10,000 documents per hour with standard rule sets and maintain classification latency under 2 seconds.",
+      "prerequisites": [
+        "10,000 test documents available",
+        "Standard rule sets configured",
+        "Performance monitoring tools in place"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load 10,000 test documents into the system for processing.",
+          "expected_result": "Documents are queued for processing without errors.",
+          "data_to_capture": [
+            "Queue status",
+            "System logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Start processing and monitor the time taken to complete classification.",
+          "expected_result": "All documents are processed within 1 hour.",
+          "data_to_capture": [
+            "Processing time",
+            "System performance metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Measure classification latency for a sample of single documents.",
+          "expected_result": "Classification latency is less than 2 seconds per document.",
+          "data_to_capture": [
+            "Latency measurements",
+            "System logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "10,000 documents are processed within 1 hour.",
+        "Classification latency is under 2 seconds per document.",
+        "System performance metrics are within expected ranges."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure no data loss during high-volume processing.",
+        "Maintain audit trails for all processed documents."
+      ],
+      "urs_requirements": [
+        "URS-019-015",
+        "URS-019-016",
+        "URS-019-013"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "Clinical document processing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Validation of Document Classification Plugin Integration",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify that custom-developed classification plugins integrate correctly with the eTMF Index Harmonization service and classify documents as expected.",
+      "prerequisites": [
+        "Custom classification plugin installed",
+        "Access to eTMF Index Harmonization service",
+        "Test documents available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a test document to the eTMF Index Harmonization service.",
+          "expected_result": "The document is successfully uploaded and visible in the validation queue.",
+          "data_to_capture": [
+            "Document ID",
+            "Upload status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Apply the custom classification plugin to the uploaded document.",
+          "expected_result": "The document is classified according to the plugin's logic and metadata is updated accordingly.",
+          "data_to_capture": [
+            "Classification result",
+            "Metadata updates"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the classification results in the validation queue.",
+          "expected_result": "The classification results match the expected output based on the plugin's logic.",
+          "data_to_capture": [
+            "Validation status",
+            "Classification accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom classification plugin integrates correctly with the eTMF Index Harmonization service.",
+        "Documents are classified accurately based on the plugin's logic."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ integrity"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all document metadata transformations maintain ALCOA+ integrity."
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-007"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "eTMF Indexing",
+        "Plugin Development"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Performance Testing of Batch Reprocessing",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To ensure the eTMF Index Harmonization service can handle batch reprocessing of documents efficiently within the specified performance requirements.",
+      "prerequisites": [
+        "Batch of test documents available",
+        "Versioned rulesets configured",
+        "Access to performance monitoring tools"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate batch reprocessing of 10,000 documents using a versioned ruleset.",
+          "expected_result": "The batch reprocessing starts without errors and progresses as expected.",
+          "data_to_capture": [
+            "Batch ID",
+            "Start time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the processing rate and system performance metrics.",
+          "expected_result": "The system processes documents at a rate of 10,000 documents/hour or faster.",
+          "data_to_capture": [
+            "Processing rate",
+            "System performance metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the completion of batch reprocessing and review the results.",
+          "expected_result": "All documents are reprocessed successfully, and the results match the expected output based on the ruleset.",
+          "data_to_capture": [
+            "Completion time",
+            "Reprocessing accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Batch reprocessing completes within the specified performance requirements.",
+        "All documents are reprocessed accurately based on the versioned ruleset."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ integrity"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all document metadata transformations maintain ALCOA+ integrity."
+      ],
+      "urs_requirements": [
+        "URS-019-009",
+        "URS-019-015"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance Testing",
+        "eTMF Indexing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Validation of Document Classification Plugins",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that custom-developed classification plugins correctly classify edge-case documents according to sponsor-specific taxonomies.",
+      "prerequisites": [
+        "Custom classification plugin installed",
+        "Edge-case document samples available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a set of edge-case documents to the eTMF indexing service.",
+          "expected_result": "Documents are processed by the custom classification plugin.",
+          "data_to_capture": [
+            "Classification results",
+            "Processing time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Review the classification results in the validation queue.",
+          "expected_result": "Documents are correctly classified according to sponsor-specific taxonomies.",
+          "data_to_capture": [
+            "Classification accuracy",
+            "Human reviewer feedback"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All edge-case documents are correctly classified.",
+        "Classification results are traceable and auditable."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ integrity"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure metadata transformations maintain ALCOA+ integrity."
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-007"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Clinical Operations",
+        "Software Development"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Performance Testing of Batch Reprocessing",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "To ensure the eTMF indexing service can handle batch reprocessing of documents with versioned rulesets efficiently.",
+      "prerequisites": [
+        "Versioned rulesets configured",
+        "Batch of documents available for reprocessing"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate batch reprocessing of 10,000 documents using a versioned ruleset.",
+          "expected_result": "Documents are reprocessed within the specified performance threshold.",
+          "data_to_capture": [
+            "Processing time",
+            "System resource usage"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the system dashboard for completeness KPIs.",
+          "expected_result": "Dashboard updates within the specified load time.",
+          "data_to_capture": [
+            "Dashboard load time",
+            "KPI accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Batch reprocessing completes within 1 hour.",
+        "Dashboard load time is less than 5 seconds."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ integrity"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all document metadata transformations maintain ALCOA+ integrity."
+      ],
+      "urs_requirements": [
+        "URS-019-009",
+        "URS-019-017"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Clinical Operations",
+        "System Performance Testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Custom Plugin Integration and Classification Validation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the system's ability to integrate and execute custom-developed classification plugins for edge-case documents.",
+      "prerequisites": [
+        "Custom plugin developed and available",
+        "Test documents with edge-case scenarios"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload the custom plugin to the eTMF indexing service.",
+          "expected_result": "Plugin is successfully uploaded and recognized by the system.",
+          "data_to_capture": [
+            "Plugin upload status",
+            "System recognition confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Process a set of edge-case documents using the custom plugin.",
+          "expected_result": "Documents are correctly classified according to the custom plugin logic.",
+          "data_to_capture": [
+            "Classification results",
+            "Processing time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom plugin is integrated without errors",
+        "Edge-case documents are accurately classified"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ integrity for document metadata transformations"
+      ],
+      "urs_requirements": [
+        "URS-019-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Plugin development",
+        "eTMF indexing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Dashboard Performance with Large Data Volume",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Ensure the configurable dashboards load within the specified time frame when handling large data volumes.",
+      "prerequisites": [
+        "1M records loaded into the system",
+        "Dashboard configured for completeness KPIs"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the configured dashboard with 1M records.",
+          "expected_result": "Dashboard loads within 5 seconds.",
+          "data_to_capture": [
+            "Dashboard load time",
+            "System resource usage"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboard load time is less than 5 seconds"
+      ],
+      "regulatory_basis": [],
+      "risk_level": "medium",
+      "data_integrity_requirements": [],
+      "urs_requirements": [
+        "URS-019-017"
+      ],
+      "related_tests": [
+        "OQ-008",
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Dashboard configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Custom Plugin Integration and Classification Validation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that custom-developed classification plugins correctly integrate with the system and accurately classify edge-case documents.",
+      "prerequisites": [
+        "Custom plugin SDK installed",
+        "Test documents with edge-case classification requirements",
+        "Access to plugin development environment"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy a custom classification plugin to the eTMF Index Harmonization service.",
+          "expected_result": "Plugin is successfully loaded and recognized by the system.",
+          "data_to_capture": [
+            "Plugin deployment logs",
+            "System recognition status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Upload a set of test documents that require custom classification logic.",
+          "expected_result": "Documents are correctly classified according to the custom plugin's logic.",
+          "data_to_capture": [
+            "Classification results",
+            "Document metadata"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the traceability logs for the classified documents.",
+          "expected_result": "Traceability logs show the correct path from source entry to final TMF artifact, including plugin involvement.",
+          "data_to_capture": [
+            "Traceability logs",
+            "Audit trail entries"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom plugin successfully integrates with the system.",
+        "Edge-case documents are classified accurately.",
+        "Traceability logs are complete and accurate."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all document metadata transformations maintain ALCOA+ integrity.",
+        "Audit trails must be retained for all classification actions."
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-007",
+        "URS-019-013"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Plugin development",
+        "Clinical document classification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Performance Testing for High-Volume Document Processing",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that the system can process 10,000 documents per hour with standard rule sets while maintaining acceptable latency.",
+      "prerequisites": [
+        "Test environment with performance monitoring tools",
+        "10,000 test documents with standard classification requirements",
+        "Standard rule sets configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the system with standard rule sets for document classification.",
+          "expected_result": "System is ready to process documents with the configured rule sets.",
+          "data_to_capture": [
+            "Rule set configuration status",
+            "System readiness logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Upload 10,000 test documents to the system for processing.",
+          "expected_result": "System processes all documents within one hour.",
+          "data_to_capture": [
+            "Processing time",
+            "Document throughput rate"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor classification latency for individual documents.",
+          "expected_result": "Classification latency for single documents is less than 2 seconds.",
+          "data_to_capture": [
+            "Latency metrics",
+            "System performance logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System processes 10,000 documents per hour.",
+        "Classification latency for single documents is less than 2 seconds.",
+        "System remains stable under high load."
+      ],
+      "regulatory_basis": [
+        "GAMP 5",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all document metadata is accurately maintained during high-volume processing.",
+        "Audit trails must be complete and uncorrupted."
+      ],
+      "urs_requirements": [
+        "URS-019-015",
+        "URS-019-016",
+        "URS-019-013"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Performance testing",
+        "Clinical document management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Custom Plugin Integration and Classification Validation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that custom-developed classification plugins correctly classify edge-case documents according to sponsor-specific taxonomies.",
+      "prerequisites": [
+        "Custom plugin SDK installed",
+        "Test documents with edge-case classification requirements",
+        "Plugin development environment configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a custom-developed classification plugin into the eTMF Index Harmonization service.",
+          "expected_result": "Plugin is successfully loaded and recognized by the system.",
+          "data_to_capture": [
+            "Plugin load status",
+            "System logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Upload a test document that requires edge-case classification.",
+          "expected_result": "Document is classified according to the custom plugin's rules.",
+          "data_to_capture": [
+            "Classification result",
+            "Processing time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the classification metadata in the TMF artifact.",
+          "expected_result": "Metadata matches the expected sponsor-specific taxonomy.",
+          "data_to_capture": [
+            "Final metadata",
+            "Traceability logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom plugins must correctly classify edge-case documents.",
+        "System must maintain traceability from source to final artifact."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Metadata transformations must maintain ALCOA+ integrity.",
+        "Audit trails must capture all classification changes."
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-007",
+        "URS-019-013"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Plugin development",
+        "Clinical document taxonomy"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "High-Volume Document Processing Performance",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that the system can process 10,000 documents/hour with standard rule sets while maintaining acceptable latency.",
+      "prerequisites": [
+        "Standard rule sets configured",
+        "Test dataset of 10,000 documents",
+        "Performance monitoring tools"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the system with standard rule sets for TMF Reference Model v3.3.",
+          "expected_result": "Rule sets are active and validated.",
+          "data_to_capture": [
+            "Rule set version",
+            "Configuration logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate batch processing of 10,000 test documents.",
+          "expected_result": "System begins processing documents without errors.",
+          "data_to_capture": [
+            "Start time",
+            "Initial system metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor processing rate and system resources for 60 minutes.",
+          "expected_result": "System maintains \u2265 10,000 documents/hour throughput.",
+          "data_to_capture": [
+            "Documents processed",
+            "CPU/memory usage",
+            "Average latency"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Throughput must meet or exceed 10,000 documents/hour.",
+        "Classification latency must remain < 2 seconds for single documents.",
+        "System must remain stable under load."
+      ],
+      "regulatory_basis": [
+        "ICH E6 (R2)",
+        "FDA 21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All documents must be processed without data loss.",
+        "Processing metrics must be accurately recorded."
+      ],
+      "urs_requirements": [
+        "URS-019-015",
+        "URS-019-016",
+        "URS-019-018"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "Clinical operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Custom Plugin Integration and Classification Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that custom-developed classification plugins can be integrated and correctly classify edge-case documents according to sponsor-specific taxonomies.",
+      "prerequisites": [
+        "Custom plugin SDK installed",
+        "Test documents with edge-case taxonomies available",
+        "Plugin development environment configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy a custom classification plugin using the provided SDK.",
+          "expected_result": "Plugin is successfully loaded and recognized by the eTMF indexing service.",
+          "data_to_capture": [
+            "Plugin deployment logs",
+            "System recognition status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Upload a set of test documents with edge-case taxonomies.",
+          "expected_result": "Documents are processed and classified according to the custom plugin rules.",
+          "data_to_capture": [
+            "Classification results",
+            "Processing time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the traceability of the classification results back to the source documents.",
+          "expected_result": "Full traceability is maintained from source entry to final TMF artifact.",
+          "data_to_capture": [
+            "Traceability logs",
+            "Metadata integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom plugin successfully classifies edge-case documents.",
+        "Traceability is maintained for all processed documents.",
+        "No system errors during plugin deployment or document processing."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all document metadata transformations maintain ALCOA+ integrity."
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-007",
+        "URS-019-020"
+      ],
+      "related_tests": [
+        "OQ-010",
+        "OQ-012"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Plugin development",
+        "eTMF indexing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Performance Test for High-Volume Document Processing",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Validate that the system can process 10,000 documents per hour with standard rule sets while maintaining acceptable latency.",
+      "prerequisites": [
+        "Test environment with performance monitoring tools",
+        "10,000 test documents available",
+        "Standard rule sets configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load 10,000 test documents into the system for processing.",
+          "expected_result": "Documents are queued for processing without errors.",
+          "data_to_capture": [
+            "Queue status",
+            "Initial load time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the system for one hour while documents are processed.",
+          "expected_result": "System processes all documents within one hour.",
+          "data_to_capture": [
+            "Processing rate",
+            "System resource usage"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify that classification latency remains under 2 seconds for single documents during peak load.",
+          "expected_result": "Latency meets the specified requirement.",
+          "data_to_capture": [
+            "Latency metrics",
+            "Peak load timestamps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System processes 10,000 documents per hour.",
+        "Classification latency remains under 2 seconds for single documents.",
+        "System availability is maintained at \u2265 99.9% during the test."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure no data loss or corruption during high-volume processing."
+      ],
+      "urs_requirements": [
+        "URS-019-015",
+        "URS-019-016",
+        "URS-019-018"
+      ],
+      "related_tests": [
+        "OQ-005",
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "System monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Verify Custom Classification Plugin Integration",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Ensure the system correctly integrates and executes custom-developed classification plugins for edge-case documents.",
+      "prerequisites": [
+        "Custom classification plugin installed",
+        "Test documents available",
+        "System configured for plugin execution"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a set of edge-case documents to the system.",
+          "expected_result": "Documents are successfully uploaded and queued for classification.",
+          "data_to_capture": [
+            "Document IDs",
+            "Upload timestamps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the custom classification plugin on the uploaded documents.",
+          "expected_result": "Documents are classified according to the custom plugin logic.",
+          "data_to_capture": [
+            "Classification results",
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the classification results in the validation queue.",
+          "expected_result": "Classification results are accurate and available for human review.",
+          "data_to_capture": [
+            "Reviewer feedback",
+            "Validation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom plugin executes without errors",
+        "Classification results are accurate",
+        "Validation queue reflects correct results"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during plugin execution",
+        "Maintain audit trails for classification actions"
+      ],
+      "urs_requirements": [
+        "URS-019-003",
+        "URS-019-013"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Plugin development",
+        "Clinical document classification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Validate Batch Reprocessing with Versioned Rulesets",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify the system correctly reprocesses documents using versioned rulesets and maintains traceability.",
+      "prerequisites": [
+        "Versioned rulesets available",
+        "Test documents previously processed",
+        "Reprocessing configuration set"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Select a batch of previously processed documents for reprocessing.",
+          "expected_result": "Documents are successfully queued for reprocessing.",
+          "data_to_capture": [
+            "Document IDs",
+            "Reprocessing queue status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Apply a versioned ruleset to the selected documents and initiate reprocessing.",
+          "expected_result": "Documents are reprocessed according to the new ruleset.",
+          "data_to_capture": [
+            "Reprocessing results",
+            "Execution time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the reprocessed documents in the validation queue.",
+          "expected_result": "Reprocessed documents reflect the updated ruleset and are available for review.",
+          "data_to_capture": [
+            "Reviewer feedback",
+            "Validation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reprocessing completes without errors",
+        "Documents reflect updated ruleset",
+        "Traceability is maintained"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during reprocessing",
+        "Maintain audit trails for reprocessing actions"
+      ],
+      "urs_requirements": [
+        "URS-019-009",
+        "URS-019-007"
+      ],
+      "related_tests": [
+        "OQ-009",
+        "OQ-013"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Ruleset configuration",
+        "Clinical document processing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 705,
+  "generation_timestamp": "2025-08-21T11:51:03.512815+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T11:51:03.697210+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T11:43:35.791993+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

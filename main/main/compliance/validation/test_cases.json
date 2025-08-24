@@ -1,0 +1,150 @@
+{
+  "TC-PART11-001": {
+    "current_status": "not_started",
+    "description": "Verify that electronic signatures are cryptographically bound to records",
+    "execution_history": [],
+    "expected_results": [
+      "Record is created successfully",
+      "Electronic signature is bound to record",
+      "Signature integrity is verified",
+      "Signature transfer is prevented"
+    ],
+    "last_execution_result": "not_executed",
+    "requirement_ids": [
+      "REQ-PART11-001"
+    ],
+    "test_case_id": "TC-PART11-001",
+    "test_data": {},
+    "test_steps": [
+      {
+        "action": "Create a test record",
+        "step": "1"
+      },
+      {
+        "action": "Apply electronic signature to record",
+        "step": "2"
+      },
+      {
+        "action": "Verify signature binding integrity",
+        "step": "3"
+      },
+      {
+        "action": "Attempt to transfer signature to different record",
+        "step": "4"
+      }
+    ],
+    "title": "Verify Electronic Signature Binding",
+    "validation_phase": "oq"
+  },
+  "TC-PART11-002": {
+    "current_status": "not_started",
+    "description": "Verify that only authorized users can access the system",
+    "execution_history": [],
+    "expected_results": [
+      "Valid user is authenticated successfully",
+      "Invalid user is rejected",
+      "Role permissions are enforced correctly",
+      "Sessions timeout appropriately"
+    ],
+    "last_execution_result": "not_executed",
+    "requirement_ids": [
+      "REQ-PART11-002"
+    ],
+    "test_case_id": "TC-PART11-002",
+    "test_data": {},
+    "test_steps": [
+      {
+        "action": "Attempt login with valid credentials",
+        "step": "1"
+      },
+      {
+        "action": "Attempt login with invalid credentials",
+        "step": "2"
+      },
+      {
+        "action": "Verify role-based permissions",
+        "step": "3"
+      },
+      {
+        "action": "Test session timeout",
+        "step": "4"
+      }
+    ],
+    "title": "Verify Access Control Enforcement",
+    "validation_phase": "oq"
+  },
+  "TC-PART11-003": {
+    "current_status": "not_started",
+    "description": "Verify that audit trail maintains integrity and is tamper-evident",
+    "execution_history": [],
+    "expected_results": [
+      "All actions are logged with details",
+      "Audit trail contains required information",
+      "Audit records are cryptographically signed",
+      "Tampering attempts are detected"
+    ],
+    "last_execution_result": "not_executed",
+    "requirement_ids": [
+      "REQ-PART11-003"
+    ],
+    "test_case_id": "TC-PART11-003",
+    "test_data": {},
+    "test_steps": [
+      {
+        "action": "Perform various user actions",
+        "step": "1"
+      },
+      {
+        "action": "Verify actions are logged in audit trail",
+        "step": "2"
+      },
+      {
+        "action": "Verify audit record signatures",
+        "step": "3"
+      },
+      {
+        "action": "Test tamper detection",
+        "step": "4"
+      }
+    ],
+    "title": "Verify Audit Trail Integrity",
+    "validation_phase": "oq"
+  },
+  "TC-PART11-004": {
+    "current_status": "not_started",
+    "description": "Verify that WORM storage prevents record modification",
+    "execution_history": [],
+    "expected_results": [
+      "Record is stored successfully",
+      "Modification attempts are prevented",
+      "Record integrity is maintained",
+      "Access controls function correctly"
+    ],
+    "last_execution_result": "not_executed",
+    "requirement_ids": [
+      "REQ-PART11-004"
+    ],
+    "test_case_id": "TC-PART11-004",
+    "test_data": {},
+    "test_steps": [
+      {
+        "action": "Store record in WORM storage",
+        "step": "1"
+      },
+      {
+        "action": "Attempt to modify stored record",
+        "step": "2"
+      },
+      {
+        "action": "Verify record integrity",
+        "step": "3"
+      },
+      {
+        "action": "Test access controls for WORM storage",
+        "step": "4"
+      }
+    ],
+    "title": "Verify WORM Storage Integrity",
+    "validation_phase": "oq"
+  }
+}

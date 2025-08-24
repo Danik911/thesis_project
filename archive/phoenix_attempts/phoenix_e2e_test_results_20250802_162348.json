@@ -1,0 +1,49 @@
+{
+  "test_session_id": "e2e_test_1754148214",
+  "test_timestamp": 1754148214.8563433,
+  "phoenix_url": "http://localhost:6006",
+  "test_results": {
+    "opentelemetry_setup": {
+      "success": true,
+      "otlp_endpoint": "http://localhost:6006/v1/traces",
+      "resource_attributes": {
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.35.0",
+        "service.name": "phoenix_e2e_test",
+        "service.version": "1.0.0",
+        "deployment.environment": "test",
+        "compliance.gamp5.enabled": true,
+        "compliance.pharmaceutical": true,
+        "test.session_id": "e2e_test_1754148214"
+      }
+    },
+    "trace_generation": {
+      "success": true,
+      "traces_generated": 9,
+      "flush_successful": true
+    },
+    "trace_verification": {
+      "success": false,
+      "errors": [
+        {
+          "message": "an unexpected error occurred",
+          "locations": [
+            {
+              "line": 3,
+              "column": 17
+            }
+          ]
+        }
+      ]
+    },
+    "enhanced_observability": {
+      "success": false,
+      "compliance_spans_accessible": false,
+      "gamp5_spans_accessible": false
+    }
+  },
+  "traces_generated": 9,
+  "traces_verified": 0,
+  "success": false
+}

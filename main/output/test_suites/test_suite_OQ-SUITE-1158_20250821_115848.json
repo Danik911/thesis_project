@@ -1,0 +1,764 @@
+{
+  "suite_id": "OQ-SUITE-1158",
+  "gamp_category": 3,
+  "document_name": "URS-021.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify document assignment functionality via vendor UI",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure that documents can be successfully assigned to users and groups using the vendor-provided UI.",
+      "prerequisites": [
+        "Access to the vendor UI",
+        "List of users and groups",
+        "Sample documents for assignment"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the vendor UI with administrative privileges.",
+          "expected_result": "User is successfully logged in and has access to the document assignment module.",
+          "data_to_capture": [
+            "Login status",
+            "Module access"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select a sample document and assign it to a user or group.",
+          "expected_result": "Document is successfully assigned to the selected user or group.",
+          "data_to_capture": [
+            "Document assignment status",
+            "Assigned user/group"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Document assignment is completed without errors",
+        "Assigned user/group receives notification"
+      ],
+      "regulatory_basis": [
+        "URS-021-001"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure accurate assignment of documents"
+      ],
+      "urs_requirements": [
+        "URS-021-001"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Vendor UI navigation",
+        "Document control procedures"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validate automated reminder functionality via vendor scheduler",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To confirm that automated reminders are sent to users as per the vendor scheduler settings.",
+      "prerequisites": [
+        "Access to the vendor scheduler",
+        "List of users with pending acknowledgments",
+        "Sample reminder settings"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the vendor scheduler to send reminders for pending acknowledgments.",
+          "expected_result": "Scheduler is successfully configured with the reminder settings.",
+          "data_to_capture": [
+            "Scheduler configuration status",
+            "Reminder settings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger the scheduler to send reminders to users.",
+          "expected_result": "Reminders are successfully sent to users with pending acknowledgments.",
+          "data_to_capture": [
+            "Reminder delivery status",
+            "User notification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reminders are sent without errors",
+        "Users receive reminders as expected"
+      ],
+      "regulatory_basis": [
+        "URS-021-002"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure accurate delivery of reminders"
+      ],
+      "urs_requirements": [
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Vendor scheduler configuration",
+        "Reminder management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify Document Assignment via Vendor UI",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure that documents can be successfully assigned to users and groups using the vendor-provided UI.",
+      "prerequisites": [
+        "Access to the document control system",
+        "Test user accounts and groups configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the document control system using an admin account.",
+          "expected_result": "Admin dashboard is displayed.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the document assignment module in the vendor UI.",
+          "expected_result": "Document assignment interface is accessible.",
+          "data_to_capture": [
+            "Module accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Assign a test document to a user and a group.",
+          "expected_result": "Document is successfully assigned to the user and group.",
+          "data_to_capture": [
+            "Assignment status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Document assignment is confirmed in the system logs.",
+        "User and group receive notification of assignment."
+      ],
+      "regulatory_basis": [
+        "URS-021-001"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure assignment records are accurate and complete."
+      ],
+      "urs_requirements": [
+        "URS-021-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Automated Reminder Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To confirm that automated reminders are sent according to the vendor scheduler.",
+      "prerequisites": [
+        "Document assigned to a user",
+        "Vendor scheduler configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the document control system using an admin account.",
+          "expected_result": "Admin dashboard is displayed.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Set a reminder schedule for the assigned document.",
+          "expected_result": "Reminder schedule is successfully configured.",
+          "data_to_capture": [
+            "Schedule configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Wait for the scheduled reminder time.",
+          "expected_result": "User receives an automated reminder notification.",
+          "data_to_capture": [
+            "Reminder delivery status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reminder is sent at the scheduled time.",
+        "Reminder details are logged in the system."
+      ],
+      "regulatory_basis": [
+        "URS-021-002"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure reminder logs are accurate and complete."
+      ],
+      "urs_requirements": [
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Document Assignment and Reminder Functionality Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the system correctly assigns documents to users and groups and sends automated reminders as configured.",
+      "prerequisites": [
+        "System is operational",
+        "Test users and groups are created",
+        "Test documents are uploaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Assign a test document to a user group using the vendor UI.",
+          "expected_result": "The document is successfully assigned to the user group.",
+          "data_to_capture": [
+            "Assignment confirmation message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure the vendor scheduler to send reminders for the assigned document.",
+          "expected_result": "Reminders are scheduled and sent to the user group as configured.",
+          "data_to_capture": [
+            "Reminder confirmation message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Document assignment is successful",
+        "Reminders are sent as scheduled"
+      ],
+      "regulatory_basis": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure assignment and reminder records are accurate"
+      ],
+      "urs_requirements": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Document control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Acknowledgment Report Generation and Role-Based Dashboard Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the system generates standard acknowledgment reports and provides role-based dashboards for managers.",
+      "prerequisites": [
+        "System is operational",
+        "Test users have acknowledged documents",
+        "Test manager role is created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate a standard acknowledgment report for a test user.",
+          "expected_result": "The report is generated successfully and contains accurate acknowledgment data.",
+          "data_to_capture": [
+            "Report generation confirmation",
+            "Report content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Access the role-based dashboard for a test manager.",
+          "expected_result": "The dashboard displays relevant acknowledgment data for the manager's role.",
+          "data_to_capture": [
+            "Dashboard content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Acknowledgment report is generated successfully",
+        "Role-based dashboard displays correct data"
+      ],
+      "regulatory_basis": [
+        "URS-021-003",
+        "URS-021-004"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure report and dashboard data are accurate"
+      ],
+      "urs_requirements": [
+        "URS-021-003",
+        "URS-021-004"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Verify Automated Reminder Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the system sends automated reminders for document acknowledgments as configured.",
+      "prerequisites": [
+        "System is operational",
+        "Documents assigned to users",
+        "Reminder scheduler configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Assign a document to a user via the vendor UI.",
+          "expected_result": "Document is successfully assigned to the user.",
+          "data_to_capture": [
+            "User ID",
+            "Document ID",
+            "Assignment timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure the reminder scheduler to send a reminder after 1 day.",
+          "expected_result": "Reminder scheduler is successfully configured.",
+          "data_to_capture": [
+            "Reminder configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Wait for 1 day and check the user's inbox.",
+          "expected_result": "User receives an automated reminder email for the assigned document.",
+          "data_to_capture": [
+            "Reminder email timestamp",
+            "Email content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Automated reminders are sent as per the configured schedule."
+      ],
+      "regulatory_basis": [
+        "URS-021-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure reminder emails are logged and traceable."
+      ],
+      "urs_requirements": [
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Administration",
+        "Quality Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Validate Role-Based Dashboard Access",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that role-based dashboards provide appropriate access and data to managers.",
+      "prerequisites": [
+        "System is operational",
+        "User roles configured",
+        "Documents assigned to users"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a manager with dashboard access.",
+          "expected_result": "Manager successfully logs in and accesses the dashboard.",
+          "data_to_capture": [
+            "User ID",
+            "Login timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the document acknowledgment dashboard.",
+          "expected_result": "Dashboard displays assigned documents and acknowledgment statuses.",
+          "data_to_capture": [
+            "Dashboard content",
+            "Document statuses"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Filter the dashboard by user group.",
+          "expected_result": "Dashboard updates to show only documents assigned to the selected user group.",
+          "data_to_capture": [
+            "Filtered results",
+            "User group ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Role-based dashboards display accurate and relevant data to managers."
+      ],
+      "regulatory_basis": [
+        "URS-021-004"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure dashboard data is consistent with system records."
+      ],
+      "urs_requirements": [
+        "URS-021-004"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Administration",
+        "Quality Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Document Assignment and Reminder Functionality Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that documents can be assigned to users and groups and that automated reminders are sent as configured.",
+      "prerequisites": [
+        "System access credentials",
+        "Test documents uploaded to the system",
+        "Test user accounts configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system using vendor UI.",
+          "expected_result": "Successful login and access to the document assignment module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Assign a test document to a test user and group using the vendor UI.",
+          "expected_result": "Document assignment is successful and visible in the user's dashboard.",
+          "data_to_capture": [
+            "Assignment status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure and trigger an automated reminder using the vendor scheduler.",
+          "expected_result": "Reminder is sent to the assigned user and group as scheduled.",
+          "data_to_capture": [
+            "Reminder status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Documents are successfully assigned to users and groups.",
+        "Automated reminders are sent as configured."
+      ],
+      "regulatory_basis": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all assignments and reminders are accurately recorded."
+      ],
+      "urs_requirements": [
+        "URS-021-001",
+        "URS-021-002"
+      ],
+      "related_tests": [
+        "OQ-010"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Acknowledgment Reporting and Dashboard Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that standard acknowledgment reports are generated and role-based dashboards display correct information.",
+      "prerequisites": [
+        "System access credentials",
+        "Test documents acknowledged by users"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system using vendor UI.",
+          "expected_result": "Successful login and access to the reporting module.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a standard acknowledgment report for a test document.",
+          "expected_result": "Report is generated successfully and contains accurate acknowledgment data.",
+          "data_to_capture": [
+            "Report generation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Access the role-based dashboard for a manager account.",
+          "expected_result": "Dashboard displays correct acknowledgment information for assigned documents.",
+          "data_to_capture": [
+            "Dashboard accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Standard acknowledgment reports are generated accurately.",
+        "Role-based dashboards display correct acknowledgment information."
+      ],
+      "regulatory_basis": [
+        "URS-021-003",
+        "URS-021-004"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all acknowledgment data is accurately recorded and displayed."
+      ],
+      "urs_requirements": [
+        "URS-021-003",
+        "URS-021-004"
+      ],
+      "related_tests": [
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administration",
+        "Quality management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 300,
+  "generation_timestamp": "2025-08-21T11:58:48.520080+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T11:58:48.827534+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T11:54:36.785334+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

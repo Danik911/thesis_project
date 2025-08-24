@@ -1,0 +1,1560 @@
+{
+  "suite_id": "OQ-SUITE-1540",
+  "gamp_category": 4,
+  "document_name": "URS-028.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verification of End-to-End Workflow Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To verify that the platform can correctly configure and execute end-to-end workflow templates for apheresis, manufacturing, QC release, and infusion as per URS-028-001.",
+      "prerequisites": [
+        "Access to the platform with admin privileges",
+        "Predefined workflow templates"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the platform with admin credentials.",
+          "expected_result": "Successful login and access to the admin dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the workflow configuration section.",
+          "expected_result": "Access to the workflow configuration interface.",
+          "data_to_capture": [
+            "Configuration interface status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure a new workflow template for apheresis.",
+          "expected_result": "Successful creation of the apheresis workflow template.",
+          "data_to_capture": [
+            "Template creation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Execute the configured workflow template.",
+          "expected_result": "Correct execution of the apheresis workflow.",
+          "data_to_capture": [
+            "Workflow execution status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Workflow templates are correctly configured and executed without errors."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all workflow steps are logged and auditable."
+      ],
+      "urs_requirements": [
+        "URS-028-001"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Workflow configuration",
+        "Platform administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validation of Chain-of-Identity and Chain-of-Custody Enforcement",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "To validate that the platform enforces chain-of-identity and chain-of-custody with dual-scanning verification as per URS-028-002.",
+      "prerequisites": [
+        "Access to the platform with user privileges",
+        "Predefined patient journey"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the platform with user credentials.",
+          "expected_result": "Successful login and access to the user dashboard.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a predefined patient journey.",
+          "expected_result": "Patient journey is correctly initiated.",
+          "data_to_capture": [
+            "Journey initiation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Perform dual-scanning verification at each handoff point.",
+          "expected_result": "Successful verification and logging of each handoff event.",
+          "data_to_capture": [
+            "Verification status",
+            "Handoff logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Review the audit trail for all handoffs and custody events.",
+          "expected_result": "Complete and accurate audit trail is available.",
+          "data_to_capture": [
+            "Audit trail completeness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All handoffs and custody events are correctly verified and logged."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all handoff events are logged and auditable."
+      ],
+      "urs_requirements": [
+        "URS-028-002",
+        "URS-028-008"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Data integrity",
+        "Audit trail management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify End-to-End Workflow Template Configuration",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "To ensure that the platform can correctly configure and execute end-to-end workflow templates for apheresis, manufacturing, QC release, and infusion as per URS-028-001.",
+      "prerequisites": [
+        "Access to the platform with admin privileges",
+        "Predefined workflow templates"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the platform with admin credentials.",
+          "expected_result": "Successful login and access to workflow configuration settings.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select and configure a workflow template for apheresis.",
+          "expected_result": "Workflow template is configured and saved successfully.",
+          "data_to_capture": [
+            "Configuration status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Execute the configured workflow template.",
+          "expected_result": "Workflow executes without errors and follows the predefined steps.",
+          "data_to_capture": [
+            "Execution status",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Workflow templates are configured and executed without errors.",
+        "All predefined steps are followed correctly."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure all workflow steps are logged and auditable."
+      ],
+      "urs_requirements": [
+        "URS-028-001"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Workflow configuration",
+        "Platform administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Chain-of-Identity and Chain-of-Custody Enforcement",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "To verify that the platform enforces chain-of-identity and chain-of-custody with dual-scanning verification as per URS-028-002.",
+      "prerequisites": [
+        "Access to the platform with user privileges",
+        "Sample patient data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the platform with user credentials.",
+          "expected_result": "Successful login and access to patient data.",
+          "data_to_capture": [
+            "Login status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select a patient record and initiate a handoff process.",
+          "expected_result": "Handoff process requires dual-scanning verification.",
+          "data_to_capture": [
+            "Handoff initiation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Perform dual-scanning verification for the handoff.",
+          "expected_result": "Handoff is completed successfully with dual-scanning verification logged.",
+          "data_to_capture": [
+            "Verification status",
+            "Audit logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Chain-of-identity and chain-of-custody are enforced with dual-scanning verification.",
+        "All handoff events are logged and auditable."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all handoff events are logged and auditable."
+      ],
+      "urs_requirements": [
+        "URS-028-002"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Data integrity",
+        "Platform user operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Dual-Scanning Chain-of-Identity Verification Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system enforces dual-scanning verification for chain-of-identity and chain-of-custody as per URS-028-002.",
+      "prerequisites": [
+        "System configured with dual-scanning verification",
+        "Test patient and sample data loaded",
+        "Barcode scanners connected and configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample handoff event in the system.",
+          "expected_result": "System prompts for first operator scan of sample barcode.",
+          "data_to_capture": [
+            "Timestamp of first scan",
+            "Operator ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Scan the sample barcode with the first operator's credentials.",
+          "expected_result": "System validates the scan and prompts for second operator scan.",
+          "data_to_capture": [
+            "Validation status",
+            "Timestamp of second scan prompt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Scan the sample barcode with the second operator's credentials.",
+          "expected_result": "System completes the handoff event and records both scans in the audit trail.",
+          "data_to_capture": [
+            "Final validation status",
+            "Audit trail entry"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System requires and validates both scans before completing handoff",
+        "Audit trail contains complete dual-scan record with timestamps",
+        "Event fails if either scan is missing or invalid"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP requirements for chain-of-custody"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Immutable audit trail of all scans",
+        "Timestamp accuracy within 1 second"
+      ],
+      "urs_requirements": [
+        "URS-028-002",
+        "URS-028-008"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Barcode scanning systems",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Custom Algorithm Module Containerization Test",
+      "test_category": "installation",
+      "gamp_category": 4,
+      "objective": "Verify that custom algorithm modules are properly containerized and versioned as specified in URS-028-015.",
+      "prerequisites": [
+        "Custom algorithm module development environment",
+        "Container registry access",
+        "Docker or equivalent container runtime"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Package a test custom algorithm module into a container image.",
+          "expected_result": "Container image builds successfully with all dependencies.",
+          "data_to_capture": [
+            "Build logs",
+            "Image size"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Push the container image to the designated registry with version tag.",
+          "expected_result": "Image is successfully stored in registry with version metadata.",
+          "data_to_capture": [
+            "Registry response",
+            "Version tag"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Deploy the containerized module to the test environment.",
+          "expected_result": "Module executes as expected within container environment.",
+          "data_to_capture": [
+            "Deployment logs",
+            "Runtime performance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All custom modules are deployed as containerized units",
+        "Each container has unique version identifier",
+        "Modules function correctly within container environment"
+      ],
+      "regulatory_basis": [
+        "GAMP 5 for software development",
+        "Container security best practices"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Version control metadata integrity",
+        "Container image checksum validation"
+      ],
+      "urs_requirements": [
+        "URS-028-015"
+      ],
+      "related_tests": [
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Container technologies",
+        "Software versioning"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Integration with EHR System via Standard APIs",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the platform's ability to integrate seamlessly with the EHR system using standard APIs to ensure data consistency and real-time updates.",
+      "prerequisites": [
+        "EHR system access credentials",
+        "Configured API endpoints",
+        "Test patient data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the platform to connect to the EHR system using the provided API endpoints.",
+          "expected_result": "Connection established successfully with no errors.",
+          "data_to_capture": [
+            "Connection status",
+            "Error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send test patient data from the platform to the EHR system.",
+          "expected_result": "Data is received and updated in the EHR system accurately.",
+          "data_to_capture": [
+            "Data sent",
+            "Data received",
+            "Timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Retrieve updated patient data from the EHR system to the platform.",
+          "expected_result": "Data is retrieved and displayed correctly in the platform.",
+          "data_to_capture": [
+            "Data retrieved",
+            "Data displayed",
+            "Timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data consistency between platform and EHR system is maintained.",
+        "Real-time updates are reflected accurately."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP compliance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during transmission.",
+        "Verify data accuracy post-transmission."
+      ],
+      "urs_requirements": [
+        "URS-028-013"
+      ],
+      "related_tests": [
+        "OQ-008"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API integration",
+        "EHR system knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Custom Algorithm Module Explainability Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Ensure that custom algorithm modules provide explainability artifacts for their decisions, supporting transparency and regulatory compliance.",
+      "prerequisites": [
+        "Custom algorithm module installed",
+        "Test patient data",
+        "Explainability artifact template"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Run the custom algorithm module with test patient data.",
+          "expected_result": "Algorithm processes data and generates a decision.",
+          "data_to_capture": [
+            "Decision output",
+            "Processing time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate explainability artifacts for the algorithm's decision.",
+          "expected_result": "Artifacts are created and match the provided template.",
+          "data_to_capture": [
+            "Artifact content",
+            "Template match status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the explainability artifacts for clarity and completeness.",
+          "expected_result": "Artifacts clearly explain the decision-making process.",
+          "data_to_capture": [
+            "Reviewer feedback",
+            "Clarity score"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Explainability artifacts are generated for all decisions.",
+        "Artifacts meet regulatory requirements for transparency."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP compliance"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure explainability artifacts are accurate and complete.",
+        "Verify artifact generation process is reliable."
+      ],
+      "urs_requirements": [
+        "URS-028-016"
+      ],
+      "related_tests": [
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Algorithm explainability",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Chain-of-Identity and Chain-of-Custody Enforcement",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "To ensure the system enforces chain-of-identity and chain-of-custody with dual-scanning verification as per URS-028-002.",
+      "prerequisites": [
+        "System configured with dual-scanning verification",
+        "Sample patient journey data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a patient journey workflow in the system.",
+          "expected_result": "System prompts for dual-scanning verification at each handoff point.",
+          "data_to_capture": [
+            "Scan verification logs",
+            "Handoff timestamps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform dual-scanning verification at each handoff point.",
+          "expected_result": "System records each scan and updates the chain-of-identity and chain-of-custody logs.",
+          "data_to_capture": [
+            "Scan verification logs",
+            "Chain-of-identity logs",
+            "Chain-of-custody logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All handoff points require dual-scanning verification",
+        "Chain-of-identity and chain-of-custody logs are complete and accurate"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP compliance"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Audit trail for all handoffs and custody events"
+      ],
+      "urs_requirements": [
+        "URS-028-002",
+        "URS-028-008"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Data integrity verification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Validate Integration with EHR and LIMS Systems",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "To verify the system integrates seamlessly with EHR and LIMS systems via standard APIs as per URS-028-013.",
+      "prerequisites": [
+        "EHR and LIMS systems configured",
+        "API endpoints accessible"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Send a patient data request from the system to the EHR system.",
+          "expected_result": "EHR system responds with the correct patient data.",
+          "data_to_capture": [
+            "API request logs",
+            "Patient data received"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a sample data request from the system to the LIMS system.",
+          "expected_result": "LIMS system responds with the correct sample data.",
+          "data_to_capture": [
+            "API request logs",
+            "Sample data received"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System successfully retrieves patient data from EHR",
+        "System successfully retrieves sample data from LIMS"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP compliance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail for API transactions"
+      ],
+      "urs_requirements": [
+        "URS-028-013"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API integration",
+        "System configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "Integration with EHR System via Standard APIs",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify the platform's ability to integrate with an Electronic Health Record (EHR) system using standard APIs.",
+      "prerequisites": [
+        "EHR system available",
+        "API credentials configured",
+        "Test patient data prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the platform to connect to the EHR system using provided API credentials.",
+          "expected_result": "Platform successfully connects to the EHR system.",
+          "data_to_capture": [
+            "Connection status",
+            "API response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Retrieve test patient data from the EHR system using the platform.",
+          "expected_result": "Test patient data is accurately retrieved and displayed in the platform.",
+          "data_to_capture": [
+            "Retrieved data",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Platform successfully integrates with EHR system",
+        "Patient data is accurately retrieved"
+      ],
+      "regulatory_basis": [
+        "URS-028-013"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during retrieval"
+      ],
+      "urs_requirements": [
+        "URS-028-013"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "API integration",
+        "EHR systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Custom Algorithm Module Containerization and Versioning",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate that custom algorithm modules are properly containerized and versioned as per technical architecture requirements.",
+      "prerequisites": [
+        "Custom algorithm module developed",
+        "Containerization tools installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Containerize the custom algorithm module using Docker.",
+          "expected_result": "Custom algorithm module is successfully containerized.",
+          "data_to_capture": [
+            "Containerization status",
+            "Docker image details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Version the containerized module using a version control system.",
+          "expected_result": "Containerized module is properly versioned and stored in the version control system.",
+          "data_to_capture": [
+            "Version number",
+            "Version control system status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom algorithm module is containerized",
+        "Module is properly versioned"
+      ],
+      "regulatory_basis": [
+        "URS-028-015"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure versioning accuracy"
+      ],
+      "urs_requirements": [
+        "URS-028-015"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Containerization",
+        "Version control systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Dual-Scanning Chain-of-Identity Verification Test",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system enforces dual-scanning verification for chain-of-identity and chain-of-custody as specified in URS-028-002.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Test patient and sample data are loaded",
+        "Barcode scanners are connected and configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample handoff workflow in the system.",
+          "expected_result": "System prompts for dual-scanning verification of both sample and patient identifiers.",
+          "data_to_capture": [
+            "Scan timestamps",
+            "Operator IDs",
+            "Scan success/failure status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Scan only one identifier (either sample or patient).",
+          "expected_result": "System rejects the handoff and displays an error message requiring both scans.",
+          "data_to_capture": [
+            "Error message displayed",
+            "System state after rejection"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Scan both identifiers correctly.",
+          "expected_result": "System accepts the handoff and records the verification event in the audit trail.",
+          "data_to_capture": [
+            "Audit trail entry",
+            "Workflow progression status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System enforces dual-scanning verification before allowing handoff",
+        "All verification events are recorded in the audit trail",
+        "Error handling is appropriate for incomplete scans"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP requirements for chain-of-custody"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail must capture all verification attempts",
+        "No manual override of dual-scanning requirement"
+      ],
+      "urs_requirements": [
+        "URS-028-002",
+        "URS-028-008"
+      ],
+      "related_tests": [
+        "OQ-004 (Audit Trail Verification)"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Barcode scanning operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Custom Algorithm Module Integration Test",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify that optional custom-developed algorithm modules for patient-to-lot matching can be successfully integrated and executed as specified in URS-028-006 and URS-028-015.",
+      "prerequisites": [
+        "System core is installed and operational",
+        "Test containerized algorithm module is available",
+        "Test patient and manufacturing lot data are loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy the test containerized algorithm module to the designated module directory.",
+          "expected_result": "System detects and validates the module without errors.",
+          "data_to_capture": [
+            "Module validation logs",
+            "System status after deployment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate a patient-to-lot matching request through the system interface.",
+          "expected_result": "System successfully executes the custom algorithm and returns matching results.",
+          "data_to_capture": [
+            "Algorithm execution time",
+            "Matching results",
+            "Explainability artifacts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the explainability artifacts generated by the algorithm.",
+          "expected_result": "System provides human-interpretable decision rationale as specified in URS-028-016.",
+          "data_to_capture": [
+            "Explainability artifact format",
+            "Content completeness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System accepts and executes containerized custom modules",
+        "Algorithm results are integrated into the workflow",
+        "Explainability artifacts meet requirements",
+        "Module version is tracked in audit trail"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for algorithm decision records",
+        "FDA AI/ML Software as a Medical Device guidance"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Algorithm version must be immutable once deployed",
+        "All decision inputs/outputs must be logged"
+      ],
+      "urs_requirements": [
+        "URS-028-006",
+        "URS-028-015",
+        "URS-028-016"
+      ],
+      "related_tests": [
+        "OQ-008 (Workflow Execution with Custom Rules)"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Containerized application deployment",
+        "Algorithm validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Verify Custom Algorithm Module Containerization",
+      "test_category": "installation",
+      "gamp_category": 4,
+      "objective": "Ensure custom algorithm modules are correctly containerized and versioned as per URS-028-015.",
+      "prerequisites": [
+        "Custom algorithm module source code",
+        "Containerization tool (e.g., Docker)",
+        "Version control system (e.g., Git)"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Build the custom algorithm module using the containerization tool.",
+          "expected_result": "Container image is successfully built without errors.",
+          "data_to_capture": [
+            "Container image ID",
+            "Build logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Push the container image to the version control system.",
+          "expected_result": "Container image is successfully pushed and versioned.",
+          "data_to_capture": [
+            "Version tag",
+            "Push logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Container image is built and versioned correctly."
+      ],
+      "regulatory_basis": [
+        "URS-028-015"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure container image integrity is maintained."
+      ],
+      "urs_requirements": [
+        "URS-028-015"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Containerization",
+        "Version control"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Validate Explainability Artifacts for Algorithm Decisions",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom algorithm modules provide explainability artifacts for their decisions as per URS-028-016.",
+      "prerequisites": [
+        "Custom algorithm module deployed",
+        "Test dataset",
+        "Explainability tool (e.g., LIME, SHAP)"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Run the custom algorithm module with the test dataset.",
+          "expected_result": "Algorithm produces decisions without errors.",
+          "data_to_capture": [
+            "Algorithm output",
+            "Execution logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate explainability artifacts using the explainability tool.",
+          "expected_result": "Explainability artifacts are generated and match the algorithm decisions.",
+          "data_to_capture": [
+            "Explainability artifacts",
+            "Artifact generation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Explainability artifacts are generated and match the algorithm decisions."
+      ],
+      "regulatory_basis": [
+        "URS-028-016"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure explainability artifacts are accurate and consistent."
+      ],
+      "urs_requirements": [
+        "URS-028-016"
+      ],
+      "related_tests": [
+        "OQ-015"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Algorithm explainability",
+        "Data analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Custom Algorithm Module Containerization Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom algorithm modules are properly containerized and versioned as per technical architecture requirements.",
+      "prerequisites": [
+        "Custom algorithm module is developed and ready for testing",
+        "Containerization platform (e.g., Docker) is installed and configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy the custom algorithm module container to the test environment.",
+          "expected_result": "Container is successfully deployed without errors.",
+          "data_to_capture": [
+            "Deployment logs",
+            "Container status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the container version matches the specified version in the module documentation.",
+          "expected_result": "Container version is correctly labeled and matches documentation.",
+          "data_to_capture": [
+            "Container version information",
+            "Documentation version"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Execute the algorithm module with test data to ensure functionality within the container.",
+          "expected_result": "Algorithm processes test data and produces expected outputs.",
+          "data_to_capture": [
+            "Algorithm output",
+            "Processing logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom algorithm module is successfully containerized and deployed.",
+        "Container version is correctly documented and verified.",
+        "Algorithm functions as expected within the containerized environment."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure all algorithm outputs are traceable and verifiable.",
+        "Maintain audit trail of container deployment and execution."
+      ],
+      "urs_requirements": [
+        "URS-028-015: Custom algorithm modules shall be containerized and versioned."
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Containerization",
+        "Algorithm development"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Dual-Scanning Verification for Chain-of-Custody",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Verify that the system enforces dual-scanning verification for chain-of-identity and chain-of-custody events.",
+      "prerequisites": [
+        "System is configured with dual-scanning rules",
+        "Test samples with barcodes are available",
+        "Two authorized users with scanning devices are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a chain-of-custody event (e.g., sample handoff) in the system.",
+          "expected_result": "System prompts for dual-scanning verification.",
+          "data_to_capture": [
+            "System prompts",
+            "Event initiation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Have the first user scan the sample barcode.",
+          "expected_result": "System records the first scan and waits for the second scan.",
+          "data_to_capture": [
+            "First scan timestamp",
+            "User ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Have the second user scan the same sample barcode.",
+          "expected_result": "System completes the chain-of-custody event and updates the audit trail.",
+          "data_to_capture": [
+            "Second scan timestamp",
+            "User ID",
+            "Audit trail entry"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System enforces dual-scanning verification for chain-of-custody events.",
+        "Audit trail accurately records both scans and user IDs.",
+        "Event is only completed after successful dual-scanning."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GDP"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure all scans are recorded in the audit trail with timestamps and user IDs.",
+        "Prevent any chain-of-custody events without dual-scanning."
+      ],
+      "urs_requirements": [
+        "URS-028-002: Enforce chain-of-identity and chain-of-custody with dual-scanning verification.",
+        "URS-028-008: Full audit trail for all handoffs and custody events."
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Barcode scanning",
+        "Audit trail verification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Custom Algorithm Module Containerization Verification",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom algorithm modules are properly containerized and versioned as per URS-028-015.",
+      "prerequisites": [
+        "Custom algorithm module deployed",
+        "Container orchestration platform available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy the custom algorithm module container to the orchestration platform.",
+          "expected_result": "Container deploys successfully without errors.",
+          "data_to_capture": [
+            "Deployment logs",
+            "Container status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify the container version matches the specified version in the module documentation.",
+          "expected_result": "Container version is correctly displayed and matches documentation.",
+          "data_to_capture": [
+            "Container version",
+            "Documentation version"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom module container deploys successfully.",
+        "Container version matches documented version."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Version control must be maintained for all custom modules."
+      ],
+      "urs_requirements": [
+        "URS-028-015"
+      ],
+      "related_tests": [
+        "OQ-016"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Containerization",
+        "DevOps"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Explainability Artifacts Verification for Algorithm Decisions",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom algorithm modules provide explainability artifacts for decisions as per URS-028-016.",
+      "prerequisites": [
+        "Custom algorithm module deployed",
+        "Test dataset available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute the custom algorithm module with a test dataset.",
+          "expected_result": "Algorithm processes the dataset and produces output.",
+          "data_to_capture": [
+            "Algorithm output",
+            "Processing logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Retrieve and review the explainability artifacts generated by the algorithm.",
+          "expected_result": "Explainability artifacts are generated and provide clear insights into the decision-making process.",
+          "data_to_capture": [
+            "Artifact content",
+            "Artifact format"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Algorithm produces explainability artifacts.",
+        "Artifacts are understandable and relevant to decisions."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "FDA AI/ML Guidelines"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Explainability artifacts must be accurate and traceable."
+      ],
+      "urs_requirements": [
+        "URS-028-016"
+      ],
+      "related_tests": [
+        "OQ-019"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Algorithm validation",
+        "Data science"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 630,
+  "generation_timestamp": "2025-08-21T15:40:21.336289+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-21T15:40:21.507491+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-21T15:32:17.840098+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}
