@@ -1,0 +1,49 @@
+C:\Users\anteb\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_fields.py:198: UserWarning: Field name "schema" in "OQTestSuite" shadows an attribute in parent "BaseModel"
+  warnings.warn(
+Phoenix UI not available. Install with: pip install arize-phoenix
+[ERROR] OpenInference LlamaIndex instrumentation not available: No module named 'openinference.instrumentation.llama_index'
+Install with: pip install openinference-instrumentation-llama-index
+[ERROR] Fallback instrumentation also failed: ArizePhoenixCallbackHandler is not installed. Please install it using `pip install llama-index-callbacks-arize-phoenix`
+[ERROR] OpenAI instrumentation not available: No module named 'openinference.instrumentation.openai'
+Install with: pip install openinference-instrumentation-openai
+[ERROR] OpenAI instrumentation failed: OpenAI instrumentation required for pharmaceutical compliance tracing
+VALIDATION MODE ACTIVE: This bypasses consultation requirements for testing. Ensure this is intentional and not in production environment. Set VALIDATION_MODE_EXPLICIT=true to suppress this warning.
+Traceback (most recent call last):
+  File "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\src\shared\output_manager.py", line 79, in safe_print
+    print(str_message, **kwargs)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\anteb\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4c4' in position 0: character maps to <undefined>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\run_demo_final.py", line 54, in run_demo
+    await run_with_event_logging(document_path, args)
+  File "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\main.py", line 278, in run_with_event_logging
+    safe_print(f"\U0001f4c4 Loading document: {document_path}")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\src\shared\output_manager.py", line 182, in safe_print
+    return get_output_manager().safe_print(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\src\shared\output_manager.py", line 93, in safe_print
+    print(error_msg, **kwargs)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\anteb\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4c4' in position 206: character maps to <undefined>
+C:\Users\anteb\Desktop\Courses\Projects\thesis_project\main\run_demo_final.py:81: RuntimeWarning: coroutine 'wait_for' was never awaited
+  asyncio.wait_for(
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+[10:38:34] Starting demonstration workflow
+OpenAI API Key present: True
+OpenRouter API Key present: True
+[10:38:37] Loading document: URS-001.md
+[10:38:37] Running FULL unified workflow (not categorization-only)
+[10:38:37] Expected duration: 5-8 minutes
+[DATA] Setting up event logging system...
+
+[10:38:37] Error: 'charmap' codec can't encode character '\U0001f4c4' in position 206: character maps to <undefined>
