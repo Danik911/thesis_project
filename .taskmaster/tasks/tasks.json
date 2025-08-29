@@ -1391,6 +1391,17 @@
       ],
       "priority": "high",
       "subtasks": []
+    },
+    {
+      "id": 43,
+      "title": "Fix Human-in-the-Loop Consultation Terminal Blocking",
+      "description": "The critical human-in-the-loop consultation terminal blocking issue has been resolved. The system now uses an event-driven consultation mechanism that prevents terminal freezing during workflow execution. Consultation is triggered when confidence < 0.7 and operates in single console mode with proper operator authentication. The solution maintains full 21 CFR Part 11 compliance and provides a complete audit trail with consultation_id tracking.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Implementation summary:\n- Added ConsultationInputEvent to events.py, extending InputRequiredEvent\n- Created consultation_handler.py with an event-driven consultation system\n- Replaced blocking handle_consultation() step with an asynchronous event pattern\n- Enhanced progress display for consultation operations\n- Removed all synchronous input() calls from workflow steps\n- Implemented event-driven consultation: ConsultationInputEvent → HumanResponseEvent\n- Added external consultation handler outside workflow architecture\n- Ensured explicit error handling with no fallbacks\n- Maintained GAMP-5 categorization validation (1, 3, 4, 5)\n- Operator authentication now uses digital signatures\n- Complete audit trail with consultation_id tracking\n- Model configuration restricted to DeepSeek V3 only (NO OpenAI models)\n\nFiles modified:\n- main/src/core/events.py (added ConsultationInputEvent)\n- main/src/core/unified_workflow.py (event-driven handle_consultation step)\n- main/src/core/consultation_handler.py (NEW - consultation handler)\n- main/test_consultation_fix.py (NEW - validation test script)\n- main/docs/tasks/task_43_human_consultation_fix.md (NEW - documentation)\n\nAll previous root issues (terminal blocking, missing events, progress display, operator authentication) have been addressed. The system is ready for user testing.",
+      "testStrategy": "1. Test with low confidence document (0.20 confidence triggers consultation)\n2. Verify terminal shows progress during agent execution and consultation\n3. Confirm consultation prompts appear in single console and are handled asynchronously\n4. Check Phoenix traces capture all workflow and consultation events\n5. Validate operator authentication collection and digital signature logging\n6. Run main/test_consultation_fix.py to ensure all validation steps pass\n7. Confirm audit trail includes consultation_id for all relevant events",
+      "subtasks": []
     }
   ]
 }

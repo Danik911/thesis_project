@@ -1,0 +1,23 @@
+{
+  "demonstration": "Human-in-the-Loop Consultation",
+  "timestamp": "2025-08-28T18:13:24.005197",
+  "validation_mode": "false",
+  "results": [
+    {
+      "document": "URS-028 (Ambiguous Category 4/5)",
+      "path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\corpus_3\\ambiguous\\URS-028.md",
+      "consultation_triggered": true,
+      "consultation_type": "timeout_after_consultation_request",
+      "duration_seconds": 32.019661,
+      "timestamp": "2025-08-28T18:12:51.984574"
+    },
+    {
+      "document": "URS-029 (Category 5)",
+      "path": "C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project\\datasets\\corpus_3\\category_5\\URS-029.md",
+      "consultation_triggered": true,
+      "consultation_type": "timeout_after_consultation_request",
+      "duration_seconds": 32.013418,
+      "timestamp": "2025-08-28T18:13:23.999848"
+    }
+  ]
+}

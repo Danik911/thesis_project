@@ -622,11 +622,57 @@ class CategorizationErrorHandler:
         except Exception as e:
             self.logger.error(f"SME consultation setup failed: {e}. NO fallbacks available per regulatory requirements")
 
-        # NO FALLBACKS - Throw error when SME consultation fails
-        raise RuntimeError(
-            f"GAMP categorization failed for '{document_name}': "
-            f"Original confidence {confidence:.1%} below threshold {self.confidence_threshold:.1%}, "
-            f"and SME consultation failed. No fallback allowed - system requires explicit resolution."
+        # NO FALLBACKS - Return low-confidence event for human consultation instead of throwing error
+        # Following human-in-the-loop pattern: failures become events, not exceptions
+        self.logger.error(
+            f"❌ SME CONSULTATION FAILED - Returning low-confidence categorization event for human review "
+            f"(Original confidence: {confidence:.1%}, Threshold: {self.confidence_threshold:.1%})"
+        )
+        
+        # Create audit log for SME consultation failure  
+        if self.enable_audit_logging:
+            sme_failure_audit_entry = AuditLogEntry(
+                action="SME_CONSULTATION_FAILED",
+                document_name=document_name,
+                confidence_score=confidence,
+                decision_rationale=f"SME consultation failed. Human review required for low-confidence categorization."
+            )
+            self.audit_log.append(sme_failure_audit_entry)
+            self._log_audit_entry(sme_failure_audit_entry)
+
+        # Return GAMPCategorizationEvent with low confidence for human consultation workflow
+        # Use Category 5 as conservative default for failed categorization requiring maximum validation
+        return GAMPCategorizationEvent(
+            gamp_category=GAMPCategory.CATEGORY_5,  # Conservative choice for unknown categorization
+            confidence_score=confidence,  # Use original confidence that triggered consultation
+            justification=f"Low-Confidence Categorization Requiring Human Review:\n\n"
+                         f"Original agent confidence {confidence:.1%} was below threshold {self.confidence_threshold:.1%}.\n"
+                         f"SME consultation failed or provided inconclusive results.\n\n"
+                         f"REGULATORY COMPLIANCE NOTICE:\n"
+                         f"- Human expert review required for GAMP-5 categorization\n"
+                         f"- Conservative Category 5 assignment pending expert review\n"
+                         f"- Full validation approach recommended until expert categorization\n\n"
+                         f"NEXT STEPS:\n"
+                         f"1. Human GAMP-5 expert reviews document: {document_name}\n"
+                         f"2. Expert provides validated category with justification\n"
+                         f"3. System records human decision with audit trail\n"
+                         f"4. Workflow continues with validated categorization",
+            risk_assessment={
+                "category": 5,  # Conservative Category 5
+                "category_description": "Conservative Category 5 pending human expert review",
+                "validation_approach": "Full GAMP-5 validation recommended pending expert categorization",
+                "confidence_score": confidence,
+                "requires_human_review": True,
+                "consultation_failed": True,
+                "original_confidence": confidence,
+                "consultation_threshold": self.confidence_threshold,
+                "regulatory_impact": "High - Human expert categorization required for compliance",
+                "validation_effort": "Full validation recommended until expert provides final category"
+            },
+            event_id=uuid4(),
+            timestamp=datetime.now(UTC),
+            categorized_by="CategorizationAgent-ConsultationFailed", 
+            review_required=True  # Critical: This signals workflow to trigger human consultation
         )
 
     def _extract_sme_category_recommendation(self, sme_data: dict[str, Any]) -> int:

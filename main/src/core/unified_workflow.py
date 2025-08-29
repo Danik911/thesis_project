@@ -22,6 +22,7 @@ Workflow Flow:
 """
 
 import logging
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -41,24 +42,28 @@ from src.compliance import (
     get_validation_framework,
     get_worm_storage,
 )
-from src.compliance.part11_signatures import SignatureMeaning
 from src.compliance.alcoa_validator import ALCOAPlusValidator
+from src.compliance.part11_signatures import SignatureMeaning
 
 # from llama_index.llms.openai import OpenAI  # Migrated to centralized LLM config
 from src.config.llm_config import LLMConfig
 from src.core.categorization_workflow import GAMPCategorizationWorkflow
+from src.core.consultation_handler import process_consultation_input
 from src.core.events import (
     AgentRequestEvent,
     AgentResultEvent,
     AgentResultsEvent,
     ConsultationBypassedEvent,
+    ConsultationInputEvent,
     ConsultationRequiredEvent,
     GAMPCategorizationEvent,
     GAMPCategory,
     PlanningEvent,
     URSIngestionEvent,
 )
-from src.core.human_consultation import HumanConsultationManager
+from src.core.human_consultation import (
+    HumanConsultationManager,
+)
 from src.monitoring.phoenix_config import setup_phoenix
 from src.monitoring.simple_tracer import get_tracer
 
@@ -76,6 +81,75 @@ config = get_config()
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def flush_output():
+    """Ensure terminal output is displayed immediately."""
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+
+async def show_progress_during_wait(coro, timeout, operation_name="Operation", agent_type="agent"):
+    """
+    Execute a coroutine with progress indicators to prevent terminal blocking.
+    
+    Enhanced with faster updates and immediate flush for better user experience
+    during human consultation workflows.
+    
+    Args:
+        coro: Coroutine to execute
+        timeout: Timeout in seconds
+        operation_name: Name of the operation for display
+        agent_type: Type of agent for logging
+        
+    Returns:
+        Result of the coroutine
+    """
+    import asyncio
+    import time
+
+    start_time = time.time()
+    print(f"🔄 {operation_name} for {agent_type} agent starting (timeout: {timeout}s)...")
+    flush_output()
+
+    # Create progress task with special handling for consultation
+    async def show_progress():
+        elapsed = 0
+        update_interval = 1.0 if "consultation" in operation_name.lower() else 2.0
+        while True:
+            await asyncio.sleep(update_interval)
+            elapsed = time.time() - start_time
+            remaining = max(0, timeout - elapsed)
+
+            # Special message for consultation operations
+            if "consultation" in operation_name.lower():
+                print(f"   👤 Waiting for human consultation: {elapsed:.0f}s elapsed, {remaining:.0f}s remaining...")
+            else:
+                print(f"   ⏱️  {operation_name}: {elapsed:.0f}s elapsed, {remaining:.0f}s remaining...")
+            flush_output()
+
+    # Start progress indicator
+    progress_task = asyncio.create_task(show_progress())
+
+    try:
+        # Execute the main operation with timeout
+        result = await asyncio.wait_for(coro, timeout=timeout)
+        elapsed = time.time() - start_time
+        print(f"✅ {operation_name} completed successfully in {elapsed:.1f}s")
+        flush_output()
+        return result
+    except TimeoutError:
+        elapsed = time.time() - start_time
+        print(f"❌ {operation_name} timed out after {elapsed:.1f}s")
+        flush_output()
+        raise
+    finally:
+        # Cancel progress indicator
+        progress_task.cancel()
+        try:
+            await progress_task
+        except asyncio.CancelledError:
+            pass
 
 
 # Safe context management functions for preventing state failures
@@ -421,11 +495,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if enable_phoenix:
             setup_phoenix()
             self.logger.info("[PHOENIX] Phoenix observability enabled")
-        
+
         # Initialize agent cache to prevent resource leaks
         self._cached_research_agent = None
         self.logger.debug("[AGENTS] Agent caching initialized for resource management")
-    
+
     def close(self) -> None:
         """Close workflow and clean up resources."""
         self.logger.debug(f"[CLEANUP] Closing UnifiedWorkflow: {self._workflow_session_id}")
@@ -433,7 +507,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             self.logger.debug("[CLEANUP] Closing cached research agent")
             self._cached_research_agent.close()
             self._cached_research_agent = None
-    
+
     def __del__(self):
         """Destructor cleanup as safety net."""
         try:
@@ -516,6 +590,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         audit_trail = get_audit_trail()
 
         self.logger.info("[WORKFLOW] Starting unified test generation workflow")
+        flush_output()
 
         # Log workflow initiation state transition
         audit_trail.log_state_transition(
@@ -690,6 +765,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         audit_trail = get_audit_trail()
 
         self.logger.info(f"[GAMP5] Starting GAMP-5 categorization for {ev.document_name}")
+        flush_output()
 
         # Log state transition to categorization
         audit_trail.log_state_transition(
@@ -748,7 +824,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
         if isinstance(categorization_data, GAMPCategorizationEvent):
             categorization_event = categorization_data
             await safe_context_set(ctx, "gamp_category", categorization_data.gamp_category)
-            self.logger.info(f"[GAMP5] GAMP-5 Category: {categorization_data.gamp_category.value}")
+            # Display categorization results
+            print("\n📊 CATEGORIZATION RESULTS:")
+            print(f"   Category: {categorization_data.gamp_category.value}")
+            print(f"   Confidence: {categorization_data.confidence_score:.2%}")
+            flush_output()
+            self.logger.info(f"[GAMP5] Category {categorization_data.gamp_category.value} with confidence {categorization_data.confidence_score:.2%}")
         # Handle dict or other formats
         elif isinstance(categorization_data, dict):
             await safe_context_set(ctx, "gamp_category", categorization_data.get("gamp_category"))
@@ -760,7 +841,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 session_id=self._workflow_session_id
             )
             gamp_cat = categorization_data.get("gamp_category")
-            self.logger.info(f"✅ GAMP-5 Category: {gamp_cat}")
+            conf_score = categorization_data.get("confidence_score", 0.0)
+            # Display categorization results
+            print("\n📊 CATEGORIZATION RESULTS:")
+            print(f"   Category: {gamp_cat}")
+            print(f"   Confidence: {conf_score:.2%}")
+            flush_output()
+            self.logger.info(f"[GAMP5] Category {gamp_cat} with confidence {conf_score:.2%}")
         else:
             await safe_context_set(ctx, "gamp_category", categorization_data.gamp_category)
             categorization_event = GAMPCategorizationEvent(
@@ -771,51 +858,51 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 session_id=self._workflow_session_id
             )
             self.logger.info(f"[GAMP5] GAMP-5 Category: {categorization_data.gamp_category.value}")
-        
+
         # Add electronic signature for categorization (21 CFR Part 11)
         config = get_config()
         if self.enable_part11_compliance and self.signature_service and not config.validation_mode.validation_mode:
             try:
                 # Extract document name from content or use default
                 doc_name = "document"
-                if hasattr(ev, 'file_path'):
+                if hasattr(ev, "file_path"):
                     doc_name = Path(ev.file_path).name
-                elif hasattr(ev, 'urs_content') and ev.urs_content:
+                elif hasattr(ev, "urs_content") and ev.urs_content:
                     # Try to extract from URS content
                     doc_name = str(ev.urs_content)[:50] if ev.urs_content else "document"
-                
+
                 signature_binding = self.signature_service.bind_signature_to_record(
                     record_id=f"cat_{self._workflow_session_id}",
                     record_content={
                         "action": "gamp_categorization",
-                        "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, 'value') else str(categorization_event.gamp_category),
+                        "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, "value") else str(categorization_event.gamp_category),
                         "confidence": categorization_event.confidence_score,
                         "document": doc_name,
                         "timestamp": datetime.now(UTC).isoformat()
                     },
-                    signer_name=getattr(config, 'user_name', 'System'),
-                    signer_id=getattr(config, 'user_id', 'system'),
+                    signer_name=getattr(config, "user_name", "System"),
+                    signer_id=getattr(config, "user_id", "system"),
                     signature_meaning=SignatureMeaning.REVIEWED,
                     additional_context={
                         "workflow_session": self._workflow_session_id,
                         "risk_assessment": categorization_event.risk_assessment
                     }
                 )
-                
+
                 self.logger.info(f"[SIGNATURE] Categorization signed: {signature_binding.signature_id}")
-                
+
             except Exception as sig_e:
                 self.logger.warning(f"[SIGNATURE] Electronic signature failed for categorization: {sig_e}")
                 # Continue without signature in case of error
         elif config.validation_mode.validation_mode:
             self.logger.info("[SIGNATURE] Skipping categorization signature in validation mode")
-        
+
         # Add ALCOA+ record for categorization with enhanced metadata
         try:
-            import sys
-            import platform
             import os
-            
+            import platform
+            import sys
+
             alcoa_validator = ALCOAPlusValidator()
             alcoa_record = alcoa_validator.create_data_record(
                 data={
@@ -825,17 +912,17 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "risk_assessment": ev.risk_assessment,
                     "regulatory_basis": "GAMP-5",
                     "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"],
-                    "document_name": getattr(ev, 'document_name', 'Unknown'),
+                    "document_name": getattr(ev, "document_name", "Unknown"),
                     "categorization_rationale": ev.risk_assessment.get("rationale", ""),
                     "system_type": ev.risk_assessment.get("system_type", ""),
                     "timestamp": datetime.now(UTC).isoformat()
                 },
-                user_id=getattr(config, 'user_name', 'System'),
+                user_id=getattr(config, "user_name", "System"),
                 agent_name="categorization_agent",
                 activity="gamp_categorization",
                 metadata={
                     "workflow_id": str(self.workflow_id),
-                    "document_id": getattr(ev, 'document_name', 'Unknown'),
+                    "document_id": getattr(ev, "document_name", "Unknown"),
                     "confidence_score": ev.confidence,
                     "risk_level": ev.risk_assessment.get("risk_level", "Unknown"),
                     "risk_factors": ev.risk_assessment.get("risk_factors", []),
@@ -851,7 +938,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             self.logger.info(f"[ALCOA+] Created categorization record with hash: {alcoa_record.get('data_hash', 'N/A')[:8]}...")
         except Exception as e:
             self.logger.warning(f"[ALCOA+] Failed to create categorization record: {e}")
-        
+
         return categorization_event
 
     @step
@@ -871,6 +958,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             AgentRequestEvent for next agent to execute, or AgentResultsEvent if no coordination needed
         """
         self.logger.info("[PARALLEL] Starting parallel agent coordination from planning event")
+        flush_output()
 
         # Store the planning event in context using safe operations
         await safe_context_set(ctx, "planning_event", ev)
@@ -982,10 +1070,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
         import time
         start_time = time.time()
         self.logger.info(f"[AGENT] Executing {ev.agent_type} agent request")
+        flush_output()
 
         try:
             # Import asyncio for timeout protection
-            import asyncio
 
             # Dynamic timeout configuration based on agent type and operation
             timeout_mapping = {
@@ -995,8 +1083,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
             }
 
             agent_timeout = timeout_mapping.get(ev.agent_type.lower(), 60.0)  # Default 1 minute
-            
+
             self.logger.info(f"[AGENT] Starting {ev.agent_type} agent with {agent_timeout}s timeout")
+            flush_output()
 
             # Execute actual agents based on type with timeout protection
             if ev.agent_type.lower() == "context_provider":
@@ -1011,18 +1100,21 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     max_documents=10
                 )
 
-                # Process the request with timeout
+                # Process the request with timeout and progress indicators
                 try:
-                    result_event = await asyncio.wait_for(
+                    result_event = await show_progress_during_wait(
                         agent.process_request(ev),
-                        timeout=agent_timeout
+                        timeout=agent_timeout,
+                        operation_name="Context Processing",
+                        agent_type=ev.agent_type
                     )
                 except TimeoutError:
                     timeout_msg = f"CRITICAL: {ev.agent_type} agent timed out after {agent_timeout} seconds. This prevents OQ generation from starting."
                     self.tracer.log_error(f"{ev.agent_type}_timeout", Exception(timeout_msg))
                     self.logger.error(f"[TIMEOUT] {timeout_msg}")
                     self.logger.error(f"[TIMEOUT] Agent type: {ev.agent_type}, Request data: {ev.request_data}")
-                    self.logger.error(f"[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
+                    self.logger.error("[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
+                    flush_output()
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -1039,6 +1131,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 result_event.session_id = self._workflow_session_id
                 processing_time = time.time() - start_time
                 self.logger.info(f"[AGENT] {ev.agent_type} agent completed successfully in {processing_time:.2f}s (timeout was {agent_timeout}s)")
+                flush_output()
                 return result_event
 
             if ev.agent_type.lower() == "sme":
@@ -1050,18 +1143,21 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     verbose=self.verbose
                 )
 
-                # Process the request with timeout
+                # Process the request with timeout and progress indicators
                 try:
-                    result_event = await asyncio.wait_for(
+                    result_event = await show_progress_during_wait(
                         agent.process_request(ev),
-                        timeout=agent_timeout
+                        timeout=agent_timeout,
+                        operation_name="SME Analysis",
+                        agent_type=ev.agent_type
                     )
                 except TimeoutError:
                     timeout_msg = f"CRITICAL: {ev.agent_type} agent timed out after {agent_timeout} seconds. This prevents OQ generation from starting."
                     self.tracer.log_error(f"{ev.agent_type}_timeout", Exception(timeout_msg))
                     self.logger.error(f"[TIMEOUT] {timeout_msg}")
                     self.logger.error(f"[TIMEOUT] Agent type: {ev.agent_type}, Request data: {ev.request_data}")
-                    self.logger.error(f"[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
+                    self.logger.error("[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
+                    flush_output()
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -1078,6 +1174,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 result_event.session_id = self._workflow_session_id
                 processing_time = time.time() - start_time
                 self.logger.info(f"[AGENT] {ev.agent_type} agent completed successfully in {processing_time:.2f}s (timeout was {agent_timeout}s)")
+                flush_output()
                 return result_event
 
             if ev.agent_type.lower() == "research":
@@ -1090,21 +1187,24 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     self.logger.debug(f"[AGENTS] Created cached research agent: {id(self._cached_research_agent)}")
                 else:
                     self.logger.debug(f"[AGENTS] Reusing cached research agent: {id(self._cached_research_agent)}")
-                
+
                 agent = self._cached_research_agent
 
-                # Process the request with timeout
+                # Process the request with timeout and progress indicators
                 try:
-                    result_event = await asyncio.wait_for(
+                    result_event = await show_progress_during_wait(
                         agent.process_request(ev),
-                        timeout=agent_timeout
+                        timeout=agent_timeout,
+                        operation_name="Research & Regulatory Updates",
+                        agent_type=ev.agent_type
                     )
                 except TimeoutError:
                     timeout_msg = f"CRITICAL: {ev.agent_type} agent timed out after {agent_timeout} seconds. This prevents OQ generation from starting."
                     self.tracer.log_error(f"{ev.agent_type}_timeout", Exception(timeout_msg))
                     self.logger.error(f"[TIMEOUT] {timeout_msg}")
                     self.logger.error(f"[TIMEOUT] Agent type: {ev.agent_type}, Request data: {ev.request_data}")
-                    self.logger.error(f"[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
+                    self.logger.error("[TIMEOUT] Workflow will not proceed to OQ generation due to agent failure.")
+                    flush_output()
                     return AgentResultEvent(
                         agent_type=ev.agent_type,
                         correlation_id=ev.correlation_id,
@@ -1121,6 +1221,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 result_event.session_id = self._workflow_session_id
                 processing_time = time.time() - start_time
                 self.logger.info(f"[AGENT] {ev.agent_type} agent completed successfully in {processing_time:.2f}s (timeout was {agent_timeout}s)")
+                flush_output()
                 return result_event
 
             # Unknown agent type
@@ -1237,20 +1338,42 @@ class UnifiedTestGenerationWorkflow(Workflow):
             return self._create_planning_event_from_categorization(ev)
 
         # Check if consultation is required
+        # CRITICAL FIX: Check original confidence for SME-recovered categorizations
+        # If categorization initially failed but was recovered by SME consultation,
+        # we must still trigger human consultation based on the ORIGINAL failure
+        risk_assessment = ev.risk_assessment or {}
+        
+        # Determine which confidence score to use for consultation check
+        confidence_for_consultation = ev.confidence_score
+        
+        # If this came from SME consultation recovery, use original confidence
+        if "original_confidence" in risk_assessment:
+            confidence_for_consultation = risk_assessment["original_confidence"]
+            self.logger.warning(
+                f"[AUDIT TRAIL] SME consultation recovery detected - using original confidence "
+                f"{confidence_for_consultation:.2f} for consultation decision (recovered to {ev.confidence_score:.2f})"
+            )
+        
         requires_consultation = (
-            ev.confidence_score < bypass_threshold or  # Low confidence
-            ev.gamp_category.value in [4, 5] or  # High-risk categories
-            "consultation_required" in ev.risk_assessment.get("flags", [])
+            confidence_for_consultation < bypass_threshold or  # Use appropriate confidence
+            "consultation_required" in risk_assessment.get("flags", [])  # Explicit flags trigger
         )
 
         if requires_consultation:
             # Create the consultation event that would be required
+            # Include both original and current confidence for full transparency
+            reason_text = f"Category {ev.gamp_category.value} with confidence {ev.confidence_score:.2f}"
+            if "original_confidence" in risk_assessment:
+                reason_text = f"Category {ev.gamp_category.value} - Original confidence {confidence_for_consultation:.2f}, recovered to {ev.confidence_score:.2f} via SME consultation"
+            
             consultation_event = ConsultationRequiredEvent(
                 consultation_type="categorization_review",
                 context={
-                    "reason": f"Category {ev.gamp_category.value} with confidence {ev.confidence_score:.2f}",
+                    "reason": reason_text,
                     "gamp_category": ev.gamp_category,
                     "confidence_score": ev.confidence_score,
+                    "original_confidence": confidence_for_consultation,  # Always include the confidence used for decision
+                    "sme_recovery": "original_confidence" in risk_assessment,
                     "risk_assessment": ev.risk_assessment,
                     "session_id": self._workflow_session_id
                 },
@@ -1406,7 +1529,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         ev: ConsultationRequiredEvent
     ) -> PlanningEvent:
         """
-        Handle human consultation requirements.
+        Handle human consultation requirements using event-driven pattern.
+        
+        This step no longer blocks the terminal with input() calls. Instead,
+        it uses the event-driven consultation system to collect human input
+        without interfering with the LlamaIndex workflow execution.
         
         Args:
             ctx: Workflow context
@@ -1417,37 +1544,108 @@ class UnifiedTestGenerationWorkflow(Workflow):
         """
         self.logger.info(f"[CONSULT] Processing consultation: {ev.context.get('reason', 'Unknown reason')}")
 
-        # In a real implementation, this would trigger human consultation UI
-        # For now, we'll simulate consultation completion
-        consultation_result = {
-            "consultation_reason": ev.context.get("reason", "Unknown reason"),
-            "consultation_timestamp": datetime.now(UTC).isoformat(),
-            "consultation_status": "simulated_approval",
-            "approved_category": ev.context.get("gamp_category", 5)  # Default to highest category
-        }
+        # Get consultation context from categorization results
+        context = ev.context
+        reason = context.get("reason", "Low confidence categorization")
+        suggested_category = context.get("gamp_category", None)
+        confidence_score = context.get("confidence_score", 0.0)
 
-        await safe_context_set(ctx, "consultation_result", consultation_result)
+        # Create consultation input event with complete context
+        consultation_prompt = self._build_consultation_prompt(reason, suggested_category, confidence_score)
 
-        # Create planning event after consultation to continue workflow
-        if hasattr(ev, "categorization_event"):
-            # Use the original categorization event to create planning event
-            return self._create_planning_event_from_categorization(ev.categorization_event)
-
-        # Create new categorization event and planning event from consultation context
-        gamp_category = GAMPCategory(ev.context.get("gamp_category", 5))
-        confidence_score = ev.context.get("confidence_score", 0.5)
-
-        # Create a mock categorization event for planning
-        categorization_event = GAMPCategorizationEvent(
-            gamp_category=gamp_category,
-            confidence_score=confidence_score,
-            justification="Categorization after human consultation",
-            risk_assessment=ev.context.get("risk_assessment", {"consultation_completed": True}),
-            review_required=True,
-            categorized_by="consultation_system"
+        consultation_input_event = ConsultationInputEvent(
+            consultation_context=context,
+            prompt_text=consultation_prompt,
+            timeout_seconds=300,  # 5 minute timeout
+            consultation_type="gamp_categorization",
+            urgency="high"  # Low confidence requires immediate attention
         )
 
-        return self._create_planning_event_from_categorization(categorization_event)
+        self.logger.info(f"[CONSULT] Requesting human input for consultation {consultation_input_event.consultation_id}")
+
+        try:
+            # Process consultation using external handler (non-blocking)
+            human_response = await process_consultation_input(consultation_input_event)
+
+            self.logger.info(f"[CONSULT] Received human response from {human_response.user_id}")
+
+            # Extract consultation results from human response
+            response_data = human_response.response_data
+            approved_category = response_data["gamp_category"]
+            justification = response_data["category_justification"]
+
+            # Create comprehensive consultation result for audit trail
+            consultation_result = {
+                "consultation_reason": reason,
+                "consultation_timestamp": human_response.timestamp.isoformat(),
+                "consultation_status": "human_approved",
+                "approved_category": approved_category,
+                "original_confidence": confidence_score,
+                "original_suggestion": suggested_category,
+                "operator_name": human_response.user_id,
+                "operator_role": human_response.user_role,
+                "decision_rationale": human_response.decision_rationale,
+                "digital_signature": human_response.digital_signature,
+                "consultation_id": str(consultation_input_event.consultation_id),
+                "regulatory_impact": human_response.regulatory_impact,
+                "confidence_level": human_response.confidence_level,
+                "method": "event_driven_consultation"
+            }
+
+            await safe_context_set(ctx, "consultation_result", consultation_result)
+
+            # Create planning event after consultation to continue workflow
+            if hasattr(ev, "categorization_event"):
+                # Use the original categorization event to create planning event
+                return self._create_planning_event_from_categorization(ev.categorization_event)
+
+            # Create new categorization event using human-approved category
+            gamp_category = GAMPCategory(approved_category)
+
+            # Create a categorization event with human-approved results
+            categorization_event = GAMPCategorizationEvent(
+                gamp_category=gamp_category,
+                confidence_score=1.0,  # Human decisions have full confidence
+                justification=f"Human-approved categorization: Category {approved_category} - {justification}",
+                risk_assessment={
+                    "consultation_completed": True,
+                    "human_approved": True,
+                    "method": "event_driven_consultation",
+                    "approval_status": "human_approved",
+                    "operator": human_response.user_id,
+                    "operator_role": human_response.user_role
+                },
+                review_required=False,  # No further review needed after human approval
+                categorized_by=f"human_consultation_{human_response.user_id}"
+            )
+
+            return self._create_planning_event_from_categorization(categorization_event)
+
+        except Exception as e:
+            self.logger.error(f"[CONSULT] Consultation failed: {e!s}")
+            # NO FALLBACKS - Surface error explicitly
+            raise RuntimeError(f"Human consultation failed: {e!s}. No fallback available - human input required.")
+
+    def _build_consultation_prompt(self, reason: str, suggested_category, confidence_score: float) -> str:
+        """Build consultation prompt text for display."""
+        prompt_lines = [
+            f"Reason: {reason}",
+            f"AI Confidence: {confidence_score:.2%}"
+        ]
+
+        if suggested_category:
+            if hasattr(suggested_category, "value"):
+                suggested_category = suggested_category.value
+            prompt_lines.append(f"AI Suggestion: Category {suggested_category}")
+
+        prompt_lines.extend([
+            "",
+            "⚠️  Low confidence detected - human expertise required",
+            "",
+            "Please select the appropriate GAMP-5 category for this software component."
+        ])
+
+        return "\n".join(prompt_lines)
 
     @step
     async def generate_oq_tests(
@@ -1466,6 +1664,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             OQTestSuiteEvent with generated test suite
         """
         self.logger.info("[OQ] Starting OQ test generation")
+        flush_output()
 
         # Validate critical workflow state exists before proceeding
         await validate_workflow_state(ctx, ["planning_event", "categorization_result"])
@@ -1540,7 +1739,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         try:
             self.logger.info("Running OQ test generation workflow with data...")
-            
+
             event_data = {
                 "gamp_category": oq_generation_event.gamp_category.value,
                 "urs_content": oq_generation_event.urs_content,
@@ -1551,20 +1750,20 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "categorization_confidence": categorization_result.confidence_score,
                 "correlation_id": oq_generation_event.correlation_id
             }
-            
+
             self.logger.info(f"Calling workflow.run() with data keys: {list(event_data.keys())}")
-            
+
             # CRITICAL FIX: Call workflow with data parameter, not StartEvent
             self.logger.info("About to call OQ workflow.run() - checking before execution")
             oq_result = await oq_workflow.run(data=event_data)
             self.logger.info(f"OQ workflow completed, result type: {type(oq_result)}")
-            
+
             # CRITICAL DEBUG: Log the actual result content to understand what's being returned
-            if hasattr(oq_result, '__dict__'):
+            if hasattr(oq_result, "__dict__"):
                 self.logger.info(f"OQ result attributes: {list(oq_result.__dict__.keys())}")
-            if hasattr(oq_result, 'result'):
+            if hasattr(oq_result, "result"):
                 self.logger.info(f"OQ result.result type: {type(oq_result.result)}")
-                if hasattr(oq_result.result, '__dict__'):
+                if hasattr(oq_result.result, "__dict__"):
                     self.logger.info(f"OQ result.result attributes: {list(oq_result.result.__dict__.keys())}")
 
             # CRITICAL FIX: Check result type first
@@ -1601,25 +1800,24 @@ class UnifiedTestGenerationWorkflow(Workflow):
             if isinstance(oq_data, dict):
                 self.logger.info(f"Processing dictionary result with keys: {list(oq_data.keys())}")
                 self.logger.info(f"Dictionary status: {oq_data.get('status', 'NO_STATUS')}")
-                
+
                 if oq_data.get("status") == "completed_successfully":
                     oq_event = oq_data.get("full_event")
                     self.logger.info(f"Full_event type: {type(oq_event)}")
-                    
+
                     if oq_event and isinstance(oq_event, OQTestSuiteEvent):
                         test_count = oq_event.test_suite.total_test_count
                         self.logger.info(f"[OQ] Generated {test_count} OQ tests successfully")
-                        
+
                         # CRITICAL DEBUG: Validate test suite actually has test cases
                         if test_count == 0 or not oq_event.test_suite.test_cases:
                             self.logger.error("CRITICAL: OQ workflow claims success but generated 0 test cases!")
                             self.logger.error(f"Test suite ID: {oq_event.test_suite.suite_id}")
                             self.logger.error(f"Test cases list: {oq_event.test_suite.test_cases}")
                             raise RuntimeError("OQ generation succeeded but produced no test cases - NO FALLBACKS ALLOWED")
-                        
+
                         return oq_event
-                    else:
-                        self.logger.error(f"No valid OQTestSuiteEvent in full_event: {oq_event}")
+                    self.logger.error(f"No valid OQTestSuiteEvent in full_event: {oq_event}")
 
                 # Handle consultation in dictionary format
                 consultation = oq_data.get("consultation", {})
@@ -1673,17 +1871,17 @@ class UnifiedTestGenerationWorkflow(Workflow):
             "generation_successful": ev.generation_successful
         }
 
-        # CRITICAL FIX: Save test suite to file 
+        # CRITICAL FIX: Save test suite to file
         try:
             import json
             from pathlib import Path
-            
+
             # Create output directory
             output_dir = Path("output/test_suites")
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate filename with suite ID and timestamp
-            timestamp = datetime.now(UTC).strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             output_file = output_dir / f"test_suite_{ev.test_suite.suite_id}_{timestamp}.json"
 
             # Create comprehensive test suite data for saving
@@ -1713,11 +1911,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
             self.logger.info(f"✅ Test suite saved successfully to {output_file}")
             self.logger.info(f"📁 File contains {len(ev.test_suite.test_cases)} test cases")
-            
+            flush_output()
+
             # Add file info to oq_results for tracking
             oq_results["output_file"] = str(output_file)
             oq_results["file_saved"] = True
-            
+
             # Add electronic signature for test generation (21 CFR Part 11)
             config = get_config()
             if self.enable_part11_compliance and self.signature_service and not config.validation_mode.validation_mode:
@@ -1732,19 +1931,19 @@ class UnifiedTestGenerationWorkflow(Workflow):
                             "document": ev.test_suite.document_name,
                             "timestamp": datetime.now(UTC).isoformat()
                         },
-                        signer_name=getattr(config, 'user_name', 'System'),
-                        signer_id=getattr(config, 'user_id', 'system'),
+                        signer_name=getattr(config, "user_name", "System"),
+                        signer_id=getattr(config, "user_id", "system"),
                         signature_meaning=SignatureMeaning.APPROVED,
                         additional_context={
                             "workflow_session": self._workflow_session_id,
                             "confidence_score": ev.test_suite.quality_metrics.get("confidence_score", 0.0)
                         }
                     )
-                    
+
                     self.logger.info(f"[SIGNATURE] Test suite signed: {signature_binding.signature_id}")
                     oq_results["signature_id"] = signature_binding.signature_id
                     oq_results["signed"] = True
-                    
+
                 except Exception as sig_e:
                     self.logger.warning(f"[SIGNATURE] Electronic signature failed: {sig_e}")
                     # Continue without signature in case of error
@@ -1754,22 +1953,22 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 self.logger.info("[SIGNATURE] Skipping signature in validation mode")
                 oq_results["signed"] = False
                 oq_results["signature_reason"] = "validation_mode"
-            
+
             # Add ALCOA+ record for test suite generation with complete metadata
             try:
-                import sys
-                import platform
                 import os
-                
+                import platform
+                import sys
+
                 alcoa_validator = ALCOAPlusValidator()
-                
+
                 # Capture ALL test IDs for complete traceability
                 all_test_ids = [t.test_id for t in ev.test_suite.test_cases]
                 test_categories_count = {}
                 for t in ev.test_suite.test_cases:
                     cat = t.test_category
                     test_categories_count[cat] = test_categories_count.get(cat, 0) + 1
-                
+
                 alcoa_record = alcoa_validator.create_data_record(
                     data={
                         "action": "test_suite_generation",
@@ -1783,7 +1982,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "test_categories": test_categories_count,  # Distribution of test types
                         "timestamp": datetime.now(UTC).isoformat()
                     },
-                    user_id=getattr(config, 'user_name', 'System'),
+                    user_id=getattr(config, "user_name", "System"),
                     agent_name="oq_generator",
                     activity="test_suite_generation",
                     metadata={
@@ -1808,7 +2007,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "risk_distribution": {"low": 0, "medium": 0, "high": 0, "critical": 0}  # Will be populated
                     }
                 )
-                
+
                 # Populate risk distribution
                 for t in ev.test_suite.test_cases:
                     risk = t.risk_level
@@ -1816,14 +2015,14 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         alcoa_record["metadata"]["risk_distribution"][risk] += 1
                 self.logger.info(f"[ALCOA+] Created test suite record with hash: {alcoa_record.get('data_hash', 'N/A')[:8]}...")
                 oq_results["alcoa_record_created"] = True
-                oq_results["data_hash"] = alcoa_record.get('data_hash', '')[:16]  # Store partial hash
+                oq_results["data_hash"] = alcoa_record.get("data_hash", "")[:16]  # Store partial hash
             except Exception as alcoa_e:
                 self.logger.warning(f"[ALCOA+] Failed to create test suite record: {alcoa_e}")
                 oq_results["alcoa_record_created"] = False
-            
+
         except Exception as e:
             self.logger.error(f"❌ CRITICAL: Failed to save test suite to file: {e}")
-            self.logger.error(f"This means the workflow completed but NO FILES were saved!")
+            self.logger.error("This means the workflow completed but NO FILES were saved!")
             # Add error info to results but don't fail the workflow
             oq_results["file_saved"] = False
             oq_results["save_error"] = str(e)
@@ -1894,6 +2093,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self.logger.info(f"[COMPLETE] Unified workflow completed with status: {status}")
         if total_time:
             self.logger.info(f"[TIMING] Total processing time: {total_time.total_seconds():.2f} seconds")
+        flush_output()
 
         # Enhanced Phoenix Observability - temporarily disabled for testing
         # if self.enable_phoenix:

@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from llama_index.core.workflow import Event
+from llama_index.core.workflow import Event, InputRequiredEvent
 from pydantic import Field, field_validator
 
 
@@ -280,6 +280,24 @@ class ConsultationSessionEvent(Event):
     compliance_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class ConsultationInputEvent(InputRequiredEvent):
+    """
+    Event requesting human consultation input for GAMP-5 categorization.
+    
+    This event is emitted when the workflow requires human input for
+    pharmaceutical compliance decisions. It extends InputRequiredEvent
+    to work with LlamaIndex's event-driven architecture.
+    """
+    consultation_context: dict[str, Any]
+    prompt_text: str
+    timeout_seconds: int = 300
+    consultation_id: UUID = Field(default_factory=uuid4)
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    consultation_type: str = "gamp_categorization"
+    urgency: str = "normal"  # normal, high, critical
+
+
 class UserDecisionEvent(Event):
     """
     Event containing user decisions and approvals.
@@ -449,6 +467,7 @@ __all__ = [
     "AgentResultEvent",
     "AgentResultsEvent",
     "ConsultationBypassedEvent",
+    "ConsultationInputEvent",
     "ConsultationRequiredEvent",
     "ConsultationSessionEvent",
     "ConsultationTimeoutEvent",
