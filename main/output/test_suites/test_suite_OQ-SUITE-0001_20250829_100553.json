@@ -1,0 +1,419 @@
+{
+  "suite_id": "OQ-SUITE-0001",
+  "gamp_category": 1,
+  "document_name": "URS-030.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Installation Verification Test",
+      "test_category": "installation",
+      "gamp_category": 1,
+      "objective": "Verify system installation completed successfully and all components are properly configured",
+      "prerequisites": [
+        "System hardware requirements verified",
+        "Network connectivity established"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify system installation completed without errors",
+          "expected_result": "Installation log shows successful completion",
+          "data_to_capture": [
+            "Installation log",
+            "System version"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Check all required services are running",
+          "expected_result": "All critical services show active status",
+          "data_to_capture": [
+            "Service status list"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify database connectivity and schema creation",
+          "expected_result": "Database connection established and schema complete",
+          "data_to_capture": [
+            "Connection test results",
+            "Schema validation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Installation completed successfully",
+        "All services operational",
+        "Database accessible"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance"
+      ],
+      "urs_requirements": [
+        "REQ-001: System Installation",
+        "REQ-002: Component Verification"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "System Administrator",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Basic Connectivity Test",
+      "test_category": "functional",
+      "gamp_category": 1,
+      "objective": "Verify basic network connectivity and communication between system components",
+      "prerequisites": [
+        "System installation verified",
+        "Network configuration completed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Ping server from client machine",
+          "expected_result": "Successful ping response received",
+          "data_to_capture": [
+            "Ping response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Test database connection from application server",
+          "expected_result": "Database connection established successfully",
+          "data_to_capture": [
+            "Connection test results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify communication between application and web server",
+          "expected_result": "HTTP request returns successful status code",
+          "data_to_capture": [
+            "HTTP status code"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Network connectivity established",
+        "Database connection verified",
+        "Application-server communication successful"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance"
+      ],
+      "urs_requirements": [
+        "REQ-003: Network Connectivity",
+        "REQ-004: Communication Verification"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Network Engineer",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "System Integration Test",
+      "test_category": "integration",
+      "gamp_category": 1,
+      "objective": "Verify integration points between system components and external systems",
+      "prerequisites": [
+        "System installation verified",
+        "External systems configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Test API connectivity with external identity provider",
+          "expected_result": "API call returns successful response",
+          "data_to_capture": [
+            "API response"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify data transfer to archival system",
+          "expected_result": "Data successfully transferred and verified",
+          "data_to_capture": [
+            "Transfer log",
+            "Data verification report"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Check integration with enterprise monitoring system",
+          "expected_result": "Monitoring system receives system status updates",
+          "data_to_capture": [
+            "Monitoring system logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "API connectivity established",
+        "Data transfer successful",
+        "Monitoring integration verified"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance"
+      ],
+      "urs_requirements": [
+        "REQ-013: Integration with Identity Provider",
+        "REQ-014: API Connectivity"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Integration Specialist",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Standard Operational Procedures Test",
+      "test_category": "functional",
+      "gamp_category": 1,
+      "objective": "Verify standard operational procedures are correctly implemented and functioning",
+      "prerequisites": [
+        "System installation verified",
+        "Operational procedures documented"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute standard startup procedure",
+          "expected_result": "System starts up without errors",
+          "data_to_capture": [
+            "Startup log"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform routine maintenance task",
+          "expected_result": "Maintenance task completed successfully",
+          "data_to_capture": [
+            "Maintenance log"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Execute shutdown procedure",
+          "expected_result": "System shuts down without errors",
+          "data_to_capture": [
+            "Shutdown log"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Startup procedure successful",
+        "Maintenance task completed",
+        "Shutdown procedure successful"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance"
+      ],
+      "urs_requirements": [
+        "REQ-005: Operational Procedures",
+        "REQ-006: Maintenance Verification"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "System Administrator",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Error Handling Test",
+      "test_category": "functional",
+      "gamp_category": 1,
+      "objective": "Verify system handles common error scenarios correctly",
+      "prerequisites": [
+        "System installation verified",
+        "Error handling procedures documented"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate network disconnection",
+          "expected_result": "System logs error and attempts reconnection",
+          "data_to_capture": [
+            "Error log",
+            "Reconnection attempts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Force database connection failure",
+          "expected_result": "System logs error and retries connection",
+          "data_to_capture": [
+            "Error log",
+            "Retry attempts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Trigger invalid user input",
+          "expected_result": "System logs error and prompts user for valid input",
+          "data_to_capture": [
+            "Error log",
+            "User prompt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Errors logged correctly",
+        "Reconnection attempts made",
+        "User prompted for valid input"
+      ],
+      "regulatory_basis": [
+        "GAMP-5 Category 1",
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance"
+      ],
+      "urs_requirements": [
+        "REQ-007: Error Handling",
+        "REQ-008: Logging Verification"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System Administrator",
+        "Validation Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 5,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 240,
+  "generation_timestamp": "2025-08-29T10:05:53.634129+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-29T10:05:53.657424+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-29T09:56:05.190600+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

@@ -1,0 +1,33 @@
+{
+  "created": "2025-08-29T10:28:14.461362+00:00",
+  "manifest_version": "1.0",
+  "signatures": [
+    {
+      "binding_proof": "e67d7cc13af28d6b684c289f2eb3e7666c0ea5026734b081950a73d7b1f1a887",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "87aad3537d3348bc537e0bab719bba744db46b339abb2191189486e288ecd2fb",
+      "record_id": "cat_unified_workflow_2025-08-29T10:18:06.467578+00:00",
+      "signature_id": "6ced7177-f7f2-497b-93d8-a65ec8c27340",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-29T10:18:06.547133+00:00",
+      "signature_value": "fa81e79017ff038958cc3da3b9a2119e8b59e8171d105a4b8d87eb0ca1bf9dff75ea6377375b35aacbc8400b98826dd09d66bdd7706d68c1dad96e5b75cccd0f",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "a9c651247663bb124974bc62c0d06ad3f4d52e38ba7e9434d33012765fa7abba",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "ed71054f9b26b5cced1bad96984ebd22ae373f3d1295a0270e1df419a6a8e5ec",
+      "record_id": "cat_unified_workflow_2025-08-29T10:26:33.635729+00:00",
+      "signature_id": "d0e452da-f15f-4b92-bf33-0189663e3d58",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-29T10:28:14.461106+00:00",
+      "signature_value": "600ce031555033fa9047d198fb20c02d5d9a316aded687d176a90c0c6e3cd1936390e4bb82276ee874cb99b0f57347521cf4ce327df5587d5f246847f554370e",
+      "signer_id": "system",
+      "signer_name": "System"
+    }
+  ],
+  "total_signatures": 2
+}

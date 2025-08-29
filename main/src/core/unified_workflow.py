@@ -825,7 +825,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             categorization_event = categorization_data
             await safe_context_set(ctx, "gamp_category", categorization_data.gamp_category)
             # Display categorization results
-            print("\n📊 CATEGORIZATION RESULTS:")
+            print("\n[CATEGORIZATION] CATEGORIZATION RESULTS:")
             print(f"   Category: {categorization_data.gamp_category.value}")
             print(f"   Confidence: {categorization_data.confidence_score:.2%}")
             flush_output()
@@ -843,7 +843,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             gamp_cat = categorization_data.get("gamp_category")
             conf_score = categorization_data.get("confidence_score", 0.0)
             # Display categorization results
-            print("\n📊 CATEGORIZATION RESULTS:")
+            print("\n[CATEGORIZATION] CATEGORIZATION RESULTS:")
             print(f"   Category: {gamp_cat}")
             print(f"   Confidence: {conf_score:.2%}")
             flush_output()
@@ -1594,11 +1594,6 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
             await safe_context_set(ctx, "consultation_result", consultation_result)
 
-            # Create planning event after consultation to continue workflow
-            if hasattr(ev, "categorization_event"):
-                # Use the original categorization event to create planning event
-                return self._create_planning_event_from_categorization(ev.categorization_event)
-
             # Create new categorization event using human-approved category
             gamp_category = GAMPCategory(approved_category)
 
@@ -1619,6 +1614,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 categorized_by=f"human_consultation_{human_response.user_id}"
             )
 
+            # CRITICAL FIX: Update context with human-corrected categorization
+            # This ensures downstream steps use the human-approved category
+            await safe_context_set(ctx, "categorization_result", categorization_event)
+            
             return self._create_planning_event_from_categorization(categorization_event)
 
         except Exception as e:
@@ -1708,8 +1707,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
         }
 
         # Create OQ generation event
+        # CRITICAL FIX: Use planning_event.gamp_category which contains human-approved category
+        # instead of categorization_result.gamp_category which may contain original AI category
         oq_generation_event = OQTestGenerationEvent(
-            gamp_category=categorization_result.gamp_category,
+            gamp_category=planning_event.gamp_category,
             urs_content=urs_content,
             document_metadata={
                 "name": Path(document_path).name if document_path else "Unknown",
@@ -2137,7 +2138,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
         #         else:
         #             self.logger.info("✅ No compliance violations detected")
         #
-        #         self.logger.info(f"📊 Compliance dashboard generated: {dashboard_path}")
+        #         self.logger.info(f"[CATEGORIZATION] Compliance dashboard generated: {dashboard_path}")
         #
         #     except Exception as e:
         #         self.logger.error(f"Enhanced observability analysis failed: {e}")
