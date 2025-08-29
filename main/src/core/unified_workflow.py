@@ -1937,7 +1937,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         signature_meaning=SignatureMeaning.APPROVED,
                         additional_context={
                             "workflow_session": self._workflow_session_id,
-                            "confidence_score": ev.test_suite.quality_metrics.get("confidence_score", 0.0)
+                            "confidence_score": getattr(ev.test_suite, "confidence_score", 0.0)
                         }
                     )
 
@@ -1977,7 +1977,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "test_count": len(ev.test_suite.test_cases),
                         "gamp_category": ev.test_suite.gamp_category,
                         "regulatory_basis": "GAMP-5, 21 CFR Part 11",
-                        "compliance_standards": compliance_standards,
+                        "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"],
                         "document": ev.test_suite.document_name,
                         "all_test_ids": all_test_ids,  # Complete list of ALL test IDs
                         "test_categories": test_categories_count,  # Distribution of test types

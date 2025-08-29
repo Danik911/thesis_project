@@ -1,5 +1,5 @@
 {
-  "created": "2025-08-29T18:22:14.293952+00:00",
+  "created": "2025-08-29T19:36:48.323002+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -443,7 +443,20 @@
       "signature_value": "c378a46e4a691e7d7697d919b17315d6b04de67ccc6bffcda0f2c085762908dc9637d624ced3de4f54ead748c365da460083e034cf99e6ece64f7fb78d20a80e",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "e1bba87e24d8d6ff04d7d65964ca1434f76b08e51a0e65eaed9a3edca2e9c476",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "625d50b539f945a19fbeb9b7ea73b0b429ab326bab8f2aa3bc91713e07e92f2b",
+      "record_id": "cat_unified_workflow_2025-08-29T19:35:35.636928+00:00",
+      "signature_id": "5a4e0b67-c7d0-4840-93c8-c5a097d2b714",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-29T19:36:48.323002+00:00",
+      "signature_value": "3d8e3d8734b450761d833d6a8d8358fb43384e11b478823a0d7dbac8719f84b298c330bd16a5b99e81bfaf9290c54f566a48928d5c1476dca81c7faf3eadd605",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 34
+  "total_signatures": 35
 }
