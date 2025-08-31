@@ -871,6 +871,57 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     # Try to extract from URS content
                     doc_name = str(ev.urs_content)[:50] if ev.urs_content else "document"
 
+                # CRITICAL FIX: Check for human consultation data in context
+                # This ensures proper 21 CFR Part 11 compliance for human decisions
+                consultation_result = await safe_context_get(ctx, "consultation_result", None)
+                
+                if consultation_result:
+                    # Human consultation occurred - use human operator data for signature
+                    operator_name = consultation_result['operator_name']
+                    operator_role = consultation_result['operator_role'].replace('_', ' ').title()
+                    signer_name = f"{operator_name} ({operator_role})"
+                    signer_id = operator_name
+                    
+                    # Extract employee ID from digital signature format: "Name_ID_Timestamp"  
+                    employee_id = "unknown"
+                    digital_sig = consultation_result.get('digital_signature', '')
+                    if '_' in digital_sig:
+                        try:
+                            parts = digital_sig.split('_')
+                            if len(parts) >= 2:
+                                employee_id = parts[1]  # Extract ID portion
+                        except Exception:
+                            employee_id = "unknown"  # Fallback if parsing fails
+                    
+                    additional_context = {
+                        "workflow_session": self._workflow_session_id,
+                        "risk_assessment": categorization_event.risk_assessment,
+                        "consultation_required": True,
+                        "employee_id": employee_id,
+                        "operator_role": consultation_result['operator_role'],
+                        "decision_justification": consultation_result['decision_rationale'],
+                        "original_ai_confidence": consultation_result['original_confidence'],
+                        "human_selected_category": consultation_result['approved_category'],
+                        "consultation_method": consultation_result.get('method', 'event_driven_consultation'),
+                        "regulatory_impact": consultation_result.get('regulatory_impact', 'high')
+                    }
+                    
+                    self.logger.info(
+                        f"[SIGNATURE] Human consultation detected - signing as {signer_name} "
+                        f"(Category {consultation_result['approved_category']}, Employee ID: {employee_id})"
+                    )
+                else:
+                    # Automated decision - use system defaults
+                    signer_name = getattr(config, "user_name", "System")
+                    signer_id = getattr(config, "user_id", "system")
+                    additional_context = {
+                        "workflow_session": self._workflow_session_id,
+                        "risk_assessment": categorization_event.risk_assessment,
+                        "consultation_required": False
+                    }
+                    
+                    self.logger.info("[SIGNATURE] Automated categorization - signing as System")
+
                 signature_binding = self.signature_service.bind_signature_to_record(
                     record_id=f"cat_{self._workflow_session_id}",
                     record_content={
@@ -880,13 +931,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "document": doc_name,
                         "timestamp": datetime.now(UTC).isoformat()
                     },
-                    signer_name=getattr(config, "user_name", "System"),
-                    signer_id=getattr(config, "user_id", "system"),
+                    signer_name=signer_name,
+                    signer_id=signer_id,
                     signature_meaning=SignatureMeaning.REVIEWED,
-                    additional_context={
-                        "workflow_session": self._workflow_session_id,
-                        "risk_assessment": categorization_event.risk_assessment
-                    }
+                    additional_context=additional_context
                 )
 
                 self.logger.info(f"[SIGNATURE] Categorization signed: {signature_binding.signature_id}")

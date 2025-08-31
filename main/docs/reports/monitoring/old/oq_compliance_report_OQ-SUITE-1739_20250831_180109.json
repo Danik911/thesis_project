@@ -1,0 +1,139 @@
+{
+  "report_metadata": {
+    "report_id": "OQ-SUITE-1739_20250831_180109",
+    "generation_timestamp": "2025-08-31T18:01:09.585540+00:00",
+    "report_type": "OQ Test Generation Monitoring",
+    "scope": "OQ-SUITE-1739 Compliance Analysis",
+    "analyst": "Phoenix Trace Forensic Analyst"
+  },
+  "executive_summary": {
+    "overall_compliance_score": 93.18,
+    "compliance_status": "COMPLIANT",
+    "tests_generated": 20,
+    "target_achievement": "80.0%",
+    "critical_issues_count": 0,
+    "gamp_category": 4,
+    "document_scope": "URS-030.md"
+  },
+  "compliance_analysis": {
+    "gamp5_oq_compliance": {
+      "total_score": 95.0,
+      "components": {
+        "category_accuracy": 95.0,
+        "oq_coverage": 85.0,
+        "risk_assessment": 100,
+        "documentation": 100.0
+      },
+      "status": "COMPLIANT",
+      "weight": "15%",
+      "description": "GAMP-5 Operational Qualification compliance for Category 4 system"
+    },
+    "alcoa_plus_principles": {
+      "total_score": 93.11111111111111,
+      "principles": {
+        "attributable": 98.0,
+        "legible": 98.0,
+        "contemporaneous": 92.0,
+        "original": 88.0,
+        "accurate": 94.0,
+        "complete": 100.0,
+        "consistent": 90.0,
+        "enduring": 85.0,
+        "available": 93.0
+      },
+      "status": "COMPLIANT",
+      "weight": "20%",
+      "description": "ALCOA+ data integrity principles validation"
+    },
+    "cfr_21_part_11": {
+      "total_score": 92.8,
+      "requirements": {
+        "electronic_signatures": 100.0,
+        "audit_trail": 92.0,
+        "access_control": 82.0,
+        "data_integrity": 95.0,
+        "system_validation": 95.0
+      },
+      "status": "COMPLIANT",
+      "weight": "20%",
+      "description": "Electronic records and signatures compliance"
+    }
+  },
+  "performance_metrics": {
+    "workflow_duration_ms": 590016,
+    "test_generation_time": "2025-08-31T17:39:56.016122+00:00",
+    "tests_generated": 20,
+    "target_tests": 25,
+    "achievement_rate": 80.0,
+    "estimated_execution_time": 1680,
+    "cost_reduction": 91.0,
+    "model_used": "LLMTextCompletionProgram_deepseek/deepseek-chat",
+    "compliance_validation": {
+      "alcoa_plus": true,
+      "gamp5": true,
+      "cfr_part_11": true
+    },
+    "description": "System performance and efficiency metrics"
+  },
+  "digital_signatures": {
+    "total_signatures": 39,
+    "oq_suite_signed": true,
+    "part11_compliant": true,
+    "signature_timestamp": "2025-08-31T17:39:56.080621+00:00"
+  },
+  "test_suite_analysis": {
+    "suite_id": "OQ-SUITE-1739",
+    "test_count": 20,
+    "categories_covered": [
+      "data_integrity",
+      "security",
+      "functional"
+    ],
+    "risk_levels": [
+      "critical",
+      "high"
+    ],
+    "estimated_execution_time": 1680,
+    "requirements_traced": 14
+  },
+  "critical_issues": [],
+  "recommendations": {
+    "immediate": [
+      "Validate all 20 generated OQ test cases for accuracy and completeness",
+      "Verify digital signatures are properly applied and compliant",
+      "Ensure audit trail captures all workflow steps"
+    ],
+    "short_term": [
+      "Optimize test generation workflow for better performance",
+      "Implement automated compliance checking",
+      "Enhance risk-based testing coverage"
+    ],
+    "long_term": [
+      "Establish continuous monitoring for OQ test quality",
+      "Develop predictive analytics for compliance scoring",
+      "Implement automated regulatory reporting"
+    ]
+  },
+  "regulatory_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "workflow_traceability": {
+    "session_id": "unified_workflow_2025-08-31T17:30:06.192913+00:00",
+    "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat",
+    "model_used": "deepseek/deepseek-chat",
+    "cost_reduction_achieved": "91%",
+    "workflow_steps_completed": [
+      "Document Analysis",
+      "GAMP Categorization",
+      "Context Retrieval",
+      "SME Analysis",
+      "Test Generation",
+      "Compliance Validation",
+      "Digital Signing"
+    ]
+  }
+}
