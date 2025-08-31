@@ -1,0 +1,798 @@
+{
+  "suite_id": "OQ-SUITE-2011",
+  "gamp_category": 3,
+  "document_name": "URS-030.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Legacy Data Migration Checksum Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that checksums of extracted legacy data match the transformed and loaded data in the cloud platform.",
+      "prerequisites": [
+        "Legacy system data extraction completed",
+        "Cloud platform staging environment ready",
+        "Checksum generation tool installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate checksums for all legacy data files before extraction.",
+          "expected_result": "Checksums are successfully generated and documented.",
+          "data_to_capture": [
+            "Checksum values",
+            "File names",
+            "Timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Extract data from the legacy system and store in staging area.",
+          "expected_result": "Data is extracted without errors and stored in staging.",
+          "data_to_capture": [
+            "Extraction logs",
+            "Error reports"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate checksums for the transformed data before loading to cloud.",
+          "expected_result": "Checksums match the original legacy data checksums.",
+          "data_to_capture": [
+            "Checksum values",
+            "Transformation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All checksums match between legacy and transformed data.",
+        "No data corruption detected during migration."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Data must remain unchanged during migration.",
+        "Checksums must be verifiable at each stage."
+      ],
+      "urs_requirements": [
+        "URS-030-001",
+        "URS-030-008"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Data migration",
+        "Checksum validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Parallel Run Reconciliation Reporting",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Validate that the parallel run mode produces reconciliation reports with \u2265 99.99% data match.",
+      "prerequisites": [
+        "Legacy and cloud systems running in parallel mode",
+        "Reconciliation tool configured",
+        "Test dataset prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute identical transactions on both legacy and cloud systems.",
+          "expected_result": "Transactions are processed successfully on both systems.",
+          "data_to_capture": [
+            "Transaction logs",
+            "System responses"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate reconciliation report comparing outputs from both systems.",
+          "expected_result": "Reconciliation report is generated without errors.",
+          "data_to_capture": [
+            "Report file",
+            "Mismatch details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Analyze reconciliation report for data match percentage.",
+          "expected_result": "Data match percentage is \u2265 99.99%.",
+          "data_to_capture": [
+            "Match percentage",
+            "Identified discrepancies"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reconciliation report shows \u2265 99.99% data match.",
+        "All discrepancies are documented and justified."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Outputs must be identical between legacy and cloud systems.",
+        "Discrepancies must be traceable and explainable."
+      ],
+      "urs_requirements": [
+        "URS-030-004",
+        "URS-030-012"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "System validation",
+        "Data reconciliation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Legacy Data Migration Checksum Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that checksums of migrated data match the original legacy system records to ensure data integrity.",
+      "prerequisites": [
+        "Legacy system data extraction completed",
+        "Migration tool configured and ready",
+        "Checksum generation tool available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate checksums for all records in the legacy system prior to migration.",
+          "expected_result": "Checksums are successfully generated and documented for all records.",
+          "data_to_capture": [
+            "Checksum values",
+            "Record counts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform the data migration using the configured migration tool.",
+          "expected_result": "Migration completes without errors and all records are transferred.",
+          "data_to_capture": [
+            "Migration logs",
+            "Error reports"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate checksums for all migrated records in the cloud platform.",
+          "expected_result": "Checksums are successfully generated and documented for all migrated records.",
+          "data_to_capture": [
+            "Checksum values",
+            "Record counts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Compare checksums between legacy and migrated records.",
+          "expected_result": "All checksums match, confirming data integrity.",
+          "data_to_capture": [
+            "Comparison results",
+            "Discrepancy reports"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "100% of checksums match between legacy and migrated records",
+        "No data corruption or loss detected"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure no data alteration during migration",
+        "Maintain ALCOA+ attributes"
+      ],
+      "urs_requirements": [
+        "URS-030-001",
+        "URS-030-008"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Data migration",
+        "Checksum validation",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Parallel Run Reconciliation Reporting",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Validate that reconciliation reports generated during parallel run mode accurately identify discrepancies between legacy and migrated systems.",
+      "prerequisites": [
+        "Legacy system operational",
+        "Migrated system deployed in parallel run mode",
+        "Reconciliation tool configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute a set of transactions in both legacy and migrated systems.",
+          "expected_result": "Transactions are processed identically in both systems.",
+          "data_to_capture": [
+            "Transaction logs",
+            "System outputs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate reconciliation reports for the executed transactions.",
+          "expected_result": "Reports are generated showing \u2265 99.99% data match.",
+          "data_to_capture": [
+            "Reconciliation reports",
+            "Discrepancy details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Investigate any discrepancies found in the reports.",
+          "expected_result": "Root cause is identified and documented for any discrepancies.",
+          "data_to_capture": [
+            "Investigation logs",
+            "Resolution actions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reconciliation reports demonstrate \u2265 99.99% data match",
+        "All discrepancies are investigated and resolved"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GAMP 5"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data consistency between systems",
+        "Maintain audit trails for all transactions"
+      ],
+      "urs_requirements": [
+        "URS-030-004",
+        "URS-030-012"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "System reconciliation",
+        "Data analysis",
+        "Regulatory compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Migration Data Integrity Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify the integrity of data migrated from the mainframe to the cloud platform using checksum verification.",
+      "prerequisites": [
+        "Completed data extraction from mainframe",
+        "Checksum values for original data"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Run checksum verification on migrated data",
+          "expected_result": "Checksum values match between original and migrated data",
+          "data_to_capture": [
+            "Checksum values",
+            "Migration logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Checksum values match for all migrated records"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure ALCOA+ attributes are maintained"
+      ],
+      "urs_requirements": [
+        "URS-030-001",
+        "URS-030-008"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Data migration",
+        "Checksum verification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Parallel Run Reconciliation Reporting",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Validate the reconciliation reporting functionality during the parallel run mode to ensure data consistency.",
+      "prerequisites": [
+        "Parallel run mode enabled",
+        "Reconciliation report template"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate reconciliation report",
+          "expected_result": "Report shows \u2265 99.99% data match between systems",
+          "data_to_capture": [
+            "Reconciliation report",
+            "Discrepancy logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reconciliation report demonstrates \u2265 99.99% data match"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data consistency across systems"
+      ],
+      "urs_requirements": [
+        "URS-030-004",
+        "URS-030-012"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Reconciliation reporting",
+        "Data consistency validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Legacy Data Migration Checksum Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that checksums of migrated records match the original mainframe records to ensure data integrity during transfer.",
+      "prerequisites": [
+        "Legacy system data extraction completed",
+        "Migration tool configured with checksum verification",
+        "Target cloud environment ready for data load"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate checksums for all records in the legacy system prior to migration.",
+          "expected_result": "Checksum values are successfully generated and documented for all records.",
+          "data_to_capture": [
+            "Checksum values for legacy records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Run the migration process with checksum verification enabled.",
+          "expected_result": "Migration completes without checksum mismatch errors.",
+          "data_to_capture": [
+            "Migration logs showing checksum verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Compare post-migration checksums with pre-migration values for a statistically significant sample.",
+          "expected_result": "All sampled checksums match between source and target systems.",
+          "data_to_capture": [
+            "Sample comparison results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "100% of sampled records show matching checksums between legacy and cloud systems",
+        "No checksum verification failures during migration process"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records",
+        "ALCOA+ data integrity principles"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "URS-030-001: Extract, transform, and load legacy records with checksum verification",
+        "URS-030-008: Maintain ALCOA+ attributes across extraction, staging, and load"
+      ],
+      "urs_requirements": [
+        "URS-030-001",
+        "URS-030-008"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Data migration",
+        "Checksum algorithms",
+        "Cloud storage"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Parallel Run Reconciliation Reporting",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Validate that reconciliation reports accurately identify discrepancies between legacy and migrated systems during parallel operation.",
+      "prerequisites": [
+        "Both legacy and cloud systems running in parallel mode",
+        "Reconciliation reporting feature configured",
+        "Test dataset with known discrepancies prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Introduce 10 known discrepancies between legacy and migrated systems.",
+          "expected_result": "Discrepancies are successfully created in test environment.",
+          "data_to_capture": [
+            "List of created discrepancies"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the reconciliation report generation process.",
+          "expected_result": "Report completes generation without errors.",
+          "data_to_capture": [
+            "Report generation timestamp",
+            "Processing time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the reconciliation report identifies all 10 known discrepancies.",
+          "expected_result": "Report accurately lists all introduced discrepancies.",
+          "data_to_capture": [
+            "Report contents",
+            "Discrepancy detection rate"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reconciliation report detects 100% of known discrepancies",
+        "Report generation completes within defined performance thresholds"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Audit Trails",
+        "GAMP5 - Verification of Critical Data"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "URS-030-004: Provide parallel run mode with reconciliation reporting",
+        "URS-030-012: Reconciliation shall demonstrate \u2265 99.99% data match"
+      ],
+      "urs_requirements": [
+        "URS-030-004",
+        "URS-030-012"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "Reporting systems",
+        "Data comparison techniques",
+        "Quality assurance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Migration Data Integrity Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify the integrity of data migrated from the mainframe to the cloud platform using checksum verification.",
+      "prerequisites": [
+        "Legacy data extraction completed",
+        "Cloud platform ready for data load"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Run checksum verification on extracted legacy data.",
+          "expected_result": "Checksum values match between legacy and extracted data.",
+          "data_to_capture": [
+            "Checksum values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Load extracted data into the cloud platform.",
+          "expected_result": "Data successfully loaded into the cloud platform.",
+          "data_to_capture": [
+            "Load status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Run checksum verification on loaded data in the cloud platform.",
+          "expected_result": "Checksum values match between extracted and loaded data.",
+          "data_to_capture": [
+            "Checksum values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Checksum values match at all stages of migration"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Ensure ALCOA+ attributes are maintained"
+      ],
+      "urs_requirements": [
+        "URS-030-001",
+        "URS-030-008"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Data migration",
+        "Cloud platform"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Parallel Run Reconciliation Reporting",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Validate the reconciliation reporting functionality during the parallel run mode.",
+      "prerequisites": [
+        "Legacy system operational",
+        "Cloud platform operational"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Run a sample transaction on both legacy and cloud systems.",
+          "expected_result": "Transaction successfully processed on both systems.",
+          "data_to_capture": [
+            "Transaction status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate reconciliation report for the sample transaction.",
+          "expected_result": "Reconciliation report generated successfully.",
+          "data_to_capture": [
+            "Report status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify data match in the reconciliation report.",
+          "expected_result": "Data match \u2265 99.99% as per reconciliation report.",
+          "data_to_capture": [
+            "Data match percentage"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Reconciliation report demonstrates \u2265 99.99% data match"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data consistency across systems"
+      ],
+      "urs_requirements": [
+        "URS-030-004",
+        "URS-030-012"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System integration",
+        "Reconciliation reporting"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 690,
+  "generation_timestamp": "2025-08-31T20:11:54.712121+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-08-31T20:11:54.796344+00:00",
+  "workflow_session_id": "unified_workflow_2025-08-31T20:04:55.603250+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

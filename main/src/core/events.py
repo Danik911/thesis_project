@@ -122,6 +122,7 @@ class AgentRequestEvent(Event):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     requesting_step: str
     correlation_id: UUID = Field(default_factory=uuid4)
+    session_id: str | None = None
 
 
 class AgentResultEvent(Event):
@@ -140,6 +141,8 @@ class AgentResultEvent(Event):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     correlation_id: UUID
     validation_status: ValidationStatus = ValidationStatus.PENDING
+    session_id: str | None = None
+    responding_step: str | None = None
 
 
 class ConsultationRequiredEvent(Event):
@@ -447,36 +450,8 @@ class WorkflowCompletionEvent(Event):
     triggering_step: str
 
 
-# Parallel Agent Workflow Events
-class AgentRequestEvent(Event):
-    """
-    Event for requesting parallel agent execution.
-    
-    Contains the request data and metadata needed for agent coordination.
-    """
-    agent_type: str
-    request_data: dict[str, Any]
-    correlation_id: UUID
-    requesting_step: str
-    session_id: str
-    event_id: UUID = Field(default_factory=uuid4)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
-
-
-class AgentResultEvent(Event):
-    """
-    Event containing result from a single agent execution.
-    
-    Contains the agent result data and metadata for correlation.
-    """
-    agent_type: str
-    result_data: dict[str, Any]
-    correlation_id: UUID
-    responding_step: str
-    session_id: str
-    execution_time: float = 0.0
-    event_id: UUID = Field(default_factory=uuid4)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+# Note: AgentRequestEvent and AgentResultEvent are defined above (lines 110-143)
+# Removed duplicate class definitions to prevent attribute conflicts
 
 
 class AgentResultsEvent(Event):

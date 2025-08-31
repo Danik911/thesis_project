@@ -1,5 +1,5 @@
 {
-  "created": "2025-08-31T19:25:06.420829+00:00",
+  "created": "2025-08-31T20:11:54.810877+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -547,7 +547,33 @@
       "signature_value": "572c35fa7c66c559bd7d947b769509e34333f59cc62a1d8641d335cb64519b1b0d5e63f2ff060c677d6c37d5d4753398a779bf98365ee8fa010009ca2ef1a901",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "99ab8fa7a2333465afb6a6bef275e951c89655a7ccc77ad0fd6cbefa48cd656a",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "14b45f473d48a0361a1c0d56e2ac86258c825b11d88f37ed35b226db5f930d1c",
+      "record_id": "cat_unified_workflow_2025-08-31T20:04:55.603250+00:00",
+      "signature_id": "2907b21e-5b28-4e8b-ab40-10dedf01e593",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-31T20:09:57.625361+00:00",
+      "signature_value": "2f6048a1db279d6077e6bc394b9faa184bcf7c3aca8e9a5e09409364dfd86c23e7c919ca3836b1a7a14ffd6fc83b7d8d9708ad59850f6cba7d7dbffe2cd7ab0b",
+      "signer_id": "Daniiil Vlad",
+      "signer_name": "Daniiil Vlad (Validation Engineer)"
+    },
+    {
+      "binding_proof": "911d94f459dbe833a8e323f35539eff49a617d65467094ffb64f88cdf9f0ba63",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "1c41a59a9a7b809ad83ccadcf9436e35c442b6e5fc61de5f0eb26d37cf51a633",
+      "record_id": "OQ-SUITE-2011",
+      "signature_id": "35293e25-9c85-4278-8dab-b2ab422f2f34",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-08-31T20:11:54.807869+00:00",
+      "signature_value": "5e6d360c4856c07372bd474cf5d5bbe734581ad98dcbe7b4de714ae32b205a1fc13c3cb99b95d2b84b23b2f7fed6a294133d3db9e61708dd1ec262bc4072d301",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 42
+  "total_signatures": 44
 }
