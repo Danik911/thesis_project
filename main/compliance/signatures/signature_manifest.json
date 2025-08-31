@@ -1,5 +1,5 @@
 {
-  "created": "2025-08-29T19:36:48.323002+00:00",
+  "created": "2025-08-29T20:21:43.742748+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -456,7 +456,33 @@
       "signature_value": "3d8e3d8734b450761d833d6a8d8358fb43384e11b478823a0d7dbac8719f84b298c330bd16a5b99e81bfaf9290c54f566a48928d5c1476dca81c7faf3eadd605",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "64899f47f138e2aa1eb1ade9b0a9875e604addbe25d0b8f26f0ad0c617ae346f",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "6cb13a5812151498f70101687d199bfa85ed3e7db44cdb713e8fd71bd0fde49b",
+      "record_id": "cat_unified_workflow_2025-08-29T20:12:52.298036+00:00",
+      "signature_id": "5711b6db-7d4f-4c82-aec6-06a35debc455",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-08-29T20:14:34.392004+00:00",
+      "signature_value": "b0e52fa53d9649762a07526680d83426dd0451f1fe8b1cf152d73cbd25173bb564d2d4acf633b1a7ab80a40f6beea45189b7e3f6ceda1f3cc5701a0d8f3a6b0b",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "f1e2f8f5e47b58d1676a00c57a57df2434f9f34afff542bb4ae31008a2184955",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "af0a598104cd04b3ebb0301d62915f07075ebc78b07f6a8c58deee119a791f81",
+      "record_id": "OQ-SUITE-2021",
+      "signature_id": "9227f7a9-d540-4e45-9688-6e6ffd6249cf",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-08-29T20:21:43.741750+00:00",
+      "signature_value": "65edfdbee253abf2c6b2171985407522f035fcac1ff04dd52e1e3d2a1ed679b849c96ff9e5e09cfa37344b7578f4dad8a02c58a52fb62918928ff177bb118707",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 35
+  "total_signatures": 37
 }
