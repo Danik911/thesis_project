@@ -447,6 +447,68 @@ class WorkflowCompletionEvent(Event):
     triggering_step: str
 
 
+# Parallel Agent Workflow Events
+class AgentRequestEvent(Event):
+    """
+    Event for requesting parallel agent execution.
+    
+    Contains the request data and metadata needed for agent coordination.
+    """
+    agent_type: str
+    request_data: dict[str, Any]
+    correlation_id: UUID
+    requesting_step: str
+    session_id: str
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class AgentResultEvent(Event):
+    """
+    Event containing result from a single agent execution.
+    
+    Contains the agent result data and metadata for correlation.
+    """
+    agent_type: str
+    result_data: dict[str, Any]
+    correlation_id: UUID
+    responding_step: str
+    session_id: str
+    execution_time: float = 0.0
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class AgentResultsEvent(Event):
+    """
+    Event containing compiled results from all parallel agent executions.
+    
+    This event is emitted when all agent requests have been completed
+    and their results compiled for the next workflow step.
+    """
+    agent_results: list[AgentResultEvent]
+    session_id: str
+    total_execution_time: float = 0.0
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class SignedAgentResultsEvent(Event):
+    """
+    Event containing agent results AFTER categorization signature has been created.
+    
+    This event ensures that electronic signatures are properly captured before
+    test generation begins, maintaining 21 CFR Part 11 compliance.
+    """
+    agent_results: list[AgentResultEvent]
+    session_id: str
+    total_execution_time: float = 0.0
+    signature_id: str | None = None
+    signature_created: bool = False
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 # OQ Test Generation Events - imported from OQ generator module
 try:
     from src.agents.oq_generator.events import (
@@ -466,6 +528,7 @@ __all__ = [
     "AgentRequestEvent",
     "AgentResultEvent",
     "AgentResultsEvent",
+    "SignedAgentResultsEvent",
     "ConsultationBypassedEvent",
     "ConsultationInputEvent",
     "ConsultationRequiredEvent",

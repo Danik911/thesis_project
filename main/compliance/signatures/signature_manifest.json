@@ -1,5 +1,5 @@
 {
-  "created": "2025-08-31T18:15:52.354469+00:00",
+  "created": "2025-08-31T19:25:06.420829+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -534,7 +534,20 @@
       "signature_value": "d6079c32c7bd7ab9052db64e3f29c5d83e3058ec50ff19cb8d4427fd69de0b2823db2e47c6e617da0bc5fc216d54b8ff9f5d1cce8428255c82d692f2ec80e40a",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "cbb66b1b2e044375eaf695cf4c604caf2e92fb9a806ae87fe8d21a9fde1cd9e0",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "509bbba8c662bbbf8aa2f17aa84d5b64cc47d0db814e3e5df5d350cd231e74e1",
+      "record_id": "OQ-SUITE-1925",
+      "signature_id": "91aea6f6-4185-4f28-afeb-eafdf34aeecd",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-08-31T19:25:06.411022+00:00",
+      "signature_value": "572c35fa7c66c559bd7d947b769509e34333f59cc62a1d8641d335cb64519b1b0d5e63f2ff060c677d6c37d5d4753398a779bf98365ee8fa010009ca2ef1a901",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 41
+  "total_signatures": 42
 }

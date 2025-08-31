@@ -188,7 +188,12 @@ Thumbs.db
 *~
 
 # Log files
-*.log
+# *.log  # Commented out to track diagnostic logs
+# Track specific log types
+!main/logs/traces/*.jsonl
+!main/logs/traces/*.csv
+!main/logs/audit/*.log
+!main/logs/events/*.jsonl
 
 # Database files
 *.db
@@ -236,10 +241,13 @@ examples/
 .mcp/
 
 # Phoenix tracing
-phoenix_traces/
+# phoenix_traces/  # Commented out to track Phoenix traces
 
-# Logs
-logs
+# Logs - Be more specific about what to exclude
+# logs  # Commented out to track important logs
+# Exclude only sensitive or temporary logs
+logs/temp/
+logs/*.tmp
 dev-debug.log
 # Dependency directories
 # Environment variables

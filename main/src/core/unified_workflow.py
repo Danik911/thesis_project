@@ -53,6 +53,7 @@ from src.core.events import (
     AgentRequestEvent,
     AgentResultEvent,
     AgentResultsEvent,
+    SignedAgentResultsEvent,
     ConsultationBypassedEvent,
     ConsultationInputEvent,
     ConsultationRequiredEvent,
@@ -859,91 +860,17 @@ class UnifiedTestGenerationWorkflow(Workflow):
             )
             self.logger.info(f"[GAMP5] GAMP-5 Category: {categorization_data.gamp_category.value}")
 
-        # Add electronic signature for categorization (21 CFR Part 11)
-        config = get_config()
-        if self.enable_part11_compliance and self.signature_service and not config.validation_mode.validation_mode:
-            try:
-                # Extract document name from content or use default
-                doc_name = "document"
-                if hasattr(ev, "file_path"):
-                    doc_name = Path(ev.file_path).name
-                elif hasattr(ev, "urs_content") and ev.urs_content:
-                    # Try to extract from URS content
-                    doc_name = str(ev.urs_content)[:50] if ev.urs_content else "document"
-
-                # CRITICAL FIX: Check for human consultation data in context
-                # This ensures proper 21 CFR Part 11 compliance for human decisions
-                consultation_result = await safe_context_get(ctx, "consultation_result", None)
-                
-                if consultation_result:
-                    # Human consultation occurred - use human operator data for signature
-                    operator_name = consultation_result['operator_name']
-                    operator_role = consultation_result['operator_role'].replace('_', ' ').title()
-                    signer_name = f"{operator_name} ({operator_role})"
-                    signer_id = operator_name
-                    
-                    # Extract employee ID from digital signature format: "Name_ID_Timestamp"  
-                    employee_id = "unknown"
-                    digital_sig = consultation_result.get('digital_signature', '')
-                    if '_' in digital_sig:
-                        try:
-                            parts = digital_sig.split('_')
-                            if len(parts) >= 2:
-                                employee_id = parts[1]  # Extract ID portion
-                        except Exception:
-                            employee_id = "unknown"  # Fallback if parsing fails
-                    
-                    additional_context = {
-                        "workflow_session": self._workflow_session_id,
-                        "risk_assessment": categorization_event.risk_assessment,
-                        "consultation_required": True,
-                        "employee_id": employee_id,
-                        "operator_role": consultation_result['operator_role'],
-                        "decision_justification": consultation_result['decision_rationale'],
-                        "original_ai_confidence": consultation_result['original_confidence'],
-                        "human_selected_category": consultation_result['approved_category'],
-                        "consultation_method": consultation_result.get('method', 'event_driven_consultation'),
-                        "regulatory_impact": consultation_result.get('regulatory_impact', 'high')
-                    }
-                    
-                    self.logger.info(
-                        f"[SIGNATURE] Human consultation detected - signing as {signer_name} "
-                        f"(Category {consultation_result['approved_category']}, Employee ID: {employee_id})"
-                    )
-                else:
-                    # Automated decision - use system defaults
-                    signer_name = getattr(config, "user_name", "System")
-                    signer_id = getattr(config, "user_id", "system")
-                    additional_context = {
-                        "workflow_session": self._workflow_session_id,
-                        "risk_assessment": categorization_event.risk_assessment,
-                        "consultation_required": False
-                    }
-                    
-                    self.logger.info("[SIGNATURE] Automated categorization - signing as System")
-
-                signature_binding = self.signature_service.bind_signature_to_record(
-                    record_id=f"cat_{self._workflow_session_id}",
-                    record_content={
-                        "action": "gamp_categorization",
-                        "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, "value") else str(categorization_event.gamp_category),
-                        "confidence": categorization_event.confidence_score,
-                        "document": doc_name,
-                        "timestamp": datetime.now(UTC).isoformat()
-                    },
-                    signer_name=signer_name,
-                    signer_id=signer_id,
-                    signature_meaning=SignatureMeaning.REVIEWED,
-                    additional_context=additional_context
-                )
-
-                self.logger.info(f"[SIGNATURE] Categorization signed: {signature_binding.signature_id}")
-
-            except Exception as sig_e:
-                self.logger.warning(f"[SIGNATURE] Electronic signature failed for categorization: {sig_e}")
-                # Continue without signature in case of error
-        elif config.validation_mode.validation_mode:
-            self.logger.info("[SIGNATURE] Skipping categorization signature in validation mode")
+        # Store categorization data for deferred signature creation
+        # Signature will be created after consultation/planning flow
+        await safe_context_set(ctx, "categorization_for_signature", {
+            "categorization_event": categorization_event,
+            "document_info": {
+                "name": Path(ev.file_path).name if hasattr(ev, "file_path") else 
+                        (str(ev.urs_content)[:50] if hasattr(ev, "urs_content") and ev.urs_content else "document")
+            }
+        })
+        
+        self.logger.info("[SIGNATURE] Categorization signature deferred until after consultation/planning")
 
         # Add ALCOA+ record for categorization with enhanced metadata
         try:
@@ -1695,17 +1622,149 @@ class UnifiedTestGenerationWorkflow(Workflow):
         return "\n".join(prompt_lines)
 
     @step
-    async def generate_oq_tests(
+    async def create_categorization_signature(
         self,
         ctx: Context,
         ev: AgentResultsEvent
+    ) -> SignedAgentResultsEvent:
+        """
+        Create electronic signature for categorization after consultation/planning is complete.
+        
+        This step ensures that human consultation decisions are properly captured
+        in electronic signatures for 21 CFR Part 11 compliance.
+        
+        Args:
+            ctx: Workflow context
+            ev: Agent results event (passed through)
+            
+        Returns:
+            SignedAgentResultsEvent to continue workflow with signature metadata
+        """
+        self.logger.info("[SIGNATURE] Creating deferred categorization signature")
+        
+        # Get deferred categorization data
+        categorization_data = await safe_context_get(ctx, "categorization_for_signature", None)
+        if not categorization_data:
+            self.logger.warning("[SIGNATURE] No categorization data found for signature - skipping")
+            return SignedAgentResultsEvent(
+                agent_results=ev.agent_results,
+                session_id=ev.session_id,
+                total_execution_time=ev.total_execution_time,
+                signature_created=False
+            )
+        
+        config = get_config()
+        if not (self.enable_part11_compliance and self.signature_service and not config.validation_mode.validation_mode):
+            self.logger.info("[SIGNATURE] Part 11 compliance disabled or validation mode - skipping signature")
+            return SignedAgentResultsEvent(
+                agent_results=ev.agent_results,
+                session_id=ev.session_id,
+                total_execution_time=ev.total_execution_time,
+                signature_created=False
+            )
+        
+        try:
+            categorization_event = categorization_data["categorization_event"]
+            doc_name = categorization_data["document_info"]["name"]
+            
+            # Check for human consultation data in context
+            consultation_result = await safe_context_get(ctx, "consultation_result", None)
+            
+            if consultation_result:
+                # Human consultation occurred - use human operator data for signature
+                operator_name = consultation_result['operator_name']
+                operator_role = consultation_result['operator_role'].replace('_', ' ').title()
+                signer_name = f"{operator_name} ({operator_role})"
+                signer_id = operator_name
+                
+                # Extract employee ID from digital signature format: "Name_ID_Timestamp"  
+                employee_id = "unknown"
+                digital_sig = consultation_result.get('digital_signature', '')
+                if '_' in digital_sig:
+                    try:
+                        parts = digital_sig.split('_')
+                        if len(parts) >= 2:
+                            employee_id = parts[1]  # Extract ID portion
+                    except Exception:
+                        employee_id = "unknown"  # Fallback if parsing fails
+                
+                additional_context = {
+                    "workflow_session": self._workflow_session_id,
+                    "risk_assessment": categorization_event.risk_assessment,
+                    "consultation_required": True,
+                    "employee_id": employee_id,
+                    "operator_role": consultation_result['operator_role'],
+                    "decision_justification": consultation_result['decision_rationale'],
+                    "original_ai_confidence": consultation_result.get('original_confidence', 0.0),
+                    "human_selected_category": consultation_result['approved_category'],
+                    "consultation_method": consultation_result.get('method', 'event_driven_consultation'),
+                    "regulatory_impact": consultation_result.get('regulatory_impact', 'high')
+                }
+                
+                self.logger.info(
+                    f"[SIGNATURE] Human consultation completed - signing as {signer_name} "
+                    f"(Category {consultation_result['approved_category']}, Employee ID: {employee_id})"
+                )
+            else:
+                # Automated decision - use system defaults
+                signer_name = getattr(config, "user_name", "System")
+                signer_id = getattr(config, "user_id", "system")
+                additional_context = {
+                    "workflow_session": self._workflow_session_id,
+                    "risk_assessment": categorization_event.risk_assessment,
+                    "consultation_required": False
+                }
+                
+                self.logger.info("[SIGNATURE] Automated categorization - signing as System")
+
+            signature_binding = self.signature_service.bind_signature_to_record(
+                record_id=f"cat_{self._workflow_session_id}",
+                record_content={
+                    "action": "gamp_categorization",
+                    "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, "value") else str(categorization_event.gamp_category),
+                    "confidence": categorization_event.confidence_score,
+                    "document": doc_name,
+                    "timestamp": datetime.now(UTC).isoformat()
+                },
+                signer_name=signer_name,
+                signer_id=signer_id,
+                signature_meaning=SignatureMeaning.REVIEWED,
+                additional_context=additional_context
+            )
+
+            self.logger.info(f"[SIGNATURE] Categorization signed: {signature_binding.signature_id}")
+            
+            # Return signed event with signature metadata
+            return SignedAgentResultsEvent(
+                agent_results=ev.agent_results,
+                session_id=ev.session_id,
+                total_execution_time=ev.total_execution_time,
+                signature_id=signature_binding.signature_id,
+                signature_created=True
+            )
+
+        except Exception as sig_e:
+            self.logger.warning(f"[SIGNATURE] Electronic signature failed for categorization: {sig_e}")
+            # Continue without signature in case of error
+            return SignedAgentResultsEvent(
+                agent_results=ev.agent_results,
+                session_id=ev.session_id,
+                total_execution_time=ev.total_execution_time,
+                signature_created=False
+            )
+
+    @step
+    async def generate_oq_tests(
+        self,
+        ctx: Context,
+        ev: SignedAgentResultsEvent
     ) -> OQTestSuiteEvent:
         """
         Generate OQ test suite based on planning and agent results.
         
         Args:
             ctx: Workflow context
-            ev: Agent results event with context data
+            ev: Signed agent results event with context data and signature metadata
             
         Returns:
             OQTestSuiteEvent with generated test suite
