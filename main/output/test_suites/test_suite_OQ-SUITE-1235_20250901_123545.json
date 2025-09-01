@@ -1,0 +1,669 @@
+{
+  "suite_id": "OQ-SUITE-1235",
+  "gamp_category": 3,
+  "document_name": "URS-020.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify X-bar/R chart creation from CSV input",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Ensure the system correctly generates X-bar/R charts from provided CSV data as per vendor specifications.",
+      "prerequisites": [
+        "CSV file with valid QC data",
+        "User with appropriate permissions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a CSV file containing valid QC data to the dashboard.",
+          "expected_result": "System accepts the file and displays data preview.",
+          "data_to_capture": [
+            "File upload time",
+            "Data preview accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select X-bar/R chart option from the visualization menu.",
+          "expected_result": "System generates X-bar/R chart with correct subgroup calculations.",
+          "data_to_capture": [
+            "Chart generation time",
+            "Subgroup calculations"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "X-bar/R chart is generated without errors",
+        "Subgroup calculations match manual verification"
+      ],
+      "regulatory_basis": [
+        "URS-020-001"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Original CSV data must remain unchanged"
+      ],
+      "urs_requirements": [
+        "URS-020-001"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Basic SPC knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validate Nelson rules application on control charts",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Confirm the system correctly applies vendor's standard Nelson rules to identify out-of-control conditions.",
+      "prerequisites": [
+        "Pre-generated control chart with known violations",
+        "User with view access"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Load a control chart containing known Nelson rule violations.",
+          "expected_result": "Chart displays with all data points visible.",
+          "data_to_capture": [
+            "Chart load time",
+            "Data point visibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Enable Nelson rules overlay from the analysis menu.",
+          "expected_result": "System highlights all expected rule violations.",
+          "data_to_capture": [
+            "Number of violations detected",
+            "Rule application accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All expected Nelson rule violations are flagged",
+        "No false positives detected"
+      ],
+      "regulatory_basis": [
+        "URS-020-002"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Underlying chart data must not be modified"
+      ],
+      "urs_requirements": [
+        "URS-020-002"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SPC rule knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify X-bar/R Chart Creation from CSV Input",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the system correctly creates X-bar/R charts from CSV input data as per vendor specifications.",
+      "prerequisites": [
+        "CSV file with valid QC data",
+        "Access to the SPC dashboard"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a CSV file containing QC data to the SPC dashboard.",
+          "expected_result": "The system should accept the CSV file and display a confirmation message.",
+          "data_to_capture": [
+            "File upload confirmation message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select the option to create an X-bar/R chart from the uploaded data.",
+          "expected_result": "The system should generate an X-bar/R chart based on the data.",
+          "data_to_capture": [
+            "Generated X-bar/R chart"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "X-bar/R chart is correctly generated from the CSV data"
+      ],
+      "regulatory_basis": [
+        "URS-020-001"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure data integrity during CSV upload and chart generation"
+      ],
+      "urs_requirements": [
+        "URS-020-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Basic knowledge of SPC and CSV data handling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Scheduled Report Email Functionality",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To verify that the system can send scheduled reports via email using the vendor scheduler.",
+      "prerequisites": [
+        "Configured email settings in the SPC dashboard",
+        "Scheduled report setup"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up a scheduled report to be sent via email using the vendor scheduler.",
+          "expected_result": "The system should save the scheduled report configuration.",
+          "data_to_capture": [
+            "Scheduled report configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time and check the email inbox for the report.",
+          "expected_result": "The scheduled report should be received in the email inbox.",
+          "data_to_capture": [
+            "Email with the scheduled report attached"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Scheduled report is successfully sent via email at the configured time"
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during report generation and email transmission"
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Knowledge of email configuration and scheduling in SPC dashboards"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify CSV Import Functionality for Chart Creation",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To ensure that the system correctly imports CSV data for creating X-bar/R and p-charts as specified in URS-020-001.",
+      "prerequisites": [
+        "CSV file with sample QC data",
+        "Access to the SPC dashboard"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Upload a CSV file containing QC data to the SPC dashboard.",
+          "expected_result": "The system should successfully import the CSV file and display the data.",
+          "data_to_capture": [
+            "File upload status",
+            "Data display accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select the option to create an X-bar/R chart from the imported data.",
+          "expected_result": "The system should generate an X-bar/R chart based on the imported data.",
+          "data_to_capture": [
+            "Chart generation status",
+            "Chart accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "CSV data is imported correctly",
+        "X-bar/R chart is generated accurately"
+      ],
+      "regulatory_basis": [
+        "URS-020-001"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity during CSV import"
+      ],
+      "urs_requirements": [
+        "URS-020-001"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "SPC dashboard operation",
+        "Data import procedures"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate Scheduled Report Email Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the system can schedule and send report emails as specified in URS-020-006.",
+      "prerequisites": [
+        "Configured email settings",
+        "Sample report"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up a scheduled email report using the vendor scheduler.",
+          "expected_result": "The system should accept the schedule and prepare the report.",
+          "data_to_capture": [
+            "Schedule setup status",
+            "Report preparation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time and check the email inbox.",
+          "expected_result": "The scheduled report should be received in the email inbox.",
+          "data_to_capture": [
+            "Email receipt status",
+            "Report accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Report is scheduled correctly",
+        "Report is received in email inbox"
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure report data integrity"
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Email scheduling",
+        "Report generation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Verify Scheduled Report Email Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the system can send scheduled reports via email using the vendor scheduler.",
+      "prerequisites": [
+        "Configured email settings in the system",
+        "Scheduled report set up in the vendor scheduler"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up a scheduled report in the vendor scheduler.",
+          "expected_result": "Report is scheduled successfully.",
+          "data_to_capture": [
+            "Scheduled report details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time to elapse.",
+          "expected_result": "Email with the report is received at the specified email address.",
+          "data_to_capture": [
+            "Email receipt confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Email with the report is received at the scheduled time."
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure the report content matches the data in the system."
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Email setup"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Test Role-Based View Access Control",
+      "test_category": "security",
+      "gamp_category": 3,
+      "objective": "To verify that the dashboard enforces role-based view access as per user roles.",
+      "prerequisites": [
+        "User roles configured in the system",
+        "Test users with different roles"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a user with view-only access.",
+          "expected_result": "User can only view data and cannot make changes.",
+          "data_to_capture": [
+            "User access level"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Log in as a user with full access.",
+          "expected_result": "User can view and modify data as per their role.",
+          "data_to_capture": [
+            "User access level"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Access levels are enforced correctly based on user roles."
+      ],
+      "regulatory_basis": [
+        "URS-020-004",
+        "URS-020-007"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure no unauthorized modifications are possible."
+      ],
+      "urs_requirements": [
+        "URS-020-004",
+        "URS-020-007"
+      ],
+      "related_tests": [
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "User role management",
+        "Security testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Scheduled Report Email Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the system correctly sends scheduled report emails using the vendor scheduler.",
+      "prerequisites": [
+        "Configured email settings in the system",
+        "Scheduled report set up in the vendor scheduler"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up a scheduled report in the vendor scheduler.",
+          "expected_result": "Report is scheduled successfully without errors.",
+          "data_to_capture": [
+            "Scheduled report configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for the scheduled time to elapse.",
+          "expected_result": "Email with the report is received at the configured email address.",
+          "data_to_capture": [
+            "Email receipt time",
+            "Report content in the email"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Email with the report is received at the scheduled time.",
+        "Report content matches the expected data."
+      ],
+      "regulatory_basis": [
+        "URS-020-006"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure report data is accurate and complete."
+      ],
+      "urs_requirements": [
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System configuration",
+        "Email setup"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Validate Role-Based View Access",
+      "test_category": "security",
+      "gamp_category": 3,
+      "objective": "To confirm that the dashboard enforces role-based view access as per user roles.",
+      "prerequisites": [
+        "User roles configured in the system",
+        "Test users with different roles"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a user with restricted view access.",
+          "expected_result": "User is only able to view data and charts as per their role.",
+          "data_to_capture": [
+            "User role",
+            "Visible data and charts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Log in as a user with full view access.",
+          "expected_result": "User is able to view all data and charts without restrictions.",
+          "data_to_capture": [
+            "User role",
+            "Visible data and charts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Users with restricted roles can only view permitted data.",
+        "Users with full access can view all data."
+      ],
+      "regulatory_basis": [
+        "URS-020-004"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data access is restricted based on user roles."
+      ],
+      "urs_requirements": [
+        "URS-020-004"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "User role management",
+        "Security testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 300,
+  "generation_timestamp": "2025-09-01T12:35:45.631768+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-09-01T12:35:45.750206+00:00",
+  "workflow_session_id": "unified_workflow_2025-09-01T12:31:37.407887+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}
