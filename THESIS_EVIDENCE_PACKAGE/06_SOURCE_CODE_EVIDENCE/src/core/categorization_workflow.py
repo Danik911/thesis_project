@@ -17,13 +17,11 @@ from src.agents.categorization import (
 )
 from src.agents.categorization.agent import categorize_with_structured_output
 from src.core.events import (
-    ConsultationRequiredEvent,
     DocumentProcessedEvent,
     ErrorRecoveryEvent,
     GAMPCategorizationEvent,
     GAMPCategory,
     URSIngestionEvent,
-    WorkflowCompletionEvent,
 )
 from src.monitoring.phoenix_config import (
     enhance_workflow_span_with_compliance,
@@ -187,12 +185,12 @@ class GAMPCategorizationWorkflow(Workflow):
             
         Returns:
             DocumentProcessedEvent if processing enabled and successful,
-            None if processing disabled (allows original event to continue)
+            None if processing disabled (allows original URSIngestionEvent to continue to categorization)
         """
-        # If document processing is not enabled, skip this step
+        # If document processing is not enabled, return None to allow original event to continue to categorize_document
         if not self.enable_document_processing or not self.document_processor:
-            self.logger.info("Document processing not enabled, skipping processing step")
-            return None  # Let original URSIngestionEvent continue to categorization
+            self.logger.info("Document processing not enabled, original URSIngestionEvent will continue to categorize_document")
+            return None  # Allow original URSIngestionEvent to continue through workflow
 
         self.logger.info(f"Processing document: {ev.document_name}")
 
@@ -241,8 +239,8 @@ class GAMPCategorizationWorkflow(Workflow):
 
         except Exception as e:
             self.logger.warning(f"Document processing failed: {e}, continuing with raw content")
-            # On failure, skip processing step
-            return None
+            # On failure, return None to allow original URSIngestionEvent to continue to categorize_document
+            return None  # Allow original URSIngestionEvent to continue through workflow
 
     async def _process_from_content(self, ev: URSIngestionEvent) -> dict[str, Any]:
         """Process document from raw content."""
@@ -277,21 +275,22 @@ class GAMPCategorizationWorkflow(Workflow):
         self,
         ctx: Context,
         ev: URSIngestionEvent | DocumentProcessedEvent
-    ) -> GAMPCategorizationEvent | ErrorRecoveryEvent:
+    ) -> StopEvent:
         """
         Perform GAMP-5 categorization on the URS document.
         
         This step uses the categorization agent to analyze the document
         and determine its GAMP category with confidence scoring.
         
-        Enhanced with comprehensive data transformation tracking for audit trail.
+        SIMPLIFIED: Returns StopEvent directly to avoid duplicate workflow orchestration.
+        Parent workflow (UnifiedTestGenerationWorkflow) handles consultation logic.
         
         Args:
             ctx: Workflow context
             ev: URS ingestion event
             
         Returns:
-            GAMPCategorizationEvent or ErrorRecoveryEvent on failure
+            StopEvent with GAMPCategorizationEvent result
         """
         # Initialize comprehensive audit trail for data transformation tracking
         from src.core.audit_trail import get_audit_trail
@@ -414,7 +413,8 @@ class GAMPCategorizationWorkflow(Workflow):
                 # Emit event to stream for logging
                 ctx.write_event_to_stream(categorization_event)
 
-                return categorization_event
+                # Return StopEvent with categorization result (SIMPLIFIED WORKFLOW)
+                return StopEvent(result=categorization_event)
 
             except Exception as e:
                 last_error = e
@@ -458,26 +458,28 @@ class GAMPCategorizationWorkflow(Workflow):
         # Emit error event to stream
         ctx.write_event_to_stream(error_event)
 
-        return error_event
+        # For errors, immediately create Category 5 fallback and return StopEvent
+        return await self.handle_error_recovery(ctx, error_event)
 
-    @step
     async def handle_error_recovery(
         self,
         ctx: Context,
         ev: ErrorRecoveryEvent
-    ) -> GAMPCategorizationEvent:
+    ) -> StopEvent:
         """
         Handle categorization errors with conservative fallback.
         
         This step creates a Category 5 categorization event when
         the primary categorization fails.
         
+        SIMPLIFIED: Returns StopEvent directly to avoid duplicate workflow orchestration.
+        
         Args:
             ctx: Workflow context
             ev: Error recovery event
             
         Returns:
-            GAMPCategorizationEvent with Category 5 fallback
+            StopEvent with GAMPCategorizationEvent fallback result
         """
         # Get document metadata
         doc_metadata = await ctx.get("document_metadata", {})
@@ -520,120 +522,12 @@ class GAMPCategorizationWorkflow(Workflow):
         # Emit fallback event to stream
         ctx.write_event_to_stream(fallback_event)
 
-        return fallback_event
+        # Return StopEvent with fallback categorization result
+        return StopEvent(result=fallback_event)
 
-    @step
-    async def check_consultation_required(
-        self,
-        ctx: Context,
-        ev: GAMPCategorizationEvent
-    ) -> WorkflowCompletionEvent:
-        """
-        Check if human consultation is required based on categorization results.
-        
-        This step evaluates the confidence score and review flag to determine
-        if human expert review is needed.
-        
-        Args:
-            ctx: Workflow context
-            ev: Categorization event
-            
-        Returns:
-            WorkflowCompletionEvent with optional consultation information
-        """
-        # Store categorization event in context for final step
-        await ctx.set("final_categorization_event", ev)
-
-        # Check if consultation is required
-        consultation_event = None
-        if ev.review_required:
-            doc_metadata = await ctx.get("document_metadata", {})
-
-            # Determine urgency based on confidence
-            urgency = "high" if ev.confidence_score < 0.5 else "normal"
-
-            # Log consultation requirement
-            self.logger.info(
-                f"Human consultation required for {doc_metadata.get('name', 'unknown')} "
-                f"(confidence: {ev.confidence_score:.2%})"
-            )
-
-            consultation_event = ConsultationRequiredEvent(
-                consultation_type="categorization_review",
-                context={
-                    "category": ev.gamp_category.value,
-                    "confidence": ev.confidence_score,
-                    "justification": ev.justification,
-                    "document_name": doc_metadata.get("name", "unknown"),
-                    "risk_assessment": ev.risk_assessment
-                },
-                urgency=urgency,
-                required_expertise=["gamp_5_expert", "validation_specialist"],
-                triggering_step="categorization"
-            )
-
-            # Emit consultation event to stream
-            ctx.write_event_to_stream(consultation_event)
-
-        # Create completion event
-        completion_event = WorkflowCompletionEvent(
-            consultation_event=consultation_event,
-            ready_for_completion=True,
-            triggering_step="check_consultation_required"
-        )
-
-        # Emit completion event to stream
-        ctx.write_event_to_stream(completion_event)
-
-        return completion_event
-
-    @step
-    async def complete_workflow(
-        self,
-        ctx: Context,
-        ev: WorkflowCompletionEvent
-    ) -> StopEvent:
-        """
-        Complete the categorization workflow.
-        
-        This final step packages all results and returns them via StopEvent.
-        
-        Args:
-            ctx: Workflow context
-            ev: Workflow completion event
-            
-        Returns:
-            StopEvent with complete workflow results
-        """
-        # Get all workflow results
-        categorization_event = await ctx.get("final_categorization_event")
-        categorization_result = await ctx.get("categorization_result")
-        workflow_start = await ctx.get("workflow_start_time")
-
-        # Calculate workflow duration
-        workflow_duration = (datetime.now(UTC) - workflow_start).total_seconds()
-
-        # Build result dictionary
-        result = {
-            "categorization_event": categorization_event,
-            "consultation_event": ev.consultation_event,
-            "summary": {
-                "category": categorization_result["category"],
-                "confidence": categorization_result["confidence"],
-                "review_required": categorization_result["review_required"],
-                "is_fallback": categorization_result.get("is_fallback", False),
-                "workflow_duration_seconds": workflow_duration
-            }
-        }
-
-        # Log workflow completion
-        self.logger.info(
-            f"Workflow completed in {workflow_duration:.2f}s - "
-            f"Category: {result['summary']['category']}, "
-            f"Confidence: {result['summary']['confidence']:.2%}"
-        )
-
-        return StopEvent(result=result)
+    # REMOVED: check_consultation_required and complete_workflow steps
+    # These steps created duplicate workflow orchestration with the parent workflow.
+    # Parent workflow (UnifiedTestGenerationWorkflow) now handles all consultation logic.
 
     def _create_categorization_event(
         self,
@@ -810,7 +704,24 @@ async def run_categorization_workflow(
         author=author
     )
 
-    return result
+    # Handle simplified workflow result format
+    if hasattr(result, "result"):
+        categorization_event = result.result
+    else:
+        categorization_event = result
+
+    # Return compatible format for backward compatibility
+    return {
+        "categorization_event": categorization_event,
+        "consultation_event": None,  # Handled by parent workflow now
+        "summary": {
+            "category": categorization_event.gamp_category.value,
+            "confidence": categorization_event.confidence_score,
+            "review_required": categorization_event.review_required,
+            "is_fallback": categorization_event.confidence_score == 0.0,
+            "workflow_duration_seconds": 0.0  # Not tracked in simplified workflow
+        }
+    }
 
 
 async def main():
