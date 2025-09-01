@@ -1,5 +1,5 @@
 {
-  "created": "2025-09-01T12:35:45.752166+00:00",
+  "created": "2025-09-01T13:20:44.187280+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -417,7 +417,20 @@
       "signature_value": "232190e40a67441b294e2c95355b2a65582627e3f301bca84e16d95702e0b9fca68a6fc1152a15d607a31cbfd2a28411f0405d688763e9614347112494fd6504",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "a6875ed1956ed2e4d98f56ba14dfc66e1d4c795e3a80a9a42a21248452bfa2de",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "ca5e06cfc7d724c5a4dc3d06345c8d066563536338a52a9b94fd1e013ac71d1b",
+      "record_id": "cat_unified_workflow_2025-09-01T13:16:12.618628+00:00",
+      "signature_id": "3462a7e6-85f4-44b0-bd42-a80306ecb0fc",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-09-01T13:20:44.186973+00:00",
+      "signature_value": "85e07dc7c8e6ddfde9525f7153a0b74b8004ac2823a2b99b3ab42d302f6e52a00fa9dd74773ae5d04d5456487135b25d4a0634556916e96433c57f4a0fb6f60f",
+      "signer_id": "Daniil Vladimirov",
+      "signer_name": "Daniil Vladimirov (Regulatory Specialist)"
     }
   ],
-  "total_signatures": 32
+  "total_signatures": 33
 }
