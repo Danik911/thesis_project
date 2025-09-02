@@ -1,5 +1,5 @@
 {
-  "created": "2025-09-01T13:20:44.187280+00:00",
+  "created": "2025-09-01T13:50:30.157084+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -430,7 +430,33 @@
       "signature_value": "85e07dc7c8e6ddfde9525f7153a0b74b8004ac2823a2b99b3ab42d302f6e52a00fa9dd74773ae5d04d5456487135b25d4a0634556916e96433c57f4a0fb6f60f",
       "signer_id": "Daniil Vladimirov",
       "signer_name": "Daniil Vladimirov (Regulatory Specialist)"
+    },
+    {
+      "binding_proof": "9a7f8e89cef2bb8f67aa7db0c1eb2a83d8ee0a3f3148644740638e1d03f43a38",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "4c0144f72d8c37f6cc587e473085e919802b2a7f626665b8b10eb0e0effbac73",
+      "record_id": "cat_unified_workflow_2025-09-01T13:39:08.290356+00:00",
+      "signature_id": "50f55ce8-0cdf-4406-8722-1e04dd9b2293",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-09-01T13:42:58.757934+00:00",
+      "signature_value": "db504a036a7ef85c49c0e596d670592f275c8b025c9af411acd4705e20c988150520292a0f4c19d7d879d363503a35d3d08dacc36586a069adf9edbdae311407",
+      "signer_id": "Daniil Vladimirov",
+      "signer_name": "Daniil Vladimirov (Quality Assurance)"
+    },
+    {
+      "binding_proof": "dbcb106154832deaa6615d03d72cd68fca3567dbcfa2b81e8a6e5d98961ab5a9",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "a0a0a9c1d089f4d520e13f7f6cdfd94e8aa6578fa88b9ba67160b2991773b291",
+      "record_id": "OQ-SUITE-1350",
+      "signature_id": "893277c2-e081-4be4-9708-d55f553469ac",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-09-01T13:50:30.156649+00:00",
+      "signature_value": "c24fe603b4f5a746a7c22e456d9c9dc422982112de376d95ff570091fb57733718d5a1737977c1f61e0eeb8c35200d9f41b930f1ce7e111cbb6a82487c39ac0a",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 33
+  "total_signatures": 35
 }

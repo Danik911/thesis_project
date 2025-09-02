@@ -699,8 +699,7 @@ def generate_forensic_report(all_data: Dict, output_dir: str):
 ## Performance Metrics
 - **Average OQ Generation Time**: {all_data['performance_metrics'].get('avg_generation_time', 'N/A')} ms
 - **Token Usage**: {all_data['performance_metrics'].get('total_tokens', 'N/A')}
-- **Cost per OQ Test**: ${all_data['performance_metrics'].get('cost_per_test', 0):.4f}
-- **Cost Reduction Achieved**: {all_data['performance_metrics'].get('cost_reduction', 'N/A')}%
+
 
 ## Critical Issues
 """
@@ -829,7 +828,6 @@ def main():
     performance_metrics = extract_performance_metrics(all_traces, oq_tests_data)
     print(f"  Average latency: {performance_metrics.get('avg_latency_ms', 'N/A')} ms")
     print(f"  Total tokens used: {performance_metrics.get('total_tokens', 'N/A')}")
-    print(f"  Cost reduction: {performance_metrics.get('cost_reduction', 'N/A')}%")
     
     # Step 5: Identify issues and generate recommendations
     print("\n🔎 Identifying issues and generating recommendations...")
@@ -937,7 +935,6 @@ def extract_performance_metrics(traces, oq_tests):
         'avg_latency_ms': 0,
         'total_tokens': 0,
         'cost_per_test': 0,
-        'cost_reduction': 91,  # Known achievement
         'validation_completeness': 85,
         'risk_assessment': 80,
         'timeline': []
@@ -1126,7 +1123,6 @@ The interactive dashboard provides:
 5. **Performance Metrics**
    - OQ generation latency trends
    - Token usage and costs
-   - 91% cost reduction visualization
 
 6. **Interactive Features**
    - Hover for detailed information
