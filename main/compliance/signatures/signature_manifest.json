@@ -1,5 +1,5 @@
 {
-  "created": "2025-09-01T13:50:30.157084+00:00",
+  "created": "2025-09-02T11:35:48.980915+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -456,7 +456,33 @@
       "signature_value": "c24fe603b4f5a746a7c22e456d9c9dc422982112de376d95ff570091fb57733718d5a1737977c1f61e0eeb8c35200d9f41b930f1ce7e111cbb6a82487c39ac0a",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "75ff2363ebafe4ea9d35695d913830fba07756e6d4a1b8ccb725e97af3bf8a8a",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "470f15d0ef610e4a5f739803517cab647ca6cdb64a1cf87be90cfcbc283f65f1",
+      "record_id": "cat_unified_workflow_2025-09-02T11:23:13.227538+00:00",
+      "signature_id": "8335923c-83ab-47b9-8eba-893c8f90e588",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-09-02T11:28:00.122333+00:00",
+      "signature_value": "069d5b94eb9ed1e4b0607a981bc6f725722e705e0080bb48fe632df0090318228cad9a92f50cf02eefacb0605f4ec0f6fb78bd997e4333f0bdc15905e46e8c01",
+      "signer_id": "Daniil Vladinirov",
+      "signer_name": "Daniil Vladinirov (Validation Engineer)"
+    },
+    {
+      "binding_proof": "ef881d06ad743c0fa80522772639125a686a78c0d5003740a37b285b5385831e",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "424e27ecafaa6ae305219e90f021ff85b4c9792a6705039413cb3cc3239a4379",
+      "record_id": "OQ-SUITE-1135",
+      "signature_id": "ac68e2b2-48c9-4828-b202-5b89b73ec4fd",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-09-02T11:35:48.971976+00:00",
+      "signature_value": "b443a9e7eae58e9d86cd218edb8df97e18a258e8f1c09569ac0c21c9bc5c6df9c4e89f92da05348ccf0bf08d15204d934e2b27bc668124567d555ee677caf00b",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 35
+  "total_signatures": 37
 }
