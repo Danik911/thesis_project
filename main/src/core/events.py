@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from llama_index.core.workflow import Event
+from llama_index.core.workflow import Event, InputRequiredEvent
 from pydantic import Field, field_validator
 
 
@@ -122,6 +122,7 @@ class AgentRequestEvent(Event):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     requesting_step: str
     correlation_id: UUID = Field(default_factory=uuid4)
+    session_id: str | None = None
 
 
 class AgentResultEvent(Event):
@@ -140,6 +141,8 @@ class AgentResultEvent(Event):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     correlation_id: UUID
     validation_status: ValidationStatus = ValidationStatus.PENDING
+    session_id: str | None = None
+    responding_step: str | None = None
 
 
 class ConsultationRequiredEvent(Event):
@@ -278,6 +281,24 @@ class ConsultationSessionEvent(Event):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     session_status: str = "active"  # active, completed, cancelled, escalated
     compliance_metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ConsultationInputEvent(InputRequiredEvent):
+    """
+    Event requesting human consultation input for GAMP-5 categorization.
+    
+    This event is emitted when the workflow requires human input for
+    pharmaceutical compliance decisions. It extends InputRequiredEvent
+    to work with LlamaIndex's event-driven architecture.
+    """
+    consultation_context: dict[str, Any]
+    prompt_text: str
+    timeout_seconds: int = 300
+    consultation_id: UUID = Field(default_factory=uuid4)
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    consultation_type: str = "gamp_categorization"
+    urgency: str = "normal"  # normal, high, critical
 
 
 class UserDecisionEvent(Event):
@@ -429,6 +450,40 @@ class WorkflowCompletionEvent(Event):
     triggering_step: str
 
 
+# Note: AgentRequestEvent and AgentResultEvent are defined above (lines 110-143)
+# Removed duplicate class definitions to prevent attribute conflicts
+
+
+class AgentResultsEvent(Event):
+    """
+    Event containing compiled results from all parallel agent executions.
+    
+    This event is emitted when all agent requests have been completed
+    and their results compiled for the next workflow step.
+    """
+    agent_results: list[AgentResultEvent]
+    session_id: str
+    total_execution_time: float = 0.0
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class SignedAgentResultsEvent(Event):
+    """
+    Event containing agent results AFTER categorization signature has been created.
+    
+    This event ensures that electronic signatures are properly captured before
+    test generation begins, maintaining 21 CFR Part 11 compliance.
+    """
+    agent_results: list[AgentResultEvent]
+    session_id: str
+    total_execution_time: float = 0.0
+    signature_id: str | None = None
+    signature_created: bool = False
+    event_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 # OQ Test Generation Events - imported from OQ generator module
 try:
     from src.agents.oq_generator.events import (
@@ -448,7 +503,9 @@ __all__ = [
     "AgentRequestEvent",
     "AgentResultEvent",
     "AgentResultsEvent",
+    "SignedAgentResultsEvent",
     "ConsultationBypassedEvent",
+    "ConsultationInputEvent",
     "ConsultationRequiredEvent",
     "ConsultationSessionEvent",
     "ConsultationTimeoutEvent",

@@ -105,7 +105,7 @@ class OQTestGeneratorV2:
         self.timeout_mapping = {
             GAMPCategory.CATEGORY_1: 120,   # 2 minutes
             GAMPCategory.CATEGORY_3: 300,   # 5 minutes (increased for 10 tests in 5 batches)
-            GAMPCategory.CATEGORY_4: 300,   # 5 minutes
+            GAMPCategory.CATEGORY_4: 900,   # 15 minutes (increased for DeepSeek V3 reliability)
             GAMPCategory.CATEGORY_5: 1200   # 20 minutes for o3 (increased)
         }
 
@@ -383,7 +383,7 @@ class OQTestGeneratorV2:
             batch_end = min(batch_start + batch_size, total_tests)
             batch_count = batch_end - batch_start
 
-            estimated_time_remaining = (num_batches - batch_num) * 60  # Use realistic 60s per batch estimate
+            estimated_time_remaining = (num_batches - batch_num) * 120  # Use realistic 120s per batch estimate
             self.logger.info(f"🔄 PROGRESS: Generating batch {batch_num + 1}/{num_batches}: Tests {batch_start + 1}-{batch_end} (ETA: {estimated_time_remaining}s)")
 
             # Generate batch with context from previous batches
@@ -407,11 +407,11 @@ class OQTestGeneratorV2:
                 )
 
                 # Execute batch generation with appropriate timeout
-                # Ensure minimum 60s per batch for DeepSeek V3 to generate 2 tests
+                # Ensure minimum 120s per batch for DeepSeek V3 to generate 2 tests
                 base_timeout = self.timeout_mapping[gamp_category] // num_batches
-                batch_timeout = max(60, base_timeout)
+                batch_timeout = max(120, base_timeout)
                 
-                self.logger.info(f"⏱️  BATCH TIMEOUT: {batch_timeout}s (base: {base_timeout}s, minimum: 60s)")
+                self.logger.info(f"⏱️  BATCH TIMEOUT: {batch_timeout}s (base: {base_timeout}s, minimum: 120s)")
                 async with asyncio.timeout(batch_timeout):
                     response = await llm.acomplete(batch_prompt)
 

@@ -10,7 +10,7 @@ This file provides guidance to Claude Code when working with this thesis project
 - ✅ ALWAYS ask "Did you hear/see/experience the expected result?" before claiming success
 - ✅ ALWAYS wait for user confirmation before updating status to "complete"
 
-## 🚨 ABSOLUTE RULE: NO FUCKING FALLBACKS 🚨
+## 🚨 ABSOLUTE RULE: NO FALLBACKS 🚨
 
 **ZERO TOLERANCE FOR FALLBACK LOGIC**
 

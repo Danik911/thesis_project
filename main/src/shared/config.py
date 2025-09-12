@@ -270,13 +270,35 @@ class HumanConsultationConfig:
             raise ValueError("At least one authorized role must be specified")
 
 
+def _get_validation_mode_from_env() -> bool:
+    """
+    Helper function to safely parse VALIDATION_MODE environment variable.
+    
+    This function provides explicit debugging for validation mode configuration
+    to ensure pharmaceutical compliance requirements are properly handled.
+    """
+    import logging
+    
+    # Get the raw environment variable value
+    raw_value = os.getenv("VALIDATION_MODE", "false")
+    
+    # Parse to boolean
+    result = raw_value.lower() == "true"
+    
+    # Log for debugging (will be visible when config initializes)
+    logger = logging.getLogger("ValidationModeConfig")
+    logger.info(f"_get_validation_mode_from_env: VALIDATION_MODE='{raw_value}' -> validation_mode={result}")
+    
+    return result
+
+
 @dataclass
 class ValidationModeConfig:
     """Configuration for validation mode testing capabilities."""
 
     # Validation mode settings - PRODUCTION SAFE defaults
     validation_mode: bool = field(
-        default_factory=lambda: os.getenv("VALIDATION_MODE", "false").lower() == "true"
+        default_factory=lambda: _get_validation_mode_from_env()
     )
 
     # Consultation bypass threshold (confidence score below which consultation would normally be required)
@@ -303,6 +325,12 @@ class ValidationModeConfig:
 
     def __post_init__(self):
         """Validate validation mode configuration and ensure production safety."""
+        # DEBUG: Log validation mode state at initialization
+        import logging
+        logger = logging.getLogger("ValidationModeConfig")
+        env_value = os.getenv("VALIDATION_MODE", "false")
+        logger.info(f"DEBUG: ValidationModeConfig.__post_init__() - VALIDATION_MODE env var: '{env_value}', validation_mode field: {self.validation_mode}")
+        
         # Ensure bypass threshold is valid
         if not 0.0 <= self.bypass_consultation_threshold <= 1.0:
             raise ValueError("Bypass consultation threshold must be between 0.0 and 1.0")

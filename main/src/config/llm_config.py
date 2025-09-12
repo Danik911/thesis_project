@@ -48,7 +48,7 @@ class LLMConfig:
             "max_tokens": 2000,
         },
         ModelProvider.OPENROUTER: {
-            "model": "deepseek/deepseek-chat",  # DeepSeek V3 - most powerful open-source model (671B MoE)
+            "model": "deepseek/deepseek-chat-v3.1",  # DeepSeek V3 - most powerful open-source model (671B MoE)
             "temperature": 0.1,
             "max_tokens": 30000,  # Increased to 30000 to prevent JSON truncation of 25 OQ test cases
         }
