@@ -1,5 +1,5 @@
 {
-  "created": "2025-09-02T11:35:48.980915+00:00",
+  "created": "2025-09-02T18:08:24.811235+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -482,7 +482,20 @@
       "signature_value": "b443a9e7eae58e9d86cd218edb8df97e18a258e8f1c09569ac0c21c9bc5c6df9c4e89f92da05348ccf0bf08d15204d934e2b27bc668124567d555ee677caf00b",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "c16e0270448472676fdecb76604f5e2322eaa6fd915b7c14d5e09f8bdfbed87b",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "691b0206f80e1918d5977bf39ef7830ae218c157425a076acf2aabb0096202e7",
+      "record_id": "cat_unified_workflow_2025-09-02T18:03:50.124965+00:00",
+      "signature_id": "cc418599-98a6-420e-8f26-bb90c590a5cd",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-09-02T18:08:24.811235+00:00",
+      "signature_value": "791ee370a9eaef60ff68f6b08e2032dbb3b1ac40b17e266bdcaf479bcd298db2247bb6a2faf06aac3f482ba91e0ae4ff8bbe4772c355f30d231765b76b45fd09",
+      "signer_id": "Daniil Vladimirov",
+      "signer_name": "Daniil Vladimirov (Quality Assurance)"
     }
   ],
-  "total_signatures": 37
+  "total_signatures": 38
 }
