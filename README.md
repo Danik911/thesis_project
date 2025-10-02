@@ -15,7 +15,7 @@ This project implements a **multi-agent LLM system** for generating Operational 
 
 ## 📊 THESIS EVIDENCE PACKAGE
 
-**Location**: `C:\Users\anteb\Desktop\Courses\Projects\thesis_project\THESIS_EVIDENCE_PACKAGE\`
+**Location**: [THESIS_EVIDENCE_PACKAGE/](https://github.com/Danik911/thesis_project/tree/main/THESIS_EVIDENCE_PACKAGE)
 
 This comprehensive evidence package serves as the complete proof of thesis work, containing all experimental data, statistical analyses, and validation results. The package demonstrates:
 
@@ -46,27 +46,30 @@ For detailed navigation and evidence review, see [`THESIS_EVIDENCE_PACKAGE/READM
 
 ```mermaid
 graph TD
-    A[URS Document] --> B[Agent 0: GAMP-5 Categorizer<br/>Determines software category]
-    B --> C[Agent 1: Planner<br/>Frontier Model]
-    C --> D[Agent 2: Context Provider<br/>RAG/CAG]
-    C --> E[Agent 3-4: SME Agents<br/>Fine-tuned Models]
-    C --> F[Agent 5: Research Agent<br/>Regulatory Updates]
-    D --> G[Agent 6: Test Generator<br/>Open-source Model]
-    E --> G
-    F --> G
-    G --> H[OQ Test Scripts]
-    H --> I[Validation & Review]
+    URS[URS Document] --> CAT[GAMP-5 Categorization Agent]
+    CAT -->|Category & confidence| OQ[OQ Generator Agent (DeepSeek V3)]
+    CAT --> CTX[Context Provider Agent (ChromaDB)]
+    CAT --> RES[Research Agent]
+    CAT --> SME[SME Agent]
+    CTX --> OQ
+    RES --> OQ
+    SME --> OQ
+    OQ --> TS[Test Suite (OQ)]
+    TS --> PHX[Phoenix Observability]
+    TS --> VAL[Compliance Validation (ALCOA+, 21 CFR Part 11)]
+    VAL --> REVIEW[Validation & Review]
 ```
 
 ### Key Components
 
-- **GAMP-5 Categorizer Agent**: Analyzes the URS to determine the GAMP 5 software category (e.g., Category 3, 4, or 5). This critical first step defines the scope and rigor of the entire validation process.
-- **Planner Agent**: Orchestrates workflow using frontier model (GPT-o3), informed by the software category
-- **Context Agent**: Provides relevant documentation via RAG/CAG
-- **Specialist Agents**: Domain-specific expertise (fine-tuned models)
-- **Research Agent**: Fetches latest regulatory updates
-- **Generator Agent**: Produces compliant test scripts tailored to the specific GAMP-5 category
-- **Validation Layer**: ALCOA+ and security compliance checks
+- Unified Orchestrator (LlamaIndex Workflow): Coordinates categorization, parallel agents, generation, and tracing
+- GAMP-5 Categorization Agent: Determines software category per ISPE GAMP-5; no fallbacks on uncertainty
+- Context Provider Agent: Retrieves regulatory context from ChromaDB (26 indexed documents)
+- Research Agent: Augments context with external regulatory sources
+- SME Agent: Performs technical and compliance sanity checks on planned tests
+- OQ Generator Agent: Produces compliant OQ test suites using DeepSeek V3 via OpenRouter; robust YAML parsing
+- Compliance Validators: ALCOA+ validator, OWASP LLM controls, and Traceability Matrix for bidirectional mapping
+- Phoenix Observability: Custom span exporter capturing full workflow traces (131 spans per execution)
 
 ## 🚀 Quick Start
 
@@ -83,27 +86,36 @@ pip install uv
 docker --version
 ```
 
+For implementation details and metrics, see the [Technical Architecture Report](TECHNICAL_ARCHITECTURE_REPORT.md).
+
 ### Installation
 
-```bash
-# Clone repository
-cd thesis_project
-
+Windows (PowerShell):
+```powershell
 # Create virtual environment
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+./.venv/Scripts/Activate.ps1
 
 # Install dependencies
 uv pip install -e .
 
-# Copy environment configuration
-cp .env.example .env
-# Edit .env with your API keys
+# Copy environment configuration (if provided)
+if (Test-Path .env.example) { Copy-Item .env.example .env }
+# Then edit .env with your API keys
+```
 
-# Initialize task management (already configured)
-# Task-Master AI is pre-configured with Claude Sonnet 4.0
-# Development uses gpt-4.1-mini-2025-04-14 for cost efficiency
-# Use MCP tools: mcp__task-master-ai__* for task management
+macOS/Linux:
+```bash
+# Create virtual environment
+uv venv
+source .venv/bin/activate
+
+# Install dependencies
+uv pip install -e .
+
+# Copy environment configuration (if provided)
+[ -f .env.example ] && cp .env.example .env
+# Then edit .env with your API keys
 ```
 
 ### Current Production Status
@@ -126,7 +138,7 @@ cp .env.example .env
 - Full GAMP-5, 21 CFR Part 11, and ALCOA+ compliance
 - See [`THESIS_EVIDENCE_PACKAGE/07_UNIFIED_ANALYSIS/final_reports/`](THESIS_EVIDENCE_PACKAGE/07_UNIFIED_ANALYSIS/final_reports/) for validation
 
-See [`main/docs/mvp_implementation_plan.md`](main/docs/mvp_implementation_plan.md) for detailed roadmap.
+See [`main/docs/guides/UNIFIED_WORKFLOW_USAGE.md`](main/docs/guides/UNIFIED_WORKFLOW_USAGE.md) for workflow details and [`main/docs/guides/OSS_MIGRATION_SUMMARY.md`](main/docs/guides/OSS_MIGRATION_SUMMARY.md) for migration context.
 
 ### Basic Usage
 
@@ -136,20 +148,26 @@ cd main
 python ingest_chromadb.py
 
 # Step 2: Run unified workflow (generates OQ tests)
-python main.py tests/test_data/gamp5_test_data/testing_data.md
+# Provide a path to your URS document (Markdown or text)
+python main.py path/to/your_URS_document.md
 
 # Expected output (based on N=30 validation):
 # - Categorization: 91.3% accuracy across categories
 # - OQ Tests: Average 13.7 tests per successful document
 # - Output: output/test_suites/test_suite_OQ-SUITE-[ID]_[timestamp].json
 # - Duration: ~7.7 minutes average with DeepSeek V3
-# - Phoenix traces: 517 total traces captured
+# - Phoenix traces: 517 total traces captured (when observability deps installed)
 # - Success Rate: 76.7% (23/30 documents)
 
 # Step 3: Monitor with Phoenix (optional)
 docker run -d -p 6006:6006 arizephoenix/phoenix:latest
 # Access at http://localhost:6006
 ```
+
+Optional dependencies (enable full observability and document processing):
+- arize-phoenix, openinference instrumentations for LlamaIndex/OpenAI, llama-index-callbacks-arize-phoenix
+- pdfplumber (for Research/SME agents that parse PDFs)
+See `main/docs/guides/UNIFIED_WORKFLOW_USAGE.md` → “Next Steps” for exact packages.
 
 See [`main/docs/guides/QUICK_START_GUIDE.md`](main/docs/guides/QUICK_START_GUIDE.md) for detailed instructions.
 
@@ -181,7 +199,7 @@ mcp__task-master-ai__set_task_status --id=1.1 --status=done
 - ✅ Fixed configuration alignment (Category 5: 25-30 tests)
 - ✅ Fixed JSON datetime serialization
 - ✅ Fixed "phantom success" status reporting
-- ✅ Added o3-2025-04-16 model support for Category 5
+- ✅ Migrated generation to DeepSeek V3 (OpenRouter) for Category 5
 - ✅ Reduced confidence threshold from 0.6 to 0.4
 
 See task details: `mcp__task-master-ai__get_tasks`
@@ -227,15 +245,22 @@ mcp__task-master-ai__research --query="..." --taskIds="X,Y"  # Research integrat
 ### Testing
 
 ```bash
-# Run all validation gates
-make validate
-
 # Individual validation levels
 uv run ruff check --fix        # Level 1: Syntax
 uv run mypy .                  # Level 1: Types
 uv run pytest tests/ -v        # Level 2: Unit tests
 uv run python -m src.main test # Level 3: Integration
 ```
+
+### Environment Variables
+
+Create a .env file with:
+
+- OPENROUTER_API_KEY=sk-or-...
+- OPENAI_API_KEY=sk-...              # used for embeddings
+- LLM_PROVIDER=openrouter            # production provider
+- PHOENIX_ENDPOINT=http://localhost:6006
+- CHROMADB_PATH=./chroma_db
 
 ## 📊 Evaluation Methodology
 
@@ -284,26 +309,28 @@ uv run python -m src.main test # Level 3: Integration
 ```
 thesis_project/
 ├── main/                           # Main application code
-│   ├── src/                       # Source code
-│   │   ├── agents/                # Multi-agent components
-│   │   │   ├── categorization/    # GAMP-5 categorization
-│   │   │   ├── oq_generator/      # OQ test generation
-│   │   │   ├── parallel/          # Parallel agent coordination
-│   │   │   └── planner/           # Test planning strategy
-│   │   ├── core/                  # Workflow orchestration
-│   │   │   └── unified_workflow.py # Master orchestration
-│   │   ├── compliance/            # Regulatory compliance
-│   │   ├── cross_validation/      # 5-fold CV framework
-│   │   └── rag/                   # RAG/CAG implementation
-│   ├── tests/                     # Test suites
-│   ├── output/                    # Generated test outputs
-│   └── docs/                      # Documentation
+│   ├── src/                        # Source code
+│   │   ├── core/                   # Workflow orchestration
+│   │   │   └── unified_workflow.py # Master orchestrator
+│   │   ├── agents/                 # Multi-agent components
+│   │   │   ├── categorization/     # GAMP-5 categorization
+│   │   │   ├── oq_generator/       # OQ test generation
+│   │   │   └── parallel/           # Context, Research, SME
+│   │   ├── compliance/             # Regulatory compliance
+│   │   │   └── alcoa_validator.py  # ALCOA+ implementation
+│   │   ├── validation/             # Statistical & audit validation
+│   │   │   └── audit_coverage_validator.py
+│   │   └── monitoring/             # Observability
+│   │       └── custom_span_exporter.py
+│   ├── tests/                      # Test suites
+│   └── output/                     # Generated test outputs
+│       └── test_suites/
 ├── THESIS_EVIDENCE_PACKAGE/       # 📊 Complete thesis proof
 │   ├── 00_URS/                    # User Requirements (30+ docs)
 │   ├── 01_TEST_EXECUTION_EVIDENCE/ # Test execution data
-│   │   ├── corpus_1/              # 17 URS documents
-│   │   ├── corpus_2/              # 10 URS documents
-│   │   ├── corpus_3/              # 5 URS documents
+│   │   ├── corpus_1/
+│   │   ├── corpus_2/
+│   │   ├── corpus_3/
 │   │   └── unified_analysis/      # Cross-corpus analysis
 │   ├── 02_STATISTICAL_ANALYSIS/   # Statistical validation
 │   ├── 03_COMPLIANCE_DOCUMENTATION/ # GAMP-5, OWASP compliance
@@ -328,7 +355,9 @@ thesis_project/
 
 ## 📈 Monitoring & Observability
 
-✅ **Fully Operational** with comprehensive tracing
+✅ **Validated with comprehensive tracing** (in production-like environment)
+
+Note: On a fresh local setup, Phoenix and some agents require optional dependencies. If observability appears broken or agents fail due to missing packages, see `main/docs/guides/UNIFIED_WORKFLOW_USAGE.md` (Troubleshooting and Next Steps).
 
 ```bash
 # Start Phoenix monitoring
