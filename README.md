@@ -45,19 +45,19 @@ For detailed navigation and evidence review, see [`THESIS_EVIDENCE_PACKAGE/READM
 ### Multi-Agent System Design
 
 ```mermaid
-graph TD
-  URS[URS Document] --> CAT[GAMP-5 Categorization Agent];
-  CAT -->|Category and confidence| OQ[OQ Generator Agent (DeepSeek V3)];
-  CAT --> CTX[Context Provider Agent (ChromaDB)];
-  CAT --> RES[Research Agent];
-  CAT --> SME[SME Agent];
+flowchart TD
+  URS["URS Document"] --> CAT["GAMP-5 Categorization Agent"];
+  CAT -- "Category and confidence" --> OQ["OQ Generator Agent - DeepSeek V3"];
+  CAT --> CTX["Context Provider Agent - ChromaDB"];
+  CAT --> RES["Research Agent"];
+  CAT --> SME["SME Agent"];
   CTX --> OQ;
   RES --> OQ;
   SME --> OQ;
-  OQ --> TS[Test Suite (OQ)];
-  TS --> PHX[Phoenix Observability];
-  TS --> VAL[Compliance Validation (ALCOA+, 21 CFR Part 11)];
-  VAL --> REVIEW[Validation & Review];
+  OQ --> TS["Test Suite (OQ)"];
+  TS --> PHX["Phoenix Observability"];
+  TS --> VAL["Compliance Validation - ALCOA+ and 21 CFR Part 11"];
+  VAL --> REVIEW["Validation & Review"];
 ```
 
 ### Key Components
