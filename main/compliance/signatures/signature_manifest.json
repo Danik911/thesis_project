@@ -1,5 +1,5 @@
 {
-  "created": "2025-09-02T18:08:24.811235+00:00",
+  "created": "2025-10-14T15:53:04.178424+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -495,7 +495,20 @@
       "signature_value": "791ee370a9eaef60ff68f6b08e2032dbb3b1ac40b17e266bdcaf479bcd298db2247bb6a2faf06aac3f482ba91e0ae4ff8bbe4772c355f30d231765b76b45fd09",
       "signer_id": "Daniil Vladimirov",
       "signer_name": "Daniil Vladimirov (Quality Assurance)"
+    },
+    {
+      "binding_proof": "ce054fc76c53a2733f6ff13740186217cded3b73e60897d7f9761d5089a9d3a9",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "397deaf751ade0228c6c5508b9661170d53f25f684cca5f65fd45ece6c38a501",
+      "record_id": "cat_unified_workflow_2025-10-14T15:46:14.423249+00:00",
+      "signature_id": "16b2773b-5fba-40f4-ad65-318784679292",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-10-14T15:53:04.177422+00:00",
+      "signature_value": "d3f0991a5f01c58591f46c6b6cf7afba795149ef289ec0e292f6bed18c8937756720cc529db6e33f26b281a35a1f3d9201e6da74c9bdcea268fe572e32757a05",
+      "signer_id": "Daniil",
+      "signer_name": "Daniil (Validation Engineer)"
     }
   ],
-  "total_signatures": 38
+  "total_signatures": 39
 }
