@@ -217,7 +217,7 @@
 ### Documentation References  
 - `main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md` - Phoenix monitoring setup
 - `main/docs/tasks_issues/oss_migration_comprehensive_report.md` - System architecture
-- `main/docs/HONEST_ASSESSMENT_REPORT.md` - Current system capabilities
+- `main/docs/validation/old/HONEST_ASSESSMENT_REPORT.md` - Current system capabilities
 
 ### Compliance Framework
 - GAMP-5 categorization and validation requirements

@@ -412,8 +412,8 @@ main/docs/
 - main/docs/guides/UNIFIED_WORKFLOW_USAGE.md
 - main/docs/guides/QUICK_START_GUIDE.md
 - main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md
-- main/docs/mvp_implementation_plan.md
-- main/docs/HONEST_ASSESSMENT_REPORT.md
+- main/docs/plans/mvp_implementation_plan.md
+- main/docs/validation/old/HONEST_ASSESSMENT_REPORT.md
 
 ---
 
@@ -1624,7 +1624,7 @@ Before declaring cleanup complete:
 1. `main/main.py`
 2. `main/ingest_chromadb.py`
 3. `main/.env`
-4. `main/pyproject.toml`
+4. `pyproject.toml` (project root, not main/)
 
 #### Core Workflow (8)
 5. `main/src/core/unified_workflow.py`
@@ -1743,8 +1743,8 @@ Before declaring cleanup complete:
 4. `main/docs/guides/UNIFIED_WORKFLOW_USAGE.md` - Usage guide
 5. `main/docs/guides/QUICK_START_GUIDE.md` - Quick start
 6. `main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md` - Monitoring guide
-7. `main/docs/mvp_implementation_plan.md` - MVP plan
-8. `main/docs/HONEST_ASSESSMENT_REPORT.md` - Assessment report
+7. `main/docs/plans/mvp_implementation_plan.md` - MVP plan
+8. `main/docs/validation/old/HONEST_ASSESSMENT_REPORT.md` - Assessment report
 9. `main/docs/PROJECT_CLEANUP_PLAN.md` - This document
 
 ### Essential Data Directories (KEEP)
