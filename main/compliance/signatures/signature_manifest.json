@@ -1,5 +1,5 @@
 {
-  "created": "2025-10-14T15:53:04.178424+00:00",
+  "created": "2025-10-31T21:45:55.052242+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -508,7 +508,33 @@
       "signature_value": "d3f0991a5f01c58591f46c6b6cf7afba795149ef289ec0e292f6bed18c8937756720cc529db6e33f26b281a35a1f3d9201e6da74c9bdcea268fe572e32757a05",
       "signer_id": "Daniil",
       "signer_name": "Daniil (Validation Engineer)"
+    },
+    {
+      "binding_proof": "558f4b7ea13ac0dc289fbcf2e1611567970d6e9577dfe82ed707bb1d841645a6",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "94ffccf0f98e16656f32447a224bbe3fbc81f2bdaca1b58152b28c4c41fd2155",
+      "record_id": "cat_unified_workflow_2025-10-31T21:38:41.347863+00:00",
+      "signature_id": "505c4b7e-4ed5-4c6f-87f5-fdf276e2262c",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-10-31T21:43:00.383244+00:00",
+      "signature_value": "e7c21abd3f074d78c1bcd5913f7e5da127b5177c5959eafa58f25c6a13b7df1a7dfa6c1833dbca52f060d3e1b6fc41a036b66c0695b84ff2e9bc89a3f4397b0b",
+      "signer_id": "Daniil",
+      "signer_name": "Daniil (Quality Assurance)"
+    },
+    {
+      "binding_proof": "c8cd11585ff61707a8821ef04cf532e5cfb73a911eb7d30f288f2e675ca3a797",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "a78e19cafb2e2e0859c6649ae078c00e031c533f834ebff0435c5520902b5aa4",
+      "record_id": "OQ-SUITE-2145",
+      "signature_id": "eb734da4-d420-44ba-a6d2-107609a6cf88",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-10-31T21:45:55.052242+00:00",
+      "signature_value": "5e53129c4eab306b2a3ae6caae9d702f1d09870062a6813bd3d5d9a2d594b99aade83040657e7ada1eb910873f58e02233e0160a463660f866b8004c11293f01",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 39
+  "total_signatures": 41
 }

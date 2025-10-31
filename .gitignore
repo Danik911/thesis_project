@@ -271,3 +271,6 @@ nul
 # Thesis documents (Chapter 4)
 THESIS_EVIDENCE_PACKAGE/05_THESIS_DOCUMENTS/chapter_4/
 
+
+# Ruff cache
+.ruff_cache/
