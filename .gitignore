@@ -271,3 +271,9 @@ nul
 # Thesis documents (Chapter 4)
 THESIS_EVIDENCE_PACKAGE/05_THESIS_DOCUMENTS/chapter_4/
 
+
+# Workflow execution logs
+main/logs/audit/*.jsonl
+main/logs/comprehensive_audit/*.jsonl
+main/logs/traces/*.jsonl
+
