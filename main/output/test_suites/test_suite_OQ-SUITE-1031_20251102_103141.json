@@ -1,0 +1,1101 @@
+{
+  "suite_id": "OQ-SUITE-1031",
+  "gamp_category": 3,
+  "document_name": "URS-027.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Site Activation Workflow with Document Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the configured site activation workflow properly enforces document checks and governance approvals before site activation",
+      "prerequisites": [
+        "CTMS system is installed and configured",
+        "Test user accounts with appropriate roles created",
+        "Test study and site records available",
+        "Required document templates uploaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a clinical operations user and initiate site activation workflow for a test site",
+          "expected_result": "System displays the site activation workflow with required document checklist",
+          "data_to_capture": [
+            "Workflow initiation timestamp",
+            "User ID",
+            "Site ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Upload all required documents for site activation (protocol, IB, consent form, etc.)",
+          "expected_result": "System accepts documents and updates checklist status for each document type",
+          "data_to_capture": [
+            "Document upload timestamps",
+            "Document types",
+            "Checklist completion status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Submit the site for activation approval through the configured workflow",
+          "expected_result": "System routes the request to appropriate approvers based on configured governance rules",
+          "data_to_capture": [
+            "Approval routing path",
+            "Approver assignments",
+            "Submission timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Log in as approver and complete the approval with electronic signature",
+          "expected_result": "System records approval with 21 CFR Part 11 compliant e-signature and activates the site",
+          "data_to_capture": [
+            "Approval timestamp",
+            "E-signature details",
+            "Site activation status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Site activation workflow enforces all required document checks",
+        "Approval process follows configured governance rules",
+        "E-signatures are 21 CFR Part 11 compliant",
+        "Audit trail captures all workflow steps"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ICH E6 R2",
+        "FDA Clinical Trial Guidance"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All workflow steps must be captured in audit trail",
+        "Document version control must be maintained",
+        "Approval signatures must be non-repudiable"
+      ],
+      "urs_requirements": [
+        "URS-027-001",
+        "URS-027-002",
+        "URS-027-009",
+        "URS-027-010"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Clinical Operations",
+        "Quality Assurance",
+        "System Administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Role-Based Access Control for CRO and Sponsor Users",
+      "test_category": "security",
+      "gamp_category": 3,
+      "objective": "Verify that the configured role-based access control properly restricts user permissions based on organizational role and study assignment",
+      "prerequisites": [
+        "CTMS system is installed and configured",
+        "Multiple test user accounts with different roles created",
+        "Test study records available",
+        "User provisioning system configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a CRO monitor user assigned to a specific study",
+          "expected_result": "User can access only assigned study data and monitoring functions",
+          "data_to_capture": [
+            "Login success/failure",
+            "Accessible modules",
+            "Study access permissions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to access financial management functions and sponsor-only reports",
+          "expected_result": "System denies access to unauthorized functions with appropriate error message",
+          "data_to_capture": [
+            "Access denial events",
+            "Error messages",
+            "Security violation attempts"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Log in as sponsor clinical operations manager with broader access rights",
+          "expected_result": "User can access multiple studies and all operational functions except financial administration",
+          "data_to_capture": [
+            "Accessible functions",
+            "Study access scope",
+            "Permission levels"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Log in as system administrator and verify user provisioning via SCIM integration",
+          "expected_result": "User accounts and permissions can be managed through SCIM API integration",
+          "data_to_capture": [
+            "SCIM provisioning success",
+            "User synchronization status",
+            "Permission mapping accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Users can only access functions and data appropriate to their role",
+        "Access denials are properly logged and secured",
+        "SCIM integration works for user provisioning",
+        "Role changes are immediately effective"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "HIPAA Security Rule",
+        "GDPR Article 32"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Access control must prevent unauthorized data modification",
+        "User permissions must be auditable",
+        "Security events must be logged and non-repudiable"
+      ],
+      "urs_requirements": [
+        "URS-027-007",
+        "URS-027-009",
+        "URS-027-015"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 35,
+      "required_expertise": [
+        "Information Security",
+        "System Administration",
+        "Quality Assurance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Site Activation Workflow with Document Checks",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the configured site activation workflow correctly enforces required document checks and governance approvals before site activation.",
+      "prerequisites": [
+        "CTMS system is installed and accessible",
+        "Test study created in the system",
+        "Test user accounts with Site Manager and Governance roles",
+        "Test site documentation (e.g., FDA 1572, CVs, lab certifications)"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into CTMS as a Site Manager and initiate the site activation workflow for a test study site.",
+          "expected_result": "System displays the site activation workflow with required document checklist.",
+          "data_to_capture": [
+            "Workflow initiation timestamp",
+            "Initial workflow state"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Upload test documents to the site activation checklist and submit for governance approval.",
+          "expected_result": "System accepts document uploads and updates checklist status accordingly.",
+          "data_to_capture": [
+            "Document upload success status",
+            "Checklist completion percentage"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Log in as Governance user and review the submitted site activation package.",
+          "expected_result": "System presents complete document package for review with approval/rejection options.",
+          "data_to_capture": [
+            "Review interface accessibility",
+            "Available approval actions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Approve the site activation package using 21 CFR Part 11-compliant e-signature.",
+          "expected_result": "System records approval with e-signature and updates site status to 'Activated'.",
+          "data_to_capture": [
+            "E-signature capture",
+            "Final site status",
+            "Audit trail entry"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Site activation workflow prevents activation until all required documents are submitted",
+        "E-signature process complies with 21 CFR Part 11 requirements",
+        "Audit trail captures all document submissions and approval actions",
+        "Site status correctly transitions through workflow states"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records; Electronic Signatures",
+        "ICH E6 R2 - Section 5.20.1 Trial Management, Data Handling, and Record Keeping"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All document submissions and approvals must be recorded in audit trail",
+        "E-signatures must be securely linked to their respective records",
+        "Workflow state changes must be timestamped and user-attributed"
+      ],
+      "urs_requirements": [
+        "URS-027-002: Implement site activation workflow with required document checks",
+        "URS-027-010: Support 21 CFR Part 11-compliant e-signatures for approvals"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "CTMS Site Management",
+        "Clinical Operations",
+        "Quality Assurance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Investigator Payment Configuration with Milestone Rules",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Validate that the configured investigator payment system correctly calculates payments based on milestone rules and applies appropriate tax withholding.",
+      "prerequisites": [
+        "CTMS system is installed and accessible",
+        "Test study with configured payment milestones",
+        "Test investigator profiles with tax withholding requirements",
+        "Financial user role access credentials"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into CTMS as a Financial Administrator and navigate to the payment configuration module.",
+          "expected_result": "System displays payment milestone rules and tax withholding settings for the test study.",
+          "data_to_capture": [
+            "Payment configuration interface accessibility",
+            "Existing milestone rules"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate achievement of a payment milestone (e.g., first subject enrolled) for a test site.",
+          "expected_result": "System automatically generates a payment request with correct amount calculation.",
+          "data_to_capture": [
+            "Payment amount calculated",
+            "Milestone trigger detection"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Review the generated payment request and verify tax withholding calculations based on investigator profile.",
+          "expected_result": "System applies correct tax withholding percentages and displays net payment amount.",
+          "data_to_capture": [
+            "Gross payment amount",
+            "Tax withholding amount",
+            "Net payment amount"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Approve the payment request and verify audit trail recording.",
+          "expected_result": "System records payment approval with timestamp and user attribution in audit trail.",
+          "data_to_capture": [
+            "Approval timestamp",
+            "Approving user",
+            "Audit trail entry details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Payment milestones trigger automatic payment calculations",
+        "Tax withholding is correctly applied based on investigator profiles",
+        "All payment transactions are recorded in audit trail",
+        "Financial records are maintained per retention policy requirements"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records; Electronic Signatures",
+        "ICH E6 R2 - Section 5.5 Compensation to Subjects and Investigators"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Payment calculations must be reproducible and verifiable",
+        "All financial transactions must have complete audit trails",
+        "Tax withholding calculations must be accurate and documented"
+      ],
+      "urs_requirements": [
+        "URS-027-005: Configure investigator payments including milestone rules and tax withholding",
+        "URS-027-011: Retain monitoring visit reports and financial records per policy"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 35,
+      "required_expertise": [
+        "Clinical Finance",
+        "CTMS Configuration",
+        "Financial Compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Monitoring Visit Workflow and Financial Milestone Configuration Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the configured monitoring visit planning, reporting, and associated investigator payment milestone rules function correctly according to the vendor's workflow templates.",
+      "prerequisites": [
+        "CTMS environment is installed and accessible",
+        "Test users with CRA and Finance roles are created and assigned appropriate permissions",
+        "A test clinical study and at least one test site are configured and activated in the system",
+        "Vendor templates for trip reports and follow-up letters are loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a CRA user and navigate to the monitoring visit planning module for the test study.",
+          "expected_result": "User successfully logs in and can access the monitoring visit planning interface for the assigned study.",
+          "data_to_capture": [
+            "Screenshot of the monitoring visit planning dashboard"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Schedule a new monitoring visit for the test site, specifying the visit type, planned date, and objectives.",
+          "expected_result": "The system creates the visit record and displays it in the planned visits list with a status of 'Scheduled'.",
+          "data_to_capture": [
+            "Visit ID",
+            "Scheduled date",
+            "Visit status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete the trip report using the configured vendor template, entering findings and actions required.",
+          "expected_result": "The trip report form is populated correctly, and all mandatory fields are completed and saved successfully.",
+          "data_to_capture": [
+            "Trip report completion status",
+            "Timestamp of report submission"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate and send a follow-up letter to the site using the configured template from the completed trip report.",
+          "expected_result": "The system generates a follow-up letter based on the trip report findings and confirms successful dispatch.",
+          "data_to_capture": [
+            "Confirmation of letter generation",
+            "Document ID of the follow-up letter"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Log in as a Finance user and verify that a payment milestone associated with the completed monitoring visit is triggered.",
+          "expected_result": "A payment milestone is automatically created in the financial module with the correct amount and linked to the appropriate site.",
+          "data_to_capture": [
+            "Milestone ID",
+            "Payment amount",
+            "Milestone status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 6,
+          "action": "Review the audit trail for the monitoring visit and associated financial milestone records.",
+          "expected_result": "A complete audit trail is available showing all user actions and data changes for the visit and payment records.",
+          "data_to_capture": [
+            "Audit trail entries for the visit and payment records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Monitoring visits can be planned, executed, and reported using the configured vendor templates",
+        "Follow-up letters are automatically generated from trip report data",
+        "Payment milestones are triggered automatically upon visit completion as per configured rules",
+        "All actions are captured in a compliant audit trail"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for electronic records and signatures",
+        "ICH E6(R2) for monitoring activities and documentation"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail must capture all changes to visit status and financial data",
+        "Financial calculations must be accurate and consistent",
+        "Linkage between visit completion and payment milestones must be maintained"
+      ],
+      "urs_requirements": [
+        "URS-027-004: Implement monitoring visit planning, trip reports, and follow-up letters using vendor templates",
+        "URS-027-005: Configure investigator payments including milestone rules and tax withholding",
+        "URS-027-009: Maintain audit trail for subject and site data changes"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "CRA Process Knowledge",
+        "Financial Configuration",
+        "CTMS Workflow Navigation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Risk-Based Monitoring Dashboard and KPI Configuration Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Validate that the configured risk-based monitoring dashboards and key performance indicators (KPIs) accurately display study and site-level metrics for monitoring oversight.",
+      "prerequisites": [
+        "CTMS environment is installed and accessible",
+        "Test study with multiple sites and subject data is populated",
+        "Monitoring visit and deviation data exists for the test study",
+        "User with Monitoring Oversight role is created and configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a user with Monitoring Oversight role and navigate to the risk-based monitoring dashboard.",
+          "expected_result": "The dashboard loads successfully and displays an overview of all assigned studies with high-level KPIs.",
+          "data_to_capture": [
+            "Screenshot of the main dashboard view",
+            "Load time for the dashboard"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select the test study from the dashboard to view study-specific risk indicators and KPIs.",
+          "expected_result": "The system displays detailed study-level metrics including enrollment rate, deviation trends, and monitoring visit status.",
+          "data_to_capture": [
+            "List of displayed KPIs",
+            "Values for key metrics like enrollment rate and deviation count"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Drill down into site-level performance metrics for the test study to view individual site data.",
+          "expected_result": "Site-level dashboard displays performance metrics for each site, highlighting sites requiring attention based on configured thresholds.",
+          "data_to_capture": [
+            "Site performance metrics",
+            "Visual indicators for risk status (e.g., red/yellow/green)"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Filter the dashboard data by date range, region, or specific risk indicators to test configurability.",
+          "expected_result": "The dashboard updates to show only the filtered data, maintaining accurate calculations for all displayed metrics.",
+          "data_to_capture": [
+            "Filter criteria applied",
+            "Dashboard response to filtering"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Generate a standard enrollment and deviation status report from the dashboard interface.",
+          "expected_result": "The report generates within 15 seconds and contains accurate data matching the dashboard displays.",
+          "data_to_capture": [
+            "Report generation time",
+            "Accuracy of data in report compared to dashboard"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 6,
+          "action": "Verify that the dashboard data refreshes correctly when new monitoring or subject data is added to the system.",
+          "expected_result": "Dashboard metrics update automatically or after refresh to reflect the most current data in the system.",
+          "data_to_capture": [
+            "Timestamp of data refresh",
+            "Accuracy of updated metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Risk-based monitoring dashboard displays accurate study and site-level KPIs",
+        "Dashboard filters and drill-down capabilities function correctly",
+        "Reports generate within the required performance threshold of 15 seconds",
+        "Data visualizations accurately represent the underlying clinical data"
+      ],
+      "regulatory_basis": [
+        "ICH E6(R2) requirements for risk-based monitoring approaches",
+        "21 CFR Part 11 for electronic reporting and data integrity"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "KPI calculations must be accurate and based on current system data",
+        "Dashboard displays must reflect real-time or near-real-time data updates",
+        "Report data must match source system records"
+      ],
+      "urs_requirements": [
+        "URS-027-006: Implement risk-based monitoring KPIs and dashboards",
+        "URS-027-008: Provide standard reports for enrollment, deviations, and SDV status",
+        "URS-027-013: Report generation < 15 seconds for 1M records"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 35,
+      "required_expertise": [
+        "Risk-Based Monitoring Principles",
+        "Data Visualization",
+        "CTMS Reporting"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Monitoring Visit Report Generation and Follow-up Letter Configuration",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that monitoring visit planning, trip report generation, and follow-up letter creation function correctly using vendor-configured templates",
+      "prerequisites": [
+        "CTMS system configured with monitoring visit templates",
+        "Test user with monitor role permissions",
+        "Sample monitoring visit data created in system"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as a monitoring user and navigate to the visit planning module",
+          "expected_result": "User successfully logs in and can access visit planning functionality",
+          "data_to_capture": [
+            "Login success status",
+            "Module accessibility status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new monitoring visit plan with required details including site, date, and objectives",
+          "expected_result": "Visit plan is successfully created and saved in the system",
+          "data_to_capture": [
+            "Visit plan creation status",
+            "Plan details stored correctly"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Complete a trip report using the vendor-configured template with findings and observations",
+          "expected_result": "Trip report is generated successfully with all required fields populated",
+          "data_to_capture": [
+            "Report generation status",
+            "Template completeness",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate a follow-up letter using the configured template and verify content",
+          "expected_result": "Follow-up letter is created with appropriate content and formatting",
+          "data_to_capture": [
+            "Letter generation status",
+            "Content accuracy",
+            "Template compliance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All monitoring visit templates function as configured",
+        "Reports and letters generate within expected timeframes",
+        "Data integrity maintained throughout the process"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for electronic records",
+        "GCP requirements for monitoring documentation"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail captures all visit-related changes",
+        "Report content cannot be modified after finalization",
+        "Template configurations are version-controlled"
+      ],
+      "urs_requirements": [
+        "URS-027-004",
+        "URS-027-009"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "CTMS monitoring module knowledge",
+        "GCP monitoring requirements understanding"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Investigator Payment Configuration and Tax Withholding Validation",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Validate that investigator payment rules including milestone-based payments and tax withholding calculations function as configured",
+      "prerequisites": [
+        "Payment configuration completed in CTMS",
+        "Test payment rules with milestones defined",
+        "Tax withholding rates configured",
+        "Test user with finance role access"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in as finance user and navigate to payment management module",
+          "expected_result": "User successfully accesses payment functionality with appropriate permissions",
+          "data_to_capture": [
+            "Login success status",
+            "Module access verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create test payment records for multiple investigators with different milestone achievements",
+          "expected_result": "Payment records are created successfully with correct milestone recognition",
+          "data_to_capture": [
+            "Payment creation status",
+            "Milestone calculation accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify tax withholding calculations for investigators in different countries/states",
+          "expected_result": "Tax calculations are performed correctly according to configured rates and rules",
+          "data_to_capture": [
+            "Tax calculation accuracy",
+            "Rate application correctness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Generate payment reports and verify financial data integrity",
+          "expected_result": "Reports generate accurately with complete financial information",
+          "data_to_capture": [
+            "Report generation success",
+            "Data completeness",
+            "Calculation verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Payment milestones trigger correctly based on study progress",
+        "Tax calculations are accurate for all configured jurisdictions",
+        "Financial records maintain integrity and auditability"
+      ],
+      "regulatory_basis": [
+        "Financial compliance requirements",
+        "Tax regulation adherence",
+        "21 CFR Part 11 for financial electronic records"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Payment calculations are immutable once processed",
+        "Audit trail captures all payment-related changes",
+        "Tax rates are version-controlled with effective dates"
+      ],
+      "urs_requirements": [
+        "URS-027-005",
+        "URS-027-009",
+        "URS-027-011"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Financial system knowledge",
+        "Tax regulation understanding",
+        "CTMS payment module experience"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Integration Testing with EDC System via API",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify that the CTMS successfully integrates with the Electronic Data Capture (EDC) system using standard APIs to exchange subject enrollment and visit data",
+      "prerequisites": [
+        "CTMS system configured and operational",
+        "EDC test environment available",
+        "API credentials configured",
+        "Test data for subjects and visits prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure API endpoint connection to EDC system in CTMS integration settings",
+          "expected_result": "Connection established successfully with valid authentication",
+          "data_to_capture": [
+            "Connection status",
+            "Authentication result",
+            "Error messages if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Trigger subject enrollment data sync from CTMS to EDC system via API",
+          "expected_result": "Subject enrollment data transmitted successfully and appears in EDC system",
+          "data_to_capture": [
+            "Transmission timestamp",
+            "Data payload",
+            "Confirmation response",
+            "EDC system receipt confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Trigger visit completion data sync from EDC to CTMS system via API",
+          "expected_result": "Visit completion data received and updated in CTMS subject records",
+          "data_to_capture": [
+            "Data reception timestamp",
+            "Updated subject records",
+            "Data validation results",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "API connection established successfully",
+        "Subject enrollment data synced accurately",
+        "Visit completion data updated in CTMS",
+        "No data loss or corruption during transmission"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for data integrity",
+        "GAMP 5 guidelines for configured systems"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data transmission must maintain accuracy and completeness",
+        "Audit trail must record all data exchanges",
+        "Data mapping must preserve original meaning"
+      ],
+      "urs_requirements": [
+        "URS-027-014",
+        "URS-027-009"
+      ],
+      "related_tests": [
+        "OQ-010",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "API integration",
+        "Clinical data management",
+        "System administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Performance Testing for Report Generation with Large Datasets",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "Validate that the CTMS can generate standard reports within acceptable timeframes when processing large volumes of data (1M+ records)",
+      "prerequisites": [
+        "CTMS system with performance monitoring enabled",
+        "Test database with 1M+ records loaded",
+        "Performance benchmarking tools available",
+        "Network connectivity verified"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute enrollment report generation for studies with 1M+ subject records",
+          "expected_result": "Report generated completely within 15 seconds as specified in requirements",
+          "data_to_capture": [
+            "Report generation start time",
+            "Report completion time",
+            "Total processing duration",
+            "System resource utilization during process"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute deviations report generation for studies with 1M+ deviation records",
+          "expected_result": "Report generated completely within 15 seconds with all data accurately included",
+          "data_to_capture": [
+            "Processing time",
+            "Data accuracy verification",
+            "Memory usage metrics",
+            "CPU utilization during report generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Execute SDV status report generation for large multi-site studies",
+          "expected_result": "Report completes within performance requirements with correct status data",
+          "data_to_capture": [
+            "Execution time",
+            "Data completeness check",
+            "System performance metrics",
+            "Any timeout or error conditions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All reports generate within 15 seconds for 1M+ records",
+        "System resources remain within acceptable limits",
+        "Report data is complete and accurate",
+        "No system crashes or timeouts during processing"
+      ],
+      "regulatory_basis": [
+        "FDA guidance on computerized systems in clinical trials",
+        "GAMP 5 performance qualification requirements"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Reports must maintain data accuracy regardless of volume",
+        "No data truncation or corruption in large datasets",
+        "Calculation integrity must be preserved"
+      ],
+      "urs_requirements": [
+        "URS-027-013",
+        "URS-027-008",
+        "URS-027-012"
+      ],
+      "related_tests": [
+        "OQ-009",
+        "OQ-007"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "Database management",
+        "System architecture"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 405,
+  "generation_timestamp": "2025-11-02T10:31:40.781405+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-11-02T10:31:41.351345+00:00",
+  "workflow_session_id": "unified_workflow_2025-11-02T10:23:43.814985+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

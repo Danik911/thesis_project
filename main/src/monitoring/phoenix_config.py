@@ -180,9 +180,15 @@ class PhoenixManager:
                     logger.error(f"[ERROR] ChromaDB instrumentation failed: {chromadb_error}")
 
             self._initialized = True
+
+            # Determine Phoenix status for clear user messaging
+            phoenix_status = "enabled" if self.tracer_provider is not None else "disabled"
+            connection_status = "established" if self.tracer_provider is not None else "unavailable"
+
             logger.info(
-                f"[SUCCESS] Phoenix observability initialized for {self.config.deployment_environment} environment\n"
+                f"[SUCCESS] Phoenix observability {phoenix_status} for {self.config.deployment_environment} environment\n"
                 f"   - Endpoint: {self.config.otlp_endpoint}\n"
+                f"   - Connection: {connection_status}\n"
                 f"   - OpenAI instrumented: {openai_instrumented}\n"
                 f"   - ChromaDB instrumented: {chromadb_instrumented}"
             )
@@ -201,39 +207,97 @@ class PhoenixManager:
         return self
 
     def _launch_local_phoenix(self) -> None:
-        """Launch local Phoenix UI for development or connect to existing instance."""
+        """Launch local Phoenix UI with Windows lock detection or connect to existing instance."""
         try:
             import phoenix as px
+            import platform
+            from pathlib import Path
 
-            # First try to connect to existing Phoenix (like Docker container)
-            try:
-                import requests
-                health_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
-                response = requests.get(health_url, timeout=2)
-                if response.status_code == 200:
-                    logger.info(f"[SUCCESS] Connected to existing Phoenix instance at: {health_url}")
-                    # Create a mock session object for compatibility
-                    class MockSession:
-                        def __init__(self, url):
-                            self.url = url
-                    self.phoenix_session = MockSession(health_url)
-                    return
-            except Exception:
-                logger.debug("No existing Phoenix instance found, launching local...")
+            # CHECK 1: Explicit user preference to skip local launch
+            # Use this when Docker Phoenix or external Phoenix is guaranteed to be running
+            if os.getenv("PHOENIX_SKIP_LOCAL_LAUNCH", "").lower() == "true":
+                logger.info("[CONFIG] PHOENIX_SKIP_LOCAL_LAUNCH=true, using external Phoenix only")
+                base_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
 
-            # Launch local Phoenix if no existing instance
-            # Check if PHOENIX_EXTERNAL environment variable is set
+                class MockSession:
+                    def __init__(self, url):
+                        self.url = url
+
+                    def close(self):
+                        """No-op close for compatibility with shutdown logic."""
+                        pass
+
+                self.phoenix_session = MockSession(base_url)
+                logger.info(f"[SUCCESS] Configured to use external Phoenix at: {base_url}")
+                logger.info("[PHOENIX] Skipped health check and local launch per user configuration")
+                return
+
+            # CHECK 2: Explicit user preference to force local launch
+            # Use this when you always want a fresh local Phoenix instance
+            force_local = os.getenv("PHOENIX_FORCE_LOCAL_LAUNCH", "").lower() == "true"
+            if force_local:
+                logger.info("[CONFIG] PHOENIX_FORCE_LOCAL_LAUNCH=true, skipping health check")
+            else:
+                # Check for stale database locks on Windows
+                if platform.system() == "Windows":
+                    phoenix_db = Path.home() / ".phoenix" / "phoenix.db"
+                    if phoenix_db.exists():
+                        try:
+                            # Attempt to open database to check for locks
+                            import sqlite3
+                            conn = sqlite3.connect(str(phoenix_db), timeout=1.0)
+                            conn.close()
+                            logger.debug("[WINDOWS] Phoenix database accessible, no stale locks detected")
+                        except sqlite3.OperationalError as e:
+                            logger.warning(
+                                f"[WINDOWS] Phoenix database may be locked by another process: {e}\n"
+                                f"Solutions:\n"
+                                f"  1. Close any other Phoenix instances\n"
+                                f"  2. Restart your terminal\n"
+                                f"  3. Delete {phoenix_db} if no other processes are using it"
+                            )
+                            # Continue anyway for Docker Phoenix compatibility
+
+                # Attempt health check for existing Phoenix instance
+                if self._check_existing_phoenix():
+                    return  # Successfully connected to existing instance
+
+            # If we reach here, either health check failed or user forced local launch
+            # Launch local Phoenix instance
+
+            # Check if PHOENIX_EXTERNAL environment variable is set (legacy support)
             if os.getenv("PHOENIX_EXTERNAL", "").lower() == "true":
                 logger.info("PHOENIX_EXTERNAL=true, skipping local Phoenix launch")
+                class MockSession:
+                    def __init__(self, url):
+                        self.url = url
+
+                    def close(self):
+                        """No-op close for compatibility with shutdown logic."""
+                        pass
+
                 self.phoenix_session = MockSession(f"http://{self.config.phoenix_host}:{self.config.phoenix_port}")
                 return
 
-            self.phoenix_session = px.launch_app(
-                host=self.config.phoenix_host,
-                port=self.config.phoenix_port,
-            )
+            # Set permanent Phoenix working directory to avoid temp directory issues
+            # Temp directories can cause database lock errors on Windows during cleanup
+            phoenix_dir = Path.home() / ".phoenix"
+            phoenix_dir.mkdir(exist_ok=True)
 
-            logger.info(f"Phoenix UI launched at: {self.phoenix_session.url}")
+            # Allow user to override working directory
+            working_dir = os.getenv("PHOENIX_WORKING_DIR", str(phoenix_dir))
+            os.environ["PHOENIX_WORKING_DIR"] = working_dir
+            logger.debug(f"[PHOENIX] Working directory set to: {working_dir}")
+
+            # Set host and port from config
+            os.environ["PHOENIX_HOST"] = self.config.phoenix_host
+            os.environ["PHOENIX_PORT"] = str(self.config.phoenix_port)
+
+            # Launch local Phoenix instance
+            logger.info("[PHOENIX] Launching local Phoenix instance...")
+            self.phoenix_session = px.launch_app()
+
+            logger.info(f"[SUCCESS] Phoenix UI launched at: {self.phoenix_session.url}")
 
         except ImportError:
             logger.warning(
@@ -246,16 +310,168 @@ class PhoenixManager:
                 class MockSession:
                     def __init__(self, url):
                         self.url = url
+
+                    def close(self):
+                        """No-op close for compatibility with shutdown logic."""
+                        pass
+
                 docker_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
                 self.phoenix_session = MockSession(docker_url)
                 logger.info(f"[SUCCESS] Using Docker Phoenix instance at: {docker_url}")
             except Exception as mock_error:
                 logger.warning(f"Failed to connect to Docker Phoenix: {mock_error}")
 
+    def _check_existing_phoenix(self) -> bool:
+        """
+        Check if Phoenix is already running at configured host/port.
+
+        Tests actual Phoenix API endpoints since Phoenix has no dedicated health check.
+        Reference: GitHub issue #2120 - health check endpoint was NOT implemented.
+
+        Phoenix Docker image does not provide /healthz, /health, or similar endpoints.
+        Instead, we test actual documented API endpoints:
+        - /v1/projects (Phoenix REST API endpoint)
+        - / (Phoenix UI root endpoint)
+
+        Returns:
+            True if existing Phoenix detected and session configured, False otherwise
+        """
+        try:
+            import requests
+
+            base_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
+
+            # Test actual Phoenix API endpoints (documented endpoints that exist)
+            # Phoenix has NO dedicated health check endpoint (GitHub issue #2120)
+            test_endpoints = [
+                ("/v1/projects", "Phoenix REST API"),      # Documented API endpoint
+                ("/", "Phoenix UI"),                        # UI root endpoint
+            ]
+
+            max_retries = 3
+            retry_delay = 1.0
+
+            logger.info(f"[PHOENIX] Checking for existing instance at {base_url}...")
+
+            for attempt in range(max_retries):
+                for endpoint, endpoint_type in test_endpoints:
+                    try:
+                        test_url = f"{base_url}{endpoint}"
+                        logger.debug(f"[PHOENIX] Health check {attempt+1}/{max_retries}: {test_url} ({endpoint_type})")
+
+                        response = requests.get(test_url, timeout=5)
+
+                        # Log response for debugging
+                        logger.debug(f"[PHOENIX] Response status: {response.status_code}")
+                        if logger.isEnabledFor(logging.DEBUG):
+                            # Only log headers in debug mode to avoid verbosity
+                            logger.debug(f"[PHOENIX] Response headers: {dict(list(response.headers.items())[:5])}...")
+
+                        # Accept success codes (200-299) OR authentication required (401, 403)
+                        # 401/403 means Phoenix is running but requires auth - still counts as "alive"
+                        if 200 <= response.status_code < 300 or response.status_code in [401, 403]:
+                            logger.info(f"[SUCCESS] Existing Phoenix detected at {base_url}")
+                            logger.info(f"[PHOENIX] Endpoint: {endpoint} returned {response.status_code}")
+
+                            if response.status_code in [401, 403]:
+                                logger.info("[PHOENIX] Note: Endpoint requires authentication but Phoenix is running")
+
+                            # Create MockSession for external Phoenix
+                            class MockSession:
+                                def __init__(self, url):
+                                    self.url = url
+
+                                def close(self):
+                                    """No-op close for compatibility with shutdown logic."""
+                                    pass
+
+                            self.phoenix_session = MockSession(base_url)
+                            return True
+
+                        # Log unsuccessful status codes for debugging
+                        logger.debug(f"[PHOENIX] Endpoint {endpoint} returned {response.status_code}, trying next...")
+
+                    except requests.exceptions.ConnectionError as e:
+                        logger.debug(f"[PHOENIX] Connection failed to {endpoint}: Connection refused or host unreachable")
+                        continue
+                    except requests.exceptions.Timeout as e:
+                        logger.debug(f"[PHOENIX] Timeout on {endpoint} after 5 seconds")
+                        continue
+                    except requests.exceptions.RequestException as e:
+                        logger.debug(f"[PHOENIX] Request error on {endpoint}: {type(e).__name__}")
+                        continue
+
+                # If not last attempt, wait before retry
+                if attempt < max_retries - 1:
+                    logger.debug(f"[PHOENIX] Retry {attempt+1}/{max_retries} failed, waiting {retry_delay}s...")
+                    time.sleep(retry_delay)
+
+            # All attempts exhausted - no Phoenix detected
+            logger.info(f"[PHOENIX] No existing Phoenix detected at {base_url} after {max_retries} attempts")
+            logger.info(f"[PHOENIX] Tested endpoints: {', '.join(e[0] for e in test_endpoints)}")
+            return False
+
+        except ImportError:
+            logger.warning("[PHOENIX] requests library not available, cannot perform health checks")
+            logger.warning("[PHOENIX] Install with: pip install requests")
+            return False
+        except Exception as e:
+            logger.warning(f"[PHOENIX] Health check error: {type(e).__name__}: {e}")
+            return False
+
+    def _validate_phoenix_connection(self) -> bool:
+        """
+        Validate Phoenix is actually accessible before setting up tracer.
+
+        Tests Phoenix OTLP endpoint to ensure traces can be exported.
+        This prevents continuous ConnectionRefusedError when Phoenix is unavailable.
+
+        Returns:
+            True if Phoenix accessible and can receive traces, False otherwise
+        """
+        try:
+            import requests
+
+            # Test actual OTLP endpoint that tracer will use
+            otlp_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}/v1/traces"
+            logger.debug(f"[PHOENIX] Validating connection to: {otlp_url}")
+
+            # Quick validation with 2s timeout (don't delay workflow)
+            response = requests.post(otlp_url, json=[], timeout=2)
+
+            # Phoenix returns 200 for valid requests (even empty)
+            # Accept any non-server-error status (< 500)
+            if response.status_code < 500:
+                logger.debug(f"[PHOENIX] Connection validated (status {response.status_code})")
+                return True
+
+            logger.debug(f"[PHOENIX] Server error {response.status_code}, Phoenix may be unhealthy")
+            return False
+
+        except ImportError:
+            logger.debug("[PHOENIX] requests library not available for connection validation")
+            # Assume Phoenix available if can't validate (optimistic)
+            return True
+        except Exception as e:
+            logger.debug(f"[PHOENIX] Connection validation failed: {type(e).__name__}: {e}")
+            return False
+
     def _setup_tracer(self) -> None:
-        """Set up OpenTelemetry tracer with OTLP exporter using Phoenix patterns."""
-        # Always use manual setup to ensure BatchSpanProcessor is used
-        # This prevents the "Exporter already shutdown" issue
+        """Set up OpenTelemetry tracer with Phoenix connection validation."""
+
+        # Validate Phoenix is actually accessible before setting up tracer
+        # This prevents continuous ConnectionRefusedError when Phoenix unavailable
+        if not self._validate_phoenix_connection():
+            logger.warning("⚠️  [PHOENIX] Phoenix not accessible - disabling observability")
+            logger.info(f"[PHOENIX] Attempted connection to: {self.config.otlp_endpoint}")
+            logger.info("[PHOENIX] Workflow will continue without observability")
+            logger.info("[PHOENIX] To enable: Ensure Phoenix is running at localhost:6006")
+            logger.info("[PHOENIX]   Docker: docker run -p 6006:6006 arizephoenix/phoenix")
+            self.tracer_provider = None
+            return
+
+        # Phoenix accessible, proceed with normal tracer setup
+        logger.info("✅ [PHOENIX] Connection validated - observability enabled")
         logger.debug("Using manual tracer setup for better control over span processing")
         self._setup_manual_tracer()
 
@@ -490,13 +706,20 @@ class PhoenixManager:
     def get_tracer(self, name: str) -> trace.Tracer:
         """
         Get a tracer instance for manual instrumentation.
-        
+
+        Returns no-op tracer if Phoenix not available (graceful degradation).
+
         Args:
             name: Name of the tracer (typically module name)
-            
+
         Returns:
-            Tracer instance
+            Tracer instance or no-op tracer if Phoenix disabled
         """
+        if self.tracer_provider is None:
+            logger.debug(f"[PHOENIX] Tracer '{name}' requested but Phoenix disabled - returning no-op")
+            # Return global tracer (will be no-op if provider not set)
+            return trace.get_tracer(name)
+
         return trace.get_tracer(name)
 
     def create_tool_span(self, tracer: trace.Tracer, tool_name: str, **attributes):
@@ -531,11 +754,13 @@ class PhoenixManager:
 
     def shutdown(self, timeout_seconds: int = 5) -> None:
         """
-        Gracefully shutdown Phoenix and tracing with forced flush.
-        
+        Gracefully shutdown Phoenix and tracing with forced flush and Windows file lock handling.
+
         Args:
             timeout_seconds: Maximum time to wait for trace export completion
         """
+        import platform
+
         logger.info("Shutting down Phoenix observability...")
 
         if self.tracer_provider:
@@ -557,13 +782,33 @@ class PhoenixManager:
             except Exception as e:
                 logger.warning(f"Error during tracer shutdown: {e}")
 
+        # Windows-specific database cleanup to prevent file locking issues
+        if platform.system() == "Windows":
+            try:
+                import gc
+                import time
+
+                # Force garbage collection to release database connections
+                gc.collect()
+                logger.debug("[WINDOWS] Forced garbage collection for database cleanup")
+
+                # Additional delay for Windows file system to release locks
+                # Increased to 2.0s to ensure Phoenix process terminates and releases database
+                time.sleep(2.0)
+                logger.debug("[WINDOWS] Database lock release delay completed (2.0s)")
+
+            except Exception as e:
+                logger.warning(f"[WINDOWS] Cleanup encountered error: {e}")
+
         if self.phoenix_session:
             try:
-                # Keep session alive for UI accessibility
-                # Don't set to None - let it persist for post-workflow access
-                logger.debug("Phoenix session maintained for continued UI access")
+                # DO NOT close Phoenix session - keep UI accessible for post-workflow analysis
+                # This ensures observability data remains available for regulatory review
+                # Only the tracer provider is shut down (spans are flushed above)
+                logger.info("[PHOENIX] Session maintained - UI remains accessible for observability analysis")
+                logger.info(f"[PHOENIX] Dashboard accessible at: {getattr(self.phoenix_session, 'url', 'http://localhost:6006')}")
             except Exception as e:
-                logger.warning(f"Error maintaining Phoenix session: {e}")
+                logger.warning(f"[PHOENIX] Error checking session status: {e}")
 
         # Mark as not initialized but don't clear session completely
         self._initialized = False

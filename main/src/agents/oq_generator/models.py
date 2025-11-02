@@ -169,7 +169,7 @@ class OQTestSuite(BaseModel):
 
     format: str = Field(default="json", description="Data format")
     encoding: str = Field(default="utf-8", description="Character encoding")
-    schema: dict[str, Any] = Field(default_factory=dict, description="Data schema")
+    data_schema: dict[str, Any] = Field(default_factory=dict, alias="schema", description="Data schema for test suite structure")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
     retention_period: str | None = Field(default="7_years", description="Data retention period")

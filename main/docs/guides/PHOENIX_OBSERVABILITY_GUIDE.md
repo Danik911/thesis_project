@@ -269,6 +269,9 @@ SERVICE_VERSION=1.0.0
 
 ## 🚨 Common Issues and Solutions
 
+> **📖 Comprehensive Issue Guide**: For detailed Phoenix troubleshooting including duplicate instances, database locks, graceful degradation, and ALCOA+ compliance issues, see:
+> **[Phoenix Observability Issues - Resolved](../issues/PHOENIX_OBSERVABILITY_ISSUES_RESOLVED.md)**
+
 ### Issue 1: GraphQL API Not Working
 **Symptoms:**
 ```

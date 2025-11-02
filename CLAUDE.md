@@ -157,6 +157,7 @@ You have 6 specialized subagents at `/home/anteb/thesis_project/.claude/agents/`
 - **OSS Migration Report**: [`main/docs/tasks_issues/oss_migration_comprehensive_report.md`](main/docs/tasks_issues/oss_migration_comprehensive_report.md)
 - **Honest Assessment**: [`main/docs/HONEST_ASSESSMENT_REPORT.md`](main/docs/HONEST_ASSESSMENT_REPORT.md)
 - **Phoenix Guide**: [`main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md`](main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md)
+- **Phoenix Issues Resolved**: [`main/docs/issues/PHOENIX_OBSERVABILITY_ISSUES_RESOLVED.md`](main/docs/issues/PHOENIX_OBSERVABILITY_ISSUES_RESOLVED.md)
 - **Quick Start**: [`main/docs/guides/QUICK_START_GUIDE.md`](main/docs/guides/QUICK_START_GUIDE.md)
 - **Test Output**: `main/output/test_suites/test_suite_OQ-SUITE-*.json`
 

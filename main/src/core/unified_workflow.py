@@ -466,6 +466,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
 
         # Initialize workflow session
         self._workflow_session_id = f"unified_workflow_{datetime.now(UTC).isoformat()}"
+        self.workflow_id = uuid4()  # Unique identifier for ALCOA+ traceability
 
         # Initialize 21 CFR Part 11 compliance systems
         if enable_part11_compliance:
@@ -882,14 +883,14 @@ class UnifiedTestGenerationWorkflow(Workflow):
             alcoa_record = alcoa_validator.create_data_record(
                 data={
                     "action": "gamp_categorization",
-                    "category": ev.category,
-                    "confidence": ev.confidence,
-                    "risk_assessment": ev.risk_assessment,
+                    "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, 'value') else str(categorization_event.gamp_category),
+                    "confidence": categorization_event.confidence_score,
+                    "risk_assessment": categorization_event.risk_assessment,
                     "regulatory_basis": "GAMP-5",
                     "compliance_standards": ["GAMP-5", "21 CFR Part 11", "ALCOA+"],
                     "document_name": getattr(ev, "document_name", "Unknown"),
-                    "categorization_rationale": ev.risk_assessment.get("rationale", ""),
-                    "system_type": ev.risk_assessment.get("system_type", ""),
+                    "categorization_rationale": categorization_event.risk_assessment.get("rationale", ""),
+                    "system_type": categorization_event.risk_assessment.get("system_type", ""),
                     "timestamp": datetime.now(UTC).isoformat()
                 },
                 user_id=getattr(config, "user_name", "System"),
@@ -898,10 +899,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 metadata={
                     "workflow_id": str(self.workflow_id),
                     "document_id": getattr(ev, "document_name", "Unknown"),
-                    "confidence_score": ev.confidence,
-                    "risk_level": ev.risk_assessment.get("risk_level", "Unknown"),
-                    "risk_factors": ev.risk_assessment.get("risk_factors", []),
-                    "mitigation_required": ev.risk_assessment.get("mitigation_required", False),
+                    "confidence_score": categorization_event.confidence_score,
+                    "risk_level": categorization_event.risk_assessment.get("risk_level", "Unknown"),
+                    "risk_factors": categorization_event.risk_assessment.get("risk_factors", []),
+                    "mitigation_required": categorization_event.risk_assessment.get("mitigation_required", False),
                     # System context for traceability
                     "python_version": sys.version.split()[0],
                     "platform": platform.system(),
@@ -2098,8 +2099,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "document_id": ev.test_suite.document_name,
                         "suite_id": ev.test_suite.suite_id,
                         "test_count": len(ev.test_suite.test_cases),
-                        "execution_start": execution_start.isoformat() if execution_start else None,
-                        "execution_duration_seconds": (datetime.now(UTC) - execution_start).total_seconds() if execution_start else None,
+                        "execution_start": workflow_start_time.isoformat() if workflow_start_time else None,
+                        "execution_duration_seconds": (datetime.now(UTC) - workflow_start_time).total_seconds() if workflow_start_time else None,
                         "document_path": str(output_file) if output_file else None,
                         # System environment for complete traceability
                         "python_version": sys.version,

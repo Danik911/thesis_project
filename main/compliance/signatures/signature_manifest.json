@@ -1,5 +1,5 @@
 {
-  "created": "2025-10-31T21:45:55.052242+00:00",
+  "created": "2025-11-02T11:41:48.957316+00:00",
   "manifest_version": "1.0",
   "signatures": [
     {
@@ -534,7 +534,124 @@
       "signature_value": "5e53129c4eab306b2a3ae6caae9d702f1d09870062a6813bd3d5d9a2d594b99aade83040657e7ada1eb910873f58e02233e0160a463660f866b8004c11293f01",
       "signer_id": "system",
       "signer_name": "System"
+    },
+    {
+      "binding_proof": "ac199c6b0ab03d104802a28400fc9b6ca9fd095b3ab508452d8c4696faee8e92",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "db16bd95266ed264d15f57ee4f3d6a8b82fb9eaa412bf02ac4b6e67deea4ae58",
+      "record_id": "cat_unified_workflow_2025-11-02T09:51:49.891502+00:00",
+      "signature_id": "37360db9-d9b1-44c5-93f5-79894fd4371c",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-11-02T09:55:58.381713+00:00",
+      "signature_value": "66a695205008d8eb0fdf5e74041071627bff22a93a7bd4c87db5b8421db9a929e6e3a75eb0904324ff71fccea4a0dd95ef2d9f8ad690d28ff91798915be22208",
+      "signer_id": "Daniil",
+      "signer_name": "Daniil (Quality Assurance)"
+    },
+    {
+      "binding_proof": "1ec477399e524d72870ccd9577d473284a5b167038b6313067eb577aac147942",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "d0cee729dbae3ef590a7d541ba6dce3e441a8683c87399800d5471b00fb81e5c",
+      "record_id": "OQ-SUITE-0958",
+      "signature_id": "3db3967d-d695-4996-b370-78cea01d1745",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-11-02T09:58:43.468604+00:00",
+      "signature_value": "7da3a69849aed37028f855d83d0d2f57500e902b956ad788181e543b2a3acab94871c0f057a16a1a1e2ed0d4a8890e806a10fc9817e8d7b062faa96d92b9250b",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "f5f8d43b5d66f2173350431a86869585b566899804e158f829aeff70fbf5d3ae",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "8cafe670c4fa6593d7c242ccbb4b2eaa8ad24ebae1d7e0c84e11ed75b5e40833",
+      "record_id": "cat_unified_workflow_2025-11-02T10:23:43.814985+00:00",
+      "signature_id": "2b59e0a0-9cf3-43d4-8741-53dcb0942792",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-11-02T10:27:35.995384+00:00",
+      "signature_value": "58e73022df59ecb4f04027aa0a8cf04b707cacab4a8086061a7cde1f17982bf19a07a4b172897653680f426bf8bb8644114c0a77931889ce393f02b7e73a5e0e",
+      "signer_id": "Daniil",
+      "signer_name": "Daniil (System Administrator)"
+    },
+    {
+      "binding_proof": "1acec4f75ff8c652bd17ec3cdab0901f8c689b4e0ea0668a98f7e2d81e771ecc",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "ed98cc9aca01900d6d9eb978fa808af8ee5353a68d3b05e18fc57b6b8ff70de2",
+      "record_id": "OQ-SUITE-1031",
+      "signature_id": "91a80239-b796-475f-87bb-5615a43c4ce9",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-11-02T10:31:41.368453+00:00",
+      "signature_value": "9153a9808c22a7f8a79ad395c04d9665d554ae1492c448ca32ffda75107b087e67f78889518e7e1afc44e95365d34cc04af0b71a1bc6d2e0b752d4a22cad250b",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "aab7128678d14391a614375e5ee9a19112deff273a595448e9dda8159ddbd153",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "1f5a55522ddfae08756f89b7ce9fa672015ce297d765ed79a921eac20e42694d",
+      "record_id": "cat_unified_workflow_2025-11-02T10:49:23.208070+00:00",
+      "signature_id": "021d4b0d-0160-4e82-89f4-59baedfa3fe9",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-11-02T10:54:21.065888+00:00",
+      "signature_value": "51092297e59f66bf59ccbaa502254d20a7a8cd397ce5c1422e1f8e271eef4d1379bf910992dc38961eb743a082d450febbbaf7476efe79596c8ed31e89941c0a",
+      "signer_id": "Daniil",
+      "signer_name": "Daniil (Regulatory Specialist)"
+    },
+    {
+      "binding_proof": "5f757786e89b42bb49ce06214cabe23cb3bd565703c870bbc2595c98c2daf986",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "aed0168170c9b75c9fa547645e572d88b187f4e04b3c3956e45d8f70c9ddeb42",
+      "record_id": "cat_unified_workflow_2025-11-02T11:08:31.288339+00:00",
+      "signature_id": "403ee65d-0cf6-4deb-b3d1-5670c49dd0af",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-11-02T11:13:01.790161+00:00",
+      "signature_value": "0beb80c6158e1c65da43fe036c56f74c3b6d60ccb947d9cabd6f83851f2fabff85d55e86909075d037fe0c145bb7a205ae1a1e9f581a050db1ca36a8a78ec90f",
+      "signer_id": "Daniil",
+      "signer_name": "Daniil (Regulatory Specialist)"
+    },
+    {
+      "binding_proof": "650df6b72183d4844b0e13a850a5602d8bba3a1ff04d6f5f5005262824e22b5e",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "7ef156d4fc1b0dcc7f9249805fa27c82fb07422267e8f25fdf1b71e45dfcd3aa",
+      "record_id": "OQ-SUITE-1115",
+      "signature_id": "ea42a5a0-b16b-4e93-9d3c-5035bb95d5dc",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-11-02T11:15:39.321462+00:00",
+      "signature_value": "d953624cc4ef54f6bf38198803f2253b3350bd4561f3b0feeccd904e7d3cc039a328b258db739b02d353cbac134dd65005d89391fb78789993d6b6e2522e870c",
+      "signer_id": "system",
+      "signer_name": "System"
+    },
+    {
+      "binding_proof": "d83876bc5113543bf0877a40def96f8013b8a0836dbeaf9edd055e787f017aef",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "8ab5ce209a6c95abe5132a8b96275f2cb3ce3bb75bdbd770be7f70b9ee269172",
+      "record_id": "cat_unified_workflow_2025-11-02T11:35:09.571160+00:00",
+      "signature_id": "65f9455a-eb78-44ac-b87a-1e3262730b52",
+      "signature_meaning": "reviewed",
+      "signature_timestamp": "2025-11-02T11:38:27.955440+00:00",
+      "signature_value": "59effcb94f95e18ad647cb0fa699cf2c07c179482658c61ecdd4e962b95a2310030fb103630bddc8f947fa541e65d74590dbfbb1521937bf1e78fdbc93069c01",
+      "signer_id": "Daniil",
+      "signer_name": "Daniil (Quality Assurance)"
+    },
+    {
+      "binding_proof": "212431c8bc79ee30ba6d838e64efc2ebc468c1f1536eab8fe332ecaceaa0742a",
+      "binding_version": "1.0",
+      "part11_compliant": true,
+      "record_content_hash": "d721735f7be74612bf006f248388e2cbd22eb25b077c80d092ade8018a63d551",
+      "record_id": "OQ-SUITE-1141",
+      "signature_id": "af47c4f1-25f6-44bd-9302-151ff3867cd6",
+      "signature_meaning": "approved",
+      "signature_timestamp": "2025-11-02T11:41:48.957316+00:00",
+      "signature_value": "9e0ad9f65b2086ffbf2ff13f819f9fd3f1823621d14fa9740ae262cc6acf0a94ec6379dbdd8685d09abd41124924a9a969a1a954fccb1a202bfb49fba1eac103",
+      "signer_id": "system",
+      "signer_name": "System"
     }
   ],
-  "total_signatures": 41
+  "total_signatures": 50
 }
