@@ -119,7 +119,7 @@ Located at `.claude/agents/`. Always provide comprehensive context when delegati
 | Agent | Purpose | Key Restriction |
 |-------|---------|----------------|
 | **context-collector** | Research GAMP-5, LlamaIndex, pharmaceutical standards | - |
-| **task-analyzer** | (DEPRECATED) Legacy Task-Master AI integration | - |
+| **task-analyzer** | Pre-flight checker for manual AWS/Clerk/infrastructure setup BEFORE /prp | READ-ONLY |
 | **task-executor** | Execute specific tasks following GAMP-5 patterns | NO FALLBACKS |
 | **tester-agent** | Validate implementations, run tests | NO FALLBACKS |
 | **debugger** | Advanced debugging with Ultrathink methodology | NO FALLBACKS |
@@ -256,6 +256,131 @@ Main Orchestrator:
 ✅ State files updated and tracked in Git
 
 **For detailed workflow specification:** See `.claude/commands/prp.md`
+
+---
+
+## 🔍 Pre-Flight Check: Task Analyzer Workflow
+
+**Purpose:** Identify manual prerequisites BEFORE executing `/prp` tasks to ensure engineers have completed all AWS Console actions, third-party registrations, and credential collection.
+
+**NOT part of automated /prp workflow** - this is a separate, optional helper step.
+
+### Invocation Pattern
+```
+1. Engineer wants to execute Task X
+2. Engineer runs: "Analyze prerequisites for task X" (invokes task-analyzer)
+3. task-analyzer generates action list → saves to .claude/state/results/
+4. Engineer completes manual steps
+5. Engineer confirms readiness
+6. Engineer executes: /prp X
+```
+
+### Task Categories by Manual Setup Intensity
+
+#### 🔴 **HEAVY MANUAL SETUP** (2-8 hours + wait time)
+**Tasks:** 0.1-0.4, 1.4, 4.1-4.3
+
+**Manual Actions Required:**
+- AWS Console access (Service Quotas, IAM, RDS, Bedrock, etc.)
+- Third-party account signups (Clerk, LangFuse)
+- Approval-gated steps (quota requests: 5 days, Bedrock access: 2-7 days)
+- Resource creation (ECR repositories, VPC, Aurora clusters)
+- Credential collection (ARNs, IDs, API keys)
+
+**Examples:**
+- **Task 0.1:** Submit Fargate vCPU quota increase → Wait 5 business days
+- **Task 1.4:** Sign up for Clerk → Copy publishable/secret keys → Configure EU endpoints
+- **Task 4.3:** Request Bedrock DeepSeek-V3.1 access → Wait for approval
+
+#### 🟡 **MODERATE MANUAL SETUP** (15-60 minutes)
+**Tasks:** 2.2, 2.3, 5.1
+
+**Manual Actions Required:**
+- Reuse credentials from earlier tasks
+- Simple service configurations
+- Optional account signups
+
+**Examples:**
+- **Task 2.2:** Copy Clerk keys from Task 1.4 (no new signup)
+- **Task 2.3:** Sign up for LangFuse → Copy keys
+
+#### 🟢 **LOW/NO MANUAL SETUP** (0-5 minutes)
+**Tasks:** 1.1-1.3, 2.1, 3.1-3.4, 4.4, 5.2-5.3
+
+**Manual Actions Required:**
+- None (pure coding tasks)
+- Dependencies automated by Terraform (IAM roles, etc.)
+
+**Response:** "No manual setup required. Ready for /prp execution after dependency tasks complete."
+
+### Agent Output Format
+task-analyzer generates a concise action list with:
+- **Setup intensity categorization** (🔴🟡🟢)
+- **Manual prerequisites checklist** (AWS resources, third-party accounts, approval steps)
+- **Blocking items** highlighted upfront (e.g., "Cannot proceed without quota approval")
+- **Required reading** from `examples/alex/guides/` with time estimates
+- **Setup sequence** ordered by dependencies
+- **Total prep time** estimate (manual steps + waiting time + reading time)
+- **Resource collection templates** (ARN: _______, Key: _______)
+
+**Saved to:** `.claude/state/results/task-analyzer-{timestamp}.md` (GAMP-5 audit trail)
+
+### When to Use task-analyzer
+
+✅ **Use BEFORE /prp for:**
+- All Phase 0 tasks (0.1-0.4) - Foundation setup
+- Task 1.4 - Clerk authentication
+- Task 4.1 - ECS deployment (ECR, VPC setup)
+- Task 4.2 - Aurora cluster creation
+- Task 4.3 - Bedrock model access
+
+❌ **Skip for:**
+- Pure coding tasks (1.1-1.3, 2.1, 3.1-3.4, etc.)
+- Tasks with only Terraform-automated dependencies
+
+### Example: Analyzing Task 0.1 (Service Quotas)
+
+**Engineer Request:**
+```
+Analyze prerequisites for task 0.1
+```
+
+**task-analyzer Output:**
+```markdown
+# Pre-Flight Check: Task 0.1
+
+**Setup Intensity:** 🔴 HEAVY (Est. 2 hours + 5-day wait)
+
+## Manual Prerequisites
+
+### AWS Console Actions
+1. **Service Quotas** (5-day lead time)
+   - Navigate: AWS Console → Service Quotas → Amazon ECS
+   - Check: Fargate On-Demand vCPU (quota code L-1216C47A)
+   - Action: Request increase to 64 vCPU if below 20
+   - Status: ⏸️ Not started
+
+2. **Collect Account ID**
+   - Run: `aws sts get-caller-identity --query Account --output text`
+   - Store: `AWS_ACCOUNT_ID=____________`
+
+## Required Reading (Est. 20 min)
+- **examples/alex/guides/1_permissions.md** (IAM setup) – 10 min
+- **AWS Service Quotas Docs** – 10 min
+
+## Setup Sequence
+1. ⏸️ **Week -1:** Submit quota requests → Wait 5 days
+2. ⏸️ **Day 0:** Review guides (20 min)
+3. ✅ **Day 1:** Ready for `/prp 0.1`
+
+## Blocking Items
+❌ Fargate vCPU quota approval pending (cannot provision tasks without approval)
+
+---
+**When all steps complete, execute:** `/prp 0.1`
+```
+
+**For complete agent specification:** See `.claude/agents/task-analyzer.md`
 
 ---
 
