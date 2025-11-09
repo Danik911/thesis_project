@@ -173,26 +173,11 @@ See [`main/docs/guides/QUICK_START_GUIDE.md`](main/docs/guides/QUICK_START_GUIDE
 
 ### Task Management (Claude Code)
 
-This project uses Task-Master AI for intelligent project management:
+This project uses the PRP (Production Readiness Plan) workflow for executing development tasks:
 
 ```bash
-# View all tasks and progress
-mcp__task-master-ai__get_tasks
-
-# Get next available task
-mcp__task-master-ai__next_task
-
-# Start working on a task
-mcp__task-master-ai__set_task_status --id=1 --status=in-progress
-
-# Log implementation progress
-mcp__task-master-ai__update_subtask --id=1.1 --prompt="Implemented event validation logic"
-
-# Research with project context
-mcp__task-master-ai__research --query="LlamaIndex workflow patterns" --taskIds="3,4"
-
-# Complete tasks
-mcp__task-master-ai__set_task_status --id=1.1 --status=done
+# Execute a PRP task (e.g., Phase 1, Task 2)
+/prp 1.2
 ```
 
 **Recent Fixes Applied (August 3, 2025):**
@@ -202,7 +187,7 @@ mcp__task-master-ai__set_task_status --id=1.1 --status=done
 - ✅ Migrated generation to DeepSeek V3 (OpenRouter) for Category 5
 - ✅ Reduced confidence threshold from 0.6 to 0.4
 
-See task details: `mcp__task-master-ai__get_tasks`
+See `CLAUDE.md` for complete PRP workflow documentation.
 
 ## 🛠️ Development Workflow
 
@@ -214,33 +199,27 @@ See task details: `mcp__task-master-ai__get_tasks`
 
 ### Integrated Development Approach
 
-This project combines **Task-Master AI** for project management with **PRP Framework** for technical specifications:
+This project uses the **PRP Framework** for development task execution:
 
-#### Task-Master AI (Project Management)
+#### PRP Workflow (Task Execution)
 ```bash
-# Daily workflow
-mcp__task-master-ai__next_task                    # Get next task
-mcp__task-master-ai__set_task_status --id=X --status=in-progress
-mcp__task-master-ai__update_subtask --id=X.Y --prompt="Progress notes"
-mcp__task-master-ai__set_task_status --id=X.Y --status=done
+# Execute a PRP task with multi-agent orchestration
+/prp 1.2  # Phase 1, Task 2
 
-# Task management
-mcp__task-master-ai__expand_task --id=X --research  # Break down complex tasks
-mcp__task-master-ai__research --query="..." --taskIds="X,Y"  # Research integration
+# Available tasks range from 0.1 to 5.3 across 6 phases:
+# Phase 0: Foundations (0.1-0.4)
+# Phase 1: Backend Abstraction (1.1-1.4)
+# Phase 2: Frontend Dashboard (2.1-2.4)
+# Phase 3: Containerization (3.1-3.4)
+# Phase 4: AWS Deployment (4.1-4.4)
+# Phase 5: Hardening (5.1-5.3)
 ```
 
-#### PRP Framework (Technical Specifications)
-```bash
-# For detailed technical guidance
-/create-base-prp "Add ALCOA+ validation module"
-/execute-base-prp PRPs/alcoa-validation.md
-/review-staged-unstaged
-```
-
-**Usage Pattern:**
-- **Task-Master**: Daily progress tracking, task dependencies, research
-- **PRP**: Detailed technical specifications and implementation guidance
-- **Integration**: Reference PRP details within task-master tasks
+**Workflow Features:**
+- **Multi-Agent**: Orchestrates context-collector, task-executor, tester-agent, and debugger
+- **State Management**: Git-tracked state files for GAMP-5 audit compliance
+- **Zero Fallback**: Explicit error handling with full diagnostics
+- **User Confirmation**: Never marks tasks complete without user verification
 
 ### Testing
 
@@ -338,8 +317,8 @@ thesis_project/
 │   ├── 05_THESIS_DOCUMENTS/       # Academic documentation
 │   ├── 06_SOURCE_CODE_EVIDENCE/   # Implementation artifacts
 │   └── 07_UNIFIED_ANALYSIS/       # Visualizations & reports
-├── .taskmaster/                   # Task-Master AI configuration
-│   ├── tasks/                     # Task files and database
+├── .taskmaster/                   # Legacy task management (not actively used)
+│   ├── tasks/                     # Historical task files
 │   ├── docs/                      # PRD and research documents
 │   └── reports/                   # Complexity and analysis reports
 ├── PRPs/                          # PRP documents (technical specs)
@@ -379,16 +358,16 @@ See [`main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md`](main/docs/guides/PHOENIX
 
 This is an academic research project. Contributions should align with thesis objectives:
 
-1. Use Task-Master AI for project management and progress tracking
-2. Follow PRP methodology for detailed technical specifications
-3. Maintain regulatory compliance (GAMP-5, 21 CFR Part 11, ALCOA+)
-4. Document security considerations
-5. Include comprehensive tests
+1. Follow PRP methodology for task execution and technical specifications
+2. Maintain regulatory compliance (GAMP-5, 21 CFR Part 11, ALCOA+)
+3. Document security considerations
+4. Include comprehensive tests
+5. Use multi-agent orchestration workflow for implementations
 
 **Development Process:**
-- Track work using `mcp__task-master-ai__*` tools
-- Reference PRPs for technical implementation details
-- Update task progress and research findings regularly
+- Execute tasks using `/prp {task-id}` workflow
+- Reference PRPs/tasks/ for detailed technical specifications
+- Follow state management protocol for audit compliance
 
 ## 📚 References
 
@@ -408,26 +387,25 @@ This project is part of academic research. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🔧 Dual Framework Architecture
+## 🔧 PRP Framework Architecture
 
-This project integrates **Task-Master AI** and **PRP Framework** for comprehensive development management:
+This project uses the **PRP Framework** for comprehensive development task execution:
 
-### Task-Master AI (Project Management)
-- **Purpose**: Dynamic task tracking, progress management, research integration
-- **Usage**: Daily development workflow, dependency management, AI-assisted research
-- **Location**: `.taskmaster/` directory with 14 pre-configured tasks
-- **Documentation**: [Task-Master AI Documentation](https://github.com/eyaltoledano/claude-task-master)
+### PRP Workflow System
+- **Purpose**: Orchestrated multi-agent task execution with state management
+- **Usage**: Execute AWS migration tasks through `/prp {task-id}` command
+- **Location**: `PRPs/tasks/` directory with 23 tasks across 6 phases (0.1-5.3)
+- **Documentation**: See [CLAUDE.md](CLAUDE.md) for complete workflow specification
 
-### PRP Framework (Technical Specifications)
-- **Purpose**: Detailed technical implementation guidance and context
-- **Usage**: Complex feature development, implementation patterns, validation
-- **Available Templates**: 
-  - **LlamaIndex Workflows**: `/prp_context/use-cases/llama-index-workflows/`
-  - **PydanticAI Agents**: `/prp_context/use-cases/pydantic-ai/`
-- **Documentation**: See [CLAUDE.md](CLAUDE.md) for integration guidance
+### Key Features
+- **Multi-Agent Orchestration**: context-collector, task-executor, tester-agent, debugger
+- **State Management**: Git-tracked markdown files for GAMP-5 audit compliance
+- **Zero Fallback Logic**: Explicit error handling with full diagnostics
+- **User Confirmation Gate**: Never marks tasks complete without verification
+- **Compliance-First**: Maintains GAMP-5, ALCOA+, and 21 CFR Part 11 standards
 
-### Integration Benefits
-- **Complementary Systems**: Task-Master handles "when and progress", PRP handles "what and how"
-- **Research Integration**: AI-powered research saved to both systems
-- **Regulatory Focus**: Both systems maintain GAMP-5 and pharmaceutical compliance
-- **Efficiency**: Structured approach reduces development time while maintaining quality
+### Workflow Benefits
+- **Reproducibility**: Complete state tracking enables workflow resumption
+- **Audit Trail**: Git-tracked state files provide regulatory compliance
+- **Error Prevention**: Zero tolerance for fallback logic prevents system failures
+- **Quality Assurance**: Multi-stage validation with comprehensive testing

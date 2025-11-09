@@ -90,14 +90,6 @@ Example:
 
 ---
 
-## Task-Master AI Integration
-
-- **Task-Master Task ID:** {tm-task-id} (if mapped)
-- **Task-Master Status:** {tm-status}
-- **Last Synced:** {timestamp}
-
----
-
 ## Notes
 
 *Add any important notes, blockers, or context here*

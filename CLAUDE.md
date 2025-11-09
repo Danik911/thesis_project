@@ -88,8 +88,10 @@ Guidance for Claude Code when working with this pharmaceutical test generation t
 ```
 thesis_project/
 ├── .claude/agents/           # 9 specialized subagents
-├── .taskmaster/              # Task-Master AI (MVP complete)
+├── .claude/commands/         # Custom slash commands (e.g., /prp)
+├── .claude/state/            # PRP workflow state management
 ├── PRPs/                     # Production Readiness Plans
+│   ├── tasks/               # PRP task definitions (0.1-5.3)
 │   └── aws-migration-updated.md   # AWS migration plan
 ├── examples/                 # Course reference materials
 │   ├── alex/                # Example production app
@@ -110,31 +112,6 @@ thesis_project/
 
 ---
 
-## 🎯 Task-Master AI Integration
-
-### Quick Commands
-```bash
-# Get next task
-mcp__task-master-ai__next_task
-
-# View task details
-mcp__task-master-ai__get_task --id=X
-
-# Update task status
-mcp__task-master-ai__set_task_status --id=X --status=in-progress
-mcp__task-master-ai__set_task_status --id=X --status=done
-
-# Log progress
-mcp__task-master-ai__update_subtask --id=X.Y --prompt="Implementation notes"
-
-# Research support
-mcp__task-master-ai__expand_task --id=X --research
-```
-
-**Full Guide:** [Task-Master AI Tutorial](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
-
----
-
 ## 🤖 Specialized Subagents
 
 Located at `.claude/agents/`. Always provide comprehensive context when delegating.
@@ -142,7 +119,7 @@ Located at `.claude/agents/`. Always provide comprehensive context when delegati
 | Agent | Purpose | Key Restriction |
 |-------|---------|----------------|
 | **context-collector** | Research GAMP-5, LlamaIndex, pharmaceutical standards | - |
-| **task-analyzer** | Analyze Task-Master AI tasks, check dependencies | - |
+| **task-analyzer** | (DEPRECATED) Legacy Task-Master AI integration | - |
 | **task-executor** | Execute specific tasks following GAMP-5 patterns | NO FALLBACKS |
 | **tester-agent** | Validate implementations, run tests | NO FALLBACKS |
 | **debugger** | Advanced debugging with Ultrathink methodology | NO FALLBACKS |
@@ -152,6 +129,133 @@ Located at `.claude/agents/`. Always provide comprehensive context when delegati
 | **cv-analyzer** | Trace and span analysis for validation | - |
 
 **Critical:** All subagents must fail explicitly rather than mask problems with fallback logic.
+
+---
+
+## 🎬 PRP Task Execution Workflow
+
+### Overview
+Orchestrated multi-agent workflow for executing Production Readiness Plan (PRP) tasks from `PRPs/tasks/` with state management, compliance tracking, and zero-fallback error handling.
+
+### Quick Start
+```bash
+# Execute a PRP task (e.g., Phase 1, Task 2)
+/prp 1.2
+```
+
+### Task Naming Convention
+All PRP tasks use ID format: `{phase}.{task}` (e.g., 0.1, 1.2, 5.3)
+- **Range:** 0.1-5.3 (23 tasks across 6 phases)
+- **Files:** `PRPs/tasks/{id}-{description}.md`
+- **Example:** `PRPs/tasks/1.2-vector-store-provider.md`
+
+### Workflow Architecture
+
+```
+User: /prp 1.2
+    ↓
+Main Orchestrator:
+  1. Validate task exists
+  2. Initialize state files
+  3. Mark task 'in-progress'
+    ↓
+🟢 context-collector (Research & Context)
+  → Research LlamaIndex, GAMP-5, AWS patterns
+  → Save findings: .claude/state/results/context-collector-{timestamp}.md
+    ↓
+🟡 task-executor (Implementation)
+  → Read context-collector results
+  → Implement with NO FALLBACK logic
+  → Track all file modifications
+  → Save results: .claude/state/results/task-executor-{timestamp}.md
+    ↓
+🔴 tester-agent (Validation & Testing)
+  → Read task-executor results
+  → Run tests (pytest, mypy, ruff)
+  → HONEST assessment (failures included)
+  → Save results: .claude/state/results/tester-agent-{timestamp}.md
+    ↓
+Conditional Branch:
+  IF tester-agent status = FAIL:
+    🟣 debugger (Issue Resolution)
+      → Read failure diagnostics
+      → Systematic debugging (max 5 iterations)
+      → Save results: .claude/state/results/debugger-{timestamp}.md
+    ↓
+Main Orchestrator:
+  - Aggregate all results
+  - Present comprehensive summary
+  - REQUEST USER CONFIRMATION
+  - Wait for "Yes" before marking 'done'
+```
+
+### State Management
+
+#### Directory Structure
+```
+.claude/state/
+├── prp-workflow-state.md          # Main orchestrator state (Git tracked)
+├── current-task-context.md         # Active task details (Git tracked)
+└── results/                        # Agent result files (Git tracked)
+    ├── context-collector-YYYYMMDD-HHMMSS.md
+    ├── task-executor-YYYYMMDD-HHMMSS.md
+    ├── tester-agent-YYYYMMDD-HHMMSS.md
+    └── debugger-YYYYMMDD-HHMMSS.md  (conditional)
+```
+
+#### State Transfer Protocol
+- **Each agent**: Reads previous agent results from `.claude/state/results/`
+- **Main orchestrator**: Provides COMPLETE context to each agent (NO ASSUMPTIONS)
+- **Result files**: Tracked in Git for GAMP-5 audit compliance
+- **No conversation history**: Agents rely ONLY on state files
+
+### Critical Requirements
+
+#### Zero Tolerance for Fallback Logic
+- ❌ NO default values masking missing data
+- ❌ NO success responses on failures
+- ❌ NO artificial confidence scores
+- ✅ ALL errors throw with full stack traces
+- ✅ ALL failures report complete diagnostics
+
+#### User Confirmation Gate
+- ❌ NEVER mark task 'done' without explicit user "Yes"
+- ✅ ALWAYS wait for user verification
+- ✅ ALWAYS ask "Did you see the expected result?"
+
+#### Model Enforcement
+- ✅ MUST USE: DeepSeek V3 (deepseek/deepseek-chat) via OpenRouter
+- ❌ FORBIDDEN: GPT-4, O3, O1, Claude, or any OpenAI generation models
+
+### Workflow Duration
+**Estimated Total Time:** 20-60 minutes depending on task complexity
+- context-collector: 5-15 min
+- task-executor: 10-30 min
+- tester-agent: 5-10 min
+- debugger (if needed): 10-20 min
+
+### Example Execution
+
+```bash
+# Execute task 1.2 (Vector Store Provider)
+/prp 1.2
+
+# Workflow executes agents sequentially
+# Main orchestrator presents summary at end
+# User confirms success before marking 'done'
+```
+
+### Success Criteria
+✅ Task file found and read successfully
+✅ All 3-4 agents completed (context, executor, tester, optional debugger)
+✅ Result files created by all agents
+✅ NO FALLBACK LOGIC violations = 0
+✅ GAMP-5 compliance requirements met
+✅ Tests passing (or failures acceptable per user)
+✅ User explicitly confirmed success
+✅ State files updated and tracked in Git
+
+**For detailed workflow specification:** See `.claude/commands/prp.md`
 
 ---
 
@@ -197,7 +301,6 @@ phoenix serve  # http://localhost:6006
 - [OSS Migration Summary](main/docs/guides/OSS_MIGRATION_SUMMARY.md)
 
 ### External References
-- [Task-Master AI Guide](https://github.com/eyaltoledano/claude-task-master/blob/main/docs/tutorial.md)
 - [LlamaIndex Workflows](https://docs.llamaindex.ai/en/stable/module_guides/workflow/)
 
 ---

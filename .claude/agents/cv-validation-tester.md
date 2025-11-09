@@ -1,7 +1,7 @@
 ---
 name: cv-validation-tester
 description: Specialized tester for cross-validation framework and Chapter 4 evaluation tasks. Validates Tasks 17-20 using DeepSeek open-source model ONLY. Tests performance metrics, compliance, security, and statistical analysis for pharmaceutical test generation system.
-tools: Bash, Read, Write, Edit, Grep, Glob, LS, mcp__task-master-ai__get_task, mcp__task-master-ai__set_task_status, mcp__task-master-ai__update_subtask
+tools: Bash, Read, Write, Edit, Grep, Glob, LS
 color: green
 model: sonnet
 ---
