@@ -37,7 +37,7 @@ Complete architecture documentation for the pharmaceutical test generation syste
                 ▼                 ▼                 ▼
        ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
        │  CloudTrail  │  │  AWS Config  │  │     KMS      │
-       │   (Active)   │  │  (Planned)   │  │   Key: a8d2  │
+       │   (Active)   │  │   (Active)   │  │   Key: a8d2  │
        └──────────────┘  └──────────────┘  └──────────────┘
                 │                 │                 │
                 │                 │                 │
@@ -335,36 +335,79 @@ Complete architecture documentation for the pharmaceutical test generation syste
 
 **Used by:** Terraform backend to prevent concurrent state modifications
 
-### Future IAM Roles (Task 0.4)
+### IAM Roles (Task 0.4)
 
-#### 1. pharma-ecs-execution
+#### 1. pharma-test-gen-ecs-execution
 **Purpose:** ECS task execution (pull images, write logs)
+**ARN:** `arn:aws:iam::275333454012:role/pharma-test-gen-ecs-execution`
+**Status:** ✅ Active (2025-11-10)
 **Trust policy:** `ecs-tasks.amazonaws.com`
-**Permissions:**
-- ECR: Pull images
-- Secrets Manager: Read secrets
-- CloudWatch Logs: Create streams, write logs
-- SSM Parameter Store: Read parameters
+**Managed by:** Terraform
 
-#### 2. pharma-ecs-task
-**Purpose:** Application runtime (Bedrock, S3, SQS access)
-**Trust policy:** `ecs-tasks.amazonaws.com`
 **Permissions:**
-- S3: Read/write `pharma-*` buckets
-- SQS: Send/receive/delete messages in `pharma-*` queues
+- ECR: Pull images, get authorization token
+- Secrets Manager: Read secrets (`pharma-test-gen/*`)
+- CloudWatch Logs: Create streams, write logs
+- SSM Parameter Store: Read parameters (`pharma-test-gen/*`)
+- AWS managed policy: `AmazonECSTaskExecutionRolePolicy`
+
+#### 2. pharma-test-gen-ecs-task
+**Purpose:** Application runtime (Bedrock, S3, SQS access)
+**ARN:** `arn:aws:iam::275333454012:role/pharma-test-gen-ecs-task`
+**Status:** ✅ Active (2025-11-10)
+**Trust policy:** `ecs-tasks.amazonaws.com`
+**Managed by:** Terraform
+
+**Permissions:**
+- S3: Read/write `pharma-test-output-compliance` bucket
+- SQS: Send/receive/delete messages in `pharma-test-gen*` queues
 - Bedrock: Invoke `deepseek-ai.DeepSeek-V3` model only
-- Secrets Manager: Read `pharma-*` secrets
-- CloudWatch: Put custom metrics
+- Secrets Manager: Read `pharma-test-gen/*` secrets
+- CloudWatch: Put custom metrics (namespace: `pharma-test-gen`)
+- CloudWatch Logs: Create log groups/streams, write logs
 
 #### 3. pharma-test-gen-deploy
-**Purpose:** CI/CD deployment (GitHub Actions / CodePipeline)
-**Trust policy:** GitHub OIDC provider
+**Purpose:** CI/CD deployment (GitHub Actions)
+**ARN:** `arn:aws:iam::275333454012:role/pharma-test-gen-deploy`
+**Status:** ✅ Active (2025-11-10)
+**Trust policy:** GitHub OIDC (`Danik911/thesis_project:main`)
+**Managed by:** Terraform
+
 **Permissions:**
-- ECR: Push images
-- ECS: Update services, register task definitions
-- IAM: PassRole to ECS roles
+- ECR: Full access (push/pull images, manage repositories)
+- ECS: Deploy services, update task definitions
+- IAM: PassRole to ECS execution and task roles
 - S3: Deploy frontend to `pharma-frontend-eu`
-- Secrets Manager: Create/update secrets
+- Secrets Manager: Create/update `pharma-test-gen/*` secrets
+- CloudWatch Logs: View deployment logs
+
+### GitHub OIDC Provider (Task 0.4)
+
+**ARN:** `arn:aws:iam::275333454012:oidc-provider/token.actions.githubusercontent.com`
+**Status:** ✅ Active (2025-11-10)
+**Purpose:** Allow GitHub Actions to assume AWS roles without long-lived credentials
+**Trusted repository:** `Danik911/thesis_project`
+**Trusted branch:** `main`
+
+### ECR Repositories (Task 0.4)
+
+#### pharma-test-gen-backend
+**Purpose:** FastAPI backend container images
+**URL:** `275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-backend`
+**ARN:** `arn:aws:ecr:eu-west-2:275333454012:repository/pharma-test-gen-backend`
+**Status:** ✅ Active (2025-11-10)
+**Image scanning:** Enabled (scan on push)
+**Encryption:** AES256
+**Lifecycle policy:** Keep last 10 images
+
+#### pharma-test-gen-worker
+**Purpose:** LlamaIndex workflow worker container images
+**URL:** `275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-worker`
+**ARN:** `arn:aws:ecr:eu-west-2:275333454012:repository/pharma-test-gen-worker`
+**Status:** ✅ Active (2025-11-10)
+**Image scanning:** Enabled (scan on push)
+**Encryption:** AES256
+**Lifecycle policy:** Keep last 10 images
 
 ---
 

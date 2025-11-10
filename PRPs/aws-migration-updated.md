@@ -1537,11 +1537,13 @@ echo "📊 Monitor: aws ecs describe-services --cluster pharma-prod --services b
    - Confirm region, service limits, and ECS/SQS architecture choice
    - Align on 10-week timeline and MVP scope
 
-2. **Phase 0 Kickoff:**
-   - Validate S3 Vectors availability in eu-west-2
-   - Create Terraform backend (S3 state + DynamoDB lock)
-   - Establish IAM roles for deployment and ECS tasks
-   - Enable CloudTrail and Config recording
+2. **Phase 0 Progress (In Progress):**
+   - ✅ **DONE:** Create Terraform backend (S3 state + DynamoDB lock) - Task 0.3 completed
+   - ✅ **DONE:** Establish IAM roles for deployment and ECS tasks - Task 0.4 completed
+     - Created: pharma-test-gen-deploy (GitHub Actions), pharma-test-gen-ecs-execution, pharma-test-gen-ecs-task
+     - Created: GitHub OIDC provider, ECR repositories (backend, worker)
+   - ✅ **DONE:** Enable CloudTrail and Config recording - Task 0.2 completed (verified 2025-11-10)
+   - 🔄 **PENDING:** Validate S3 Vectors availability in eu-west-2
 
 3. **Weekly Checkpoints:**
    - Monday: Review previous week's deliverables
@@ -1590,9 +1592,9 @@ echo "📊 Monitor: aws ecs describe-services --cluster pharma-prod --services b
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** 2025-11-03
-**Next Review:** 2025-11-10 (Phase 0 completion)
+**Document Version:** 2.1
+**Last Updated:** 2025-11-10
+**Next Review:** 2025-11-17 (Phase 0 completion)
 **Approved By:** [Pending stakeholder review]
 
 ---

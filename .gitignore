@@ -302,6 +302,13 @@ aws/terraform/.terraform.lock.hcl
 aws/terraform/terraform.tfvars
 aws/terraform/*.tfvars
 
+# Ignore root-level Terraform directory
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+
 # Ignore AWS credentials and sensitive files
 aws/**/*.pem
 aws/**/*.key
