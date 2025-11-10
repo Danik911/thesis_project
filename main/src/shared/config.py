@@ -412,6 +412,68 @@ class PhoenixConfig:
 
 
 @dataclass
+class StorageAdapterConfig:
+    """Configuration for dual-mode storage adapter (local/S3)."""
+
+    # Storage mode settings
+    storage_mode: str = field(
+        default_factory=lambda: os.getenv("STORAGE_MODE", "local")
+    )
+
+    # Local storage settings
+    local_base_path: str = field(
+        default_factory=lambda: os.getenv("STORAGE_LOCAL_BASE_PATH", "output")
+    )
+
+    # AWS S3 settings
+    aws_region: str = field(
+        default_factory=lambda: os.getenv("STORAGE_AWS_REGION", "eu-west-2")
+    )
+    test_output_bucket: str = field(
+        default_factory=lambda: os.getenv("STORAGE_TEST_OUTPUT_BUCKET", "")
+    )
+    kms_key_id: str = field(
+        default_factory=lambda: os.getenv("STORAGE_KMS_KEY_ID", "")
+    )
+
+    # Retention settings (GAMP-5 compliance: 7 years)
+    artifact_retention_days: int = field(
+        default_factory=lambda: int(os.getenv("STORAGE_RETENTION_DAYS", "2555"))
+    )
+
+    def __post_init__(self) -> None:
+        """Validate storage configuration."""
+        # Validate storage mode
+        valid_modes = ["local", "s3"]
+        if self.storage_mode not in valid_modes:
+            raise ValueError(
+                f"CRITICAL: Invalid storage mode '{self.storage_mode}'\n"
+                f"Valid modes: {valid_modes}\n"
+                "Set STORAGE_MODE environment variable to 'local' or 's3'"
+            )
+
+        # Validate S3 configuration if S3 mode enabled
+        if self.storage_mode == "s3":
+            if not self.test_output_bucket:
+                raise ValueError(
+                    "CRITICAL: S3 storage mode requires bucket name\n"
+                    "Set STORAGE_TEST_OUTPUT_BUCKET environment variable"
+                )
+
+        # Validate retention period
+        if self.artifact_retention_days < 1:
+            raise ValueError(
+                "CRITICAL: Artifact retention period must be at least 1 day\n"
+                f"Current value: {self.artifact_retention_days}\n"
+                "GAMP-5 compliance typically requires 7 years (2555 days)"
+            )
+
+        # Ensure local base path exists if local mode
+        if self.storage_mode == "local":
+            Path(self.local_base_path).mkdir(parents=True, exist_ok=True)
+
+
+@dataclass
 class Config:
     """Main configuration class combining all system settings."""
 
@@ -422,6 +484,7 @@ class Config:
     human_consultation: HumanConsultationConfig = field(default_factory=HumanConsultationConfig)
     validation_mode: ValidationModeConfig = field(default_factory=ValidationModeConfig)
     phoenix: PhoenixConfig = field(default_factory=PhoenixConfig)
+    storage: StorageAdapterConfig = field(default_factory=StorageAdapterConfig)
 
     # Environment settings
     environment: str = "development"  # development, testing, production
@@ -514,6 +577,14 @@ class Config:
                 "experiment_name": self.phoenix.experiment_name,
                 "otlp_endpoint": self.phoenix.otlp_endpoint,
                 "service_name": self.phoenix.service_name
+            },
+            "storage": {
+                "storage_mode": self.storage.storage_mode,
+                "local_base_path": self.storage.local_base_path,
+                "aws_region": self.storage.aws_region,
+                "test_output_bucket": self.storage.test_output_bucket,
+                "kms_key_id": self.storage.kms_key_id,
+                "artifact_retention_days": self.storage.artifact_retention_days
             },
             "environment": self.environment,
             "debug_mode": self.debug_mode
