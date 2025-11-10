@@ -1,0 +1,202 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ServiceQuotasAccess",
+      "Effect": "Allow",
+      "Action": [
+        "servicequotas:ListServiceQuotas",
+        "servicequotas:GetServiceQuota",
+        "servicequotas:RequestServiceQuotaIncrease",
+        "servicequotas:ListRequestedServiceQuotaChangeHistory",
+        "servicequotas:GetRequestedServiceQuotaChange"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-west-2"
+        }
+      }
+    },
+    {
+      "Sid": "KMSKeyManagement",
+      "Effect": "Allow",
+      "Action": [
+        "kms:CreateKey",
+        "kms:DescribeKey",
+        "kms:CreateAlias",
+        "kms:ListAliases",
+        "kms:ListKeys",
+        "kms:PutKeyPolicy",
+        "kms:GetKeyPolicy",
+        "kms:EnableKeyRotation",
+        "kms:TagResource",
+        "kms:GetKeyRotationStatus"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudTrailSetup",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:CreateTrail",
+        "cloudtrail:StartLogging",
+        "cloudtrail:PutEventSelectors",
+        "cloudtrail:UpdateTrail",
+        "cloudtrail:DescribeTrails",
+        "cloudtrail:GetTrailStatus",
+        "cloudtrail:ListTrails"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AWSConfigSetup",
+      "Effect": "Allow",
+      "Action": [
+        "config:PutConfigurationRecorder",
+        "config:StartConfigurationRecorder",
+        "config:DescribeConfigurationRecorders",
+        "config:DescribeConfigurationRecorderStatus",
+        "config:PutDeliveryChannel",
+        "config:DescribeDeliveryChannels"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3BucketManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:PutBucketVersioning",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutEncryptionConfiguration",
+        "s3:PutBucketLogging",
+        "s3:PutBucketPolicy",
+        "s3:GetBucketPolicy",
+        "s3:GetBucketVersioning",
+        "s3:GetBucketLocation",
+        "s3:ListBucket",
+        "s3:PutBucketTagging",
+        "s3:PutBucketObjectLockConfiguration",
+        "s3:GetBucketObjectLockConfiguration"
+      ],
+      "Resource": [
+        "arn:aws:s3:::pharma-*",
+        "arn:aws:s3:::pharma-*/*"
+      ]
+    },
+    {
+      "Sid": "DynamoDBTableManagement",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:ListTables",
+        "dynamodb:TagResource"
+      ],
+      "Resource": "arn:aws:dynamodb:eu-west-2:275333454012:table/terraform-locks"
+    },
+    {
+      "Sid": "IAMRoleManagement",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:GetRole",
+        "iam:PutRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:CreatePolicy",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicies",
+        "iam:ListRoles",
+        "iam:PassRole",
+        "iam:CreateServiceLinkedRole",
+        "iam:TagRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::275333454012:role/AWSConfigRole",
+        "arn:aws:iam::275333454012:role/pharma-*",
+        "arn:aws:iam::275333454012:policy/pharma-*",
+        "arn:aws:iam::275333454012:role/aws-service-role/ecs.amazonaws.com/*"
+      ]
+    },
+    {
+      "Sid": "STSGetCallerIdentity",
+      "Effect": "Allow",
+      "Action": "sts:GetCallerIdentity",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:CreateRepository",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:PutImage",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:CompleteLayerUpload",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:PutImageTagMutability",
+        "ecr:SetRepositoryPolicy",
+        "ecr:GetRepositoryPolicy",
+        "ecr:TagResource",
+        "ecr:PutLifecyclePolicy",
+        "ecr:GetLifecyclePolicy"
+      ],
+      "Resource": [
+        "arn:aws:ecr:eu-west-2:275333454012:repository/pharma-*"
+      ]
+    },
+    {
+      "Sid": "ECRAuthorization",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECSManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:CreateCluster",
+        "ecs:DescribeClusters",
+        "ecs:RegisterTaskDefinition",
+        "ecs:DescribeTaskDefinition",
+        "ecs:DeregisterTaskDefinition",
+        "ecs:CreateService",
+        "ecs:DescribeServices",
+        "ecs:UpdateService",
+        "ecs:DeleteService",
+        "ecs:ListClusters",
+        "ecs:ListServices",
+        "ecs:ListTaskDefinitions",
+        "ecs:TagResource",
+        "ecs:RunTask",
+        "ecs:StopTask",
+        "ecs:DescribeTasks"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogsSetup",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DescribeLogGroups",
+        "logs:PutRetentionPolicy",
+        "logs:TagLogGroup",
+        "logs:CreateLogStream",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": [
+        "arn:aws:logs:eu-west-2:275333454012:log-group:/ecs/pharma-*",
+        "arn:aws:logs:eu-west-2:275333454012:log-group:/ecs/pharma-*:*",
+        "arn:aws:logs:eu-west-2:275333454012:log-group:/aws/ecs/pharma-*",
+        "arn:aws:logs:eu-west-2:275333454012:log-group:/aws/ecs/pharma-*:*"
+      ]
+    }
+  ]
+}

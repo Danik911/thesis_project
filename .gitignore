@@ -284,4 +284,52 @@ THESIS_EVIDENCE_PACKAGE/05_THESIS_DOCUMENTS/chapter_4/
 # Examples folder
 examples/
 
+# AWS Infrastructure - Selective Tracking for GAMP-5 Compliance
+# TRACK: Policy files, documentation, scripts (audit trail required)
+# IGNORE: Downloaded logs, sensitive data, Terraform state, temporary files
+
+# Ignore downloaded AWS logs
+aws/logs/
+aws/downloads/
+aws/**/logs/
+aws/**/*.log
+
+# Ignore Terraform state files (stored in S3, not Git)
+aws/terraform/*.tfstate
+aws/terraform/*.tfstate.*
+aws/terraform/.terraform/
+aws/terraform/.terraform.lock.hcl
+aws/terraform/terraform.tfvars
+aws/terraform/*.tfvars
+
+# Ignore AWS credentials and sensitive files
+aws/**/*.pem
+aws/**/*.key
+aws/**/*.crt
+aws/**/credentials
+aws/**/.aws/
+aws/**/*.env
+aws/**/secrets.json
+
+# Ignore temporary and cache files
+aws/**/*.tmp
+aws/**/*.temp
+aws/**/.DS_Store
+aws/**/Thumbs.db
+
+# Track everything else (policies, docs, scripts) for compliance
+!aws/iam-policies/
+!aws/iam-policies/**/*.json
+!aws/iam-policies/**/*.sh
+!aws/iam-policies/**/*.md
+!aws/docs/
+!aws/docs/**/*.md
+!aws/scripts/
+!aws/scripts/**/*.sh
+!aws/scripts/**/*.py
+!aws/*.json
+!aws/*.md
+!aws/terraform/**/*.tf
+!aws/terraform/**/*.tfvars.example
+
 

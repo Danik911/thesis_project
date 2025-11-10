@@ -93,6 +93,18 @@ thesis_project/
 ├── PRPs/                     # Production Readiness Plans
 │   ├── tasks/               # PRP task definitions (0.1-5.3)
 │   └── aws-migration-updated.md   # AWS migration plan
+├── aws/                      # AWS infrastructure and configuration
+│   ├── iam-policies/        # IAM policy definitions
+│   │   ├── phase0-deployment-policy.json (Tasks 0.1-0.3)
+│   │   ├── phase0-complete-policy.json (Tasks 0.1-0.4)
+│   │   ├── attach-phase0-policy.sh
+│   │   ├── attach-phase0-complete-policy.sh
+│   │   ├── verify-phase0-permissions.sh
+│   │   ├── verify-phase0-complete-permissions.sh
+│   │   └── IAM-SETUP-GUIDE.md
+│   ├── terraform/           # Infrastructure as Code (TODO)
+│   ├── scripts/             # AWS automation scripts (TODO)
+│   └── docs/                # AWS-specific documentation (TODO)
 ├── examples/                 # Course reference materials
 │   ├── alex/                # Example production app
 │   └── production/guides/   # Course Jupyter notebooks
@@ -107,7 +119,6 @@ thesis_project/
 │   │   └── guides/QUICK_START_GUIDE.md
 │   ├── tests/               # Test suites
 │   └── output/              # Generated test suites
-└── terraform/               # AWS infrastructure (TODO)
 ```
 
 ---

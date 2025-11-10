@@ -92,7 +92,11 @@
 				"--from",
 				"git+https://github.com/oraios/serena",
 				"serena",
-				"start-mcp-server"
+				"start-mcp-server",
+				"--context",
+				"ide-assistant",
+				"--project",
+				"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project"
 			]
 		}
 	}
