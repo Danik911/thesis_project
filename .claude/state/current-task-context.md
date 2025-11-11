@@ -1,54 +1,52 @@
-# Current Task Context: 1.4
+# Current Task Context: 2.1
 
 ## Task File
-PRPs/tasks/1.4-clerk-auth.md
+PRPs/tasks/2.1-nextjs-setup.md
 
 ## Task Content
-# Task P1.4 – Integrate Clerk Authentication with FastAPI
+# Task P2.1 – Initialize Next.js 14 Frontend Project
 
 ## What to Do
-- Add middleware/dependencies to validate Clerk JWTs for API requests using Clerk's EU endpoints.
-- Map authenticated Clerk users to job records and audit logs for GAMP-5 traceability.
-- Provide developer-friendly testing path (Clerk test mode) and document environment variable requirements.
+- Scaffold a Next.js App Router project (TypeScript, Tailwind) under `main/frontend` and configure static export (`output: 'export'`).
+- Set up environment variable handling for Clerk publishable key and API base URL.
+- Establish global styles, layout, and base navigation shell aligned with compliance branding.
 
 ## Dependencies
-- Depends on Task P1.3 (job submission) to ensure user identity is captured.
+- Requires Clerk configuration (Task P1.4) to reuse publishable key.
 
 ## Best Practices
-- Cache Clerk JWKS keys to minimize latency while respecting key rotation.
-- Propagate user context through structured logging for audit trails.
-- Fail closed (401) if tokens are missing or invalid; do not allow anonymous submissions.
+- Leverage the Next.js `app` directory for server components where possible to improve performance.
+- Use `trailingSlash: true` to produce S3-friendly paths for static hosting.
+- Commit linting/formatting configuration (ESLint, Prettier) to align with backend standards.
 
 ## Code Example
-```python
-clerk_client = Clerk(api_key=settings.clerk_secret_key)
-
-async def require_clerk_user(authorization: str = Header(...)) -> ClerkClaims:
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
-    token = authorization.split(" ", 1)[1]
-    try:
-        payload = clerk_client.verify_token(token)
-        return ClerkClaims(**payload)
-    except Exception as exc:
-        raise HTTPException(status_code=401, detail="Token verification failed") from exc
+```ts
+// next.config.mjs
+const config = {
+  output: 'export',
+  trailingSlash: true,
+  experimental: {
+    typedRoutes: true
+  }
+};
+export default config;
 ```
 
 ## Links
-- [Clerk backend token verification](https://clerk.com/docs/backend-requests/verify-jwts)
+- [Next.js static export guide](https://nextjs.org/docs/app/guides/static-exports)
 
 ## Testing Strategy
-- Use Clerk test tokens to hit protected endpoints and confirm 200/401 behaviors.
-- Write unit tests mocking Clerk client responses (valid/expired/invalid signatures).
-- Validate EU endpoint configuration by checking network calls remain within EU domain.
+- Run `npm run lint` and `npm run build` to ensure project compiles.
+- Use `npx next export` (via `output: 'export'`) and serve the `out` directory locally to validate static output.
+- Add smoke test verifying environment variables are read correctly via `next dev`.
 
 ## Common Issues to Avoid
-- Forgetting to set `CLERK_JWT_AUDIENCE`, leading to verification failures.
-- Not handling clock skew; allow small grace period when validating `exp` claims.
-- Logging sensitive token contents—sanitize logs to maintain compliance.
+- Forgetting to add `.env.local` to `.gitignore`, risking credential leakage.
+- Not enabling `output: 'export'`, resulting in server-side code incompatible with S3 hosting.
+- Neglecting to configure TypeScript path aliases consistent with backend shared models if needed.
 
 ## Task Metadata
-- Task ID: 1.4
-- Phase: 1 - Backend Abstraction & Storage Layer
-- Started: 2025-11-11T12:00:00Z
+- Task ID: 2.1
+- Phase: 2 - Frontend Dashboard
+- Started: 2025-11-11T00:00:00Z
 - Workflow Status: INITIALIZED

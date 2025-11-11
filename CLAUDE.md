@@ -457,10 +457,28 @@ phoenix serve  # http://localhost:6006
 - **Data Residency:** EU (eu-west-2 region, London)
 
 ### Development Standards
-- **Research first:** Check context7, official docs, course examples
+- **Research hierarchy:**
+  1. ✅ Check examples/ directory for proven working implementations FIRST
+  2. ✅ If example exists, match its architecture exactly (Pages Router, versions, etc.)
+  3. ✅ Only deviate if task explicitly requires different approach
+  4. ✅ Check context7, official docs for specific implementation details
 - **Incremental validation:** Test after each change
 - **Error prevention:** Address known issues proactively
 - **No assumptions:** Verify paths, dependencies, configurations
+
+### Architecture Decision Protocol
+
+When implementing frontend/infrastructure tasks:
+1. **Check reference:** Does examples/alex/ have similar functionality?
+2. **Match pattern:** If yes, replicate architecture exactly:
+   - Use same Next.js router (Pages vs App)
+   - Use same package versions (especially auth libraries)
+   - Follow same file structure and patterns
+3. **Document deviation:** If task requires different approach, explicitly document why
+4. **Validation:** Compare final implementation to reference for consistency
+
+**Example reference:**
+- Frontend with Clerk auth → Use examples/alex/frontend/ as template (Pages Router + Clerk v6)
 
 ---
 

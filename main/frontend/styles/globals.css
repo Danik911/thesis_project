@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 0 102 204; /* #0066CC */
+    --color-success: 16 185 129; /* #10B981 */
+    --color-warning: 245 158 11; /* #F59E0B */
+    --color-error: 239 68 68; /* #EF4444 */
+  }
+
+  body {
+    @apply text-gray-900 bg-gray-50;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-[rgb(var(--color-primary))] text-white rounded hover:opacity-90 transition-opacity;
+  }
+
+  .card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm p-6;
+  }
+}

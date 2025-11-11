@@ -82,6 +82,25 @@ Create file `.claude/state/results/context-collector-{timestamp}.md` with:
 - **For current trends**: Use mcp__one-search-mcp__one_search + mcp__one-search-mcp__one_extract
 
 ## Research Focus Areas
+
+## Local Reference Examples (PRIORITY #1)
+
+**ALWAYS CHECK FIRST** before external research:
+1. Search `examples/` directory for similar implementations:
+   - Use Glob: `examples/**/package.json`, `examples/**/next.config.*`
+   - Use Grep: Search for similar technology keywords
+2. If working example found:
+   - Read architecture (Pages vs App Router, auth patterns, versions)
+   - Document what works (configurations, patterns, file structure)
+   - Match proven patterns unless task explicitly requires deviation
+3. If no example found OR task requires different approach:
+   - Proceed with external research (perplexity, context7, web)
+   - Document why example wasn't followed
+
+**Known reference implementations:**
+- `examples/alex/` - Production Next.js + Clerk + FastAPI architecture
+- `examples/production/` - Course reference materials
+
 **LlamaIndex 0.12.0+ Workflow Patterns**:
 - Multi-agent architectures, event-driven systems
 - Human-in-the-loop patterns, audit trails
