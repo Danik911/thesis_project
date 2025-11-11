@@ -1,52 +1,56 @@
-# Current Task Context: 2.1
+# Current Task Context: 2.2
 
 ## Task File
-PRPs/tasks/2.1-nextjs-setup.md
+PRPs/tasks/2.2-clerk-provider.md
 
 ## Task Content
-# Task P2.1 – Initialize Next.js 14 Frontend Project
+# Task P2.2 – Configure Clerk Provider for EU Authentication
 
 ## What to Do
-- Scaffold a Next.js App Router project (TypeScript, Tailwind) under `main/frontend` and configure static export (`output: 'export'`).
-- Set up environment variable handling for Clerk publishable key and API base URL.
-- Establish global styles, layout, and base navigation shell aligned with compliance branding.
+- Wrap the Next.js app with `ClerkProvider` pointing to EU endpoints and configure protected routes.
+- Implement middleware for route protection (redirect unauthenticated users to sign-in).
+- Surface user profile info in the UI header to confirm session context.
 
 ## Dependencies
-- Requires Clerk configuration (Task P1.4) to reuse publishable key.
+- Requires frontend scaffold (Task P2.1) and backend Clerk setup (Task P1.4).
 
 ## Best Practices
-- Leverage the Next.js `app` directory for server components where possible to improve performance.
-- Use `trailingSlash: true` to produce S3-friendly paths for static hosting.
-- Commit linting/formatting configuration (ESLint, Prettier) to align with backend standards.
+- Store Clerk publishable key in `.env.local` for development and use runtime environment variables for production.
+- Use `next/headers` to read auth state server-side where necessary, keeping compliance data server-rendered when possible.
+- Provide fallback UI for session loading states to improve UX.
 
 ## Code Example
-```ts
-// next.config.mjs
-const config = {
-  output: 'export',
-  trailingSlash: true,
-  experimental: {
-    typedRoutes: true
-  }
-};
-export default config;
+```tsx
+// app/layout.tsx
+import { ClerkProvider } from '@clerk/nextjs';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      domain="clerk.pharma.eu">
+      <html lang="en">
+        <body className="bg-slate-950 text-slate-100">{children}</body>
+      </html>
+    </ClerkProvider>
+  );
+}
 ```
 
 ## Links
-- [Next.js static export guide](https://nextjs.org/docs/app/guides/static-exports)
+- [Clerk Next.js App Router guide](https://clerk.com/docs/nextjs/app-router)
 
 ## Testing Strategy
-- Run `npm run lint` and `npm run build` to ensure project compiles.
-- Use `npx next export` (via `output: 'export'`) and serve the `out` directory locally to validate static output.
-- Add smoke test verifying environment variables are read correctly via `next dev`.
+- Verify that unauthenticated access to `/dashboard` redirects to Clerk-hosted sign-in.
+- Use Clerk test mode to log in and confirm user metadata displays correctly.
+- Add integration test with Playwright to ensure auth flows operate under static export.
 
 ## Common Issues to Avoid
-- Forgetting to add `.env.local` to `.gitignore`, risking credential leakage.
-- Not enabling `output: 'export'`, resulting in server-side code incompatible with S3 hosting.
-- Neglecting to configure TypeScript path aliases consistent with backend shared models if needed.
+- Forgetting to set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, leading to hydration errors.
+- Not configuring EU-only domain, causing data residency violations.
+- Allowing unauthenticated access to compliance-sensitive pages by skipping middleware checks.
 
 ## Task Metadata
-- Task ID: 2.1
-- Phase: 2 - Frontend Dashboard
-- Started: 2025-11-11T00:00:00Z
+- Task ID: 2.2
+- Phase: 2 (Frontend Dashboard)
+- Started: 2025-11-11 16:25:04
 - Workflow Status: INITIALIZED
