@@ -474,6 +474,81 @@ class StorageAdapterConfig:
 
 
 @dataclass
+class VectorStoreConfig:
+    """Configuration for dual-mode vector store (ChromaDB/pgvector)."""
+
+    # Vector store mode settings
+    rag_mode: str = field(
+        default_factory=lambda: os.getenv("RAG_MODE", "chromadb")
+    )
+
+    # ChromaDB settings (local development)
+    chroma_path: str = field(
+        default_factory=lambda: os.getenv("CHROMA_PATH", "./chroma_db")
+    )
+    chroma_collection: str = field(
+        default_factory=lambda: os.getenv("CHROMA_COLLECTION", "pharma_docs")
+    )
+
+    # PostgreSQL pgvector settings (AWS production)
+    pg_connection_string: str = field(
+        default_factory=lambda: os.getenv("VECTOR_STORE_CONNECTION_STRING", "")
+    )
+    pg_table_name: str = field(
+        default_factory=lambda: os.getenv("VECTOR_STORE_TABLE", "rag_documents")
+    )
+
+    # Embedding settings
+    embedding_model: str = field(
+        default_factory=lambda: os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+    )
+    embedding_dimensions: int = field(
+        default_factory=lambda: int(os.getenv("EMBEDDING_DIMENSIONS", "1536"))
+    )
+
+    # Query settings
+    similarity_top_k: int = field(
+        default_factory=lambda: int(os.getenv("SIMILARITY_TOP_K", "10"))
+    )
+
+    def __post_init__(self) -> None:
+        """Validate vector store configuration - NO FALLBACK LOGIC."""
+        # Validate mode
+        valid_modes = ["chromadb", "pgvector"]
+        if self.rag_mode not in valid_modes:
+            raise ValueError(
+                f"CRITICAL: Invalid RAG mode '{self.rag_mode}'\n"
+                f"Valid modes: {valid_modes}\n"
+                "Set RAG_MODE environment variable to 'chromadb' or 'pgvector'"
+            )
+
+        # Validate pgvector configuration
+        if self.rag_mode == "pgvector" and not self.pg_connection_string:
+            raise ValueError(
+                "CRITICAL: pgvector mode requires connection string\n"
+                "Set VECTOR_STORE_CONNECTION_STRING environment variable\n"
+                "Format: postgresql://user:pass@aurora-endpoint:5432/dbname"
+            )
+
+        # Validate embedding dimensions
+        valid_dims = [384, 768, 1024, 1536, 3072]
+        if self.embedding_dimensions not in valid_dims:
+            raise ValueError(
+                f"CRITICAL: Unusual embedding dimension: {self.embedding_dimensions}\n"
+                f"Common dimensions: {valid_dims}\n"
+                f"Verify EMBEDDING_DIMENSIONS matches embedding model\n"
+                f"  384: BAAI/bge-small-en-v1.5\n"
+                f"  768: sentence-transformers/all-MiniLM-L6-v2\n"
+                f"  1536: text-embedding-3-small (OpenAI)\n"
+                f"  3072: text-embedding-3-large (OpenAI)"
+            )
+
+        # Ensure ChromaDB path exists if chromadb mode
+        if self.rag_mode == "chromadb":
+            Path(self.chroma_path).mkdir(parents=True, exist_ok=True)
+
+
+@dataclass
 class Config:
     """Main configuration class combining all system settings."""
 
@@ -485,6 +560,7 @@ class Config:
     validation_mode: ValidationModeConfig = field(default_factory=ValidationModeConfig)
     phoenix: PhoenixConfig = field(default_factory=PhoenixConfig)
     storage: StorageAdapterConfig = field(default_factory=StorageAdapterConfig)
+    vector_store: VectorStoreConfig = field(default_factory=VectorStoreConfig)
 
     # Environment settings
     environment: str = "development"  # development, testing, production
@@ -585,6 +661,16 @@ class Config:
                 "test_output_bucket": self.storage.test_output_bucket,
                 "kms_key_id": self.storage.kms_key_id,
                 "artifact_retention_days": self.storage.artifact_retention_days
+            },
+            "vector_store": {
+                "rag_mode": self.vector_store.rag_mode,
+                "chroma_path": self.vector_store.chroma_path,
+                "chroma_collection": self.vector_store.chroma_collection,
+                "pg_connection_string": "***MASKED***" if self.vector_store.pg_connection_string else "",
+                "pg_table_name": self.vector_store.pg_table_name,
+                "embedding_model": self.vector_store.embedding_model,
+                "embedding_dimensions": self.vector_store.embedding_dimensions,
+                "similarity_top_k": self.vector_store.similarity_top_k
             },
             "environment": self.environment,
             "debug_mode": self.debug_mode
