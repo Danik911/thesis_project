@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
+
 from src.agents.categorization import (
     create_gamp_categorization_agent,
 )

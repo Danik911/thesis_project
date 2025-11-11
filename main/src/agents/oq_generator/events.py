@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 from llama_index.core.workflow import Event
 from pydantic import Field
+
 from src.core.events import GAMPCategory
 
 from .models import OQTestSuite

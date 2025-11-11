@@ -70,6 +70,7 @@ from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
 from pydantic import BaseModel, Field, ValidationError
+
 from src.agents.categorization.error_handler import (
     CategorizationError,
     CategorizationErrorHandler,
@@ -435,7 +436,7 @@ def gamp_analysis_tool(urs_content: str) -> dict[str, Any]:
     for cat_num, score in category_scores.items():
         analysis = categories_analysis[cat_num]
         debug_info.append(f"Category {cat_num}: score={score}, strong={analysis['strong_count']}, weak={analysis['weak_count']}, exclusions={analysis['exclusion_count']}")
-    
+
     # Select category with highest score
     predicted_category_num = max(category_scores.items(), key=lambda x: x[1])
     predicted_category = GAMPCategory(predicted_category_num[0])
@@ -634,8 +635,7 @@ def context_provider_tool(
             if loop.is_running():
                 # We're already in an async context, use run_coroutine_threadsafe
                 import concurrent.futures
-                import threading
-                
+
                 # Create a new event loop in a separate thread
                 def run_in_new_loop():
                     new_loop = asyncio.new_event_loop()
@@ -646,7 +646,7 @@ def context_provider_tool(
                         )
                     finally:
                         new_loop.close()
-                
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(run_in_new_loop)
                     context_result = future.result(timeout=120)
@@ -657,10 +657,10 @@ def context_provider_tool(
             # If all else fails, skip context augmentation
             print(f"Warning: Context augmentation failed: {e}")
             # Return a minimal result to allow workflow to continue
-            context_result = type('obj', (object,), {
-                'success': False,
-                'error_message': str(e),
-                'result_data': {}
+            context_result = type("obj", (object,), {
+                "success": False,
+                "error_message": str(e),
+                "result_data": {}
             })
 
         # Check if context retrieval was successful

@@ -41,6 +41,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field, field_validator
+
 from src.config.llm_config import LLMConfig
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.agent_instrumentation import trace_agent_method
@@ -483,7 +484,7 @@ class ContextProviderAgent:
                 api_key=os.getenv("OPENAI_API_KEY"),
                 callback_manager=None  # Always None to prevent thread conflicts in cross-validation
             )
-            
+
             # Log thread-safety approach for cross-validation debugging
             self.logger.info(f"Embedding model initialized for cross-validation: {self.embedding_model_name} (callback_manager=None)")
 

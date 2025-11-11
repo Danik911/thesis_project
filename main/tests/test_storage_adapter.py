@@ -9,19 +9,15 @@ import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import pytest
-import pytest_asyncio
 from moto import mock_aws
-
 from src.adapters import (
     LocalStorageAdapter,
     S3StorageAdapter,
     StorageFactory,
     StorageProvider,
 )
-
 
 # Test fixtures for parametrization
 
@@ -72,28 +68,27 @@ def storage_adapter(
     """
     if request.param == "local":
         return LocalStorageAdapter(base_path=str(local_temp_dir))
-    else:
-        # S3 adapter (mocked) - Create bucket inline within mock context
-        import boto3
-        from moto import mock_aws
+    # S3 adapter (mocked) - Create bucket inline within mock context
+    import boto3
+    from moto import mock_aws
 
-        # Store mock context in adapter for cleanup
-        mock_context = mock_aws()
-        mock_context.__enter__()
+    # Store mock context in adapter for cleanup
+    mock_context = mock_aws()
+    mock_context.__enter__()
 
-        bucket_name = "test-pharma-artifacts"
-        s3_client = boto3.client("s3", region_name="eu-west-2")
-        s3_client.create_bucket(
-            Bucket=bucket_name,
-            CreateBucketConfiguration={"LocationConstraint": "eu-west-2"}
-        )
+    bucket_name = "test-pharma-artifacts"
+    s3_client = boto3.client("s3", region_name="eu-west-2")
+    s3_client.create_bucket(
+        Bucket=bucket_name,
+        CreateBucketConfiguration={"LocationConstraint": "eu-west-2"}
+    )
 
-        adapter = S3StorageAdapter(bucket=bucket_name, region="eu-west-2")
+    adapter = S3StorageAdapter(bucket=bucket_name, region="eu-west-2")
 
-        # Store mock context reference for potential cleanup
-        adapter._mock_context = mock_context  # type: ignore
+    # Store mock context reference for potential cleanup
+    adapter._mock_context = mock_context  # type: ignore
 
-        return adapter
+    return adapter
 
 
 # Core functionality tests
@@ -456,7 +451,7 @@ async def test_local_adapter_metadata_file_creation(
     assert metadata_path.exists()
 
     # Verify metadata content
-    with open(metadata_path, "r", encoding="utf-8") as f:
+    with open(metadata_path, encoding="utf-8") as f:
         metadata_content = json.load(f)
 
     # Check all required fields present

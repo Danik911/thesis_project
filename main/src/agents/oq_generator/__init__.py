@@ -38,6 +38,7 @@ from .templates import (
     TestCategoryTemplates,
 )
 from .workflow import OQGenerationWorkflow
+
 # For backwards compatibility, create an alias
 OQTestGenerationWorkflow = OQGenerationWorkflow
 

@@ -3,9 +3,9 @@
 Test configuration initialization to debug validation mode issue.
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
 
 # Setup logging to see debug messages
@@ -24,7 +24,7 @@ print(f"Loading .env from: {env_file}")
 
 if env_file.exists():
     load_dotenv(env_file)
-    print(f"✓ .env loaded successfully")
+    print("✓ .env loaded successfully")
 else:
     print(f"✗ .env file not found at {env_file}")
     sys.exit(1)
@@ -45,9 +45,9 @@ from src.shared.config import ValidationModeConfig
 print("Creating ValidationModeConfig instance...")
 validation_config = ValidationModeConfig()
 
-print(f"\nResult:")
+print("\nResult:")
 print(f"  validation_config.validation_mode = {validation_config.validation_mode}")
-print(f"  Expected: False (since VALIDATION_MODE=false)")
+print("  Expected: False (since VALIDATION_MODE=false)")
 
 if validation_config.validation_mode:
     print("\n❌ PROBLEM: validation_mode is True but should be False!")

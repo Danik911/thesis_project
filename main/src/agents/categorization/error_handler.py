@@ -24,6 +24,7 @@ from uuid import uuid4
 
 from llama_index.core.instrumentation.event_handlers import BaseEventHandler
 from llama_index.core.instrumentation.events import BaseEvent
+
 from src.core.events import GAMPCategorizationEvent, GAMPCategory
 
 
@@ -628,14 +629,14 @@ class CategorizationErrorHandler:
             f"❌ SME CONSULTATION FAILED - Returning low-confidence categorization event for human review "
             f"(Original confidence: {confidence:.1%}, Threshold: {self.confidence_threshold:.1%})"
         )
-        
-        # Create audit log for SME consultation failure  
+
+        # Create audit log for SME consultation failure
         if self.enable_audit_logging:
             sme_failure_audit_entry = AuditLogEntry(
                 action="SME_CONSULTATION_FAILED",
                 document_name=document_name,
                 confidence_score=confidence,
-                decision_rationale=f"SME consultation failed. Human review required for low-confidence categorization."
+                decision_rationale="SME consultation failed. Human review required for low-confidence categorization."
             )
             self.audit_log.append(sme_failure_audit_entry)
             self._log_audit_entry(sme_failure_audit_entry)
@@ -671,7 +672,7 @@ class CategorizationErrorHandler:
             },
             event_id=uuid4(),
             timestamp=datetime.now(UTC),
-            categorized_by="CategorizationAgent-ConsultationFailed", 
+            categorized_by="CategorizationAgent-ConsultationFailed",
             review_required=True  # Critical: This signals workflow to trigger human consultation
         )
 

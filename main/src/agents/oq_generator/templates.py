@@ -261,11 +261,11 @@ Return complete JSON document with proper formatting. Start with {{ and end with
     @classmethod
     def _get_example_test_structure(cls, gamp_category: GAMPCategory) -> str:
         """Get example test structure for OSS model guidance in JSON format."""
-        return '''{
+        return """{
   "test_id": "OQ-001",
   "test_name": "Installation Verification Test",
   "test_category": "installation",
-  "gamp_category": ''' + str(gamp_category.value) + ''',
+  "gamp_category": """ + str(gamp_category.value) + """,
   "objective": "Verify system installation completed successfully and all components are properly configured",
   "prerequisites": [
     "System hardware requirements verified",
@@ -308,7 +308,7 @@ Return complete JSON document with proper formatting. Start with {{ and end with
     "Database accessible"
   ],
   "regulatory_basis": [
-    "GAMP-5 Category ''' + str(gamp_category.value) + '''",
+    "GAMP-5 Category """ + str(gamp_category.value) + """",
     "21 CFR Part 11"
   ],
   "risk_level": "medium",
@@ -321,7 +321,7 @@ Return complete JSON document with proper formatting. Start with {{ and end with
     "System Administrator",
     "Validation Engineer"
   ]
-}'''
+}"""
 
 
 class TestCategoryTemplates:

@@ -772,7 +772,7 @@ class ComprehensiveAuditTrail:
         if "compliance" in error_type.lower():
             return "medium"
         return "low"
-    
+
     def log_data_access(
         self,
         source: str,
@@ -805,9 +805,9 @@ class ComprehensiveAuditTrail:
             "error_message": error_message,
             "access_timestamp": datetime.now(UTC).isoformat()
         }
-        
+
         severity = AuditSeverity.ERROR if access_status != "success" else AuditSeverity.INFO
-        
+
         return self._write_audit_event(
             event_type=AuditEventType.DATA_ACCESS,
             event_data=event_data,

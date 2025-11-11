@@ -3,20 +3,20 @@
 Demo runner with proper async execution
 """
 import asyncio
-import os
-import sys
 from pathlib import Path
 
 # Load environment variables
 from dotenv import load_dotenv
-env_path = Path(__file__).parent.parent / '.env'
+
+env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
 async def run_demo():
     # Import after env is loaded
-    from main import run_with_event_logging, parse_arguments
     from pathlib import Path
-    
+
+    from main import run_with_event_logging
+
     # Setup args
     class Args:
         def __init__(self):
@@ -30,10 +30,10 @@ async def run_demo():
             self.consult = False
             self.list_consultations = False
             self.respond_to = None
-    
+
     args = Args()
     document_path = Path(r"C:\Users\anteb\Desktop\Courses\Projects\thesis_project\datasets\urs_corpus\category_3\URS-001.md")
-    
+
     print(f"Running demonstration with {document_path.name}")
     await run_with_event_logging(document_path, args)
     print("Demo completed!")

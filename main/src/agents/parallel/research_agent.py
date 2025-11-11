@@ -27,6 +27,7 @@ from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
 from opentelemetry import trace
 from pydantic import BaseModel, Field
+
 from src.agents.parallel.regulatory_data_sources import (
     FDAAPIError,
     RegulatoryAuditTrail,
@@ -133,24 +134,24 @@ class ResearchAgent:
             "high_quality_results": 0,
             "research_coverage": {}
         }
-        
+
         # Resource tracking for debugging
         self.logger.debug(f"ResearchAgent created: {id(self)} with FDAClient: {id(self.fda_client)}")
-    
+
     def close(self) -> None:
         """Close resources and clean up."""
         self.logger.debug(f"Closing ResearchAgent: {id(self)}")
-        if hasattr(self, 'fda_client') and self.fda_client:
+        if hasattr(self, "fda_client") and self.fda_client:
             self.fda_client.close()
-    
+
     def __enter__(self):
         """Context manager entry."""
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit with cleanup."""
         self.close()
-    
+
     def __del__(self):
         """Destructor cleanup as safety net."""
         try:
@@ -318,7 +319,7 @@ class ResearchAgent:
                 self.logger.info(f"[HEARTBEAT] Completed regulatory updates research: {len(regulatory_updates)} updates found")
 
             # Step 2: Best Practices Research
-            self.logger.info(f"[HEARTBEAT] Starting best practices research")
+            self.logger.info("[HEARTBEAT] Starting best practices research")
             with self.tracer.start_as_current_span("research.best_practices"):
                 best_practices = await self._research_best_practices(request)
                 response.best_practices = best_practices
@@ -327,7 +328,7 @@ class ResearchAgent:
 
             # Step 3: Industry Trends Research
             if request.include_trends:
-                self.logger.info(f"[HEARTBEAT] Starting industry trends research")
+                self.logger.info("[HEARTBEAT] Starting industry trends research")
                 with self.tracer.start_as_current_span("research.industry_trends"):
                     industry_trends = await self._research_industry_trends(request)
                     response.industry_trends = industry_trends

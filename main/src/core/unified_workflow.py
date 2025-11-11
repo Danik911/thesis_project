@@ -30,6 +30,7 @@ from uuid import uuid4
 
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
+
 from src.agents.oq_generator.events import OQTestGenerationEvent, OQTestSuiteEvent
 from src.agents.oq_generator.workflow import OQGenerationWorkflow
 
@@ -53,13 +54,13 @@ from src.core.events import (
     AgentRequestEvent,
     AgentResultEvent,
     AgentResultsEvent,
-    SignedAgentResultsEvent,
     ConsultationBypassedEvent,
     ConsultationInputEvent,
     ConsultationRequiredEvent,
     GAMPCategorizationEvent,
     GAMPCategory,
     PlanningEvent,
+    SignedAgentResultsEvent,
     URSIngestionEvent,
 )
 from src.core.human_consultation import (
@@ -866,11 +867,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
         await safe_context_set(ctx, "categorization_for_signature", {
             "categorization_event": categorization_event,
             "document_info": {
-                "name": Path(ev.file_path).name if hasattr(ev, "file_path") else 
+                "name": Path(ev.file_path).name if hasattr(ev, "file_path") else
                         (str(ev.urs_content)[:50] if hasattr(ev, "urs_content") and ev.urs_content else "document")
             }
         })
-        
+
         self.logger.info("[SIGNATURE] Categorization signature deferred until after consultation/planning")
 
         # Add ALCOA+ record for categorization with enhanced metadata
@@ -883,7 +884,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             alcoa_record = alcoa_validator.create_data_record(
                 data={
                     "action": "gamp_categorization",
-                    "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, 'value') else str(categorization_event.gamp_category),
+                    "category": categorization_event.gamp_category.value if hasattr(categorization_event.gamp_category, "value") else str(categorization_event.gamp_category),
                     "confidence": categorization_event.confidence_score,
                     "risk_assessment": categorization_event.risk_assessment,
                     "regulatory_basis": "GAMP-5",
@@ -1318,10 +1319,10 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # If categorization initially failed but was recovered by SME consultation,
         # we must still trigger human consultation based on the ORIGINAL failure
         risk_assessment = ev.risk_assessment or {}
-        
+
         # Determine which confidence score to use for consultation check
         confidence_for_consultation = ev.confidence_score
-        
+
         # If this came from SME consultation recovery, use original confidence
         if "original_confidence" in risk_assessment:
             confidence_for_consultation = risk_assessment["original_confidence"]
@@ -1329,7 +1330,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 f"[AUDIT TRAIL] SME consultation recovery detected - using original confidence "
                 f"{confidence_for_consultation:.2f} for consultation decision (recovered to {ev.confidence_score:.2f})"
             )
-        
+
         requires_consultation = (
             confidence_for_consultation < bypass_threshold or  # Use appropriate confidence
             "consultation_required" in risk_assessment.get("flags", [])  # Explicit flags trigger
@@ -1341,7 +1342,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             reason_text = f"Category {ev.gamp_category.value} with confidence {ev.confidence_score:.2f}"
             if "original_confidence" in risk_assessment:
                 reason_text = f"Category {ev.gamp_category.value} - Original confidence {confidence_for_consultation:.2f}, recovered to {ev.confidence_score:.2f} via SME consultation"
-            
+
             consultation_event = ConsultationRequiredEvent(
                 consultation_type="categorization_review",
                 context={
@@ -1593,7 +1594,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # CRITICAL FIX: Update context with human-corrected categorization
             # This ensures downstream steps use the human-approved category
             await safe_context_set(ctx, "categorization_result", categorization_event)
-            
+
             return self._create_planning_event_from_categorization(categorization_event)
 
         except Exception as e:
@@ -1642,7 +1643,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             SignedAgentResultsEvent to continue workflow with signature metadata
         """
         self.logger.info("[SIGNATURE] Creating deferred categorization signature")
-        
+
         # Get deferred categorization data
         categorization_data = await safe_context_get(ctx, "categorization_for_signature", None)
         if not categorization_data:
@@ -1653,7 +1654,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 total_execution_time=ev.total_execution_time,
                 signature_created=False
             )
-        
+
         config = get_config()
         if not (self.enable_part11_compliance and self.signature_service and not config.validation_mode.validation_mode):
             self.logger.info("[SIGNATURE] Part 11 compliance disabled or validation mode - skipping signature")
@@ -1663,45 +1664,45 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 total_execution_time=ev.total_execution_time,
                 signature_created=False
             )
-        
+
         try:
             categorization_event = categorization_data["categorization_event"]
             doc_name = categorization_data["document_info"]["name"]
-            
+
             # Check for human consultation data in context
             consultation_result = await safe_context_get(ctx, "consultation_result", None)
-            
+
             if consultation_result:
                 # Human consultation occurred - use human operator data for signature
-                operator_name = consultation_result['operator_name']
-                operator_role = consultation_result['operator_role'].replace('_', ' ').title()
+                operator_name = consultation_result["operator_name"]
+                operator_role = consultation_result["operator_role"].replace("_", " ").title()
                 signer_name = f"{operator_name} ({operator_role})"
                 signer_id = operator_name
-                
-                # Extract employee ID from digital signature format: "Name_ID_Timestamp"  
+
+                # Extract employee ID from digital signature format: "Name_ID_Timestamp"
                 employee_id = "unknown"
-                digital_sig = consultation_result.get('digital_signature', '')
-                if '_' in digital_sig:
+                digital_sig = consultation_result.get("digital_signature", "")
+                if "_" in digital_sig:
                     try:
-                        parts = digital_sig.split('_')
+                        parts = digital_sig.split("_")
                         if len(parts) >= 2:
                             employee_id = parts[1]  # Extract ID portion
                     except Exception:
                         employee_id = "unknown"  # Fallback if parsing fails
-                
+
                 additional_context = {
                     "workflow_session": self._workflow_session_id,
                     "risk_assessment": categorization_event.risk_assessment,
                     "consultation_required": True,
                     "employee_id": employee_id,
-                    "operator_role": consultation_result['operator_role'],
-                    "decision_justification": consultation_result['decision_rationale'],
-                    "original_ai_confidence": consultation_result.get('original_confidence', 0.0),
-                    "human_selected_category": consultation_result['approved_category'],
-                    "consultation_method": consultation_result.get('method', 'event_driven_consultation'),
-                    "regulatory_impact": consultation_result.get('regulatory_impact', 'high')
+                    "operator_role": consultation_result["operator_role"],
+                    "decision_justification": consultation_result["decision_rationale"],
+                    "original_ai_confidence": consultation_result.get("original_confidence", 0.0),
+                    "human_selected_category": consultation_result["approved_category"],
+                    "consultation_method": consultation_result.get("method", "event_driven_consultation"),
+                    "regulatory_impact": consultation_result.get("regulatory_impact", "high")
                 }
-                
+
                 self.logger.info(
                     f"[SIGNATURE] Human consultation completed - signing as {signer_name} "
                     f"(Category {consultation_result['approved_category']}, Employee ID: {employee_id})"
@@ -1715,7 +1716,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "risk_assessment": categorization_event.risk_assessment,
                     "consultation_required": False
                 }
-                
+
                 self.logger.info("[SIGNATURE] Automated categorization - signing as System")
 
             signature_binding = self.signature_service.bind_signature_to_record(
@@ -1734,7 +1735,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             )
 
             self.logger.info(f"[SIGNATURE] Categorization signed: {signature_binding.signature_id}")
-            
+
             # Return signed event with signature metadata
             return SignedAgentResultsEvent(
                 agent_results=ev.agent_results,

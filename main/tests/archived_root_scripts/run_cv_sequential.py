@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """Sequential cross-validation execution - direct calls."""
 
-import os
 import json
+import os
 import time
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, UTC
 
 # Change to main directory
-os.chdir('main')
+os.chdir("main")
 
 # Results storage
 results = []
@@ -50,11 +50,12 @@ total_start = time.time()
 for i, (doc_id, doc_path) in enumerate(documents, 1):
     print(f"\n[{i}/{len(documents)}] Processing {doc_id}")
     doc_start = time.time()
-    
+
     # Import here to get fresh workflow each time
-    from src.core.unified_workflow import UnifiedTestGenerationWorkflow
     import asyncio
-    
+
+    from src.core.unified_workflow import UnifiedTestGenerationWorkflow
+
     try:
         # Create workflow
         workflow = UnifiedTestGenerationWorkflow(
@@ -62,28 +63,28 @@ for i, (doc_id, doc_path) in enumerate(documents, 1):
             enable_parallel_coordination=True,
             enable_phoenix=True
         )
-        
+
         # Run workflow
         result = asyncio.run(workflow.run(document_path=doc_path))
-        
+
         duration = time.time() - doc_start
-        
+
         # Check success
-        success = hasattr(result, 'success') and result.success
-        
+        success = hasattr(result, "success") and result.success
+
         results.append({
             "document": doc_id,
             "success": success,
             "duration": duration,
-            "category": getattr(result, 'gamp_category', None) if hasattr(result, 'gamp_category') else None,
-            "tests_generated": getattr(result, 'tests_generated', 0) if hasattr(result, 'tests_generated') else 0
+            "category": getattr(result, "gamp_category", None) if hasattr(result, "gamp_category") else None,
+            "tests_generated": getattr(result, "tests_generated", 0) if hasattr(result, "tests_generated") else 0
         })
-        
+
         if success:
             print(f"  [SUCCESS] Category {results[-1]['category']}, {results[-1]['tests_generated']} tests in {duration:.1f}s")
         else:
             print(f"  [FAILED] After {duration:.1f}s")
-            
+
     except Exception as e:
         duration = time.time() - doc_start
         results.append({
@@ -93,17 +94,17 @@ for i, (doc_id, doc_path) in enumerate(documents, 1):
             "error": str(e)
         })
         print(f"  [ERROR] {str(e)[:100]}")
-    
+
     # Save intermediate results
-    with open(output_dir / "results.json", 'w') as f:
+    with open(output_dir / "results.json", "w") as f:
         json.dump(results, f, indent=2)
-    
+
     # Brief pause between documents
     time.sleep(2)
 
 # Summary
 total_duration = time.time() - total_start
-successful = sum(1 for r in results if r['success'])
+successful = sum(1 for r in results if r["success"])
 
 print("\n" + "=" * 80)
 print("SEQUENTIAL CROSS-VALIDATION COMPLETE")
@@ -128,7 +129,7 @@ report = {
     "results": results
 }
 
-with open(output_dir / "final_report.json", 'w') as f:
+with open(output_dir / "final_report.json", "w") as f:
     json.dump(report, f, indent=2, default=str)
 
 # If we have Phoenix spans, count them

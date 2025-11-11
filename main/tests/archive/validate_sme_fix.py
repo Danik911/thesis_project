@@ -50,10 +50,10 @@ try:
 except Exception as e:
     print(f"❌ Critical priority test failed: {e}")
 
-# Test 2-4: Various case combinations  
+# Test 2-4: Various case combinations
 for i, test_case in enumerate(test_cases, 2):
     print(f"\n{i}. Testing {test_case['name']}...")
-    
+
     test_json = f"""
     [
         {{
@@ -66,7 +66,7 @@ for i, test_case in enumerate(test_cases, 2):
         }}
     ]
     """
-    
+
     try:
         parsed = extract_json_from_markdown(test_json)
         print(f"✅ Accepted priority='{test_case['priority']}', effort='{test_case['effort']}'")

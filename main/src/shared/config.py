@@ -278,17 +278,17 @@ def _get_validation_mode_from_env() -> bool:
     to ensure pharmaceutical compliance requirements are properly handled.
     """
     import logging
-    
+
     # Get the raw environment variable value
     raw_value = os.getenv("VALIDATION_MODE", "false")
-    
+
     # Parse to boolean
     result = raw_value.lower() == "true"
-    
+
     # Log for debugging (will be visible when config initializes)
     logger = logging.getLogger("ValidationModeConfig")
     logger.info(f"_get_validation_mode_from_env: VALIDATION_MODE='{raw_value}' -> validation_mode={result}")
-    
+
     return result
 
 
@@ -330,7 +330,7 @@ class ValidationModeConfig:
         logger = logging.getLogger("ValidationModeConfig")
         env_value = os.getenv("VALIDATION_MODE", "false")
         logger.info(f"DEBUG: ValidationModeConfig.__post_init__() - VALIDATION_MODE env var: '{env_value}', validation_mode field: {self.validation_mode}")
-        
+
         # Ensure bypass threshold is valid
         if not 0.0 <= self.bypass_consultation_threshold <= 1.0:
             raise ValueError("Bypass consultation threshold must be between 0.0 and 1.0")

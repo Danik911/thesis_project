@@ -13,6 +13,7 @@ from typing import Any
 
 from llama_index.core.llms import LLM
 from pydantic import ValidationError
+
 from src.config.llm_config import LLMConfig
 from src.core.events import GAMPCategory
 
@@ -302,41 +303,41 @@ class OQTestGeneratorV2:
         except (json.JSONDecodeError, ValidationError) as e:
             # JSON parsing failed - try YAML fallback for DeepSeek V3 compatibility
             self.logger.info(f"JSON parsing failed for main generation, attempting YAML fallback: {str(e)[:100]}...")
-            
+
             try:
                 # Use yaml_parser module for YAML extraction and validation
                 yaml_data = extract_yaml_from_response(response_text)
                 validated_yaml = validate_yaml_data(yaml_data)
-                
+
                 # Apply same field normalization as JSON flow
                 test_data = self._normalize_deepseek_json_fields(validated_yaml)
-                
+
                 # Add pharmaceutical-compliant defaults for missing critical fields
                 test_data = self._add_pharmaceutical_defaults(test_data, gamp_category, document_name)
-                
+
                 # Validate and create test suite
                 test_suite = OQTestSuite(**test_data)
-                
+
                 self.logger.info(f"Successfully parsed main generation with YAML fallback: {len(test_data.get('test_cases', []))} tests")
                 return test_suite
-                
+
             except Exception as yaml_error:
                 # Both JSON and YAML parsing failed - NO FALLBACKS, fail explicitly
-                self.logger.error(f"Both JSON and YAML parsing failed for main generation")
-                self.logger.error(f"JSON error: {str(e)}")
-                self.logger.error(f"YAML error: {str(yaml_error)}")
+                self.logger.error("Both JSON and YAML parsing failed for main generation")
+                self.logger.error(f"JSON error: {e!s}")
+                self.logger.error(f"YAML error: {yaml_error!s}")
                 self.logger.error(f"Response preview: {response_text[:300]}...")
-                
+
                 raise TestGenerationFailure(
                     f"Failed to parse o3 model output with both JSON and YAML parsers. "
-                    f"JSON error: {str(e)}. YAML error: {str(yaml_error)}. "
+                    f"JSON error: {e!s}. YAML error: {yaml_error!s}. "
                     f"NO FALLBACKS available - response format incompatible with both parsers.",
                     {
-                        "json_parse_error": str(e), 
+                        "json_parse_error": str(e),
                         "yaml_parse_error": str(yaml_error),
-                        "model": llm.model, 
+                        "model": llm.model,
                         "response_preview": response_text[:500],
-                        "json_content": json_str[:500] if 'json_str' in locals() else "N/A",
+                        "json_content": json_str[:500] if "json_str" in locals() else "N/A",
                         "parsing_strategies_failed": ["json", "yaml"],
                         "requires_format_analysis": True
                     }
@@ -410,7 +411,7 @@ class OQTestGeneratorV2:
                 # Ensure minimum 120s per batch for DeepSeek V3 to generate 2 tests
                 base_timeout = self.timeout_mapping[gamp_category] // num_batches
                 batch_timeout = max(120, base_timeout)
-                
+
                 self.logger.info(f"⏱️  BATCH TIMEOUT: {batch_timeout}s (base: {base_timeout}s, minimum: 120s)")
                 async with asyncio.timeout(batch_timeout):
                     response = await llm.acomplete(batch_prompt)
@@ -427,7 +428,7 @@ class OQTestGeneratorV2:
 
                     # Add tests to collection
                     all_test_cases.extend(batch_test_cases)
-                    
+
                     # Progress update after successful batch
                     progress_percentage = ((batch_num + 1) / num_batches) * 100
                     self.logger.info(f"✅ BATCH COMPLETE: {batch_num + 1}/{num_batches} ({progress_percentage:.1f}%) - {len(all_test_cases)} tests generated so far")
@@ -442,7 +443,7 @@ class OQTestGeneratorV2:
                 raise TestGenerationFailure(
                     f"Batch {batch_num + 1} timed out after {batch_timeout}s - DeepSeek V3 unable to generate {batch_count} tests in time",
                     {
-                        "batch": batch_num + 1, 
+                        "batch": batch_num + 1,
                         "timeout": batch_timeout,
                         "base_timeout": base_timeout,
                         "total_timeout": self.timeout_mapping[gamp_category],
@@ -621,12 +622,12 @@ JSON Schema:
         """
         # Clean the JSON first
         cleaned_json = clean_unicode_characters(json_str.strip())
-        
+
         # Store original for error reporting
         original_json = json_str[:500] if len(json_str) > 500 else json_str
-        
+
         parsing_strategies = []
-        
+
         try:
             # Strategy 1: Direct parsing (fastest)
             try:
@@ -635,7 +636,7 @@ JSON Schema:
                 return parsed_data
             except json.JSONDecodeError as e1:
                 parsing_strategies.append(("direct", str(e1)))
-                
+
             # Strategy 2: Fix common comma issues
             try:
                 # Fix missing commas between object/array elements
@@ -645,7 +646,7 @@ JSON Schema:
                 return parsed_data
             except json.JSONDecodeError as e2:
                 parsing_strategies.append(("comma_fixes", str(e2)))
-                
+
             # Strategy 3: Fix trailing commas
             try:
                 trailing_fixed = self._fix_trailing_commas(cleaned_json)
@@ -654,7 +655,7 @@ JSON Schema:
                 return parsed_data
             except json.JSONDecodeError as e3:
                 parsing_strategies.append(("trailing_commas", str(e3)))
-                
+
             # Strategy 4: Fix quote escaping issues
             try:
                 quote_fixed = self._fix_quote_issues(cleaned_json)
@@ -663,7 +664,7 @@ JSON Schema:
                 return parsed_data
             except json.JSONDecodeError as e4:
                 parsing_strategies.append(("quote_fixes", str(e4)))
-                
+
             # All strategies failed - NO FALLBACKS
             error_details = {
                 "context": context,
@@ -674,20 +675,20 @@ JSON Schema:
                 "no_fallback_available": True,
                 "audit_trail": f"DeepSeek V3 JSON parsing failed for {context} after 4 strategies"
             }
-            
+
             # Log detailed error for pharmaceutical audit trail
             self.logger.error(
                 f"JSON parsing failed for {context}. "
                 f"Attempted {len(parsing_strategies)} strategies. "
                 f"JSON preview: {original_json}"
             )
-            
+
             raise TestGenerationFailure(
                 f"Failed to parse DeepSeek V3 JSON response for {context}: "
                 f"All parsing strategies exhausted. Last error: {parsing_strategies[-1][1] if parsing_strategies else 'Unknown'}",
                 error_details
             )
-            
+
         except Exception as e:
             # Unexpected error during parsing
             error_details = {
@@ -698,97 +699,97 @@ JSON Schema:
                 "requires_human_intervention": True,
                 "audit_trail": f"Unexpected error during JSON parsing for {context}"
             }
-            
+
             self.logger.error(f"Unexpected error during robust JSON parsing for {context}: {e}")
-            
+
             raise TestGenerationFailure(
                 f"Unexpected error parsing DeepSeek V3 JSON for {context}: {e}",
                 error_details
             )
-    
+
     def _fix_missing_commas(self, json_str: str) -> str:
         """Fix missing commas between JSON elements with enhanced patterns for large DeepSeek V3 responses."""
         import re
-        
+
         # Original patterns - preserve existing functionality
         # Fix missing commas between object elements: }" -> }",
-        json_str = re.sub(r'}\s*{', '},{', json_str)
-        
+        json_str = re.sub(r"}\s*{", "},{", json_str)
+
         # Fix missing commas between array elements: ]" -> ]",
-        json_str = re.sub(r']\s*\[', '],[', json_str)
-        
+        json_str = re.sub(r"]\s*\[", "],[", json_str)
+
         # Fix missing commas after closing brace/bracket before opening quote
         json_str = re.sub(r'}\s*"', '},"', json_str)
         json_str = re.sub(r']\s*"', '],"', json_str)
-        
-        # Fix missing commas after quoted strings before opening brace/bracket  
+
+        # Fix missing commas after quoted strings before opening brace/bracket
         json_str = re.sub(r'"\s*{', '",{', json_str)
         json_str = re.sub(r'"\s*\[', '",[', json_str)
-        
+
         # ENHANCED PATTERNS for large DeepSeek V3 responses (22,474+ characters)
-        
+
         # Fix missing commas after numbers before opening brace/bracket
-        json_str = re.sub(r'(\d+)\s*{', r'\1,{', json_str)
-        json_str = re.sub(r'(\d+)\s*\[', r'\1,[', json_str)
-        
+        json_str = re.sub(r"(\d+)\s*{", r"\1,{", json_str)
+        json_str = re.sub(r"(\d+)\s*\[", r"\1,[", json_str)
+
         # Fix missing commas after boolean values before opening brace/bracket
-        json_str = re.sub(r'(true|false)\s*{', r'\1,{', json_str)
-        json_str = re.sub(r'(true|false)\s*\[', r'\1,[', json_str)
-        
+        json_str = re.sub(r"(true|false)\s*{", r"\1,{", json_str)
+        json_str = re.sub(r"(true|false)\s*\[", r"\1,[", json_str)
+
         # Fix missing commas after closing structures before numbers/booleans
-        json_str = re.sub(r'}\s*(\d+)', r'},\1', json_str)
-        json_str = re.sub(r']\s*(\d+)', r'],\1', json_str)
-        json_str = re.sub(r'}\s*(true|false)', r'},\1', json_str)
-        json_str = re.sub(r']\s*(true|false)', r'],\1', json_str)
-        
+        json_str = re.sub(r"}\s*(\d+)", r"},\1", json_str)
+        json_str = re.sub(r"]\s*(\d+)", r"],\1", json_str)
+        json_str = re.sub(r"}\s*(true|false)", r"},\1", json_str)
+        json_str = re.sub(r"]\s*(true|false)", r"],\1", json_str)
+
         # Fix missing commas across line breaks (common in large multi-line responses)
         # Pattern: }\n    " -> },\n    "
         json_str = re.sub(r'}\s*\n\s*"', '},\n    "', json_str)
         json_str = re.sub(r']\s*\n\s*"', '],\n    "', json_str)
-        
+
         # Fix missing commas after quoted values across line breaks
         # Pattern: "value"\n    " -> "value",\n    "
         json_str = re.sub(r'"\s*\n\s*"', '",\n    "', json_str)
-        
+
         # Fix missing commas after numbers/booleans across line breaks
         json_str = re.sub(r'(\d+)\s*\n\s*"', r'\1,\n    "', json_str)
         json_str = re.sub(r'(true|false)\s*\n\s*"', r'\1,\n    "', json_str)
-        
+
         # Fix complex nested structure comma issues
         # Pattern: } { -> },{
-        json_str = re.sub(r'}\s+{', '},{', json_str)
-        json_str = re.sub(r']\s+\[', '],[', json_str)
-        
+        json_str = re.sub(r"}\s+{", "},{", json_str)
+        json_str = re.sub(r"]\s+\[", "],[", json_str)
+
         # Fix missing commas in array of objects patterns
         # Common DeepSeek V3 pattern: }  { -> },{
-        json_str = re.sub(r'}\s{2,}{', '},{', json_str)
-        
+        json_str = re.sub(r"}\s{2,}{", "},{", json_str)
+
         # Fix missing commas after array closing before object/array start
         json_str = re.sub(r']\s{2,}"', '],"', json_str)
-        json_str = re.sub(r']\s{2,}{', '],[', json_str)
-        
+        json_str = re.sub(r"]\s{2,}{", "],[", json_str)
+
         return json_str
-    
+
     def _fix_trailing_commas(self, json_str: str) -> str:
         """Remove trailing commas that break JSON parsing."""
         import re
-        
+
         # Remove trailing commas before closing brackets/braces
-        json_str = re.sub(r',\s*}', '}', json_str)
-        json_str = re.sub(r',\s*]', ']', json_str)
-        
+        json_str = re.sub(r",\s*}", "}", json_str)
+        json_str = re.sub(r",\s*]", "]", json_str)
+
         return json_str
-    
+
     def _fix_quote_issues(self, json_str: str) -> str:
         """Fix common quote escaping issues."""
         # This is a simplified version - can be enhanced based on actual patterns
         # Replace unescaped quotes within strings (basic heuristic)
         import re
-        
+
         # Fix common patterns where quotes are not escaped within strings
         # This is heuristic and may need refinement based on actual DeepSeek V3 patterns
         json_str = re.sub(r'(?<=[a-zA-Z0-9])"(?=[a-zA-Z0-9])', '\\"', json_str)
-        
+
         return json_str
 
     def _normalize_deepseek_json_fields(self, raw_data: dict[str, Any]) -> dict[str, Any]:
@@ -913,8 +914,8 @@ JSON Schema:
         # Ensure basic suite information - NO FALLBACKS
         if "gamp_category" not in test_data:
             raise ValueError(
-                f"Generated test suite missing required 'gamp_category' field. "
-                f"NO FALLBACK available - LLM must generate this field explicitly."
+                "Generated test suite missing required 'gamp_category' field. "
+                "NO FALLBACK available - LLM must generate this field explicitly."
             )
         test_data.setdefault("document_name", document_name)
         test_data.setdefault("generation_timestamp", datetime.now(UTC).isoformat())
@@ -1243,39 +1244,39 @@ EXACT JSON Schema for this batch:
         except (json.JSONDecodeError, ValidationError) as e:
             # JSON parsing failed - try YAML fallback for DeepSeek V3 compatibility
             self.logger.info(f"JSON parsing failed for batch {batch_num + 1}, attempting YAML fallback: {str(e)[:100]}...")
-            
+
             try:
                 # Use yaml_parser module for YAML extraction and validation
                 yaml_data = extract_yaml_from_response(response_text)
                 validated_yaml = validate_yaml_data(yaml_data)
-                
+
                 # Extract test cases from YAML structure
                 test_cases = validated_yaml.get("test_cases", [])
                 if not test_cases:
                     raise ValueError(f"No test_cases found in YAML batch {batch_num + 1} response")
-                
+
                 # Normalize test case fields for consistency with JSON flow
                 normalized_test_cases = []
                 for test_case in test_cases:
                     normalized_case = self._normalize_deepseek_json_fields(test_case) if isinstance(test_case, dict) else test_case
                     normalized_test_cases.append(normalized_case)
-                
+
                 self.logger.info(f"Successfully parsed batch {batch_num + 1} with YAML fallback: {len(normalized_test_cases)} tests")
                 return normalized_test_cases
-                
+
             except Exception as yaml_error:
                 # Both JSON and YAML parsing failed - NO FALLBACKS, fail explicitly
                 self.logger.error(f"Both JSON and YAML parsing failed for batch {batch_num + 1}")
-                self.logger.error(f"JSON error: {str(e)}")
-                self.logger.error(f"YAML error: {str(yaml_error)}")
+                self.logger.error(f"JSON error: {e!s}")
+                self.logger.error(f"YAML error: {yaml_error!s}")
                 self.logger.error(f"Response preview: {response_text[:300]}...")
-                
+
                 raise TestGenerationFailure(
                     f"Failed to parse batch {batch_num + 1} response with both JSON and YAML parsers. "
-                    f"JSON error: {str(e)}. YAML error: {str(yaml_error)}. "
+                    f"JSON error: {e!s}. YAML error: {yaml_error!s}. "
                     f"NO FALLBACKS available - response format incompatible with both parsers.",
                     {
-                        "batch": batch_num + 1, 
+                        "batch": batch_num + 1,
                         "json_parse_error": str(e),
                         "yaml_parse_error": str(yaml_error),
                         "response_preview": response_text[:500],

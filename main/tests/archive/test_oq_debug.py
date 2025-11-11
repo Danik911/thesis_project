@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent / "main"))
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 # Set validation mode to bypass consultation
@@ -28,10 +28,10 @@ async def test_oq_generation():
     """Test OQ generation with minimal workflow."""
     try:
         from main.src.core.unified_workflow import run_unified_test_generation_workflow
-        
+
         # Use a simple test document
         test_doc_path = "main/tests/test_data/gamp5_test_data/category3_test.md"
-        
+
         if not Path(test_doc_path).exists():
             # Create a minimal test document
             test_content = """
@@ -62,11 +62,11 @@ No custom programming or source code modification required.
             Path(test_doc_path).parent.mkdir(parents=True, exist_ok=True)
             Path(test_doc_path).write_text(test_content)
             print(f"Created test document: {test_doc_path}")
-        
+
         print("Starting OQ generation debug test...")
         print(f"Document path: {test_doc_path}")
         print(f"Validation mode: {os.environ.get('VALIDATION_MODE')}")
-        
+
         # Run the workflow with debug enabled
         result = await run_unified_test_generation_workflow(
             document_path=test_doc_path,
@@ -75,32 +75,29 @@ No custom programming or source code modification required.
             validation_mode=True,
             enable_parallel_coordination=True
         )
-        
+
         print(f"Workflow completed with status: {result.get('status', 'UNKNOWN')}")
-        
+
         # Check for OQ generation results
-        if 'oq_generation' in result:
-            oq_results = result['oq_generation']
+        if "oq_generation" in result:
+            oq_results = result["oq_generation"]
             print(f"OQ generation results: {oq_results}")
-            
-            if 'total_tests' in oq_results:
-                test_count = oq_results['total_tests']
+
+            if "total_tests" in oq_results:
+                test_count = oq_results["total_tests"]
                 print(f"TOTAL TESTS GENERATED: {test_count}")
-                
+
                 if test_count == 0:
                     print("ERROR: Workflow completed but generated 0 tests!")
                     return False
-                else:
-                    print(f"SUCCESS: Generated {test_count} OQ tests")
-                    return True
-            else:
-                print("ERROR: No 'total_tests' field in OQ results")
-                return False
-        else:
-            print("ERROR: No 'oq_generation' section in results")
-            print(f"Available result keys: {list(result.keys())}")
+                print(f"SUCCESS: Generated {test_count} OQ tests")
+                return True
+            print("ERROR: No 'total_tests' field in OQ results")
             return False
-            
+        print("ERROR: No 'oq_generation' section in results")
+        print(f"Available result keys: {list(result.keys())}")
+        return False
+
     except Exception as e:
         print(f"Test failed with error: {e}")
         import traceback

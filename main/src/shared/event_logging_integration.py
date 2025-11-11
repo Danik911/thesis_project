@@ -384,7 +384,6 @@ async def handle_hitl_consultation(
         True if consultation was handled, False otherwise
     """
     # Import here to avoid circular imports
-    import sys
 
     from ..core.events import ConsultationRequiredEvent, HumanResponseEvent
     from ..shared.output_manager import safe_print
@@ -400,13 +399,13 @@ async def handle_hitl_consultation(
 
     safe_print("\n" + "="*60)
     # Check if we're in a non-interactive environment or validation mode
-    is_interactive = sys.stdin.isatty() if hasattr(sys, 'stdin') else False
-    validation_mode = os.getenv('VALIDATION_MODE', 'false').lower() == 'true'
-    ci_mode = os.getenv('CI', 'false').lower() == 'true'
-    
+    is_interactive = sys.stdin.isatty() if hasattr(sys, "stdin") else False
+    validation_mode = os.getenv("VALIDATION_MODE", "false").lower() == "true"
+    ci_mode = os.getenv("CI", "false").lower() == "true"
+
     # Determine if we should bypass consultation
     should_bypass = validation_mode or ci_mode or not is_interactive
-    
+
     safe_print("[HUMAN] HUMAN CONSULTATION REQUIRED")
     safe_print("="*60)
     safe_print(f"Consultation Type: {event.consultation_type}")
@@ -417,12 +416,12 @@ async def handle_hitl_consultation(
     for key, value in event.context.items():
         safe_print(f"  {key}: {value}")
     safe_print("")
-    
+
     if should_bypass:
         safe_print("[INFO] Non-interactive mode detected or VALIDATION_MODE=true")
         safe_print("[INFO] Using default consultation values for automated execution")
         safe_print("")
-    
+
     try:
         # Handle different consultation types
         if "categorization" in event.consultation_type.lower():
@@ -435,7 +434,7 @@ async def handle_hitl_consultation(
                 safe_print(f"[AUTO] Using default GAMP category: {user_input}")
             else:
                 user_input = input("Enter GAMP category (1, 3, 4, 5): ").strip()
-            
+
             if user_input not in ["1", "3", "4", "5"]:
                 safe_print("[ERROR] Invalid category. Using conservative default (Category 5)")
                 gamp_category = 5
@@ -472,7 +471,7 @@ async def handle_hitl_consultation(
         else:
             # Generic consultation handling
             safe_print("Please provide your consultation response:")
-            
+
             if should_bypass:
                 user_input = "proceed_with_defaults"
                 safe_print(f"[AUTO] Using default decision: {user_input}")

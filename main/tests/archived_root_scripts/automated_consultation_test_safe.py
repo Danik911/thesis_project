@@ -6,10 +6,9 @@ Windows-safe version without Unicode emojis.
 
 import asyncio
 import logging
-from datetime import datetime, UTC
-from unittest.mock import patch, MagicMock
-import sys
 import os
+import sys
+from datetime import UTC, datetime
 
 # Set console to UTF-8 to handle Unicode better
 if sys.platform == "win32":
@@ -21,7 +20,7 @@ from src.core.events import ConsultationInputEvent, HumanResponseEvent
 def test_consultation_event_creation():
     """Test that ConsultationInputEvent can be created properly."""
     print("TEST 1: ConsultationInputEvent Creation")
-    
+
     try:
         test_context = {
             "reason": "Test: Low confidence categorization",
@@ -29,7 +28,7 @@ def test_consultation_event_creation():
             "gamp_category": 4,
             "document_name": "test_urs_document.pdf"
         }
-        
+
         consultation_event = ConsultationInputEvent(
             consultation_context=test_context,
             prompt_text="Test consultation prompt",
@@ -37,13 +36,13 @@ def test_consultation_event_creation():
             consultation_type="test_gamp_categorization",
             urgency="normal"
         )
-        
+
         print(f"   Consultation ID: {consultation_event.consultation_id}")
         print(f"   Event ID: {consultation_event.event_id}")
         print(f"   Timestamp: {consultation_event.timestamp}")
         print("   PASS: ConsultationInputEvent created successfully")
         return True
-        
+
     except Exception as e:
         print(f"   FAIL: Error creating ConsultationInputEvent: {e}")
         return False
@@ -52,10 +51,10 @@ def test_consultation_event_creation():
 def test_human_response_event_creation():
     """Test that HumanResponseEvent can be created properly."""
     print("\nTEST 2: HumanResponseEvent Creation")
-    
+
     try:
         from uuid import uuid4
-        
+
         response_event = HumanResponseEvent(
             response_type="gamp_categorization_decision",
             response_data={
@@ -75,13 +74,13 @@ def test_human_response_event_creation():
             approval_level="validation_engineer",
             regulatory_impact="high"
         )
-        
+
         print(f"   User ID: {response_event.user_id}")
         print(f"   Category: {response_event.response_data['gamp_category']}")
         print(f"   Confidence: {response_event.confidence_level}")
         print("   PASS: HumanResponseEvent created successfully")
         return True
-        
+
     except Exception as e:
         print(f"   FAIL: Error creating HumanResponseEvent: {e}")
         return False
@@ -90,22 +89,25 @@ def test_human_response_event_creation():
 def test_imports_and_dependencies():
     """Test that all required imports are available."""
     print("\nTEST 3: Import and Dependency Check")
-    
+
     try:
-        from src.core.events import ConsultationInputEvent, HumanResponseEvent
-        from src.core.consultation_handler import process_consultation_input, ConsultationEventHandler
         from llama_index.core.workflow import InputRequiredEvent
+        from src.core.consultation_handler import (
+            ConsultationEventHandler,
+            process_consultation_input,
+        )
+        from src.core.events import ConsultationInputEvent, HumanResponseEvent
         print("   PASS: All required imports successful")
-        
+
         # Test that ConsultationInputEvent extends InputRequiredEvent
         if issubclass(ConsultationInputEvent, InputRequiredEvent):
             print("   PASS: ConsultationInputEvent correctly extends InputRequiredEvent")
         else:
             print("   FAIL: ConsultationInputEvent does not extend InputRequiredEvent")
             return False
-            
+
         return True
-        
+
     except ImportError as e:
         print(f"   FAIL: Import error: {e}")
         return False
@@ -114,29 +116,29 @@ def test_imports_and_dependencies():
 def test_workflow_integration():
     """Test that the consultation system integrates with unified workflow."""
     print("\nTEST 4: Workflow Integration Check")
-    
+
     try:
-        from src.core.unified_workflow import UnifiedWorkflow
         from src.core.events import ConsultationRequiredEvent
-        
+        from src.core.unified_workflow import UnifiedWorkflow
+
         # Check if handle_consultation method exists
         workflow = UnifiedWorkflow()
-        if hasattr(workflow, 'handle_consultation'):
+        if hasattr(workflow, "handle_consultation"):
             print("   PASS: UnifiedWorkflow has handle_consultation method")
         else:
             print("   FAIL: UnifiedWorkflow missing handle_consultation method")
             return False
-            
+
         # Check if the method is properly decorated as a step
         import inspect
-        method = getattr(workflow, 'handle_consultation')
-        if hasattr(method, '__annotations__'):
+        method = workflow.handle_consultation
+        if hasattr(method, "__annotations__"):
             print("   PASS: handle_consultation has type annotations")
         else:
             print("   WARN: handle_consultation missing type annotations")
-            
+
         return True
-        
+
     except ImportError as e:
         print(f"   FAIL: Import error: {e}")
         return False
@@ -148,18 +150,18 @@ def test_workflow_integration():
 def test_event_driven_architecture():
     """Test that the event-driven architecture is properly implemented."""
     print("\nTEST 5: Event-Driven Architecture Validation")
-    
+
     try:
-        from src.core.events import ConsultationRequiredEvent
         from llama_index.core.workflow import Event
-        
+        from src.core.events import ConsultationRequiredEvent
+
         # Test ConsultationRequiredEvent exists and extends Event
         if issubclass(ConsultationRequiredEvent, Event):
             print("   PASS: ConsultationRequiredEvent extends Event")
         else:
             print("   FAIL: ConsultationRequiredEvent does not extend Event")
             return False
-            
+
         # Test that ConsultationInputEvent extends InputRequiredEvent
         from llama_index.core.workflow import InputRequiredEvent
         if issubclass(ConsultationInputEvent, InputRequiredEvent):
@@ -167,10 +169,10 @@ def test_event_driven_architecture():
         else:
             print("   FAIL: ConsultationInputEvent does not extend InputRequiredEvent")
             return False
-            
+
         print("   PASS: Event-driven architecture properly implemented")
         return True
-        
+
     except ImportError as e:
         print(f"   FAIL: Import error: {e}")
         return False
@@ -184,7 +186,7 @@ async def run_all_tests():
     print("="*60)
     print("AUTOMATED CONSULTATION SYSTEM VALIDATION")
     print("="*60)
-    
+
     tests = [
         test_consultation_event_creation,
         test_human_response_event_creation,
@@ -192,7 +194,7 @@ async def run_all_tests():
         test_workflow_integration,
         test_event_driven_architecture
     ]
-    
+
     results = []
     for test in tests:
         if asyncio.iscoroutinefunction(test):
@@ -200,16 +202,16 @@ async def run_all_tests():
         else:
             result = test()
         results.append(result)
-    
+
     print("\n" + "="*60)
     print("TEST SUMMARY")
     print("="*60)
-    
+
     passed = sum(results)
     total = len(results)
-    
+
     print(f"Tests Passed: {passed}/{total}")
-    
+
     if passed == total:
         print("OVERALL RESULT: ALL TESTS PASSED")
         print("The consultation system is properly implemented.")
@@ -217,14 +219,14 @@ async def run_all_tests():
     else:
         print("OVERALL RESULT: SOME TESTS FAILED")
         print("Check the failed tests above for issues.")
-    
+
     return passed == total
 
 
 if __name__ == "__main__":
     # Set up basic logging
     logging.basicConfig(level=logging.WARNING)  # Reduce log noise
-    
+
     # Run automated tests
     try:
         success = asyncio.run(run_all_tests())

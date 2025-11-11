@@ -4,7 +4,6 @@ Simple test to check validation mode configuration parsing.
 """
 
 import os
-import sys
 from pathlib import Path
 
 # Load environment variables from .env file
@@ -38,7 +37,7 @@ print(f"ValidationModeConfig logic result: {test_result}")
 env_value = os.getenv("VALIDATION_MODE", "false")
 lower_value = env_value.lower()
 equals_true = lower_value == "true"
-print(f"Step by step:")
+print("Step by step:")
 print(f"  os.getenv('VALIDATION_MODE', 'false') = '{env_value}'")
 print(f"  .lower() = '{lower_value}'")
 print(f"  == 'true' = {equals_true}")
@@ -50,14 +49,14 @@ possible_env_files = [
     project_root / ".env"
 ]
 
-print(f"\nChecking for multiple .env files:")
+print("\nChecking for multiple .env files:")
 for env_path in possible_env_files:
     if env_path.exists():
         print(f"  Found: {env_path}")
         # Check content
-        with open(env_path, 'r') as f:
+        with open(env_path) as f:
             lines = f.readlines()
-        validation_lines = [line.strip() for line in lines if 'VALIDATION_MODE' in line and not line.strip().startswith('#')]
+        validation_lines = [line.strip() for line in lines if "VALIDATION_MODE" in line and not line.strip().startswith("#")]
         print(f"    VALIDATION_MODE lines: {validation_lines}")
 
-print(f"\n=== TEST COMPLETE ===")
+print("\n=== TEST COMPLETE ===")

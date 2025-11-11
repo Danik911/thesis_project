@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from llama_index.core.llms import LLM
+
 from src.core.events import GAMPCategory
 
 from .models import OQTestCase, OQTestSuite, TestStep
@@ -340,7 +341,7 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
                                 acceptance_criteria = "Data recorded with timestamp and attribution"
                             else:
                                 acceptance_criteria = "Result matches expected outcome ±tolerance"
-                        
+
                         # Enhanced data capture with units/precision
                         data_to_capture = step_data.get("data_to_capture", [])
                         enhanced_capture = []
@@ -355,11 +356,11 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
                                 enhanced_capture.append(f"{item} (%, ±2% RH)")
                             else:
                                 enhanced_capture.append(item)
-                        
+
                         # Add timestamp to all data captures if not present
                         if enhanced_capture and not any("timestamp" in s.lower() for s in enhanced_capture):
                             enhanced_capture.append("Timestamp (ISO 8601 format)")
-                        
+
                         # Diversify verification methods based on test type
                         verification_method = step_data.get("verification_method", "visual_inspection")
                         action_lower = step_data.get("action", "").lower()
@@ -374,7 +375,7 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
                                 verification_method = "audit_trail_review"
                             elif "calculate" in action_lower or "compute" in action_lower:
                                 verification_method = "calculation_verification"
-                        
+
                         test_steps.append(TestStep(
                             step_number=step_data.get("step_number", 1),
                             action=step_data.get("action", "Perform test action"),
@@ -498,7 +499,7 @@ Generate {chunk_size} complete, detailed pharmaceutical tests. NO placeholders o
                         timestamp_required=True
                     )
                 ]
-            
+
             test_case = OQTestCase(
                 test_id=test_id,
                 test_name=f"Test {test_id}: {category.replace('_', ' ').title()} Validation",

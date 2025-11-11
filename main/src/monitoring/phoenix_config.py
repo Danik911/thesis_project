@@ -209,9 +209,10 @@ class PhoenixManager:
     def _launch_local_phoenix(self) -> None:
         """Launch local Phoenix UI with Windows lock detection or connect to existing instance."""
         try:
-            import phoenix as px
             import platform
             from pathlib import Path
+
+            import phoenix as px
 
             # CHECK 1: Explicit user preference to skip local launch
             # Use this when Docker Phoenix or external Phoenix is guaranteed to be running
@@ -225,7 +226,6 @@ class PhoenixManager:
 
                     def close(self):
                         """No-op close for compatibility with shutdown logic."""
-                        pass
 
                 self.phoenix_session = MockSession(base_url)
                 logger.info(f"[SUCCESS] Configured to use external Phoenix at: {base_url}")
@@ -274,7 +274,6 @@ class PhoenixManager:
 
                     def close(self):
                         """No-op close for compatibility with shutdown logic."""
-                        pass
 
                 self.phoenix_session = MockSession(f"http://{self.config.phoenix_host}:{self.config.phoenix_port}")
                 return
@@ -313,7 +312,6 @@ class PhoenixManager:
 
                     def close(self):
                         """No-op close for compatibility with shutdown logic."""
-                        pass
 
                 docker_url = f"http://{self.config.phoenix_host}:{self.config.phoenix_port}"
                 self.phoenix_session = MockSession(docker_url)
@@ -383,7 +381,6 @@ class PhoenixManager:
 
                                 def close(self):
                                     """No-op close for compatibility with shutdown logic."""
-                                    pass
 
                             self.phoenix_session = MockSession(base_url)
                             return True
@@ -391,10 +388,10 @@ class PhoenixManager:
                         # Log unsuccessful status codes for debugging
                         logger.debug(f"[PHOENIX] Endpoint {endpoint} returned {response.status_code}, trying next...")
 
-                    except requests.exceptions.ConnectionError as e:
+                    except requests.exceptions.ConnectionError:
                         logger.debug(f"[PHOENIX] Connection failed to {endpoint}: Connection refused or host unreachable")
                         continue
-                    except requests.exceptions.Timeout as e:
+                    except requests.exceptions.Timeout:
                         logger.debug(f"[PHOENIX] Timeout on {endpoint} after 5 seconds")
                         continue
                     except requests.exceptions.RequestException as e:

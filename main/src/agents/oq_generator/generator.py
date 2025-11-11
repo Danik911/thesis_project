@@ -16,12 +16,12 @@ from typing import Any
 
 from llama_index.core.llms import LLM
 from pydantic import ValidationError
+
 from src.config.timeout_config import TimeoutConfig
 from src.core.events import GAMPCategory
 
 from .models import OQGenerationConfig, OQTestSuite
 from .templates import GAMPCategoryConfig, OQPromptTemplates
-from .yaml_parser import extract_yaml_from_response, validate_yaml_data
 
 
 def clean_unicode_characters(text: str) -> str:
@@ -505,11 +505,11 @@ class OQTestGenerator:
             # Parse JSON response - NO FALLBACKS
             try:
                 json_string, diagnostic_context = extract_json_from_mixed_response(raw_response)
-                
+
                 # Parse JSON and validate
                 import json
                 json_data = json.loads(json_string)
-                
+
                 # Create OQTestSuite from JSON data
                 result = OQTestSuite(**json_data)
 
