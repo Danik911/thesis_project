@@ -1,0 +1,3 @@
+REQ-001: System shall validate user authentication
+REQ-002: System shall log all authentication events
+REQ-003: System shall enforce GAMP-5 compliance

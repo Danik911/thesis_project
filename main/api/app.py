@@ -12,9 +12,20 @@ import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+
+# Load environment variables from .env.local (for local development)
+# This must happen BEFORE importing dependencies that use environment variables
+env_file = Path(__file__).parent.parent.parent / ".env.local"
+if env_file.exists():
+    load_dotenv(env_file)
+    logging.info(f"Loaded environment variables from {env_file}")
+else:
+    logging.warning(f"Environment file not found: {env_file}")
 
 from .audit import get_audit_logger, initialize_audit_logger
 from .dependencies import (
@@ -120,18 +131,19 @@ async def submit_job(
     job_queue: JobQueueDep,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
-    user_id: CurrentUserDep
+    user: CurrentUserDep
 ) -> JobSubmitResponse:
     """
     Submit URS file for async processing.
 
     Workflow:
     1. Validate file (size, type) - handled by ValidatedFileDep
-    2. Compute SHA-256 hash of file content
-    3. Persist file via storage adapter
-    4. Create job record in repository
-    5. Enqueue job for background processing
-    6. Return job ID immediately
+    2. Authenticate user - handled by CurrentUserDep (Clerk JWT)
+    3. Compute SHA-256 hash of file content
+    4. Persist file via storage adapter
+    5. Create job record in repository
+    6. Enqueue job for background processing
+    7. Return job ID immediately
 
     Args:
         file: Validated URS upload file
@@ -139,13 +151,14 @@ async def submit_job(
         job_queue: Job queue dependency
         job_repository: Job repository dependency
         job_lock: Job lock dependency
-        user_id: Current user dependency
+        user: Current user dependency (Clerk JWT claims)
 
     Returns:
         JobSubmitResponse with job_id and status
 
     Raises:
         HTTPException 400: If file validation fails
+        HTTPException 401: If authentication fails
         HTTPException 413: If file too large
         HTTPException 500: If storage or job creation fails
 
@@ -154,7 +167,7 @@ async def submit_job(
     try:
         # Generate unique job ID
         job_id = str(uuid.uuid4())
-        logger.info(f"Submitting job {job_id} for user {user_id}")
+        logger.info(f"Submitting job {job_id} for user {user.sub} ({user.email})")
 
         # Read file content (already in memory from validation)
         urs_content = await file.read()
@@ -170,7 +183,8 @@ async def submit_job(
             "gamp_category": "5",  # Valid GAMP-5 placeholder (custom software)
             "job_id": job_id,
             "created_at": datetime.now(UTC).isoformat(),
-            "created_by": user_id,
+            "created_by": user.sub,  # Clerk user ID
+            "created_by_email": user.email,  # Human-readable attribution
             "artifact_type": "urs"
         }
 
@@ -190,7 +204,7 @@ async def submit_job(
             urs_storage_key=storage_key,
             urs_hash=urs_hash,
             urs_size_bytes=len(urs_content),
-            user_id=user_id
+            user_id=user.sub  # Clerk user ID from JWT 'sub' claim
         )
 
         # Add to repository (thread-safe)
@@ -201,18 +215,21 @@ async def submit_job(
         await job_queue.put(job_id)
         logger.info(f"Job {job_id} enqueued for processing")
 
-        # Log to audit trail
+        # Log to audit trail with Clerk authentication context
         audit_logger = get_audit_logger()
         audit_logger.log_event(
             job_id=job_id,
             event_type="submit",
-            user_id=user_id,
+            user_id=user.sub,  # Clerk user ID
             status=JobStatus.PENDING,
+            user_email=user.email,  # ALCOA+ attribution
+            token_iat=user.iat,  # JWT issued-at for lifecycle tracking
             metadata={
                 "urs_filename": file.filename,
                 "urs_size_bytes": len(urs_content),
                 "urs_hash": urs_hash,
-                "storage_key": storage_key
+                "storage_key": storage_key,
+                "token_exp": user.exp  # JWT expiration for security analysis
             }
         )
 
@@ -248,7 +265,7 @@ async def get_job_status(
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
     storage: StorageAdapterDep,
-    user_id: CurrentUserDep
+    user: CurrentUserDep
 ) -> JobStatusResponse:
     """
     Get job status and results.
@@ -258,14 +275,15 @@ async def get_job_status(
         job_repository: Job repository dependency
         job_lock: Job lock dependency
         storage: Storage adapter dependency
-        user_id: Current user dependency
+        user: Current user dependency (Clerk JWT claims)
 
     Returns:
         JobStatusResponse with current status and results
 
     Raises:
-        HTTPException 404: If job not found
+        HTTPException 401: If authentication fails
         HTTPException 403: If user not authorized to view job
+        HTTPException 404: If job not found
 
     CRITICAL: NO FALLBACK LOGIC - Missing jobs return 404, not empty data
     """
@@ -280,12 +298,15 @@ async def get_job_status(
                 detail=f"CRITICAL: Job {job_id} not found"
             )
 
-        # Authorization check (mock - replace with Clerk)
-        # TODO: Implement proper user authorization in Task 1.4
-        if job.user_id != user_id and user_id != "mock_user_dev_001":
+        # Authorization check: User can only access their own jobs
+        if job.user_id != user.sub:
+            logger.warning(
+                f"Authorization denied: User {user.sub} ({user.email}) "
+                f"attempted to access job {job_id} owned by {job.user_id}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"CRITICAL: User {user_id} not authorized to view job {job_id}"
+                detail=f"CRITICAL: User not authorized to view job {job_id}"
             )
 
         # Generate download URL if job completed

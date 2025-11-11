@@ -7,15 +7,27 @@ queues, and authentication with testability and configurability.
 
 import asyncio
 import logging
+import os
 from typing import Annotated
 
+import jwt
 from fastapi import Depends, HTTPException, UploadFile, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt import PyJWTError
 from src.adapters.storage import StorageFactory, StorageProvider
 from src.shared.config import get_config
 
-from .models import JobRecord
+from .models import ClerkClaims, JobRecord
 
 logger = logging.getLogger(__name__)
+
+# Clerk Authentication Configuration
+CLERK_PEM_PUBLIC_KEY = os.getenv("CLERK_PEM_PUBLIC_KEY")
+CLERK_ISSUER = os.getenv("CLERK_ISSUER")
+CLERK_JWT_AUDIENCE = os.getenv("CLERK_JWT_AUDIENCE")  # Optional
+
+# HTTPBearer security for token extraction
+security = HTTPBearer()
 
 # In-memory job storage (replaced by Aurora in production)
 # Protected by asyncio lock for thread-safe access
@@ -134,18 +146,124 @@ def get_storage_adapter() -> StorageProvider:
         ) from e
 
 
-def get_current_user() -> str:
+async def require_clerk_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
+) -> ClerkClaims:
     """
-    Get current user dependency (mock implementation).
+    Verify Clerk JWT and return user claims.
+
+    Args:
+        credentials: HTTP Authorization header with Bearer token
 
     Returns:
-        Mock user ID
+        Validated ClerkClaims object with user identity
 
-    TODO: Replace with Clerk authentication (Task 1.4)
-    Currently returns mock user for development/testing.
+    Raises:
+        HTTPException 401: If token is invalid, expired, or missing required claims
+
+    CRITICAL: FAIL CLOSED - NO FALLBACK LOGIC
+    All authentication failures result in 401 with explicit error details.
     """
-    # Mock user for development (replace with Clerk integration)
-    return "mock_user_dev_001"
+    token = credentials.credentials
+
+    # Validate environment configuration
+    if not CLERK_PEM_PUBLIC_KEY:
+        logger.error("CLERK_PEM_PUBLIC_KEY not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="CRITICAL: Authentication system not configured (missing CLERK_PEM_PUBLIC_KEY)",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    if not CLERK_ISSUER:
+        logger.error("CLERK_ISSUER not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="CRITICAL: Authentication system not configured (missing CLERK_ISSUER)",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    try:
+        # Verify JWT using Clerk's public key with RS256 algorithm
+        # Note: Session tokens don't include 'aud' claim, so we disable audience verification
+        verify_options = {
+            "verify_exp": True,
+            "verify_iat": True,
+            "verify_aud": False,  # Disable audience verification (session tokens don't have 'aud')
+            "leeway": 10  # 10 seconds clock skew tolerance
+        }
+
+        payload = jwt.decode(
+            token,
+            CLERK_PEM_PUBLIC_KEY,
+            algorithms=["RS256"],
+            issuer=CLERK_ISSUER,
+            options=verify_options
+        )
+
+        # Validate required claims exist
+        if "sub" not in payload:
+            logger.warning("JWT missing 'sub' claim")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: missing user identifier",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+
+        # Parse and validate claims with Pydantic
+        user_claims = ClerkClaims(**payload)
+
+        # Warn if email is missing (common in Clerk session tokens)
+        if not user_claims.email:
+            logger.warning(f"JWT missing 'email' claim for user {user_claims.sub} - will fetch from Clerk API if needed")
+
+        logger.debug(f"Authentication successful for user {user_claims.sub}")
+
+        return user_claims
+
+    except jwt.ExpiredSignatureError:
+        logger.info("JWT expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    except jwt.InvalidIssuerError:
+        logger.warning(f"Invalid JWT issuer (expected: {CLERK_ISSUER})")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token issuer",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    except jwt.InvalidSignatureError:
+        logger.warning("Invalid JWT signature")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token signature",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    except jwt.InvalidAudienceError:
+        logger.warning(f"Invalid JWT audience (expected: {CLERK_JWT_AUDIENCE})")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token audience",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    except (jwt.DecodeError, PyJWTError) as e:
+        logger.warning(f"JWT decode error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token validation failed: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    except Exception as e:
+        # FAIL CLOSED: Any unexpected error = 401
+        logger.exception("Unexpected authentication error")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
 
 
 async def validate_upload_file(file: UploadFile) -> UploadFile:
@@ -228,5 +346,5 @@ StorageAdapterDep = Annotated[StorageProvider, Depends(get_storage_adapter)]
 JobQueueDep = Annotated[asyncio.Queue[str], Depends(get_job_queue)]
 JobRepositoryDep = Annotated[dict[str, JobRecord], Depends(get_job_repository)]
 JobLockDep = Annotated[asyncio.Lock, Depends(get_job_lock)]
-CurrentUserDep = Annotated[str, Depends(get_current_user)]
+CurrentUserDep = Annotated[ClerkClaims, Depends(require_clerk_user)]
 ValidatedFileDep = Annotated[UploadFile, Depends(validate_upload_file)]

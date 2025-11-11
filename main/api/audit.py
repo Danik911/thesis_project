@@ -61,17 +61,25 @@ class AuditLogger:
         event_type: str,
         user_id: str,
         status: JobStatus,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
+        user_email: str | None = None,
+        token_iat: int | None = None,
+        ip_address: str | None = None,
+        session_id: str | None = None
     ) -> None:
         """
         Log an audit event with ALCOA+ compliance.
 
         Args:
             job_id: Unique job identifier
-            event_type: Event type (submit, start, complete, fail, retry)
-            user_id: User identifier
+            event_type: Event type (submit, start, complete, fail, retry, auth_success, auth_failure)
+            user_id: User identifier (Clerk user ID from 'sub' claim)
             status: Current job status
             metadata: Additional event context
+            user_email: User email for human-readable attribution (ALCOA+)
+            token_iat: JWT issued-at timestamp for lifecycle tracking (ALCOA+)
+            ip_address: Client IP address for contemporaneous context (ALCOA+)
+            session_id: Session ID for linking related events (ALCOA+)
 
         Raises:
             RuntimeError: If audit logging fails
@@ -86,7 +94,11 @@ class AuditLogger:
                 event_type=event_type,
                 user_id=user_id,
                 status=status,
-                metadata=metadata or {}
+                metadata=metadata or {},
+                user_email=user_email,
+                token_iat=token_iat,
+                ip_address=ip_address,
+                session_id=session_id
             )
 
             # Write to append-only audit log (daily rotation)
@@ -100,8 +112,13 @@ class AuditLogger:
                 "user_id": entry.user_id,
                 "status": entry.status.value,
                 "metadata": entry.metadata,
+                # ALCOA+ extended fields
+                "user_email": entry.user_email,
+                "token_iat": entry.token_iat,
+                "ip_address": entry.ip_address,
+                "session_id": entry.session_id,
                 # ALCOA+ compliance markers
-                "alcoa_attributable": entry.user_id,
+                "alcoa_attributable": f"{entry.user_id} ({entry.user_email})" if entry.user_email else entry.user_id,
                 "alcoa_contemporaneous": entry.timestamp.isoformat(),
                 "alcoa_original": True  # Append-only, no modifications
             }

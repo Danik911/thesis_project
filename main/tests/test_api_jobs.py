@@ -23,14 +23,28 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from api.app import app
 from api.audit import initialize_audit_logger
 from api.dependencies import (
-    get_current_user,
     get_job_lock,
     get_job_queue,
     get_job_repository,
     get_storage_adapter,
     initialize_job_infrastructure,
+    require_clerk_user,
 )
-from api.models import JobRecord, JobStatus
+from api.models import ClerkClaims, JobRecord, JobStatus
+import time
+
+
+@pytest.fixture
+def mock_clerk_user() -> ClerkClaims:
+    """Create mock ClerkClaims for testing."""
+    return ClerkClaims(
+        sub="test_user_001",
+        email="testuser@example.com",
+        email_verified=True,
+        iat=int(time.time()),
+        exp=int(time.time()) + 3600,
+        iss="https://test-instance.clerk.accounts.dev"
+    )
 
 
 @pytest.fixture
@@ -73,7 +87,17 @@ class TestJobSubmission:
         """Test successful job submission with valid URS file."""
         # Override dependencies
         app.dependency_overrides[get_storage_adapter] = lambda: mock_storage
-        app.dependency_overrides[get_current_user] = lambda: "test_user_001"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         queue, repo, lock = job_infrastructure
         app.dependency_overrides[get_job_queue] = lambda: queue
@@ -180,7 +204,17 @@ class TestJobSubmission:
         failing_storage.save_artifact.side_effect = RuntimeError("Storage failure")
 
         app.dependency_overrides[get_storage_adapter] = lambda: failing_storage
-        app.dependency_overrides[get_current_user] = lambda: "test_user_001"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         queue, repo, lock = job_infrastructure
         app.dependency_overrides[get_job_queue] = lambda: queue
@@ -215,7 +249,17 @@ class TestJobStatus:
         app.dependency_overrides[get_job_queue] = lambda: queue
         app.dependency_overrides[get_job_repository] = lambda: repo
         app.dependency_overrides[get_job_lock] = lambda: lock
-        app.dependency_overrides[get_current_user] = lambda: "test_user_001"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         # Create test job in repository
         job_id = "test-job-123"
@@ -257,7 +301,17 @@ class TestJobStatus:
         app.dependency_overrides[get_job_queue] = lambda: queue
         app.dependency_overrides[get_job_repository] = lambda: repo
         app.dependency_overrides[get_job_lock] = lambda: lock
-        app.dependency_overrides[get_current_user] = lambda: "test_user_001"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         # Create completed job
         job_id = "test-job-completed"
@@ -302,7 +356,17 @@ class TestJobStatus:
         app.dependency_overrides[get_job_queue] = lambda: queue
         app.dependency_overrides[get_job_repository] = lambda: repo
         app.dependency_overrides[get_job_lock] = lambda: lock
-        app.dependency_overrides[get_current_user] = lambda: "test_user_001"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         # Get non-existent job
         response = test_client.get("/jobs/non-existent-job")
@@ -325,7 +389,17 @@ class TestJobStatus:
         app.dependency_overrides[get_job_queue] = lambda: queue
         app.dependency_overrides[get_job_repository] = lambda: repo
         app.dependency_overrides[get_job_lock] = lambda: lock
-        app.dependency_overrides[get_current_user] = lambda: "test_user_001"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         # Create failed job
         job_id = "test-job-failed"
@@ -375,7 +449,17 @@ class TestComplianceRequirements:
         app.dependency_overrides[get_job_queue] = lambda: queue
         app.dependency_overrides[get_job_repository] = lambda: repo
         app.dependency_overrides[get_job_lock] = lambda: lock
-        app.dependency_overrides[get_current_user] = lambda: "test_user_compliance"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         # Submit job
         test_file = ("test.txt", io.BytesIO(b"test content"), "text/plain")
@@ -405,7 +489,17 @@ class TestComplianceRequirements:
         app.dependency_overrides[get_job_queue] = lambda: queue
         app.dependency_overrides[get_job_repository] = lambda: repo
         app.dependency_overrides[get_job_lock] = lambda: lock
-        app.dependency_overrides[get_current_user] = lambda: "test_user"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         # Submit same file twice
         test_content = b"Consistent test content"
@@ -437,7 +531,17 @@ class TestComplianceRequirements:
         app.dependency_overrides[get_job_queue] = lambda: queue
         app.dependency_overrides[get_job_repository] = lambda: repo
         app.dependency_overrides[get_job_lock] = lambda: lock
-        app.dependency_overrides[get_current_user] = lambda: "test_user"
+
+        # Create mock Clerk user for this test
+        mock_user = ClerkClaims(
+            sub="test_user_001",
+            email="testuser@example.com",
+            email_verified=True,
+            iat=int(time.time()),
+            exp=int(time.time()) + 3600,
+            iss="https://test-instance.clerk.accounts.dev"
+        )
+        app.dependency_overrides[require_clerk_user] = lambda: mock_user
 
         # Submit job
         test_file = ("test.txt", io.BytesIO(b"test"), "text/plain")
