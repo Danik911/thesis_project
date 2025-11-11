@@ -13,6 +13,7 @@
  */
 
 import { useAuth } from '@clerk/nextjs';
+import Head from 'next/head';
 import useSWR from 'swr';
 import Layout from '../components/Layout';
 
@@ -57,14 +58,15 @@ const fetcher = async (url: string): Promise<APIResponse> => {
 export default function ObservabilityDashboard() {
   const { isLoaded, userId } = useAuth();
 
-  // SWR with 5-minute cache (matches backend cache)
+  // SWR with 30-minute cache (matches backend cache)
   const { data, error, isLoading } = useSWR<APIResponse>(
     isLoaded && userId ? '/api/langfuse/summary' : null,
     fetcher,
     {
-      refreshInterval: 5 * 60 * 1000, // 5 minutes
+      refreshInterval: 30 * 60 * 1000, // 30 minutes
       revalidateOnFocus: false, // Don't refetch on tab focus
       dedupingInterval: 60000, // 1 minute deduping
+      shouldRetryOnError: false, // Don't retry on 429 rate limit errors
     }
   );
 
@@ -74,102 +76,127 @@ export default function ObservabilityDashboard() {
   const totalCost = metrics.reduce((sum, m) => sum + m.totalCost, 0);
   const avgDailyTraces = metrics.length > 0 ? Math.round(totalTraces / metrics.length) : 0;
 
-  // Error state (NO FALLBACK - explicit error display)
+  // Error state (NO FALLBACK - explicit error display with ARIA)
   if (error) {
     return (
-      <Layout>
-        <div className="p-8">
-          <h1 className="text-3xl font-bold text-red-600 mb-4">Observability Dashboard</h1>
-          <div className="bg-red-50 border border-red-300 p-6 rounded-lg">
-            <p className="text-red-700 font-semibold">Failed to load metrics</p>
-            <p className="text-red-600 text-sm mt-2">{error.message}</p>
-            <div className="mt-4 p-4 bg-red-100 rounded text-xs text-red-800">
-              <p className="font-semibold mb-2">Troubleshooting:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Verify LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are configured in .env.local</li>
-                <li>Check that LangFuse project is active at https://cloud.langfuse.com</li>
-                <li>Ensure network connectivity to LangFuse Cloud (EU region)</li>
-                <li>Verify Clerk authentication is working</li>
-              </ul>
+      <>
+        <Head>
+          <title>Error - Observability - Pharmaceutical Test Generation</title>
+        </Head>
+        <Layout>
+          <div className="p-8">
+            <h1 className="text-3xl font-bold text-red-600 mb-4">Observability Dashboard</h1>
+            {/* Error with ARIA live region (WCAG 4.1.3 - Status Messages) */}
+            <div role="alert" aria-live="assertive" className="bg-red-50 border border-red-300 p-6 rounded-lg">
+              <p className="text-red-700 font-semibold">Failed to load metrics</p>
+              <p className="text-red-600 text-sm mt-2">{error.message}</p>
+              <div className="mt-4 p-4 bg-red-100 rounded text-xs text-red-800">
+                <p className="font-semibold mb-2">Troubleshooting:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Verify LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are configured in .env.local</li>
+                  <li>Check that LangFuse project is active at https://cloud.langfuse.com</li>
+                  <li>Ensure network connectivity to LangFuse Cloud (EU region)</li>
+                  <li>Verify Clerk authentication is working</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </Layout>
+        </Layout>
+      </>
     );
   }
 
-  // Loading state
+  // Loading state with ARIA live region (WCAG 4.1.3 - Status Messages)
   if (!isLoaded || isLoading) {
     return (
-      <Layout>
-        <div className="p-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-4">Observability Dashboard</h1>
-          <p className="text-gray-600 mb-4">Loading metrics from LangFuse Cloud...</p>
-          <div className="mt-4 space-y-4">
-            <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
-            <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
-            <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
+      <>
+        <Head>
+          <title>Loading - Observability - Pharmaceutical Test Generation</title>
+        </Head>
+        <Layout>
+          <div className="p-8">
+            <h1 className="text-3xl font-bold text-blue-600 mb-4">Observability Dashboard</h1>
+            <div role="status" aria-live="polite">
+              <span className="sr-only">Loading metrics from LangFuse Cloud. Please wait...</span>
+              <p className="text-gray-700 mb-4" aria-hidden="true">Loading metrics from LangFuse Cloud...</p>
+              <div className="mt-4 space-y-4">
+                <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
+                <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
+                <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
           </div>
-        </div>
-      </Layout>
+        </Layout>
+      </>
     );
   }
 
   // No data state
   if (!data?.success || metrics.length === 0) {
     return (
-      <Layout>
-        <div className="p-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-4">Observability Dashboard</h1>
-          <div className="bg-blue-50 border border-blue-300 p-6 rounded-lg">
-            <p className="text-blue-800 font-semibold">No observability data available yet</p>
-            <p className="text-blue-700 text-sm mt-2">
-              Generate some test suites to see metrics appear here.
-            </p>
-            <div className="mt-4 p-4 bg-blue-100 rounded text-xs text-blue-800">
-              <p className="font-semibold mb-2">Next Steps:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Submit a URS document via the job submission API</li>
-                <li>Wait for test generation workflow to complete</li>
-                <li>Traces will appear in LangFuse Cloud within 1-2 minutes</li>
-                <li>Refresh this dashboard to see metrics</li>
-              </ul>
+      <>
+        <Head>
+          <title>Observability - Pharmaceutical Test Generation</title>
+          <meta name="description" content="LangFuse observability metrics for GAMP-5 compliant pharmaceutical test generation" />
+        </Head>
+        <Layout>
+          <div className="p-8">
+            <h1 className="text-3xl font-bold text-blue-600 mb-4">Observability Dashboard</h1>
+            <div className="bg-blue-50 border border-blue-300 p-6 rounded-lg">
+              <p className="text-blue-800 font-semibold">No observability data available yet</p>
+              <p className="text-blue-700 text-sm mt-2">
+                Generate some test suites to see metrics appear here.
+              </p>
+              <div className="mt-4 p-4 bg-blue-100 rounded text-xs text-blue-800">
+                <p className="font-semibold mb-2">Next Steps:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Submit a URS document via the job submission API</li>
+                  <li>Wait for test generation workflow to complete</li>
+                  <li>Traces will appear in LangFuse Cloud within 1-2 minutes</li>
+                  <li>Refresh this dashboard to see metrics</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </Layout>
+        </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-blue-600">Observability Dashboard</h1>
-          <p className="text-gray-600 text-sm mt-2">
-            GAMP-5 Category 5 System • Last updated: {data.metadata?.fetchedAt ? new Date(data.metadata.fetchedAt).toLocaleString() : 'Unknown'}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            ALCOA+ Compliant: Attributable, Legible, Contemporaneous, Original, Accurate, Complete, Consistent, Enduring, Available
-          </p>
-        </div>
+    <>
+      <Head>
+        <title>Observability - Pharmaceutical Test Generation</title>
+        <meta name="description" content="LangFuse observability metrics for GAMP-5 compliant pharmaceutical test generation" />
+      </Head>
+      <Layout>
+        <div className="p-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-blue-600">Observability Dashboard</h1>
+            <p className="text-gray-700 text-sm mt-2">
+              GAMP-5 Category 5 System • Last updated: {data.metadata?.fetchedAt ? new Date(data.metadata.fetchedAt).toLocaleString() : 'Unknown'}
+            </p>
+            <p className="text-xs text-gray-700 mt-1">
+              ALCOA+ Compliant: Attributable, Legible, Contemporaneous, Original, Accurate, Complete, Consistent, Enduring, Available
+            </p>
+          </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Total Traces */}
           <div className="bg-white border border-gray-300 p-6 rounded-lg shadow-sm">
-            <h3 className="text-gray-600 text-sm font-semibold mb-2">Total Traces (7 days)</h3>
+            <h2 className="text-gray-700 text-sm font-semibold mb-2">Total Traces (7 days)</h2>
             <p className="text-4xl font-bold text-blue-600">{totalTraces}</p>
-            <p className="text-gray-500 text-xs mt-2">
+            <p className="text-gray-700 text-xs mt-2">
               ALCOA+ Contemporaneous: Traces captured in real-time with ISO8601 timestamps
             </p>
           </div>
 
           {/* Average Daily Throughput */}
           <div className="bg-white border border-gray-300 p-6 rounded-lg shadow-sm">
-            <h3 className="text-gray-600 text-sm font-semibold mb-2">Avg. Daily Throughput</h3>
+            <h2 className="text-gray-700 text-sm font-semibold mb-2">Avg. Daily Throughput</h2>
             <p className="text-4xl font-bold text-green-600">{avgDailyTraces}</p>
-            <p className="text-gray-500 text-xs mt-2">
+            <p className="text-gray-700 text-xs mt-2">
               Target: 50 documents/day (Baseline for performance monitoring)
             </p>
             {avgDailyTraces < 50 && avgDailyTraces > 0 && (
@@ -186,30 +213,34 @@ export default function ObservabilityDashboard() {
 
           {/* Total Cost */}
           <div className="bg-white border border-gray-300 p-6 rounded-lg shadow-sm">
-            <h3 className="text-gray-600 text-sm font-semibold mb-2">Total Cost (7 days)</h3>
+            <h2 className="text-gray-700 text-sm font-semibold mb-2">Total Cost (7 days)</h2>
             <p className="text-4xl font-bold text-purple-600">${totalCost.toFixed(2)}</p>
-            <p className="text-gray-500 text-xs mt-2">
+            <p className="text-gray-700 text-xs mt-2">
               LLM usage costs tracked for budget compliance and cost attribution
             </p>
           </div>
         </div>
 
-        {/* Daily Metrics Table */}
+        {/* Daily Metrics Table with WCAG 1.3.1 - Table Accessibility */}
         <div className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200 bg-gray-50">
             <h2 className="text-xl font-bold text-gray-800">Daily Metrics (Last 7 Days)</h2>
-            <p className="text-gray-600 text-sm mt-1">
+            <p className="text-gray-700 text-sm mt-1">
               ALCOA+ Complete: All trace data captured with full input/output context
             </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
+              {/* Table caption for screen readers (WCAG 1.3.1) */}
+              <caption className="sr-only">
+                Daily observability metrics for the last 7 days, showing trace counts, costs, and models used per date
+              </caption>
               <thead className="bg-gray-100 border-b border-gray-200">
                 <tr>
-                  <th className="text-left p-4 text-gray-700 font-semibold">Date</th>
-                  <th className="text-right p-4 text-gray-700 font-semibold">Traces</th>
-                  <th className="text-right p-4 text-gray-700 font-semibold">Cost</th>
-                  <th className="text-left p-4 text-gray-700 font-semibold">Models Used</th>
+                  <th scope="col" className="text-left p-4 text-gray-700 font-semibold">Date</th>
+                  <th scope="col" className="text-right p-4 text-gray-700 font-semibold">Traces</th>
+                  <th scope="col" className="text-right p-4 text-gray-700 font-semibold">Cost</th>
+                  <th scope="col" className="text-left p-4 text-gray-700 font-semibold">Models Used</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,7 +263,7 @@ export default function ObservabilityDashboard() {
                     <td className="p-4 text-right text-gray-800 font-mono">
                       ${metric.totalCost.toFixed(2)}
                     </td>
-                    <td className="p-4 text-gray-600 text-sm">
+                    <td className="p-4 text-gray-700 text-sm">
                       {metric.usage.map(u => u.model).join(', ') || 'N/A'}
                     </td>
                   </tr>
@@ -258,5 +289,6 @@ export default function ObservabilityDashboard() {
         </div>
       </div>
     </Layout>
+    </>
   );
 }

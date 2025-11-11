@@ -7,8 +7,11 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link href="/">
-              <h1 className="text-xl font-semibold text-gray-900 cursor-pointer">
+            <Link
+              href="/"
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded"
+            >
+              <h1 className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors">
                 Pharmaceutical Test Generation
               </h1>
             </Link>

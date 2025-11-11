@@ -1,68 +1,49 @@
-# Current Task Context: 2.3
+# Current Task Context: 2.4
 
 ## Task File
-PRPs/tasks/2.3-langfuse-dashboard.md
+PRPs/tasks/2.4-frontend-accessibility.md
 
 ## Task Content
-# Task P2.3 – Extend LangFuse Dashboard Integration
+# Task P2.4 – Harden Next.js Frontend Accessibility & Compliance
 
 ## What to Do
-- Add LangFuse session dashboards to frontend for live observability metrics.
-- Create authenticated API route that pulls aggregated trace data from LangFuse API and caches results.
-- Display throughput, latency, and error trends in compliance-ready format.
+- Audit frontend components against WCAG 2.1 AA and GAMP-5 UI expectations.
+- Integrate automated accessibility checks (e.g., axe-core) into CI.
+- Document manual accessibility testing scenarios for compliance records.
 
 ## Dependencies
-- Requires LangFuse backend instrumentation (Task 6) and Clerk-protected frontend (Task P2.2).
+- Requires initial frontend layout (Task P2.1) and dashboard components (Task P2.3).
 
 ## Best Practices
-- Use ISR or SWR caching to limit API requests and respect LangFuse rate limits.
-- Present metrics normalized to the 50 documents/day throughput requirement, flagging deviations.
-- Keep metric descriptions inline to ensure compliance reviewers understand each chart.
+- Use semantic HTML and ARIA attributes only when needed to avoid over-annotation.
+- Provide textual descriptions for all observability charts and LLM outputs.
+- Maintain audit trail of accessibility testing outcomes in compliance documentation.
 
 ## Code Example
-```tsx
-// app/api/langfuse/summary/route.ts
-import { NextResponse } from 'next/server';
-import { cache } from 'react';
-
-const fetchLangFuseSummary = cache(async () => {
-  const res = await fetch('https://cloud.langfuse.com/api/public/metrics', {
-    headers: {
-      Authorization: `Bearer ${process.env.LANGFUSE_PUBLIC_KEY}:${process.env.LANGFUSE_SECRET_KEY}`,
-    },
-  });
-  if (!res.ok) throw new Error('LangFuse metrics fetch failed');
-  return res.json();
-});
-
-export async function GET() {
-  const data = await fetchLangFuseSummary();
-  return NextResponse.json(data);
+```bash
+# package.json scripts
+"scripts": {
+  "lint": "next lint",
+  "test:a11y": "axe --exit zero .next/server/app"
 }
 ```
 
 ## Links
-- [LangFuse Metrics API](https://langfuse.com/docs/api/reference)
+- [Axe for Next.js](https://www.deque.com/blog/introducing-axe-core-testing-in-next-js/)
+- [WCAG 2.1 Checklist](https://www.w3.org/TR/WCAG21/)
 
 ## Testing Strategy
-- Add Next.js API integration tests using `jest-fetch-mock` to validate error handling.
-- Snapshot test dashboard components to detect visualization regressions.
-- Validate caching by calling endpoint twice and confirming only one LangFuse request.
+- Run automated tests via `npm run test:a11y` and capture results in CI artifacts.
+- Perform manual keyboard navigation test across primary workflows.
+- Record screen reader walkthrough for compliance evidence.
 
 ## Common Issues to Avoid
-- Exposing LangFuse secret via client-side fetch; keep requests on the server.
-- Forgetting to guard metrics routes with Clerk middleware.
-- Overloading dashboard with raw traces instead of high-level metrics for audit review.
+- Treating color contrast as optional; enforce via design tokens.
+- Forgetting to localize dynamic content for multilingual requirements.
+- Skipping manual testing in favor of automated checks alone.
 
 ## Task Metadata
-- Task ID: 2.3
-- Phase: Phase 2 - Backend Abstraction
+- Task ID: 2.4
+- Phase: 2 - Backend Abstraction
 - Started: 2025-11-11T00:00:00Z
 - Workflow Status: INITIALIZED
-
-## Scope Expansion
-**User Decision:** Option 2 - Implement Full LangFuse Integration Now
-This task now includes:
-1. Backend LangFuse instrumentation (FastAPI + LlamaIndex workflows)
-2. Frontend dashboard with authenticated API routes
-3. End-to-end observability integration

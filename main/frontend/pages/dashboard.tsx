@@ -15,9 +15,11 @@ export default function Dashboard() {
     return (
       <Layout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
+          {/* Loading state with ARIA live region (WCAG 4.1.3 - Status Messages) */}
+          <div role="status" aria-live="polite" className="animate-pulse">
+            <span className="sr-only">Loading dashboard content. Verifying your EU-compliant session...</span>
             <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
-            <p className="text-sm text-gray-500 mb-8">
+            <p className="text-sm text-gray-500 mb-8" aria-hidden="true">
               Verifying your EU-compliant session...
             </p>
             <div className="card">
@@ -67,7 +69,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700 w-24">Email:</span>
                 <span className="text-sm text-gray-900">
-                  {user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses[0]?.emailAddress ?? 'Not available'}
+                  {user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? 'Not available'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
