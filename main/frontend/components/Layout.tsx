@@ -46,6 +46,16 @@ export default function Layout({ children }: LayoutProps) {
                   >
                     Dashboard
                   </Link>
+                  <Link
+                    href="/observability"
+                    className={`text-sm font-medium transition-colors ${
+                      isActive('/observability')
+                        ? 'text-blue-600'
+                        : 'text-gray-600 hover:text-blue-600'
+                    }`}
+                  >
+                    Observability
+                  </Link>
                 </div>
               </div>
 

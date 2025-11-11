@@ -1,56 +1,68 @@
-# Current Task Context: 2.2
+# Current Task Context: 2.3
 
 ## Task File
-PRPs/tasks/2.2-clerk-provider.md
+PRPs/tasks/2.3-langfuse-dashboard.md
 
 ## Task Content
-# Task P2.2 – Configure Clerk Provider for EU Authentication
+# Task P2.3 – Extend LangFuse Dashboard Integration
 
 ## What to Do
-- Wrap the Next.js app with `ClerkProvider` pointing to EU endpoints and configure protected routes.
-- Implement middleware for route protection (redirect unauthenticated users to sign-in).
-- Surface user profile info in the UI header to confirm session context.
+- Add LangFuse session dashboards to frontend for live observability metrics.
+- Create authenticated API route that pulls aggregated trace data from LangFuse API and caches results.
+- Display throughput, latency, and error trends in compliance-ready format.
 
 ## Dependencies
-- Requires frontend scaffold (Task P2.1) and backend Clerk setup (Task P1.4).
+- Requires LangFuse backend instrumentation (Task 6) and Clerk-protected frontend (Task P2.2).
 
 ## Best Practices
-- Store Clerk publishable key in `.env.local` for development and use runtime environment variables for production.
-- Use `next/headers` to read auth state server-side where necessary, keeping compliance data server-rendered when possible.
-- Provide fallback UI for session loading states to improve UX.
+- Use ISR or SWR caching to limit API requests and respect LangFuse rate limits.
+- Present metrics normalized to the 50 documents/day throughput requirement, flagging deviations.
+- Keep metric descriptions inline to ensure compliance reviewers understand each chart.
 
 ## Code Example
 ```tsx
-// app/layout.tsx
-import { ClerkProvider } from '@clerk/nextjs';
+// app/api/langfuse/summary/route.ts
+import { NextResponse } from 'next/server';
+import { cache } from 'react';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      domain="clerk.pharma.eu">
-      <html lang="en">
-        <body className="bg-slate-950 text-slate-100">{children}</body>
-      </html>
-    </ClerkProvider>
-  );
+const fetchLangFuseSummary = cache(async () => {
+  const res = await fetch('https://cloud.langfuse.com/api/public/metrics', {
+    headers: {
+      Authorization: `Bearer ${process.env.LANGFUSE_PUBLIC_KEY}:${process.env.LANGFUSE_SECRET_KEY}`,
+    },
+  });
+  if (!res.ok) throw new Error('LangFuse metrics fetch failed');
+  return res.json();
+});
+
+export async function GET() {
+  const data = await fetchLangFuseSummary();
+  return NextResponse.json(data);
 }
 ```
 
 ## Links
-- [Clerk Next.js App Router guide](https://clerk.com/docs/nextjs/app-router)
+- [LangFuse Metrics API](https://langfuse.com/docs/api/reference)
 
 ## Testing Strategy
-- Verify that unauthenticated access to `/dashboard` redirects to Clerk-hosted sign-in.
-- Use Clerk test mode to log in and confirm user metadata displays correctly.
-- Add integration test with Playwright to ensure auth flows operate under static export.
+- Add Next.js API integration tests using `jest-fetch-mock` to validate error handling.
+- Snapshot test dashboard components to detect visualization regressions.
+- Validate caching by calling endpoint twice and confirming only one LangFuse request.
 
 ## Common Issues to Avoid
-- Forgetting to set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, leading to hydration errors.
-- Not configuring EU-only domain, causing data residency violations.
-- Allowing unauthenticated access to compliance-sensitive pages by skipping middleware checks.
+- Exposing LangFuse secret via client-side fetch; keep requests on the server.
+- Forgetting to guard metrics routes with Clerk middleware.
+- Overloading dashboard with raw traces instead of high-level metrics for audit review.
 
 ## Task Metadata
-- Task ID: 2.2
-- Phase: 2 (Frontend Dashboard)
-- Started: 2025-11-11 16:25:04
+- Task ID: 2.3
+- Phase: Phase 2 - Backend Abstraction
+- Started: 2025-11-11T00:00:00Z
 - Workflow Status: INITIALIZED
+
+## Scope Expansion
+**User Decision:** Option 2 - Implement Full LangFuse Integration Now
+This task now includes:
+1. Backend LangFuse instrumentation (FastAPI + LlamaIndex workflows)
+2. Frontend dashboard with authenticated API routes
+3. End-to-end observability integration

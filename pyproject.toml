@@ -67,6 +67,7 @@ dependencies = [
     "pyjwt[crypto]==2.9.0",
     "cryptography>=45.0.6",
     "python-jose[cryptography]>=3.5.0",
+    "langfuse==3.5.2",
 ]
 
 [build-system]

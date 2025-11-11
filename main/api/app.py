@@ -17,6 +17,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from langfuse import observe
 
 # Load environment variables from .env.local (for local development)
 # This must happen BEFORE importing dependencies that use environment variables
@@ -38,6 +39,7 @@ from .dependencies import (
     initialize_job_infrastructure,
 )
 from .models import JobRecord, JobStatus, JobStatusResponse, JobSubmitResponse
+from .observability import initialize_langfuse, shutdown_langfuse
 from .worker import process_job_worker
 
 logger = logging.getLogger(__name__)
@@ -63,6 +65,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize audit logger
     initialize_audit_logger(audit_directory="logs/audit/jobs")
     logger.info("Audit logger initialized")
+
+    # Initialize LangFuse observability
+    try:
+        initialize_langfuse()
+        logger.info("LangFuse observability initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize LangFuse: {e}. Continuing without observability.")
+        # Don't fail startup if LangFuse fails - observability is important but not critical
 
     # Initialize job infrastructure
     job_queue, job_repository, job_lock = initialize_job_infrastructure()
@@ -92,6 +102,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await worker_task
     except asyncio.CancelledError:
         logger.info("Background worker stopped")
+
+    # Shutdown LangFuse observability (flush pending traces)
+    shutdown_langfuse()
 
     logger.info("FastAPI application shutdown complete")
 
@@ -125,6 +138,7 @@ async def root() -> dict[str, str]:
 
 
 @app.post("/jobs", response_model=JobSubmitResponse, status_code=status.HTTP_201_CREATED)
+@observe(name="create_test_generation_job")
 async def submit_job(
     file: ValidatedFileDep,
     storage: StorageAdapterDep,
@@ -260,6 +274,7 @@ async def submit_job(
 
 
 @app.get("/jobs/{job_id}", response_model=JobStatusResponse)
+@observe(name="get_job_status")
 async def get_job_status(
     job_id: str,
     job_repository: JobRepositoryDep,

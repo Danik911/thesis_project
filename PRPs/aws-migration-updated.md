@@ -18,8 +18,9 @@ This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test 
 - **LLM Provider:** Amazon Bedrock (DeepSeek-V3.1) - $0.90/1M input, $2.61/1M output
 - **Region:** eu-west-2 (London, UK)
 - **Observability:** Phoenix (local dev) + LangFuse (AWS production) + CloudWatch
-- **Frontend:** S3 + CloudFront with Clerk authentication (EU endpoints)
-- **Estimated Cost:** ~$1,043/month production average (78% LLM cost reduction vs Claude)
+- **Frontend:** ECS Fargate (containerized Next.js) + CloudFront with Clerk authentication (EU endpoints)
+- **Estimated Cost:** ~$1,083/month production average (78% LLM cost reduction vs Claude)
+- **Note:** Frontend deployment changed from S3 static to ECS Fargate in Task 2.3 to support API routes
 
 ---
 
@@ -182,13 +183,16 @@ This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test 
 
 ### 2.3 Component Details
 
-#### Frontend (S3 + CloudFront)
-- **Stack:** Next.js 14+ with App Router
-- **Hosting:** S3 static website + CloudFront distribution
+#### Frontend (ECS Fargate + CloudFront) - UPDATED Task 2.3
+- **Stack:** Next.js 14+ with Pages Router + API Routes
+- **Hosting:** ECS Fargate (containerized) + CloudFront CDN
+- **Resources:** 1 vCPU, 2 GB RAM, 1-2 tasks
 - **Authentication:** Clerk React components (EU endpoints)
-- **Pages:** Dashboard, Job Status, Test Suite Viewer, Compliance Reports
-- **Build:** GitHub Actions → S3 deployment
-- **Cost:** ~$50/month (CloudFront + S3)
+- **Pages:** Dashboard, Job Status, Test Suite Viewer, Compliance Reports, Observability (Task 2.3)
+- **API Routes:** `/api/langfuse/summary` - LangFuse metrics proxy (Task 2.3)
+- **Build:** GitHub Actions → ECR → ECS deployment
+- **Cost:** ~$90/month (ECS Fargate + CloudFront)
+- **Note:** Changed from S3 static hosting to support server-side API routes for LangFuse integration
 
 #### Backend API (ECS Fargate)
 - **Stack:** FastAPI + uvicorn
@@ -1048,6 +1052,7 @@ Each gate must include: (1) updated ORR checklist, (2) rollback validation, (3) 
 | Service | Configuration | Cost |
 |---------|--------------|------|
 | **Compute** |
+| ECS Fargate (Frontend) | 1 vCPU, 2 GB, 1 task × 24h (Task 2.3) | $40 |
 | ECS Fargate (Backend) | 2 vCPU, 4 GB, 2 tasks × 24h | $100 |
 | ECS Fargate (Worker) | 4 vCPU, 8 GB, 2 tasks avg × 12h/day | $300 |
 | **Database** |
@@ -1069,7 +1074,9 @@ Each gate must include: (1) updated ORR checklist, (2) rollback validation, (3) 
 | Secrets Manager | 10 secrets, 10K retrievals | $5 |
 | **Queue** |
 | SQS | 1M requests | $0.40 |
-| **Total** | | **~$1,190/month** |
+| **Total** | | **~$1,230/month** |
+
+**Note:** Frontend cost increased by $40/month vs original S3 static hosting due to Task 2.3 requirement for Next.js API routes (LangFuse observability dashboard).
 
 ### 7.2 Development Cost Estimate (Monthly)
 

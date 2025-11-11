@@ -2,8 +2,8 @@
 
 Complete architecture documentation for the pharmaceutical test generation system AWS migration.
 
-**Last Updated:** 2025-11-10
-**Phase:** Phase 0 - Foundations
+**Last Updated:** 2025-11-11 (Task 2.3 frontend architecture change)
+**Phase:** Phase 2 - Backend Abstraction
 **Region:** eu-west-2 (London, UK)
 **Account ID:** 275333454012
 
@@ -76,11 +76,16 @@ Complete architecture documentation for the pharmaceutical test generation syste
         │                            │                            │
         ▼                            ▼                            │
 ┌───────────────┐          ┌────────────────┐                    │
-│  S3: pharma-  │          │   ECS Fargate  │────────────────────┘
-│  frontend-eu  │          │                │
-│  Next.js      │          │  API Service   │
-│  Static Site  │          │  2vCPU/4GB     │
-└───────────────┘          │  1-4 tasks     │
+│  CloudFront   │          │   ECS Fargate  │────────────────────┘
+│  (CDN Cache)  │          │                │
+│               │          │  Frontend Svc  │
+│               │          │  1vCPU/2GB     │
+│               │◄─────────│  Next.js+API   │
+└───────────────┘          │  1-2 tasks     │
+                           │                │
+                           │  API Service   │
+                           │  2vCPU/4GB     │
+                           │  1-4 tasks     │
                            │                │
                            │  Worker Svc    │
                            │  4vCPU/8GB     │
@@ -118,8 +123,9 @@ Complete architecture documentation for the pharmaceutical test generation syste
 | **pharma-cloudtrail-logs-eu** | CloudTrail API call logs | AES256 + KMS | ✅ Enabled | 7 years (GAMP-5) | ❌ Blocked |
 | **pharma-config-logs-eu** | AWS Config configuration snapshots | AES256 | ✅ Enabled | 7 years (GAMP-5) | ❌ Blocked |
 | **pharma-test-output-compliance** | Application test generation outputs | AES256 | ✅ Enabled | 7 years (21 CFR Part 11) | ❌ Blocked |
-| **pharma-frontend-eu** (future) | Next.js static site | AES256 | ✅ Enabled | N/A | ✅ CloudFront only |
 | **pharma-tfstate-eu** | Terraform state files | AES256 | ✅ Enabled | Permanent | ❌ Blocked |
+
+**Note:** Frontend originally planned for S3 static hosting (`pharma-frontend-eu`) but now deployed via **ECS Fargate** (containerized Next.js) to support API routes required by Task 2.3 (LangFuse observability dashboard). See "Compute" costs for frontend container pricing.
 
 ### Bucket Policies
 
@@ -375,11 +381,12 @@ Complete architecture documentation for the pharmaceutical test generation syste
 
 **Permissions:**
 - ECR: Full access (push/pull images, manage repositories)
-- ECS: Deploy services, update task definitions
+- ECS: Deploy services, update task definitions (frontend, API, worker)
 - IAM: PassRole to ECS execution and task roles
-- S3: Deploy frontend to `pharma-frontend-eu`
 - Secrets Manager: Create/update `pharma-test-gen/*` secrets
 - CloudWatch Logs: View deployment logs
+
+**Note:** Frontend now deployed via ECS Fargate (containerized Next.js with API routes), not S3 static hosting.
 
 ### GitHub OIDC Provider (Task 0.4)
 
@@ -408,6 +415,17 @@ Complete architecture documentation for the pharmaceutical test generation syste
 **Image scanning:** Enabled (scan on push)
 **Encryption:** AES256
 **Lifecycle policy:** Keep last 10 images
+
+#### pharma-test-gen-frontend (Task 2.3)
+**Purpose:** Next.js frontend with API routes container images
+**URL:** `275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-frontend`
+**ARN:** `arn:aws:ecr:eu-west-2:275333454012:repository/pharma-test-gen-frontend` (future)
+**Status:** ⏸️ Planned (required for Task 4.1 deployment)
+**Image scanning:** Enabled (scan on push)
+**Encryption:** AES256
+**Lifecycle policy:** Keep last 10 images
+
+**Note:** Frontend now requires containerization due to Next.js API routes (Task 2.3 LangFuse integration)
 
 ---
 
@@ -480,6 +498,7 @@ No VPC resources yet - using AWS global services only.
 | Service | Configuration | Monthly Cost |
 |---------|--------------|--------------|
 | **Compute** | | |
+| ECS Fargate (Frontend) | 1 task × 1vCPU × 2GB × 24h (Task 2.3) | $40 |
 | ECS Fargate (API) | 2 tasks × 2vCPU × 4GB × 24h | $150 |
 | ECS Fargate (Worker) | 2 tasks × 4vCPU × 8GB × 12h avg | $250 |
 | LangFuse | 1 task × 1vCPU × 2GB × 24h | $50 |
@@ -501,9 +520,11 @@ No VPC resources yet - using AWS global services only.
 | **Queue & Secrets** | | |
 | SQS | 10M requests | $4 |
 | Secrets Manager | 5 secrets | $2.50 |
-| **Total (Production)** | | **~$737/month** |
+| **Total (Production)** | | **~$777/month** |
 
-**With optimizations (Fargate Spot, caching):** ~$500-600/month
+**Note:** Frontend cost increased by $40/month (ECS Fargate vs S3 static hosting) due to Task 2.3 requirement for API routes.
+
+**With optimizations (Fargate Spot, caching):** ~$540-640/month
 
 ---
 
@@ -626,7 +647,9 @@ No VPC resources yet - using AWS global services only.
 
 ---
 
-**Document Version:** 1.0
-**Last Review:** 2025-11-10
-**Next Review:** 2025-12-10 (monthly during migration)
-**Status:** Phase 0 In Progress
+**Document Version:** 1.1
+**Last Review:** 2025-11-11
+**Next Review:** 2025-12-11 (monthly during migration)
+**Status:** Phase 2 In Progress
+**Changelog:**
+- 2025-11-11: Updated frontend deployment from S3 static hosting to ECS Fargate (Task 2.3)

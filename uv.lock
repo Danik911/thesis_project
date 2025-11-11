@@ -1610,6 +1610,26 @@ wheels = [
 ]
 
 [[package]]
+name = "langfuse"
+version = "3.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "backoff" },
+    { name = "httpx" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-sdk" },
+    { name = "packaging" },
+    { name = "pydantic" },
+    { name = "requests" },
+    { name = "wrapt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7e/12/8813d38f49d13c3d9d9c25a6d9545e028ca2ed96071fcbc26a5cdf498769/langfuse-3.5.2.tar.gz", hash = "sha256:bfd94f6cd768129d004da812bb85a34d81c28c23e4d4c1fb3a29b086c94d4269", size = 188047, upload_time = "2025-09-28T14:14:43.262Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/c9/44189f008cac5f1bb252fb1a4f89dd3cf466f808d7f44eb56c8ed3c0319a/langfuse-3.5.2-py3-none-any.whl", hash = "sha256:51527aed5a3237410e587b04e07268382063435a4af2d53e7d9096a7b6535c94", size = 349012, upload_time = "2025-09-28T14:14:41.629Z" },
+]
+
+[[package]]
 name = "llama-cloud"
 version = "0.1.35"
 source = { registry = "https://pypi.org/simple" }
@@ -4243,6 +4263,7 @@ dependencies = [
     { name = "faiss-cpu" },
     { name = "httpx" },
     { name = "kaleido" },
+    { name = "langfuse" },
     { name = "llama-index" },
     { name = "llama-index-callbacks-arize-phoenix" },
     { name = "llama-index-core" },
@@ -4304,6 +4325,7 @@ requires-dist = [
     { name = "faiss-cpu", specifier = ">=1.7.4" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "kaleido", specifier = ">=1.0.0" },
+    { name = "langfuse", specifier = "==3.5.2" },
     { name = "llama-index", specifier = ">=0.11.0" },
     { name = "llama-index-callbacks-arize-phoenix", specifier = ">=0.5.1" },
     { name = "llama-index-core", specifier = ">=0.12.0" },
