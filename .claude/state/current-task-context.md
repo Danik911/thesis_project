@@ -1,77 +1,41 @@
 # Current Task Context
 
-## Status: Ready for Next Task
-
-**Last Completed Task:** 3.1 - Optimize Docker Multi-Stage Build
-**Completion Date:** 2025-11-15
-**Completion Status:** DONE WITH CAVEATS
+**Status:** Ready for next task
+**Last Updated:** 2025-11-15T18:00:00Z
 
 ---
 
-## Task 3.1 Summary
+## No Active Task
 
-**Implementation:** ✅ COMPLETE
-- Multi-stage Docker builds for API and worker
-- Non-root execution with Tini init system
-- Security scans passing (0 critical/high CVEs)
-- Health checks functional
-- Multi-architecture support (AMD64/ARM64)
+Task 3.2 (Compose Multi-Service Local Stack) completed successfully.
 
-**Critical Caveat:** ⚠️ Image Size Non-Compliance
-- **Current:** 558 MB per image
-- **Target:** <200 MB per image
-- **Gap:** 358 MB over target
-- **Root Cause:** Full dependency tree (~1.7 GB .venv with analytics libraries)
-- **Impact:** GAMP-5 validation package compliance risk
+**Previous Task Summary:**
+- All 4 services running (postgres, localstack, api, worker)
+- Database tables created with pgvector v0.8.1
+- SQS queues created (testgen-jobs, testgen-jobs-dlq)
+- Compliance violations remediated (NO FALLBACK LOGIC, hardcoded secrets)
 
-**Documentation:**
-- Completion summary: `.claude/state/results/task-3.1-completion-summary.md`
-- Workflow state: `.claude/state/prp-workflow-state.md`
-
-**Follow-up Required:**
-- Subtask 3.1.1: Dependency optimization (before Phase 4 ECS deployment)
-- Split dependencies into runtime-only extras
-- Target: <200 MB per image
+**Next Available Tasks:**
+- Task 3.3: Local Integration Testing
+- Task 3.1.1: Dependency Optimization (<200 MB target)
 
 ---
 
-## Next Available Tasks
+## Critical Reminders
 
-### Phase 3 - Containerization (Docker Compose + Load Testing)
-- **Task 3.2:** Compose Multi-Container Orchestration
-  - Dependencies: Task 3.1 ✅ (can proceed with current images)
-  - Status: Ready to start
+### Outstanding Actions
+⚠️ **ACTION REQUIRED:** Rotate exposed Langfuse API keys
+- Keys exposed in previous commit: `pk-lf-61bf3c13-*` and `sk-lf-b6b8a0e3-*`
+- Login to https://cloud.langfuse.com
+- Revoke compromised keys
+- Generate new keys
+- Add to `.env.development` (file is in .gitignore)
 
-- **Task 3.3:** Configure LangFuse Local Observability Stack
-  - Dependencies: Task 3.2
-  - Status: Blocked
-
-- **Task 3.4:** Perform Local Load Test & Capture Phoenix Spans
-  - Dependencies: Task 3.3
-  - Status: Blocked
-
-### Phase 4 - AWS Deployment
-- **Task 4.1:** Deploy ECS Fargate for API & Worker
-  - Dependencies: Tasks 3.1-3.4 (3.1 needs size optimization first)
-  - Status: Blocked (requires <200 MB images)
+### Task 3.1 Caveat
+Task 3.1 completed with caveat: Image size 558 MB vs <200 MB target
+- Requires Task 3.1.1 (Dependency Optimization) before Task 4.1 (ECS deployment)
+- Plan: Split dependencies, strip wheels, remove analytics libs
 
 ---
 
-## Notes
-
-The current 558 MB images are **functionally operational** and can be used for:
-- Local development and testing
-- Task 3.2 Docker Compose orchestration
-- Task 3.3 LangFuse integration
-- Task 3.4 Load testing
-
-However, **before Task 4.1 (ECS deployment)**, the images must be optimized to meet the <200 MB target to ensure:
-- Compliance with GAMP-5 validation package requirements
-- Optimal ECR pull times and Fargate cold start performance
-- Cost efficiency in production
-
-**Recommendation:** Proceed with Task 3.2 while scheduling dependency optimization as a parallel effort.
-
----
-
-**Last Updated:** 2025-11-15
+**Ready for:** `/prp 3.3` or other task execution

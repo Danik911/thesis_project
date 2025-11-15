@@ -236,6 +236,7 @@ examples/
 # Environment Variables
 .env.local
 .env.*.local
+.env.development  # Docker Compose development environment (Task 3.2)
 
 # Security
 *.pem

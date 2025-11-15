@@ -1,0 +1,304 @@
+# =============================================================================
+# Docker Compose Development Stack for Pharmaceutical Test Generation System
+# =============================================================================
+#
+# GAMP-5 Category 5 Development Environment
+#
+# This stack orchestrates 4 services for local development:
+# 1. postgres    - PostgreSQL 15 (mocks Aurora Data API)
+# 2. localstack  - LocalStack 3.x (mocks AWS SQS)
+# 3. api         - FastAPI application (port 8080)
+# 4. worker      - Background job processor
+#
+# Startup Sequence (enforced by depends_on with healthchecks):
+# 1. postgres starts → runs init.sql → becomes healthy (pg_isready)
+# 2. localstack starts → runs init.sh → creates SQS queues
+# 3. api starts (after postgres healthy + localstack started)
+# 4. worker starts (after postgres healthy + localstack started)
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up -d        # Start all services
+#   docker-compose -f docker-compose.dev.yml logs -f      # View logs
+#   docker-compose -f docker-compose.dev.yml down         # Stop services
+#   docker-compose -f docker-compose.dev.yml down --volumes  # Reset all data
+#
+# Architecture Decision: Matches examples/alex production reference
+# Compliance: ALCOA+ principles relaxed for development (no regulated data)
+#
+# =============================================================================
+
+version: '3.9'
+
+services:
+  # ===========================================================================
+  # PostgreSQL 15 - Mocks AWS Aurora Data API
+  # ===========================================================================
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: pharma-postgres-dev
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: testgen
+      # Postgres tuning for development (not production settings)
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+
+    # Healthcheck ensures database is ready before dependent services start
+    # This prevents "connection refused" errors in API and worker containers
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d testgen"]
+      interval: 10s        # Check every 10 seconds
+      timeout: 5s          # Fail if check takes >5s
+      start_period: 30s    # Grace period for Postgres initialization
+      retries: 5           # Mark unhealthy after 5 consecutive failures
+
+    volumes:
+      # Named volume for database persistence across restarts
+      # To reset: docker-compose -f docker-compose.dev.yml down --volumes
+      - postgres-data:/var/lib/postgresql/data
+
+      # Init script runs ONCE on first startup (when volume is empty)
+      # Creates tables, indexes, pgvector extension
+      - ./scripts/postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+
+    ports:
+      # Expose for local psql access and debugging
+      - "5432:5432"
+
+    networks:
+      - pharma-dev
+
+  # ===========================================================================
+  # LocalStack 3.x - Mocks AWS SQS
+  # ===========================================================================
+  localstack:
+    image: localstack/localstack:3
+    container_name: pharma-localstack-dev
+    restart: unless-stopped
+
+    environment:
+      # Only enable SQS service (minimal overhead)
+      SERVICES: sqs
+
+      # Match production AWS region (eu-west-2 London)
+      DEFAULT_REGION: eu-west-2
+
+      # Use 'path' strategy for Docker container access
+      # Queue URL format: http://localstack:4566/000000000000/queue-name
+      SQS_ENDPOINT_STRATEGY: path
+
+      # Enable debug logging for troubleshooting
+      DEBUG: 1
+
+      # Prevent LocalStack from contacting external services
+      DISABLE_EVENTS: 1
+
+    ports:
+      # LocalStack unified gateway (all AWS services)
+      - "4566:4566"
+
+    volumes:
+      # Named volume for queue persistence across restarts
+      # NOTE: Queue initialization handled by localstack-init service (see below)
+      - localstack-data:/var/lib/localstack
+
+    networks:
+      - pharma-dev
+
+  # ===========================================================================
+  # LocalStack Initializer - Creates SQS Queues
+  # ===========================================================================
+  localstack-init:
+    image: amazon/aws-cli:latest
+    container_name: pharma-localstack-init
+    depends_on:
+      localstack:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: eu-west-2
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        set -e  # Exit immediately on any error (NO FALLBACK LOGIC)
+
+        echo "Waiting for LocalStack to be ready..."
+        sleep 10
+
+        echo "Creating testgen-jobs queue..."
+        if ! aws --endpoint-url=http://localstack:4566 sqs create-queue \
+          --queue-name testgen-jobs \
+          --region eu-west-2 \
+          --attributes VisibilityTimeout=300,MessageRetentionPeriod=1209600; then
+          # Check if queue already exists (only acceptable failure)
+          if aws --endpoint-url=http://localstack:4566 sqs get-queue-url \
+            --queue-name testgen-jobs \
+            --region eu-west-2 >/dev/null 2>&1; then
+            echo "testgen-jobs queue already exists (verified)"
+          else
+            echo "ERROR: Failed to create testgen-jobs queue and queue does not exist" >&2
+            exit 1
+          fi
+        else
+          echo "testgen-jobs queue created successfully"
+        fi
+
+        echo "Creating testgen-jobs-dlq queue..."
+        if ! aws --endpoint-url=http://localstack:4566 sqs create-queue \
+          --queue-name testgen-jobs-dlq \
+          --region eu-west-2 \
+          --attributes MessageRetentionPeriod=1209600; then
+          # Check if queue already exists (only acceptable failure)
+          if aws --endpoint-url=http://localstack:4566 sqs get-queue-url \
+            --queue-name testgen-jobs-dlq \
+            --region eu-west-2 >/dev/null 2>&1; then
+            echo "testgen-jobs-dlq queue already exists (verified)"
+          else
+            echo "ERROR: Failed to create testgen-jobs-dlq queue and queue does not exist" >&2
+            exit 1
+          fi
+        else
+          echo "testgen-jobs-dlq queue created successfully"
+        fi
+
+        echo "All SQS queues verified/created"
+    networks:
+      - pharma-dev
+
+  # ===========================================================================
+  # FastAPI Application - Job Submission API
+  # ===========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      # Build for AMD64 (production parity with ECS Fargate)
+      # NOTE: On ARM64 hosts (Qualcomm Oryon), this runs via QEMU emulation
+      # For faster local builds, use: --build-arg BUILDPLATFORM=linux/arm64
+      args:
+        BUILDPLATFORM: linux/amd64
+
+    container_name: pharma-api-dev
+    restart: unless-stopped
+
+    # Load environment variables from .env.development
+    # CRITICAL: Do NOT use .env.local or production credentials
+    env_file: .env.development
+
+    # Override ENVIRONMENT variable to trigger .env.development loading
+    environment:
+      ENVIRONMENT: development
+
+    # Override CMD for development mode with auto-reload
+    # Production uses: uvicorn main.api.app:app --host 0.0.0.0 --port 8080
+    command: ["uvicorn", "main.api.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+
+    # Wait for dependencies before starting
+    depends_on:
+      postgres:
+        condition: service_healthy  # Wait for pg_isready to pass
+      localstack:
+        condition: service_started  # LocalStack has no healthcheck (starts fast)
+
+    ports:
+      - "8080:8080"  # FastAPI HTTP endpoint
+
+    volumes:
+      # DEVELOPMENT ONLY: Mount code for live reload
+      # Remove this in production (code is baked into image)
+      - ./main:/app/main:ro
+
+      # Shared volumes for storage adapter and vector store
+      - output-data:/app/output          # LocalStorageAdapter base path
+      - chroma-data:/app/chroma_db       # ChromaDB persistence
+
+    networks:
+      - pharma-dev
+
+    # Healthcheck (same as Dockerfile, but with longer start period)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s  # Longer grace period for --reload mode
+      retries: 3
+
+  # ===========================================================================
+  # Background Worker - Job Processor
+  # ===========================================================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        BUILDPLATFORM: linux/amd64
+
+    container_name: pharma-worker-dev
+    restart: unless-stopped
+
+    env_file: .env.development
+
+    environment:
+      ENVIRONMENT: development
+
+    # Worker CMD from Dockerfile: python -m main.api.worker
+    # No override needed (no --reload mode for workers)
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+
+    # No ports exposed (workers don't have HTTP endpoints)
+
+    volumes:
+      # DEVELOPMENT ONLY: Mount code for live updates
+      - ./main:/app/main:ro
+
+      # Shared volumes (same as API for storage adapter consistency)
+      - output-data:/app/output
+      - chroma-data:/app/chroma_db
+
+    networks:
+      - pharma-dev
+
+# =============================================================================
+# Named Volumes - Persist data across container restarts
+# =============================================================================
+volumes:
+  # PostgreSQL database files
+  # Contains: jobs table, rag_documents table, pgvector indexes
+  # Reset: docker-compose -f docker-compose.dev.yml down --volumes
+  postgres-data:
+    driver: local
+
+  # LocalStack state (SQS queues, messages)
+  # Contains: Queue metadata, in-flight messages
+  localstack-data:
+    driver: local
+
+  # LocalStorageAdapter output directory
+  # Contains: Uploaded URS files, generated test suite YAML files
+  output-data:
+    driver: local
+
+  # ChromaDB vector store
+  # Contains: RAG document embeddings, ChromaDB SQLite database
+  chroma-data:
+    driver: local
+
+# =============================================================================
+# Networks - Bridge network for inter-service communication
+# =============================================================================
+networks:
+  pharma-dev:
+    driver: bridge
+    # Services communicate via service names:
+    # - postgres:5432 (from API/worker)
+    # - localstack:4566 (from API/worker)
+    # - api:8080 (from worker, if needed)

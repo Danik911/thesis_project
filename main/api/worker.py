@@ -236,3 +236,55 @@ async def _simulate_job_processing(job: JobRecord) -> str:
 
     # Return mock result URI
     return f"file:///output/job_{job.job_id}/test_suite.md"
+
+
+if __name__ == "__main__":
+    """
+    Entry point when executed with: python -m main.api.worker
+
+    For Task 3.2 (Docker Compose), we only have placeholders.
+    The full worker will be implemented in Task 2.3 (Backend API).
+
+    This runs a simple heartbeat worker to validate Docker Compose orchestration.
+    """
+    import asyncio
+    import os
+    import time
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    logger.info("=== Pharmaceutical Test Generation Worker Starting ===")
+    logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'unknown')}")
+    logger.info(f"Database URL: {os.getenv('DATABASE_URL', 'not set')}")
+    logger.info(f"SQS Queue URL: {os.getenv('SQS_QUEUE_URL', 'not set')}")
+    logger.info("Worker placeholder running. Full implementation pending Task 2.3.")
+    logger.info("This validates Docker Compose orchestration for Task 3.2.")
+
+    async def placeholder_worker() -> None:
+        """Placeholder worker with heartbeat logging."""
+        try:
+            iteration = 0
+            while True:
+                iteration += 1
+                await asyncio.sleep(300)  # Sleep 5 minutes
+                logger.info(
+                    f"Worker heartbeat #{iteration}: Container running, "
+                    f"awaiting full implementation"
+                )
+
+        except asyncio.CancelledError:
+            logger.info("Worker received cancellation signal, shutting down gracefully")
+        except KeyboardInterrupt:
+            logger.info("Worker interrupted, shutting down gracefully")
+        except Exception as e:
+            logger.exception(f"Unexpected error in worker: {e}")
+            raise
+
+    try:
+        asyncio.run(placeholder_worker())
+    except KeyboardInterrupt:
+        logger.info("Worker shutdown complete")
