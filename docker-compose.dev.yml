@@ -79,8 +79,8 @@ services:
     restart: unless-stopped
 
     environment:
-      # Only enable SQS service (minimal overhead)
-      SERVICES: sqs
+      # Enable SQS and S3 services for RAG workflow testing
+      SERVICES: sqs,s3
 
       # Match production AWS region (eu-west-2 London)
       DEFAULT_REGION: eu-west-2

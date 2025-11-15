@@ -250,6 +250,11 @@ examples/
 # Phoenix tracing
 # phoenix_traces/  # Commented out to track Phoenix traces
 
+# Compliance evidence - trace exports (local development only)
+compliance_evidence/traces/*.json
+compliance_evidence/test_logs/*.txt
+compliance_evidence/test_logs/*.json
+
 # Logs - Be more specific about what to exclude
 # logs  # Commented out to track important logs
 # Exclude only sensitive or temporary logs

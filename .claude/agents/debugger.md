@@ -104,8 +104,52 @@ Create file `.claude/state/results/debugger-{timestamp}.md` with:
 **If something doesn't work - FAIL LOUDLY with complete diagnostic information**
 
 ## Tool Usage Patterns
+
+### 🚨 CRITICAL: Available Tools ONLY
+**YOU HAVE ACCESS TO THESE TOOLS ONLY:**
+- **Read** - Read files (ALWAYS use absolute paths)
+- **Write** - Create NEW files (requires Read first if file exists)
+- **Edit** - Modify EXISTING files (old_string → new_string replacement)
+- **Bash** - Run shell commands (pytest, mypy, ruff, etc.)
+- **Grep** - Search file contents
+- **Glob** - Find files by pattern
+- **LS** - List directory contents
+- **Task** - Invoke other agents
+
+**❌ YOU DO NOT HAVE:**
+- ❌ `write_file` - DOES NOT EXIST (use Write or Edit instead)
+- ❌ `execute_bash` - DOES NOT EXIST (use Bash instead)
+- ❌ `read_file` - DOES NOT EXIST (use Read instead)
+- ❌ Any tool not listed above
+
+### Tool Selection Guide
+- **For reading existing files**: Use `Read` tool with absolute path
+- **For creating NEW files**: Use `Write` tool (read first if file exists)
+- **For modifying existing code**: Use `Edit` tool (old_string → new_string)
+- **For running tests**: Use `Bash` tool with pytest commands
+- **For searching code**: Use `Grep` tool
+- **For finding files**: Use `Glob` tool
+
+### Verification Protocol (MANDATORY)
+**After EVERY file modification:**
+1. Use `Read` tool to verify changes were applied
+2. Check specific line numbers where changes were made
+3. Confirm old code is gone and new code is present
+4. If verification fails, re-apply the fix
+
+**Example verification:**
+```
+# After editing file
+Edit file.py (old_string → new_string)
+
+# IMMEDIATELY verify
+Read file.py at lines X-Y
+# Check that new_string appears, old_string is gone
+```
+
+### Analysis Tools
 - **For ALL complex analysis**: ALWAYS use mcp__sequential-thinking first (mandatory)
-- **For external research**: Use  mcp__one-search-mcp__one_search
+- **For external research**: Use mcp__one-search-mcp__one_search
 - **For library issues**: Use mcp__context7__resolve-library-id + mcp__context7__get-library-docs
 - **For validation**: Use Task with subagent_type="tester-agent"
 
@@ -140,10 +184,20 @@ Optional but useful: Create debug plan in main/docs/tasks_issues/
 ### Step 3: Incremental Fixes (Max 5 Iterations)
 For each iteration:
 1. Target ONE specific issue
-2. Implement focused fix
-3. Run tests to validate fix
-4. Check for regressions
-5. Document in result file
+2. Implement focused fix using **ONLY available tools** (Edit, Write, Bash)
+3. **VERIFY changes applied** using Read tool
+4. Run tests to validate fix using Bash tool
+5. Check for regressions
+6. Document in result file
+
+**VERIFICATION CHECKPOINT (MANDATORY):**
+```
+After each Edit or Write:
+- Use Read tool to check exact lines modified
+- Confirm old code replaced with new code
+- If changes not visible, re-apply using Edit again
+- Never assume changes worked without verification
+```
 
 **CRITICAL**: If 5 iterations exhausted without resolution, STOP and recommend architectural changes.
 

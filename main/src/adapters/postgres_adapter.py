@@ -58,9 +58,17 @@ class PostgresVectorStoreAdapter:
             self.table_name = table_name
             self.embed_dim = embed_dim
 
+            # Convert sync connection string to async for asyncpg driver
+            # postgresql://... → postgresql+asyncpg://...
+            async_connection_string = connection_string.replace(
+                "postgresql://",
+                "postgresql+asyncpg://"
+            )
+
             # Initialize pgvector store
             self.vector_store = PGVectorStore.from_params(
                 connection_string=connection_string,
+                async_connection_string=async_connection_string,
                 table_name=table_name,
                 embed_dim=embed_dim,
                 # HNSW index parameters (tuned for pharmaceutical use: 200-10,000 docs)
@@ -132,6 +140,16 @@ class PostgresVectorStoreAdapter:
             # Validate metadata
             self._validate_metadata(metadata)
 
+            # Validate documents (NO FALLBACK LOGIC: reject empty documents)
+            for i, doc in enumerate(documents):
+                if not doc.text or not doc.text.strip():
+                    raise ValueError(
+                        f"CRITICAL: Document at index {i} has empty text\n"
+                        f"NO FALLBACK LOGIC: Empty documents must be rejected\n"
+                        f"Document ID: {doc.doc_id or doc.id_ or 'N/A'}\n"
+                        f"Check: Ensure all documents have non-empty text content"
+                    )
+
             # Enrich documents with metadata
             for doc in documents:
                 doc.metadata.update(metadata)
@@ -189,9 +207,18 @@ class PostgresVectorStoreAdapter:
             List of retrieved nodes with similarity scores
 
         Raises:
+            ValueError: If query_text is empty
             RuntimeError: If query fails
         """
         try:
+            # Validate query (NO FALLBACK LOGIC: reject empty queries)
+            if not query_text or not query_text.strip():
+                raise ValueError(
+                    "CRITICAL: Query text cannot be empty\n"
+                    "NO FALLBACK LOGIC: Empty queries must be rejected\n"
+                    "Provide a non-empty query string"
+                )
+
             # Load index from vector store
             index = VectorStoreIndex.from_vector_store(
                 self.vector_store,
