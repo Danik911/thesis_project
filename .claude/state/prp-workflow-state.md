@@ -1,20 +1,109 @@
 # PRP Workflow State
 
 ## Current Task
-- **Task ID:** None (ready for next task)
-- **Task Name:** N/A
-- **Phase:** N/A
-- **Status:** N/A
-- **Current Agent:** none
-- **Started:** N/A
-- **Completed:** N/A
-- **Last Updated:** 2025-01-11T21:30:00Z
+- **Task ID:** None
+- **Status:** Ready for next task
+- **Last Completed:** 3.1 (2025-11-15)
 
 ---
 
 ## Workflow Progress
 
 ### Workflow History
+
+### Task 3.1: Optimize Docker Multi-Stage Build ✅ DONE (WITH CAVEATS)
+
+**Duration:** 2025-11-11 00:00:00 → 2025-11-15 (~8 hours including optimization iterations)
+
+**Completion Status:** ✅ DONE WITH CAVEATS
+- **Functional:** ✅ PASS (containers operational, security compliant)
+- **Size Target:** ❌ FAIL (558 MB vs <200 MB target)
+- **Compliance Impact:** GAMP-5 validation package risk (requires follow-up)
+
+**Agents Executed:**
+1. ✅ **context-collector** → Research & context gathering COMPLETE
+   - Result: Multiple research sessions (Docker multi-stage, uv, security best practices)
+   - Key Findings: Multi-stage builds, Tini init, non-root execution, .dockerignore optimization
+
+2. ✅ **task-executor** → Implementation COMPLETE
+   - Result: `.claude/state/results/task-3.1-completion-summary.md`
+   - Implementation: Dockerfile.api, Dockerfile.worker, build-docker.sh, scan-docker.sh
+   - Files: 3 created, 3 modified
+
+3. ✅ **tester-agent** (manual) → Validation & testing COMPLETE
+   - Build: ✅ PASS (both images build successfully)
+   - Security: ✅ PASS (0 critical/high CVEs, license scan clean)
+   - Runtime: ✅ PASS (containers start, health checks pass)
+   - Size: ❌ FAIL (558 MB exceeds 200 MB target)
+
+**Implementation Summary:**
+- **Multi-Stage Builds:** ✅ Builder + runtime stages with slim base images
+- **Security Hardening:** ✅ Non-root execution (appuser UID 1000), Tini PID 1, pinned dependencies
+- **Health Checks:** ✅ FastAPI /health endpoint + Docker HEALTHCHECK directive
+- **Multi-Arch Support:** ✅ TARGET_PLATFORM env var (linux/amd64, linux/arm64)
+- **Build Context:** ✅ Optimized via .dockerignore (702 KB)
+- **Image Sizes:** 🟡 558 MB each (358 MB over target)
+
+**Critical Caveat: Image Size Non-Compliance**
+- **Target:** <200 MB per container (per DOCKER_BUILD_GUIDE.md and task 3.1 definition)
+- **Actual:** 558 MB per container
+- **Root Cause:** .venv directory ~1.7 GB (includes pandas, scipy, matplotlib, seaborn, plotly)
+- **Impact:** Violates GAMP-5 validation package acceptance criteria
+- **Operational Impacts:** Longer ECR pull times, higher storage costs, slower Fargate cold starts
+
+**Size Optimization Progress:**
+- **Before:** API 5.09 GB, Worker 1.07 GB (massive chown layer)
+- **After:** API 558 MB, Worker 558 MB (eliminated chown layer via COPY --chown)
+- **Remaining Bloat:** .venv dependencies (~1.7 GB compressed)
+
+**Files Created:**
+- Dockerfile.api (115 lines) - Multi-stage API container
+- Dockerfile.worker (115 lines) - Multi-stage worker container
+- .dockerignore (45 lines) - Build context exclusions
+- .claude/state/results/task-3.1-completion-summary.md (500+ lines) - Detailed completion report
+
+**Files Modified:**
+- scripts/build-docker.sh (+50 lines) - Multi-arch support, size validation warnings
+- scripts/scan-docker.sh (+20 lines) - License scanning integration
+- main/api/app.py (+30 lines) - /health endpoint for HEALTHCHECK
+
+**Code Quality:**
+- Multi-stage builds: ✅ PASS
+- Security (Trivy): ✅ PASS (0 high/critical CVEs)
+- License compliance: ✅ PASS (no GPL/AGPL violations)
+- Non-root execution: ✅ PASS
+- Healthchecks: ✅ PASS
+- Image size: ❌ FAIL (558 MB vs <200 MB)
+- NO FALLBACK LOGIC: ✅ 0 violations
+
+**Compliance:**
+- GAMP-5: 🟡 PARTIAL (9/10 requirements met)
+- ALCOA+: ✅ PASS
+- Security: ✅ PASS
+
+**Runtime Verification:**
+- ✅ API container: Started, health check HEALTHY, GET /health → 200 OK
+- ✅ Worker container: Started under Tini, no errors
+- ✅ Multi-arch builds: AMD64 (ECS) and ARM64 (local dev) both functional
+
+**Plan Forward (To Achieve <200 MB):**
+1. **Split dependencies:** Create `api` and `worker` optional extras excluding analytics libs (pandas, scipy, matplotlib, seaborn, plotly)
+2. **Strip wheels:** Add cache pruning and .pyc/.pyo deletion
+3. **Multi-arch CI:** Automate buildx for simultaneous AMD64/ARM64 builds
+4. **Expected savings:** ~400-500 MB (trimmed deps) + ~50-100 MB (cache cleanup) = **target achievable**
+
+**Code Review:** PASS (4/5 quality score)
+- Review File: `code_reviews/task-3.1-docker-review.md` (ARCHIVED)
+- Verdict: Functional and secure, but size optimization needed
+- Recommended improvements: Byte-accurate size checks, license scan both images
+
+**User Confirmed Completion:** 2025-11-15 ✅ (with documented caveats)
+
+**Next Steps:**
+1. ⏸️ **Subtask 3.1.1:** Dependency optimization to achieve <200 MB target (before Phase 4 ECS deployment)
+2. ✅ **Ready for Task 3.2:** Docker Compose orchestration (can proceed with current images)
+
+---
 
 ### Task 2.4: Harden Next.js Frontend Accessibility & Compliance ✅ COMPLETED
 

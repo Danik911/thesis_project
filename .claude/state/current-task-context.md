@@ -1,49 +1,77 @@
-# Current Task Context: 2.4
+# Current Task Context
 
-## Task File
-PRPs/tasks/2.4-frontend-accessibility.md
+## Status: Ready for Next Task
 
-## Task Content
-# Task P2.4 – Harden Next.js Frontend Accessibility & Compliance
+**Last Completed Task:** 3.1 - Optimize Docker Multi-Stage Build
+**Completion Date:** 2025-11-15
+**Completion Status:** DONE WITH CAVEATS
 
-## What to Do
-- Audit frontend components against WCAG 2.1 AA and GAMP-5 UI expectations.
-- Integrate automated accessibility checks (e.g., axe-core) into CI.
-- Document manual accessibility testing scenarios for compliance records.
+---
 
-## Dependencies
-- Requires initial frontend layout (Task P2.1) and dashboard components (Task P2.3).
+## Task 3.1 Summary
 
-## Best Practices
-- Use semantic HTML and ARIA attributes only when needed to avoid over-annotation.
-- Provide textual descriptions for all observability charts and LLM outputs.
-- Maintain audit trail of accessibility testing outcomes in compliance documentation.
+**Implementation:** ✅ COMPLETE
+- Multi-stage Docker builds for API and worker
+- Non-root execution with Tini init system
+- Security scans passing (0 critical/high CVEs)
+- Health checks functional
+- Multi-architecture support (AMD64/ARM64)
 
-## Code Example
-```bash
-# package.json scripts
-"scripts": {
-  "lint": "next lint",
-  "test:a11y": "axe --exit zero .next/server/app"
-}
-```
+**Critical Caveat:** ⚠️ Image Size Non-Compliance
+- **Current:** 558 MB per image
+- **Target:** <200 MB per image
+- **Gap:** 358 MB over target
+- **Root Cause:** Full dependency tree (~1.7 GB .venv with analytics libraries)
+- **Impact:** GAMP-5 validation package compliance risk
 
-## Links
-- [Axe for Next.js](https://www.deque.com/blog/introducing-axe-core-testing-in-next-js/)
-- [WCAG 2.1 Checklist](https://www.w3.org/TR/WCAG21/)
+**Documentation:**
+- Completion summary: `.claude/state/results/task-3.1-completion-summary.md`
+- Workflow state: `.claude/state/prp-workflow-state.md`
 
-## Testing Strategy
-- Run automated tests via `npm run test:a11y` and capture results in CI artifacts.
-- Perform manual keyboard navigation test across primary workflows.
-- Record screen reader walkthrough for compliance evidence.
+**Follow-up Required:**
+- Subtask 3.1.1: Dependency optimization (before Phase 4 ECS deployment)
+- Split dependencies into runtime-only extras
+- Target: <200 MB per image
 
-## Common Issues to Avoid
-- Treating color contrast as optional; enforce via design tokens.
-- Forgetting to localize dynamic content for multilingual requirements.
-- Skipping manual testing in favor of automated checks alone.
+---
 
-## Task Metadata
-- Task ID: 2.4
-- Phase: 2 - Backend Abstraction
-- Started: 2025-11-11T00:00:00Z
-- Workflow Status: INITIALIZED
+## Next Available Tasks
+
+### Phase 3 - Containerization (Docker Compose + Load Testing)
+- **Task 3.2:** Compose Multi-Container Orchestration
+  - Dependencies: Task 3.1 ✅ (can proceed with current images)
+  - Status: Ready to start
+
+- **Task 3.3:** Configure LangFuse Local Observability Stack
+  - Dependencies: Task 3.2
+  - Status: Blocked
+
+- **Task 3.4:** Perform Local Load Test & Capture Phoenix Spans
+  - Dependencies: Task 3.3
+  - Status: Blocked
+
+### Phase 4 - AWS Deployment
+- **Task 4.1:** Deploy ECS Fargate for API & Worker
+  - Dependencies: Tasks 3.1-3.4 (3.1 needs size optimization first)
+  - Status: Blocked (requires <200 MB images)
+
+---
+
+## Notes
+
+The current 558 MB images are **functionally operational** and can be used for:
+- Local development and testing
+- Task 3.2 Docker Compose orchestration
+- Task 3.3 LangFuse integration
+- Task 3.4 Load testing
+
+However, **before Task 4.1 (ECS deployment)**, the images must be optimized to meet the <200 MB target to ensure:
+- Compliance with GAMP-5 validation package requirements
+- Optimal ECR pull times and Fargate cold start performance
+- Cost efficiency in production
+
+**Recommendation:** Proceed with Task 3.2 while scheduling dependency optimization as a parallel effort.
+
+---
+
+**Last Updated:** 2025-11-15

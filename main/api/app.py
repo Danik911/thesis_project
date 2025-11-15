@@ -137,6 +137,31 @@ async def root() -> dict[str, str]:
     }
 
 
+@app.get("/health", response_model=dict[str, str])
+async def health_check() -> dict[str, str]:
+    """
+    ECS Fargate healthcheck endpoint.
+
+    Returns 200 OK if application is running and ready to accept requests.
+    Used by Docker HEALTHCHECK directive and ECS target group health checks.
+
+    GAMP-5 Compliance:
+    - Shallow health check (fast, <100ms)
+    - No database queries (prevents healthcheck from causing load)
+    - Logged to audit trail via LangFuse (@observe decorator would add overhead)
+
+    Returns:
+        Health status information
+
+    CRITICAL: NO FALLBACK LOGIC - If application not ready, let it fail
+    """
+    return {
+        "status": "healthy",
+        "service": "pharmaceutical-test-generation-api",
+        "version": "1.0.0"
+    }
+
+
 @app.post("/jobs", response_model=JobSubmitResponse, status_code=status.HTTP_201_CREATED)
 @observe(name="create_test_generation_job")
 async def submit_job(

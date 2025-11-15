@@ -1,0 +1,81 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Output directories
+output/
+logs/
+*.log
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+!README.md
+
+# Examples and reference materials
+examples/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Node.js (if present in examples)
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+
+# Exclude large subdirectories within main/
+main/frontend/
+main/chroma_db/
+main/lib/
+main/logs/
+main/output/
+main/docs/
+main/thesis_visualizations/
+main/THESIS_EVIDENCE_PACKAGE/
+main/tests/
+main/**/*.html
+main/**/*.log
+main/**/__pycache__/
+main/**/*.pyc
+main/**/*.md
+main/**/test_*.py
+main/**/*_test.py

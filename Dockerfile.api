@@ -1,0 +1,125 @@
+# syntax=docker/dockerfile:1.9
+#
+# Multi-stage Docker build for FastAPI pharmaceutical test generation API
+#
+# GAMP-5 Compliance:
+# - Reproducible builds via pinned versions
+# - Non-root user execution for security
+# - Tini init system for graceful shutdown (ALCOA+ data integrity)
+# - Healthcheck for system monitoring (audit trail)
+#
+# Target: AWS ECS Fargate (linux/amd64)
+# Size Target: <200MB
+#
+
+# =============================================================================
+# Stage 1: Builder - Install dependencies and compile native extensions
+# =============================================================================
+FROM python:3.12-slim-bookworm AS builder
+
+WORKDIR /app
+
+# Install uv package manager (pinned version for reproducibility)
+COPY --from=ghcr.io/astral-sh/uv:0.9.8 /uv /bin/uv
+
+# Install build dependencies for compiling native extensions
+# - gcc: C compiler for psycopg2, cryptography, etc.
+# - libpq-dev: PostgreSQL development headers (for psycopg2 compilation)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc=4:12.2.* \
+    libpq-dev=15.* \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure uv for Docker environment
+# UV_COMPILE_BYTECODE=1: Pre-compile .pyc files for faster startup (~20% improvement)
+# UV_LINK_MODE=copy: Required for Docker (hard links not supported in multi-stage)
+# UV_PYTHON_DOWNLOADS=never: Use system Python from base image
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never
+
+# Copy dependency files FIRST (maximize cache hit rate)
+# These change less frequently than application code
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies with cache mount
+# --frozen: Fail if uv.lock out of sync (ensures reproducibility)
+# --no-install-project: Skip installing the project itself (just dependencies)
+# --no-dev: Exclude development dependencies (pytest, mypy, ruff)
+# Cache mount persists uv cache across builds (5min → 30sec rebuild time)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
+
+# Copy application code (changes most frequently - separate layer)
+COPY main/ ./main/
+COPY README.md ./
+
+# Install project itself (now that application code is present)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+# =============================================================================
+# Stage 2: Runtime - Minimal production image
+# =============================================================================
+FROM python:3.12-slim-bookworm
+
+WORKDIR /app
+
+# Install runtime dependencies ONLY (no build tools)
+# - libpq5: PostgreSQL client library (runtime for psycopg2)
+# - curl: For healthcheck endpoint testing
+# - tini: Init system for PID 1 (zombie reaping, signal forwarding)
+# - ca-certificates: HTTPS connections to AWS APIs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5=15.* \
+    curl=7.* \
+    tini=0.19.* \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security compliance before copying files
+# UID 1000: Predictable across environments for ECS IAM role mapping
+# -m: Create home directory
+RUN useradd -m -u 1000 appuser && \
+    chown appuser:appuser /app
+
+# Copy virtual environment from builder stage (already contains Python deps)
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+# Copy application code from builder stage
+COPY --from=builder --chown=appuser:appuser /app/main /app/main
+COPY --from=builder --chown=appuser:appuser /app/README.md /app/README.md
+
+# Switch to non-root user (GAMP-5 security requirement)
+USER appuser
+
+# Configure Python environment
+# PYTHONUNBUFFERED=1: Disable buffering for faster CloudWatch logs
+# PYTHONDONTWRITEBYTECODE=1: Skip .pyc writing (read-only filesystem)
+# PATH: Add virtual environment binaries to PATH
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+# Expose FastAPI port (ECS task definition will map this)
+EXPOSE 8080
+
+# Healthcheck for ECS Fargate
+# ECS monitors this to determine container health
+# --interval=30s: Check every 30 seconds (matches ECS default)
+# --timeout=5s: Mark unhealthy if no response in 5s
+# --start-period=10s: Grace period for app startup (uvicorn boot ~5-10s)
+# --retries=3: Mark unhealthy after 3 consecutive failures
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Tini as PID 1 for proper signal handling
+# - Reaps zombie processes (prevents PID table exhaustion)
+# - Forwards SIGTERM to application (graceful shutdown for ALCOA+ compliance)
+# - Ensures in-flight transactions complete before termination
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
+# Start FastAPI application
+# --host 0.0.0.0: Bind to all interfaces (required for Docker networking)
+# --port 8080: Match EXPOSE and HEALTHCHECK port
+CMD ["uvicorn", "main.api.app:app", "--host", "0.0.0.0", "--port", "8080"]

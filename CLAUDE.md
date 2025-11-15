@@ -56,6 +56,27 @@ Guidance for Claude Code when working with this pharmaceutical test generation t
 
 ---
 
+## 💻 Development Environment
+
+**Hardware:**
+- **CPU:** Qualcomm Oryon (ARM 64-bit architecture)
+- **OS:** Windows 11
+- **Virtualization:** WSL2 (Windows Subsystem for Linux)
+- **Docker:** Docker Desktop for Windows on ARM
+
+**Docker Platform Notes:**
+- **Local Development:** Use `--platform=linux/arm64` for native performance
+- **AWS Production:** Use `--platform=linux/amd64` for ECS Fargate (Intel-based)
+- **Emulation:** AMD64 images run via QEMU emulation on ARM (slower but functional)
+- **Build Strategy:** Build AMD64 images for production, ARM64 for local testing
+
+**WSL2 on ARM64:**
+- Docker Desktop works with WSL2 backend on Qualcomm Oryon processors
+- Native ARM64 containers run at full speed
+- AMD64 containers run via emulation (acceptable for testing, not ideal for development)
+
+---
+
 ## 🤖 Technology Stack
 
 ### Local Development
