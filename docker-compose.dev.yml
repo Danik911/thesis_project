@@ -185,17 +185,23 @@ services:
     container_name: pharma-api-dev
     restart: unless-stopped
 
-    # Load environment variables from .env.development
-    # CRITICAL: Do NOT use .env.local or production credentials
-    env_file: .env.development
+    # Load environment variables from .env.local (contains all API keys)
+    # CRITICAL: Do NOT commit .env.local or use production credentials in development
+    env_file: .env.local
 
     # Override ENVIRONMENT variable to trigger .env.development loading
     environment:
       ENVIRONMENT: development
 
-    # Override CMD for development mode with auto-reload
+    # Override CMD for development mode WITHOUT reload (WSL2 memory issues)
     # Production uses: uvicorn main.api.app:app --host 0.0.0.0 --port 8080
-    command: ["uvicorn", "main.api.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+    command:
+      - uvicorn
+      - main.api.app:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8080"
 
     # Wait for dependencies before starting
     depends_on:
@@ -203,6 +209,7 @@ services:
         condition: service_healthy  # Wait for pg_isready to pass
       localstack:
         condition: service_started  # LocalStack has no healthcheck (starts fast)
+
 
     ports:
       - "8080:8080"  # FastAPI HTTP endpoint
@@ -240,7 +247,7 @@ services:
     container_name: pharma-worker-dev
     restart: unless-stopped
 
-    env_file: .env.development
+    env_file: .env.local
 
     environment:
       ENVIRONMENT: development

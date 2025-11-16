@@ -1,0 +1,236 @@
+pharma-api-dev  | INFO:     Will watch for changes in these directories: ['/app']
+pharma-api-dev  | INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+pharma-api-dev  | INFO:     Started reloader process [7] using WatchFiles
+pharma-api-dev  | WARNING:root:Environment file not found: /app/.env.local
+pharma-api-dev  | INFO:     Started server process [9]
+pharma-api-dev  | INFO:     Waiting for application startup.
+pharma-api-dev  | ERROR:main.api.observability:Failed to initialize LangFuse client: AttributeError: 'Langfuse' object has no attribute 'trace'
+pharma-api-dev  |   Host: https://cloud.langfuse.com
+pharma-api-dev  |   Public Key: REPLACE_...
+pharma-api-dev  |   Verify credentials are valid and network connectivity is available.
+pharma-api-dev  | Traceback (most recent call last):
+pharma-worker-dev  | 2025-11-15 22:09:57,842 - __main__ - INFO - === Pharmaceutical Test Generation Worker Starting ===
+pharma-worker-dev  | 2025-11-15 22:09:57,853 - __main__ - INFO - Environment: development
+pharma-worker-dev  | 2025-11-15 22:09:57,854 - __main__ - INFO - Database URL: postgresql://postgres:***REDACTED***@postgres:5432/testgen
+pharma-worker-dev  | 2025-11-15 22:09:57,854 - __main__ - INFO - SQS Queue URL: http://localstack:4566/000000000000/testgen-jobs
+pharma-worker-dev  | 2025-11-15 22:09:57,854 - __main__ - INFO - Worker placeholder running. Full implementation pending Task 2.3.
+pharma-worker-dev  | 2025-11-15 22:09:57,854 - __main__ - INFO - This validates Docker Compose orchestration for Task 3.2.
+pharma-api-dev     |   File "/app/main/api/observability.py", line 78, in initialize
+pharma-api-dev     |     test_trace = self.client.trace(name="health_check_trace")
+pharma-api-dev     |                  ^^^^^^^^^^^^^^^^^
+pharma-api-dev     | AttributeError: 'Langfuse' object has no attribute 'trace'
+pharma-api-dev     | ERROR:main.api.app:Failed to initialize LangFuse: Failed to initialize LangFuse client: AttributeError: 'Langfuse' object has no attribute 'trace'
+pharma-api-dev     |   Host: https://cloud.langfuse.com
+pharma-api-dev     |   Public Key: REPLACE_...
+pharma-api-dev     |   Verify credentials are valid and network connectivity is available.. Continuing without observability.
+pharma-api-dev     | INFO:     Application startup complete.
+pharma-api-dev     | INFO:     127.0.0.1:51480 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     127.0.0.1:59582 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     127.0.0.1:37870 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     127.0.0.1:60796 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     127.0.0.1:51152 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     127.0.0.1:57702 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     127.0.0.1:36478 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     172.18.0.1:44442 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     172.18.0.1:44442 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     127.0.0.1:49880 - "GET /health HTTP/1.1" 200 OK
+pharma-api-dev     | INFO:     172.18.0.1:44484 - "GET /health HTTP/1.1" 200 OK
+pharma-localstack-init  | Waiting for LocalStack to be ready...
+pharma-localstack-init  | Creating testgen-jobs queue...
+pharma-localstack-init  | {
+pharma-localstack-init  |     "QueueUrl": "http://localhost.localstack.cloud:4566/queue/eu-west-2/000000000000/testgen-jobs"
+pharma-localstack-init  | }
+pharma-localstack-init  | testgen-jobs queue created successfully
+pharma-localstack-init  | Creating testgen-jobs-dlq queue...
+pharma-localstack-init  | {
+pharma-localstack-init  |     "QueueUrl": "http://localhost.localstack.cloud:4566/queue/eu-west-2/000000000000/testgen-jobs-dlq"
+pharma-localstack-init  | }
+pharma-localstack-init  | testgen-jobs-dlq queue created successfully
+pharma-localstack-init  | All SQS queues verified/created
+pharma-postgres-dev     | The files belonging to this database system will be owned by user "postgres".
+pharma-postgres-dev     | This user must also own the server process.
+pharma-postgres-dev     | 
+pharma-postgres-dev     | The database cluster will be initialized with locale "C".
+pharma-postgres-dev     | The default text search configuration will be set to "english".
+pharma-postgres-dev     | 
+pharma-postgres-dev     | Data page checksums are disabled.
+pharma-postgres-dev     | 
+pharma-postgres-dev     | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+pharma-postgres-dev     | creating subdirectories ... ok
+pharma-postgres-dev     | selecting dynamic shared memory implementation ... posix
+pharma-postgres-dev     | selecting default max_connections ... 100
+pharma-postgres-dev     | selecting default shared_buffers ... 128MB
+pharma-postgres-dev     | selecting default time zone ... Etc/UTC
+pharma-postgres-dev     | creating configuration files ... ok
+pharma-postgres-dev     | running bootstrap script ... ok
+pharma-postgres-dev     | performing post-bootstrap initialization ... ok
+pharma-postgres-dev     | syncing data to disk ... ok
+pharma-postgres-dev     | initdb: warning: enabling "trust" authentication for local connections
+pharma-postgres-dev     | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+pharma-postgres-dev     | 
+pharma-postgres-dev     | 
+pharma-postgres-dev     | Success. You can now start the database server using:
+pharma-postgres-dev     | 
+pharma-postgres-dev     |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+pharma-postgres-dev     | 
+pharma-postgres-dev     | waiting for server to start....2025-11-15 22:09:48.348 UTC [46] LOG:  starting PostgreSQL 15.15 (Debian 15.15-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+pharma-postgres-dev     | 2025-11-15 22:09:48.430 UTC [46] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+pharma-postgres-dev     | 2025-11-15 22:09:48.644 UTC [49] LOG:  database system was shut down at 2025-11-15 22:09:46 UTC
+pharma-postgres-dev     | 2025-11-15 22:09:48.774 UTC [46] LOG:  database system is ready to accept connections
+pharma-postgres-dev     |  done
+pharma-postgres-dev     | server started
+pharma-postgres-dev     | 2025-11-15 22:09:49.308 UTC [62] FATAL:  database "testgen" does not exist
+pharma-postgres-dev     | CREATE DATABASE
+pharma-postgres-dev     | 
+pharma-postgres-dev     | 
+pharma-postgres-dev     | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/01-init.sql
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  ==================================================
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  Pharmaceutical Test Generation - Database Init
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  ==================================================
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  Database: testgen
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  Environment: Development
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  GAMP-5 Category: 5 (Custom Software)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:34: NOTICE:  
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:46: NOTICE:  [1/3] Creating pgvector extension...
+pharma-postgres-dev     | CREATE EXTENSION
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:58: NOTICE:     ??? pgvector extension ready
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:74: NOTICE:  [2/3] Creating jobs table...
+pharma-postgres-dev     | CREATE TABLE
+pharma-postgres-dev     | CREATE INDEX
+pharma-postgres-dev     | CREATE INDEX
+pharma-postgres-dev     | CREATE INDEX
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:127: NOTICE:     ??? jobs table created with 3 indexes
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:139: NOTICE:  [3/3] Creating rag_documents table...
+pharma-postgres-dev     | CREATE TABLE
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:173: NOTICE:  ivfflat index created with little data
+pharma-postgres-dev     | DETAIL:  This will cause low recall.
+pharma-postgres-dev     | HINT:  Drop the index until the table has more data.
+pharma-postgres-dev     | CREATE INDEX
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | GRANT
+pharma-postgres-dev     | GRANT
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:178: NOTICE:     ??? rag_documents table created with vector index
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  ==================================================
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  Database Initialization Complete!
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  ==================================================
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  Tables Created:
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    ??? jobs (0 rows)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    ??? rag_documents (0 rows)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  Extensions:
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    ??? pgvector (vector similarity search)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  Indexes:
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    ??? idx_jobs_user_id (B-tree)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    ??? idx_jobs_status (B-tree)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    ??? idx_jobs_created_at (B-tree DESC)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    ??? idx_rag_documents_embedding (IVFFlat cosine)
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  API/Worker containers can now connect!
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:    Connection: postgresql://postgres:***REDACTED***@postgres:5432/testgen
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  
+pharma-postgres-dev     | psql:/docker-entrypoint-initdb.d/01-init.sql:223: NOTICE:  ==================================================
+pharma-postgres-dev     | DO
+pharma-postgres-dev     | 
+pharma-postgres-dev     | 
+pharma-postgres-dev     | waiting for server to shut down....2025-11-15 22:09:51.998 UTC [46] LOG:  received fast shutdown request
+pharma-postgres-dev     | 2025-11-15 22:09:52.020 UTC [46] LOG:  aborting any active transactions
+pharma-postgres-dev     | 2025-11-15 22:09:52.111 UTC [46] LOG:  background worker "logical replication launcher" (PID 58) exited with exit code 1
+pharma-postgres-dev     | 2025-11-15 22:09:52.120 UTC [47] LOG:  shutting down
+pharma-postgres-dev     | 2025-11-15 22:09:52.146 UTC [47] LOG:  checkpoint starting: shutdown immediate
+pharma-postgres-dev     | 2025-11-15 22:09:52.961 UTC [47] LOG:  checkpoint complete: wrote 1149 buffers (7.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.467 s, sync=0.212 s, total=0.842 s; sync files=313, longest=0.047 s, average=0.001 s; distance=5284 kB, estimate=5284 kB
+pharma-postgres-dev     | .2025-11-15 22:09:53.049 UTC [46] LOG:  database system is shut down
+pharma-postgres-dev     |  done
+pharma-postgres-dev     | server stopped
+pharma-postgres-dev     | 
+pharma-postgres-dev     | PostgreSQL init process complete; ready for start up.
+pharma-postgres-dev     | 
+pharma-postgres-dev     | 2025-11-15 22:09:53.402 UTC [1] LOG:  starting PostgreSQL 15.15 (Debian 15.15-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+pharma-postgres-dev     | 2025-11-15 22:09:53.412 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+pharma-postgres-dev     | 2025-11-15 22:09:53.413 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+pharma-postgres-dev     | 2025-11-15 22:09:53.450 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+pharma-postgres-dev     | 2025-11-15 22:09:53.541 UTC [72] LOG:  database system was shut down at 2025-11-15 22:09:52 UTC
+pharma-postgres-dev     | 2025-11-15 22:09:53.637 UTC [1] LOG:  database system is ready to accept connections
+pharma-localstack-dev   | LocalStack supervisor: starting
+pharma-localstack-dev   | LocalStack supervisor: localstack process (PID 14) starting
+pharma-localstack-dev   | 2025-11-15T22:09:46.866 DEBUG --- [  MainThread] l.utils.docker_utils       : Using SdkDockerClient. LEGACY_DOCKER_CLIENT: False, SDK installed: True
+pharma-localstack-dev   | 2025-11-15T22:09:46.869 DEBUG --- [  MainThread] l.u.c.docker_sdk_client    : Creating Docker SDK client failed: Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory')). If you want to use Docker as container runtime, make sure to mount the socket at /var/run/docker.sock
+pharma-localstack-dev   | 2025-11-15T22:09:48.417  WARN --- [  MainThread] l.services.internal        : Enabling diagnose endpoint, please be aware that this can expose sensitive information via your network.
+pharma-localstack-dev   | 2025-11-15T22:09:48.463 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.runtime.components.aws = <class 'localstack.aws.components.AwsComponents'>)
+pharma-localstack-dev   | 2025-11-15T22:09:48.464 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.runtime.components:aws
+pharma-localstack-dev   | 
+pharma-localstack-dev   | LocalStack version: 3.8.1
+pharma-localstack-dev   | LocalStack build date: 2024-10-08
+pharma-localstack-dev   | LocalStack build git hash: 529aba7d8
+pharma-localstack-dev   | 
+pharma-localstack-dev   | 2025-11-15T22:09:48.465 DEBUG --- [  MainThread] localstack.utils.run       : Executing command: rm -rf "/tmp/localstack"
+pharma-localstack-dev   | 2025-11-15T22:09:49.048 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start._patch_botocore_endpoint_in_memory = <function _patch_botocore_endpoint_in_memory at 0xf2ff90f00220>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.052 DEBUG --- [  MainThread] plux.runtime.manager       : plugin localstack.hooks.on_infra_start:_patch_botocore_endpoint_in_memory is disabled, reason: Load condition for plugin was false
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start._patch_botocore_json_parser = <function _patch_botocore_json_parser at 0xf2ff90ee3e20>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:_patch_botocore_json_parser
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start._patch_cbor2 = <function _patch_cbor2 at 0xf2ff90ee3f60>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:_patch_cbor2
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start._publish_config_as_analytics_event = <function _publish_config_as_analytics_event at 0xf2ff8fdc9940>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:_publish_config_as_analytics_event
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start._publish_container_info = <function _publish_container_info at 0xf2ff8fdc9d00>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:_publish_container_info
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start._run_init_scripts_on_start = <function _run_init_scripts_on_start at 0xf2ff8fd5f7e0>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:_run_init_scripts_on_start
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.apply_aws_runtime_patches = <function apply_aws_runtime_patches at 0xf2ff8fdca020>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:apply_aws_runtime_patches
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.apply_runtime_patches = <function apply_runtime_patches at 0xf2ff8fdca3e0>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:apply_runtime_patches
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.conditionally_enable_debugger = <function conditionally_enable_debugger at 0xf2ff8fdca840>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:conditionally_enable_debugger
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.delete_cached_certificate = <function delete_cached_certificate at 0xf2ff8fdcac00>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : plugin localstack.hooks.on_infra_start:delete_cached_certificate is disabled, reason: Load condition for plugin was false
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.deprecation_warnings = <function deprecation_warnings at 0xf2ff8fdcaa20>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:deprecation_warnings
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.register_cloudformation_deploy_ui = <function register_cloudformation_deploy_ui at 0xf2ff8fdcafc0>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:register_cloudformation_deploy_ui
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.register_custom_endpoints = <function register_custom_endpoints at 0xf2ff8fc83100>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:register_custom_endpoints
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.register_swagger_endpoints = <function register_swagger_endpoints at 0xf2ff8fb6c7c0>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:register_swagger_endpoints
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.setup_dns_configuration_on_host = <function setup_dns_configuration_on_host at 0xf2ff8fb6cae0>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:setup_dns_configuration_on_host
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.start_dns_server = <function start_dns_server at 0xf2ff8fb6c9a0>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:start_dns_server
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_start.validate_configuration = <function validate_configuration at 0xf2ff8fc82fc0>)
+pharma-localstack-dev   | 2025-11-15T22:09:49.056 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_start:validate_configuration
+pharma-localstack-dev   | 2025-11-15T22:09:50.666 DEBUG --- [  MainThread] localstack.dns.server      : Determined fallback dns: 127.0.0.11
+pharma-localstack-dev   | 2025-11-15T22:09:50.667 DEBUG --- [  MainThread] localstack.dns.server      : Starting DNS servers (tcp/udp port 53 on 0.0.0.0)...
+pharma-localstack-dev   | 2025-11-15T22:09:50.667 DEBUG --- [  MainThread] localstack.dns.server      : Adding host .*localhost.localstack.cloud pointing to LocalStack
+pharma-localstack-dev   | 2025-11-15T22:09:50.667 DEBUG --- [  MainThread] localstack.dns.server      : Adding host .*localhost.localstack.cloud with record DynamicRecord(record_type=<RecordType.A: 1>, record_id=None)
+pharma-localstack-dev   | 2025-11-15T22:09:50.667 DEBUG --- [  MainThread] localstack.dns.server      : Adding host .*localhost.localstack.cloud with record DynamicRecord(record_type=<RecordType.AAAA: 2>, record_id=None)
+pharma-localstack-dev   | 2025-11-15T22:09:50.674 DEBUG --- [-functhread1] localstack.dns.server      : DNS Server started
+pharma-localstack-dev   | 2025-11-15T22:09:51.877 DEBUG --- [  MainThread] localstack.dns.server      : DNS server startup finished.
+pharma-localstack-dev   | 2025-11-15T22:09:51.879 DEBUG --- [  MainThread] localstack.runtime.init    : Init scripts discovered: {BOOT: [], START: [], READY: [], SHUTDOWN: []}
+pharma-localstack-dev   | 2025-11-15T22:09:51.889 DEBUG --- [  MainThread] localstack.plugins         : Checking for the usage of deprecated community features and configs...
+pharma-localstack-dev   | 2025-11-15T22:09:51.889  WARN --- [  MainThread] localstack.deprecations    : DEFAULT_REGION is deprecated (since 0.12.7) and will be removed in upcoming releases of LocalStack! LocalStack now has full multi-region support. This option has no effect. Please remove it from your configuration.
+pharma-localstack-dev   | 2025-11-15T22:09:51.971 DEBUG --- [  MainThread] localstack.dns.server      : Overwriting container DNS server to point to localhost
+pharma-localstack-dev   | 2025-11-15T22:09:52.006 DEBUG --- [  MainThread] localstack.utils.ssl       : Attempting to download local SSL certificate file
+pharma-localstack-dev   | 2025-11-15T22:09:52.833 DEBUG --- [  MainThread] localstack.utils.ssl       : SSL certificate downloaded successfully
+pharma-localstack-dev   | 2025-11-15T22:09:52.889 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.runtime.server.twisted = <class 'localstack.runtime.server.plugins.TwistedRuntimeServerPlugin'>)
+pharma-localstack-dev   | 2025-11-15T22:09:52.890 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.runtime.server:twisted
+pharma-localstack-dev   | 2025-11-15T22:09:55.321 DEBUG --- [ady_monitor)] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_ready._run_init_scripts_on_ready = <function _run_init_scripts_on_ready at 0xf2ff8fd5f920>)
+pharma-localstack-dev   | 2025-11-15T22:09:55.321 DEBUG --- [ady_monitor)] plux.runtime.manager       : loading plugin localstack.hooks.on_infra_ready:_run_init_scripts_on_ready
+pharma-localstack-dev   | 2025-11-15T22:09:55.321 DEBUG --- [ady_monitor)] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.hooks.on_infra_ready.register_virtual_host_routes = <function register_virtual_host_routes at 0xf2ff8c58b920>)
+pharma-localstack-dev   | 2025-11-15T22:09:55.321 DEBUG --- [ady_monitor)] plux.runtime.manager       : plugin localstack.hooks.on_infra_ready:register_virtual_host_routes is disabled, reason: Load condition for plugin was false
+pharma-localstack-dev   | Ready.
+pharma-localstack-dev   | 2025-11-15T22:09:59.147 DEBUG --- [et.reactor-0] l.a.p.service_router       : building service catalog index cache file /var/lib/localstack/cache/service-catalog-3_8_1-1_35_34.pickle
+pharma-localstack-dev   | 2025-11-15T22:10:06.079 DEBUG --- [et.reactor-0] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.aws.provider.sqs:default = <function sqs at 0xf2ff667168e0>)
+pharma-localstack-dev   | 2025-11-15T22:10:06.080 DEBUG --- [et.reactor-0] plux.runtime.manager       : loading plugin localstack.aws.provider:sqs:default
+pharma-localstack-dev   | 2025-11-15T22:10:07.044 DEBUG --- [et.reactor-0] l.services.sqs.provider    : creating queue key=testgen-jobs attributes={'VisibilityTimeout': '300', 'MessageRetentionPeriod': '1209600'} tags=None
+pharma-localstack-dev   | 2025-11-15T22:10:07.046  INFO --- [et.reactor-0] localstack.request.aws     : AWS sqs.CreateQueue => 200
+pharma-localstack-dev   | 2025-11-15T22:10:10.023 DEBUG --- [et.reactor-1] l.services.sqs.provider    : creating queue key=testgen-jobs-dlq attributes={'MessageRetentionPeriod': '1209600'} tags=None
+pharma-localstack-dev   | 2025-11-15T22:10:10.025  INFO --- [et.reactor-1] localstack.request.aws     : AWS sqs.CreateQueue => 200

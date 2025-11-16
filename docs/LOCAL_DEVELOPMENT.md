@@ -99,6 +99,8 @@ Get OpenRouter API key from: https://openrouter.ai/keys
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
+> **Note:** Uvicorn hot reload is now opt-in to prevent watchfiles OOM issues on Windows/WSL2. Leave the default `UVICORN_RELOAD=0` in `.env.development` for stability, and flip it to `1` only when you need live reload and have >4GB free RAM.
+
 **Expected Output:**
 ```
 Creating network "pharma-dev" with driver bridge
@@ -357,7 +359,7 @@ docker-compose -f docker-compose.dev.yml exec localstack awslocal sqs receive-me
 **API/Worker Hot Reload:**
 1. Edit files in `main/` directory
 2. Code is mounted via volume (`./main:/app/main:ro`)
-3. API automatically reloads (uvicorn `--reload` flag)
+3. API reload is disabled by default; set `UVICORN_RELOAD=1` in `.env.development` before running `docker-compose up` if you need uvicorn `--reload` (ensure >4GB RAM available)
 4. Worker requires restart: `docker-compose -f docker-compose.dev.yml restart worker`
 
 **Dockerfile Changes:**

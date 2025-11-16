@@ -106,10 +106,10 @@ pytest main/tests/rag/test_retrieval.py::test_retrieval_returns_top_k -v
 
 ```bash
 # LocalStack configuration
-LOCALSTACK_ENDPOINT=http://localhost:4566  # Default
+LOCALSTACK_ENDPOINT=http://127.0.0.1:4566  # Default (avoids IPv6 issues on Windows)
 
 # PostgreSQL configuration
-VECTOR_STORE_CONNECTION_STRING=postgresql://postgres:devpassword@localhost:5432/testgen
+VECTOR_STORE_CONNECTION_STRING=postgresql://postgres:devpassword@127.0.0.1:5432/testgen
 
 # Environment mode (controls Phoenix tracing)
 ENVIRONMENT=local  # Enable observability

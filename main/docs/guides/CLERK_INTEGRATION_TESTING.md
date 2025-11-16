@@ -49,19 +49,38 @@ uv run uvicorn main.api.app:app --reload --port 8000
 
 **⚠️ Token Expiry:** Clerk session tokens expire after 60 seconds. Generate immediately before testing!
 
+Use the repository helper `scripts/get_clerk_token.py`, which calls the Clerk
+Backend API directly and prints the JWT:
+
 ```bash
-uv run python main/scripts/create_clerk_session.py user_35KgiAcvIC0tdtFvJUN1vDkrNYc
+python scripts/get_clerk_token.py --user-id user_35KgiAcvIC0tdtFvJUN1vDkrNYc --template server-token --print-session --output .tmp/clerk.jwt
 ```
 
 Output:
 ```
-Loaded environment variables from .env.local
-Creating session for user: user_35KgiAcvIC0tdtFvJUN1vDkrNYc
-
-Session created: sess_XXXXX
-
-JWT Token generated:
+session_id=sess_XXXXX
 eyJhbGciOiJSUzI1NiIs...
+```
+
+Need to confirm which JWT template slug to use? List everything Clerk knows about:
+
+```bash
+python scripts/get_clerk_token.py --list-templates
+```
+
+For PowerShell sessions, you can export `CLERK_TOKEN` automatically via:
+
+```powershell
+powershell -File scripts/Set-ClerkToken.ps1 -UserId user_35KgiAcvIC0tdtFvJUN1vDkrNYc -Template server-token -Persist
+```
+
+This wrapper runs the Python helper, captures the JWT, assigns `$env:CLERK_TOKEN`
+for the current shell, and (optionally) persists it to your user profile.
+
+Need to inspect templates from PowerShell? Use:
+
+```powershell
+powershell -File scripts/Set-ClerkToken.ps1 -ListTemplates
 ```
 
 ### Step 3: Test Authentication

@@ -1,0 +1,5 @@
+{
+    "status":  "healthy",
+    "service":  "pharmaceutical-test-generation-api",
+    "version":  "1.0.0"
+}

@@ -1,23 +1,36 @@
-# Current Task Context
+# Current Task Context: 3.4
 
-## Status
-**NO ACTIVE TASK** - Ready for next task assignment
+## Task File
+PRPs/tasks/3.4-devops-readiness.md
 
-## Last Completed Task
-**Task 3.3: Validate RAG Workflow Locally** ✅ COMPLETED 2025-11-15 21:05:00
+## Task Content
+# Task P3.4 – DevOps Readiness Review
 
-### Completion Summary
-- **Tests:** 20/20 PASS (100% success)
-- **Coverage:** RAG ingestion, vectorization, retrieval, e2e pipeline
-- **Compliance:** NO FALLBACK LOGIC = 0 violations, GAMP-5 PASS, ALCOA+ 9/9 PASS
-- **Artifacts:** test_logs/ + htmlcov/index.html
+## What to Do
+- Conduct checklist review covering Docker, Compose, local RAG tests, and documentation.
+- Validate onboarding guide enables new engineers to stand up local stack within 30 minutes.
+- Capture gaps and create follow-up tickets for Phase 4 execution.
 
-## Available Next Tasks (Phase 3)
-- **Task 3.4:** Load Testing with Locust (optional)
-- **Task 3.5:** LangFuse Local Observability Integration
+## Dependencies
+- Requires completion of Phase 3 technical tasks (P3.1–P3.3).
 
-## Notes
-- All Phase 3 containerization and local integration tasks complete
-- RAG workflow validated end-to-end with LocalStack S3 + PostgreSQL pgvector
-- Per-test UUID table isolation + Windows WSL2 retry hardening implemented
-- Ready to proceed with optional load testing or move to Phase 4 (AWS deployment)
+## Best Practices
+- Use pair walkthroughs to ensure instructions are clear, factoring in Windows/macOS differences.
+- Update `THESIS_EVIDENCE_PACKAGE` with local stack screenshots and logs.
+- Align readiness artifacts with GAMP-5 V&V expectations.
+
+## Testing Strategy
+- Run a timed onboarding exercise with a fresh git clone and document any friction.
+- Verify CI pipeline triggers lint/test on pull requests touching Docker/Compose files.
+- Ensure local stack logs reveal no sensitive data when shared for audit.
+
+## Common Issues to Avoid
+- Skipping documentation updates after tooling changes.
+- Assuming macOS scripts work unchanged on Windows developers.
+- Neglecting to store evidence in compliance repositories.
+
+## Task Metadata
+- Task ID: 3.4
+- Phase: 3 - Containerization & Local DevOps
+- Started: 2025-11-15T21:16:45Z
+- Workflow Status: INITIALIZED

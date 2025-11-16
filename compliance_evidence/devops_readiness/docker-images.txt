@@ -1,0 +1,9 @@
+REPOSITORY               TAG         IMAGE ID       CREATED         SIZE
+thesis_project-worker    latest      ff1f0a2daa5f   8 hours ago     2.5GB
+thesis_project-api       latest      4788e1d1b8e6   8 hours ago     2.5GB
+thesis-worker            fix         36e89b434fab   9 hours ago     2.64GB
+thesis-worker            latest      36e89b434fab   9 hours ago     2.64GB
+thesis-api               fix         e9a00284036d   9 hours ago     2.64GB
+thesis-api               latest      e9a00284036d   9 hours ago     2.64GB
+thesis-worker            e818c73     0f9595a8c747   10 hours ago    1.07GB
+thesis-api               e818c73     9034d3cc0f6e   10 hours ago    5.09GB

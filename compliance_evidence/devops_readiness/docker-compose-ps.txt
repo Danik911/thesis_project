@@ -1,0 +1,5 @@
+NAME                    IMAGE                         COMMAND                  SERVICE      CREATED              STATUS                        PORTS
+pharma-api-dev          thesis_project_fresh-api      "/usr/bin/tini -- uv???"   api          About a minute ago   Up About a minute (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+pharma-localstack-dev   localstack/localstack:3       "docker-entrypoint.sh"   localstack   About a minute ago   Up About a minute (healthy)   0.0.0.0:4566->4566/tcp, [::]:4566->4566/tcp
+pharma-postgres-dev     pgvector/pgvector:pg15        "docker-entrypoint.s???"   postgres     About a minute ago   Up About a minute (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+pharma-worker-dev       thesis_project_fresh-worker   "/usr/bin/tini -- py???"   worker       About a minute ago   Up About a minute             

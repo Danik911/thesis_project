@@ -38,10 +38,10 @@ logger = logging.getLogger(__name__)
 
 # Environment configuration
 ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
-LOCALSTACK_ENDPOINT = os.getenv("LOCALSTACK_ENDPOINT", "http://localhost:4566")
+LOCALSTACK_ENDPOINT = os.getenv("LOCALSTACK_ENDPOINT", "http://127.0.0.1:4566")
 POSTGRES_CONNECTION_STRING = os.getenv(
     "VECTOR_STORE_CONNECTION_STRING",
-    "postgresql://postgres:devpassword@localhost:5432/testgen"
+    "postgresql://postgres:devpassword@127.0.0.1:5432/testgen"
 )
 PGVECTOR_CONNECT_RETRIES = int(os.getenv("PGVECTOR_CONNECT_RETRIES", "8"))
 PGVECTOR_CONNECT_RETRY_DELAY = float(os.getenv("PGVECTOR_CONNECT_RETRY_DELAY", "1.0"))
