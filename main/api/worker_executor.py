@@ -23,7 +23,6 @@ from langfuse import observe
 from main.src.adapters.chroma_adapter import ChromaVectorStoreAdapter
 from main.src.adapters.local_adapter import LocalStorageAdapter
 from main.src.core.unified_workflow import UnifiedTestGenerationWorkflow
-from main.src.monitoring.phoenix_config import setup_phoenix
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class WorkflowExecutor:
     - Loading URS documents from storage
     - Executing UnifiedWorkflow end-to-end
     - Saving generated test suites
-    - Phoenix trace management
+    - Langfuse trace management
     - ALCOA+ compliant logging
 
     CRITICAL: NO FALLBACK LOGIC - All errors must fail explicitly
@@ -56,14 +55,6 @@ class WorkflowExecutor:
         """
         self.storage_adapter = storage_adapter or LocalStorageAdapter(base_path="/app/output")
         self.vector_adapter = vector_adapter
-
-        # Initialize Phoenix observability
-        try:
-            setup_phoenix()
-            logger.info("Phoenix observability initialized for workflow execution")
-        except Exception as e:
-            logger.error(f"Phoenix initialization failed: {e}. Traces may not be captured.")
-            # Don't fail - observability is important but not critical for execution
 
     @observe(name="execute_workflow", capture_input=True, capture_output=True)
     async def execute_workflow(

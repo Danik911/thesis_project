@@ -218,6 +218,7 @@ services:
       # DEVELOPMENT ONLY: Mount code for live reload
       # Code changes on host immediately visible in container (no rebuild needed)
       - ./main:/app/main:ro
+      - ./main/logs:/app/main/logs:rw    # ALCOA+ audit logs (writable overlay)
 
       # Shared volumes for storage adapter and vector store
       - output-data:/app/output          # LocalStorageAdapter base path
@@ -267,6 +268,7 @@ services:
       # DEVELOPMENT ONLY: Mount code for live updates
       # Code changes on host immediately visible in container (no rebuild needed)
       - ./main:/app/main:ro
+      - ./main/logs:/app/main/logs:rw    # ALCOA+ audit logs (writable overlay)
 
       # Shared volumes (same as API for storage adapter consistency)
       - output-data:/app/output

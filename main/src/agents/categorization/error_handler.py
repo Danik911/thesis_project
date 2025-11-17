@@ -73,7 +73,7 @@ class AuditLogEntry:
     original_category: GAMPCategory | None = None
     fallback_category: GAMPCategory = GAMPCategory.CATEGORY_5
     error: CategorizationError | None = None
-    confidence_score: float = 0.0
+    confidence_score: float = 0.3
     decision_rationale: str = ""
     regulatory_impact: str = "High - Manual review required"
 

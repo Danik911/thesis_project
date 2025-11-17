@@ -14,6 +14,7 @@ import traceback
 from typing import Any
 
 import chromadb
+from langfuse import observe
 from llama_index.core import Document, Settings, StorageContext, VectorStoreIndex
 from llama_index.core.schema import NodeWithScore
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -136,6 +137,7 @@ class ChromaVectorStoreAdapter:
                 f"Stack trace: {traceback.format_exc()}"
             ) from e
 
+    @observe(name="chromadb-rag-query", as_type="span")
     async def query(
         self,
         query_text: str,
@@ -143,7 +145,7 @@ class ChromaVectorStoreAdapter:
         metadata_filters: dict[str, Any] | None = None
     ) -> list[NodeWithScore]:
         """
-        Query ChromaDB for similar documents.
+        Query ChromaDB for similar documents with Langfuse traceability.
 
         WARNING: ChromaDB metadata filtering has poor performance at scale.
         Over-fetches results (2x top_k) to compensate for post-filtering.
@@ -159,6 +161,10 @@ class ChromaVectorStoreAdapter:
         Raises:
             RuntimeError: If query fails
         """
+        # Note: get_current_observation() not available in this langfuse version
+        # Langfuse @observe decorator handles observation context automatically
+        obs = None
+
         try:
             # Load index from vector store
             index = VectorStoreIndex.from_vector_store(
@@ -208,6 +214,14 @@ class ChromaVectorStoreAdapter:
                 f"  Filters: {metadata_filters}\n"
                 f"  Collection: {self.collection_name}"
             )
+
+            # Log output to Langfuse
+            if obs:
+                avg_score = sum(r.score for r in results) / len(results) if results else 0.0
+                obs.update(output={
+                    "result_count": len(results),
+                    "avg_relevance_score": avg_score
+                })
 
             return results
 

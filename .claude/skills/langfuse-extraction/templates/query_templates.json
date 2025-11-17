@@ -1,0 +1,26 @@
+{
+  "recent_traces_24h": {
+    "description": "Get traces from last 24 hours",
+    "command": "python scripts/extract_traces.py --hours 24 --output recent.json"
+  },
+  "user_audit_trail": {
+    "description": "Generate ALCOA+ audit trail for specific user",
+    "command": "python scripts/generate_audit_trail.py --user-id USER_ID --output audit.json"
+  },
+  "session_traces": {
+    "description": "Get all traces for specific session",
+    "command": "python scripts/extract_traces.py --user-id USER_ID --session-id JOB_ID --output session.json"
+  },
+  "detailed_trace_investigation": {
+    "description": "Investigate specific trace with all spans",
+    "command": "python scripts/extract_traces.py --trace-id TRACE_ID --detailed --output trace_detail.json"
+  },
+  "pharmaceutical_traces_only": {
+    "description": "Get only pharmaceutical-tagged traces",
+    "command": "python scripts/extract_traces.py --hours 168 --tags pharmaceutical gamp5 --output pharma.json"
+  },
+  "export_to_csv": {
+    "description": "Export traces to pandas CSV",
+    "command": "python scripts/export_to_dataframe.py --output traces.csv"
+  }
+}

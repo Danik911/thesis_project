@@ -71,6 +71,16 @@ async def process_job_worker(
                     job_queue.task_done()
                     continue
 
+                # CRITICAL: Skip jobs that already failed in previous run
+                # Prevents infinite retry loop on container restart
+                if job.status == JobStatus.FAILED:
+                    logger.info(
+                        f"[RETRY-STOP] Job {job_id} already marked FAILED "
+                        f"(retry_count: {job.retry_count}/{job.max_retries}). Skipping."
+                    )
+                    job_queue.task_done()
+                    continue
+
                 # Update status to PROCESSING
                 job.status = JobStatus.PROCESSING
                 job.started_at = datetime.now(UTC)
@@ -168,9 +178,27 @@ async def _process_job_with_retries(
     - Attempt 3: After 2 seconds
     - Attempt 4: After 4 seconds
     - Give up after 3 retries (4 total attempts)
+
+    CRITICAL: Reads existing retry_count from job record to prevent infinite loops
+    on container restart or function re-invocation.
     """
-    retry_count = 0
+    # CRITICAL FIX: Initialize from job record, not from 0
+    # Prevents infinite retry loop if function called multiple times
+    retry_count = job.retry_count
     max_retries = job.max_retries
+
+    logger.info(
+        f"[RETRY] Job {job.job_id} starting retry logic: "
+        f"status={job.status}, retry_count={retry_count}/{max_retries}"
+    )
+
+    # Safety check: If job already exceeded retries, fail immediately
+    if retry_count > max_retries:
+        logger.error(
+            f"[RETRY-STOP] Job {job.job_id} already exceeded max retries "
+            f"({retry_count}/{max_retries}). Failing immediately."
+        )
+        return False
 
     while retry_count <= max_retries:
         try:
@@ -209,19 +237,29 @@ async def _process_job_with_retries(
 
             if retry_count > max_retries:
                 logger.error(
-                    f"Job {job.job_id} failed after {max_retries} retries: {e}"
+                    f"[RETRY-STOP] Job {job.job_id} FAILED permanently after "
+                    f"{retry_count} retries (max: {max_retries}). Error: {e}"
                 )
-                return False  # Failure
+                logger.info(
+                    f"[RETRY-STOP] Job {job.job_id} will be marked FAILED and "
+                    f"will NOT be retried again."
+                )
+                return False  # Failure - job marked FAILED in caller
 
             # Exponential backoff: 1s, 2s, 4s
             backoff_delay = 2 ** (retry_count - 1)
             logger.warning(
-                f"Job {job.job_id} retry {retry_count}/{max_retries} "
+                f"[RETRY] Job {job.job_id} retry {retry_count}/{max_retries} "
                 f"after {backoff_delay}s: {e}"
             )
             await asyncio.sleep(backoff_delay)
 
-    return False  # Should not reach here, but handle gracefully
+    # Should not reach here (loop exits via return statements)
+    logger.error(
+        f"[RETRY-STOP] Job {job.job_id} exited retry loop unexpectedly. "
+        f"Final retry_count: {retry_count}/{max_retries}"
+    )
+    return False
 
 
 async def _execute_workflow(job: JobRecord, executor: WorkflowExecutor) -> dict[str, Any]:

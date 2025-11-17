@@ -66,6 +66,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
+from langfuse import observe
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
@@ -1213,6 +1214,7 @@ def _estimate_validation_effort(category: GAMPCategory) -> str:
     return effort_mapping.get(category, "Effort unknown - expert consultation required")
 
 
+@observe(name="gamp5-categorization-agent", as_type="span")
 def categorize_with_pydantic_structured_output(
     llm: LLM,
     urs_content: str,
@@ -1220,24 +1222,28 @@ def categorize_with_pydantic_structured_output(
     error_handler: CategorizationErrorHandler | None = None
 ) -> GAMPCategorizationEvent:
     """
-    Categorize URS using direct LLM calls with robust parsing for OSS model compatibility.
-    
+    Categorize URS using direct LLM calls with robust parsing for OSS model compatibility with Langfuse traceability.
+
     This approach bypasses LLMTextCompletionProgram's model validation to support
     both OpenAI and OpenRouter/OSS models through direct LLM calls with JSON parsing.
-    
+
     Enhanced with comprehensive audit trail logging for 100% regulatory compliance.
-    
+
     Args:
         llm: LLM instance to use for categorization
         urs_content: URS document content
         document_name: Document identifier for logging
         error_handler: Optional error handler for compliance tracking
-        
+
     Returns:
         GAMPCategorizationEvent with categorization result
     """
     if error_handler is None:
         error_handler = CategorizationErrorHandler()
+
+    # Note: get_current_observation() not available in this langfuse version
+    # Langfuse @observe decorator handles observation context automatically
+    obs = None
 
     # Initialize comprehensive audit trail logging
     from datetime import UTC, datetime
@@ -1421,6 +1427,14 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
             "validation_effort": _estimate_validation_effort(gamp_category),
             "analysis_method": "LLMTextCompletionProgram with Pydantic validation"
         }
+
+        # Log output to Langfuse
+        if obs:
+            obs.update(output={
+                "gamp_category": result.category,
+                "confidence_score": result.confidence_score,
+                "review_required": requires_review
+            })
 
         return GAMPCategorizationEvent(
             gamp_category=gamp_category,

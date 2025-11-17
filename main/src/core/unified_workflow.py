@@ -23,11 +23,13 @@ Workflow Flow:
 
 import logging
 import sys
+import yaml
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from langfuse import observe
 from llama_index.core.llms import LLM
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
 
@@ -156,18 +158,21 @@ async def show_progress_during_wait(coro, timeout, operation_name="Operation", a
 
 # Safe context management functions for preventing state failures
 # Using ctx.store for persistent cross-workflow state management
-async def safe_context_get(ctx: Context, key: str, default=None):
+# Sentinel value to distinguish "no default provided" from "default=None"
+_NO_DEFAULT = object()
+
+async def safe_context_get(ctx: Context, key: str, default=_NO_DEFAULT):
     """
     Safe context retrieval with persistent storage and explicit error handling.
-    
+
     Args:
         ctx: Workflow context
         key: Context key to retrieve
-        default: Default value if key not found or error occurs
-        
+        default: Default value if key not found or error occurs (can be None)
+
     Returns:
         Retrieved value or default
-        
+
     Raises:
         RuntimeError: If critical state retrieval fails with no fallback allowed
     """
@@ -181,10 +186,13 @@ async def safe_context_get(ctx: Context, key: str, default=None):
             # ENHANCED: Log value type for debugging complex objects
             logger.debug(f"[CTX] Context retrieval successful for key {key}, type: {type(value)}")
             return value
-        if default is not None:
+
+        # Check if default was explicitly provided (even if None)
+        if default is not _NO_DEFAULT:
             logger.debug(f"[CTX] Context key {key} not found, returning default: {default}")
             return default
-        # NO FALLBACKS - explicit failure for critical state
+
+        # NO FALLBACKS - explicit failure for critical state when no default provided
         logger.error(f"[CRITICAL] Context key '{key}' not found in persistent store and no default provided")
 
         # ENHANCED: Add context diagnosis for debugging
@@ -569,6 +577,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             return False
 
     @step
+    @observe(name="unified-workflow-execution", as_type="span")
     async def start_unified_workflow(
         self,
         ctx: Context,
@@ -576,14 +585,19 @@ class UnifiedTestGenerationWorkflow(Workflow):
     ) -> URSIngestionEvent:
         """
         Start the unified workflow with document ingestion.
-        
+
         Args:
             ctx: Workflow context
             ev: Start event with document path
-            
+
         Returns:
             URSIngestionEvent to begin document processing
         """
+        # Set trace context for job attribution
+        # Note: Langfuse @observe decorator handles trace context automatically
+        # get_current_trace() not available in this langfuse version
+        pass
+
         # Check user access permission for test generation
         if not self._check_user_access("CREATE_TESTS"):
             raise PermissionError("Access denied: User lacks CREATE_TESTS permission for workflow execution")
@@ -1672,6 +1686,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # Check for human consultation data in context
             consultation_result = await safe_context_get(ctx, "consultation_result", None)
 
+            if consultation_result is None:
+                # No consultation required - typically Category 3 (non-configured products)
+                self.logger.info(
+                    "[SIGNATURE] No consultation required for Category 3 (non-configured product). "
+                    "Skipping consultation result processing."
+                )
+
             if consultation_result:
                 # Human consultation occurred - use human operator data for signature
                 operator_name = consultation_result["operator_name"]
@@ -1949,21 +1970,27 @@ class UnifiedTestGenerationWorkflow(Workflow):
             raise
 
     @step
+    @observe(name="oq-test-generation", as_type="span")
     async def complete_workflow(
         self,
         ctx: Context,
         ev: OQTestSuiteEvent
     ) -> StopEvent:
         """
-        Complete the unified workflow and return final results.
-        
+        Complete the unified workflow and return final results with OQ test generation traceability.
+
         Args:
             ctx: Workflow context
             ev: OQTestSuiteEvent with generated test suite
-            
+
         Returns:
             StopEvent with comprehensive workflow results
         """
+        # Get current observation for traceability
+        # Note: get_current_observation() not available in this langfuse version
+        # Langfuse @observe decorator handles observation context automatically
+        obs = None
+
         # Get all stored results using safe context operations
         workflow_start_time = await safe_context_get(ctx, "workflow_start_time", None)
         document_path = await safe_context_get(ctx, "document_path", "unknown")
@@ -1980,6 +2007,16 @@ class UnifiedTestGenerationWorkflow(Workflow):
             "review_required": ev.test_suite.review_required,
             "generation_successful": ev.generation_successful
         }
+
+        # Log generation start to Langfuse
+        if obs:
+            obs.update(metadata={
+                "oq.gamp_category": ev.test_suite.gamp_category,
+                "oq.required_count": len(ev.test_suite.test_cases),
+                "oq.strategy": ev.test_suite.validation_approach,
+                "oq.suite_id": ev.test_suite.suite_id,
+                "workflow_session_id": self._workflow_session_id
+            })
 
         # CRITICAL FIX: Save test suite to file
         try:
@@ -2015,6 +2052,22 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "generation_method": ev.test_suite.generation_method
             }
 
+            # Serialize test suite to YAML for persistence (worker expects this format)
+            test_suite_dict: dict[str, Any] = ev.test_suite.model_dump(
+                mode='json',
+                exclude_none=True
+            )
+
+            # Serialize to YAML format for worker artifact storage
+            test_suite_yaml: str = yaml.dump(
+                test_suite_dict,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False
+            )
+
+            self.logger.info(f"Serialized test suite to YAML ({len(test_suite_yaml)} characters)")
+
             # Save test suite to JSON file
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(test_suite_data, f, indent=2, default=str)
@@ -2026,6 +2079,9 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # Add file info to oq_results for tracking
             oq_results["output_file"] = str(output_file)
             oq_results["file_saved"] = True
+
+            # Store YAML serialization for worker artifact persistence
+            oq_results["test_suite_yaml"] = test_suite_yaml
 
             # Add electronic signature for test generation (21 CFR Part 11)
             config = get_config()
@@ -2199,6 +2255,20 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # Additional workflow results
             "workflow_results": ev.workflow_results if hasattr(ev, "workflow_results") else None
         }
+
+        # Add test suite YAML for worker artifact persistence (top-level key)
+        # If serialization failed in try block above, this will raise KeyError explicitly
+        final_results["test_suite"] = oq_results["test_suite_yaml"]
+
+        # Log generation completion to Langfuse
+        if obs:
+            obs.update(output={
+                "test_count": len(ev.test_suite.test_cases),
+                "test_suite_present": "test_suite" in final_results,
+                "test_suite_size_bytes": len(oq_results["test_suite_yaml"]) if "test_suite_yaml" in oq_results else 0,
+                "status": status,
+                "workflow_duration_seconds": total_time.total_seconds() if total_time else 0.0
+            })
 
         self.logger.info(f"[COMPLETE] Unified workflow completed with status: {status}")
         if total_time:

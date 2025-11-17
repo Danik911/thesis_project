@@ -15,6 +15,7 @@ from typing import Any
 from uuid import uuid4
 
 import psutil
+from langfuse import observe
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
 
 from src.agents.oq_generator.generator_v2 import OQTestGeneratorV2
@@ -163,23 +164,28 @@ class OQGenerationWorkflow(Workflow):
         return generation_event
 
     @step
+    @observe(name="oq-test-case-generation", as_type="span")
     async def generate_oq_tests(
         self,
         ctx: Context,
         ev: OQTestGenerationEvent
     ) -> OQTestSuiteEvent | ConsultationRequiredEvent:
         """
-        Generate OQ test suite with comprehensive traceability.
-        
+        Generate OQ test suite with comprehensive traceability and Langfuse instrumentation.
+
         Args:
             ctx: Workflow context
             ev: OQ test generation event
-            
+
         Returns:
             OQTestSuiteEvent on success, ConsultationRequiredEvent if intervention needed
         """
         step_start = time.time()
         logger.info(f"{TRACE_PREFIX} [Workflow {self.workflow_id}] STEP 2/3: generate_oq_tests")
+
+        # Note: get_current_observation() not available in this langfuse version
+        # Langfuse @observe decorator handles observation context automatically
+        obs = None
 
         # Resource tracking
         process = psutil.Process()
@@ -208,6 +214,15 @@ class OQGenerationWorkflow(Workflow):
                 self.step_timings["generate_oq_tests"] = step_duration
                 logger.info(f"{TRACE_PREFIX} OQ test suite generated successfully in {step_duration:.2f}s")
                 logger.info(f"{BATCH_PREFIX} Generation summary: {len(self.batch_progress)} batches processed")
+
+                # Log output to Langfuse
+                if obs:
+                    obs.update(output={
+                        "test_count": len(result.test_suite.test_cases),
+                        "coverage_percentage": result.test_suite.coverage_percentage,
+                        "generation_duration_seconds": step_duration
+                    })
+
                 return result
             # Fallback: create consultation event
             logger.error("Unexpected result type from OQ generation")

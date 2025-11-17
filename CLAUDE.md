@@ -503,6 +503,131 @@ When implementing frontend/infrastructure tasks:
 
 ---
 
+## 🎨 Custom Skills
+
+**Location**: `.claude/skills/` - Specialized skills for pharmaceutical observability workflows.
+
+### Langfuse Observability Skills (3 Skills)
+
+**Purpose**: Comprehensive Langfuse Cloud (EU) integration for pharmaceutical traceability, replacing Phoenix with production-ready observability.
+
+#### langfuse-integration
+**Use**: Replace Phoenix with Langfuse Cloud instrumentation
+
+**Capabilities**:
+- Add `@observe` decorators to functions and workflows
+- Configure LlamaIndex LangfuseCallbackHandler
+- Migrate Phoenix spans to Langfuse equivalently
+- Inject GAMP-5 and ALCOA+ compliance attributes
+- Remove Phoenix dependencies cleanly
+- Validate integration with health checks
+
+**When to invoke**:
+- Implementing Task 2.3 (LangFuse Integration)
+- Migrating from Phoenix to production observability
+- Adding traceability to new pharmaceutical workflows
+
+**Invocation**: Agents automatically use this skill when working on observability integration tasks.
+
+**Key files**:
+- `SKILL.md` - Complete migration workflow (6 phases)
+- `reference/decorator-patterns.md` - `@observe` usage examples
+- `reference/phoenix-migration-guide.md` - Side-by-side API comparison
+- `reference/compliance-attributes.md` - GAMP-5/ALCOA+ schemas
+- `scripts/validate_integration.py` - Health check script
+
+---
+
+#### langfuse-extraction
+**Use**: Extract traces/logs from Langfuse Cloud API for debugging and audit trails
+
+**Capabilities**:
+- Extract traces by time range (last N hours)
+- Query by user_id, session_id, tags
+- Generate ALCOA+ compliant audit trails
+- Export to pandas DataFrame/CSV for analysis
+- Extract detailed observations with token usage/costs
+
+**When to invoke**:
+- Investigating production workflow failures
+- Generating compliance documentation for regulatory audits
+- Analyzing LLM costs and performance metrics
+- Debugging specific user sessions
+
+**Invocation**: Agents automatically use this skill when extracting observability data.
+
+**Key files**:
+- `SKILL.md` - API extraction workflows (4 phases)
+- `scripts/extract_traces.py` - CLI tool for trace extraction
+- `scripts/generate_audit_trail.py` - ALCOA+ report generator
+- `scripts/export_to_dataframe.py` - Pandas export utility
+- `reference/api-reference.md` - Langfuse REST API docs
+- `templates/query_templates.json` - Common query patterns
+
+---
+
+#### langfuse-dashboard
+**Use**: Automate Langfuse Cloud dashboard interactions via Playwright MCP
+
+**Capabilities**:
+- Capture dashboard screenshots for documentation
+- Extract metrics from dashboard DOM for monitoring
+- Navigate to specific traces for visual investigation
+- Filter traces by tags (pharmaceutical, gamp5)
+- Create compliance documentation with screenshots
+
+**When to invoke**:
+- Documenting workflows with dashboard screenshots
+- Monitoring dashboard metrics for alerting
+- Creating visual compliance reports
+- Investigating traces interactively in UI
+
+**Invocation**: Agents automatically use this skill when interacting with Langfuse dashboard.
+
+**Prerequisites**: Playwright MCP server enabled (`/mcp` command)
+
+**Key files**:
+- `SKILL.md` - Dashboard automation workflows
+- `scripts/dashboard_helpers.py` - Workflow generators
+- `reference/playwright-patterns.md` - MCP automation patterns
+- `reference/dashboard-navigation.md` - UI structure guide
+
+---
+
+### Skill Usage Examples
+
+**Example 1: Migrate Phoenix to Langfuse**
+```
+User: "Implement Task 2.3 - replace Phoenix with Langfuse"
+→ Agent invokes langfuse-integration skill
+→ Skill executes 6-phase migration workflow
+→ Phoenix removed, Langfuse configured, traces validated
+```
+
+**Example 2: Generate Audit Trail**
+```
+User: "Generate ALCOA+ audit trail for user_35KgiAcvIC0tdtFvJUN1vDkrNYc"
+→ Agent invokes langfuse-extraction skill
+→ Executes: python scripts/generate_audit_trail.py --user-id user_xxx
+→ Returns JSON audit trail with compliance checks
+```
+
+**Example 3: Capture Dashboard Screenshot**
+```
+User: "Capture Langfuse dashboard screenshot for documentation"
+→ Agent invokes langfuse-dashboard skill
+→ Uses Playwright MCP to navigate and screenshot
+→ Returns: langfuse_traces_YYYYMMDD_HHMMSS.png
+```
+
+---
+
+### Skill Development
+
+To create new skills, use `meta-skill-guide` in `.claude/skills/meta-skill-guide/SKILL.md` for templates and best practices.
+
+---
+
 ## ⚡ Quick References
 
 **Task Status:** `pending`, `in-progress`, `done`, `blocked`, `deferred`, `cancelled`
