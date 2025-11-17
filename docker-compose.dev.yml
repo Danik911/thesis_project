@@ -216,7 +216,7 @@ services:
 
     volumes:
       # DEVELOPMENT ONLY: Mount code for live reload
-      # Remove this in production (code is baked into image)
+      # Code changes on host immediately visible in container (no rebuild needed)
       - ./main:/app/main:ro
 
       # Shared volumes for storage adapter and vector store
@@ -265,6 +265,7 @@ services:
 
     volumes:
       # DEVELOPMENT ONLY: Mount code for live updates
+      # Code changes on host immediately visible in container (no rebuild needed)
       - ./main:/app/main:ro
 
       # Shared volumes (same as API for storage adapter consistency)

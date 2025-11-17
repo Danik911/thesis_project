@@ -492,7 +492,69 @@ docker stats container-name
 | Permission denied | Check user in Dockerfile | Add USER directive, fix volume permissions |
 | Slow build on ARM64 | Check `--platform` flag | Use `--platform=linux/arm64` for dev |
 | Cannot connect to daemon | `docker info` | Start Docker Desktop, check WSL2 integration |
+| Volume mount not working | Check container sees host files | `docker-compose down && up -d` to apply mount changes |
+| Code changes not reflected | Volume mount disabled/stale | Re-enable mounts in docker-compose.yml, restart stack |
 
 ---
 
-**Remember**: Docker issues are systematic and diagnosable. Follow the three-phase workflow (Symptom → Root Cause → Solution), use the diagnostic scripts, and reference the detailed guides for complex scenarios. Always validate fixes before considering the issue resolved.
+### Volume Mount Development Issues
+
+**Problem**: Code changes on host not reflected in running container despite volume mounts configured
+
+**Common Causes**:
+1. **Volume mounts commented out**: Check `docker-compose.yml` for commented volume directives
+2. **Container running with old configuration**: Volume changes require recreating containers
+3. **Cached Python bytecode**: `.pyc` files from image build taking precedence over mounted source
+
+**Diagnosis**:
+```bash
+# Check if container can see host files
+docker exec <container-name> ls -la /app/main/
+
+# Check if specific code changes are visible
+docker exec <container-name> grep "new code marker" /app/main/path/to/file.py
+
+# Inspect actual mounts
+docker inspect <container-name> | jq '.[0].Mounts'
+```
+
+**Solution**:
+```bash
+# 1. Enable volume mounts in docker-compose.yml
+# Uncomment or add:
+#   volumes:
+#     - ./main:/app/main:ro
+
+# 2. Recreate containers (down/up applies configuration changes)
+docker-compose -f docker-compose.dev.yml down
+docker-compose -f docker-compose.dev.yml up -d
+
+# 3. Verify mounts work
+docker exec <container-name> grep "test marker" /app/main/file.py
+
+# 4. For future code changes: just restart (no rebuild needed!)
+docker-compose -f docker-compose.dev.yml restart api
+```
+
+**Development Workflow with Volume Mounts**:
+```bash
+# Make code changes on host → Edit files normally
+
+# Restart container to reload Python modules (5 seconds)
+docker-compose restart api
+
+# Test immediately → No rebuild needed!
+```
+
+**When Volume Mounts Don't Work**:
+- ❌ Changed `pyproject.toml` dependencies → Must rebuild
+- ❌ Changed `Dockerfile` → Must rebuild
+- ❌ Changed system packages → Must rebuild
+- ✅ Changed Python code → Just restart container
+- ✅ Changed config files → Just restart container
+
+**Quality Gate**: Container sees host file changes immediately after restart, no rebuild required
+
+---
+
+**Remember**: Docker issues are systematic and diagnosable. Follow the three-phase workflow (Symptom → Root Cause → Solution), use the diagnostic scripts, and reference the detailed guides for complex scenarios. Always validate fixes before considering the issue resolved. For development speed, always use volume mounts for code - only rebuild when dependencies or system packages change.
