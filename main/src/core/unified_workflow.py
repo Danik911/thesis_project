@@ -212,8 +212,14 @@ async def safe_context_get(ctx: Context, key: str, default=_NO_DEFAULT):
 
         raise RuntimeError(f"Critical state '{key}' not found in workflow context - workflow state corrupted")
     except Exception as e:
+        # CRITICAL FIX: If default was provided, return it instead of raising
+        # This handles cases where ctx.store.get() raises an exception (not just returns None)
+        if default is not _NO_DEFAULT:
+            logger.warning(f"[CTX] Context retrieval exception for key {key}, returning default: {e}")
+            return default
+
+        # NO FALLBACKS - fail explicitly for regulatory compliance ONLY if no default
         logger.error(f"[ERROR] Context retrieval failed for key {key}: {e}")
-        # NO FALLBACKS - fail explicitly for regulatory compliance
         raise RuntimeError(f"Context storage system failure for key '{key}': {e!s}") from e
 
 
@@ -1609,6 +1615,16 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # This ensures downstream steps use the human-approved category
             await safe_context_set(ctx, "categorization_result", categorization_event)
 
+            # CRITICAL FIX: Store with key that signature step expects
+            # Signature step retrieves "categorization_for_signature" (line 1662)
+            await safe_context_set(ctx, "categorization_for_signature", {
+                "categorization_event": categorization_event,
+                "document_info": {
+                    "name": Path(self.document_path).name if hasattr(self, "document_path") and self.document_path else "Unknown",
+                    "path": self.document_path if hasattr(self, "document_path") else ""
+                }
+            })
+
             return self._create_planning_event_from_categorization(categorization_event)
 
         except Exception as e:
@@ -1729,16 +1745,24 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     f"(Category {consultation_result['approved_category']}, Employee ID: {employee_id})"
                 )
             else:
-                # Automated decision - use system defaults
+                # Automated decision - use system defaults (Category 3 path)
                 signer_name = getattr(config, "user_name", "System")
                 signer_id = getattr(config, "user_id", "system")
                 additional_context = {
                     "workflow_session": self._workflow_session_id,
                     "risk_assessment": categorization_event.risk_assessment,
-                    "consultation_required": False
+                    "consultation_required": False,
+                    # CRITICAL FIX: Include GAMP category for Category 3 (automated path)
+                    # Without this, metadata validation fails with "GAMP category = None"
+                    "gamp_category": categorization_event.gamp_category.value,
+                    "confidence_score": categorization_event.confidence_score
                 }
 
-                self.logger.info("[SIGNATURE] Automated categorization - signing as System")
+                self.logger.info(
+                    f"[SIGNATURE] Automated categorization - signing as System "
+                    f"(Category {categorization_event.gamp_category.value}, "
+                    f"Confidence: {categorization_event.confidence_score:.2%})"
+                )
 
             signature_binding = self.signature_service.bind_signature_to_record(
                 record_id=f"cat_{self._workflow_session_id}",
@@ -2018,13 +2042,49 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "workflow_session_id": self._workflow_session_id
             })
 
-        # CRITICAL FIX: Save test suite to file
+        # CRITICAL FIX #6: Serialize test suite to YAML BEFORE any filesystem operations
+        # This ensures YAML is available in workflow results even if filesystem save fails
+        try:
+            test_suite_dict: dict[str, Any] = ev.test_suite.model_dump(
+                mode='json',
+                exclude_none=True
+            )
+
+            test_suite_yaml: str = yaml.dump(
+                test_suite_dict,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False
+            )
+
+            # Store in oq_results IMMEDIATELY (before any filesystem operations)
+            oq_results["test_suite_yaml"] = test_suite_yaml
+
+            self.logger.info(
+                f"✅ Serialized test suite to YAML ({len(test_suite_yaml)} characters). "
+                f"YAML stored in results before filesystem save."
+            )
+            flush_output()
+
+        except Exception as e:
+            # YAML serialization failed - this is CRITICAL (cannot generate valid output)
+            self.logger.error(f"❌ CRITICAL: Failed to serialize test suite to YAML: {e}")
+            import traceback
+            self.logger.error(f"Stack trace:\n{traceback.format_exc()}")
+            raise RuntimeError(
+                f"Test suite YAML serialization failed: {e!s}. "
+                f"Cannot generate valid YAML output for worker artifact storage. "
+                f"This indicates a data model or serialization issue."
+            ) from e
+
+        # NOW attempt filesystem save (this can fail without losing YAML)
         try:
             import json
             from pathlib import Path
 
-            # Create output directory
-            output_dir = Path("output/test_suites")
+            # CRITICAL: Use absolute path to ensure writes target writable Docker volume
+            # The /app/output directory is mounted as writable (not read-only like /app/main)
+            output_dir = Path("/app/output/test_suites")
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate filename with suite ID and timestamp
@@ -2052,21 +2112,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 "generation_method": ev.test_suite.generation_method
             }
 
-            # Serialize test suite to YAML for persistence (worker expects this format)
-            test_suite_dict: dict[str, Any] = ev.test_suite.model_dump(
-                mode='json',
-                exclude_none=True
-            )
-
-            # Serialize to YAML format for worker artifact storage
-            test_suite_yaml: str = yaml.dump(
-                test_suite_dict,
-                default_flow_style=False,
-                allow_unicode=True,
-                sort_keys=False
-            )
-
-            self.logger.info(f"Serialized test suite to YAML ({len(test_suite_yaml)} characters)")
+            self.logger.info(f"Attempting to save test suite to filesystem: {output_file}")
 
             # Save test suite to JSON file
             with open(output_file, "w", encoding="utf-8") as f:
@@ -2079,9 +2125,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             # Add file info to oq_results for tracking
             oq_results["output_file"] = str(output_file)
             oq_results["file_saved"] = True
-
-            # Store YAML serialization for worker artifact persistence
-            oq_results["test_suite_yaml"] = test_suite_yaml
+            # NOTE: test_suite_yaml already stored in oq_results before filesystem operations
 
             # Add electronic signature for test generation (21 CFR Part 11)
             config = get_config()
@@ -2187,11 +2231,20 @@ class UnifiedTestGenerationWorkflow(Workflow):
                 oq_results["alcoa_record_created"] = False
 
         except Exception as e:
-            self.logger.error(f"❌ CRITICAL: Failed to save test suite to file: {e}")
-            self.logger.error("This means the workflow completed but NO FILES were saved!")
+            # Filesystem save failed - BUT YAML is already preserved in oq_results
+            self.logger.error(f"❌ Failed to save test suite to filesystem: {e}")
+            self.logger.warning(
+                f"Filesystem save failed, but YAML serialization succeeded "
+                f"({len(oq_results.get('test_suite_yaml', ''))} characters). "
+                f"Test suite YAML will be returned in workflow results."
+            )
+            import traceback
+            self.logger.error(f"Filesystem error details:\n{traceback.format_exc()}")
+
             # Add error info to results but don't fail the workflow
             oq_results["file_saved"] = False
             oq_results["save_error"] = str(e)
+            # NOTE: test_suite_yaml is already in oq_results from serialization step
 
         # Get all context data with safe defaults
         categorization_result = await safe_context_get(ctx, "categorization_result", None)
@@ -2257,8 +2310,31 @@ class UnifiedTestGenerationWorkflow(Workflow):
         }
 
         # Add test suite YAML for worker artifact persistence (top-level key)
-        # If serialization failed in try block above, this will raise KeyError explicitly
+        # Validate that YAML serialization succeeded before accessing
+        if "test_suite_yaml" not in oq_results:
+            # This should NEVER happen (serialization raises RuntimeError on failure)
+            # But adding explicit check for defensive programming
+            raise RuntimeError(
+                "CRITICAL: test_suite_yaml not found in OQ results. "
+                "This indicates test suite YAML serialization failed but error was not caught. "
+                f"Available keys in oq_results: {list(oq_results.keys())}"
+            )
+
         final_results["test_suite"] = oq_results["test_suite_yaml"]
+
+        # CRITICAL FIX: Add top-level gamp_category for worker_executor compatibility
+        # Worker expects workflow_result.get("gamp_category") to return integer value
+        # NO FALLBACK LOGIC: Must have valid categorization result to proceed
+        if not categorization_result:
+            available_keys = list(final_results.keys())
+            raise RuntimeError(
+                f"CRITICAL: categorization_result is None. "
+                f"Cannot extract GAMP category for final results. "
+                f"This indicates categorization step failed or didn't persist results. "
+                f"Available final_results keys: {available_keys}"
+            )
+
+        final_results["gamp_category"] = categorization_result.gamp_category.value
 
         # Log generation completion to Langfuse
         if obs:

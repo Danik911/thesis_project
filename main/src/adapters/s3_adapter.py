@@ -189,11 +189,11 @@ class S3StorageAdapter:
         Build deterministic S3 key for artifact.
 
         Args:
-            artifact_id: Unique identifier (typically job_id)
+            artifact_id: Unique identifier (may include extension like "job_id/test_suite.yaml")
             artifact_type: Type of artifact (test_suite, urs, report)
 
         Returns:
-            S3 key path (e.g., "test-suites/job-123.json")
+            S3 key path (e.g., "test-suites/job-123/test_suite.yaml")
         """
         # Deterministic naming for audit trail and compliance
         type_prefix = {
@@ -202,7 +202,10 @@ class S3StorageAdapter:
             "report": "reports"
         }.get(artifact_type, "artifacts")
 
-        return f"{type_prefix}/{artifact_id}.json"
+        # CRITICAL: Preserve original file extension (don't append .json)
+        # artifact_id may already include extension and path: "job_id/test_suite.yaml"
+        # This is especially critical for S3 Object Lock (7-year immutability)
+        return f"{type_prefix}/{artifact_id}"
 
     async def save_artifact(
         self,

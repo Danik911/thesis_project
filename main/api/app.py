@@ -221,14 +221,14 @@ async def submit_job(
         storage_metadata = {
             "gamp_category": "5",  # Valid GAMP-5 placeholder (custom software)
             "job_id": job_id,
-            "created_at": datetime.now(UTC).isoformat(),
+            "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             "created_by": user.sub,  # Clerk user ID
             "created_by_email": user.email,  # Human-readable attribution
             "artifact_type": "urs"
         }
 
         storage_key = await storage.save_artifact(
-            artifact_id=job_id,
+            artifact_id=f"{job_id}/urs_document.md",
             content=urs_content,
             metadata=storage_metadata
         )

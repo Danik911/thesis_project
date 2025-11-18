@@ -134,18 +134,49 @@ class WorkflowExecutor:
 
             # Execute workflow (this takes 5-6 minutes for Category 3 URS)
             logger.info(f"Executing UnifiedTestGenerationWorkflow for job {job_id} (expect 5-6 minutes)...")
-            workflow_result = await workflow.run(
+            workflow_result_raw = await workflow.run(
                 document_path=str(temp_urs_path)
             )
 
-            if not workflow_result:
+            if not workflow_result_raw:
                 raise RuntimeError(
                     f"CRITICAL: Workflow returned None/empty result\n"
                     f"Job ID: {job_id}\n"
                     f"Expected: WorkflowResult with test_suite, gamp_category, etc.\n"
-                    f"Actual: {workflow_result}\n"
+                    f"Actual: {workflow_result_raw}\n"
                     "This indicates a critical workflow failure"
                 )
+
+            # Unwrap StopEvent to get actual dictionary
+            if hasattr(workflow_result_raw, "result"):
+                workflow_result = workflow_result_raw.result
+            else:
+                workflow_result = workflow_result_raw
+
+            # Validate result is a dictionary
+            if not isinstance(workflow_result, dict):
+                raise RuntimeError(
+                    f"CRITICAL: Workflow returned invalid type: {type(workflow_result)}. "
+                    f"Expected dict containing workflow results. "
+                    f"Job ID: {job_id}. "
+                    f"Value: {workflow_result}"
+                )
+
+            # Validate mandatory test_suite key exists
+            if "test_suite" not in workflow_result:
+                available_keys = list(workflow_result.keys())
+                raise RuntimeError(
+                    f"CRITICAL: Workflow result missing mandatory 'test_suite' key. "
+                    f"Job ID: {job_id}. "
+                    f"Available keys: {available_keys}. "
+                    f"This indicates OQ test generation failed or didn't emit results."
+                )
+
+            logger.debug(
+                f"Workflow result unwrapped successfully. "
+                f"Type: {type(workflow_result)}, "
+                f"Keys: {list(workflow_result.keys())}"
+            )
 
             # Extract results
             test_suite_content = workflow_result.get("test_suite")
@@ -171,7 +202,7 @@ class WorkflowExecutor:
             artifact_metadata = {
                 "gamp_category": str(gamp_category),
                 "job_id": job_id,
-                "created_at": datetime.now(UTC).isoformat() + "Z",
+                "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 "created_by": user_id,
                 "artifact_type": "test_suite",
                 "urs_filename": metadata.get("urs_filename", "unknown"),
@@ -244,14 +275,23 @@ async def read_urs_from_storage(storage_adapter: LocalStorageAdapter, job_id: st
     CRITICAL: NO FALLBACK LOGIC - Never return empty string on error
     """
     try:
-        # Use job_id directly as artifact_id (matches LocalStorageAdapter flat-file design)
-        urs_bytes = await storage_adapter.retrieve_artifact(job_id)
+        # CRITICAL: Try new subdirectory format first (job_id/urs_document.md)
+        # This resolves filesystem conflict where URS FILE blocked test suite DIRECTORY
+        try:
+            urs_bytes = await storage_adapter.retrieve_artifact(f"{job_id}/urs_document.md")
+        except FileNotFoundError:
+            # Backward compatibility: Try legacy format (job_id at root level)
+            logger.warning(
+                f"URS not found in new format ({job_id}/urs_document.md), "
+                f"trying legacy format ({job_id})"
+            )
+            urs_bytes = await storage_adapter.retrieve_artifact(job_id)
 
         if not urs_bytes:
             raise RuntimeError(
                 f"CRITICAL: URS file is empty\n"
                 f"Job ID: {job_id}\n"
-                f"Artifact ID: {job_id}.json\n"
+                f"Tried formats: {job_id}/urs_document.md, {job_id}\n"
                 "Cannot process empty URS document"
             )
 

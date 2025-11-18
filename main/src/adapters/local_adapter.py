@@ -156,10 +156,50 @@ class LocalStorageAdapter:
             self._validate_metadata(metadata)
 
             # Construct file paths
-            artifact_path = self.base_path / f"{artifact_id}.json"
-            metadata_path = self.base_path / f"{artifact_id}.meta.json"
+            # Sanitize artifact_id: replace backslashes with forward slashes (Windows safety)
+            artifact_id_safe = artifact_id.replace("\\", "/")
+            # CRITICAL: Preserve original file extension (don't append .json)
+            # artifact_id may already include extension: "job_id/test_suite.yaml"
+            # Result: /app/output/job_id/test_suite.yaml (not .yaml.json)
+            artifact_path = self.base_path / artifact_id_safe
+            metadata_path = self.base_path / f"{artifact_id_safe}.meta.json"
 
             try:
+                # CRITICAL: Create parent directories if artifact_id contains slashes
+                # Example: artifact_id="fa7a84d2.../test_suite.yaml" creates /app/output/fa7a84d2.../
+                #
+                # IMPORTANT: Check if path exists as FILE (not directory)
+                # Python's mkdir(exist_ok=True) only ignores existing DIRECTORIES
+                # If path exists as FILE, it raises FileExistsError regardless of exist_ok=True
+                artifact_path_parent = artifact_path.parent
+
+                if artifact_path_parent.exists() and not artifact_path_parent.is_dir():
+                    raise RuntimeError(
+                        f"CRITICAL: Cannot create directory - path exists as FILE\n"
+                        f"Path: {artifact_path_parent}\n"
+                        f"This is likely from a previous failed job attempt.\n"
+                        f"Manual cleanup required: docker exec pharma-worker-dev rm -f {artifact_path_parent}\n"
+                        f"Then retry the job."
+                    )
+
+                # Safe to create directory (path is directory or doesn't exist)
+                artifact_path_parent.mkdir(parents=True, exist_ok=True)
+
+                # Same check for metadata path
+                metadata_path_parent = metadata_path.parent
+                if metadata_path_parent != artifact_path_parent:
+                    if metadata_path_parent.exists() and not metadata_path_parent.is_dir():
+                        raise RuntimeError(
+                            f"CRITICAL: Cannot create directory - path exists as FILE\n"
+                            f"Path: {metadata_path_parent}\n"
+                            f"Manual cleanup required: docker exec pharma-worker-dev rm -f {metadata_path_parent}"
+                        )
+                    metadata_path_parent.mkdir(parents=True, exist_ok=True)
+
+                logger.debug(
+                    f"Ensured directory exists for artifact: {artifact_path_parent}"
+                )
+
                 # Write artifact content
                 async with aiofiles.open(artifact_path, "wb") as f:
                     await f.write(content)
@@ -223,16 +263,25 @@ class LocalStorageAdapter:
             RuntimeError: If read operation fails
         """
         async with self._semaphore:
-            artifact_path = self.base_path / f"{artifact_id}.json"
+            # CRITICAL: Preserve original extension (don't append .json)
+            # Try artifact_id as-is first (new format without .json)
+            artifact_id_safe = artifact_id.replace("\\", "/")
+            artifact_path = self.base_path / artifact_id_safe
 
+            # Backward compatibility: If file doesn't exist, try with .json appended (old format)
             if not artifact_path.exists():
-                raise FileNotFoundError(
-                    f"CRITICAL: Artifact not found in local storage\n"
-                    f"Artifact ID: {artifact_id}\n"
-                    f"Expected path: {artifact_path}\n"
-                    f"Storage directory: {self.base_path}\n"
-                    "Artifact may have been deleted or never created"
-                )
+                artifact_path_legacy = self.base_path / f"{artifact_id_safe}.json"
+                if artifact_path_legacy.exists():
+                    artifact_path = artifact_path_legacy
+                    logger.debug(f"Using legacy .json path for backward compatibility: {artifact_path}")
+                else:
+                    raise FileNotFoundError(
+                        f"CRITICAL: Artifact not found in local storage\n"
+                        f"Artifact ID: {artifact_id}\n"
+                        f"Tried paths: {self.base_path / artifact_id_safe}, {artifact_path_legacy}\n"
+                        f"Storage directory: {self.base_path}\n"
+                        "Artifact may have been deleted or never created"
+                    )
 
             try:
                 async with aiofiles.open(artifact_path, "rb") as f:
