@@ -1,276 +1,118 @@
 # Current Task Context
 
-## Task Information
-- **Task ID:** 3.6
-- **Task Name:** Fix Test Suite Generation and Workflow Completion
-- **Phase:** 3 - Containerization & Local DevOps
-- **Status:** ready_to_start
-- **Priority:** HIGH
-- **Started:** Not yet started
-- **Last Updated:** 2025-11-17 00:00:00
+## Active Task
+**Task ID:** 3.7
+**Task Name:** Fix RAG Context Provider Agent
+**Phase:** 3 - Containerization & Local DevOps
+**Status:** ready_to_start
+**Priority:** HIGH
+**Started:** Not yet started
 
 ---
 
-## Task Definition
-**Source:** `PRPs/tasks/3.6-fix-test-generation.md`
+## Task Objective
+Fix Context Provider Agent to successfully retrieve RAG documents from ChromaDB, preventing the "poor" context quality that degrades downstream SME and OQ generation agents.
 
-**Objective:** Fix workflow bugs preventing test suite generation and ensure proper job completion without infinite retry loops.
+## Problem Statement
 
-**Context from Task 3.5:**
-Task 3.5 successfully validated the end-to-end pipeline through GAMP-5 categorization and parallel agent execution, but the workflow fails at the final test generation step.
+**Current Behavior (BROKEN)**:
+- Context Provider Agent executes without error
+- Returns `documents_retrieved: 0` for all collections (gamp5, regulatory, best_practices)
+- ChromaDB collections empty (`document_count: 0`)
+- Downstream agents operate without RAG context (`context_quality: "poor"`, `confidence_score: 0`)
+- Silent failure - workflow continues despite missing critical context
+- ALCOA+ violation - no audit trail for context retrieval failure
 
-**What Works:**
-- ✅ Docker environment with 4 healthy containers
-- ✅ URS submission via FastAPI with Clerk JWT auth
-- ✅ Background worker job processing
-- ✅ GAMP-5 categorization (Category 3, 100% confidence)
-- ✅ ChromaDB RAG retrieval (182 regulatory chunks)
-- ✅ Parallel agents execution (Context, Research, SME)
-- ✅ DeepSeek V3 via OpenRouter
-- ✅ OpenAI embeddings integration
+**Evidence**: Langfuse trace `76f363c24dc087450c73d473128d48ad` from successful Task 3.6 completion
 
-**What Fails:**
-- ❌ Test suite generation (final step)
-- ❌ Workflow completes but missing `test_suite` key in result
-- ❌ Worker stuck in infinite retry loop
-- ❌ ALCOA+ audit logs can't persist (read-only filesystem)
-- ❌ Missing `consultation_result` state error
+## Root Causes
 
----
+1. **Collections never seeded** - ChromaDB collections empty, never populated with corpus documents
+2. **Strict metadata filters** - `_apply_metadata_filters` drops docs if metadata key absent
+3. **Missing configuration** - No validation of OPENAI_API_KEY, RAG_VECTOR_STORE_PATH, RAG_CACHE_DIR
+4. **No fallback / readiness guard** - Silent failure without explicit error
 
 ## Success Criteria
 
-1. ✅ Workflow generates complete test suite YAML
-2. ✅ `test_suite` key present in workflow result
-3. ✅ Worker correctly extracts and saves test suite to storage
-4. ✅ Job completes with status `completed` (not infinite retry)
-5. ✅ ALCOA+ audit logs persist to `main/logs/audit/`
-6. ✅ No `consultation_result` state errors for Category 3 URS
-7. ✅ Job fails after max retries (3-4), not infinitely
+1. ChromaDB collections populated (>100 documents each for gamp5/regulatory, >50 for best_practices)
+2. RAG retrieval functional (50-200 relevant chunks per query)
+3. `context_quality`: "medium" or better
+4. Readiness guard prevents silent failures
+5. Metadata filtering hardened (handles missing keys)
+6. Configuration validation at startup
+7. End-to-end validation confirmed via Langfuse trace
 
----
+## Implementation Phases
 
-## Issues to Resolve
+### Phase 1: Create Corpus Seeding Script
+- File: `scripts/seed_chroma.py`
+- Ingest documents from `datasets/corpus_3/` into ChromaDB collections
+- Verify persistence in `lib/chroma_db/chroma.sqlite3`
 
-### Issue 1: Missing Test Suite in Workflow Result
-**Symptom:**
-```
-ERROR: Workflow completed but no test suite generated
-Workflow result keys: ['summary', 'workflow_metadata', 'status', 'categorization',
-'planning', 'agent_coordination', 'oq_generation', 'workflow_results']
-```
+### Phase 2: Add Readiness Guard
+- File: `main/src/agents/parallel/context_provider.py`
+- Location: Inside `_search_documents()` before retrieval loop
+- Fail fast if collections empty with actionable error message
 
-**Expected:** Result should contain `test_suite` key with YAML test specification
+### Phase 3: Harden Metadata Filtering
+- File: `main/src/agents/parallel/context_provider.py`
+- Location: Inside `_apply_metadata_filters()` method
+- Use `.get()` instead of direct access, handle missing keys gracefully
 
-**Investigation Steps:**
-1. Check `main/src/core/unified_workflow.py` final steps (test generation event)
-2. Find where `test_suite` should be added to workflow result
-3. Verify test generation agent (`TestArchitect`?) completes successfully
-4. Check if `oq_generation` contains test suite data in different format
+### Phase 4: Configuration Validation
+- File: `main/src/agents/parallel/context_provider.py`
+- Location: Inside `__init__()` method
+- Validate required env vars at instantiation
 
-**Files to Investigate:**
-- `main/src/core/unified_workflow.py` - Workflow completion logic
-- `main/src/agents/test_architect.py` or similar - Test generation agent
-- `main/api/worker_executor.py:150-170` - Test suite extraction logic
+### Phase 5: Fallback Context (Optional)
+- File: `main/src/agents/parallel/context_provider.py`
+- Location: Inside `_execute_context_retrieval()` method
+- Load baseline markdown if RAG returns zero results
+- Flag with `fallback_used: true`
 
----
+## Key Files
 
-### Issue 2: Missing `consultation_result` in Workflow State
-**Symptom:**
-```
-ERROR: Context retrieval failed for key consultation_result:
-Path 'consultation_result' not found in state
-WARNING: Electronic signature failed for categorization:
-Context storage system failure for key 'consultation_result'
-```
+**To Create:**
+1. `scripts/seed_chroma.py` (~80 lines)
+2. `datasets/baselines/category3_context.md` (~500 lines)
+3. `docs/RAG_SEEDING_GUIDE.md` (~300 lines)
 
-**Root Cause:** Workflow expects human-in-the-loop consultation result for all categories, but Category 3 (non-configured products) skips human consultation
+**To Modify:**
+1. `main/src/agents/parallel/context_provider.py` (~60 lines total across 4 methods)
+2. `.env.local` or `.env.development` (ensure RAG env vars present)
+3. `docker-compose.dev.yml` (mount `./lib/chroma_db:/app/lib/chroma_db:rw`)
 
-**Fix Required:** Make `consultation_result` optional for Category 3
+## Reference Documentation
 
-**Files to Modify:**
-- `main/src/core/unified_workflow.py` - Context retrieval with optional key
-- Electronic signature logic - Handle missing consultation_result gracefully
-
-**Implementation:**
-```python
-# Instead of:
-consultation_result = ctx.get("consultation_result")  # Raises error if missing
-
-# Use:
-consultation_result = ctx.get("consultation_result", None)  # Returns None if missing
-if consultation_result is None:
-    logger.info("No consultation required for Category 3 (non-configured product)")
-```
-
----
-
-### Issue 3: Infinite Retry Loop
-**Symptom:**
-```
-WARNING: Job 67077789... retry 1/3 after 1s: ...
-WARNING: Job 67077789... retry 2/3 after 2s: ...
-WARNING: Job 67077789... retry 3/3 after 4s: ...
-ERROR: Job 67077789... failed after 3 retries
-[Then retries start again infinitely]
-```
-
-**Root Cause:** Worker retry logic not respecting `retry_count` limit or job status
-
-**Investigation:**
-1. Check `main/api/worker.py` - `_process_job_with_retries()` function
-2. Verify retry counter increments correctly
-3. Ensure job marked as `FAILED` after max retries
-4. Check if worker re-processes already-failed jobs from queue
-
-**Expected Behavior:**
-- Retry 1/3 with 1s delay
-- Retry 2/3 with 2s delay (exponential backoff)
-- Retry 3/3 with 4s delay
-- Mark job as `FAILED` with retry_count=4
-- **Stop retrying** - do not re-queue
-
----
-
-### Issue 4: ALCOA+ Audit Log Read-Only Filesystem
-**Symptom:**
-```
-Warning: Failed to persist ALCOA+ record:
-[Errno 30] Read-only file system: 'main/logs/audit/alcoa_records_20251117.json'
-```
-
-**Root Cause:** Volume mount `- ./main:/app/main:ro` is **read-only** (`:ro` flag)
-
-**Fix:** Add separate **writable** volume mount for logs directory
-
-**File to Modify:** `docker-compose.dev.yml`
-
-**Implementation:**
-```yaml
-api:
-  volumes:
-    # Read-only code mount (prevents accidental modification)
-    - ./main:/app/main:ro
-
-    # Writable logs mount (ALCOA+ compliance requires audit trail persistence)
-    - ./main/logs:/app/main/logs:rw
-
-    # Other mounts...
-    - output-data:/app/output
-    - chroma-data:/app/chroma_db
-```
-
-**Note:** After modification, run `docker-compose down && docker-compose up -d` to apply changes
-
----
-
-## Implementation Plan
-
-### Phase 1: Stop Infinite Loop (Immediate)
-```bash
-# Restart API to kill retrying worker
-docker-compose -f docker-compose.dev.yml restart api
-```
-
-### Phase 2: Fix Audit Log Volume (5 minutes)
-1. Edit `docker-compose.dev.yml`
-2. Add writable logs volume mount for API and worker services
-3. Restart stack: `docker-compose down && up -d`
-4. Verify: Submit test job, check audit log created
-
-### Phase 3: Debug Test Suite Generation (30 minutes)
-1. Read `main/src/core/unified_workflow.py` - identify test generation step
-2. Add logging to track workflow result keys at each step
-3. Find where `test_suite` should be populated
-4. Fix test suite extraction/assignment
-5. Restart API and test
-
-### Phase 4: Fix consultation_result State (15 minutes)
-1. Find all references to `consultation_result` in workflow
-2. Make it optional with default `None`
-3. Update electronic signature logic to handle missing value
-4. Restart API and test
-
-### Phase 5: Fix Retry Logic (10 minutes)
-1. Read `main/api/worker.py` - `_process_job_with_retries()`
-2. Verify retry counter logic
-3. Ensure job marked as FAILED after max retries
-4. Prevent re-queueing failed jobs
-5. Restart API and test
-
-### Phase 6: End-to-End Validation (10 minutes)
-1. Submit Category 3 URS
-2. Monitor workflow execution
-3. Verify test suite generated
-4. Confirm job status = `completed`
-5. Check audit logs persisted
-6. Validate no infinite retries
-
-**Total Estimated Duration:** 1-2 hours
-
----
+**Analysis File:** `docs/context_agent_analysis.md`
+**Task Specification:** `PRPs/tasks/3.7-fix-rag-context-agent.md`
+**Previous Task:** `PRPs/tasks/3.6-fix-test-generation.md` (✅ completed)
 
 ## Dependencies
 
-- **Task 3.5:** Docker environment healthy, volume mounts enabled ✅
-- **ChromaDB:** 182 regulatory chunks ingested ✅
-- **Phoenix:** Running on port 6006 (optional for this task) ✅
+- ✅ Task 3.6 completed (workflow end-to-end functional)
+- ✅ ChromaDB working (Task 1.2)
+- ✅ OpenAI embeddings configured (Task 3.5)
+- ⏸️ Corpus documents available in `datasets/corpus_3/` (assume present or create during execution)
 
----
+## Estimated Effort
+**Total:** 2.5 hours
+- Phase 1 (Seeding): 30 min
+- Phase 2 (Readiness Guard): 15 min
+- Phase 3 (Metadata Hardening): 20 min
+- Phase 4 (Config Validation): 15 min
+- Phase 5 (Fallback Context): 30 min
+- Testing & Validation: 45 min
 
-## Validation Checklist
+## Compliance Requirements
 
-- [ ] Workflow executes without `consultation_result` errors
-- [ ] Test suite YAML generated and included in result
-- [ ] Worker extracts test suite from workflow result
-- [ ] Test suite saved to storage adapter
-- [ ] Job status transitions: `pending` → `processing` → `completed`
-- [ ] Job does NOT retry infinitely (max 3-4 retries)
-- [ ] ALCOA+ audit logs written to `main/logs/audit/alcoa_records_YYYYMMDD.json`
-- [ ] No "read-only filesystem" errors
-- [ ] Complete end-to-end test generates downloadable test suite
+**GAMP-5:** Category 5 (Custom Software - RAG infrastructure)
+**ALCOA+:** All 9 principles enforced
+**NO FALLBACK LOGIC:**
+- ✅ Readiness guard fails explicitly if collections empty
+- ✅ Configuration validation raises on missing env vars
+- ✅ Fallback context flagged (not silent)
+- ❌ NO silent continuation with zero RAG results
 
----
-
-## Files Expected to be Modified
-
-1. **docker-compose.dev.yml** - Add writable logs volume
-2. **main/src/core/unified_workflow.py** - Fix consultation_result optional, test suite generation
-3. **main/api/worker.py** - Fix infinite retry loop
-4. **main/api/worker_executor.py** - Improve test suite extraction (if needed)
-
----
-
-## Previous Agent Results
-
-**Task 3.5 Results:**
-- Workflow executed successfully through parallel agents
-- GAMP-5 categorization: Category 3, 100% confidence
-- ChromaDB retrieval: 182 chunks
-- Parallel agents completed: Context (4.9s), Research (75.3s), SME (182.2s)
-- Test generation: Failed (missing test_suite key)
-- Storage path fix applied (flat-file pattern)
-- Volume mounts enabled for fast development
-
----
-
-## Notes
-
-- **DO NOT** use fallback logic - if test suite generation fails, workflow must fail explicitly
-- **DO NOT** mask errors with artificial success responses
-- **ALWAYS** log full stack traces for debugging
-- **GAMP-5 Compliance:** Audit trail completeness is mandatory
-
----
-
-## References
-
-- Task 3.5 execution logs: `docker logs pharma-api-dev --tail=500`
-- Workflow implementation: `main/src/core/unified_workflow.py`
-- Worker implementation: `main/api/worker.py`, `main/api/worker_executor.py`
-- Storage adapter: `main/src/adapters/local_adapter.py`
-
----
-
-**Task Status:** Ready to start (awaiting user confirmation)
-**Next Action:** Execute Phase 1 (stop infinite loop) when user requests Task 3.6 execution
+## Next Task
+**Task 3.8:** Fix local test script visibility (change to bind mount)

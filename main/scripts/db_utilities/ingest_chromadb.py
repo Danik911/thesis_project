@@ -16,7 +16,7 @@ from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.embeddings.openai import OpenAIEmbedding
 
 
-def ingest_documents(doc_paths: list[str], collection_name: str = "pharmaceutical_regulations"):
+def ingest_documents(doc_paths: list[str], collection_name: str = "regulatory_documents"):
     """
     Ingest documents into ChromaDB for RAG.
     

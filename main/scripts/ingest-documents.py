@@ -71,7 +71,7 @@ def validate_documents() -> list[Path]:
 async def ingest_documents_to_chromadb(
     doc_paths: list[Path],
     persist_path: str = "/app/chroma_db",
-    collection_name: str = "pharma_docs"
+    collection_name: str = "regulatory_documents"
 ) -> None:
     """
     Ingest documents into ChromaDB using LlamaIndex VectorStoreIndex.
@@ -88,7 +88,7 @@ async def ingest_documents_to_chromadb(
         # Import here to avoid memory issues
         import chromadb
         from llama_index.core import Document, Settings, StorageContext, VectorStoreIndex
-        from llama_index.core.node_parser import SimpleNodeParser
+        from llama_index.core.node_parser import TokenTextSplitter  # NLTK-free alternative
         from llama_index.embeddings.openai import OpenAIEmbedding
         from llama_index.vector_stores.chroma import ChromaVectorStore
 
@@ -97,11 +97,15 @@ async def ingest_documents_to_chromadb(
         embed_model = OpenAIEmbedding(model="text-embedding-3-small")
         Settings.embed_model = embed_model
 
-        # Initialize node parser for chunking (chunk size 1024, overlap 200)
-        logger.info("Initializing node parser (chunk_size=1024, overlap=200)...")
-        node_parser = SimpleNodeParser.from_defaults(
+        # Initialize token-based node parser (NO NLTK REQUIRED)
+        # TokenTextSplitter uses tiktoken library only (production-safe)
+        logger.info("Initializing TokenTextSplitter (chunk_size=1024, overlap=200)...")
+        from llama_index.core.node_parser import TokenTextSplitter
+
+        node_parser = TokenTextSplitter(
             chunk_size=1024,
-            chunk_overlap=200
+            chunk_overlap=200,
+            separator=" "  # Split on whitespace for pharmaceutical documents
         )
 
         # Initialize ChromaDB

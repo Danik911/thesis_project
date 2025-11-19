@@ -10,11 +10,22 @@ TASK 3.5: Fully implemented worker with UnifiedWorkflow integration.
 import asyncio
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
+
+from dotenv import load_dotenv
 
 from .audit import get_audit_logger
 from .models import JobRecord, JobStatus
 from .worker_executor import WorkflowExecutor, read_urs_from_storage
+
+# Load environment variables from .env.local (for local development)
+env_file = Path(__file__).parent.parent.parent / ".env.local"
+if env_file.exists():
+    load_dotenv(env_file)
+    logging.info(f"Loaded environment variables from {env_file}")
+else:
+    logging.info(f"Environment file not found: {env_file} (using system env vars)")
 
 logger = logging.getLogger(__name__)
 

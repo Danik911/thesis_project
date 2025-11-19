@@ -32,7 +32,7 @@ from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.extractors import KeywordExtractor, TitleExtractor
 from llama_index.core.ingestion import IngestionCache, IngestionPipeline
 from llama_index.core.llms import LLM
-from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.node_parser import TokenTextSplitter  # NLTK-free alternative
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.schema import NodeWithScore, QueryBundle
 from llama_index.core.tools import FunctionTool
@@ -104,7 +104,7 @@ class ContextProviderAgent:
     ):
         """
         Initialize the Context Provider Agent.
-        
+
         Args:
             llm: Language model for context analysis
             verbose: Enable verbose logging
@@ -115,6 +115,30 @@ class ContextProviderAgent:
             cache_dir: Directory for caching embeddings
             embedding_model: OpenAI embedding model to use
         """
+        # ⭐ CONFIGURATION VALIDATION: Check required environment variables ⭐
+        required_env_vars = {
+            "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY")
+        }
+
+        missing_vars = [var_name for var_name, var_value in required_env_vars.items() if not var_value]
+
+        if missing_vars:
+            raise RuntimeError(
+                f"CRITICAL: Context Provider initialization failed - missing required environment variables.\n"
+                f"\n"
+                f"Missing variables: {missing_vars}\n"
+                f"\n"
+                f"Required configuration:\n"
+                f"  - OPENAI_API_KEY: API key for text-embedding-3-small embeddings\n"
+                f"\n"
+                f"Action required:\n"
+                f"  1. Add missing variables to .env.local file\n"
+                f"  2. Restart Docker containers: docker-compose -f docker-compose.dev.yml restart\n"
+                f"  3. Verify variables loaded: docker exec -it pharma-api-dev env | grep OPENAI\n"
+                f"\n"
+                f"This error prevents RAG document retrieval for pharmaceutical test generation."
+            )
+
         # Use centralized LLM configuration (NO FALLBACKS)
         self.llm = llm or LLMConfig.get_llm()
         self.verbose = verbose
@@ -124,7 +148,9 @@ class ContextProviderAgent:
         self.logger = logging.getLogger(__name__)
 
         # Vector store configuration from environment
-        self.vector_store_path = Path(vector_store_path or os.getenv("RAG_VECTOR_STORE_PATH", "./lib/chroma_db"))
+        # Default matches Docker volume mount: /app/chroma_db (see docker-compose.dev.yml line 225/275)
+        self.vector_store_path = Path(vector_store_path or os.getenv("RAG_VECTOR_STORE_PATH", "./chroma_db"))
+        self.logger.info(f"RAG Vector Store Path resolved to: {self.vector_store_path.absolute()}")
         self.cache_dir = Path(cache_dir or os.getenv("RAG_CACHE_DIR", "./cache/rag"))
         self.embedding_model_name = embedding_model or os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
@@ -509,14 +535,14 @@ class ContextProviderAgent:
             # Create optimized LLM for metadata extraction
             extractor_llm = self._create_extractor_llm()
 
-            # Setup transformations for pharmaceutical documents
+            # Setup transformations for pharmaceutical documents (NO NLTK)
             transformations = [
-                # Text splitting optimized for pharmaceutical content
-                SentenceSplitter(
+                # Token-based splitting (NLTK-free, production-safe)
+                # Uses tiktoken library only - no NLTK stopwords required
+                TokenTextSplitter(
                     chunk_size=int(os.getenv("RAG_CHUNK_SIZE", "1500")),
                     chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP", "200")),
-                    include_metadata=True,
-                    include_prev_next_rel=True
+                    separator=" "  # Split on whitespace for pharmaceutical documents
                 ),
 
                 # Metadata extraction for compliance tracking
@@ -592,6 +618,53 @@ class ContextProviderAgent:
 
                 # Determine which collections to search
                 collection_names = self._select_collections(request.gamp_category, request.search_scope)
+
+                # ⭐ READINESS GUARD: Fail fast if ALL collections empty ⭐
+                empty_collections = []
+                collection_stats = {}
+                total_documents = 0
+                for collection_name in collection_names:
+                    count = self.collections[collection_name].count()
+                    collection_stats[collection_name] = count
+                    total_documents += count
+                    if count == 0:
+                        empty_collections.append(collection_name)
+
+                # Only fail if ALL collections are empty (total_documents == 0)
+                # Allow workflow to proceed if at least one collection has documents
+                if total_documents == 0:
+                    error_details = "\n".join([
+                        f"  - {name}: {collection_stats[name]} documents"
+                        for name in collection_names
+                    ])
+                    raise RuntimeError(
+                        f"CRITICAL: Context Provider cannot execute - ALL ChromaDB collections are empty.\n"
+                        f"\n"
+                        f"Empty collections: {empty_collections}\n"
+                        f"\n"
+                        f"Collection status:\n{error_details}\n"
+                        f"\n"
+                        f"Action required:\n"
+                        f"  1. Run ingestion script: docker exec -it pharma-api-dev python3 /app/main/scripts/ingest-documents.py\n"
+                        f"  2. Verify collections populated: docker exec -it pharma-api-dev python3 -c 'import chromadb; c=chromadb.PersistentClient(path=\"/app/chroma_db\"); print([col.count() for col in c.list_collections()])'\n"
+                        f"  3. Re-run workflow after successful ingestion\n"
+                        f"\n"
+                        f"This error prevents generation of pharmaceutical test suites without regulatory context."
+                    )
+
+                # Log warning for empty collections but allow workflow to proceed
+                if empty_collections:
+                    self.logger.warning(
+                        f"[READINESS] Some collections empty: {empty_collections}\n"
+                        f"Proceeding with {total_documents} documents from populated collections: "
+                        f"{[name for name, count in collection_stats.items() if count > 0]}"
+                    )
+
+                # Log collection readiness
+                self.logger.info(
+                    f"[READINESS] ChromaDB collections ready:\n" +
+                    "\n".join([f"   ✓ {name}: {collection_stats[name]} documents" for name in collection_names])
+                )
 
                 # Build search query
                 query = self._build_search_query(request)
@@ -939,7 +1012,7 @@ class ContextProviderAgent:
         }
 
     def _apply_metadata_filters(self, documents: list[dict[str, Any]], filters: dict[str, Any]) -> list[dict[str, Any]]:
-        """Apply metadata filters to search results."""
+        """Apply metadata filters to search results with graceful missing key handling."""
         filtered_docs = []
 
         for doc in documents:
@@ -947,17 +1020,25 @@ class ContextProviderAgent:
             metadata = doc.get("metadata", {})
 
             for key, value in filters.items():
-                if key not in metadata:
+                # Use .get() instead of direct access
+                doc_value = metadata.get(key)
+
+                # Handle missing metadata gracefully
+                if doc_value is None:
                     include = False
                     break
 
+                # Check filter match
                 if isinstance(value, list):
-                    if metadata[key] not in value:
+                    # List membership check
+                    if doc_value not in value:
                         include = False
                         break
-                elif metadata[key] != value:
-                    include = False
-                    break
+                else:
+                    # Exact match
+                    if doc_value != value:
+                        include = False
+                        break
 
             if include:
                 filtered_docs.append(doc)

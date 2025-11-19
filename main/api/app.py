@@ -26,7 +26,8 @@ if env_file.exists():
     load_dotenv(env_file)
     logging.info(f"Loaded environment variables from {env_file}")
 else:
-    logging.warning(f"Environment file not found: {env_file}")
+    # In Docker, env vars are passed via docker-compose, so file might not exist
+    logging.info(f"Environment file not found: {env_file} (using system env vars)")
 
 from .audit import get_audit_logger, initialize_audit_logger
 from .dependencies import (

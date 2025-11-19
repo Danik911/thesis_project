@@ -75,9 +75,23 @@ class LangFuseObservability:
 
             # Health check: attempt to create a test trace
             # This verifies credentials and network connectivity
-            test_trace = self.client.trace(name="health_check_trace")
-            test_trace.update(metadata={"health_check": True, "environment": "startup"})
-            test_trace.end()  # Close trace to prevent orphan traces in LangFuse
+            try:
+                if hasattr(self.client, 'trace'):
+                    test_trace = self.client.trace(name="health_check_trace")
+                    test_trace.update(metadata={"health_check": True, "environment": "startup"})
+                    test_trace.end()  # Close trace to prevent orphan traces in LangFuse
+                elif hasattr(self.client, 'auth_check'):
+                     if not self.client.auth_check():
+                         raise RuntimeError("LangFuse auth check failed")
+                else:
+                    # Fallback for newer/older versions where trace might be different
+                    # Just log that we initialized
+                    logger.warning(f"LangFuse client initialized but 'trace' method not found. Available methods: {dir(self.client)}")
+
+            except Exception as e:
+                logger.warning(f"LangFuse health check failed (non-critical): {e}")
+                # We continue anyway as the client might be valid for @observe
+                pass
 
             self.enabled = True
             logger.info(

@@ -85,7 +85,7 @@ from chromadb.config import Settings
 
 client = chromadb.PersistentClient(path='./chroma_db', settings=Settings(anonymized_telemetry=False))
 try:
-    collection = client.get_collection('pharmaceutical_regulations')
+    collection = client.get_collection('regulatory_documents')
     count = collection.count()
     print(f'${GREEN}  ✓ ChromaDB collection contains {count} chunks${NC}')
     if count == 0:

@@ -599,6 +599,68 @@ JSON Schema:
 
         return deepseek_prompt
 
+    def _repair_truncated_json(self, json_str: str) -> str:
+        """
+        Attempt to repair truncated JSON by closing open structures.
+        
+        This is a fallback for when the model output is cut off due to token limits.
+        It attempts to close open strings, objects, and arrays.
+        """
+        # 1. Check for unclosed string
+        # Count quotes that are not escaped
+        quote_count = 0
+        escape = False
+        for char in json_str:
+            if escape:
+                escape = False
+                continue
+            if char == '\\':
+                escape = True
+                continue
+            if char == '"':
+                quote_count += 1
+        
+        if quote_count % 2 != 0:
+            # Unclosed string - close it
+            json_str += '"'
+            
+        # 2. Balance braces and brackets using a stack
+        stack = []
+        escape = False
+        in_string = False
+        
+        for char in json_str:
+            if escape:
+                escape = False
+                continue
+            if char == '\\':
+                escape = True
+                continue
+            if char == '"':
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            
+            if char == '{':
+                stack.append('}')
+            elif char == '[':
+                stack.append(']')
+            elif char == '}' or char == ']':
+                if stack:
+                    # If it matches the top of stack, pop it
+                    if stack[-1] == char:
+                        stack.pop()
+                    # If it doesn't match, we have a mismatch, but let's ignore for now
+                    # or maybe the JSON is malformed in other ways.
+                    # For simple truncation, we just want to track what's open.
+        
+        # Close remaining open structures in reverse order
+        while stack:
+            json_str += stack.pop()
+            
+        return json_str
+
     def _parse_json_robustly(self, json_str: str, context: str) -> dict[str, Any]:
         """
         Robust JSON parsing for DeepSeek V3 responses with common formatting issues.
@@ -623,6 +685,9 @@ JSON Schema:
         # Clean the JSON first
         cleaned_json = clean_unicode_characters(json_str.strip())
 
+        # Attempt to repair truncated JSON structures
+        repaired_json = self._repair_truncated_json(cleaned_json)
+
         # Store original for error reporting
         original_json = json_str[:500] if len(json_str) > 500 else json_str
 
@@ -631,7 +696,7 @@ JSON Schema:
         try:
             # Strategy 1: Direct parsing (fastest)
             try:
-                parsed_data = json.loads(cleaned_json)
+                parsed_data = json.loads(repaired_json)
                 self.logger.debug(f"JSON parsed successfully with direct parsing for {context}")
                 return parsed_data
             except json.JSONDecodeError as e1:
@@ -640,7 +705,7 @@ JSON Schema:
             # Strategy 2: Fix common comma issues
             try:
                 # Fix missing commas between object/array elements
-                comma_fixed = self._fix_missing_commas(cleaned_json)
+                comma_fixed = self._fix_missing_commas(repaired_json)
                 parsed_data = json.loads(comma_fixed)
                 self.logger.info(f"JSON parsed successfully after comma fixes for {context}")
                 return parsed_data
@@ -649,7 +714,7 @@ JSON Schema:
 
             # Strategy 3: Fix trailing commas
             try:
-                trailing_fixed = self._fix_trailing_commas(cleaned_json)
+                trailing_fixed = self._fix_trailing_commas(repaired_json)
                 parsed_data = json.loads(trailing_fixed)
                 self.logger.info(f"JSON parsed successfully after trailing comma fixes for {context}")
                 return parsed_data
@@ -658,7 +723,7 @@ JSON Schema:
 
             # Strategy 4: Fix quote escaping issues
             try:
-                quote_fixed = self._fix_quote_issues(cleaned_json)
+                quote_fixed = self._fix_quote_issues(repaired_json)
                 parsed_data = json.loads(quote_fixed)
                 self.logger.info(f"JSON parsed successfully after quote fixes for {context}")
                 return parsed_data
@@ -668,7 +733,7 @@ JSON Schema:
             # All strategies failed - NO FALLBACKS
             error_details = {
                 "context": context,
-                "json_length": len(cleaned_json),
+                "json_length": len(repaired_json),
                 "json_preview": original_json,
                 "parsing_strategies_attempted": parsing_strategies,
                 "requires_human_intervention": True,
