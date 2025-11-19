@@ -167,7 +167,7 @@ class OQTestSuite(BaseModel):
     last_updated: str | None = Field(default=None, description="Last update timestamp")
     processing_time: float | None = Field(default=None, description="Processing time in seconds")
 
-    format: str = Field(default="json", description="Data format")
+    format: str = Field(default="yaml", description="Data format")
     encoding: str = Field(default="utf-8", description="Character encoding")
     data_schema: dict[str, Any] = Field(default_factory=dict, alias="schema", description="Data schema for test suite structure")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
@@ -242,10 +242,10 @@ class OQTestSuite(BaseModel):
         """Ensure required pharmaceutical compliance checks are present."""
         required_compliance = [
             "alcoa_plus_compliant",
-            "cfr_part11_compliant",
+            "cfr_part_11_compliant",
             "gamp5_compliant",
             "audit_trail_verified",
-            "data_integrity_validated"
+            "data_integrity_assured"
         ]
 
         # Initialize missing compliance flags as False (explicit)

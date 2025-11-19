@@ -205,6 +205,7 @@ class WorkflowExecutor:
                 "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 "created_by": user_id,
                 "artifact_type": "test_suite",
+                "format": "yaml",  # Explicitly set format to match file extension
                 "urs_filename": metadata.get("urs_filename", "unknown"),
                 "urs_hash": metadata.get("urs_hash", "unknown")
             }

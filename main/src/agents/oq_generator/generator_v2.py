@@ -388,10 +388,16 @@ class OQTestGeneratorV2:
             self.logger.info(f"🔄 PROGRESS: Generating batch {batch_num + 1}/{num_batches}: Tests {batch_start + 1}-{batch_end} (ETA: {estimated_time_remaining}s)")
 
             # Generate batch with context from previous batches
+            # CRITICAL FIX: Include test names to prevent semantic duplicates
+            previous_tests_summary = [
+                f"{t.get('test_id', 'Unknown')}: {t.get('test_name', 'Unnamed')}" 
+                for t in all_test_cases
+            ]
+            
             batch_context = {
                 "batch_number": batch_num + 1,
                 "total_batches": num_batches,
-                "previous_tests": [t.get("test_id", f"OQ-{i+1:03d}") for i, t in enumerate(all_test_cases)],
+                "previous_tests": previous_tests_summary,
                 "test_id_start": batch_start + 1,
                 "test_id_end": batch_end,
                 "original_context": context_data
@@ -986,6 +992,7 @@ JSON Schema:
         test_data.setdefault("generation_timestamp", datetime.now(UTC).isoformat())
 
         # Add pharmaceutical compliance defaults
+        # CRITICAL: Standardized keys for audit trail consistency
         test_data.setdefault("pharmaceutical_compliance", {
             "alcoa_plus_compliant": True,
             "gamp5_compliant": True,
@@ -993,6 +1000,16 @@ JSON Schema:
             "audit_trail_verified": True,
             "data_integrity_assured": True
         })
+
+        # Remove conflicting/duplicate keys if present (from LLM hallucination)
+        if "pharmaceutical_compliance" in test_data:
+            compliance = test_data["pharmaceutical_compliance"]
+            # Remove "cfr_part11_compliant" (duplicate of cfr_part_11_compliant)
+            if "cfr_part11_compliant" in compliance:
+                del compliance["cfr_part11_compliant"]
+            # Remove "data_integrity_validated" (duplicate of data_integrity_assured)
+            if "data_integrity_validated" in compliance:
+                del compliance["data_integrity_validated"]
 
         # Add validation status defaults
         test_data.setdefault("validation_status", {
@@ -1205,9 +1222,11 @@ JSON Schema:
 
         previous_test_info = ""
         if previous_tests:
+            # Format list for readability
+            prev_list = "\n".join([f"- {t}" for t in previous_tests])
             previous_test_info = f"""
-PREVIOUS BATCH TESTS GENERATED:
-{', '.join(previous_tests)}
+PREVIOUS BATCH TESTS GENERATED (DO NOT DUPLICATE CONTENT):
+{prev_list}
 
 Test IDs: OQ-{test_id_start:03d} through OQ-{test_id_end:03d} (no duplicates).
 """
