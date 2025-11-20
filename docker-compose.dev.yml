@@ -224,7 +224,7 @@ services:
       - ./main/logs:/app/main/logs:rw    # ALCOA+ audit logs (writable overlay)
 
       # Shared volumes for storage adapter and vector store
-      - output-data:/app/output          # LocalStorageAdapter base path
+      - ./main/output:/app/output:rw     # LocalStorageAdapter base path (bind mount)
       - chroma-data:/app/chroma_db       # ChromaDB persistence
 
     networks:
@@ -275,7 +275,7 @@ services:
       - ./main/logs:/app/main/logs:rw    # ALCOA+ audit logs (writable overlay)
 
       # Shared volumes (same as API for storage adapter consistency)
-      - output-data:/app/output
+      - ./main/output:/app/output:rw
       - chroma-data:/app/chroma_db
 
     networks:
@@ -319,8 +319,8 @@ volumes:
 
   # LocalStorageAdapter output directory
   # Contains: Uploaded URS files, generated test suite YAML files
-  output-data:
-    driver: local
+  # output-data:
+  #   driver: local
 
   # ChromaDB vector store
   # Contains: RAG document embeddings, ChromaDB SQLite database

@@ -1,0 +1,1184 @@
+{
+  "suite_id": "OQ-SUITE-2113",
+  "gamp_category": 3,
+  "document_name": "942f1339-454d-4fea-bff5-aaa67995a4cb.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Functional Verification of X-bar/R Chart Creation and Nelson Rules",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the SPC dashboard can correctly create X-bar/R control charts from a CSV file and accurately apply the vendor's standard Nelson rules for detecting out-of-control conditions.",
+      "prerequisites": [
+        "SPC Dashboard software is installed and accessible",
+        "Test CSV file with sample subgroup data for X-bar/R chart is available",
+        "User account with appropriate permissions to create charts is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the SPC dashboard using valid credentials with chart creation permissions.",
+          "expected_result": "User successfully authenticates and gains access to the main dashboard interface.",
+          "data_to_capture": [
+            "Screenshot of successful login",
+            "System time/date stamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to the chart creation module and select the option to create a new X-bar/R control chart.",
+          "expected_result": "System displays the X-bar/R chart creation wizard or configuration interface.",
+          "data_to_capture": [
+            "Screenshot of chart creation interface"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Upload the prepared test CSV file containing subgroup data using the standard import function.",
+          "expected_result": "System successfully imports the CSV data and displays a preview of the dataset.",
+          "data_to_capture": [
+            "Screenshot of data preview",
+            "Import confirmation message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Configure the chart parameters (subgroup size, specification limits) and enable all vendor standard Nelson rules.",
+          "expected_result": "System accepts the configuration and displays the configured parameters.",
+          "data_to_capture": [
+            "Screenshot of configured parameters",
+            "List of enabled Nelson rules"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Generate the X-bar/R control chart and verify the application of Nelson rules.",
+          "expected_result": "System renders the X-bar/R chart with control limits and correctly flags any points violating Nelson rules.",
+          "data_to_capture": [
+            "Screenshot of final chart",
+            "Record of any Nelson rule violations detected"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "X-bar/R chart is generated successfully from CSV input data",
+        "Vendor standard Nelson rules are correctly applied and visible on the chart",
+        "Control limits are calculated accurately based on the provided data",
+        "Any out-of-control conditions are properly flagged according to Nelson rules"
+      ],
+      "regulatory_basis": [
+        "FDA 21 CFR Part 11 for electronic records and electronic signatures",
+        "ICH Q7 for Good Manufacturing Practice",
+        "FDA Guidance for Industry - Process Validation: General Principles and Practices"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Chart configuration settings must be retained as controlled records",
+        "Data import must maintain accuracy and completeness from source CSV"
+      ],
+      "urs_requirements": [
+        "URS-020-001: Users shall create X-bar/R and p-charts from CSV inputs",
+        "URS-020-002: Users shall apply vendor's standard Nelson rules",
+        "URS-020-008: Retain chart configurations as controlled records"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "SPC methodology knowledge",
+        "Basic CSV file preparation",
+        "Dashboard navigation skills"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Performance Verification of Data Loading and Chart Rendering",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "To verify that the SPC dashboard meets performance requirements for loading large datasets and rendering charts within specified time limits.",
+      "prerequisites": [
+        "SPC Dashboard software is installed on supported hardware",
+        "Test CSV file with 100,000+ data points is prepared",
+        "Stopwatch or timing tool is available for performance measurement"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the SPC dashboard and navigate to the data import functionality.",
+          "expected_result": "User successfully accesses the data import module.",
+          "data_to_capture": [
+            "System time at login",
+            "Screenshot of import interface"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate the import of the large test CSV file containing 100,000+ data points and start timing.",
+          "expected_result": "System begins processing the CSV file import.",
+          "data_to_capture": [
+            "Start timestamp",
+            "File size and record count"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor the import process until completion and record the total load time.",
+          "expected_result": "System successfully loads all 100,000+ data points into the database.",
+          "data_to_capture": [
+            "End timestamp",
+            "Total load time in seconds",
+            "Any error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Create a control chart using the loaded dataset and apply standard filters.",
+          "expected_result": "System prepares the chart configuration with the large dataset.",
+          "data_to_capture": [
+            "Chart configuration settings",
+            "Dataset size used for chart"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Initiate chart rendering and measure the time until complete display.",
+          "expected_result": "System renders the control chart with all data points visible.",
+          "data_to_capture": [
+            "Chart render start time",
+            "Chart render completion time",
+            "Total render time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 6,
+          "action": "Apply filter changes to the chart and measure the re-rendering time.",
+          "expected_result": "System quickly re-renders the chart with the applied filters.",
+          "data_to_capture": [
+            "Filter application time",
+            "Re-render time after filters"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "100,000+ data points load in less than 5 seconds on supported hardware",
+        "Charts render completely in less than 2 seconds after initial configuration",
+        "Chart re-rendering after filter changes completes in less than 2 seconds",
+        "System remains responsive during all performance testing operations"
+      ],
+      "regulatory_basis": [
+        "FDA 21 CFR Part 11 for system performance and reliability",
+        "GAMP 5 guidelines for verification of commercial software"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All 100,000+ data points must be accurately loaded without data loss",
+        "Chart rendering must maintain data accuracy and statistical integrity"
+      ],
+      "urs_requirements": [
+        "URS-020-010: Load 100k data points in < 5 seconds on supported hardware",
+        "URS-020-011: Render charts in < 2 seconds after filter changes"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing methodology",
+        "Timing measurement techniques",
+        "Large dataset handling"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "ODBC Data Import and Chart Generation Verification",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To verify that the SPC dashboard can successfully import data from an ODBC data source and generate standard control charts (X-bar/R and p-charts) from the imported dataset.",
+      "prerequisites": [
+        "OQ-001 Installation completed successfully",
+        "ODBC data source configured and accessible",
+        "Valid test dataset available in the ODBC source",
+        "User with appropriate permissions is logged in"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the data import section and select the ODBC connection option.",
+          "expected_result": "System displays the ODBC connection configuration dialog.",
+          "data_to_capture": [
+            "Screenshot of the ODBC configuration dialog"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure the connection using the pre-defined ODBC DSN and execute the data import.",
+          "expected_result": "System successfully connects to the data source and displays a preview of the available data.",
+          "data_to_capture": [
+            "Screenshot of the data preview",
+            "Log of any connection errors"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Select a dataset containing variable and attribute data and confirm the import.",
+          "expected_result": "System imports the data and displays a confirmation message. The dataset appears in the dashboard's data library.",
+          "data_to_capture": [
+            "Screenshot of the import confirmation",
+            "Name of the imported dataset"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Create a new X-bar/R chart using the imported ODBC data.",
+          "expected_result": "System generates the X-bar and R charts correctly based on the selected data columns.",
+          "data_to_capture": [
+            "Screenshot of the generated X-bar/R chart"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Create a new p-chart using attribute data from the same imported dataset.",
+          "expected_result": "System generates the p-chart correctly, calculating proportions from the attribute data.",
+          "data_to_capture": [
+            "Screenshot of the generated p-chart"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "ODBC data import completes without errors",
+        "Imported data is accurately reflected in the dashboard data library",
+        "X-bar/R and p-charts are generated correctly from the ODBC data source",
+        "Chart calculations match expected values from the source data"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records; demonstrates use of validated data sources",
+        "GMP principles for data integrity and traceability"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be transferred completely and accurately from the ODBC source",
+        "No data corruption or alteration during the import process",
+        "Audit trail (if available) must record the data import event"
+      ],
+      "urs_requirements": [
+        "URS-020-001",
+        "URS-020-012"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "SPC Dashboard User",
+        "ODBC Configuration Knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Scheduled Report Generation and Email Distribution Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the vendor's built-in scheduler can successfully generate and email PDF/CSV reports according to a predefined schedule.",
+      "prerequisites": [
+        "OQ-001 Installation completed successfully",
+        "A configured chart or report is saved",
+        "Email server settings are configured in the system",
+        "A valid recipient email address is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the scheduling module and create a new scheduled task for a saved chart report.",
+          "expected_result": "System displays the scheduler configuration interface.",
+          "data_to_capture": [
+            "Screenshot of the scheduler configuration screen"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure the task to generate a PDF report and set the schedule to run immediately or within a short timeframe.",
+          "expected_result": "Scheduler accepts the configuration and saves the scheduled task.",
+          "data_to_capture": [
+            "Screenshot of the saved task configuration",
+            "Task ID or name"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure the email distribution list for the report and set the subject/body template.",
+          "expected_result": "Email settings are saved successfully with the scheduled task.",
+          "data_to_capture": [
+            "Screenshot of the email configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Wait for the scheduled time to elapse and verify the task execution in the scheduler log.",
+          "expected_result": "Scheduler log indicates the task ran successfully and the report was generated.",
+          "data_to_capture": [
+            "Screenshot of the scheduler execution log"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Check the recipient's email inbox for the delivered report attachment.",
+          "expected_result": "Email is received containing the correct PDF/CSV report attachment.",
+          "data_to_capture": [
+            "Screenshot of the received email with attachment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 6,
+          "action": "Verify the content and format of the received report matches the original chart.",
+          "expected_result": "The exported report accurately represents the chart data and format.",
+          "data_to_capture": [
+            "Screenshot of the opened report for content verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Scheduled task is created and saved without error",
+        "Task executes automatically at the scheduled time",
+        "Report is generated in the correct format (PDF/CSV)",
+        "Email is successfully sent to the designated recipients",
+        "Report content is accurate and complete"
+      ],
+      "regulatory_basis": [
+        "GMP requirements for automated reporting and data distribution",
+        "21 CFR Part 11 - electronic signatures and records for automated processes"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Scheduled reports must be identical to manually generated reports",
+        "Email distribution must be complete and accurate",
+        "Scheduler must maintain an execution log for traceability"
+      ],
+      "urs_requirements": [
+        "URS-020-003",
+        "URS-020-006"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 35,
+      "required_expertise": [
+        "SPC Dashboard User",
+        "Email System Knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "ODBC Data Source Integration and Import Verification",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To verify that the SPC dashboard can successfully connect to and import data from a configured ODBC data source using the vendor's standard connectors.",
+      "prerequisites": [
+        "OQ-001 Installation Verification completed successfully",
+        "A test database with a known schema and sample QC data is available",
+        "A valid ODBC data source name (DSN) is configured on the test machine",
+        "Valid database credentials are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Launch the SPC dashboard and navigate to the data import section.",
+          "expected_result": "Dashboard loads successfully and data import options are accessible.",
+          "data_to_capture": [
+            "Application startup time",
+            "Any error messages displayed"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Select the ODBC connection option and choose the pre-configured test DSN from the list.",
+          "expected_result": "System displays the list of available ODBC data sources; the test DSN is selectable.",
+          "data_to_capture": [
+            "List of available DSNs",
+            "Status of connection attempt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Enter valid credentials and attempt to connect to the database.",
+          "expected_result": "Connection is established successfully without errors.",
+          "data_to_capture": [
+            "Authentication success/failure message",
+            "Connection timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Select a known table or view from the database schema containing QC data.",
+          "expected_result": "System displays the database schema and allows selection of the target table.",
+          "data_to_capture": [
+            "List of available tables/views",
+            "Schema information displayed"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Map the database columns to the required SPC chart fields and initiate the data import.",
+          "expected_result": "Data is imported successfully, and a confirmation message is displayed.",
+          "data_to_capture": [
+            "Number of records imported",
+            "Any data mapping errors",
+            "Import duration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 6,
+          "action": "Verify the imported data by comparing a sample of records in the dashboard with the source database.",
+          "expected_result": "Imported data matches the source data exactly, confirming data integrity.",
+          "data_to_capture": [
+            "Sample record comparison results",
+            "Data accuracy confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "The system establishes a connection to the ODBC data source without errors.",
+        "The system successfully imports data from the specified database table.",
+        "All imported data is accurate and complete when compared to the source.",
+        "The import process completes within the performance requirements for data loading."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Requirements for electronic records and trusted data sources.",
+        "GMP principles ensuring data integrity during transfer from source systems."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be transferred completely and accurately from the source database.",
+        "The import process must not alter or corrupt the original data values.",
+        "Audit trail (if available) should record the data source and import timestamp."
+      ],
+      "urs_requirements": [
+        "URS-020-012: Import data from CSV and ODBC connections using standard connectors."
+      ],
+      "related_tests": [
+        "OQ-001: Installation Verification",
+        "OQ-004: CSV Data Import Functionality"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Database Administration",
+        "ODBC Configuration",
+        "SPC Dashboard Navigation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Scheduled Report Generation and Email Distribution",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the vendor's built-in scheduler can automatically generate and email PDF/CSV reports according to a predefined schedule.",
+      "prerequisites": [
+        "OQ-002 Basic Chart Creation completed successfully",
+        "A valid email server configuration is set up in the dashboard",
+        "A test email recipient address is configured",
+        "A sample chart configuration is saved and ready for reporting"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the scheduling module within the SPC dashboard.",
+          "expected_result": "Scheduling interface is accessible and functional.",
+          "data_to_capture": [
+            "Interface load time",
+            "Available scheduling options"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new scheduled report task, selecting a pre-configured X-bar/R chart.",
+          "expected_result": "System allows creation of a new scheduled task with chart selection.",
+          "data_to_capture": [
+            "Task creation success/failure",
+            "Selected chart configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Configure the schedule to run immediately or within a short timeframe for testing.",
+          "expected_result": "Schedule is accepted by the system without validation errors.",
+          "data_to_capture": [
+            "Schedule configuration details",
+            "System validation messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Set the output format to PDF and CSV, and specify the test email recipient.",
+          "expected_result": "Output formats and recipient are correctly configured.",
+          "data_to_capture": [
+            "Selected output formats",
+            "Recipient email address"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Save the scheduled task and verify it appears in the task list as active.",
+          "expected_result": "Task is saved successfully and appears in the active tasks list.",
+          "data_to_capture": [
+            "Task save confirmation",
+            "Task status in the list"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 6,
+          "action": "Wait for the scheduled time and verify the report generation and email dispatch.",
+          "expected_result": "Report is generated and email is sent to the recipient at the scheduled time.",
+          "data_to_capture": [
+            "Actual execution time",
+            "Email delivery confirmation",
+            "Report generation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 7,
+          "action": "Verify the received email contains the correct attachments and report content.",
+          "expected_result": "Email contains PDF and CSV attachments with accurate chart data.",
+          "data_to_capture": [
+            "Email receipt time",
+            "Attachment integrity",
+            "Report content accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "The scheduler successfully triggers the report generation at the specified time.",
+        "Reports are generated in both PDF and CSV formats as configured.",
+        "The system sends the email with correct attachments to the specified recipient.",
+        "The generated reports contain accurate and complete data from the selected chart."
+      ],
+      "regulatory_basis": [
+        "GMP requirements for automated reporting and data distribution.",
+        "21 CFR Part 11 - Electronic records and signatures for automated processes."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Scheduled reports must accurately reflect the current chart data and configuration.",
+        "The email distribution process must not alter the report content or format.",
+        "The scheduler should maintain a log of execution attempts and outcomes."
+      ],
+      "urs_requirements": [
+        "URS-020-003: The system shall provide vendor standard export to PDF and CSV.",
+        "URS-020-006: The system shall support scheduled report emails using vendor scheduler."
+      ],
+      "related_tests": [
+        "OQ-002: Basic Chart Creation and Nelson Rules Application",
+        "OQ-003: Report Export Functionality"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "SPC Dashboard Scheduling Configuration",
+        "Email Server Setup Knowledge",
+        "Report Verification Techniques"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "ODBC Data Import Integration Test",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify the system can successfully import data from an ODBC data source using standard vendor connectors and maintain data integrity",
+      "prerequisites": [
+        "ODBC data source configured with test data",
+        "Valid ODBC connection string",
+        "User with import permissions logged in",
+        "Target dashboard workspace prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the data import section and select ODBC as the import source",
+          "expected_result": "ODBC import interface is displayed with connection configuration options",
+          "data_to_capture": [
+            "Import interface screenshot",
+            "Connection configuration options available"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure the ODBC connection using the provided connection string and credentials",
+          "expected_result": "Connection is established successfully without errors",
+          "data_to_capture": [
+            "Connection status",
+            "Any error messages",
+            "Connection timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Select the test dataset from the available ODBC tables and initiate import",
+          "expected_result": "Data is imported successfully and appears in the dashboard workspace",
+          "data_to_capture": [
+            "Import completion time",
+            "Record count imported",
+            "Data validation results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify the imported data matches the source data by comparing sample records",
+          "expected_result": "All imported data matches the source data exactly without corruption",
+          "data_to_capture": [
+            "Data comparison results",
+            "Any data discrepancies found"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "ODBC connection established successfully",
+        "Data imported without errors",
+        "Imported data matches source data exactly",
+        "Import completes within acceptable time frame"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for data integrity",
+        "GAMP 5 guidelines for data transfer validation"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be transferred without alteration",
+        "Complete audit trail of import process",
+        "Data mapping must be verified for accuracy"
+      ],
+      "urs_requirements": [
+        "URS-020-012: Import data from CSV and ODBC connections using standard connectors"
+      ],
+      "related_tests": [
+        "OQ-001: CSV Import Functionality",
+        "OQ-005: Data Integrity Verification"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "ODBC configuration",
+        "Database administration",
+        "Data validation techniques"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Scheduled Report Email Distribution Test",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify the vendor scheduler functionality can successfully generate and distribute reports via email according to configured schedules",
+      "prerequisites": [
+        "Email server configured and accessible",
+        "User with scheduling permissions logged in",
+        "Report template configured",
+        "Valid email distribution list",
+        "Scheduled time reached or manual trigger available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a scheduled report with specific parameters and set email distribution list",
+          "expected_result": "Schedule is saved successfully with all parameters retained",
+          "data_to_capture": [
+            "Schedule configuration screenshot",
+            "Schedule parameters saved"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Wait for scheduled time or manually trigger the scheduled report execution",
+          "expected_result": "Report generation initiates at the scheduled time or upon manual trigger",
+          "data_to_capture": [
+            "Execution start time",
+            "Any generation errors",
+            "Report generation duration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the report is generated in the specified format (PDF/CSV) and emailed to distribution list",
+          "expected_result": "Report is successfully generated and distributed to all recipients",
+          "data_to_capture": [
+            "Email delivery confirmation",
+            "Report format verification",
+            "Recipient list validation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Validate the content and format of the distributed report matches expectations",
+          "expected_result": "Report content is accurate and format is correct for all recipients",
+          "data_to_capture": [
+            "Report content validation results",
+            "Format consistency check",
+            "Data accuracy verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Report schedule configuration is saved correctly",
+        "Report generates at scheduled time without errors",
+        "Email distribution to all recipients is successful",
+        "Report content and format meet requirements"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 electronic records requirements",
+        "Data integrity principles for automated processes"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Scheduled reports must maintain data accuracy",
+        "Distribution records must be maintained",
+        "Report generation must be reliable and consistent"
+      ],
+      "urs_requirements": [
+        "URS-020-006: The system shall support scheduled report emails using vendor scheduler",
+        "URS-020-003: The system shall provide vendor standard export to PDF and CSV"
+      ],
+      "related_tests": [
+        "OQ-003: Report Export Functionality",
+        "OQ-006: User Role Access Control"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Email system configuration",
+        "Scheduling system operation",
+        "Report validation techniques"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "ODBC Data Import Integration Test",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify the system can successfully import data from ODBC connections using standard vendor-provided connectors",
+      "prerequisites": [
+        "ODBC data source configured with test data",
+        "Valid user credentials with import permissions",
+        "System installed and configured with ODBC connector"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to data import section and select ODBC connection option",
+          "expected_result": "System displays ODBC connection configuration interface",
+          "data_to_capture": [
+            "Interface responsiveness",
+            "Available connection options"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure ODBC connection parameters and authenticate",
+          "expected_result": "System successfully connects to ODBC data source",
+          "data_to_capture": [
+            "Connection success/failure status",
+            "Authentication method used"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Select test dataset and initiate import process",
+          "expected_result": "Data is imported successfully without errors",
+          "data_to_capture": [
+            "Import completion time",
+            "Number of records imported",
+            "Any error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify imported data appears in dashboard datasets",
+          "expected_result": "Imported data is available for chart creation and analysis",
+          "data_to_capture": [
+            "Data accuracy verification",
+            "Dataset availability status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "ODBC connection established successfully",
+        "All test data imported without corruption",
+        "Imported data accessible for chart creation"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for electronic records",
+        "Data integrity requirements for QC systems"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must maintain original values during import",
+        "No data corruption or loss during transfer",
+        "Complete audit trail of import process"
+      ],
+      "urs_requirements": [
+        "URS-020-012: Import data from CSV and ODBC connections using standard connectors"
+      ],
+      "related_tests": [
+        "OQ-001: CSV Import Functionality",
+        "OQ-006: Data Integrity Verification"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "ODBC configuration knowledge",
+        "Database administration",
+        "System integration testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Active Directory Authentication Integration Test",
+      "test_category": "security",
+      "gamp_category": 3,
+      "objective": "Verify the system integrates with Active Directory for user authentication when supported by vendor",
+      "prerequisites": [
+        "Active Directory test environment",
+        "Test user accounts in AD",
+        "System configured for AD integration",
+        "Network connectivity to AD server"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure system to use Active Directory authentication in vendor settings",
+          "expected_result": "System accepts AD configuration parameters without errors",
+          "data_to_capture": [
+            "Configuration options available",
+            "Settings validation results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt login with valid AD credentials",
+          "expected_result": "System authenticates user successfully via AD",
+          "data_to_capture": [
+            "Authentication success/failure",
+            "Login time",
+            "User role mapping"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt login with invalid AD credentials",
+          "expected_result": "System rejects authentication attempt",
+          "data_to_capture": [
+            "Error message displayed",
+            "Security event logging"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify role-based access control functions with AD-authenticated users",
+          "expected_result": "User permissions are correctly applied based on AD group membership",
+          "data_to_capture": [
+            "Access level verification",
+            "Role mapping accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Successful authentication with valid AD credentials",
+        "Proper rejection of invalid credentials",
+        "Correct role-based access control implementation",
+        "Secure handling of authentication data"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 electronic signature requirements",
+        "Data security and access control regulations",
+        "GAMP5 security guidelines"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Authentication credentials must be securely transmitted",
+        "User access must be properly controlled and logged",
+        "No unauthorized access permitted"
+      ],
+      "urs_requirements": [
+        "URS-020-013: Integrate with AD for user authentication if supported by vendor",
+        "URS-020-004: The dashboard shall allow role-based view access"
+      ],
+      "related_tests": [
+        "OQ-004: User Role Access Control",
+        "OQ-008: Security and Access Control"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Active Directory administration",
+        "Network security",
+        "Authentication protocols"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 410,
+  "generation_timestamp": "2025-11-17T21:13:03.462163+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true,
+    "cfr_part11_compliant": false,
+    "data_integrity_validated": false
+  },
+  "review_required": true,
+  "timestamp": "2025-11-17T21:13:03.730715+00:00",
+  "workflow_session_id": "unified_workflow_2025-11-17T21:06:58.342663+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

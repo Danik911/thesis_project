@@ -189,9 +189,12 @@ Thumbs.db
 
 # Log files
 # *.log  # Commented out to track diagnostic logs
-# Track specific log types
-!main/logs/traces/*.jsonl
-!main/logs/traces/*.csv
+
+# Ignore voluminous generated traces and local observability data
+main/logs/traces/
+main/logs/langfuse/
+
+# Track specific compliance log types (GAMP5/ALCOA+)
 !main/logs/audit/*.log
 !main/logs/events/*.jsonl
 

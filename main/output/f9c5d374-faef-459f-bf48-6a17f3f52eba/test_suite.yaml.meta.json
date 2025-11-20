@@ -1,0 +1,13 @@
+{
+  "gamp_category": "3",
+  "job_id": "f9c5d374-faef-459f-bf48-6a17f3f52eba",
+  "created_at": "2025-11-19T11:46:11.581485Z",
+  "created_by": "user_35KgiAcvIC0tdtFvJUN1vDkrNYc",
+  "artifact_type": "test_suite",
+  "urs_filename": "URS-020.md",
+  "urs_hash": "18821f2dcbbb390ff724b86708e16fb0215670f7eb6bf13f46c248eadb5c6843",
+  "storage_mode": "local",
+  "storage_path": "/app/output/f9c5d374-faef-459f-bf48-6a17f3f52eba/test_suite.yaml",
+  "storage_timestamp": "2025-11-19T11:46:11.587577Z",
+  "file_size_bytes": 36560
+}

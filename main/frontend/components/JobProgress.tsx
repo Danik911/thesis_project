@@ -10,10 +10,35 @@ export default function JobProgress({ status, logs }: JobProgressProps) {
 
   // Simulate progress based on status or logs
   useEffect(() => {
-    if (status === 'PENDING') setProgress(10);
-    else if (status === 'PROCESSING') setProgress(45);
-    else if (status === 'COMPLETED') setProgress(100);
-    else if (status === 'FAILED') setProgress(100);
+    let interval: NodeJS.Timeout;
+
+    if (status === 'PENDING') {
+      setProgress(10);
+    } else if (status === 'PROCESSING') {
+      // Ensure we start at least at 10%
+      setProgress(prev => Math.max(prev, 10));
+      
+      // Gradually increase progress up to 90%
+      interval = setInterval(() => {
+        setProgress(prev => {
+          // Slow down as we get closer to 90%
+          const remaining = 90 - prev;
+          if (remaining <= 0) return 90;
+          
+          // Add a small increment based on remaining distance
+          const increment = Math.max(0.1, remaining * 0.02);
+          return Math.min(90, prev + increment);
+        });
+      }, 200);
+    } else if (status === 'COMPLETED') {
+      setProgress(100);
+    } else if (status === 'FAILED') {
+      setProgress(100);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [status]);
 
   return (
@@ -34,7 +59,7 @@ export default function JobProgress({ status, logs }: JobProgressProps) {
             </span>
             Generation Status: <span className="text-blue-400 font-mono">{status}</span>
           </h3>
-          <span className="text-sm font-mono text-slate-400">{progress}%</span>
+          <span className="text-sm font-mono text-slate-400">{Math.round(progress)}%</span>
         </div>
         
         <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">

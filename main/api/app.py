@@ -13,11 +13,13 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+import yaml
+import aiofiles
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from langfuse import observe
 
 # Load environment variables from .env.local (for local development)
@@ -315,6 +317,128 @@ async def submit_job(
             logger.warning(f"Failed to close file handle: {e}")
 
 
+@app.get("/jobs", response_model=list[JobStatusResponse])
+@observe(name="list_jobs")
+async def list_jobs(
+    job_repository: JobRepositoryDep,
+    job_lock: JobLockDep,
+    user: CurrentUserDep
+) -> list[JobStatusResponse]:
+    """
+    List all jobs for the current user.
+    """
+    async with job_lock:
+        user_jobs = [
+            job.to_response() 
+            for job in job_repository.values() 
+            if job.user_id == user.sub
+        ]
+    # Sort by created_at desc
+    user_jobs.sort(key=lambda x: x.created_at, reverse=True)
+    return user_jobs
+
+
+@app.get("/jobs/{job_id}/download")
+@observe(name="download_job_result")
+async def download_job_result(
+    job_id: str,
+    job_repository: JobRepositoryDep,
+    job_lock: JobLockDep,
+    user: CurrentUserDep
+):
+    """
+    Download job result file.
+    """
+    async with job_lock:
+        job = job_repository.get(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.user_id != user.sub:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    if job.status != JobStatus.COMPLETED:
+        raise HTTPException(status_code=400, detail="Job not completed")
+
+    if not job.result_uri:
+        raise HTTPException(status_code=404, detail="Result not found")
+
+    # Handle file:// URI
+    if job.result_uri.startswith("file://"):
+        file_path = job.result_uri.replace("file://", "")
+        # On Windows it might be file:///C:/... -> /C:/...
+        # But inside Docker (Linux) it is file:///app/output/... -> /app/output/...
+        
+        # Handle Windows path if running locally
+        if ":" in file_path and not file_path.startswith("/"):
+             pass # It's likely absolute windows path
+        elif file_path.startswith("/") and ":" in file_path[2:]: # /C:/...
+             file_path = file_path[1:] # C:/...
+
+        path_obj = Path(file_path).resolve()
+        
+        if not path_obj.exists():
+             raise HTTPException(status_code=404, detail=f"File not found on server: {path_obj}")
+             
+        return FileResponse(
+            path=path_obj, 
+            filename=f"test_suite_{job_id}.yaml",
+            media_type="application/x-yaml"
+        )
+    
+    raise HTTPException(status_code=501, detail="Storage backend not supported for direct download")
+
+
+@app.get("/jobs/{job_id}/result")
+@observe(name="get_job_result_json")
+async def get_job_result_json(
+    job_id: str,
+    job_repository: JobRepositoryDep,
+    job_lock: JobLockDep,
+    user: CurrentUserDep
+):
+    """
+    Get job result as JSON for dashboard display.
+    """
+    async with job_lock:
+        job = job_repository.get(job_id)
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.user_id != user.sub:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    if job.status != JobStatus.COMPLETED:
+        raise HTTPException(status_code=400, detail="Job not completed")
+
+    if not job.result_uri:
+        raise HTTPException(status_code=404, detail="Result not found")
+
+    if job.result_uri.startswith("file://"):
+        file_path = job.result_uri.replace("file://", "")
+        # Handle Windows path logic if needed
+        if file_path.startswith("/") and ":" in file_path[2:]:
+             file_path = file_path[1:]
+
+        path_obj = Path(file_path).resolve()
+        
+        if not path_obj.exists():
+             raise HTTPException(status_code=404, detail="File not found on server")
+             
+        try:
+            async with aiofiles.open(path_obj, "r") as f:
+                content = await f.read()
+                # Parse YAML
+                data = yaml.safe_load(content)
+                return JSONResponse(content=data)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to parse result: {e}")
+
+    raise HTTPException(status_code=501, detail="Storage backend not supported")
+
+
 @app.get("/jobs/{job_id}", response_model=JobStatusResponse)
 @observe(name="get_job_status")
 async def get_job_status(
@@ -369,14 +493,19 @@ async def get_job_status(
         # Generate download URL if job completed
         download_url: str | None = None
         if job.status == JobStatus.COMPLETED and job.result_uri:
-            try:
-                download_url = await storage.generate_download_url(
-                    artifact_id=job_id,
-                    expiry_seconds=86400  # 24 hours
-                )
-            except Exception as e:
-                logger.warning(f"Failed to generate download URL: {e}")
-                # Don't fail request if URL generation fails
+            if job.result_uri.startswith("file://"):
+                 # Return API endpoint for download
+                 # We assume the client can construct the full URL or we return relative
+                 download_url = f"/jobs/{job_id}/download"
+            else:
+                try:
+                    download_url = await storage.generate_download_url(
+                        artifact_id=job_id,
+                        expiry_seconds=86400  # 24 hours
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to generate download URL: {e}")
+                    # Don't fail request if URL generation fails
 
         # Convert to response model
         return job.to_response(download_url=download_url)

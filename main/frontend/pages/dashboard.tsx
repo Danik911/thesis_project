@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [results, setResults] = useState<any>(null);
+  const [jobs, setJobs] = useState<any[]>([]);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Derive display name
@@ -25,6 +26,23 @@ export default function Dashboard() {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const fetchJobs = async () => {
+    if (!isLoaded || !user) return;
+    try {
+      const token = await getToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+      const response = await fetch(`${apiUrl}/jobs`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setJobs(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch jobs:", error);
+    }
+  };
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
@@ -33,6 +51,10 @@ export default function Dashboard() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [isLoaded, user]);
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -103,31 +125,24 @@ export default function Dashboard() {
           
           setLogs(prev => [...prev, 'Job completed. Retrieving results...']);
           
-          // Fetch the actual results if download_url is present
-          if (data.download_url) {
-            try {
-              // Note: download_url might be a presigned URL or internal URL. 
-              // If it's internal (e.g. localhost:8000), we might need to adjust it if we are client-side.
-              // But usually presigned URLs are direct to S3 or similar.
-              // For local dev, it might be http://localhost:8080/...
-              const resultResponse = await fetch(data.download_url);
-              if (resultResponse.ok) {
-                const resultData = await resultResponse.json();
-                setResults(resultData);
-                setStatus('COMPLETED');
-                setLogs(prev => [...prev, 'Results retrieved successfully.']);
-              } else {
-                throw new Error('Failed to download results');
-              }
-            } catch (err) {
-              console.error("Error fetching results:", err);
-              setStatus('FAILED');
-              setLogs(prev => [...prev, 'ERROR: Failed to retrieve result data.']);
+          // Fetch the JSON result for dashboard
+          try {
+            const resultResponse = await fetch(`${apiUrl}/jobs/${id}/result`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (resultResponse.ok) {
+              const resultData = await resultResponse.json();
+              setResults(resultData);
+              setStatus('COMPLETED');
+              setLogs(prev => [...prev, 'Results retrieved successfully.']);
+              fetchJobs(); // Refresh history
+            } else {
+              throw new Error('Failed to retrieve results');
             }
-          } else {
-             // Fallback if no download URL (shouldn't happen for completed jobs in this workflow)
-             setStatus('COMPLETED');
-             setLogs(prev => [...prev, 'Job completed but no result URL provided.']);
+          } catch (err) {
+            console.error("Error fetching results:", err);
+            setStatus('FAILED');
+            setLogs(prev => [...prev, 'ERROR: Failed to retrieve result data.']);
           }
 
         } else if (data.status === 'FAILED') {
@@ -147,15 +162,57 @@ export default function Dashboard() {
     }, 2000);
   };
 
-  const handleDownload = () => {
-    // Create a blob and download it
-    const element = document.createElement("a");
-    const file = new Blob([JSON.stringify(results, null, 2)], {type: 'application/json'});
-    element.href = URL.createObjectURL(file);
-    element.download = `test_suite_${jobId}.json`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const handleDownload = async () => {
+    if (!jobId) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const url = `${apiUrl}/jobs/${jobId}/download`;
+    
+    try {
+      const token = await getToken();
+      const response = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `test_suite_${jobId}.yaml`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    } catch (e) {
+        console.error("Download error:", e);
+        alert("Failed to download file");
+    }
+  };
+
+  const handleHistoryDownload = async (job: any) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const url = `${apiUrl}/jobs/${job.job_id}/download`;
+    
+    try {
+      const token = await getToken();
+      const response = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `test_suite_${job.job_id}.yaml`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    } catch (e) {
+        console.error("Download error:", e);
+        alert("Failed to download file");
+    }
   };
 
   const resetDashboard = () => {
@@ -304,6 +361,59 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+
+            {/* History Section */}
+            <div className="mt-12 border-t border-slate-800 pt-8">
+              <h2 className="text-2xl font-bold text-white mb-6">Recent Workflows</h2>
+              <div className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700">
+                 {jobs.length === 0 ? (
+                   <div className="p-8 text-center text-slate-400">No history available.</div>
+                 ) : (
+                   <table className="w-full text-left text-sm text-slate-400">
+                     <thead className="bg-slate-900/50 text-slate-200 uppercase font-mono text-xs">
+                       <tr>
+                         <th className="px-6 py-4">Job ID</th>
+                         <th className="px-6 py-4">File</th>
+                         <th className="px-6 py-4">Status</th>
+                         <th className="px-6 py-4">Date</th>
+                         <th className="px-6 py-4">Actions</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-700">
+                       {jobs.map(job => (
+                         <tr key={job.job_id} className="hover:bg-slate-700/30 transition-colors">
+                           <td className="px-6 py-4 font-mono text-xs">{job.job_id.substring(0, 8)}...</td>
+                           <td className="px-6 py-4">{job.urs_filename}</td>
+                           <td className="px-6 py-4">
+                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                               job.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' :
+                               job.status === 'FAILED' ? 'bg-red-500/10 text-red-400' :
+                               'bg-blue-500/10 text-blue-400'
+                             }`}>
+                               {job.status}
+                             </span>
+                           </td>
+                           <td className="px-6 py-4">{new Date(job.created_at).toLocaleDateString()} {new Date(job.created_at).toLocaleTimeString()}</td>
+                           <td className="px-6 py-4">
+                             {job.status === 'COMPLETED' && (
+                               <button 
+                                 onClick={() => handleHistoryDownload(job)}
+                                 className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                               >
+                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                 </svg>
+                                 Download
+                               </button>
+                             )}
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 )}
+              </div>
+            </div>
           </div>
         </div>
       </Layout>

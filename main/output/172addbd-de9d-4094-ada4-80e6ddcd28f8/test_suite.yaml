@@ -1,0 +1,1000 @@
+suite_id: OQ-SUITE-1117
+gamp_category: 3
+document_name: 172addbd-de9d-4094-ada4-80e6ddcd28f8.md
+test_cases:
+- test_id: OQ-001
+  test_name: X-bar/R Chart Creation and Nelson Rules Application
+  test_category: functional
+  gamp_category: 3
+  objective: Verify the system can create X-bar/R control charts from CSV input data
+    and correctly apply vendor-standard Nelson rules for statistical process control
+  prerequisites:
+  - System installed and configured
+  - Test CSV file with 1000 data points prepared
+  - Valid user credentials with chart creation permissions
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard with valid credentials and navigate to chart
+      creation module
+    expected_result: User successfully logs in and chart creation interface is accessible
+    data_to_capture:
+    - Login success status
+    - Chart creation module accessibility
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Import prepared CSV file containing 1000 data points using standard import
+      functionality
+    expected_result: CSV file imports successfully without errors and data appears
+      in preview
+    data_to_capture:
+    - Import success status
+    - Data point count verification
+    - Any error messages
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Configure X-bar/R chart parameters and enable all vendor-standard Nelson
+      rules
+    expected_result: Chart configuration completes successfully with Nelson rules
+      enabled
+    data_to_capture:
+    - Configuration settings
+    - Nelson rules activation status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Generate the X-bar/R chart and verify Nelson rule violations are properly
+      flagged
+    expected_result: Chart renders completely with proper statistical calculations
+      and Nelson rule violations visually identified
+    data_to_capture:
+    - Chart rendering time
+    - Statistical calculation accuracy
+    - Nelson rule violation flags
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - X-bar/R chart renders successfully from CSV input
+  - All vendor-standard Nelson rules are correctly applied and violations properly
+    flagged
+  - Statistical calculations match expected values from reference data
+  regulatory_basis:
+  - 21 CFR Part 211.68
+  - ICH Q9 Quality Risk Management
+  - FDA Data Integrity Requirements
+  risk_level: medium
+  data_integrity_requirements:
+  - Original CSV data must remain unaltered during processing
+  - Statistical calculations must be mathematically accurate
+  - Nelson rule application must be consistent and reproducible
+  urs_requirements:
+  - URS-020-001
+  - URS-020-002
+  - URS-020-008
+  related_tests:
+  - OQ-002
+  - PQ-010
+  - PQ-015
+  estimated_duration_minutes: 30
+  required_expertise:
+  - SPC chart interpretation
+  - Statistical process control knowledge
+  - CSV data formatting
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-002
+  test_name: High Volume Data Loading and Chart Rendering Performance
+  test_category: performance
+  gamp_category: 3
+  objective: Validate system performance meets requirements for loading large datasets
+    and rendering charts within specified timeframes under supported hardware configuration
+  prerequisites:
+  - System installed on supported hardware
+  - Test CSV file with exactly 100,000 data points prepared
+  - Performance monitoring tools available
+  - Network connectivity verified
+  test_steps:
+  - step_number: 1
+    action: Prepare performance monitoring tools to measure data loading and chart
+      rendering times
+    expected_result: Performance monitoring tools are active and ready to capture
+      timing metrics
+    data_to_capture:
+    - Monitoring tool status
+    - Baseline system performance metrics
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Import the 100,000 data point CSV file using standard import functionality
+    expected_result: Data import initiates and completes the loading process
+    data_to_capture:
+    - Data import start time
+    - Data import completion time
+    - Memory usage during import
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Apply standard filter changes to the loaded dataset and trigger chart
+      re-rendering
+    expected_result: Filters apply successfully and chart re-rendering process initiates
+    data_to_capture:
+    - Filter application time
+    - Chart rendering initiation time
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Measure total time from data import completion to fully rendered chart
+      after filter changes
+    expected_result: Complete chart rendering with all visual elements displayed
+    data_to_capture:
+    - Total rendering time
+    - CPU utilization during rendering
+    - System responsiveness metrics
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - 100,000 data points load in less than 5 seconds
+  - Charts render completely in less than 2 seconds after filter changes
+  - System remains responsive during high volume operations
+  regulatory_basis:
+  - 21 CFR Part 11.10(a)
+  - FDA Guidance on General Principles of Software Validation
+  - PIC/S PI 041-1 Good Practices for Data Management
+  risk_level: medium
+  data_integrity_requirements:
+  - All 100,000 data points must be accurately processed without loss
+  - Statistical calculations must maintain precision with large datasets
+  - No data corruption during high volume operations
+  urs_requirements:
+  - URS-020-010
+  - URS-020-011
+  - URS-020-012
+  related_tests:
+  - OQ-001
+  - PQ-012
+  - PQ-018
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Performance testing methodology
+  - System monitoring tools operation
+  - Large dataset management
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-003
+  test_name: Data Import and Chart Creation Functional Test
+  test_category: functional
+  gamp_category: 3
+  objective: Verify the system can successfully import data from CSV and ODBC sources
+    and create X-bar/R and p-charts using the imported data.
+  prerequisites:
+  - System installation is complete and verified
+  - Test CSV files with valid SPC data are available
+  - ODBC data source is configured and accessible
+  - User account with chart creation permissions is available
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard with a user account that has data import permissions.
+    expected_result: User successfully logs in and the main dashboard interface is
+      displayed.
+    data_to_capture:
+    - Screenshot of successful login
+    - System timestamp of login
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Navigate to the data import module and select the CSV import option. Upload
+      the prepared test CSV file containing 100k data points.
+    expected_result: System accepts the CSV file and displays a confirmation message.
+      Data import completes in less than 5 seconds.
+    data_to_capture:
+    - Screenshot of import confirmation
+    - Time taken for import completion
+    - Number of records imported
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Navigate to the data import module and select the ODBC import option.
+      Connect to the configured ODBC source and import a dataset.
+    expected_result: System successfully connects to the ODBC source and imports the
+      specified dataset without errors.
+    data_to_capture:
+    - Screenshot of successful ODBC connection
+    - Number of records imported via ODBC
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Select the imported dataset and create an X-bar/R chart using the vendor's
+      standard chart creation workflow.
+    expected_result: System generates an X-bar/R chart displaying the correct control
+      limits and data points based on the imported data.
+    data_to_capture:
+    - Screenshot of the generated X-bar/R chart
+    - Chart configuration settings used
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Create a p-chart using the same or a different imported dataset following
+      the standard workflow.
+    expected_result: System generates a p-chart with appropriate proportions and control
+      limits calculated correctly.
+    data_to_capture:
+    - Screenshot of the generated p-chart
+    - Chart configuration settings used
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - CSV import completes successfully in under 5 seconds for 100k data points
+  - ODBC import completes without connection or data retrieval errors
+  - X-bar/R and p-charts are generated accurately reflecting the source data
+  - All chart elements (control limits, center lines, data points) are displayed correctly
+  regulatory_basis:
+  - FDA 21 CFR Part 11 for electronic records integrity
+  - GMP requirements for accurate data representation in quality control
+  risk_level: medium
+  data_integrity_requirements:
+  - Imported data must maintain accuracy and completeness throughout the process
+  - Chart calculations must be mathematically correct and reproducible
+  - Source data integrity must be preserved during transformation and visualization
+  urs_requirements:
+  - URS-020-001
+  - URS-020-010
+  - URS-020-012
+  related_tests:
+  - OQ-001
+  - OQ-002
+  - OQ-004
+  estimated_duration_minutes: 45
+  required_expertise:
+  - SPC chart interpretation
+  - Data import procedures
+  - ODBC connectivity knowledge
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-004
+  test_name: Nelson Rules Application and Reporting Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Verify the system correctly applies vendor-standard Nelson rules to control
+    charts and generates accurate PDF/CSV exports of the results.
+  prerequisites:
+  - System is operational with test data loaded
+  - Test datasets with known out-of-control patterns are available
+  - User account with reporting permissions is available
+  - Email server configuration is verified if testing scheduled reports
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard and open a control chart with a dataset containing
+      known violations of Nelson rules.
+    expected_result: Chart displays with data points clearly marked, including those
+      that violate Nelson rules.
+    data_to_capture:
+    - Screenshot of the chart showing rule violations
+    - List of which Nelson rules were triggered
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Verify that all eight standard Nelson rules are correctly implemented
+      by reviewing the chart against known pattern violations.
+    expected_result: System correctly identifies and flags violations for all eight
+      Nelson rules according to the vendor's implementation.
+    data_to_capture:
+    - Documentation of each Nelson rule verification
+    - Screenshots showing correct violation detection
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Export the chart with Nelson rule violations to PDF format using the vendor's
+      standard export function.
+    expected_result: System generates a PDF file containing the chart image, data,
+      and highlighted rule violations in a readable format.
+    data_to_capture:
+    - Exported PDF file
+    - Verification that all chart elements and violations are included in PDF
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Export the underlying chart data with Nelson rule flags to CSV format.
+    expected_result: System generates a CSV file containing the raw data with additional
+      columns indicating which Nelson rules were violated for each point.
+    data_to_capture:
+    - Exported CSV file
+    - Verification that Nelson rule flags are included in CSV export
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: If supported, configure and execute a scheduled report email for the chart
+      using the vendor's scheduler.
+    expected_result: System successfully schedules and sends the report email with
+      the attached chart and data to the specified recipients.
+    data_to_capture:
+    - Screenshot of scheduler configuration
+    - Confirmation of email receipt
+    - Timestamp of email delivery
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - All eight Nelson rules are correctly implemented and trigger appropriately
+  - PDF exports contain complete chart representations with rule violations highlighted
+  - CSV exports include Nelson rule violation flags for each data point
+  - Scheduled reports are generated and delivered successfully if feature is supported
+  regulatory_basis:
+  - FDA guidance on statistical process control in pharmaceutical manufacturing
+  - GMP requirements for proper out-of-control condition detection and documentation
+  risk_level: medium
+  data_integrity_requirements:
+  - Nelson rule calculations must be mathematically accurate and consistent
+  - Export functions must preserve all chart data and rule application results
+  - Scheduled reports must maintain data integrity during generation and transmission
+  urs_requirements:
+  - URS-020-002
+  - URS-020-003
+  - URS-020-006
+  - URS-020-008
+  related_tests:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  estimated_duration_minutes: 40
+  required_expertise:
+  - Nelson rules knowledge
+  - Reporting and export functionality
+  - Email system configuration if testing scheduled reports
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-005
+  test_name: Performance Testing - Large Dataset Loading and Chart Rendering
+  test_category: performance
+  gamp_category: 3
+  objective: Verify the system meets performance requirements for loading large datasets
+    and rendering charts within specified time limits under supported hardware conditions.
+  prerequisites:
+  - System installation is complete and verified
+  - Test environment with supported hardware specifications is available
+  - Sample CSV file with 100,000+ data points is prepared
+  - User account with appropriate permissions is available
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard using valid credentials with appropriate permissions
+    expected_result: User successfully authenticates and gains access to the dashboard
+      interface
+    data_to_capture:
+    - Login timestamp
+    - Time to load dashboard interface
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Navigate to the data import function and select the prepared CSV file
+      containing 100,000+ data points
+    expected_result: System displays file selection dialog and accepts the CSV file
+    data_to_capture:
+    - File selection time
+    - File validation status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Initiate the data import process and start timer simultaneously
+    expected_result: System begins processing the CSV file and displays progress indicator
+    data_to_capture:
+    - Import start timestamp
+    - Progress indicator status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Monitor the import process until completion and stop timer when data is
+      fully loaded
+    expected_result: System completes data loading and displays confirmation message
+    data_to_capture:
+    - Import completion timestamp
+    - Total load time
+    - Any error messages
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Apply filter changes to the loaded dataset and start timer for chart rendering
+    expected_result: System processes filter criteria and begins chart regeneration
+    data_to_capture:
+    - Filter application time
+    - Chart rendering start time
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 6
+    action: Wait for chart to fully render and stop timer when visualization is complete
+    expected_result: System displays fully rendered control chart with all data points
+    data_to_capture:
+    - Chart rendering completion time
+    - Visual confirmation of complete rendering
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Data loading time for 100,000+ points is less than 5 seconds
+  - Chart rendering time after filter changes is less than 2 seconds
+  - No system crashes or data corruption occurs during performance testing
+  - All visual elements render correctly without missing data points
+  regulatory_basis:
+  - FDA 21 CFR Part 11 - System performance requirements for electronic records
+  - GMP requirements for timely data processing and visualization
+  risk_level: medium
+  data_integrity_requirements:
+  - All 100,000+ data points must be accurately loaded without loss or corruption
+  - Chart calculations must reflect the complete dataset accurately
+  - Filtered views must maintain data integrity and statistical accuracy
+  urs_requirements:
+  - 'URS-020-010: Load 100k data points in < 5 seconds on supported hardware'
+  - 'URS-020-011: Render charts in < 2 seconds after filter changes'
+  related_tests:
+  - OQ-001
+  - OQ-002
+  - OQ-004
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Performance Testing
+  - SPC Knowledge
+  - System Administration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-006
+  test_name: Integration Testing - Data Import from Multiple Sources
+  test_category: integration
+  gamp_category: 3
+  objective: Verify the system correctly imports data from both CSV files and ODBC
+    connections using standard vendor-provided connectors.
+  prerequisites:
+  - System installation is complete and verified
+  - Test CSV files with various formats are prepared
+  - ODBC data source is configured and accessible
+  - User account with data import permissions is available
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard using valid credentials with data import permissions
+    expected_result: User successfully authenticates and gains access to dashboard
+      features
+    data_to_capture:
+    - Login success status
+    - Available import options
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Navigate to CSV import function and select a test CSV file with standard
+      format
+    expected_result: System accepts the CSV file and displays preview of data structure
+    data_to_capture:
+    - File format validation
+    - Data preview accuracy
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Complete the CSV import process and verify data mapping accuracy
+    expected_result: System imports all data points correctly with proper column mapping
+    data_to_capture:
+    - Import completion status
+    - Data mapping validation results
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Navigate to ODBC import function and select the configured data source
+    expected_result: System connects to ODBC source and displays available tables/views
+    data_to_capture:
+    - ODBC connection status
+    - Available data sources
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Select a test table/view and configure the data import parameters
+    expected_result: System accepts configuration and displays data preview
+    data_to_capture:
+    - Parameter configuration acceptance
+    - Data preview accuracy
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 6
+    action: Complete the ODBC import process and verify data integrity
+    expected_result: System imports data correctly maintaining referential integrity
+    data_to_capture:
+    - Import completion status
+    - Data integrity verification results
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 7
+    action: Compare data imported from both sources for consistency and accuracy
+    expected_result: Data from both sources maintains consistent formatting and values
+    data_to_capture:
+    - Data consistency validation
+    - Format comparison results
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - CSV import function successfully processes standard format files
+  - ODBC connector establishes connection and imports data correctly
+  - Data mapping maintains accuracy across both import methods
+  - No data loss or corruption occurs during import processes
+  regulatory_basis:
+  - FDA 21 CFR Part 11 - Requirements for electronic records and data integrity
+  - GMP requirements for accurate data transfer and maintenance
+  risk_level: medium
+  data_integrity_requirements:
+  - All imported data must maintain original values and structure
+  - Data mapping must be accurate and consistent across import methods
+  - No data truncation or alteration during import processes
+  urs_requirements:
+  - 'URS-020-012: Import data from CSV and ODBC connections using standard connectors'
+  - 'URS-020-001: Users shall create X-bar/R and p-charts from CSV inputs'
+  related_tests:
+  - OQ-001
+  - OQ-002
+  - OQ-005
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Database Administration
+  - Data Integration
+  - SPC System Knowledge
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-007
+  test_name: ODBC Data Import and Chart Generation Verification
+  test_category: integration
+  gamp_category: 3
+  objective: To verify that the SPC dashboard can successfully import data from a
+    configured ODBC data source and generate accurate control charts from the imported
+    dataset.
+  prerequisites:
+  - ODBC data source configured with test data
+  - Valid user credentials with import permissions
+  - SPC dashboard application is installed and running
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard with valid credentials.
+    expected_result: User successfully authenticates and the main dashboard interface
+      loads.
+    data_to_capture:
+    - Screenshot of login screen
+    - Screenshot of main dashboard
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Navigate to the data import module and select the ODBC connection option.
+    expected_result: The ODBC connection interface is displayed, showing available
+      data sources.
+    data_to_capture:
+    - Screenshot of the ODBC connection interface
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Select the pre-configured test ODBC data source and execute the data import.
+    expected_result: System connects to the ODBC source and imports the test dataset
+      without errors.
+    data_to_capture:
+    - Screenshot of successful import confirmation
+    - Log of any error messages
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Create an X-bar/R chart using the imported ODBC dataset.
+    expected_result: The chart is rendered correctly, displaying control limits and
+      data points based on the imported data.
+    data_to_capture:
+    - Screenshot of the generated X-bar/R chart
+    - Timestamp of chart rendering
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - ODBC data import completes without errors
+  - Imported data is accurately reflected in the generated X-bar/R chart
+  - Chart rendering time is less than 2 seconds
+  regulatory_basis:
+  - 21 CFR Part 11 compliance for electronic records
+  - Data integrity ALCOA+ principles for data transfer
+  risk_level: medium
+  data_integrity_requirements:
+  - Data must maintain accuracy and completeness during ODBC transfer
+  - Audit trail must record the data import event if supported by vendor
+  urs_requirements:
+  - 'URS-020-012: Import data from CSV and ODBC connections using standard connectors'
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 30
+  required_expertise:
+  - ODBC configuration knowledge
+  - SPC dashboard navigation skills
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-008
+  test_name: Scheduled Report Generation and Email Distribution Test
+  test_category: functional
+  gamp_category: 3
+  objective: To verify that the vendor's scheduler correctly generates and emails
+    PDF reports according to a predefined schedule and configuration.
+  prerequisites:
+  - Email server configured in the system
+  - Scheduled report configuration saved
+  - Valid recipient email addresses configured
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard with administrator credentials.
+    expected_result: User successfully authenticates and gains access to administrative
+      functions.
+    data_to_capture:
+    - Screenshot of successful login
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Navigate to the scheduler module and configure a test report to run immediately.
+    expected_result: Scheduler accepts the configuration and shows the job as scheduled.
+    data_to_capture:
+    - Screenshot of the scheduled job configuration
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Monitor the scheduler execution and verify the report generation.
+    expected_result: System generates the PDF report and initiates the email distribution
+      process.
+    data_to_capture:
+    - Screenshot of scheduler status showing completion
+    - Timestamp of report generation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify the recipient's email inbox for the delivered report.
+    expected_result: Email is received containing the PDF report attachment with correct
+      content.
+    data_to_capture:
+    - Screenshot of received email
+    - Screenshot of PDF report content
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Scheduled report generates successfully without manual intervention
+  - PDF report is correctly formatted and contains accurate data
+  - Email is delivered to all configured recipients with the correct attachment
+  regulatory_basis:
+  - GMP requirements for automated reporting processes
+  - Data integrity requirements for automated data handling
+  risk_level: medium
+  data_integrity_requirements:
+  - Scheduled reports must maintain data accuracy and consistency
+  - Report configuration must be retained as a controlled record
+  urs_requirements:
+  - 'URS-020-006: The system shall support scheduled report emails using vendor scheduler'
+  - 'URS-020-008: Retain chart configurations as controlled records'
+  related_tests:
+  - OQ-003
+  estimated_duration_minutes: 30
+  required_expertise:
+  - System administration knowledge
+  - Email system configuration understanding
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-009
+  test_name: ODBC Data Import Integration Test
+  test_category: integration
+  gamp_category: 3
+  objective: Verify the system can successfully import data from an ODBC data source
+    using standard vendor connectors and maintain data integrity
+  prerequisites:
+  - ODBC data source configured with test data
+  - Valid user credentials with import permissions
+  - ODBC driver installed on test system
+  - Network connectivity to data source
+  test_steps:
+  - step_number: 1
+    action: Navigate to the data import section and select ODBC as the import source
+    expected_result: System displays ODBC connection configuration dialog with required
+      fields
+    data_to_capture:
+    - Connection dialog screenshot
+    - Available ODBC sources list
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Configure ODBC connection parameters and establish connection to test
+      database
+    expected_result: System successfully connects to ODBC data source and displays
+      available tables/views
+    data_to_capture:
+    - Connection status
+    - Available data tables list
+    - Connection time
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Select a test data table and map columns to appropriate chart fields
+    expected_result: System accepts column mapping and displays preview of imported
+      data
+    data_to_capture:
+    - Column mapping configuration
+    - Data preview screenshot
+    - Mapping validation results
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Complete the import process and verify data appears in the dashboard
+    expected_result: Data is successfully imported and displayed in the SPC dashboard
+      with all values intact
+    data_to_capture:
+    - Import completion status
+    - Final data count
+    - Data accuracy verification results
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - ODBC connection established successfully
+  - All test data imported without corruption
+  - Column mapping maintained data integrity
+  - Imported data appears correctly in dashboard views
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic Records
+  - Data integrity ALCOA+ principles
+  risk_level: medium
+  data_integrity_requirements:
+  - Data must maintain accuracy and completeness during transfer
+  - Audit trail of import process if available
+  - No data modification during import process
+  urs_requirements:
+  - 'URS-020-012: Import data from CSV and ODBC connections using standard connectors'
+  related_tests:
+  - 'OQ-001: CSV Import Functionality'
+  - 'OQ-006: Data Integrity Verification'
+  estimated_duration_minutes: 45
+  required_expertise:
+  - ODBC configuration
+  - Database administration
+  - Data mapping knowledge
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-010
+  test_name: Active Directory Authentication Integration Test
+  test_category: integration
+  gamp_category: 3
+  objective: Verify the system integrates with Active Directory for user authentication
+    when supported by vendor
+  prerequisites:
+  - Active Directory test environment
+  - Test user accounts in AD
+  - Network connectivity to AD server
+  - Vendor AD integration module installed
+  test_steps:
+  - step_number: 1
+    action: Configure the system to use Active Directory authentication in system
+      settings
+    expected_result: System accepts AD configuration parameters and saves authentication
+      settings
+    data_to_capture:
+    - Configuration settings screenshot
+    - AD server connection status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Attempt to log in using valid AD credentials for a test user
+    expected_result: System authenticates user against AD and grants access to the
+      dashboard
+    data_to_capture:
+    - Login success/failure status
+    - Authentication time
+    - User role assignment verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Attempt to log in using invalid AD credentials
+    expected_result: System rejects login attempt with appropriate error message
+    data_to_capture:
+    - Error message displayed
+    - Login failure details
+    - Security event log entry if available
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify role-based access controls work with AD-authenticated users
+    expected_result: User permissions and view access correspond to their AD group
+      memberships
+    data_to_capture:
+    - User role verification
+    - Access permission test results
+    - Group membership mapping validation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Successful authentication with valid AD credentials
+  - Proper rejection of invalid credentials
+  - Role-based access controls function correctly
+  - AD group membership properly maps to system roles
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic Signatures
+  - Data integrity access control requirements
+  risk_level: medium
+  data_integrity_requirements:
+  - Secure authentication mechanism
+  - Proper access control enforcement
+  - Audit trail of login attempts if available
+  urs_requirements:
+  - 'URS-020-013: Integrate with AD for user authentication if supported by vendor'
+  - 'URS-020-004: The dashboard shall allow role-based view access'
+  related_tests:
+  - 'OQ-004: User Role Access Verification'
+  - 'OQ-008: Security and Access Control'
+  estimated_duration_minutes: 35
+  required_expertise:
+  - Active Directory administration
+  - Network security
+  - Authentication protocols
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+test_categories: {}
+requirements_coverage:
+  URS-001:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-005
+  URS-002:
+  - OQ-006
+  - OQ-007
+  - OQ-008
+  - OQ-009
+  - OQ-010
+  URS-003: []
+risk_coverage:
+  low: 0
+  medium: 0
+  high: 0
+compliance_coverage:
+  21_cfr_part_11: true
+  gamp5: true
+  alcoa_plus: true
+total_test_count: 10
+estimated_execution_time: 390
+coverage_percentage: 0.0
+generation_timestamp: '2025-11-19T11:17:01.561863Z'
+generation_method: LLMTextCompletionProgram_deepseek/deepseek-chat
+validation_approach: ''
+created_by: oq_generation_agent_v2_progressive
+review_required: true
+pharmaceutical_compliance:
+  alcoa_plus_compliant: true
+  gamp5_compliant: true
+  cfr_part_11_compliant: true
+  audit_trail_verified: true
+  data_integrity_assured: true
+  cfr_part11_compliant: false
+  data_integrity_validated: false
+alcoa_plus_metadata: {}
+is_original: true
+version: '1.0'
+immutable: true
+locked: false
+validated: true
+reconciled: true
+cross_verified: true
+corrections: []
+error_log: []
+audit_trail: {}
+format: json
+encoding: utf-8
+data_schema: {}
+metadata: {}
+retention_period: 7_years
+encrypted: false
+protected: true
+backed_up: false
+backup_status: pending
+accessible: true
+retrieval_time: 0.1
+searchable: true
+indexed: true
+export_formats:
+- json
+- xml
+- csv
+download_options:
+- json
+- xml
+- pdf
+system_version: 1.0.0
+change_history: []
+related_records: []
+dependencies: []

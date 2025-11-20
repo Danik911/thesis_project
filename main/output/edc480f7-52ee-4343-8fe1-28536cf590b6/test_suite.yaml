@@ -1,0 +1,921 @@
+suite_id: OQ-SUITE-2012
+gamp_category: 3
+document_name: edc480f7-52ee-4343-8fe1-28536cf590b6.md
+test_cases:
+- test_id: OQ-001
+  test_name: 'Functional Test: X-bar/R Chart Creation and Nelson Rules Application'
+  test_category: functional
+  gamp_category: 3
+  objective: To verify that the SPC dashboard can correctly create X-bar/R control
+    charts from a CSV file and accurately apply the vendor's standard Nelson rules
+    to identify out-of-control points.
+  prerequisites:
+  - SPC dashboard software is installed and accessible
+  - Test CSV file with sample QC data (e.g., 100 rows, 5 subgroups) is available
+  - User account with 'Analyst' role permissions is created
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard using the credentials for the 'Analyst' role.
+    expected_result: Login is successful, and the main dashboard interface is displayed.
+    data_to_capture:
+    - Screenshot of the main dashboard
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Navigate to the 'New Chart' function and select the option to create an
+      X-bar/R chart.
+    expected_result: The system prompts for a data source and displays configuration
+      options for the X-bar/R chart.
+    data_to_capture:
+    - Screenshot of the chart configuration screen
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Upload the prepared test CSV file using the standard import function.
+    expected_result: The system successfully imports the data and populates the data
+      preview grid.
+    data_to_capture:
+    - Screenshot of the data preview
+    - Log message confirming successful import
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Configure the chart by mapping the CSV columns to the subgroup and measurement
+      fields, then enable the 'Apply Nelson Rules' option.
+    expected_result: Chart configuration is saved, and the system indicates that Nelson
+      rules are active.
+    data_to_capture:
+    - Screenshot of the final chart configuration
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Generate the X-bar/R chart and observe the plotted data points and control
+      limits.
+    expected_result: The chart renders completely, displaying all data points, control
+      limits, and any points flagged by Nelson rules.
+    data_to_capture:
+    - Screenshot of the final rendered chart
+    - List of any points flagged by Nelson rules
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The X-bar/R chart is generated successfully from the CSV data.
+  - The vendor's standard Nelson rules are applied correctly, flagging known out-of-control
+    points in the test dataset.
+  - All chart elements (points, center line, control limits) are displayed accurately.
+  regulatory_basis:
+  - 21 CFR Part 211.68 requires that automated equipment reliably performs intended
+    functions.
+  - General GAMP principles for verifying configured software functionality.
+  risk_level: medium
+  data_integrity_requirements:
+  - The imported data from the CSV must be rendered accurately on the chart without
+    alteration.
+  - The application of Nelson rules must be consistent and based solely on the provided
+    dataset.
+  urs_requirements:
+  - 'URS-020-001: Users shall create X-bar/R and p-charts from CSV inputs.'
+  - 'URS-020-002: Users shall apply vendor''s standard Nelson rules.'
+  related_tests:
+  - OQ-002
+  - OQ-003 (Future Test for p-charts)
+  estimated_duration_minutes: 30
+  required_expertise:
+  - SPC Chart Knowledge
+  - Basic Navigation of the SPC Dashboard
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-002
+  test_name: 'Performance Test: Data Loading and Chart Rendering Speed'
+  test_category: performance
+  gamp_category: 3
+  objective: To verify that the SPC dashboard meets the performance requirements for
+    loading a large dataset and rendering charts within the specified time limits
+    on supported hardware.
+  prerequisites:
+  - SPC dashboard software is installed on supported hardware as per vendor specifications
+  - A large test CSV file containing exactly 100,000 data points is available
+  - A stopwatch or system timer is available for measurement
+  test_steps:
+  - step_number: 1
+    action: Log into the SPC dashboard and navigate to the data import screen.
+    expected_result: The import screen loads successfully.
+    data_to_capture:
+    - Timestamp of login completion
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Initiate the import of the 100,000-point CSV file and start the timer
+      simultaneously.
+    expected_result: The system begins processing the file upload.
+    data_to_capture:
+    - Start timestamp of the import process
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Monitor the system until the data import is complete and the data preview
+      is shown. Stop the timer.
+    expected_result: The system displays a confirmation message and a preview of the
+      loaded data.
+    data_to_capture:
+    - End timestamp of the import process
+    - Total data load time in seconds
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Configure a simple X-bar chart using the loaded dataset and apply a basic
+      filter (e.g., filter by a specific product ID). Start a new timer upon applying
+      the filter.
+    expected_result: The system acknowledges the filter command and begins chart rendering.
+    data_to_capture:
+    - Start timestamp of chart rendering
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Wait for the chart to be fully rendered on the screen. Stop the timer
+      once rendering is complete.
+    expected_result: The chart is displayed completely with all data points and axes.
+    data_to_capture:
+    - End timestamp of chart rendering
+    - Total chart render time in seconds
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The 100,000 data points are loaded from the CSV file in less than 5 seconds.
+  - The chart is fully rendered after a filter change in less than 2 seconds.
+  regulatory_basis:
+  - General principles for ensuring automated systems perform adequately for their
+    intended use.
+  risk_level: medium
+  data_integrity_requirements:
+  - The performance test must not corrupt or alter the source data file.
+  - The chart must render the correct subset of data after the filter is applied.
+  urs_requirements:
+  - 'URS-020-010: Load 100k data points in < 5 seconds on supported hardware.'
+  - 'URS-020-011: Render charts in < 2 seconds after filter changes.'
+  related_tests:
+  - OQ-001
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Basic Performance Measurement Techniques
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-003
+  test_name: Role-Based Access Control and Read-Only Data Verification
+  test_category: security
+  gamp_category: 3
+  objective: Verify that role-based access controls function correctly and released
+    datasets are read-only as required by regulatory standards.
+  prerequisites:
+  - System installed and configured
+  - User accounts with different roles created (Admin, Viewer, Analyst)
+  - Sample dataset imported and marked as released
+  test_steps:
+  - step_number: 1
+    action: Log in as Viewer role user and attempt to modify a released dataset
+    expected_result: System prevents modifications and displays read-only warning
+      message
+    data_to_capture:
+    - Screenshot of error message
+    - System response time
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Log in as Analyst role user and attempt to annotate points in a released
+      chart
+    expected_result: Annotation feature is disabled for released datasets with appropriate
+      indication
+    data_to_capture:
+    - UI behavior documentation
+    - System status messages
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log in as Admin role user and verify configuration change capabilities
+    expected_result: Admin can modify configurations with audit trail recording if
+      vendor supports
+    data_to_capture:
+    - Audit trail entries
+    - Configuration change success confirmation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Role-based access controls enforce appropriate permissions
+  - Released datasets cannot be modified by any user role
+  - Audit trail records configuration changes if vendor supports this feature
+  regulatory_basis:
+  - 21 CFR Part 11 electronic records requirements
+  - Data integrity principles for read-only controlled records
+  risk_level: medium
+  data_integrity_requirements:
+  - Ensures data cannot be altered after release
+  - Maintains controlled record status for regulatory compliance
+  urs_requirements:
+  - URS-020-004
+  - URS-020-007
+  - URS-020-009
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Quality Assurance
+  - System Administration
+  - Regulatory Compliance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-004
+  test_name: Data Export and Integration Capabilities Verification
+  test_category: integration
+  gamp_category: 3
+  objective: Validate that the system correctly exports data to PDF/CSV formats and
+    integrates with external data sources using standard connectors.
+  prerequisites:
+  - System installed with export features enabled
+  - Sample dataset with annotations created
+  - ODBC data source configured if available
+  test_steps:
+  - step_number: 1
+    action: Export a control chart with annotations to PDF format using vendor standard
+      export
+    expected_result: PDF file is generated containing the complete chart with all
+      annotations and data points
+    data_to_capture:
+    - PDF file integrity check
+    - Export completion time
+    - File content verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Export dataset statistics to CSV format using standard export feature
+    expected_result: CSV file is created with correct data formatting and complete
+      dataset information
+    data_to_capture:
+    - CSV file validation
+    - Data accuracy check
+    - Format compliance
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Import data from ODBC connection using standard connector (if available)
+    expected_result: System successfully connects to ODBC source and imports data
+      without errors
+    data_to_capture:
+    - Connection success status
+    - Data import completion time
+    - Import accuracy verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - PDF exports contain complete chart information with annotations
+  - CSV exports maintain data integrity and formatting
+  - ODBC connections function correctly with standard connectors
+  regulatory_basis:
+  - Data integrity requirements for accurate reporting
+  - Standardized data exchange formats for quality records
+  risk_level: low
+  data_integrity_requirements:
+  - Ensures exported data matches source data exactly
+  - Maintains data structure and annotations during export processes
+  urs_requirements:
+  - URS-020-003
+  - URS-020-005
+  - URS-020-012
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Data Integration
+  - Quality Control
+  - System Configuration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-005
+  test_name: Audit Trail and Configuration Change Verification
+  test_category: data_integrity
+  gamp_category: 3
+  objective: Verify that the system maintains an audit trail for configuration changes
+    and retains chart configurations as controlled records as per vendor capabilities.
+  prerequisites:
+  - System installed and configured
+  - Admin user credentials
+  - Sample chart configuration created
+  - Vendor documentation on audit trail capabilities
+  test_steps:
+  - step_number: 1
+    action: Log in as admin user and navigate to chart configuration settings
+    expected_result: Successfully access configuration management interface
+    data_to_capture:
+    - Login success confirmation
+    - Configuration interface accessibility
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Modify an existing chart configuration (e.g., change control limits or
+      Nelson rule settings)
+    expected_result: Configuration changes are successfully saved and applied
+    data_to_capture:
+    - Configuration change details
+    - Save confirmation message
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Access the vendor-provided audit trail functionality (if available)
+    expected_result: Audit trail entries show the configuration change with timestamp
+      and user information
+    data_to_capture:
+    - Audit trail entries
+    - Timestamp accuracy
+    - User identification in audit log
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify that previous chart configurations are retained and accessible
+    expected_result: System maintains historical configuration versions as controlled
+      records
+    data_to_capture:
+    - Configuration version history
+    - Record retention verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Audit trail captures configuration changes when vendor supports this feature
+  - Chart configurations are retained as controlled records
+  - All changes include timestamp and user identification in audit log
+  regulatory_basis:
+  - 21 CFR Part 11 electronic records requirements
+  - GMP data integrity principles
+  risk_level: medium
+  data_integrity_requirements:
+  - Configuration changes must be traceable and auditable
+  - Historical configurations must be preserved as controlled records
+  urs_requirements:
+  - URS-020-008
+  - URS-020-009
+  related_tests:
+  - OQ-001
+  - OQ-003
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Quality System Knowledge
+  - Data Integrity Principles
+  - System Administration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-006
+  test_name: Scheduled Report Email and Annotation Functionality
+  test_category: functional
+  gamp_category: 3
+  objective: Verify the system's ability to schedule automated report emails and allow
+    users to annotate data points with comments using built-in features.
+  prerequisites:
+  - System installed and configured
+  - Valid user credentials
+  - Email server configured
+  - Sample dataset loaded
+  - Report configuration created
+  test_steps:
+  - step_number: 1
+    action: Configure a scheduled report using the vendor's scheduler with PDF export
+      format
+    expected_result: Report schedule is successfully configured with specified parameters
+    data_to_capture:
+    - Schedule configuration details
+    - Confirmation message
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Wait for scheduled time or manually trigger the scheduled report
+    expected_result: Report is generated and emailed to specified recipients
+    data_to_capture:
+    - Email delivery confirmation
+    - Report attachment integrity
+    - Timestamp of delivery
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Select a data point on a control chart and use the built-in annotation
+      feature to add a comment
+    expected_result: Comment is successfully added and associated with the specific
+      data point
+    data_to_capture:
+    - Annotation functionality response
+    - Comment persistence
+    - Data point association
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify that annotations are visible when viewing the chart and included
+      in exported reports
+    expected_result: Annotations are properly displayed and exported with the chart
+      data
+    data_to_capture:
+    - Annotation visibility in UI
+    - Annotation inclusion in exported reports
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Scheduled reports are successfully emailed to designated recipients
+  - Annotations can be added to data points and persist with the chart
+  - All functionality works as specified in vendor documentation
+  regulatory_basis:
+  - GMP documentation requirements
+  - Data traceability and explanation of outliers
+  risk_level: low
+  data_integrity_requirements:
+  - Scheduled reports must maintain data accuracy
+  - Annotations must be permanently associated with specific data points
+  urs_requirements:
+  - URS-020-005
+  - URS-020-006
+  - URS-020-003
+  related_tests:
+  - OQ-001
+  - OQ-004
+  estimated_duration_minutes: 30
+  required_expertise:
+  - System User Operations
+  - Report Configuration
+  - Quality Control Processes
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-007
+  test_name: ODBC Data Source Integration and Import Verification
+  test_category: integration
+  gamp_category: 3
+  objective: Verify the system can successfully connect to and import data from an
+    ODBC data source using standard vendor connectors.
+  prerequisites:
+  - ODBC data source configured with test data
+  - Valid user credentials with import permissions
+  - System configured with ODBC connection settings
+  test_steps:
+  - step_number: 1
+    action: Navigate to the data import section and select ODBC as the data source
+      type
+    expected_result: System displays ODBC connection configuration options
+    data_to_capture:
+    - Screenshot of ODBC configuration interface
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Configure the ODBC connection with valid server, database, and authentication
+      parameters
+    expected_result: System successfully connects to the ODBC data source without
+      errors
+    data_to_capture:
+    - Connection status
+    - Any error messages
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Select a test dataset from the available ODBC tables and initiate import
+    expected_result: System imports data successfully and displays confirmation message
+    data_to_capture:
+    - Import completion time
+    - Record count imported
+    - Import confirmation message
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify the imported data appears correctly in the dashboard interface
+    expected_result: All imported data is accurately displayed and available for chart
+      creation
+    data_to_capture:
+    - Screenshot of imported data display
+    - Data accuracy verification results
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - ODBC connection established successfully
+  - Data imported without errors
+  - Imported data matches source data exactly
+  - Data available for chart creation
+  regulatory_basis:
+  - 21 CFR Part 11 compliance for electronic records
+  - Data integrity requirements for QC systems
+  risk_level: medium
+  data_integrity_requirements:
+  - Data must maintain integrity during transfer from ODBC source
+  - No data corruption or loss during import process
+  - Complete audit trail of data import
+  urs_requirements:
+  - 'URS-020-012: Import data from CSV and ODBC connections using standard connectors'
+  related_tests:
+  - 'OQ-001: Functional Test: X-bar/R Chart Creation'
+  - 'OQ-004: Data Export and Integration Capabilities'
+  estimated_duration_minutes: 45
+  required_expertise:
+  - ODBC configuration
+  - Database administration
+  - System integration testing
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-008
+  test_name: Active Directory Authentication Integration Test
+  test_category: security
+  gamp_category: 3
+  objective: Verify the system can integrate with Active Directory for user authentication
+    when supported by vendor configuration.
+  prerequisites:
+  - Active Directory test environment
+  - Test user accounts in AD
+  - System configured for AD integration
+  - Network connectivity to AD server
+  test_steps:
+  - step_number: 1
+    action: Configure the system with AD server details and authentication parameters
+    expected_result: System accepts AD configuration without errors
+    data_to_capture:
+    - AD configuration settings
+    - Configuration success status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Attempt to log in using valid AD credentials for a test user
+    expected_result: System successfully authenticates user via AD and grants access
+    data_to_capture:
+    - Login success/failure
+    - Authentication method used
+    - User role assigned
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Attempt to log in using invalid AD credentials
+    expected_result: System rejects login attempt with appropriate error message
+    data_to_capture:
+    - Error message displayed
+    - Login failure details
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify role-based access controls work correctly with AD-authenticated
+      users
+    expected_result: AD-authenticated users receive appropriate access levels based
+      on their AD group memberships
+    data_to_capture:
+    - User access permissions
+    - Role-based functionality available
+    - Any access violations
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Successful authentication with valid AD credentials
+  - Rejection of invalid credentials
+  - Proper role assignment based on AD groups
+  - No security vulnerabilities introduced
+  regulatory_basis:
+  - 21 CFR Part 11 electronic signature requirements
+  - Data security and access control regulations
+  - GAMP5 security best practices
+  risk_level: high
+  data_integrity_requirements:
+  - Secure authentication process
+  - Protection against unauthorized access
+  - Maintenance of user accountability
+  urs_requirements:
+  - 'URS-020-013: Integrate with AD for user authentication if supported by vendor'
+  - 'URS-020-004: The dashboard shall allow role-based view access'
+  related_tests:
+  - 'OQ-003: Role-Based Access Control and Read-Only Data Verification'
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Active Directory administration
+  - Network security
+  - Authentication protocols
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-009
+  test_name: High Volume Data Import and Chart Performance Under Load
+  test_category: performance
+  gamp_category: 3
+  objective: To verify the system meets performance requirements for loading large
+    datasets and rendering charts under maximum specified load conditions.
+  prerequisites:
+  - OQ test environment is set up and accessible
+  - Test CSV file with exactly 100,000 data points is prepared
+  - User with appropriate permissions to import data and create charts is logged in
+  - System clock or timer tool is available for measurement
+  test_steps:
+  - step_number: 1
+    action: Navigate to the data import section and select the prepared CSV file containing
+      100,000 data points.
+    expected_result: System displays the file name and prompts for import confirmation.
+    data_to_capture:
+    - Time taken from import initiation to completion confirmation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Initiate the data import process and start the timer simultaneously.
+    expected_result: System processes the file and displays a success message upon
+      completion.
+    data_to_capture:
+    - Elapsed time for import process
+    - Any system error messages or warnings
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Stop the timer when the import completes and verify the data count matches
+      the expected 100,000 points.
+    expected_result: Timer shows elapsed time is less than 5 seconds, and data count
+      is verified.
+    data_to_capture:
+    - Final elapsed time
+    - Recorded data point count from the system
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Create an X-bar/R chart using the newly imported dataset and start a new
+      timer.
+    expected_result: Chart configuration screen appears, allowing user to select parameters.
+    data_to_capture:
+    - Time from chart creation request to full visual rendering
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Apply a filter to the chart (e.g., date range, specific parameter) and
+      observe the re-rendering.
+    expected_result: Chart updates and re-renders with the applied filter.
+    data_to_capture:
+    - Time taken for chart to re-render after filter application
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Data import of 100,000 points completes in less than 5 seconds
+  - Initial chart rendering completes in less than 2 seconds
+  - Chart re-rendering after filter application completes in less than 2 seconds
+  - All data points are accurately loaded and represented in the chart
+  regulatory_basis:
+  - FDA 21 CFR Part 11 for system performance and reliability
+  - GAMP 5 guidelines for verification of configured products
+  risk_level: medium
+  data_integrity_requirements:
+  - All 100,000 data points must be accurately imported without corruption
+  - Chart calculations must correctly represent the imported dataset
+  urs_requirements:
+  - 'URS-020-010: Load 100k data points in < 5 seconds on supported hardware'
+  - 'URS-020-011: Render charts in < 2 seconds after filter changes'
+  related_tests:
+  - 'OQ-002: Performance Test: Data Loading and Chart Rendering Speed'
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Performance Testing
+  - SPC Chart Configuration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-010
+  test_name: Comprehensive User Role Permissions and Data Access Validation
+  test_category: security
+  gamp_category: 3
+  objective: To verify that role-based access control functions correctly, enforcing
+    appropriate permissions for viewing, editing, and exporting data based on user
+    roles.
+  prerequisites:
+  - OQ test environment is set up and accessible
+  - At least three distinct user roles are configured (e.g., Viewer, Analyst, Admin)
+  - A released dataset exists in the system with read-only status
+  - Test users for each role type are created and available for login
+  test_steps:
+  - step_number: 1
+    action: Log in as a user with Viewer role permissions and navigate to the released
+      dataset.
+    expected_result: User can view the dataset and associated charts but cannot see
+      edit or delete options.
+    data_to_capture:
+    - Screenshot of interface showing available options
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Attempt to modify data points or chart configurations as the Viewer role
+      user.
+    expected_result: System prevents modifications and displays an appropriate access
+      denied message.
+    data_to_capture:
+    - System response message when modification is attempted
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log out and log in as a user with Analyst role permissions.
+    expected_result: Successful login with Analyst role privileges.
+    data_to_capture:
+    - Available functions visible to Analyst role
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Attempt to create a new chart configuration and annotate data points as
+      an Analyst.
+    expected_result: System allows chart creation and annotation but prevents modification
+      of released data.
+    data_to_capture:
+    - Success/failure of chart creation and annotation attempts
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Log out and log in as a user with Admin role permissions.
+    expected_result: Successful login with Admin role privileges.
+    data_to_capture:
+    - Full set of administrative functions available
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 6
+    action: Verify that Admin can access all functions including user management and
+      system configuration.
+    expected_result: Admin has full access to all system features and configurations.
+    data_to_capture:
+    - List of administrative functions successfully accessed
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Viewer role can only view data and charts without modification capabilities
+  - Analyst role can create charts and annotations but cannot modify released data
+  - Admin role has full system access including user management
+  - Released datasets remain read-only for all non-admin users
+  - Access attempts outside of role permissions are properly restricted
+  regulatory_basis:
+  - FDA 21 CFR Part 11 for access controls and electronic records
+  - EU Annex 11 for privileged access and data integrity
+  risk_level: high
+  data_integrity_requirements:
+  - Released data must remain immutable to unauthorized users
+  - Role permissions must be strictly enforced to prevent unauthorized data modification
+  urs_requirements:
+  - 'URS-020-004: The dashboard shall allow role-based view access'
+  - 'URS-020-007: Read-only access for released datasets'
+  related_tests:
+  - 'OQ-003: Role-Based Access Control and Read-Only Data Verification'
+  estimated_duration_minutes: 30
+  required_expertise:
+  - User Access Management
+  - GxP Compliance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+test_categories: {}
+requirements_coverage:
+  URS-001:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-005
+  URS-002:
+  - OQ-006
+  - OQ-007
+  - OQ-008
+  - OQ-009
+  - OQ-010
+  URS-003: []
+risk_coverage:
+  low: 0
+  medium: 0
+  high: 0
+compliance_coverage:
+  21_cfr_part_11: true
+  gamp5: true
+  alcoa_plus: true
+total_test_count: 10
+estimated_execution_time: 345
+coverage_percentage: 0.0
+generation_timestamp: '2025-11-19T20:12:40.708497Z'
+generation_method: LLMTextCompletionProgram_deepseek/deepseek-chat
+validation_approach: ''
+created_by: oq_generation_agent_v2_progressive
+review_required: true
+pharmaceutical_compliance:
+  alcoa_plus_compliant: true
+  gamp5_compliant: true
+  cfr_part_11_compliant: true
+  audit_trail_verified: true
+  data_integrity_assured: true
+alcoa_plus_metadata: {}
+is_original: true
+version: '1.0'
+immutable: true
+locked: false
+validated: true
+reconciled: true
+cross_verified: true
+corrections: []
+error_log: []
+audit_trail: {}
+format: yaml
+encoding: utf-8
+data_schema: {}
+metadata: {}
+retention_period: 7_years
+encrypted: false
+protected: true
+backed_up: false
+backup_status: pending
+accessible: true
+retrieval_time: 0.1
+searchable: true
+indexed: true
+export_formats:
+- json
+- xml
+- csv
+download_options:
+- json
+- xml
+- pdf
+system_version: 1.0.0
+change_history: []
+related_records: []
+dependencies: []

@@ -64,47 +64,6 @@ Complete architecture documentation for the pharmaceutical test generation syste
 │                     Region: eu-west-2 (London, UK)                      │
 └─────────────────────────────────────────────────────────────────────────┘
                                      │
-        ┌────────────────────────────┼────────────────────────────┐
-        │                            │                            │
-        ▼                            ▼                            ▼
-┌───────────────┐          ┌────────────────┐         ┌──────────────────┐
-│   CloudFront  │          │  Amazon SQS    │         │  Amazon Bedrock  │
-│   (Frontend)  │          │  Job Queue     │         │  DeepSeek-V3.1   │
-│               │          │  + DLQ         │         │  LLM Inference   │
-└───────────────┘          └────────────────┘         └──────────────────┘
-        │                            │                            ▲
-        │                            │                            │
-        ▼                            ▼                            │
-┌───────────────┐          ┌────────────────┐                    │
-│  CloudFront   │          │   ECS Fargate  │────────────────────┘
-│  (CDN Cache)  │          │                │
-│               │          │  Frontend Svc  │
-│               │          │  1vCPU/2GB     │
-│               │◄─────────│  Next.js+API   │
-└───────────────┘          │  1-2 tasks     │
-                           │                │
-                           │  API Service   │
-                           │  2vCPU/4GB     │
-                           │  1-4 tasks     │
-                           │                │
-                           │  Worker Svc    │
-                           │  4vCPU/8GB     │
-                           │  1-4 tasks     │
-                           └────────────────┘
-                                     │
-                   ┌─────────────────┼─────────────────┐
-                   │                 │                 │
-                   ▼                 ▼                 ▼
-         ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-         │ Aurora       │  │ S3 Vectors   │  │ ECR          │
-         │ Serverless   │  │ RAG Store    │  │ Docker       │
-         │ PostgreSQL   │  │ ChromaDB →   │  │ Images       │
-         │ 0.5-2 ACU    │  │ S3 Migration │  │              │
-         └──────────────┘  └──────────────┘  └──────────────┘
-                                     │
-                   ┌─────────────────┼─────────────────┐
-                   │                 │                 │
-                   ▼                 ▼                 ▼
          ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
          │ CloudWatch   │  │ LangFuse     │  │ CloudTrail   │
          │ Logs +       │  │ Observability│  │ Audit Logs   │
@@ -203,7 +162,15 @@ Complete architecture documentation for the pharmaceutical test generation syste
 **VPC Security Groups (Future):**
 - ECS tasks: No inbound from internet
 - Aurora: Accessible only from ECS security group
-- ALB: HTTPS only (port 443)
+- ALB: HTTPS only (port 443) + WAF Protected
+
+### Network Security (New)
+- **VPC Endpoints**: S3, ECR, Secrets Manager, CloudWatch (Keeps traffic private)
+- **WAF (Web Application Firewall)**:
+  - Rate limiting
+  - SQL Injection protection
+  - IP Reputation lists
+- **Strict Egress**: ECS tasks only allowed outbound to specific AWS services and OpenRouter API.
 
 ---
 
@@ -520,13 +487,46 @@ No VPC resources yet - using AWS global services only.
 | **Queue & Secrets** | | |
 | SQS | 10M requests | $4 |
 | Secrets Manager | 5 secrets | $2.50 |
-| **Total (Production)** | | **~$777/month** |
+| **Security** | | |
+| AWS WAF | Web ACL + Rules | $20 |
+| VPC Endpoints | 4 Interfaces (S3 Gateway free) | $30 |
+| **Total (Production)** | | **~$827/month** |
 
 **Note:** Frontend cost increased by $40/month (ECS Fargate vs S3 static hosting) due to Task 2.3 requirement for API routes.
+**Security Additions:** WAF and VPC Endpoints added for GAMP-5 compliance (+$50/month).
 
-**With optimizations (Fargate Spot, caching):** ~$540-640/month
+**With optimizations (Fargate Spot, caching, Dev Pausing):** ~$500-600/month
 
 ---
+
+## 🛠️ Terraform Implementation Strategy
+
+### Modular Structure
+To ensure maintainability and compliance, the Terraform codebase will be modularized:
+
+```
+terraform/
+├── main.tf            # Root configuration (calls modules)
+├── variables.tf       # Global variables
+├── outputs.tf         # Root outputs
+├── backend.tf         # S3 backend configuration
+├── modules/
+│   ├── networking/    # VPC, Subnets, Endpoints, Security Groups
+│   ├── compute/       # ECS Cluster, Fargate Services, ALB, WAF
+│   ├── database/      # Aurora Serverless, Secrets Manager
+│   ├── storage/       # S3 Buckets, ECR Repositories
+│   └── compliance/    # CloudTrail, Config, KMS, IAM Roles
+└── envs/
+    ├── dev/           # Development environment variables
+    └── prod/          # Production environment variables
+```
+
+### Deployment Pipeline
+1. **Build**: Docker Build → Trivy Scan → ECR Push (Immutable Tag)
+2. **Plan**: Terraform Plan (against new Tag)
+3. **Approve**: Manual Gate (GAMP-5 Requirement)
+4. **Apply**: Terraform Apply
+
 
 ## 📋 Compliance Mapping
 
