@@ -55,7 +55,7 @@ flowchart TD
   RES --> OQ;
   SME --> OQ;
   OQ --> TS["Test Suite (OQ)"];
-  TS --> PHX["Phoenix Observability"];
+  TS --> LF["LangFuse Cloud Observability"];
   TS --> VAL["Compliance Validation - ALCOA+ and 21 CFR Part 11"];
   VAL --> REVIEW["Validation & Review"];
 ```
@@ -69,7 +69,7 @@ flowchart TD
 - SME Agent: Performs technical and compliance sanity checks on planned tests
 - OQ Generator Agent: Produces compliant OQ test suites using DeepSeek V3 via OpenRouter; robust YAML parsing
 - Compliance Validators: ALCOA+ validator, OWASP LLM controls, and Traceability Matrix for bidirectional mapping
-- Phoenix Observability: Custom span exporter capturing full workflow traces (131 spans per execution)
+- LangFuse Cloud Observability: Production-grade tracing with @observe decorators; captures full workflow traces, token usage, and costs in EU-compliant cloud platform
 
 ## 🚀 Quick Start
 
@@ -122,13 +122,14 @@ uv pip install -e .
 
 ✅ **Fully Operational** - System validated with N=30 sample analysis:
 
-**✅ Working (Production Ready)**: 
+**✅ Working (Production Ready)**:
 - GAMP-5 Categorization with **91.3% accuracy** (21/23 successful documents)
 - OQ Test Generation with **DeepSeek V3** (316 tests generated across 30 documents)
-- Phoenix observability with 517 traces captured across 3 corpora
+- LangFuse Cloud observability with automatic trace capture via @observe decorators
 - ChromaDB integration (26 regulatory documents indexed)
 - Complete workflow tracing and monitoring
 - 91% cost reduction achieved (from $15 to $1.35 per 1M tokens)
+- Docker containerization (4-service stack: postgres, localstack, api, worker)
 
 **🚀 Latest Validated Achievement (N=30)**:
 - Successfully migrated from OpenAI to **DeepSeek V3** (671B MoE) via OpenRouter
@@ -140,34 +141,55 @@ uv pip install -e .
 
 See [`main/docs/guides/UNIFIED_WORKFLOW_USAGE.md`](main/docs/guides/UNIFIED_WORKFLOW_USAGE.md) for workflow details and [`main/docs/guides/OSS_MIGRATION_SUMMARY.md`](main/docs/guides/OSS_MIGRATION_SUMMARY.md) for migration context.
 
-### Basic Usage
+### Docker Compose Quickstart (Recommended)
 
 ```bash
-# Step 1: Ingest regulatory documents into ChromaDB
-cd main
-python ingest_chromadb.py
+# Step 1: Configure environment variables
+cp .env.example .env.local
 
-# Step 2: Run unified workflow (generates OQ tests)
-# Provide a path to your URS document (Markdown or text)
-python main.py path/to/your_URS_document.md
+# Edit .env.local with your API keys:
+# - OPENAI_API_KEY=sk-or-... (OpenRouter for DeepSeek V3)
+# - LANGFUSE_PUBLIC_KEY=pk-lf-...
+# - LANGFUSE_SECRET_KEY=sk-lf-...
+# - CLERK_SECRET_KEY=sk_test_... (optional for authentication)
+
+# Step 2: Start Docker stack (4 containers: postgres, localstack, api, worker)
+docker-compose -f docker-compose.dev.yml up -d
+
+# Step 3: Verify services are healthy
+docker ps  # Should show 4 containers running
+curl http://localhost:8080/health  # API health check
+
+# Step 4: Submit test job via API
+curl -X POST http://localhost:8080/jobs \
+  -H "Authorization: Bearer YOUR_CLERK_JWT" \
+  -F "file=@your_urs.md"
+
+# Step 5: Check job status
+curl http://localhost:8080/jobs/{job_id}
+
+# Step 6: Access Frontend UI (optional)
+# Open http://localhost:3000 in your browser
+# Sign in with Clerk, upload URS files via web interface
 
 # Expected output (based on N=30 validation):
 # - Categorization: 91.3% accuracy across categories
 # - OQ Tests: Average 13.7 tests per successful document
-# - Output: output/test_suites/test_suite_OQ-SUITE-[ID]_[timestamp].json
+# - Output: /app/output/{job_id}/test_suite.yaml
 # - Duration: ~7.7 minutes average with DeepSeek V3
-# - Phoenix traces: 517 total traces captured (when observability deps installed)
+# - LangFuse traces: Automatic capture to cloud dashboard
 # - Success Rate: 76.7% (23/30 documents)
-
-# Step 3: Monitor with Phoenix (optional)
-docker run -d -p 6006:6006 arizephoenix/phoenix:latest
-# Access at http://localhost:6006
 ```
 
-Optional dependencies (enable full observability and document processing):
-- arize-phoenix, openinference instrumentations for LlamaIndex/OpenAI, llama-index-callbacks-arize-phoenix
-- pdfplumber (for Research/SME agents that parse PDFs)
-See `main/docs/guides/UNIFIED_WORKFLOW_USAGE.md` → “Next Steps” for exact packages.
+**Development Workflow (Fast Iteration):**
+```bash
+# Edit code in main/ directory
+# Restart API container (5 seconds, volume mounts enabled)
+docker-compose -f docker-compose.dev.yml restart api
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f api
+```
 
 See [`main/docs/guides/QUICK_START_GUIDE.md`](main/docs/guides/QUICK_START_GUIDE.md) for detailed instructions.
 
@@ -233,12 +255,14 @@ uv run python -m src.main test # Level 3: Integration
 
 ### Environment Variables
 
-Create a .env file with:
+Create a .env.local file with:
 
 - OPENROUTER_API_KEY=sk-or-...
-- OPENAI_API_KEY=sk-...              # used for embeddings
-- LLM_PROVIDER=openrouter            # production provider
-- PHOENIX_ENDPOINT=http://localhost:6006
+- OPENAI_API_KEY=sk-...                # used for embeddings
+- LLM_PROVIDER=openrouter              # production provider
+- LANGFUSE_PUBLIC_KEY=pk-lf-...       # LangFuse Cloud observability
+- LANGFUSE_SECRET_KEY=sk-lf-...       # LangFuse Cloud observability
+- CLERK_SECRET_KEY=sk_test_...        # optional, for JWT authentication
 - CHROMADB_PATH=./chroma_db
 
 ## 📊 Evaluation Methodology
@@ -334,25 +358,72 @@ thesis_project/
 
 ## 📈 Monitoring & Observability
 
-✅ **Validated with comprehensive tracing** (in production-like environment)
+✅ **Production-Ready LangFuse Cloud Integration**
 
-Note: On a fresh local setup, Phoenix and some agents require optional dependencies. If observability appears broken or agents fail due to missing packages, see `main/docs/guides/UNIFIED_WORKFLOW_USAGE.md` (Troubleshooting and Next Steps).
+The system uses **LangFuse Cloud** (EU region) for comprehensive observability with automatic trace capture via `@observe` decorators.
 
 ```bash
-# Start Phoenix monitoring
-docker run -d -p 6006:6006 arizephoenix/phoenix:latest
+# Setup (one-time configuration)
+# 1. Sign up at https://cloud.langfuse.com
+# 2. Create a project
+# 3. Add keys to .env.local:
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
 
-# Access dashboard
-http://localhost:6006
+# 4. Restart services
+docker-compose -f docker-compose.dev.yml restart api worker
 
-# Metrics captured:
-- 131 spans per workflow execution
-- Complete agent traceability
-- ChromaDB operation monitoring
-- API call tracking with token usage
+# Access LangFuse Dashboard
+https://cloud.langfuse.com
+
+# Metrics captured automatically:
+- Complete workflow traces (categorization → generation)
+- FastAPI endpoint tracing (/jobs POST, GET)
+- Token usage and cost tracking
+- Error diagnostics with full stack traces
+- Agent execution timings
+- ChromaDB retrieval operations
 ```
 
-See [`main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md`](main/docs/guides/PHOENIX_OBSERVABILITY_GUIDE.md) for details.
+**Benefits:**
+- ✅ No local installation required
+- ✅ EU data residency (GDPR compliant)
+- ✅ Persistent trace storage
+- ✅ Team collaboration features
+- ✅ Advanced analytics and filtering
+
+See [`docs/OBSERVABILITY_MIGRATION.md`](docs/OBSERVABILITY_MIGRATION.md) for Phoenix → LangFuse migration details.
+
+## 🖥️ Frontend Dashboard
+
+✅ **Next.js Web UI Operational** (as of 2025-11-20)
+
+Access the pharmaceutical test generation dashboard at **http://localhost:3000**
+
+**Features:**
+- 🔐 **Clerk Authentication** - Secure user sign-in with JWT tokens
+- 📄 **URS File Upload** - Drag-and-drop interface for User Requirements Specifications
+- 📊 **Job Status Tracking** - Real-time monitoring of test generation progress
+- 📥 **Test Suite Download** - Download generated OQ tests in YAML format
+- 🎯 **GAMP-5 Category Display** - See categorization results with confidence scores
+
+**Tech Stack:**
+```yaml
+Framework: Next.js 14 (standalone build)
+Authentication: Clerk (dev keys: pk_test_*)
+API Connection: http://localhost:8080
+Port: 3000
+Container: pharma-frontend-dev
+```
+
+**Deployment Status:**
+- ✅ Containerized with Dockerfile.frontend
+- ✅ Integrated with docker-compose.dev.yml
+- ✅ Clerk authentication configured
+- ✅ Ready for ECS Fargate deployment
+- ⏳ CloudFront CDN integration (planned for AWS phase)
+
+See [`docs/FRONTEND_DOCKER_STATUS.md`](docs/FRONTEND_DOCKER_STATUS.md) for detailed configuration and [`docs/FRONTEND_INTEGRATION.md`](docs/FRONTEND_INTEGRATION.md) for API integration guide.
 
 ## 🤝 Contributing
 

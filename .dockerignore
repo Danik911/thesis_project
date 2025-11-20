@@ -63,7 +63,8 @@ Thumbs.db
 *.bak
 
 # Exclude large subdirectories within main/
-main/frontend/
+main/frontend/node_modules/
+main/frontend/.next/
 main/chroma_db/
 main/lib/
 main/logs/

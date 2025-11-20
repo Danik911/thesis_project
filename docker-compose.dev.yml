@@ -4,17 +4,19 @@
 #
 # GAMP-5 Category 5 Development Environment
 #
-# This stack orchestrates 4 services for local development:
+# This stack orchestrates 5 services for local development:
 # 1. postgres    - PostgreSQL 15 (mocks Aurora Data API)
 # 2. localstack  - LocalStack 3.x (mocks AWS SQS)
 # 3. api         - FastAPI application (port 8080)
 # 4. worker      - Background job processor
+# 5. frontend     - Next.js frontend (port 3000)
 #
 # Startup Sequence (enforced by depends_on with healthchecks):
 # 1. postgres starts → runs init.sql → becomes healthy (pg_isready)
 # 2. localstack starts → runs init.sh → creates SQS queues
 # 3. api starts (after postgres healthy + localstack started)
 # 4. worker starts (after postgres healthy + localstack started)
+# 5. frontend starts (after api started)
 #
 # Usage:
 #   docker-compose -f docker-compose.dev.yml up -d        # Start all services
@@ -276,6 +278,27 @@ services:
       - output-data:/app/output
       - chroma-data:/app/chroma_db
 
+    networks:
+      - pharma-dev
+
+  # ===========================================================================
+  # Next.js Frontend - User Interface
+  # ===========================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_aGVscGVkLXN0dXJnZW9uLTE5LmNsZXJrLmFjY291bnRzLmRldiQ
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+    container_name: pharma-frontend-dev
+    restart: unless-stopped
+    env_file: .env.local
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_started
     networks:
       - pharma-dev
 

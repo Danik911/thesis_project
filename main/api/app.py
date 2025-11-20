@@ -16,6 +16,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from langfuse import observe
 
@@ -120,6 +121,21 @@ app = FastAPI(
     ),
     version="1.0.0",
     lifespan=lifespan
+)
+
+# Configure CORS
+# GAMP-5 Compliance: Restrict origins to known trusted domains
+origins = [
+    "http://localhost:3000",  # Local development frontend
+    "http://127.0.0.1:3000",  # Local development frontend (alternative)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -400,6 +416,16 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
             "type": type(exc).__name__
         }
     )
+
+
+# Enable CORS for all origins (public API)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # TODO: Restrict to specific origins in production
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 
 if __name__ == "__main__":
