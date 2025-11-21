@@ -440,7 +440,6 @@ async def get_job_result_json(
 
 
 @app.get("/jobs/{job_id}", response_model=JobStatusResponse)
-@observe(name="get_job_status")
 async def get_job_status(
     job_id: str,
     job_repository: JobRepositoryDep,

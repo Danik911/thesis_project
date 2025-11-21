@@ -1,14 +1,14 @@
 {
   "gamp_category": "3",
-  "job_id": "19aad5af-ce41-4362-a44a-c83f7619ac22",
-  "created_at": "2025-11-20T19:44:47.172474Z",
+  "job_id": "752905a1-956e-4ad8-9075-b41dbaf5ee0c",
+  "created_at": "2025-11-21T18:12:28.710279Z",
   "created_by": "user_35KgiAcvIC0tdtFvJUN1vDkrNYc",
   "artifact_type": "test_suite",
   "format": "yaml",
   "urs_filename": "URS-020.md",
   "urs_hash": "18821f2dcbbb390ff724b86708e16fb0215670f7eb6bf13f46c248eadb5c6843",
   "storage_mode": "local",
-  "storage_path": "/app/output/19aad5af-ce41-4362-a44a-c83f7619ac22/test_suite.yaml",
-  "storage_timestamp": "2025-11-20T19:44:47.182749Z",
-  "file_size_bytes": 35072
+  "storage_path": "/app/output/752905a1-956e-4ad8-9075-b41dbaf5ee0c/test_suite.yaml",
+  "storage_timestamp": "2025-11-21T18:12:28.716087Z",
+  "file_size_bytes": 38277
 }

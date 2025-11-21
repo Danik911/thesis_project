@@ -14,11 +14,16 @@ import asyncio
 import json
 import logging
 import traceback
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from langfuse import observe
+from langfuse import get_client, observe
+try:
+    from langfuse.decorators import propagate_attributes  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover - older SDKs
+    propagate_attributes = None
 
 from main.src.adapters.chroma_adapter import ChromaVectorStoreAdapter
 from main.src.adapters.local_adapter import LocalStorageAdapter
@@ -85,7 +90,8 @@ class WorkflowExecutor:
                 - gamp_category: GAMP-5 category (1, 3, 4, 5)
                 - result_uri: Storage URI for test suite
                 - execution_time_seconds: Total workflow execution time
-                - trace_id: Phoenix trace identifier
+                - trace_id: Langfuse trace identifier
+                - trace_url: Direct link to Langfuse trace for UI deep links
 
         Raises:
             ValueError: If URS content is invalid or empty
@@ -108,139 +114,179 @@ class WorkflowExecutor:
                 "Cannot execute workflow without valid URS document"
             )
 
+        trace_tags = [f"job_id:{job_id}", f"user_id:{user_id}"]
+        trace_metadata = {
+            "jobId": job_id,
+            "userId": user_id,
+            "ursFilename": metadata.get("urs_filename", "unknown")
+        }
+
+        def _safe_update_trace(**kwargs: Any) -> None:
+            try:
+                langfuse_client = get_client()
+                if langfuse_client:
+                    langfuse_client.update_current_trace(**kwargs)
+            except Exception as update_error:
+                logger.warning(f"Failed to update Langfuse trace context: {update_error}")
+
         # CRITICAL: Tag trace with job_id for observability filtering
+        _safe_update_trace(tags=trace_tags, metadata=trace_metadata)
+
+        propagation_context = nullcontext()
+        if propagate_attributes is not None:
+            try:
+                propagation_context = propagate_attributes(
+                    user_id=user_id,
+                    tags=trace_tags,
+                    metadata=trace_metadata
+                )
+            except Exception as e:
+                logger.warning(f"Failed to propagate Langfuse attributes: {e}")
+        else:
+            logger.debug("Langfuse SDK does not expose propagate_attributes; skipping context propagation.")
+
         try:
-            from langfuse.decorators import langfuse_context
-            langfuse_context.update_current_trace(
-                tags=[f"job_id:{job_id}", f"user_id:{user_id}", f"gamp_category:{metadata.get('gamp_category', 'unknown')}"],
-                metadata={
-                    "job_id": job_id, 
-                    "user_id": user_id,
-                    "urs_filename": metadata.get("urs_filename", "unknown")
+            with propagation_context:
+                # Save URS content to temporary file (workflow expects file path, not content)
+                import tempfile
+                from pathlib import Path
+
+                temp_dir = Path("/tmp/urs_documents")
+                temp_dir.mkdir(parents=True, exist_ok=True)
+                temp_urs_path = temp_dir / f"{job_id}.md"
+
+                logger.info(f"Saving URS content to temporary file: {temp_urs_path}")
+                temp_urs_path.write_text(urs_content, encoding="utf-8")
+
+                # Initialize UnifiedTestGenerationWorkflow
+                workflow = UnifiedTestGenerationWorkflow()
+                logger.info(f"UnifiedTestGenerationWorkflow initialized for job {job_id}")
+
+                # Execute workflow (this takes 5-6 minutes for Category 3 URS)
+                logger.info(f"Executing UnifiedTestGenerationWorkflow for job {job_id} (expect 5-6 minutes)...")
+                workflow_result_raw = await workflow.run(
+                    document_path=str(temp_urs_path)
+                )
+
+                if not workflow_result_raw:
+                    raise RuntimeError(
+                        f"CRITICAL: Workflow returned None/empty result\n"
+                        f"Job ID: {job_id}\n"
+                        f"Expected: WorkflowResult with test_suite, gamp_category, etc.\n"
+                        f"Actual: {workflow_result_raw}\n"
+                        "This indicates a critical workflow failure"
+                    )
+
+                # Unwrap StopEvent to get actual dictionary
+                if hasattr(workflow_result_raw, "result"):
+                    workflow_result = workflow_result_raw.result
+                else:
+                    workflow_result = workflow_result_raw
+
+                # Validate result is a dictionary
+                if not isinstance(workflow_result, dict):
+                    raise RuntimeError(
+                        f"CRITICAL: Workflow returned invalid type: {type(workflow_result)}. "
+                        f"Expected dict containing workflow results. "
+                        f"Job ID: {job_id}. "
+                        f"Value: {workflow_result}"
+                    )
+
+                # Validate mandatory test_suite key exists
+                if "test_suite" not in workflow_result:
+                    available_keys = list(workflow_result.keys())
+                    raise RuntimeError(
+                        f"CRITICAL: Workflow result missing mandatory 'test_suite' key. "
+                        f"Job ID: {job_id}. "
+                        f"Available keys: {available_keys}. "
+                        f"This indicates OQ test generation failed or didn't emit results."
+                    )
+
+                logger.debug(
+                    f"Workflow result unwrapped successfully. "
+                    f"Type: {type(workflow_result)}, "
+                    f"Keys: {list(workflow_result.keys())}"
+                )
+
+                # Extract results
+                test_suite_content = workflow_result.get("test_suite")
+                gamp_category = workflow_result.get("gamp_category")
+
+                if gamp_category:
+                    _safe_update_trace(
+                        tags=trace_tags + [f"gamp_category:{gamp_category}"],
+                        metadata={
+                            **trace_metadata,
+                            "gampCategory": str(gamp_category)
+                        }
+                    )
+
+                if not test_suite_content:
+                    raise RuntimeError(
+                        f"CRITICAL: Workflow completed but no test suite generated\n"
+                        f"Job ID: {job_id}\n"
+                        f"GAMP Category: {gamp_category}\n"
+                        f"Workflow result keys: {list(workflow_result.keys())}\n"
+                        "Test suite generation is mandatory - this is a workflow failure"
+                    )
+
+                logger.info(
+                    f"Workflow completed successfully\n"
+                    f"  Job ID: {job_id}\n"
+                    f"  GAMP Category: {gamp_category}\n"
+                    f"  Test suite length: {len(test_suite_content)} characters"
+                )
+
+                # Save test suite to storage
+                artifact_metadata = {
+                    "gamp_category": str(gamp_category),
+                    "job_id": job_id,
+                    "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                    "created_by": user_id,
+                    "artifact_type": "test_suite",
+                    "format": "yaml",  # Explicitly set format to match file extension
+                    "urs_filename": metadata.get("urs_filename", "unknown"),
+                    "urs_hash": metadata.get("urs_hash", "unknown")
                 }
-            )
-        except Exception as e:
-            logger.warning(f"Failed to update Langfuse trace context: {e}")
 
-        try:
-            # Save URS content to temporary file (workflow expects file path, not content)
-            import tempfile
-            from pathlib import Path
-
-            temp_dir = Path("/tmp/urs_documents")
-            temp_dir.mkdir(parents=True, exist_ok=True)
-            temp_urs_path = temp_dir / f"{job_id}.md"
-
-            logger.info(f"Saving URS content to temporary file: {temp_urs_path}")
-            temp_urs_path.write_text(urs_content, encoding="utf-8")
-
-            # Initialize UnifiedTestGenerationWorkflow
-            workflow = UnifiedTestGenerationWorkflow()
-            logger.info(f"UnifiedTestGenerationWorkflow initialized for job {job_id}")
-
-            # Execute workflow (this takes 5-6 minutes for Category 3 URS)
-            logger.info(f"Executing UnifiedTestGenerationWorkflow for job {job_id} (expect 5-6 minutes)...")
-            workflow_result_raw = await workflow.run(
-                document_path=str(temp_urs_path)
-            )
-
-            if not workflow_result_raw:
-                raise RuntimeError(
-                    f"CRITICAL: Workflow returned None/empty result\n"
-                    f"Job ID: {job_id}\n"
-                    f"Expected: WorkflowResult with test_suite, gamp_category, etc.\n"
-                    f"Actual: {workflow_result_raw}\n"
-                    "This indicates a critical workflow failure"
+                result_uri = await self.storage_adapter.save_artifact(
+                    artifact_id=f"{job_id}/test_suite.yaml",
+                    content=test_suite_content.encode("utf-8"),
+                    metadata=artifact_metadata
                 )
 
-            # Unwrap StopEvent to get actual dictionary
-            if hasattr(workflow_result_raw, "result"):
-                workflow_result = workflow_result_raw.result
-            else:
-                workflow_result = workflow_result_raw
+                logger.info(f"Test suite saved: {result_uri}")
 
-            # Validate result is a dictionary
-            if not isinstance(workflow_result, dict):
-                raise RuntimeError(
-                    f"CRITICAL: Workflow returned invalid type: {type(workflow_result)}. "
-                    f"Expected dict containing workflow results. "
-                    f"Job ID: {job_id}. "
-                    f"Value: {workflow_result}"
-                )
+                # Calculate execution time
+                end_time = datetime.now(UTC)
+                execution_time = (end_time - start_time).total_seconds()
 
-            # Validate mandatory test_suite key exists
-            if "test_suite" not in workflow_result:
-                available_keys = list(workflow_result.keys())
-                raise RuntimeError(
-                    f"CRITICAL: Workflow result missing mandatory 'test_suite' key. "
-                    f"Job ID: {job_id}. "
-                    f"Available keys: {available_keys}. "
-                    f"This indicates OQ test generation failed or didn't emit results."
-                )
+                trace_id = "unknown"
+                trace_url = None
+                try:
+                    langfuse_client = get_client()
+                    if langfuse_client:
+                        current_trace_id = langfuse_client.get_current_trace_id()
+                        if current_trace_id:
+                            trace_id = current_trace_id
+                            trace_url = langfuse_client.get_trace_url(trace_id=current_trace_id)
+                except Exception as trace_error:
+                    logger.warning(f"Failed to capture Langfuse trace metadata: {trace_error}")
 
-            logger.debug(
-                f"Workflow result unwrapped successfully. "
-                f"Type: {type(workflow_result)}, "
-                f"Keys: {list(workflow_result.keys())}"
-            )
-
-            # Extract results
-            test_suite_content = workflow_result.get("test_suite")
-            gamp_category = workflow_result.get("gamp_category")
-
-            if not test_suite_content:
-                raise RuntimeError(
-                    f"CRITICAL: Workflow completed but no test suite generated\n"
-                    f"Job ID: {job_id}\n"
-                    f"GAMP Category: {gamp_category}\n"
-                    f"Workflow result keys: {list(workflow_result.keys())}\n"
-                    "Test suite generation is mandatory - this is a workflow failure"
-                )
-
-            logger.info(
-                f"Workflow completed successfully\n"
-                f"  Job ID: {job_id}\n"
-                f"  GAMP Category: {gamp_category}\n"
-                f"  Test suite length: {len(test_suite_content)} characters"
-            )
-
-            # Save test suite to storage
-            artifact_metadata = {
-                "gamp_category": str(gamp_category),
-                "job_id": job_id,
-                "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-                "created_by": user_id,
-                "artifact_type": "test_suite",
-                "format": "yaml",  # Explicitly set format to match file extension
-                "urs_filename": metadata.get("urs_filename", "unknown"),
-                "urs_hash": metadata.get("urs_hash", "unknown")
-            }
-
-            result_uri = await self.storage_adapter.save_artifact(
-                artifact_id=f"{job_id}/test_suite.yaml",
-                content=test_suite_content.encode("utf-8"),
-                metadata=artifact_metadata
-            )
-
-            logger.info(f"Test suite saved: {result_uri}")
-
-            # Calculate execution time
-            end_time = datetime.now(UTC)
-            execution_time = (end_time - start_time).total_seconds()
-
-            return {
-                "test_suite_content": test_suite_content,
-                "gamp_category": gamp_category,
-                "result_uri": result_uri,
-                "execution_time_seconds": execution_time,
-                "trace_id": workflow_result.get("trace_id", "unknown"),
-                "workflow_metadata": {
-                    "start_time": start_time.isoformat() + "Z",
-                    "end_time": end_time.isoformat() + "Z",
-                    "urs_filename": metadata.get("urs_filename"),
-                    "user_id": user_id
+                return {
+                    "test_suite_content": test_suite_content,
+                    "gamp_category": gamp_category,
+                    "result_uri": result_uri,
+                    "execution_time_seconds": execution_time,
+                    "trace_id": trace_id,
+                    "trace_url": trace_url,
+                    "workflow_metadata": {
+                        "start_time": start_time.isoformat() + "Z",
+                        "end_time": end_time.isoformat() + "Z",
+                        "urs_filename": metadata.get("urs_filename"),
+                        "user_id": user_id
+                    }
                 }
-            }
 
         except Exception as e:
             # Log complete error context for debugging

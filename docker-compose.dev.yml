@@ -300,7 +300,9 @@ services:
       - ./main/frontend:/app
       - /app/node_modules
       - /app/.next
-    command: npm run dev
+    # Bind Next.js dev server to 0.0.0.0 so browser traffic outside the container
+    # (Windows host) can reach both HTTP and the HMR websocket without resets.
+    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
     depends_on:
       api:
         condition: service_started

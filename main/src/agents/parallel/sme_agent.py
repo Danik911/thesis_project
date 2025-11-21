@@ -19,6 +19,7 @@ import asyncio
 import json
 import logging
 import re
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -346,6 +347,24 @@ class SMEAgent:
     The agent supports multiple specialties and integrates with parallel
     execution workflows for comprehensive test generation support.
     """
+
+    DOMAIN_INSIGHT_REQUIRED_FIELDS = [
+        "specialty_focus",
+        "key_expertise_areas",
+        "industry_trends",
+        "best_practices",
+        "common_pitfalls",
+        "emerging_challenges",
+        "opportunities",
+    ]
+    DOMAIN_INSIGHT_LIST_FIELDS = [
+        "key_expertise_areas",
+        "industry_trends",
+        "best_practices",
+        "common_pitfalls",
+        "emerging_challenges",
+        "opportunities",
+    ]
 
     def __init__(
         self,
@@ -1048,17 +1067,16 @@ class SMEAgent:
 
             # Parse JSON response using robust extraction
             try:
-                insights = extract_json_from_markdown(response_text)
+                raw_insights = extract_json_from_markdown(response_text)
+                insights = self._normalize_domain_insights_payload(raw_insights)
 
                 # Validate required fields are present
-                required_fields = ["specialty_focus", "key_expertise_areas", "industry_trends", "best_practices", "common_pitfalls"]
-                for field in required_fields:
+                for field in self.DOMAIN_INSIGHT_REQUIRED_FIELDS:
                     if field not in insights:
                         raise ValueError(f"Missing required field: {field}")
 
                 # Validate field types
-                list_fields = ["key_expertise_areas", "industry_trends", "best_practices", "common_pitfalls"]
-                for field in list_fields:
+                for field in self.DOMAIN_INSIGHT_LIST_FIELDS:
                     if not isinstance(insights[field], list):
                         raise ValueError(f"Field {field} must be a list")
 
@@ -1081,6 +1099,91 @@ class SMEAgent:
                 f"Request: {request.specialty}\n"
                 f"This violates pharmaceutical system requirements - domain insights cannot use fallback logic."
             ) from llm_error
+
+    def _normalize_domain_insights_payload(self, payload: Any, depth: int = 0) -> dict[str, Any]:
+        """Unwrap common LLM payload shells until we reach the actual insights JSON."""
+        if depth > 5:
+            raise ValueError("Exceeded maximum unwrap depth while parsing domain insights payload")
+
+        if isinstance(payload, list):
+            for item in payload:
+                try:
+                    return self._normalize_domain_insights_payload(item, depth + 1)
+                except ValueError:
+                    continue
+            raise ValueError("List payload did not contain a valid domain insights object")
+
+        if isinstance(payload, dict):
+            if self._has_required_domain_fields(payload):
+                return payload
+
+            textual_keys = [
+                "text",
+                "content",
+                "message",
+                "response",
+                "value",
+                "output",
+                "data",
+            ]
+
+            for key in textual_keys:
+                if key not in payload:
+                    continue
+                nested_value = payload[key]
+                if isinstance(nested_value, str):
+                    try:
+                        parsed = extract_json_from_markdown(nested_value)
+                        return self._normalize_domain_insights_payload(parsed, depth + 1)
+                    except ValueError:
+                        continue
+                if isinstance(nested_value, (dict, list)):
+                    try:
+                        return self._normalize_domain_insights_payload(nested_value, depth + 1)
+                    except ValueError:
+                        continue
+
+            choices = payload.get("choices")
+            if isinstance(choices, list):
+                for choice in choices:
+                    for message_key in ("message", "delta"):
+                        candidate = choice.get(message_key)
+                        if isinstance(candidate, Mapping):
+                            content = candidate.get("content")
+                            if isinstance(content, str):
+                                try:
+                                    parsed = extract_json_from_markdown(content)
+                                    return self._normalize_domain_insights_payload(parsed, depth + 1)
+                                except ValueError:
+                                    continue
+                        elif isinstance(candidate, (dict, list)):
+                            try:
+                                return self._normalize_domain_insights_payload(candidate, depth + 1)
+                            except ValueError:
+                                continue
+                    # Some providers embed direct text on the choice object
+                    if isinstance(choice, Mapping) and "text" in choice and isinstance(choice["text"], str):
+                        try:
+                            parsed = extract_json_from_markdown(choice["text"])
+                            return self._normalize_domain_insights_payload(parsed, depth + 1)
+                        except ValueError:
+                            continue
+
+            for key in ("raw", "result", "response_object"):
+                nested = payload.get(key)
+                if isinstance(nested, (dict, list)):
+                    try:
+                        return self._normalize_domain_insights_payload(nested, depth + 1)
+                    except ValueError:
+                        continue
+
+            raise ValueError("Payload did not contain required domain insights fields")
+
+        raise ValueError("Domain insights payload must be a list or dictionary")
+
+    def _has_required_domain_fields(self, payload: Mapping[str, Any]) -> bool:
+        """Check whether the payload already matches the expected insights schema."""
+        return all(field in payload for field in self.DOMAIN_INSIGHT_REQUIRED_FIELDS)
 
     async def _assess_regulatory_considerations(self, request: SMEAgentRequest) -> list[dict[str, Any]]:
         """Assess regulatory considerations using LLM expertise."""

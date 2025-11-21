@@ -14,14 +14,35 @@ interface Job {
     urs_filename: string;
     result_uri?: string;
     error_message?: string;
+    trace_id?: string;
+    trace_url?: string;
 }
 
-interface JobMetrics {
-    totalTraces: number;
-    totalCost: number;
-    totalTokens: number;
-    latency: number;
+interface LangfuseObservation {
+    id: string;
+    startTime?: string | null;
+    endTime?: string | null;
 }
+
+interface LangfuseTracePayload {
+    id: string;
+    observations?: LangfuseObservation[];
+    totalCost?: number | string | null;
+    latency?: number | null;
+}
+
+interface LangfuseApiSuccess {
+    success: true;
+    data: LangfuseTracePayload;
+}
+
+interface LangfuseApiError {
+    success: false;
+    error: string;
+    details?: string;
+}
+
+type LangfuseApiResponse = LangfuseApiSuccess | LangfuseApiError;
 
 export default function JobDetails() {
     const { isLoaded, userId, getToken } = useAuth();
@@ -29,10 +50,12 @@ export default function JobDetails() {
     const { id } = router.query;
     const [job, setJob] = useState<Job | null>(null);
     const [results, setResults] = useState<any>(null);
-    const [metrics, setMetrics] = useState<JobMetrics | null>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'observability'>('overview');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [traceSummary, setTraceSummary] = useState<LangfuseTracePayload | null>(null);
+    const [isTraceLoading, setIsTraceLoading] = useState(false);
+    const [traceError, setTraceError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchJobDetails = async () => {
@@ -66,15 +89,6 @@ export default function JobDetails() {
                         const resultData = await resultRes.json();
                         setResults(resultData);
                     }
-                }
-
-                // Fetch Metrics (Keep using Next.js API route for this as it proxies Langfuse)
-                const metricsRes = await fetch(`/api/jobs/${id}/metrics`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (metricsRes.ok) {
-                    const metricsData = await metricsRes.json();
-                    setMetrics(metricsData);
                 }
 
             } catch (err) {
@@ -124,6 +138,53 @@ export default function JobDetails() {
 
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     };
+
+    useEffect(() => {
+        if (!job?.trace_id || job.trace_id === 'unknown') {
+            setTraceSummary(null);
+            setTraceError(job ? 'Langfuse trace not captured for this job.' : null);
+            return;
+        }
+
+        const controller = new AbortController();
+        const fetchTrace = async () => {
+            setIsTraceLoading(true);
+            setTraceError(null);
+            try {
+                const response = await fetch(`/api/langfuse/trace?traceId=${encodeURIComponent(job.trace_id!)}`, {
+                    signal: controller.signal,
+                });
+                const payload = await response.json() as LangfuseApiResponse;
+                if (!payload.success) {
+                    throw new Error(payload.details || payload.error || 'Failed to load Langfuse trace');
+                }
+                setTraceSummary(payload.data);
+            } catch (err) {
+                if (!controller.signal.aborted) {
+                    setTraceSummary(null);
+                    setTraceError(err instanceof Error ? err.message : 'Unable to load Langfuse trace');
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setIsTraceLoading(false);
+                }
+            }
+        };
+
+        fetchTrace();
+        return () => controller.abort();
+    }, [job?.trace_id]);
+
+    const observationCount = traceSummary?.observations?.length ?? 0;
+    const formattedCostValue = (() => {
+        if (!traceSummary || traceSummary.totalCost === undefined || traceSummary.totalCost === null) {
+            return 0;
+        }
+        const numeric = typeof traceSummary.totalCost === 'number'
+            ? traceSummary.totalCost
+            : Number(traceSummary.totalCost);
+        return Number.isFinite(numeric) ? numeric : 0;
+    })();
 
     if (!isLoaded || isLoading) {
         return (
@@ -202,7 +263,15 @@ export default function JobDetails() {
                     {activeTab === 'overview' && (
                         <div className="animate-fade-in">
                             {job.status.toUpperCase() === 'COMPLETED' && results ? (
-                                <ComplianceDashboard results={results} onDownload={handleDownload} />
+                                <ComplianceDashboard
+                                    results={{
+                                        ...results,
+                                        job_id: job.job_id,
+                                        trace_id: job.trace_id,
+                                        trace_url: job.trace_url,
+                                    }}
+                                    onDownload={handleDownload}
+                                />
                             ) : (
                                 <div className="bg-slate-800/50 rounded-xl p-8 text-center border border-slate-700">
                                     <p className="text-slate-400">
@@ -224,16 +293,26 @@ export default function JobDetails() {
                             </div>
 
                             <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-sm">
-                                <h2 className="text-slate-400 text-sm font-semibold mb-2">Total Traces</h2>
-                                <p className="text-4xl font-bold text-blue-400">{metrics ? metrics.totalTraces : 'N/A'}</p>
-                                <p className="text-slate-500 text-xs mt-2">Traces collected for this job</p>
+                                <h2 className="text-slate-400 text-sm font-semibold mb-2">Langfuse Observations</h2>
+                                <p className="text-4xl font-bold text-blue-400">
+                                    {isTraceLoading ? '…' : traceSummary ? observationCount : traceError ? 'N/A' : '0'}
+                                </p>
+                                <p className="text-slate-500 text-xs mt-2">Observations captured across the workflow</p>
                             </div>
 
                             <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-sm">
                                 <h2 className="text-slate-400 text-sm font-semibold mb-2">Total Cost</h2>
-                                <p className="text-4xl font-bold text-purple-400">{metrics ? `$${metrics.totalCost}` : 'N/A'}</p>
-                                <p className="text-slate-500 text-xs mt-2">Estimated LLM cost</p>
+                                <p className="text-4xl font-bold text-purple-400">
+                                    {isTraceLoading ? '…' : traceSummary ? `$${formattedCostValue.toFixed(4)}` : traceError ? 'N/A' : '$0.0000' }
+                                </p>
+                                <p className="text-slate-500 text-xs mt-2">Estimated LLM cost from Langfuse</p>
                             </div>
+
+                            {traceError && (
+                                <div className="md:col-span-3 bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-sm text-red-200">
+                                    Unable to load Langfuse trace data: {traceError}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

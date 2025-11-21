@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import LangfuseTraceDashboard from './LangfuseTraceDashboard';
 
 interface ComplianceDashboardProps {
   results: any; // Replace with proper type
@@ -7,6 +8,12 @@ interface ComplianceDashboardProps {
 
 export default function ComplianceDashboard({ results, onDownload }: ComplianceDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showTracePanel, setShowTracePanel] = useState(false);
+
+  const traceId = (results.trace_id || results.traceId) as string | undefined;
+  const traceUrl = (results.trace_url || results.traceUrl) as string | undefined;
+  const traceAvailable = Boolean(traceId && traceId !== 'unknown');
+  const generatedAt = results.generation_timestamp || results.timestamp || null;
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 animate-fade-in-up">
@@ -16,16 +23,33 @@ export default function ComplianceDashboard({ results, onDownload }: ComplianceD
           <h2 className="text-2xl font-bold text-white mb-1">Validation Results</h2>
           <p className="text-slate-400 text-sm">Job ID: {results.job_id || 'N/A'}</p>
         </div>
-        <button
-          onClick={onDownload}
-          className="btn-primary flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Download Test Suite
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => traceAvailable && setShowTracePanel((prev) => !prev)}
+            disabled={!traceAvailable}
+            className={`btn-secondary flex items-center gap-2 ${!traceAvailable ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
+            </svg>
+            {traceAvailable ? (showTracePanel ? 'Hide Langfuse trace' : 'Langfuse trace dashboard') : 'Langfuse trace unavailable'}
+          </button>
+          <button
+            onClick={onDownload}
+            className="btn-primary flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Test Suite
+          </button>
+        </div>
       </div>
+
+      {showTracePanel && traceAvailable && (
+        <LangfuseTraceDashboard traceId={traceId} traceUrl={traceUrl} jobId={results.job_id} />
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -55,8 +79,8 @@ export default function ComplianceDashboard({ results, onDownload }: ComplianceD
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-4 text-sm font-medium transition-colors relative ${activeTab === tab
-                  ? 'text-blue-400 bg-slate-800/50'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
+                ? 'text-blue-400 bg-slate-800/50'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
                 }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -80,7 +104,7 @@ export default function ComplianceDashboard({ results, onDownload }: ComplianceD
                     </div>
                     <div className="flex justify-between py-2 border-b border-slate-700/50">
                       <span className="text-slate-400">Generated At</span>
-                      <span className="text-slate-200">{new Date(results.timestamp).toLocaleString()}</span>
+                      <span className="text-slate-200">{generatedAt ? new Date(generatedAt).toLocaleString() : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-slate-700/50">
                       <span className="text-slate-400">Workflow Session</span>
@@ -172,8 +196,8 @@ export default function ComplianceDashboard({ results, onDownload }: ComplianceD
                       <h4 className="text-white font-medium mt-1">{test.test_name}</h4>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded border ${test.risk_level === 'critical' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
-                        test.risk_level === 'high' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30' :
-                          'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                      test.risk_level === 'high' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30' :
+                        'bg-blue-500/10 text-blue-400 border-blue-500/30'
                       }`}>
                       {test.risk_level?.toUpperCase()} RISK
                     </span>

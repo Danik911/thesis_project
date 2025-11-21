@@ -91,6 +91,8 @@ class JobStatusResponse(BaseModel):
     # Results (only present if completed)
     result_uri: str | None = Field(default=None, description="Storage URI for result artifact")
     download_url: str | None = Field(default=None, description="Pre-signed download URL")
+    trace_id: str | None = Field(default=None, description="Langfuse trace identifier for observability")
+    trace_url: str | None = Field(default=None, description="Direct Langfuse link for deep diagnostics")
 
     # Error details (only present if failed)
     error_message: str | None = Field(default=None, description="Error message if job failed")
@@ -113,6 +115,8 @@ class JobStatusResponse(BaseModel):
                 "urs_hash": "a3b2c1d4e5f6...",
                 "urs_size_bytes": 5432,
                 "result_uri": "file:///output/job_550e8400/test_suite.md",
+                "trace_id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+                "trace_url": "https://cloud.langfuse.com/project/example/traces/a1b2c3",
                 "download_url": "http://localhost:8000/jobs/550e8400.../download",
                 "error_message": None,
                 "error_type": None,
@@ -141,6 +145,8 @@ class JobRecord(BaseModel):
 
     # Processing metadata
     result_uri: str | None = None
+    trace_id: str | None = None
+    trace_url: str | None = None
     error_message: str | None = None
     error_type: str | None = None
     retry_count: int = 0
@@ -171,6 +177,8 @@ class JobRecord(BaseModel):
             urs_size_bytes=self.urs_size_bytes,
             result_uri=self.result_uri,
             download_url=download_url,
+            trace_id=self.trace_id,
+            trace_url=self.trace_url,
             error_message=self.error_message,
             error_type=self.error_type,
             retry_count=self.retry_count,

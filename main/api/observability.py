@@ -8,11 +8,17 @@ error handling (NO FALLBACK LOGIC).
 
 import logging
 import os
+import base64
 from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
 from langfuse import Langfuse
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +78,33 @@ class LangFuseObservability:
                 secret_key=self._secret_key,
                 host=self._host,
             )
+
+            # Configure OpenTelemetry for LlamaIndex -> Langfuse
+            # We need to manually configure the OTLP exporter because LlamaIndexInstrumentor
+            # uses the global OpenTelemetry tracer provider.
+            
+            # Create OTLP exporter pointing to Langfuse
+            # Auth header is Basic base64(public_key:secret_key)
+            auth_str = f"{self._public_key}:{self._secret_key}"
+            auth_b64 = base64.b64encode(auth_str.encode()).decode()
+            
+            otlp_exporter = OTLPSpanExporter(
+                endpoint=f"{self._host}/api/public/otel/v1/traces",
+                headers={"Authorization": f"Basic {auth_b64}"}
+            )
+            
+            # Set up global tracer provider
+            trace_provider = TracerProvider()
+            trace_provider.add_span_processor(SimpleSpanProcessor(otlp_exporter))
+            trace.set_tracer_provider(trace_provider)
+
+            # Initialize LlamaIndex instrumentation
+            # This will now use the global tracer provider we just configured
+            try:
+                LlamaIndexInstrumentor().instrument()
+                logger.info("LlamaIndex instrumentation initialized with OTLP exporter")
+            except Exception as e:
+                logger.warning(f"Failed to initialize LlamaIndex instrumentation: {e}")
 
             # Health check: attempt to create a test trace
             # This verifies credentials and network connectivity

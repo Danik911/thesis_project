@@ -220,6 +220,8 @@ async def _process_job_with_retries(
             async with job_lock:
                 job.result_uri = result["result_uri"]
                 job.gamp_category = str(result["gamp_category"])
+                job.trace_id = result.get("trace_id")
+                job.trace_url = result.get("trace_url")
 
             return True  # Success
 
