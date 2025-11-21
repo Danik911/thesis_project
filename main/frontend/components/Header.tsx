@@ -23,7 +23,13 @@ export default function Header() {
               </div>
             </Link>
           </div>
-          <div>
+          <div className="flex items-center gap-8">
+            <Link href="/dashboard" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/history" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              History
+            </Link>
             <SignedOut>
               <SignInButton mode="modal">
                 <button className="btn-primary">
@@ -33,7 +39,7 @@ export default function Header() {
             </SignedOut>
             <SignedIn>
               <div className="flex items-center gap-4">
-                <UserButton 
+                <UserButton
                   afterSignOutUrl="/"
                   appearance={{
                     elements: {

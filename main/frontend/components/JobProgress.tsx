@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 interface JobProgressProps {
   status: string;
   logs: string[];
+  startTime?: number | null;
 }
 
-export default function JobProgress({ status, logs }: JobProgressProps) {
+export default function JobProgress({ status, logs, startTime }: JobProgressProps) {
   const [progress, setProgress] = useState(0);
 
   // Simulate progress based on status or logs
@@ -15,21 +16,34 @@ export default function JobProgress({ status, logs }: JobProgressProps) {
     if (status === 'PENDING') {
       setProgress(10);
     } else if (status === 'PROCESSING') {
-      // Ensure we start at least at 10%
-      setProgress(prev => Math.max(prev, 10));
-      
+      // Calculate initial progress based on elapsed time if startTime is available
+      let initialProgress = 10;
+      if (startTime) {
+        const elapsedSeconds = (Date.now() - startTime) / 1000;
+        // Target: 90% in 480 seconds (8 mins)
+        // Rate: (90 - 10) / 480 = ~0.167% per second
+        const calculatedProgress = 10 + (elapsedSeconds * 0.167);
+        initialProgress = Math.min(90, Math.max(10, calculatedProgress));
+      }
+
+      setProgress(initialProgress);
+
       // Gradually increase progress up to 90%
+      // Workflow takes 6-9 minutes (360-540 seconds)
+      // We want to reach 90% in about 8 minutes (480 seconds)
+      // Update every 1 second (1000ms)
       interval = setInterval(() => {
         setProgress(prev => {
-          // Slow down as we get closer to 90%
-          const remaining = 90 - prev;
-          if (remaining <= 0) return 90;
-          
-          // Add a small increment based on remaining distance
-          const increment = Math.max(0.1, remaining * 0.02);
+          // Cap at 90% until actually completed
+          if (prev >= 90) return 90;
+
+          // Calculate increment to reach 90% in ~480 seconds
+          // (90 - 10) / 480 = ~0.16 per second
+          // Add some randomness to make it look natural
+          const increment = 0.1 + Math.random() * 0.1;
           return Math.min(90, prev + increment);
         });
-      }, 200);
+      }, 1000);
     } else if (status === 'COMPLETED') {
       setProgress(100);
     } else if (status === 'FAILED') {
@@ -39,7 +53,7 @@ export default function JobProgress({ status, logs }: JobProgressProps) {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [status]);
+  }, [status, startTime]);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -51,24 +65,22 @@ export default function JobProgress({ status, logs }: JobProgressProps) {
               {status === 'PROCESSING' && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               )}
-              <span className={`relative inline-flex rounded-full h-3 w-3 ${
-                status === 'COMPLETED' ? 'bg-emerald-500' : 
-                status === 'FAILED' ? 'bg-red-500' : 
-                'bg-blue-500'
-              }`}></span>
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${status === 'COMPLETED' ? 'bg-emerald-500' :
+                status === 'FAILED' ? 'bg-red-500' :
+                  'bg-blue-500'
+                }`}></span>
             </span>
             Generation Status: <span className="text-blue-400 font-mono">{status}</span>
           </h3>
           <span className="text-sm font-mono text-slate-400">{Math.round(progress)}%</span>
         </div>
-        
+
         <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
-          <div 
-            className={`h-2.5 rounded-full transition-all duration-1000 ease-out ${
-              status === 'FAILED' ? 'bg-red-500' : 
-              status === 'COMPLETED' ? 'bg-emerald-500' : 
-              'bg-blue-600 relative overflow-hidden'
-            }`}
+          <div
+            className={`h-2.5 rounded-full transition-all duration-1000 ease-out ${status === 'FAILED' ? 'bg-red-500' :
+              status === 'COMPLETED' ? 'bg-emerald-500' :
+                'bg-blue-600 relative overflow-hidden'
+              }`}
             style={{ width: `${progress}%` }}
           >
             {status === 'PROCESSING' && (
@@ -97,9 +109,9 @@ export default function JobProgress({ status, logs }: JobProgressProps) {
                 <span className="text-slate-600 select-none">{(index + 1).toString().padStart(3, '0')}</span>
                 <span className={
                   log.includes('ERROR') ? 'text-red-400' :
-                  log.includes('SUCCESS') ? 'text-emerald-400' :
-                  log.includes('WARNING') ? 'text-amber-400' :
-                  'text-slate-300'
+                    log.includes('SUCCESS') ? 'text-emerald-400' :
+                      log.includes('WARNING') ? 'text-amber-400' :
+                        'text-slate-300'
                 }>
                   <span className="opacity-50 mr-2">[{new Date().toLocaleTimeString()}]</span>
                   {log}

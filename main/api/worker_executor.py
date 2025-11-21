@@ -108,13 +108,19 @@ class WorkflowExecutor:
                 "Cannot execute workflow without valid URS document"
             )
 
-        logger.info(
-            f"Starting workflow execution\n"
-            f"  Job ID: {job_id}\n"
-            f"  User ID: {user_id}\n"
-            f"  URS length: {len(urs_content)} characters\n"
-            f"  URS filename: {metadata.get('urs_filename', 'unknown')}"
-        )
+        # CRITICAL: Tag trace with job_id for observability filtering
+        try:
+            from langfuse.decorators import langfuse_context
+            langfuse_context.update_current_trace(
+                tags=[f"job_id:{job_id}", f"user_id:{user_id}", f"gamp_category:{metadata.get('gamp_category', 'unknown')}"],
+                metadata={
+                    "job_id": job_id, 
+                    "user_id": user_id,
+                    "urs_filename": metadata.get("urs_filename", "unknown")
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to update Langfuse trace context: {e}")
 
         try:
             # Save URS content to temporary file (workflow expects file path, not content)

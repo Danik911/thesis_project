@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.9
+
 #
 # Multi-stage Docker build for FastAPI pharmaceutical test generation API
 #

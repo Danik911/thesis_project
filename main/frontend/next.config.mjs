@@ -5,6 +5,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async redirects() {
+    return [
+      {
+        source: '/observability',
+        destination: '/history',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 export default nextConfig

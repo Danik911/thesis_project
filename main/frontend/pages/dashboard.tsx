@@ -6,7 +6,7 @@ import FileUpload from '@/components/FileUpload';
 import JobProgress from '@/components/JobProgress';
 import ComplianceDashboard from '@/components/ComplianceDashboard';
 
-type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
 
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<string[]>([]);
   const [results, setResults] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
+  const [jobStartTime, setJobStartTime] = useState<number | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Derive display name
@@ -25,6 +26,10 @@ export default function Dashboard() {
     'User';
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+  };
 
   const fetchJobs = async () => {
     if (!isLoaded || !user) return;
@@ -56,31 +61,124 @@ export default function Dashboard() {
     fetchJobs();
   }, [isLoaded, user]);
 
-  const handleFileSelect = (file: File) => {
-    setSelectedFile(file);
+  // Load state from localStorage on mount
+  useEffect(() => {
+    const savedJobId = localStorage.getItem('activeJobId');
+    const savedStatus = localStorage.getItem('activeJobStatus') as JobStatus;
+    const savedLogs = localStorage.getItem('jobLogs');
+    const savedStartTime = localStorage.getItem('jobStartTime');
+
+    if (savedJobId && savedStatus) {
+      setJobId(savedJobId);
+      setStatus(savedStatus);
+      if (savedLogs) {
+        try {
+          setLogs(JSON.parse(savedLogs));
+        } catch (e) {
+          console.error("Failed to parse saved logs", e);
+        }
+      }
+      if (savedStartTime) {
+        setJobStartTime(parseInt(savedStartTime, 10));
+      }
+
+      // Resume polling if active
+      if (savedStatus === 'PENDING' || savedStatus === 'PROCESSING') {
+        // We need the token, but we can't use await here directly.
+        // We'll trigger a function that gets the token.
+        resumePolling(savedJobId);
+      } else if (savedStatus === 'COMPLETED') {
+        // Restore results if needed, or just let the user view history
+        // Ideally we should fetch results again
+        restoreCompletedJob(savedJobId);
+      }
+    }
+  }, [isLoaded]);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (jobId) {
+      localStorage.setItem('activeJobId', jobId);
+    } else {
+      localStorage.removeItem('activeJobId');
+    }
+  }, [jobId]);
+
+  useEffect(() => {
+    if (status) {
+      localStorage.setItem('activeJobStatus', status);
+    } else {
+      localStorage.removeItem('activeJobStatus');
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (logs.length > 0) {
+      localStorage.setItem('jobLogs', JSON.stringify(logs));
+    } else {
+      localStorage.removeItem('jobLogs');
+    }
+  }, [logs]);
+
+  useEffect(() => {
+    if (jobStartTime) {
+      localStorage.setItem('jobStartTime', jobStartTime.toString());
+    } else {
+      localStorage.removeItem('jobStartTime');
+    }
+  }, [jobStartTime]);
+
+  const resumePolling = async (id: string) => {
+    if (!isLoaded) return;
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+      pollJobStatus(id, apiUrl);
+    } catch (e) {
+      console.error("Failed to resume polling", e);
+    }
   };
 
+  const restoreCompletedJob = async (id: string) => {
+    if (!isLoaded) return;
+    try {
+      const token = await getToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+
+      // Fetch results
+      const resultResponse = await fetch(`${apiUrl}/jobs/${id}/result`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resultResponse.ok) {
+        const resultData = await resultResponse.json();
+        setResults(resultData);
+      }
+    } catch (e) {
+      console.error("Failed to restore completed job", e);
+    }
+  };
+
+  // Persistence Logic
   const handleGenerate = async () => {
     if (!selectedFile) return;
-    
+
     setStatus('PENDING');
     setLogs(['Initializing upload...', 'Validating file format...', 'Checking GAMP-5 compliance requirements...']);
-    
+
     try {
       const token = await getToken();
       const formData = new FormData();
       formData.append('file', selectedFile);
 
       const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-      
+
       setLogs(prev => [...prev, `Connecting to secure API at ${apiUrl}...`]);
 
-      const response = await fetch(`${apiUrl}/jobs`, { 
-        method: 'POST', 
+      const response = await fetch(`${apiUrl}/jobs`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         },
-        body: formData 
+        body: formData
       });
 
       if (!response.ok) {
@@ -91,10 +189,11 @@ export default function Dashboard() {
       const data = await response.json();
       setJobId(data.job_id);
       setStatus('PROCESSING');
+      setJobStartTime(Date.now()); // Set start time
       setLogs(prev => [...prev, `Job submitted successfully (ID: ${data.job_id}). Starting processing...`]);
-      
+
       // Start polling
-      pollJobStatus(data.job_id, token, apiUrl);
+      pollJobStatus(data.job_id, apiUrl);
 
     } catch (error) {
       console.error('Upload failed:', error);
@@ -103,49 +202,91 @@ export default function Dashboard() {
     }
   };
 
-  const pollJobStatus = (id: string, token: string | null, apiUrl: string) => {
+  const pollJobStatus = (id: string, apiUrl: string) => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
     pollIntervalRef.current = setInterval(async () => {
       try {
+        const token = await getToken();
         const response = await fetch(`${apiUrl}/jobs/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        
+
         if (!response.ok) {
-           throw new Error(`Polling error: ${response.statusText}`);
+          if (response.status === 404) {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            setStatus('EXPIRED');
+            setLogs(prev => [...prev, 'ERROR: Job session expired. The server may have restarted.']);
+            return;
+          }
+          throw new Error(`Polling error: ${response.statusText}`);
         }
 
         const data = await response.json();
-        
-        if (data.status === 'COMPLETED') {
+
+        // Normalize status to uppercase for comparison
+        const normalizedStatus = data.status.toUpperCase();
+
+        if (normalizedStatus === 'COMPLETED') {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-          
+
           setLogs(prev => [...prev, 'Job completed. Retrieving results...']);
-          
+
           // Fetch the JSON result for dashboard
           try {
+            const resultToken = await getToken();
             const resultResponse = await fetch(`${apiUrl}/jobs/${id}/result`, {
-              headers: { 'Authorization': `Bearer ${token}` }
+              headers: { 'Authorization': `Bearer ${resultToken}` }
             });
+
             if (resultResponse.ok) {
               const resultData = await resultResponse.json();
               setResults(resultData);
-              setStatus('COMPLETED');
               setLogs(prev => [...prev, 'Results retrieved successfully.']);
-              fetchJobs(); // Refresh history
             } else {
-              throw new Error('Failed to retrieve results');
+              console.warn("Failed to retrieve JSON results, using fallback.");
+              // Fallback result object to allow download button to appear
+              setResults({
+                job_id: id,
+                total_test_count: 0,
+                gamp_category: 'Unknown (JSON Missing)',
+                estimated_execution_time: 0,
+                document_name: 'Unknown',
+                timestamp: new Date().toISOString(),
+                workflow_session_id: 'N/A',
+                requirements_coverage: {},
+                pharmaceutical_compliance: {},
+                test_cases: []
+              });
+              setLogs(prev => [...prev, 'WARNING: Could not retrieve detailed results JSON. You can still try downloading the test suite.']);
             }
+
+            // Always set status to COMPLETED if the backend says so
+            setStatus('COMPLETED');
+            fetchJobs(); // Refresh history
+
           } catch (err) {
             console.error("Error fetching results:", err);
-            setStatus('FAILED');
-            setLogs(prev => [...prev, 'ERROR: Failed to retrieve result data.']);
+            // Even on error, set COMPLETED with fallback so user can try to download
+            setStatus('COMPLETED');
+            setResults({
+              job_id: id,
+              total_test_count: 0,
+              gamp_category: 'Error Loading Results',
+              estimated_execution_time: 0,
+              document_name: 'Unknown',
+              timestamp: new Date().toISOString(),
+              workflow_session_id: 'N/A',
+              requirements_coverage: {},
+              pharmaceutical_compliance: {},
+              test_cases: []
+            });
+            setLogs(prev => [...prev, 'ERROR: Failed to retrieve result data. Download may still be available.']);
           }
 
-        } else if (data.status === 'FAILED') {
+        } else if (normalizedStatus === 'FAILED') {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setStatus('FAILED');
           setLogs(prev => [...prev, `Job failed: ${data.error_message || 'Unknown error'}`]);
@@ -166,14 +307,18 @@ export default function Dashboard() {
     if (!jobId) return;
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
     const url = `${apiUrl}/jobs/${jobId}/download`;
-    
+
     try {
       const token = await getToken();
       const response = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error('Download failed');
-      
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Download failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -184,22 +329,26 @@ export default function Dashboard() {
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(a);
     } catch (e) {
-        console.error("Download error:", e);
-        alert("Failed to download file");
+      console.error("Download error:", e);
+      alert(`Failed to download file: ${e instanceof Error ? e.message : 'Unknown error'}`);
     }
   };
 
   const handleHistoryDownload = async (job: any) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
     const url = `${apiUrl}/jobs/${job.job_id}/download`;
-    
+
     try {
       const token = await getToken();
       const response = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error('Download failed');
-      
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Download failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -210,8 +359,8 @@ export default function Dashboard() {
       window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(a);
     } catch (e) {
-        console.error("Download error:", e);
-        alert("Failed to download file");
+      console.error("Download error:", e);
+      alert(`Failed to download file: ${e instanceof Error ? e.message : 'Unknown error'}`);
     }
   };
 
@@ -221,6 +370,7 @@ export default function Dashboard() {
     setLogs([]);
     setResults(null);
     setSelectedFile(null);
+    setJobStartTime(null); // Reset start time
   };
 
   if (!isLoaded) {
@@ -244,7 +394,7 @@ export default function Dashboard() {
       </Head>
       <Layout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-          
+
           {/* Welcome Section */}
           <div className="flex justify-between items-end">
             <div>
@@ -256,7 +406,7 @@ export default function Dashboard() {
               </p>
             </div>
             {status !== 'IDLE' && (
-              <button 
+              <button
                 onClick={resetDashboard}
                 className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2"
               >
@@ -287,19 +437,19 @@ export default function Dashboard() {
                         <p className="text-slate-400">
                           Selected file: <span className="text-blue-400 font-mono">{selectedFile.name}</span>
                         </p>
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-slate-400 mt-2">
                           {(selectedFile.size / 1024).toFixed(2)} KB
                         </p>
                       </div>
-                      
+
                       <div className="flex gap-4 justify-center">
-                        <button 
+                        <button
                           onClick={() => setSelectedFile(null)}
                           className="px-6 py-3 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
                         >
                           Cancel
                         </button>
-                        <button 
+                        <button
                           onClick={handleGenerate}
                           className="btn-primary flex items-center gap-2"
                         >
@@ -312,20 +462,20 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <FeatureCard 
-                    title="GAMP-5 Compliant" 
+                  <FeatureCard
+                    title="GAMP-5 Compliant"
                     description="Automated categorization and validation logic aligned with ISPE GAMP 5 guidelines."
                     icon="shield"
                   />
-                  <FeatureCard 
-                    title="AI-Powered Analysis" 
+                  <FeatureCard
+                    title="AI-Powered Analysis"
                     description="Advanced LLM processing to extract requirements and generate precise test cases."
                     icon="chip"
                   />
-                  <FeatureCard 
-                    title="Audit Ready" 
+                  <FeatureCard
+                    title="Audit Ready"
                     description="Full ALCOA+ traceability with immutable logs and user attribution."
                     icon="document"
                   />
@@ -335,7 +485,7 @@ export default function Dashboard() {
 
             {(status === 'PENDING' || status === 'PROCESSING') && (
               <div className="animate-fade-in">
-                <JobProgress status={status} logs={logs} />
+                <JobProgress status={status} logs={logs} startTime={jobStartTime} />
               </div>
             )}
 
@@ -353,7 +503,7 @@ export default function Dashboard() {
                 <h3 className="text-xl font-medium text-white mb-2">Generation Failed</h3>
                 <p className="text-slate-400 mb-6">An error occurred while processing your request.</p>
                 <button onClick={resetDashboard} className="btn-primary">Try Again</button>
-                
+
                 <div className="mt-8 max-w-2xl mx-auto text-left">
                   <div className="bg-slate-900/50 rounded-lg p-4 border border-red-500/20 font-mono text-sm text-red-400">
                     {logs[logs.length - 1]}
@@ -362,58 +512,18 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* History Section */}
-            <div className="mt-12 border-t border-slate-800 pt-8">
-              <h2 className="text-2xl font-bold text-white mb-6">Recent Workflows</h2>
-              <div className="bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700">
-                 {jobs.length === 0 ? (
-                   <div className="p-8 text-center text-slate-400">No history available.</div>
-                 ) : (
-                   <table className="w-full text-left text-sm text-slate-400">
-                     <thead className="bg-slate-900/50 text-slate-200 uppercase font-mono text-xs">
-                       <tr>
-                         <th className="px-6 py-4">Job ID</th>
-                         <th className="px-6 py-4">File</th>
-                         <th className="px-6 py-4">Status</th>
-                         <th className="px-6 py-4">Date</th>
-                         <th className="px-6 py-4">Actions</th>
-                       </tr>
-                     </thead>
-                     <tbody className="divide-y divide-slate-700">
-                       {jobs.map(job => (
-                         <tr key={job.job_id} className="hover:bg-slate-700/30 transition-colors">
-                           <td className="px-6 py-4 font-mono text-xs">{job.job_id.substring(0, 8)}...</td>
-                           <td className="px-6 py-4">{job.urs_filename}</td>
-                           <td className="px-6 py-4">
-                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                               job.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' :
-                               job.status === 'FAILED' ? 'bg-red-500/10 text-red-400' :
-                               'bg-blue-500/10 text-blue-400'
-                             }`}>
-                               {job.status}
-                             </span>
-                           </td>
-                           <td className="px-6 py-4">{new Date(job.created_at).toLocaleDateString()} {new Date(job.created_at).toLocaleTimeString()}</td>
-                           <td className="px-6 py-4">
-                             {job.status === 'COMPLETED' && (
-                               <button 
-                                 onClick={() => handleHistoryDownload(job)}
-                                 className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                               >
-                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                 </svg>
-                                 Download
-                               </button>
-                             )}
-                           </td>
-                         </tr>
-                       ))}
-                     </tbody>
-                   </table>
-                 )}
+            {status === 'EXPIRED' && (
+              <div className="text-center py-12 animate-fade-in">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 mb-4">
+                  <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-medium text-white mb-2">Session Expired</h3>
+                <p className="text-slate-400 mb-6">The job session is no longer available (server may have restarted).</p>
+                <button onClick={resetDashboard} className="btn-primary bg-amber-600 hover:bg-amber-700">Start New Job</button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </Layout>
