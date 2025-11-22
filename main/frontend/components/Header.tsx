@@ -1,7 +1,11 @@
 import Link from 'next/link'
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
+import { useModal } from '@/context/ModalContext'
 
 export default function Header() {
+  const { openHowItWorks } = useModal();
+
   return (
     <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,9 +27,19 @@ export default function Header() {
               </div>
             </Link>
           </div>
-          <div className="flex items-center gap-8">
-            <Link href="/dashboard" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-              Dashboard
+          <div className="flex items-center gap-6">
+            <button
+              onClick={openHowItWorks}
+              className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-2"
+            >
+              <QuestionMarkCircleIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">How It Works</span>
+            </button>
+
+            <div className="h-6 w-px bg-slate-700 mx-2"></div>
+
+            <Link href="/generate" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              Generate
             </Link>
             <Link href="/history" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
               History

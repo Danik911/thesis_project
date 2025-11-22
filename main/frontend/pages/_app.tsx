@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import Head from 'next/head'
 import React from 'react'
 import reportAccessibility from '../utils/reportAccessibility'
+import { ModalProvider } from '@/context/ModalContext'
 
 // Initialize axe-core accessibility testing (development only)
 if (process.env.NODE_ENV !== 'production') {
@@ -15,11 +16,13 @@ if (process.env.NODE_ENV !== 'production') {
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <ClerkProvider {...pageProps}>
-      <Head>
-        <title>PharmaGen AI</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-      <Component {...pageProps} />
+      <ModalProvider>
+        <Head>
+          <title>PharmaGen AI</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+        </Head>
+        <Component {...pageProps} />
+      </ModalProvider>
     </ClerkProvider>
   )
 }

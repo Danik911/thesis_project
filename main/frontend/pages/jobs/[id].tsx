@@ -173,7 +173,7 @@ export default function JobDetails() {
 
         fetchTrace();
         return () => controller.abort();
-    }, [job?.trace_id]);
+    }, [job?.trace_id, job]);
 
     const observationCount = traceSummary?.observations?.length ?? 0;
     const formattedCostValue = (() => {
@@ -303,7 +303,7 @@ export default function JobDetails() {
                             <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-sm">
                                 <h2 className="text-slate-400 text-sm font-semibold mb-2">Total Cost</h2>
                                 <p className="text-4xl font-bold text-purple-400">
-                                    {isTraceLoading ? '…' : traceSummary ? `$${formattedCostValue.toFixed(4)}` : traceError ? 'N/A' : '$0.0000' }
+                                    {isTraceLoading ? '…' : traceSummary ? `$${formattedCostValue.toFixed(4)}` : traceError ? 'N/A' : '$0.0000'}
                                 </p>
                                 <p className="text-slate-500 text-xs mt-2">Estimated LLM cost from Langfuse</p>
                             </div>
