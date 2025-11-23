@@ -1,8 +1,13 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { CheckCircleIcon, ClockIcon, CurrencyDollarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import ParallaxHero from '@/components/landing/ParallaxHero';
 import AnimatedSection from '@/components/landing/AnimatedSection';
+import { Canvas } from '@react-three/fiber';
+import { Environment } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import Molecule from '@/components/3d/Molecule';
 
 export default function LandingPage() {
   return (
@@ -18,55 +23,87 @@ export default function LandingPage() {
         {/* Pain Points Section */}
         <div className="bg-slate-900/50 py-16 sm:py-24 relative overflow-hidden">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.indigo.900),transparent)] opacity-20" />
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <AnimatedSection className="mx-auto max-w-2xl lg:text-center">
-              <h2 className="text-base font-semibold leading-7 text-blue-400">The Manual CSV Nightmare</h2>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Why are you still writing tests by hand?
-              </p>
-              <p className="mt-6 text-lg leading-8 text-gray-400">
-                Traditional validation is slow, expensive, and prone to human error. It&apos;s time for Validation 4.0.
-              </p>
-            </AnimatedSection>
 
-            <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-              <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-                <AnimatedSection delay={0.2} className="flex flex-col">
-                  <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-white">
-                    <ClockIcon className="h-5 w-5 flex-none text-red-400" aria-hidden="true" />
-                    Weeks of Delay
-                  </dt>
-                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
-                    <p className="flex-auto">
-                      Manual protocol writing bottlenecks project timelines. A single system can take 2-3 weeks to validate manually.
-                    </p>
-                  </dd>
-                </AnimatedSection>
+          {/* Added Gradient Blobs for consistency */}
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[100px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[100px]" />
 
-                <AnimatedSection delay={0.4} className="flex flex-col">
-                  <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-white">
-                    <CurrencyDollarIcon className="h-5 w-5 flex-none text-red-400" aria-hidden="true" />
-                    High Costs
-                  </dt>
-                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
-                    <p className="flex-auto">
-                      Validation consultants cost $150+/hr. We reduce generation costs to pennies per test suite.
-                    </p>
-                  </dd>
-                </AnimatedSection>
+          {/* 3D Molecules Layer */}
+          <div className="absolute inset-0 z-0">
+            <Canvas camera={{ position: [0, 0, 10], fov: 45 }} gl={{ alpha: true }}>
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} intensity={1.5} />
+              <Environment preset="city" environmentIntensity={0.8} />
 
-                <AnimatedSection delay={0.6} className="flex flex-col">
-                  <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-white">
-                    <ShieldCheckIcon className="h-5 w-5 flex-none text-red-400" aria-hidden="true" />
-                    Compliance Risks
-                  </dt>
-                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
-                    <p className="flex-auto">
-                      Manual scripts often miss requirements or lack traceability, leading to painful audit findings.
-                    </p>
-                  </dd>
-                </AnimatedSection>
-              </dl>
+              {/* Left Molecule */}
+              <Molecule scale={0.5} color="#F87171" position={[-7, 0, 0]} />
+
+              {/* Right Molecule */}
+              <Molecule scale={0.5} color="#60A5FA" position={[7, 2, 0]} />
+
+              {/* Bloom Post-Processing for Ethereal Glow */}
+              <EffectComposer>
+                <Bloom
+                  luminanceThreshold={0}
+                  luminanceSmoothing={0.9}
+                  intensity={2.5}
+                  radius={0.8}
+                />
+              </EffectComposer>
+            </Canvas>
+          </div>
+
+          <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10 pointer-events-none">
+            <div className="pointer-events-auto">
+              <AnimatedSection className="mx-auto max-w-2xl lg:text-center">
+                <h2 className="text-base font-semibold leading-7 text-blue-400">The Manual CSV Nightmare</h2>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  Why are you still writing tests by hand?
+                </p>
+                <p className="mt-6 text-lg leading-8 text-gray-400">
+                  Traditional validation is slow, expensive, and prone to human error. It&apos;s time for Validation 4.0.
+                </p>
+              </AnimatedSection>
+
+              <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+                <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
+                  <AnimatedSection delay={0.2} className="flex flex-col">
+                    <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-white">
+                      <ClockIcon className="h-5 w-5 flex-none text-red-400" aria-hidden="true" />
+                      Weeks of Delay
+                    </dt>
+                    <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
+                      <p className="flex-auto">
+                        Manual protocol writing bottlenecks project timelines. A single system can take 2-3 weeks to validate manually.
+                      </p>
+                    </dd>
+                  </AnimatedSection>
+
+                  <AnimatedSection delay={0.4} className="flex flex-col">
+                    <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-white">
+                      <CurrencyDollarIcon className="h-5 w-5 flex-none text-red-400" aria-hidden="true" />
+                      High Costs
+                    </dt>
+                    <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
+                      <p className="flex-auto">
+                        Validation consultants cost $150+/hr. We reduce generation costs to pennies per test suite.
+                      </p>
+                    </dd>
+                  </AnimatedSection>
+
+                  <AnimatedSection delay={0.6} className="flex flex-col">
+                    <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-white">
+                      <ShieldCheckIcon className="h-5 w-5 flex-none text-red-400" aria-hidden="true" />
+                      Compliance Risks
+                    </dt>
+                    <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-400">
+                      <p className="flex-auto">
+                        Manual scripts often miss requirements or lack traceability, leading to painful audit findings.
+                      </p>
+                    </dd>
+                  </AnimatedSection>
+                </dl>
+              </div>
             </div>
           </div>
         </div>
@@ -141,12 +178,12 @@ export default function LandingPage() {
               Join the Validation 4.0 revolution. Secure, compliant, and efficient.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <a
+              <Link
                 href="/generate"
                 className="rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               >
                 Get Started
-              </a>
+              </Link>
             </div>
           </div>
         </AnimatedSection>

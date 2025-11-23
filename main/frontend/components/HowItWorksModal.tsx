@@ -26,7 +26,18 @@ export default function HowItWorksModal({ isOpen, onClose }: HowItWorksModalProp
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden p-4 sm:p-0">
-            <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
+            <div
+                className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm transition-opacity"
+                onClick={onClose}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        onClose();
+                    }
+                }}
+                aria-label="Close modal"
+            />
 
             <div className="relative transform overflow-hidden rounded-xl bg-slate-900 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-5xl border border-slate-700 z-10">
                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">

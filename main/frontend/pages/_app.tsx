@@ -20,6 +20,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <Head>
           <title>PharmaGen AI</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.png" />
         </Head>
         <Component {...pageProps} />
       </ModalProvider>

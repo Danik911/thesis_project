@@ -3,6 +3,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRef } from 'react';
 import { useModal } from '@/context/ModalContext';
+import { Canvas } from '@react-three/fiber';
+import { Environment } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import Molecule from '../3d/Molecule';
 
 export default function ParallaxHero() {
     const { openHowItWorks } = useModal();
@@ -22,6 +26,35 @@ export default function ParallaxHero() {
             <div className="absolute inset-0 z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse-slow" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse-slow delay-1000" />
+            </div>
+
+            <Image
+                src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2830&q=80&blend=111827&sat=-100&exp=15&blend-mode=multiply"
+                alt=""
+                fill
+                className="absolute inset-0 -z-10 h-full w-full object-cover"
+            />
+
+            {/* 3D Molecules Layer - Single Canvas */}
+            <div className="absolute inset-0 z-0">
+                <Canvas camera={{ position: [0, 0, 10], fov: 45 }} gl={{ alpha: true }}>
+                    <ambientLight intensity={0.5} />
+                    <pointLight position={[10, 10, 10]} intensity={1.5} />
+                    <Environment preset="city" environmentIntensity={0.8} />
+
+                    {/* Single Molecule - Top Left, closer to center */}
+                    <Molecule scale={0.6} color="#60A5FA" position={[-3, 2, 0]} />
+
+                    {/* Bloom Post-Processing for Ethereal Glow */}
+                    <EffectComposer>
+                        <Bloom
+                            luminanceThreshold={0}
+                            luminanceSmoothing={0.9}
+                            intensity={2.5}
+                            radius={0.8}
+                        />
+                    </EffectComposer>
+                </Canvas>
             </div>
 
             <div className="container mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
@@ -78,7 +111,7 @@ export default function ParallaxHero() {
                     className="relative h-[500px] w-full hidden lg:block"
                 >
                     {/* Placeholder for the generated 3D asset - assuming it will be placed in public/images */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-3xl backdrop-blur-sm border border-white/10 flex items-center justify-center overflow-hidden group">
+                    <div className="absolute inset-0 flex items-center justify-center overflow-visible group">
                         {/* We will replace this with the actual image later */}
                         <div className="absolute inset-0 bg-[url('/hero-3d-asset.png')] bg-contain bg-center bg-no-repeat animate-float" />
 
