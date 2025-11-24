@@ -62,9 +62,14 @@ class URSIngestionEvent(Event):
 class GAMPCategorizationEvent(Event):
     """
     Event containing GAMP-5 software categorization results.
-    
+
     Critical for determining validation approach and test rigor level
     according to pharmaceutical regulatory requirements.
+
+    Enhanced with ambiguity detection for Human-in-the-Loop (HIL) integration:
+    - Detects ambiguity across all GAMP category boundaries (1/3, 3/4, 4/5)
+    - Triggers review when confidence < 85% OR ambiguity signals detected
+    - Surfaces alternative categories for human decision-making
     """
     gamp_category: GAMPCategory
     confidence_score: float
@@ -75,6 +80,20 @@ class GAMPCategorizationEvent(Event):
     categorized_by: str
     review_required: bool = Field(default=False)
 
+    # NEW FIELDS (Task 3.12 - Universal Ambiguity Detection):
+    has_ambiguity_signals: bool = Field(
+        default=False,
+        description="True if ANY uncertainty detected (keywords, conflicting indicators, etc.)"
+    )
+    ambiguity_details: str | None = Field(
+        default=None,
+        description="Specific reason for ambiguity (e.g., 'Category 3/4 boundary: configuration unclear')"
+    )
+    alternative_categories: list[int] | None = Field(
+        default=None,
+        description="Other plausible GAMP categories if ambiguous (e.g., [4, 5] for Cat 4/5 boundary)"
+    )
+
     @field_validator("confidence_score")
     @classmethod
     def validate_confidence_score(cls, v: float) -> float:
@@ -84,9 +103,11 @@ class GAMPCategorizationEvent(Event):
         return v
 
     def __init__(self, **data: Any) -> None:
-        """Initialize and set review_required based on confidence."""
+        """Initialize and set review_required based on confidence OR ambiguity detection."""
         super().__init__(**data)
-        if self.confidence_score < 0.7:
+        # Raised threshold from 0.7 to 0.85 (Task 3.12)
+        # Trigger review if EITHER confidence low OR ambiguity detected
+        if self.confidence_score < 0.85 or self.has_ambiguity_signals:
             self.review_required = True
 
 

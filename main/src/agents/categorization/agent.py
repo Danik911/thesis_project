@@ -70,13 +70,17 @@ from langfuse import observe
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 
 from src.agents.categorization.error_handler import (
     CategorizationError,
     CategorizationErrorHandler,
     ErrorSeverity,
     ErrorType,
+)
+from src.agents.categorization.models import (
+    GAMPCategorizationResult,
+    enforce_universal_ambiguity_guards,
 )
 from src.agents.parallel.context_provider import (
     ContextProviderRequest,
@@ -87,31 +91,6 @@ from src.core.events import AgentRequestEvent, GAMPCategorizationEvent, GAMPCate
 from src.monitoring.phoenix_config import instrument_tool
 
 
-class GAMPCategorizationResult(BaseModel):
-    """Pydantic model for structured GAMP categorization output."""
-
-    category: int = Field(
-        ...,
-        ge=1,
-        le=5,
-        description="GAMP category number (must be 1, 3, 4, or 5)"
-    )
-    confidence_score: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Confidence score between 0.0 and 1.0"
-    )
-    reasoning: str = Field(
-        ...,
-        min_length=10,
-        description="Brief justification for the categorization decision"
-    )
-
-    def validate_category(self) -> None:
-        """Validate that category is a valid GAMP category (1, 3, 4, or 5)."""
-        if self.category not in [1, 3, 4, 5]:
-            raise ValueError(f"Invalid GAMP category: {self.category}. Must be 1, 3, 4, or 5.")
 
 
 def parse_structured_response(response_text: str, output_cls=GAMPCategorizationResult) -> GAMPCategorizationResult:
@@ -201,12 +180,71 @@ def parse_structured_response(response_text: str, output_cls=GAMPCategorizationR
                 reasoning = match.group(1).strip()
                 break
 
+        # Extract has_ambiguity_signals (NEW - Task 3.12)
+        ambiguity_signals_patterns = [
+            r'"?has_ambiguity_signals"?\s*:\s*(true|false)',
+            r"has_ambiguity_signals\s*:\s*(true|false)",
+        ]
+
+        has_ambiguity = False  # default
+        for pattern in ambiguity_signals_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE)
+            if match:
+                has_ambiguity = match.group(1).lower() == "true"
+                break
+
+        # Extract ambiguity_details (NEW - Task 3.12)
+        ambiguity_details_patterns = [
+            r'"?ambiguity_details"?\s*:\s*"([^"]+)"',
+            r"ambiguity_details\s*:\s*(.+?)(?:\n|,|$)",
+        ]
+
+        ambiguity_details = None  # default
+        for pattern in ambiguity_details_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                ambiguity_details = match.group(1).strip()
+                break
+
+        # Extract requires_human_review (NEW - Task 3.12)
+        requires_review_patterns = [
+            r'"?requires_human_review"?\s*:\s*(true|false)',
+            r"requires_human_review\s*:\s*(true|false)",
+        ]
+
+        requires_human_review = False  # default
+        for pattern in requires_review_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE)
+            if match:
+                requires_human_review = match.group(1).lower() == "true"
+                break
+
+        # Extract alternative_categories (NEW - Task 3.12)
+        alternative_categories_patterns = [
+            r'"?alternative_categories"?\s*:\s*\[([^\]]+)\]',
+        ]
+
+        alternative_categories = None  # default
+        for pattern in alternative_categories_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE)
+            if match:
+                categories_str = match.group(1)
+                try:
+                    alternative_categories = [int(x.strip()) for x in categories_str.split(",") if x.strip().isdigit()]
+                except:
+                    pass
+                break
+
         # If we have all required fields, create the result
         if category is not None and confidence is not None and reasoning:
             return output_cls(
                 category=category,
                 confidence_score=confidence,
-                reasoning=reasoning
+                reasoning=reasoning,
+                has_ambiguity_signals=has_ambiguity,  # NEW
+                ambiguity_details=ambiguity_details,  # NEW
+                requires_human_review=requires_human_review,  # NEW
+                alternative_categories=alternative_categories  # NEW
             )
     except Exception:
         # Continue to error reporting
@@ -1102,6 +1140,30 @@ def create_categorization_event(
     predicted_category = GAMPCategory(categorization_result["predicted_category"])
     evidence = categorization_result["evidence"]
 
+    exclusion_count = evidence.get("exclusion_count", 0)
+    exclusion_factors = evidence.get("exclusion_factors", [])
+    low_confidence = confidence_score < 0.85
+
+    has_ambiguity_signals = exclusion_count > 0 or low_confidence
+    ambiguity_reasons: list[str] = []
+    if exclusion_count > 0 and exclusion_factors:
+        ambiguity_reasons.append(
+            "Exclusion factors present: " + ", ".join(exclusion_factors[:3])
+        )
+    if low_confidence:
+        ambiguity_reasons.append(
+            f"Confidence {confidence_score:.2f} below 0.85 threshold"
+        )
+
+    category_scores = evidence.get("category_scores", {})
+    alternative_categories = None
+    if category_scores:
+        sorted_scores = sorted(
+            category_scores.items(), key=lambda item: item[1], reverse=True
+        )
+        alt = [cat for cat, _ in sorted_scores[1:] if _ > 0]
+        alternative_categories = alt if alt else None
+
     # Generate comprehensive justification
     justification_parts = [
         f"GAMP-5 Categorization Analysis for '{document_name}'",
@@ -1124,12 +1186,14 @@ def create_categorization_event(
     justification_parts.append("")
     justification_parts.append(f"DECISION RATIONALE: {categorization_result['decision_rationale']}")
 
-    requires_review = confidence_score < 0.85
+    requires_review = has_ambiguity_signals
     if requires_review:
+        warning_reason = "; ".join(ambiguity_reasons) if ambiguity_reasons else "Confidence below threshold (85%)"
         justification_parts.extend([
             "",
             "[WARNING] HUMAN REVIEW REQUIRED",
-            "Confidence below threshold (85%) - Expert review needed for regulatory compliance"
+            f"Reason: {warning_reason}",
+            "Expert review required to maintain conservative compliance posture"
         ])
 
     # Build risk assessment
@@ -1141,7 +1205,9 @@ def create_categorization_event(
         "evidence_strength": _assess_evidence_strength(evidence),
         "requires_human_review": requires_review,
         "regulatory_impact": _assess_regulatory_impact(predicted_category),
-        "validation_effort": _estimate_validation_effort(predicted_category)
+        "validation_effort": _estimate_validation_effort(predicted_category),
+        "ambiguity_details": "; ".join(ambiguity_reasons) if ambiguity_reasons else None,
+        "has_ambiguity_signals": has_ambiguity_signals
     }
 
     return GAMPCategorizationEvent(
@@ -1152,7 +1218,10 @@ def create_categorization_event(
         event_id=uuid4(),
         timestamp=datetime.now(UTC),
         categorized_by=categorized_by,
-        review_required=requires_review
+        review_required=requires_review,
+        has_ambiguity_signals=has_ambiguity_signals,
+        ambiguity_details="; ".join(ambiguity_reasons) if ambiguity_reasons else None,
+        alternative_categories=alternative_categories
     )
 
 
@@ -1248,7 +1317,7 @@ def categorize_with_pydantic_structured_output(
     # Initialize comprehensive audit trail logging
     from datetime import UTC, datetime
 
-    from src.core.audit_trail import get_audit_trail
+    from src.core.audit_trail import AuditEventType, get_audit_trail
 
     audit_trail = get_audit_trail()
     start_time = datetime.now(UTC)
@@ -1256,7 +1325,7 @@ def categorize_with_pydantic_structured_output(
 
     # Log agent decision initiation
     audit_trail.log_system_event(
-        event_type="AGENT_DECISION",
+        event_type=AuditEventType.AGENT_DECISION,
         event_data={
             "agent_type": "gamp_categorization",
             "agent_id": agent_id,
@@ -1273,41 +1342,100 @@ def categorize_with_pydantic_structured_output(
     )
 
     try:
-        # Enhanced prompt with Chain-of-Thought reasoning and JSON examples
-        categorization_prompt = f"""You are a GAMP-5 categorization expert. Use step-by-step reasoning to analyze the URS document.
+        # Enhanced prompt with Chain-of-Thought reasoning and Universal Ambiguity Detection (Task 3.12)
+        categorization_prompt = f"""You are a GAMP-5 categorization expert with pharmaceutical regulatory compliance expertise.
 
-Categories:
-1: Infrastructure (OS, databases, middleware)
-3: Non-configured COTS (used as supplied)  
-4: Configured products (user parameters)
-5: Custom applications (bespoke development)
+##GAMP-5 Categories
 
-Chain-of-Thought Reasoning Process:
-1. Identify software type: [infrastructure/commercial/custom]
-2. Check customization level: [none/configuration/development]  
-3. Evaluate GAMP indicators: [list key findings]
-4. Determine category: [1/3/4/5]
-5. Calculate confidence: [0.0-1.0]
+**Category 1**: Operating systems, firmware, infrastructure software (NOT directly affecting product quality)
+**Category 3**: Non-configured commercial off-the-shelf (COTS) software used as supplied
+**Category 4**: Configured COTS software with user-defined parameters (NO source code changes)
+**Category 5**: Custom-developed software with bespoke code and proprietary algorithms
 
-Examples with Chain-of-Thought:
+## CRITICAL: Universal Ambiguity Detection Rules
 
-Input: "Requirements for Windows Server 2019 operating system installation with Oracle Database 19c for laboratory network infrastructure"
-Chain-of-Thought: 1) Software type: infrastructure (OS, database), 2) Customization: none (standard installation), 3) GAMP indicators: foundational platform services, no business logic, 4) Category: 1, 5) Confidence: 0.85 (clear infrastructure pattern)
-Output: {{"category": 1, "confidence_score": 0.85, "reasoning": "Infrastructure software - Windows Server OS and Oracle Database are Category 1 components providing foundational platform services"}}
+Before assigning a category, ANALYZE for ambiguity signals across ALL category boundaries:
 
-Input: "Commercial LIMS package to be used as supplied by vendor without modifications or custom configuration"  
-Chain-of-Thought: 1) Software type: commercial COTS, 2) Customization: none (as supplied), 3) GAMP indicators: vendor-supplied without modification, standard functionality, 4) Category: 3, 5) Confidence: 0.90 (explicit 'as supplied' statement)
-Output: {{"category": 3, "confidence_score": 0.90, "reasoning": "Non-configured product - COTS LIMS used as supplied without modifications indicates Category 3"}}
+### Category 1 vs 3 Ambiguity
+- Does the URS describe infrastructure (OS, database) OR application software?
+- Is it directly affecting product quality? (Yes → Cat 3+, No → Cat 1)
+- **IF UNCLEAR** → set `requires_human_review = true`
 
-Input: "Configure commercial ERP system workflows, user roles, and business process parameters for pharmaceutical manufacturing"
-Chain-of-Thought: 1) Software type: commercial product, 2) Customization: configuration (workflows, parameters), 3) GAMP indicators: business process setup, user-defined parameters, 4) Category: 4, 5) Confidence: 0.80 (clear configuration requirements)  
-Output: {{"category": 4, "confidence_score": 0.80, "reasoning": "Configured product - commercial ERP requiring workflow configuration and business rule setup indicates Category 4"}}
+### Category 3 vs 4 Ambiguity
+- Is software used "as-is" (Cat 3) OR does it require configuration/parameterization (Cat 4)?
+- Does URS mention: "configured workflows", "customizable settings", "parameter adjustments"?
+- **IF BOTH POSSIBLE** → set `requires_human_review = true`
 
-Input: "Custom-developed laboratory data management system with proprietary algorithms for analytical data processing and bespoke reporting modules"
-Chain-of-Thought: 1) Software type: custom development, 2) Customization: full development (proprietary code), 3) GAMP indicators: bespoke solution, proprietary algorithms, custom modules, 4) Category: 5, 5) Confidence: 0.95 (multiple strong custom indicators)
-Output: {{"category": 5, "confidence_score": 0.95, "reasoning": "Custom application - bespoke development with proprietary algorithms and custom modules clearly indicates Category 5"}}
+### Category 4 vs 5 Ambiguity
+- Configuration only (XML, INI, GUI settings) → Category 4
+- Custom source code (Python, Java, C#) → Category 5
+- BOTH (hybrid: configured platform + custom modules) → **AMBIGUOUS** → set `requires_human_review = true`
+- Keywords: "optional custom modules", "extensible", "plugin architecture", "API customization"
+- **IF UNSURE** → set `requires_human_review = true`
 
-Now use Chain-of-Thought reasoning to analyze this URS content and respond with ONLY the JSON object:
+### General Ambiguity Signals
+
+**Mandatory HIL triggers** (set `requires_human_review = true` if ANY detected):
+- ❌ Keywords: "optional", "customizable", "hybrid", "ambiguous", "unclear", "may include"
+- ❌ Conflicting indicators (e.g., "standard package with custom algorithms")
+- ❌ Vague/incomplete URS (missing critical details)
+- ❌ Multiple valid interpretations possible
+- ❌ Confidence score < 85%
+
+## Conservative Stance
+
+**Default Assumption**: When uncertain → `requires_human_review = true`
+
+You must **explicitly justify** why it's NOT ambiguous to set `requires_human_review = false`.
+
+## Response Format (JSON - 7 fields required)
+
+{{
+    "category": 4,
+    "confidence_score": 0.75,
+    "reasoning": "System involves configuration BUT 'optional custom modules' suggests potential Category 5",
+    "has_ambiguity_signals": true,
+    "ambiguity_details": "Category 4/5 boundary: 'optional custom modules' indicates potential custom development",
+    "requires_human_review": true,
+    "alternative_categories": [5]
+}}
+
+## Chain-of-Thought Examples
+
+**Example 1: Clear Category 4 (No Ambiguity)**
+Input: "Commercial LIMS configured via XML files. No source code modifications. No custom development."
+Chain-of-Thought: 1) Commercial product, 2) Configuration only (XML), 3) Explicit 'no custom development', 4) Category 4, 5) Confidence 0.90
+Output: {{"category": 4, "confidence_score": 0.90, "reasoning": "Configured COTS with XML parameterization, no custom code", "has_ambiguity_signals": false, "ambiguity_details": null, "requires_human_review": false, "alternative_categories": null}}
+
+**Example 2: Category 4/5 Ambiguity (REQUIRES HIL)**
+Input: "Personalized Medicine Orchestration Platform with configured workflows and optional custom algorithm modules"
+Chain-of-Thought: 1) Platform product, 2) Configured workflows (Cat 4 indicator), 3) "Optional custom modules" (Cat 5 indicator), 4) Category 4/5 boundary detected, 5) Confidence 0.75
+Output: {{"category": 4, "confidence_score": 0.75, "reasoning": "Configured platform BUT 'optional custom modules' suggests potential Cat 5 characteristics", "has_ambiguity_signals": true, "ambiguity_details": "Category 4/5 boundary: 'optional custom modules' indicates potential custom development", "requires_human_review": true, "alternative_categories": [5]}}
+
+**Example 3: Category 3/4 Ambiguity**
+Input: "Microsoft Excel for data analysis. May require custom macros for specific workflows."
+Chain-of-Thought: 1) COTS product, 2) "May require" suggests uncertainty, 3) Custom macros could be Cat 4 (if using built-in VBA) or Cat 5 (if proprietary code), 4) Category 3/4 boundary, 5) Confidence 0.65
+Output: {{"category": 3, "confidence_score": 0.65, "reasoning": "Excel COTS but 'may require custom macros' creates Cat 3/4/5 ambiguity", "has_ambiguity_signals": true, "ambiguity_details": "Category 3/4 boundary: uncertain if macros are simple configuration or custom development", "requires_human_review": true, "alternative_categories": [4, 5]}}
+
+**Example 4: Clear Category 5 (No Ambiguity)**
+Input: "Custom-developed laboratory data management system with proprietary algorithms for analytical data processing"
+Chain-of-Thought: 1) Custom development explicit, 2) Proprietary algorithms (Cat 5 indicator), 3) Bespoke system, 4) Category 5, 5) Confidence 0.95
+Output: {{"category": 5, "confidence_score": 0.95, "reasoning": "Bespoke development with proprietary algorithms clearly Category 5", "has_ambiguity_signals": false, "ambiguity_details": null, "requires_human_review": false, "alternative_categories": null}}
+
+**Example 5: Vague URS (REQUIRES HIL)**
+Input: "Software system for clinical trial management. Details to be determined."
+Chain-of-Thought: 1) Clinical trial management (application), 2) "Details TBD" means missing critical info, 3) Cannot determine category reliably, 4) Multiple possibilities (3/4/5), 5) Confidence 0.50
+Output: {{"category": 4, "confidence_score": 0.50, "reasoning": "Insufficient detail - could be COTS (3), configured (4), or custom (5)", "has_ambiguity_signals": true, "ambiguity_details": "Vague/incomplete URS: missing critical categorization details", "requires_human_review": true, "alternative_categories": [3, 5]}}
+
+## Mandatory Rules
+
+1. **IF** confidence < 85% → `requires_human_review = true`
+2. **IF** any ambiguity keyword detected → `requires_human_review = true`
+3. **IF** multiple category interpretations valid → `requires_human_review = true`
+4. **IF** URS missing critical details → `requires_human_review = true`
+5. **NEVER** set `requires_human_review = false` without explicit justification
+
+Now analyze this URS and respond with ONLY the JSON object (all 7 fields):
 
 {urs_content}"""
 
@@ -1325,6 +1453,7 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
 
         # Validate the result
         result.validate_category()
+        result = enforce_universal_ambiguity_guards(result, urs_content)
 
         # Calculate processing time
         end_time = datetime.now(UTC)
@@ -1374,19 +1503,20 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
             }
         )
 
-        # Check confidence threshold
+        # Confidence below threshold forces HIL but no longer short-circuits the response
         if result.confidence_score < error_handler.confidence_threshold:
-            error = CategorizationError(
-                error_type=ErrorType.CONFIDENCE_ERROR,
-                severity=ErrorSeverity.MEDIUM,
-                message=f"Confidence {result.confidence_score:.2f} below threshold {error_handler.confidence_threshold}",
-                details={
-                    "confidence": result.confidence_score,
-                    "threshold": error_handler.confidence_threshold,
-                    "category": result.category
-                }
+            error_handler.logger.warning(
+                f"Confidence {result.confidence_score:.2f} below {error_handler.confidence_threshold:.2f} for {document_name}; flagging for human review"
             )
-            return error_handler._create_human_consultation_request(error, document_name)
+            result.requires_human_review = True
+            result.has_ambiguity_signals = True
+            low_confidence_detail = (
+                f"Confidence {result.confidence_score:.2f} below 0.85 threshold"
+            )
+            if result.ambiguity_details:
+                result.ambiguity_details = f"{result.ambiguity_details}; {low_confidence_detail}"
+            else:
+                result.ambiguity_details = low_confidence_detail
 
         # Create successful categorization event
         gamp_category = GAMPCategory(result.category)
@@ -1407,12 +1537,20 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
             f"VALIDATION APPROACH: {_get_validation_approach(gamp_category)}"
         ]
 
-        requires_review = result.confidence_score < 0.85
+        requires_review = (
+            result.requires_human_review
+            or result.confidence_score < 0.85
+            or result.has_ambiguity_signals
+            or bool(result.ambiguity_details)
+            or bool(result.alternative_categories)
+        )
         if requires_review:
+            review_reason = result.ambiguity_details or "Confidence below threshold (85%)"
             justification_parts.extend([
                 "",
                 "[WARNING] HUMAN REVIEW REQUIRED",
-                "Confidence below threshold (85%) - Expert review needed for regulatory compliance"
+                f"Reason: {review_reason}",
+                "Expert review required to maintain conservative compliance posture"
             ])
 
         # Build comprehensive risk assessment
@@ -1425,7 +1563,9 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
             "requires_human_review": requires_review,
             "regulatory_impact": _assess_regulatory_impact(gamp_category),
             "validation_effort": _estimate_validation_effort(gamp_category),
-            "analysis_method": "LLMTextCompletionProgram with Pydantic validation"
+            "analysis_method": "LLMTextCompletionProgram with Pydantic validation",
+            "ambiguity_details": result.ambiguity_details,
+            "has_ambiguity_signals": result.has_ambiguity_signals
         }
 
         # Log output to Langfuse
@@ -1444,7 +1584,11 @@ Now use Chain-of-Thought reasoning to analyze this URS content and respond with 
             event_id=uuid4(),
             timestamp=datetime.now(UTC),
             categorized_by="GAMPCategorizationAgent-Structured",
-            review_required=requires_review
+            review_required=requires_review,
+            # NEW FIELDS (Task 3.12):
+            has_ambiguity_signals=result.has_ambiguity_signals,
+            ambiguity_details=result.ambiguity_details,
+            alternative_categories=result.alternative_categories
         )
 
     except Exception as e:
@@ -1706,7 +1850,7 @@ def categorize_urs_document(
     document_name: str = "Unknown",
     llm: LLM = None,
     use_structured_output: bool = True,
-    confidence_threshold: float = 0.40,
+    confidence_threshold: float = 0.85,
     verbose: bool = False
 ) -> GAMPCategorizationEvent:
     """

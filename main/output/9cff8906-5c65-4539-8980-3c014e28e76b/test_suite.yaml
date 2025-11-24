@@ -1,0 +1,1607 @@
+suite_id: OQ-SUITE-1158
+gamp_category: 4
+document_name: 9cff8906-5c65-4539-8980-3c014e28e76b.md
+test_cases:
+- test_id: OQ-001
+  test_name: Verify Method Version Locking During Schedule Creation
+  test_category: functional
+  gamp_category: 4
+  objective: To verify that the system correctly enforces method-version locking when
+    scheduling chromatography runs.
+  prerequisites:
+  - System is fully operational and accessible.
+  - At least two versions of a chromatography method (e.g., Method_A_v1.0 and Method_A_v1.1)
+    are configured.
+  - User has 'Schedule Creator' role permissions.
+  test_steps:
+  - step_number: 1
+    action: Log in as a user with schedule creation privileges.
+    expected_result: User successfully logs into the Chromatography Sample Scheduling
+      Module.
+    data_to_capture:
+    - Login timestamp
+    - User ID
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Create a new sample run schedule and attempt to select the older version
+      (v1.0) of Method_A.
+    expected_result: The system accepts the selection of Method_A_v1.0 and locks this
+      version for all samples within the schedule.
+    data_to_capture:
+    - Schedule ID
+    - Selected Method Version
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Attempt to modify the schedule to use the newer version (v1.1) of Method_A.
+    expected_result: The system prevents modification to the method version once the
+      schedule is saved or submitted for approval, confirming version lock.
+    data_to_capture:
+    - Attempted modification details
+    - System response message
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The system successfully locks the initially selected method version (URS-018-002).
+  - Subsequent attempts to change the method version on the saved schedule are blocked
+    or require a new schedule creation.
+  regulatory_basis:
+  - URS-018-002
+  risk_level: medium
+  data_integrity_requirements:
+  - Audit trail must record the initial method version selection and any subsequent
+    failed attempts to change it (URS-018-006, URS-018-014).
+  urs_requirements:
+  - URS-018-002
+  related_tests:
+  - OQ-002
+  estimated_duration_minutes: 25
+  required_expertise:
+  - QC Analyst
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-002
+  test_name: Verify Pause/Resume and Failure Re-queue with Reason Capture
+  test_category: functional
+  gamp_category: 4
+  objective: To confirm the system's ability to pause, resume, and re-queue failed
+    runs while capturing mandatory reason codes.
+  prerequisites:
+  - System is operational and integrated with an instrument simulator or actual instrument.
+  - A test schedule containing at least three runs is loaded.
+  - User has execution privileges.
+  test_steps:
+  - step_number: 1
+    action: Start execution of the test schedule.
+    expected_result: The first sample run begins processing on the assigned instrument.
+    data_to_capture:
+    - Start time of Run 1
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Manually pause the schedule execution while Run 1 is in progress.
+    expected_result: The system pauses the current run and prevents the next run from
+      starting. Pause action is recorded in the audit trail.
+    data_to_capture:
+    - Pause timestamp
+    - Audit trail entry for pause
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Resume the schedule execution.
+    expected_result: Run 1 continues execution from where it was paused (URS-018-005).
+    data_to_capture:
+    - Resume timestamp
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Force Run 2 to fail (e.g., by simulating an instrument error or invalid
+      sample input).
+    expected_result: Run 2 stops, and the system prompts the user to select a disposition
+      (e.g., Cancel, Re-queue, Skip).
+    data_to_capture:
+    - Failure event details
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Select 'Re-queue' for Run 2 and enter a mandatory reason code (e.g., 'Instrument
+      communication lost').
+    expected_result: Run 2 is moved back to the pending queue, and the reason code
+      is permanently associated with the failed attempt in the audit trail.
+    data_to_capture:
+    - Re-queue timestamp
+    - Captured reason code
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The system successfully pauses and resumes schedule execution (URS-018-005).
+  - Failed runs can be re-queued, and the system enforces the capture of a reason
+    code before re-queuing (URS-018-005).
+  - All actions (Pause, Resume, Re-queue, Reason Capture) are logged in the audit
+    trail (URS-018-006).
+  regulatory_basis:
+  - URS-018-005
+  - URS-018-006
+  - URS-018-014
+  risk_level: medium
+  data_integrity_requirements:
+  - The reason for re-queuing must be immutable and linked to the specific failed
+    run instance.
+  urs_requirements:
+  - URS-018-005
+  - URS-018-006
+  related_tests:
+  - OQ-001
+  estimated_duration_minutes: 40
+  required_expertise:
+  - QC Analyst
+  - Validation Engineer
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-003
+  test_name: Verify Schedule Priority and Instrument Routing Based on Availability
+  test_category: functional
+  gamp_category: 4
+  objective: To verify that the system correctly schedules runs based on defined priority
+    levels and enforces routing rules based on instrument availability.
+  prerequisites:
+  - System is fully configured and operational.
+  - At least three instruments (A, B, C) are configured and their availability status
+    is accessible by the system.
+  - A test method (Method X, Version 1.0) is available.
+  - User has 'Schedule Creator' role permissions.
+  test_steps:
+  - step_number: 1
+    action: Create a new sample run schedule containing 5 samples requiring Method
+      X.
+    expected_result: Schedule creation interface opens successfully.
+    data_to_capture:
+    - Schedule ID
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Assign Sample 1 and 2 a HIGH priority, Sample 3 and 4 a MEDIUM priority,
+      and Sample 5 a LOW priority.
+    expected_result: Priorities are accepted and saved to the schedule entry.
+    data_to_capture:
+    - Assigned Priorities
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: 'Configure routing rules: Instrument A is available, Instrument B is marked
+      as ''Down for Maintenance'', Instrument C is available but busy processing a
+      long run.'
+    expected_result: System accepts the configured availability rules.
+    data_to_capture:
+    - Instrument Status Configuration
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Submit the schedule for execution, ensuring the system attempts to route
+      based on availability and priority.
+    expected_result: HIGH priority samples (1 & 2) are routed to Instrument A. MEDIUM
+      priority samples (3 & 4) are routed to Instrument C (as A is full/busy, and
+      B is down). LOW priority sample (5) remains unscheduled or routed to the next
+      available slot.
+    data_to_capture:
+    - Final Schedule Routing Assignments
+    - Instrument Queue Status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The system successfully routes samples according to the defined priority order.
+  - Samples are only routed to instruments reported as available (Instrument B is
+    bypassed).
+  - The scheduling logic respects instrument load/availability when assigning runs.
+  regulatory_basis:
+  - URS-018-001
+  - URS-018-004
+  risk_level: medium
+  data_integrity_requirements:
+  - Schedule routing decisions must be logged in the audit trail.
+  urs_requirements:
+  - Users shall create sample run schedules with priority, instrument, and method
+    selections.
+  - Users shall route samples to instruments based on configured availability rules.
+  related_tests:
+  - OQ-001
+  estimated_duration_minutes: 45
+  required_expertise:
+  - QC Analyst
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-004
+  test_name: Verify Audit Trail Capture for Schedule Modification and Part 11 Compliance
+  test_category: data_integrity
+  gamp_category: 4
+  objective: To verify that all modifications to a schedule entry are securely recorded
+    in the audit trail, meeting 21 CFR Part 11 requirements for time-stamping and
+    traceability.
+  prerequisites:
+  - System is configured for Part 11 compliance (electronic signatures enabled).
+  - 'A test schedule (Schedule ID: TS-001) containing at least one pending run exists.'
+  - User A (Analyst) and User B (Supervisor) accounts are active.
+  test_steps:
+  - step_number: 1
+    action: User A modifies the method associated with Run ID R-101 within TS-001
+      from Method X (V1.0) to Method Y (V1.0).
+    expected_result: System prompts User A for electronic signature to confirm the
+      change.
+    data_to_capture:
+    - User A Signature Confirmation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: User A submits the change and verifies the audit trail entry for Run ID
+      R-101.
+    expected_result: 'A secure, time-stamped audit trail entry is generated showing:
+      User A, Date/Time, Field Changed (Method), Old Value (V1.0), New Value (V1.0),
+      and Reason for Change.'
+    data_to_capture:
+    - Audit Trail Entry Details for Method Change
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: User B (Supervisor) accesses the schedule and changes the required approval
+      status for Run ID R-102 from 'Pending' to 'Approved'.
+    expected_result: System prompts User B for electronic signature to confirm the
+      approval status change.
+    data_to_capture:
+    - User B Signature Confirmation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: User B submits the change and verifies the audit trail entry for Run ID
+      R-102.
+    expected_result: 'A secure, time-stamped audit trail entry is generated showing:
+      User B, Date/Time, Field Changed (Approval Status), Old Value (Pending), New
+      Value (Approved), and Reason for Change.'
+    data_to_capture:
+    - Audit Trail Entry Details for Approval Change
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - All modifications (method change, status change) trigger an electronic signature
+    prompt.
+  - The audit trail captures the identity of the actor, the time of the action, the
+    specific field modified, and the old/new values.
+  - Audit trail entries are immutable and secure.
+  regulatory_basis:
+  - URS-018-006
+  - URS-018-013
+  - URS-018-014
+  risk_level: high
+  data_integrity_requirements:
+  - Audit trail data must be retained and retrievable per regulatory requirements.
+  urs_requirements:
+  - Audit trail entries shall be generated for all changes to schedule entries.
+  - Electronic records shall comply with 21 CFR Part 11 including electronic signatures.
+  related_tests:
+  - OQ-002
+  estimated_duration_minutes: 60
+  required_expertise:
+  - QA/Compliance Officer
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-005
+  test_name: Verify Role-Based Access Control for Schedule Management
+  test_category: security
+  gamp_category: 4
+  objective: To verify that role-based access controls correctly restrict schedule
+    creation, approval, and execution based on user roles.
+  prerequisites:
+  - System is fully installed and configured.
+  - User accounts configured for Analyst (Schedule Creator), Supervisor (Approver),
+    and Operator (Executor) roles.
+  - GMP run configuration is established requiring approval.
+  test_steps:
+  - step_number: 1
+    action: Log in as a user assigned only the 'Analyst' role and attempt to create
+      and submit a new GMP sample schedule.
+    expected_result: The schedule is created successfully and submitted for approval,
+      but execution is blocked.
+    data_to_capture:
+    - Screenshot of schedule submission confirmation
+    - User role verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Log in as a user assigned only the 'Supervisor' role and attempt to execute
+      a pending schedule without prior approval.
+    expected_result: Execution attempt is blocked, and an 'Unauthorized Action' or
+      'Pending Approval' message is displayed.
+    data_to_capture:
+    - Error message displayed upon execution attempt
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log in as the 'Supervisor' and approve the schedule created in Step 1.
+    expected_result: The schedule status changes to 'Approved'. Audit trail records
+      the approval action.
+    data_to_capture:
+    - Audit trail entry for approval
+    - Schedule status change
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Log in as the 'Operator' and attempt to execute the now-approved schedule.
+    expected_result: The schedule execution initiates successfully, routing samples
+      according to the schedule.
+    data_to_capture:
+    - Confirmation of run initiation
+    - Audit trail entry for execution start
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Only users with the appropriate roles can perform creation, approval, and execution
+    actions.
+  - Unauthorized actions result in clear system rejection messages.
+  regulatory_basis:
+  - URS-018-008
+  - URS-018-016
+  risk_level: medium
+  data_integrity_requirements:
+  - All role changes and access attempts must be logged in the audit trail.
+  urs_requirements:
+  - URS-018-008
+  - URS-018-010
+  related_tests:
+  - OQ-004
+  estimated_duration_minutes: 45
+  required_expertise:
+  - System Administrator
+  - QC Analyst
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-006
+  test_name: Verify Hold Rules Triggered by External System Excursion
+  test_category: functional
+  gamp_category: 4
+  objective: To verify that the scheduling module correctly pauses or holds scheduled
+    runs when an integrated stability chamber reports an excursion event.
+  prerequisites:
+  - System is integrated with a simulated or actual stability chamber monitoring system.
+  - A schedule containing samples designated for the monitored chamber is active or
+    queued.
+  - Hold rules are configured to trigger based on stability excursion alerts.
+  test_steps:
+  - step_number: 1
+    action: Verify the status of the active schedule, ensuring runs designated for
+      the stability chamber are ready or running.
+    expected_result: Schedule status is 'Active' or 'Queued'.
+    data_to_capture:
+    - Initial schedule status snapshot
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Simulate or trigger an excursion event (e.g., temperature out-of-range)
+      from the integrated stability chamber system.
+    expected_result: The system receives the excursion alert via integration.
+    data_to_capture:
+    - Log entry confirming receipt of the excursion signal
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Monitor the scheduling module interface for changes to the affected sample
+      runs.
+    expected_result: All runs associated with the affected stability chamber are immediately
+      transitioned to a 'Hold' status, and URS-018-007 alerts are generated for relevant
+      personnel.
+    data_to_capture:
+    - Screenshot of schedule showing 'Hold' status
+    - Alert notification details
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Resolve the simulated excursion event in the stability chamber system.
+    expected_result: The system automatically reverts the affected runs from 'Hold'
+      back to 'Ready to Run' or 'Queued', based on configuration.
+    data_to_capture:
+    - Final schedule status after resolution
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The system successfully pauses/holds relevant runs upon receiving an excursion
+    signal.
+  - The system resumes scheduling automatically or prompts for manual resumption after
+    the excursion is cleared.
+  regulatory_basis:
+  - URS-018-009
+  risk_level: high
+  data_integrity_requirements:
+  - The transition to and from the 'Hold' state must be recorded in the audit trail,
+    including the reason (excursion event).
+  urs_requirements:
+  - URS-018-004
+  - URS-018-007
+  - URS-018-009
+  related_tests:
+  - OQ-003
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Integration Specialist
+  - QC Lab Operations
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-007
+  test_name: Verify Report Generation and Template Control
+  test_category: functional
+  gamp_category: 4
+  objective: To verify the system correctly generates compliance-ready batch reports
+    using controlled templates and meets performance criteria.
+  prerequisites:
+  - System is configured with at least two controlled report templates.
+  - A batch of 200 injections is scheduled and successfully executed.
+  - User has permissions to generate reports.
+  test_steps:
+  - step_number: 1
+    action: Execute the standard batch report generation function for the completed
+      200-injection batch.
+    expected_result: The system initiates report generation within the expected timeframe.
+    data_to_capture:
+    - Start time of report generation request.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Measure the time taken for the report generation process to complete.
+    expected_result: The standard batch report is generated and finalized in less
+      than 10 seconds (URS-018-019).
+    data_to_capture:
+    - End time of report generation.
+    - Report generation duration.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify that the generated report utilizes the currently controlled report
+      template version.
+    expected_result: The generated report structure and content match the approved,
+      controlled template artifact (URS-018-003, URS-018-015).
+    data_to_capture:
+    - Report template version identifier.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify the report is successfully pushed to the controlled document repository.
+    expected_result: The finalized report is accessible and stored in the designated
+      repository (URS-018-026).
+    data_to_capture:
+    - Repository confirmation ID/path.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Report generation completes within 10 seconds for 200 injections.
+  - The generated report accurately reflects the executed batch data.
+  - The report uses the correct, controlled template version.
+  - The report is successfully archived to the document repository.
+  regulatory_basis:
+  - URS-018-003
+  - URS-018-015
+  - URS-018-019
+  risk_level: medium
+  data_integrity_requirements:
+  - Report content must match source data (ALCOA+).
+  urs_requirements:
+  - URS-018-003
+  - URS-018-015
+  - URS-018-019
+  - URS-018-026
+  related_tests:
+  - OQ-001
+  estimated_duration_minutes: 45
+  required_expertise:
+  - QC Analyst
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-008
+  test_name: Verify Schedule Gantt View Performance and Filtering
+  test_category: performance
+  gamp_category: 4
+  objective: To verify the system's ability to load and filter the schedule Gantt
+    view efficiently under load, meeting specified performance targets.
+  prerequisites:
+  - System is configured to support 30 concurrent users.
+  - A large schedule (e.g., 500 samples) is loaded into the system.
+  - User has access to the Gantt view interface.
+  test_steps:
+  - step_number: 1
+    action: Log in 30 concurrent users, ensuring all are active within the system.
+    expected_result: System remains responsive during user login sequence.
+    data_to_capture:
+    - Time taken for 30th user login.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: The primary test user opens the Schedule Gantt View, applying no filters.
+    expected_result: The Gantt view loads the 500-sample schedule in less than 3 seconds
+      (URS-018-018).
+    data_to_capture:
+    - Start time of view load.
+    - End time of view load.
+    - Total load duration.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Apply a filter to the Gantt view based on a specific instrument ID.
+    expected_result: The view refreshes to show only the filtered data in less than
+      2 seconds (URS-018-023).
+    data_to_capture:
+    - Start time of filter application.
+    - End time of filter refresh.
+    - Filter refresh duration.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Apply a second filter based on a specific analyst name.
+    expected_result: The view refreshes again, showing the intersection of both filters,
+      within 2 seconds.
+    data_to_capture:
+    - Start time of second filter application.
+    - End time of second filter refresh.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Monitor system performance metrics (CPU/Memory) across all 30 users during
+      the filtering steps.
+    expected_result: No functional degradation is observed for any user, and system
+      resource utilization remains within acceptable operational limits (URS-018-020).
+    data_to_capture:
+    - Peak CPU/Memory utilization during filtering.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The 500-sample schedule loads in under 3 seconds.
+  - Filtering operations (by instrument/analyst) complete in under 2 seconds.
+  - No functional degradation is observed for any of the 30 concurrent users.
+  regulatory_basis:
+  - URS-018-012
+  - URS-018-018
+  - URS-018-020
+  - URS-018-023
+  risk_level: medium
+  data_integrity_requirements:
+  - Visual representation must accurately reflect scheduled data.
+  urs_requirements:
+  - URS-018-012
+  - URS-018-018
+  - URS-018-020
+  - URS-018-023
+  related_tests:
+  - OQ-005
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Performance Engineer
+  - QC Analyst
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-009
+  test_name: Verify GMP Run Approval Workflow and Exception Summary Generation
+  test_category: functional
+  gamp_category: 4
+  objective: Verify that GMP runs require explicit approval before execution and that
+    the system generates required exception summaries for out-of-trend results.
+  prerequisites:
+  - System is configured for GMP run mode.
+  - A test sample requiring GMP execution is available in the queue.
+  - A method is configured that can generate an out-of-trend (OOT) result based on
+    acceptance criteria.
+  test_steps:
+  - step_number: 1
+    action: Log in as a standard Analyst role and attempt to start the configured
+      GMP run.
+    expected_result: The system prevents execution and prompts for approval.
+    data_to_capture:
+    - Screenshot of execution block message.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Log in as a Supervisor role and navigate to the schedule approval interface.
+    expected_result: The pending GMP run is visible for approval.
+    data_to_capture:
+    - Approval interface view.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Approve the GMP run schedule.
+    expected_result: The run status changes to 'Ready for Execution' or similar.
+    data_to_capture:
+    - Audit trail entry confirming approval.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Execute the run, ensuring one sample results in an OOT condition (e.g.,
+      by spiking data or using a known OOT method parameter).
+    expected_result: The run completes, and the OOT result is flagged.
+    data_to_capture:
+    - Result file/data confirming OOT flag.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Navigate to the reporting module and generate the exception summary report
+      for the completed batch.
+    expected_result: The system generates a compliant exception summary report detailing
+      the OOT result and associated run information.
+    data_to_capture:
+    - Generated Exception Summary Report (PDF/Electronic format).
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - GMP runs cannot be executed without explicit approval.
+  - The system successfully generates a compliant exception summary report for the
+    OOT result.
+  regulatory_basis:
+  - URS-018-010
+  - URS-018-011
+  risk_level: high
+  data_integrity_requirements:
+  - All approval actions must be time-stamped and auditable (ALCOA+).
+  urs_requirements:
+  - URS-018-010
+  - URS-018-011
+  related_tests:
+  - OQ-005
+  estimated_duration_minutes: 60
+  required_expertise:
+  - QC Analyst
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-010
+  test_name: Verify Integration with Asset System for Instrument Status Pull
+  test_category: integration
+  gamp_category: 4
+  objective: Verify the system correctly pulls and utilizes instrument availability
+    and calibration status from the external asset management system when creating
+    schedules.
+  prerequisites:
+  - System is configured with valid API connection details for the Asset System.
+  - At least two chromatography instruments are configured and linked.
+  - Asset System is configured to report one instrument as 'Unavailable/Calibration
+    Due' and the other as 'Available/Calibrated'.
+  test_steps:
+  - step_number: 1
+    action: Log in and attempt to create a new sample run schedule, selecting the
+      instrument reported as 'Unavailable/Calibration Due' in the Asset System.
+    expected_result: The system prevents selection of the unavailable instrument or
+      displays a clear warning indicating the reason (e.g., calibration status failure).
+    data_to_capture:
+    - Screenshot of instrument selection interface showing status feedback.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Attempt to route a sample to the instrument reported as 'Available/Calibrated'
+      using the configured availability rules.
+    expected_result: The routing is successful, and the instrument is assigned to
+      the run.
+    data_to_capture:
+    - Schedule entry showing successful instrument assignment.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Force an update in the Asset System to change the status of the previously
+      available instrument to 'Maintenance Required'.
+    expected_result: The system reflects the status change within the defined latency
+      period (URS-018-022).
+    data_to_capture:
+    - Time stamp of status change in Asset System.
+    - Time stamp of status update reflected in the scheduling module.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Attempt to modify the schedule created in Step 2 to route a new sample
+      to the instrument now marked as 'Maintenance Required'.
+    expected_result: The system blocks the modification or issues a warning based
+      on routing rules.
+    data_to_capture:
+    - Error message or warning displayed upon modification attempt.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The scheduling module accurately reflects the real-time availability and calibration
+    status pulled from the Asset System.
+  - Samples cannot be routed to instruments flagged as unavailable or out of calibration.
+  regulatory_basis:
+  - URS-018-004
+  - URS-018-025
+  risk_level: medium
+  data_integrity_requirements:
+  - Instrument status synchronization must be auditable to ensure correct routing
+    decisions.
+  urs_requirements:
+  - URS-018-004
+  - URS-018-025
+  related_tests:
+  - OQ-003
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Integration Specialist
+  - QC Analyst
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-011
+  test_name: Verify Concurrent User Load and Schedule Loading Performance
+  test_category: performance
+  gamp_category: 4
+  objective: Verify the system can load a large sample schedule (500 samples) within
+    the required time limit while supporting concurrent user access.
+  prerequisites:
+  - System is configured with a 500-sample schedule template.
+  - 30 test user accounts are available and authenticated.
+  - System monitoring tools are active to track resource utilization.
+  test_steps:
+  - step_number: 1
+    action: Simultaneously initiate schedule loading (URS-018-018) for the 500-sample
+      schedule across 30 concurrent user sessions.
+    expected_result: All 30 sessions successfully load the schedule, and the loading
+      time for each session is recorded.
+    data_to_capture:
+    - Time taken for schedule load per user session
+    - System CPU/Memory utilization during the load test
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Monitor system performance metrics for functional degradation (URS-018-020)
+      during the concurrent load test.
+    expected_result: No functional degradation (e.g., inability to interact with the
+      schedule or system timeouts) is observed across any of the 30 sessions.
+    data_to_capture:
+    - Confirmation of no functional errors reported by users
+    - System response times for basic schedule navigation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - All 30 concurrent users successfully load the 500-sample schedule.
+  - Schedule load time for every user is less than 3 seconds (URS-018-018).
+  - No functional degradation is observed during the concurrent load test (URS-018-020).
+  regulatory_basis:
+  - URS-018-018
+  - URS-018-020
+  risk_level: medium
+  data_integrity_requirements:
+  - Ensure schedule data integrity is maintained during high concurrency access.
+  urs_requirements:
+  - URS-018-018
+  - URS-018-020
+  related_tests:
+  - OQ-008
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Performance Testing Engineer
+  - LIMS/CDS Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-012
+  test_name: Verify Alert Delivery Time and Report Generation Performance
+  test_category: performance
+  gamp_category: 4
+  objective: Verify that system alerts are delivered within the specified time frame
+    and that standard batch reports meet performance requirements.
+  prerequisites:
+  - A scheduled run is configured to trigger an alert upon completion.
+  - A batch of 200 injections is ready for reporting.
+  - Analyst and Instrument readiness/excursion events can be simulated or triggered.
+  test_steps:
+  - step_number: 1
+    action: Trigger an instrument readiness event (URS-018-007) and measure the time
+      until the analyst receives the corresponding alert.
+    expected_result: The alert notification is received by the analyst within 5 seconds
+      of the event detection (URS-018-022).
+    data_to_capture:
+    - Timestamp of event trigger
+    - Timestamp of alert receipt by analyst
+    - Measured alert delivery time
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Complete the 200-injection batch run and immediately initiate the generation
+      of the standard batch report (URS-018-003).
+    expected_result: The standard batch report is fully generated and available for
+      viewing within 10 seconds (URS-018-019).
+    data_to_capture:
+    - Timestamp report generation initiated
+    - Timestamp report generation completed
+    - Measured report generation time
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Alert delivery time meets the requirement of <= 5 seconds (URS-018-022).
+  - Standard batch report generation for 200 injections completes in <= 10 seconds
+    (URS-018-019).
+  regulatory_basis:
+  - URS-018-003
+  - URS-018-007
+  - URS-018-019
+  - URS-018-022
+  risk_level: medium
+  data_integrity_requirements:
+  - Ensure the time stamps captured for performance measurement are accurate and traceable.
+  urs_requirements:
+  - URS-018-003
+  - URS-018-007
+  - URS-018-019
+  - URS-018-022
+  related_tests:
+  - OQ-007
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Analytical Chemist
+  - System Tester
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-013
+  test_name: Verify Part 11 Compliance for Schedule Electronic Signatures
+  test_category: data_integrity
+  gamp_category: 4
+  objective: To verify that the system enforces 21 CFR Part 11 compliant electronic
+    signatures upon final approval of a GMP schedule.
+  prerequisites:
+  - System is configured for Part 11 compliance (electronic signatures enabled).
+  - A test sample schedule requiring GMP approval is created.
+  - User accounts with appropriate signature authority are available.
+  test_steps:
+  - step_number: 1
+    action: Create a sample run schedule designated as a 'GMP Run' requiring approval.
+    expected_result: Schedule is created and status is set to 'Pending Approval'.
+    data_to_capture:
+    - Schedule ID
+    - Initial Status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Attempt to execute the schedule without applying the required electronic
+      signature/approval.
+    expected_result: Execution is blocked, and a prompt requires electronic signature
+      credentials.
+    data_to_capture:
+    - Error message displayed
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log in as an authorized approver and apply the electronic signature to
+      approve the schedule execution.
+    expected_result: Signature is successfully applied, the schedule status changes
+      to 'Approved/Ready to Run', and an audit trail entry is created.
+    data_to_capture:
+    - Signature timestamp
+    - Approver ID
+    - Audit trail entry verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Review the audit trail entry associated with the approval action.
+    expected_result: The audit trail entry clearly links the action (Approval), the
+      user ID, the date/time stamp, and the reason for the signature (if applicable).
+    data_to_capture:
+    - Audit trail record details
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The system successfully blocks execution until a valid Part 11 compliant electronic
+    signature is applied.
+  - The electronic signature captures the signer's identity, time, date, and the meaning
+    of the signature (e.g., 'Approved').
+  regulatory_basis:
+  - URS-018-010
+  - URS-018-013
+  risk_level: high
+  data_integrity_requirements:
+  - Ensure signature integrity and non-repudiation.
+  urs_requirements:
+  - URS-018-010
+  - URS-018-013
+  related_tests:
+  - OQ-004
+  - OQ-009
+  estimated_duration_minutes: 45
+  required_expertise:
+  - QC Analyst
+  - Validation Engineer
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-014
+  test_name: Verify Schedule Integration with Document Repository for Report Push
+  test_category: integration
+  gamp_category: 4
+  objective: To verify that finalized batch reports are automatically pushed to the
+    controlled document repository as required by integration specifications.
+  prerequisites:
+  - The controlled document repository (CDR) is accessible and configured for receiving
+    reports.
+  - A valid report template is configured for batch results.
+  - A sample set has successfully completed execution, generating a finalized report.
+  test_steps:
+  - step_number: 1
+    action: Execute a scheduled batch run that completes successfully and generates
+      a finalized report.
+    expected_result: The system marks the batch report as 'Finalized' within the scheduling
+      module.
+    data_to_capture:
+    - Batch ID
+    - Final Report Status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Monitor the system integration logs for the report transfer process.
+    expected_result: A successful transmission log entry is recorded indicating the
+      report file was sent to the CDR.
+    data_to_capture:
+    - Integration log timestamp
+    - Report file name transferred
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log into the controlled document repository (CDR) using appropriate credentials.
+    expected_result: The CDR is accessible.
+    data_to_capture:
+    - CDR Login Status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Search the CDR for the report generated in Step 1 using the Batch ID or
+      file name.
+    expected_result: The finalized batch report is found in the CDR, accessible, and
+      matches the content generated by the CDS.
+    data_to_capture:
+    - CDR document ID
+    - Report version/timestamp in CDR
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The finalized batch report is successfully transferred and stored in the designated
+    controlled document repository.
+  - The transfer process is logged accurately in the system audit trail/integration
+    logs.
+  regulatory_basis:
+  - URS-018-003
+  - URS-018-015
+  - URS-018-026
+  risk_level: medium
+  data_integrity_requirements:
+  - Ensure report completeness and integrity during transfer.
+  urs_requirements:
+  - URS-018-003
+  - URS-018-026
+  related_tests:
+  - OQ-007
+  - OQ-010
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Integration Specialist
+  - QC Analyst
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-015
+  test_name: Verify Schedule Creation with Priority and Method Version Lock
+  test_category: functional
+  gamp_category: 4
+  objective: To verify that users can successfully create a sample run schedule, assign
+    priority, and confirm that the system enforces the correct, locked version of
+    the analytical method.
+  prerequisites:
+  - System is fully installed and configured.
+  - Test user accounts with scheduling permissions are active.
+  - At least two different versions of a chromatography method are loaded in the system.
+  test_steps:
+  - step_number: 1
+    action: Log in as a qualified analyst and navigate to the Sample Scheduling module.
+    expected_result: User is successfully authenticated and the scheduling interface
+      loads.
+    data_to_capture:
+    - Login timestamp
+    - User ID
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Create a new schedule entry, assigning a high priority level and selecting
+      a specific instrument.
+    expected_result: Schedule entry is created successfully with the assigned priority
+      and instrument.
+    data_to_capture:
+    - New Schedule ID
+    - Assigned Priority
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Add samples to the schedule, explicitly selecting Method Version X.0 (the
+      current approved version).
+    expected_result: Samples are added, and the system confirms the use of Method
+      Version X.0.
+    data_to_capture:
+    - Method Version selected for samples
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Attempt to modify the schedule entry to use an older, unapproved version
+      (Method Version Y.0) of the same method.
+    expected_result: The system prevents the selection or use of Method Version Y.0,
+      enforcing the lock on the approved version selected in Step 3.
+    data_to_capture:
+    - Error message received (if any)
+    - Final confirmed method version in the schedule
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Schedules can be created with defined priorities (URS-018-001).
+  - The system successfully prevents the scheduling of runs using non-current or unapproved
+    method versions (URS-018-002).
+  regulatory_basis:
+  - 21 CFR Part 11 (Data Integrity)
+  - ALCOA+ Principles
+  risk_level: medium
+  data_integrity_requirements:
+  - Method version used must be traceable in the schedule record.
+  urs_requirements:
+  - URS-018-001
+  - URS-018-002
+  related_tests:
+  - OQ-001
+  estimated_duration_minutes: 45
+  required_expertise:
+  - QC Analyst
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-016
+  test_name: Verify Schedule Routing Based on Availability and AD Authentication
+  test_category: integration
+  gamp_category: 4
+  objective: To verify that the scheduling module correctly routes samples based on
+    instrument availability rules and that user authentication is correctly managed
+    via the integrated directory service.
+  prerequisites:
+  - System is integrated with an Asset Management System reporting instrument status.
+  - System is integrated with Active Directory (AD) for user authentication.
+  - Instrument A is configured as 'Available' and Instrument B is configured as 'Unavailable/In
+    Maintenance'.
+  test_steps:
+  - step_number: 1
+    action: Log out and attempt to log in using a standard AD user account that is
+      NOT authorized for schedule execution (e.g., Read-Only role).
+    expected_result: Login is successful via AD, but the user is restricted from creating
+      or modifying schedules (URS-018-008).
+    data_to_capture:
+    - AD Authentication success status
+    - Observed user permissions
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Log in as a qualified scheduling user and create a schedule requiring
+      routing to Instrument A or Instrument B.
+    expected_result: The system successfully pulls the current availability status
+      from the integrated asset system (URS-018-025).
+    data_to_capture:
+    - Instrument status reported by integration
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Submit the schedule, configured to route samples to the first available
+      instrument matching the method requirements.
+    expected_result: All samples are routed exclusively to Instrument A, as Instrument
+      B is reported as unavailable.
+    data_to_capture:
+    - Final routing assignment for all samples
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Change the configuration rule to allow routing to Instrument B if Instrument
+      A is busy, and then submit a new schedule.
+    expected_result: The system routes the samples based on the updated availability
+      rules, respecting the configured routing logic (URS-018-004).
+    data_to_capture:
+    - New routing assignment
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - User authentication and role synchronization via LDAP/AD is successful (URS-018-027).
+  - Sample routing respects configured availability rules based on real-time instrument
+    status pulled from the asset system (URS-018-004, URS-018-025).
+  regulatory_basis:
+  - 21 CFR Part 11 (Access Control)
+  - ALCOA+ (Attributable)
+  risk_level: medium
+  data_integrity_requirements:
+  - User identity must be correctly attributed via AD integration.
+  urs_requirements:
+  - URS-018-004
+  - URS-018-008
+  - URS-018-025
+  - URS-018-027
+  related_tests:
+  - OQ-005
+  - OQ-010
+  estimated_duration_minutes: 60
+  required_expertise:
+  - QC Analyst
+  - Integration Specialist
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-017
+  test_name: Verify System Availability and User Load Tolerance
+  test_category: performance
+  gamp_category: 4
+  objective: To verify that the system maintains required availability (URS-018-021)
+    and supports concurrent user load without functional degradation (URS-018-020).
+  prerequisites:
+  - System is fully configured and operational.
+  - 30 test user accounts with appropriate scheduling roles are available.
+  - Monitoring tools are in place to track system uptime and response times.
+  test_steps:
+  - step_number: 1
+    action: Monitor system availability continuously over a 24-hour period during
+      typical lab operating hours.
+    expected_result: System availability remains at or above 99.5% for the monitoring
+      duration.
+    data_to_capture:
+    - Total uptime percentage
+    - Logged downtime incidents
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Simultaneously log in 30 distinct user accounts and initiate complex schedule
+      creation/modification tasks (e.g., creating a 500-sample schedule).
+    expected_result: All 30 users can execute their tasks without encountering functional
+      errors or significant delays beyond specified performance limits.
+    data_to_capture:
+    - Number of concurrent active users
+    - Average schedule creation time for concurrent users
+    - Error logs during load test
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - System availability meets or exceeds 99.5% during monitored lab hours (URS-018-021).
+  - Concurrent access by 30 users does not cause functional degradation (URS-018-020).
+  regulatory_basis:
+  - ALCOA+
+  risk_level: medium
+  data_integrity_requirements:
+  - Ensure no data corruption occurs during high-load operations.
+  urs_requirements:
+  - URS-018-020
+  - URS-018-021
+  related_tests:
+  - OQ-011
+  estimated_duration_minutes: 180
+  required_expertise:
+  - System Administrator
+  - Performance Tester
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-018
+  test_name: Verify Schedule Exception Handling and Audit Trail for Re-queues
+  test_category: data_integrity
+  gamp_category: 4
+  objective: To verify that the system correctly captures audit trails for schedule
+    modifications, specifically when re-queuing failed runs with mandatory reason
+    capture (URS-018-005, URS-018-006).
+  prerequisites:
+  - A scheduled run is configured and ready for execution.
+  - User has permissions to modify schedules and capture audit trails.
+  - A method is configured to fail under specific conditions (or manual intervention
+    is possible to force a failure).
+  test_steps:
+  - step_number: 1
+    action: Execute the scheduled run until it fails, triggering the failure notification.
+    expected_result: The run status changes to 'Failed', and the system prompts for
+      a failure reason.
+    data_to_capture:
+    - Time of failure
+    - Initial failure reason prompt status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: As an authorized user, select the failed run, select the 'Re-queue' action,
+      and enter a detailed, compliant reason for re-queuing (e.g., 'Instrument maintenance
+      required').
+    expected_result: The run is successfully re-queued to the schedule, and the system
+      prompts for an electronic signature to confirm the action.
+    data_to_capture:
+    - Re-queue reason text
+    - Electronic signature confirmation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Review the Audit Trail entry corresponding to the re-queue action.
+    expected_result: The audit trail must contain a time-stamped entry detailing the
+      'Re-queue' action, the user ID, the specific reason provided, and the electronic
+      signature confirmation (URS-018-006, URS-018-014).
+    data_to_capture:
+    - Audit trail entry timestamp
+    - Audit trail entry details (Action, User, Data Change/Reason)
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Failed runs can be paused, resumed, and re-queued with mandatory reason capture
+    (URS-018-005).
+  - All schedule changes, including re-queues, generate secure, time-stamped audit
+    trail entries capturing the required data (URS-018-006, URS-018-014).
+  regulatory_basis:
+  - 21 CFR Part 11 (Electronic Signatures)
+  - ALCOA+
+  risk_level: high
+  data_integrity_requirements:
+  - Ensure the captured reason for re-queue is immutable and linked to the subsequent
+    execution attempt.
+  urs_requirements:
+  - URS-018-005
+  - URS-018-006
+  - URS-018-014
+  related_tests:
+  - OQ-002
+  - OQ-004
+  estimated_duration_minutes: 60
+  required_expertise:
+  - QC Analyst
+  - Validation Engineer
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-019
+  test_name: Verify Schedule Loading Performance for Large Batch Size
+  test_category: performance
+  gamp_category: 4
+  objective: To verify that the system can load a large sample run schedule (500 samples)
+    within the specified time limit under typical operating conditions.
+  prerequisites:
+  - System is configured and stable.
+  - A test schedule containing exactly 500 sample entries is prepared.
+  - System monitoring tools are active.
+  test_steps:
+  - step_number: 1
+    action: Start timing and initiate the loading/creation of the 500-sample run schedule
+      via the scheduling interface.
+    expected_result: The schedule loading process completes, and the schedule is visible
+      and ready for modification.
+    data_to_capture:
+    - Time taken to load the schedule (in seconds)
+    - System resource utilization during load
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Verify the loaded schedule contains exactly 500 entries and all associated
+      parameters (instrument, method) are correctly assigned.
+    expected_result: All 500 entries are present and correctly configured.
+    data_to_capture:
+    - Final count of schedule entries
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The schedule loading time must be less than 3 seconds (URS-018-018).
+  - No functional degradation or errors are observed during the load process.
+  regulatory_basis:
+  - URS-018-018
+  risk_level: medium
+  data_integrity_requirements:
+  - Ensure schedule data integrity is maintained during the high-speed load.
+  urs_requirements:
+  - URS-018-018
+  related_tests:
+  - OQ-011
+  - OQ-008
+  estimated_duration_minutes: 20
+  required_expertise:
+  - QC Analyst
+  - Performance Tester
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-020
+  test_name: Verify LDAP/AD Integration for Role Synchronization and Authentication
+  test_category: integration
+  gamp_category: 4
+  objective: To confirm that user authentication and role synchronization correctly
+    utilize the configured LDAP/Active Directory service as required for access control.
+  prerequisites:
+  - LDAP/AD server is accessible and configured in the system settings.
+  - Test user accounts with distinct roles (e.g., Analyst, Approver, Admin) exist
+    in the LDAP/AD.
+  - System is configured to enforce role-based access (URS-018-008).
+  test_steps:
+  - step_number: 1
+    action: Attempt to log in using an LDAP/AD user account assigned the 'Analyst'
+      role.
+    expected_result: Login is successful, and the user interface reflects only Analyst
+      permissions.
+    data_to_capture:
+    - Login success/failure status
+    - Reported user role upon login
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: As the 'Analyst' user, attempt to create and submit a GMP schedule for
+      approval (URS-018-010).
+    expected_result: Schedule creation and submission are successful.
+    data_to_capture:
+    - Confirmation of schedule submission
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log out and log in using an LDAP/AD user account assigned the 'Approver'
+      role.
+    expected_result: Login is successful, and the user interface reflects Approver
+      permissions, including the ability to approve pending schedules.
+    data_to_capture:
+    - Reported user role upon login
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: As the 'Approver' user, attempt to execute a function restricted to 'Admin'
+      (e.g., user management or system configuration).
+    expected_result: Access is denied, and an appropriate error message is displayed.
+    data_to_capture:
+    - Error message received for restricted action
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - User authentication via LDAP/AD is successful for all test accounts (URS-018-027).
+  - Roles synchronized from LDAP/AD correctly enforce least privilege access control
+    (URS-018-016, URS-018-008).
+  regulatory_basis:
+  - URS-018-016
+  - URS-018-027
+  risk_level: high
+  data_integrity_requirements:
+  - Verify that role synchronization does not corrupt existing user data or permissions.
+  urs_requirements:
+  - URS-018-008
+  - URS-018-016
+  - URS-018-027
+  related_tests:
+  - OQ-005
+  - OQ-016
+  estimated_duration_minutes: 45
+  required_expertise:
+  - System Administrator
+  - Security Engineer
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+test_categories: {}
+requirements_coverage:
+  URS-001:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-005
+  URS-002:
+  - OQ-006
+  - OQ-007
+  - OQ-008
+  - OQ-009
+  - OQ-010
+  URS-003:
+  - OQ-011
+  - OQ-012
+  - OQ-013
+  - OQ-014
+  - OQ-015
+  - OQ-016
+  - OQ-017
+  - OQ-018
+  - OQ-019
+  - OQ-020
+risk_coverage:
+  low: 0
+  medium: 0
+  high: 0
+compliance_coverage:
+  21_cfr_part_11: true
+  gamp5: true
+  alcoa_plus: true
+total_test_count: 20
+estimated_execution_time: 1105
+coverage_percentage: 0.0
+generation_timestamp: '2025-11-24T11:58:04.605515Z'
+generation_method: LLMTextCompletionProgram_deepseek/deepseek-chat
+validation_approach: ''
+created_by: oq_generation_agent_v2_progressive
+review_required: true
+pharmaceutical_compliance:
+  alcoa_plus_compliant: true
+  gamp5_compliant: true
+  cfr_part_11_compliant: true
+  audit_trail_verified: true
+  data_integrity_assured: true
+alcoa_plus_metadata: {}
+is_original: true
+version: '1.0'
+immutable: true
+locked: false
+validated: true
+reconciled: true
+cross_verified: true
+corrections: []
+error_log: []
+audit_trail: {}
+format: yaml
+encoding: utf-8
+data_schema: {}
+metadata: {}
+retention_period: 7_years
+encrypted: false
+protected: true
+backed_up: false
+backup_status: pending
+accessible: true
+retrieval_time: 0.1
+searchable: true
+indexed: true
+export_formats:
+- json
+- xml
+- csv
+download_options:
+- json
+- xml
+- pdf
+system_version: 1.0.0
+change_history: []
+related_records: []
+dependencies: []

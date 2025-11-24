@@ -52,6 +52,7 @@ from src.compliance.part11_signatures import SignatureMeaning
 from src.config.llm_config import LLMConfig
 from src.core.categorization_workflow import GAMPCategorizationWorkflow
 from src.core.consultation_handler import process_consultation_input
+from src.core.consultation_utils import derive_consultation_triggers
 from src.core.events import (
     AgentRequestEvent,
     AgentResultEvent,
@@ -1340,28 +1341,29 @@ class UnifiedTestGenerationWorkflow(Workflow):
         # we must still trigger human consultation based on the ORIGINAL failure
         risk_assessment = ev.risk_assessment or {}
 
-        # Determine which confidence score to use for consultation check
-        confidence_for_consultation = ev.confidence_score
+        requires_consultation, consultation_triggers, confidence_for_consultation = derive_consultation_triggers(
+            ev,
+            bypass_threshold
+        )
 
-        # If this came from SME consultation recovery, use original confidence
-        if "original_confidence" in risk_assessment:
-            confidence_for_consultation = risk_assessment["original_confidence"]
+        if "original_confidence" in risk_assessment and confidence_for_consultation != ev.confidence_score:
             self.logger.warning(
                 f"[AUDIT TRAIL] SME consultation recovery detected - using original confidence "
                 f"{confidence_for_consultation:.2f} for consultation decision (recovered to {ev.confidence_score:.2f})"
             )
 
-        requires_consultation = (
-            confidence_for_consultation < bypass_threshold or  # Use appropriate confidence
-            "consultation_required" in risk_assessment.get("flags", [])  # Explicit flags trigger
-        )
-
         if requires_consultation:
             # Create the consultation event that would be required
             # Include both original and current confidence for full transparency
-            reason_text = f"Category {ev.gamp_category.value} with confidence {ev.confidence_score:.2f}"
-            if "original_confidence" in risk_assessment:
-                reason_text = f"Category {ev.gamp_category.value} - Original confidence {confidence_for_consultation:.2f}, recovered to {ev.confidence_score:.2f} via SME consultation"
+            if consultation_triggers:
+                reason_text = f"Category {ev.gamp_category.value}: " + "; ".join(consultation_triggers)
+            else:
+                reason_text = f"Category {ev.gamp_category.value} with confidence {ev.confidence_score:.2f}"
+                if "original_confidence" in risk_assessment:
+                    reason_text = (
+                        f"Category {ev.gamp_category.value} - Original confidence {confidence_for_consultation:.2f}, "
+                        f"recovered to {ev.confidence_score:.2f} via SME consultation"
+                    )
 
             consultation_event = ConsultationRequiredEvent(
                 consultation_type="categorization_review",
@@ -1372,7 +1374,13 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     "original_confidence": confidence_for_consultation,  # Always include the confidence used for decision
                     "sme_recovery": "original_confidence" in risk_assessment,
                     "risk_assessment": ev.risk_assessment,
-                    "session_id": self._workflow_session_id
+                    "session_id": self._workflow_session_id,
+                    "consultation_triggers": consultation_triggers,
+                    "review_required": ev.review_required,
+                    "has_ambiguity_signals": getattr(ev, "has_ambiguity_signals", False),
+                    "ambiguity_details": getattr(ev, "ambiguity_details", None),
+                    "alternative_categories": getattr(ev, "alternative_categories", None),
+                    "confidence_threshold": bypass_threshold
                 },
                 urgency="normal",
                 required_expertise=["validation_engineer", "quality_assurance"],
@@ -1399,7 +1407,8 @@ class UnifiedTestGenerationWorkflow(Workflow):
                         "original_confidence": ev.confidence_score,
                         "gamp_category": ev.gamp_category.value,
                         "bypass_threshold": bypass_threshold,
-                        "validation_mode_active": True
+                        "validation_mode_active": True,
+                        "consultation_triggers": consultation_triggers
                     }
                 )
 

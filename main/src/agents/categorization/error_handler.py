@@ -88,7 +88,7 @@ class CategorizationErrorHandler:
 
     def __init__(
         self,
-        confidence_threshold: float = 0.50,  # Reduced from 0.60 to 0.50 for more realistic threshold
+        confidence_threshold: float = 0.85,
         ambiguity_threshold: float = 0.15,
         enable_audit_logging: bool = True,
         enable_phoenix_events: bool = True,

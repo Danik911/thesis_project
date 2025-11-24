@@ -8,6 +8,7 @@ with GAMP-5 compliance requirements.
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -50,8 +51,19 @@ class JobStatus(str, Enum):
 
     PENDING = "pending"
     PROCESSING = "processing"
+    AWAITING_APPROVAL = "awaiting_approval"  # HIL: Workflow paused for human decision
+    APPROVED = "approved"                     # HIL: Human approved, resuming workflow
+    REJECTED = "rejected"                     # HIL: Human rejected or approval timeout
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class ApprovalDecision(str, Enum):
+    """Human approval decision options for GAMP-5 categorization."""
+
+    APPROVE = "APPROVE"              # Accept AI categorization or override with human category
+    REJECT = "REJECT"                # Reject categorization, stop workflow
+    REQUEST_REVISION = "REQUEST_REVISION"  # Request additional information (future)
 
 
 class JobSubmitResponse(BaseModel):
@@ -136,6 +148,7 @@ class JobRecord(BaseModel):
     created_at: datetime
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    updated_at: datetime | None = None  # Last modification timestamp (HIL updates)
 
     # File metadata
     urs_filename: str
@@ -155,6 +168,13 @@ class JobRecord(BaseModel):
     # GAMP-5 compliance
     user_id: str
     gamp_category: str | None = None
+
+    # HIL Approval Tracking (Task 3.13)
+    requires_approval: bool = False
+    approval_reason: str | None = None
+    approval_timeout_at: datetime | None = None
+    categorization_result: dict | None = None  # AI recommendation + ambiguity details
+    human_category: int | None = None  # Final human-approved category (1, 3, 4, or 5)
 
     def to_response(self, download_url: str | None = None) -> JobStatusResponse:
         """
@@ -229,6 +249,212 @@ class AuditLogEntry(BaseModel):
                     "urs_hash": "a3b2c1d4e5f6...",
                     "token_exp": 1699003600
                 }
+            }
+        }
+    )
+
+
+# =============================================================================
+# HIL Approval Models (Task 3.13)
+# =============================================================================
+
+
+class ApprovalRecord(BaseModel):
+    """
+    ALCOA+ compliant audit trail for human approval decisions.
+
+    Captures all human decisions with comprehensive pharmaceutical compliance
+    metadata for regulatory audit requirements.
+
+    ALCOA+ Compliance:
+    - Attributable: user_id, user_email, user_role captured
+    - Legible: justification in plain text
+    - Contemporaneous: timestamp captured at decision time
+    - Original: stored as immutable record
+    - Accurate: digital signature validates authenticity
+    - Complete: all decision context preserved
+    - Consistent: single source of truth
+    - Enduring: permanent audit trail
+    - Available: queryable by job_id, user_id, timestamp
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid4()), description="Unique approval record ID")
+    job_id: str = Field(..., description="Associated job ID")
+
+    # AI Recommendation (captured at time of HIL trigger)
+    ai_category: int = Field(..., ge=1, le=5, description="Original AI-recommended GAMP-5 category")
+    ai_confidence: float = Field(..., ge=0.0, le=1.0, description="AI confidence score (0.0-1.0)")
+    ai_reasoning: str = Field(..., description="AI reasoning for categorization")
+    ambiguity_reason: str | None = Field(default=None, description="Why HIL was triggered")
+    alternative_categories: list[int] | None = Field(
+        default=None,
+        description="Other plausible GAMP categories identified"
+    )
+
+    # Human Decision
+    approval_decision: ApprovalDecision = Field(..., description="Human decision: APPROVE, REJECT, or REQUEST_REVISION")
+    human_category: int | None = Field(
+        default=None,
+        ge=1,
+        le=5,
+        description="Final GAMP-5 category (if APPROVE, can override AI recommendation)"
+    )
+    justification: str = Field(
+        ...,
+        min_length=10,
+        description="Human's reasoning for decision (minimum 10 characters for audit trail)"
+    )
+
+    # ALCOA+ Compliance Fields
+    user_id: str = Field(..., description="Clerk user ID (unique identifier)")
+    user_email: str | None = Field(default=None, description="User email for traceability")
+    user_role: str = Field(default="User", description="User role (Quality Manager, etc.)")
+    digital_signature: str = Field(..., description="Digital signature: {user_id}_{timestamp} format")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Decision timestamp (UTC)"
+    )
+
+    # Request Metadata
+    ip_address: str | None = Field(default=None, description="Client IP address for audit")
+    user_agent: str | None = Field(default=None, description="Browser/client info")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                "ai_category": 4,
+                "ai_confidence": 0.72,
+                "ai_reasoning": "System appears to be configured COTS but contains optional custom modules",
+                "ambiguity_reason": "Category 4/5 boundary: contains 'optional custom modules'",
+                "alternative_categories": [4, 5],
+                "approval_decision": "APPROVE",
+                "human_category": 4,
+                "justification": "System clearly falls under Category 4: configured COTS with no custom source code modifications.",
+                "user_id": "user_2abc123xyz",
+                "user_email": "quality.manager@pharma.com",
+                "user_role": "Quality Manager",
+                "digital_signature": "user_2abc123xyz_20251124_143052",
+                "timestamp": "2025-11-24T14:30:52Z",
+                "ip_address": "192.168.1.100",
+                "user_agent": "Mozilla/5.0..."
+            }
+        }
+    )
+
+
+class ApprovalRequest(BaseModel):
+    """
+    Request body for submitting human approval decision.
+
+    Used by frontend to submit human decisions on ambiguous GAMP-5 categorizations.
+    """
+
+    approval_decision: ApprovalDecision = Field(
+        ...,
+        description="Human decision: APPROVE, REJECT, or REQUEST_REVISION"
+    )
+    human_category: int | None = Field(
+        default=None,
+        ge=1,
+        le=5,
+        description="Final GAMP-5 category if APPROVE (can override AI recommendation)"
+    )
+    justification: str = Field(
+        ...,
+        min_length=10,
+        description="Human's reasoning for decision (minimum 10 characters for audit trail)"
+    )
+    user_signature: str = Field(
+        ...,
+        description="Digital signature: {user_id}_{timestamp} format (pre-filled from Clerk)"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "approval_decision": "APPROVE",
+                "human_category": 4,
+                "justification": "System clearly falls under Category 4: configured COTS with no custom source code modifications.",
+                "user_signature": "user_2abc123xyz_20251124_143052"
+            }
+        }
+    )
+
+
+class ApprovalResponse(BaseModel):
+    """Response after approval decision submission."""
+
+    job_id: str = Field(..., description="Job ID")
+    status: JobStatus = Field(..., description="Updated job status")
+    gamp_category: int = Field(..., description="Final GAMP-5 category")
+    workflow_resumed: bool = Field(..., description="Whether workflow will resume")
+    trace_id: str | None = Field(default=None, description="Langfuse trace ID")
+    message: str = Field(..., description="Human-readable result message")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                "status": "approved",
+                "gamp_category": 4,
+                "workflow_resumed": True,
+                "trace_id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+                "message": "Approval decision 'APPROVE' recorded. Workflow resuming with Category 4."
+            }
+        }
+    )
+
+
+class JobStatusWithApproval(BaseModel):
+    """
+    Extended job status response including HIL approval details.
+
+    Used by frontend for polling during approval workflow to get full context.
+    """
+
+    job_id: str = Field(..., description="Job ID")
+    status: JobStatus = Field(..., description="Current job status")
+    requires_approval: bool = Field(..., description="Whether job requires human approval")
+    approval_reason: str | None = Field(default=None, description="Why approval is required")
+    timeout_remaining_seconds: int | None = Field(
+        default=None,
+        description="Seconds remaining before approval timeout (auto-reject)"
+    )
+
+    # Categorization context for human decision
+    categorization_result: dict | None = Field(
+        default=None,
+        description="AI categorization result including category, confidence, reasoning"
+    )
+    alternative_categories: list[int] | None = Field(
+        default=None,
+        description="Other plausible GAMP categories if ambiguous"
+    )
+
+    # Timestamps
+    created_at: str = Field(..., description="Job creation timestamp (ISO 8601)")
+    updated_at: str | None = Field(default=None, description="Last update timestamp (ISO 8601)")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "job_id": "550e8400-e29b-41d4-a716-446655440000",
+                "status": "awaiting_approval",
+                "requires_approval": True,
+                "approval_reason": "Category 4/5 boundary: contains 'optional custom modules'",
+                "timeout_remaining_seconds": 3542,
+                "categorization_result": {
+                    "category": 4,
+                    "confidence_score": 0.72,
+                    "reasoning": "System appears to be configured COTS...",
+                    "has_ambiguity_signals": True,
+                    "ambiguity_details": "Category 4/5 boundary detected"
+                },
+                "alternative_categories": [4, 5],
+                "created_at": "2025-11-24T14:30:00Z",
+                "updated_at": "2025-11-24T14:31:15Z"
             }
         }
     )

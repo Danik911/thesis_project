@@ -17,7 +17,7 @@ from jwt import PyJWTError
 from src.adapters.storage import StorageFactory, StorageProvider
 from src.shared.config import get_config
 
-from .models import ClerkClaims, JobRecord
+from .models import ApprovalRecord, ClerkClaims, JobRecord
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,12 @@ security = HTTPBearer()
 _job_repository: dict[str, JobRecord] = {}
 _job_lock: asyncio.Lock | None = None
 _job_queue: asyncio.Queue[str] | None = None
+
+# In-memory approval storage for HIL workflow
+# Maps job_id -> list of ApprovalRecords (audit trail)
+# Protected by asyncio lock for thread-safe access
+_approval_repository: dict[str, list[ApprovalRecord]] = {}
+_approval_lock: asyncio.Lock | None = None
 
 
 def initialize_job_infrastructure() -> tuple[asyncio.Queue[str], dict[str, JobRecord], asyncio.Lock]:
@@ -107,6 +113,64 @@ def get_job_lock() -> asyncio.Lock:
             detail="CRITICAL: Job lock not initialized. Check app lifespan."
         )
     return _job_lock
+
+
+def initialize_approval_infrastructure() -> tuple[dict[str, list[ApprovalRecord]], asyncio.Lock]:
+    """
+    Initialize approval repository and lock for HIL workflow.
+
+    Returns:
+        Tuple of (approval_repository, approval_lock)
+
+    Called during app lifespan startup.
+    """
+    global _approval_repository, _approval_lock
+
+    _approval_repository = {}
+    _approval_lock = asyncio.Lock()
+
+    logger.info("Approval infrastructure initialized (in-memory mode)")
+    return _approval_repository, _approval_lock
+
+
+def get_approval_repository() -> dict[str, list[ApprovalRecord]]:
+    """
+    Get approval repository dependency.
+
+    Returns:
+        In-memory approval storage dict (job_id -> list of ApprovalRecords)
+
+    Raises:
+        HTTPException: If repository not initialized
+
+    CRITICAL: NO FALLBACK LOGIC - Errors must propagate explicitly
+    """
+    if _approval_repository is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="CRITICAL: Approval repository not initialized. Check app lifespan."
+        )
+    return _approval_repository
+
+
+def get_approval_lock() -> asyncio.Lock:
+    """
+    Get approval repository lock dependency.
+
+    Returns:
+        Asyncio lock for approval repository access
+
+    Raises:
+        HTTPException: If lock not initialized
+
+    CRITICAL: NO FALLBACK LOGIC - Errors must propagate explicitly
+    """
+    if _approval_lock is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="CRITICAL: Approval lock not initialized. Check app lifespan."
+        )
+    return _approval_lock
 
 
 def get_storage_adapter() -> StorageProvider:
@@ -348,3 +412,7 @@ JobRepositoryDep = Annotated[dict[str, JobRecord], Depends(get_job_repository)]
 JobLockDep = Annotated[asyncio.Lock, Depends(get_job_lock)]
 CurrentUserDep = Annotated[ClerkClaims, Depends(require_clerk_user)]
 ValidatedFileDep = Annotated[UploadFile, Depends(validate_upload_file)]
+
+# HIL Approval type aliases
+ApprovalRepositoryDep = Annotated[dict[str, list[ApprovalRecord]], Depends(get_approval_repository)]
+ApprovalLockDep = Annotated[asyncio.Lock, Depends(get_approval_lock)]

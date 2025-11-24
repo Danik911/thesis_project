@@ -13,10 +13,7 @@ from typing import Any
 
 from llama_index.core.workflow import Context, StartEvent, StopEvent, Workflow, step
 
-from src.agents.categorization import (
-    create_gamp_categorization_agent,
-)
-from src.agents.categorization.agent import categorize_with_structured_output
+from src.agents.categorization.agent import categorize_urs_document
 from src.core.events import (
     DocumentProcessedEvent,
     ErrorRecoveryEvent,
@@ -50,7 +47,7 @@ class GAMPCategorizationWorkflow(Workflow):
         timeout: int = 300,
         verbose: bool = False,
         enable_error_handling: bool = True,
-        confidence_threshold: float = 0.40,
+        confidence_threshold: float = 0.85,
         retry_attempts: int = 2,
         enable_document_processing: bool = False
     ):
@@ -73,27 +70,10 @@ class GAMPCategorizationWorkflow(Workflow):
         self.enable_document_processing = enable_document_processing
         self.logger = logging.getLogger(__name__)
 
-        # Initialize categorization agent
-        self.categorization_agent = None
-        self._initialize_agent()
-
         # Initialize document processor if enabled
         self.document_processor = None
         if self.enable_document_processing:
             self._initialize_document_processor()
-
-    def _initialize_agent(self) -> None:
-        """Initialize the categorization agent."""
-        try:
-            self.categorization_agent = create_gamp_categorization_agent(
-                enable_error_handling=self.enable_error_handling,
-                confidence_threshold=self.confidence_threshold,
-                verbose=self.verbose
-            )
-            self.logger.info("Categorization agent initialized successfully")
-        except Exception as e:
-            self.logger.error(f"Failed to initialize categorization agent: {e}")
-            raise
 
     def _initialize_document_processor(self) -> None:
         """Initialize the document processor if enabled."""
@@ -345,15 +325,14 @@ class GAMPCategorizationWorkflow(Workflow):
 
         for attempt in range(self.retry_attempts):
             try:
-                # Use structured output categorization for reliable results
-                result = categorize_with_structured_output(
-                    agent=self.categorization_agent,
+                # Use structured output categorization with enforced ambiguity detection
+                categorization_event = categorize_urs_document(
                     urs_content=urs_content,
-                    document_name=document_name
+                    document_name=document_name,
+                    confidence_threshold=self.confidence_threshold,
+                    use_structured_output=True,
+                    verbose=self.verbose
                 )
-
-                # Result is already a GAMPCategorizationEvent from LLM-based function
-                categorization_event = result
 
                 # Capture output data transformation
                 output_data = {
@@ -380,12 +359,12 @@ class GAMPCategorizationWorkflow(Workflow):
                         "risk_assessment_generation"
                     ],
                     transformation_metadata={
-                        "transformation_method": "llm_categorization_agent",
+                        "transformation_method": "llm_structured_prompt_with_ambiguity_guards",
                         "agent_type": "gamp_categorization",
                         "workflow_step": "categorize_document",
                         "attempt_number": attempt + 1,
                         "processing_successful": True,
-                        "confidence_threshold_met": categorization_event.confidence_score >= 0.5
+                        "confidence_threshold_met": categorization_event.confidence_score >= self.confidence_threshold
                     },
                     workflow_step="gamp_categorization",
                     workflow_context={
@@ -402,7 +381,10 @@ class GAMPCategorizationWorkflow(Workflow):
                     "confidence": categorization_event.confidence_score,
                     "review_required": categorization_event.review_required,
                     "justification": categorization_event.justification,
-                    "is_fallback": categorization_event.confidence_score == 0.0  # Mark as fallback if confidence is 0
+                    "is_fallback": categorization_event.confidence_score == 0.0,
+                    "has_ambiguity_signals": getattr(categorization_event, "has_ambiguity_signals", False),
+                    "ambiguity_details": getattr(categorization_event, "ambiguity_details", None),
+                    "alternative_categories": getattr(categorization_event, "alternative_categories", None)
                 })
 
                 # Log success
@@ -766,7 +748,7 @@ async def main():
             document_name="test_urs.md",
             enable_error_handling=True,
             verbose=True,
-            confidence_threshold=0.60
+            confidence_threshold=0.85
         )
 
         # Display results

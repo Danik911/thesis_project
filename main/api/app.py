@@ -11,7 +11,7 @@ import logging
 import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import yaml
 import aiofiles
@@ -34,15 +34,28 @@ else:
 
 from .audit import get_audit_logger, initialize_audit_logger
 from .dependencies import (
+    ApprovalLockDep,
+    ApprovalRepositoryDep,
     CurrentUserDep,
     JobLockDep,
     JobQueueDep,
     JobRepositoryDep,
     StorageAdapterDep,
     ValidatedFileDep,
+    initialize_approval_infrastructure,
     initialize_job_infrastructure,
 )
-from .models import JobRecord, JobStatus, JobStatusResponse, JobSubmitResponse
+from .models import (
+    ApprovalDecision,
+    ApprovalRecord,
+    ApprovalRequest,
+    ApprovalResponse,
+    JobRecord,
+    JobStatus,
+    JobStatusResponse,
+    JobStatusWithApproval,
+    JobSubmitResponse,
+)
 from .observability import initialize_langfuse, shutdown_langfuse
 from .worker import process_job_worker
 
@@ -81,6 +94,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize job infrastructure
     job_queue, job_repository, job_lock = initialize_job_infrastructure()
     logger.info("Job infrastructure initialized")
+
+    # Initialize approval infrastructure for HIL workflow
+    approval_repository, approval_lock = initialize_approval_infrastructure()
+    logger.info("Approval infrastructure initialized")
 
     # Start background worker task
     worker_task = asyncio.create_task(
@@ -519,6 +536,339 @@ async def get_job_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"CRITICAL: Job status query failed: {e}"
         ) from e
+
+
+# =============================================================================
+# HIL (Human-in-the-Loop) Approval Endpoints
+# =============================================================================
+
+
+@app.get("/jobs/{job_id}/approval-status", response_model=JobStatusWithApproval)
+@observe(name="get_job_approval_status")
+async def get_job_approval_status(
+    job_id: str,
+    job_repository: JobRepositoryDep,
+    job_lock: JobLockDep,
+    user: CurrentUserDep
+) -> JobStatusWithApproval:
+    """
+    Get extended job status with approval details for HIL workflow.
+
+    Returns detailed information including:
+    - Current job status
+    - Whether approval is required
+    - Approval reason and timeout
+    - AI categorization result with confidence
+    - Alternative categories for human review
+
+    Args:
+        job_id: Unique job identifier
+        job_repository: Job repository dependency
+        job_lock: Job lock dependency
+        user: Current user dependency (Clerk JWT claims)
+
+    Returns:
+        JobStatusWithApproval with full approval context
+
+    Raises:
+        HTTPException 401: If authentication fails
+        HTTPException 403: If user not authorized to view job
+        HTTPException 404: If job not found
+
+    CRITICAL: NO FALLBACK LOGIC - All errors propagate explicitly
+    """
+    async with job_lock:
+        job = job_repository.get(job_id)
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"CRITICAL: Job {job_id} not found"
+        )
+
+    # Authorization check: User can only access their own jobs
+    if job.user_id != user.sub:
+        logger.warning(
+            f"Authorization denied: User {user.sub} ({user.email}) "
+            f"attempted to access job {job_id} owned by {job.user_id}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"CRITICAL: User not authorized to view job {job_id}"
+        )
+
+    # Calculate timeout remaining
+    timeout_remaining_seconds: int | None = None
+    if job.approval_timeout_at:
+        remaining = (job.approval_timeout_at - datetime.now(UTC)).total_seconds()
+        timeout_remaining_seconds = max(0, int(remaining))
+
+    # Extract alternative categories from categorization result
+    alternative_categories: list[int] | None = None
+    if job.categorization_result and "alternative_categories" in job.categorization_result:
+        alternative_categories = job.categorization_result["alternative_categories"]
+
+    return JobStatusWithApproval(
+        job_id=job.job_id,
+        status=job.status,
+        requires_approval=job.requires_approval,
+        approval_reason=job.approval_reason,
+        timeout_remaining_seconds=timeout_remaining_seconds,
+        categorization_result=job.categorization_result,
+        alternative_categories=alternative_categories,
+        created_at=job.created_at.isoformat(),
+        updated_at=job.updated_at.isoformat() if job.updated_at else None
+    )
+
+
+@app.post("/jobs/{job_id}/approval", response_model=ApprovalResponse)
+@observe(name="submit_job_approval")
+async def submit_job_approval(
+    job_id: str,
+    approval_request: ApprovalRequest,
+    job_repository: JobRepositoryDep,
+    job_lock: JobLockDep,
+    approval_repository: ApprovalRepositoryDep,
+    approval_lock: ApprovalLockDep,
+    user: CurrentUserDep,
+    request: Request
+) -> ApprovalResponse:
+    """
+    Submit human approval decision for HIL workflow.
+
+    Validates:
+    - Job exists and belongs to user
+    - Job status is AWAITING_APPROVAL
+    - Approval timeout not expired
+
+    Actions:
+    - Creates ALCOA+ compliant ApprovalRecord
+    - Updates job status to APPROVED or REJECTED
+    - Stores human category decision
+    - Logs to audit trail
+
+    Args:
+        job_id: Unique job identifier
+        approval_request: Approval decision with justification
+        job_repository: Job repository dependency
+        job_lock: Job lock dependency
+        approval_repository: Approval repository dependency
+        approval_lock: Approval lock dependency
+        user: Current user dependency (Clerk JWT claims)
+        request: FastAPI request for IP/User-Agent
+
+    Returns:
+        ApprovalResponse with updated job status
+
+    Raises:
+        HTTPException 400: If job not awaiting approval
+        HTTPException 401: If authentication fails
+        HTTPException 403: If user not authorized
+        HTTPException 404: If job not found
+        HTTPException 408: If approval timeout expired
+
+    CRITICAL: NO FALLBACK LOGIC - All errors propagate explicitly
+    """
+    try:
+        # Get job with lock
+        async with job_lock:
+            job = job_repository.get(job_id)
+
+            if job is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"CRITICAL: Job {job_id} not found"
+                )
+
+            # Authorization check: User can only approve their own jobs
+            if job.user_id != user.sub:
+                logger.warning(
+                    f"Authorization denied: User {user.sub} ({user.email}) "
+                    f"attempted to approve job {job_id} owned by {job.user_id}"
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"CRITICAL: User not authorized to approve job {job_id}"
+                )
+
+            # Validate job is awaiting approval
+            if job.status != JobStatus.AWAITING_APPROVAL:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"CRITICAL: Job {job_id} is not awaiting approval (status: {job.status})"
+                )
+
+            # Check timeout not expired
+            if job.approval_timeout_at and datetime.now(UTC) > job.approval_timeout_at:
+                # Auto-reject on timeout
+                job.status = JobStatus.REJECTED
+                job.updated_at = datetime.now(UTC)
+                logger.warning(f"Job {job_id} approval timeout expired - auto-rejecting")
+                raise HTTPException(
+                    status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                    detail=f"CRITICAL: Approval timeout expired for job {job_id}"
+                )
+
+            # Extract AI categorization details for audit record
+            ai_category = 5  # Default
+            ai_confidence = 0.0
+            ai_reasoning = "Unknown"
+            ambiguity_reason = None
+            alternative_categories = None
+
+            if job.categorization_result:
+                ai_category = job.categorization_result.get("gamp_category", 5)
+                ai_confidence = job.categorization_result.get("confidence", 0.0)
+                ai_reasoning = job.categorization_result.get("reasoning", "No reasoning provided")
+                ambiguity_reason = job.categorization_result.get("ambiguity_reason")
+                alternative_categories = job.categorization_result.get("alternative_categories")
+
+            # Create ALCOA+ compliant approval record
+            approval_record = ApprovalRecord(
+                job_id=job_id,
+                # AI Recommendation
+                ai_category=ai_category,
+                ai_confidence=ai_confidence,
+                ai_reasoning=ai_reasoning,
+                ambiguity_reason=ambiguity_reason,
+                alternative_categories=alternative_categories,
+                # Human Decision
+                approval_decision=approval_request.approval_decision,
+                human_category=approval_request.human_category,
+                justification=approval_request.justification,
+                # ALCOA+ Compliance
+                user_id=user.sub,
+                user_email=user.email,
+                digital_signature=f"{user.sub}_{datetime.now(UTC).isoformat()}",
+                # Metadata
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent")
+            )
+
+            # Determine final job status and category
+            if approval_request.approval_decision == ApprovalDecision.APPROVE:
+                job.status = JobStatus.APPROVED
+                # Use human category if provided, otherwise keep AI category
+                job.human_category = approval_request.human_category or ai_category
+                workflow_resumed = True
+                message = f"Job approved with GAMP category {job.human_category}"
+            elif approval_request.approval_decision == ApprovalDecision.REJECT:
+                job.status = JobStatus.REJECTED
+                job.human_category = None
+                workflow_resumed = False
+                message = "Job rejected by human reviewer"
+            else:  # REQUEST_REVISION
+                # Keep AWAITING_APPROVAL status, extend timeout
+                job.approval_timeout_at = datetime.now(UTC) + timedelta(hours=1)
+                workflow_resumed = False
+                message = "Revision requested - timeout extended by 1 hour"
+
+            job.updated_at = datetime.now(UTC)
+
+        # Store approval record in repository
+        async with approval_lock:
+            if job_id not in approval_repository:
+                approval_repository[job_id] = []
+            approval_repository[job_id].append(approval_record)
+
+        # Log to audit trail
+        audit_logger = get_audit_logger()
+        audit_logger.log_event(
+            job_id=job_id,
+            event_type="approval",
+            user_id=user.sub,
+            status=job.status,
+            user_email=user.email,
+            metadata={
+                "approval_decision": approval_request.approval_decision.value,
+                "human_category": approval_request.human_category,
+                "justification": approval_request.justification,
+                "ai_category": ai_category,
+                "ai_confidence": ai_confidence,
+                "digital_signature": approval_record.digital_signature
+            }
+        )
+
+        logger.info(
+            f"Approval recorded for job {job_id}: "
+            f"decision={approval_request.approval_decision.value}, "
+            f"human_category={approval_request.human_category}, "
+            f"new_status={job.status}"
+        )
+
+        return ApprovalResponse(
+            job_id=job_id,
+            status=job.status,
+            gamp_category=job.human_category or ai_category,
+            workflow_resumed=workflow_resumed,
+            trace_id=None,  # Will be populated by worker when resuming
+            message=message
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Approval submission failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"CRITICAL: Approval submission failed: {e}"
+        ) from e
+
+
+@app.get("/jobs/{job_id}/approval-history")
+@observe(name="get_approval_history")
+async def get_approval_history(
+    job_id: str,
+    job_repository: JobRepositoryDep,
+    job_lock: JobLockDep,
+    approval_repository: ApprovalRepositoryDep,
+    approval_lock: ApprovalLockDep,
+    user: CurrentUserDep
+) -> list[dict]:
+    """
+    Get approval history for a job (ALCOA+ audit trail).
+
+    Returns all approval records for the job in chronological order.
+
+    Args:
+        job_id: Unique job identifier
+        job_repository: Job repository dependency
+        job_lock: Job lock dependency
+        approval_repository: Approval repository dependency
+        approval_lock: Approval lock dependency
+        user: Current user dependency
+
+    Returns:
+        List of approval records
+
+    Raises:
+        HTTPException 403: If user not authorized
+        HTTPException 404: If job not found
+
+    CRITICAL: NO FALLBACK LOGIC - All errors propagate explicitly
+    """
+    # Validate job exists and user has access
+    async with job_lock:
+        job = job_repository.get(job_id)
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"CRITICAL: Job {job_id} not found"
+        )
+
+    if job.user_id != user.sub:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"CRITICAL: User not authorized to view job {job_id}"
+        )
+
+    # Get approval records
+    async with approval_lock:
+        records = approval_repository.get(job_id, [])
+
+    # Convert to dict for JSON serialization
+    return [record.model_dump() for record in records]
 
 
 @app.exception_handler(Exception)

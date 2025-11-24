@@ -4,12 +4,19 @@ Background worker for async job processing.
 Implements long-running coroutine that consumes jobs from asyncio.Queue
 with retry logic, error handling, and GAMP-5 audit trail.
 
+Supports Human-in-the-Loop (HIL) workflow:
+- Detects when categorization requires human review
+- Pauses workflow and updates job to AWAITING_APPROVAL
+- Polls for approval decision every 2 seconds
+- Resumes with human-approved category or rejects on timeout
+
 TASK 3.5: Fully implemented worker with UnifiedWorkflow integration.
+TASK 3.13: Extended with HIL pause/resume functionality.
 """
 
 import asyncio
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +24,13 @@ from dotenv import load_dotenv
 
 from .audit import get_audit_logger
 from .models import JobRecord, JobStatus
-from .worker_executor import WorkflowExecutor, read_urs_from_storage
+from .worker_executor import (
+    HIL_APPROVAL_TIMEOUT_SECONDS,
+    HIL_ENABLED,
+    HIL_POLL_INTERVAL_SECONDS,
+    WorkflowExecutor,
+    read_urs_from_storage,
+)
 
 # Load environment variables from .env.local (for local development)
 env_file = Path(__file__).parent.parent.parent / ".env.local"
@@ -108,9 +121,10 @@ async def process_job_worker(
                 }
             )
 
-            # Process job with retry logic
+            # Process job with retry logic (includes HIL pause/resume if needed)
             success = await _process_job_with_retries(
                 job=job,
+                job_repository=job_repository,
                 job_lock=job_lock,
                 audit_logger=audit_logger,
                 executor=executor
@@ -167,21 +181,23 @@ async def process_job_worker(
 
 async def _process_job_with_retries(
     job: JobRecord,
+    job_repository: dict[str, JobRecord],
     job_lock: asyncio.Lock,
     audit_logger: Any,
     executor: WorkflowExecutor
 ) -> bool:
     """
-    Process job with exponential backoff retry logic.
+    Process job with exponential backoff retry logic and HIL support.
 
     Args:
         job: Job record to process
+        job_repository: Shared job repository for HIL polling
         job_lock: Lock for updating job state
         audit_logger: Audit logger for compliance
         executor: WorkflowExecutor instance
 
     Returns:
-        True if job succeeded, False if failed after max retries
+        True if job succeeded, False if failed after max retries or HIL rejection
 
     Retry Schedule:
     - Attempt 1: Immediate
@@ -189,6 +205,11 @@ async def _process_job_with_retries(
     - Attempt 3: After 2 seconds
     - Attempt 4: After 4 seconds
     - Give up after 3 retries (4 total attempts)
+
+    HIL Support:
+    - If categorization triggers review_required=True and HIL_ENABLED=True
+    - Updates job to AWAITING_APPROVAL and polls for decision
+    - Resumes workflow if APPROVED, fails job if REJECTED/timeout
 
     CRITICAL: Reads existing retry_count from job record to prevent infinite loops
     on container restart or function re-invocation.
@@ -216,7 +237,94 @@ async def _process_job_with_retries(
             # Execute actual workflow (replaces simulation)
             result = await _execute_workflow(job, executor)
 
-            # Update job with result
+            # Check if HIL is required based on workflow result
+            # This is determined by categorization ambiguity detection (Task 3.12)
+            hil_required = (
+                HIL_ENABLED and
+                result.get("workflow_metadata", {}).get("review_required", False)
+            )
+
+            # If categorization result has ambiguity signals, also trigger HIL
+            workflow_metadata = result.get("workflow_metadata", {})
+            categorization_result = {
+                "gamp_category": result.get("gamp_category"),
+                "confidence": workflow_metadata.get("confidence_score", 1.0),
+                "reasoning": workflow_metadata.get("categorization_reasoning", ""),
+                "has_ambiguity_signals": workflow_metadata.get("has_ambiguity_signals", False),
+                "alternative_categories": workflow_metadata.get("alternative_categories"),
+                "ambiguity_reason": workflow_metadata.get("ambiguity_reason"),
+                "review_required": workflow_metadata.get("review_required", False)
+            }
+
+            if hil_required:
+                logger.info(
+                    f"[HIL] Human review required for job {job.job_id}\n"
+                    f"  GAMP Category: {result['gamp_category']}\n"
+                    f"  Confidence: {categorization_result['confidence']}\n"
+                    f"  Ambiguity: {categorization_result['has_ambiguity_signals']}\n"
+                    f"  Reason: {categorization_result.get('ambiguity_reason', 'Low confidence')}"
+                )
+
+                # Update job status to AWAITING_APPROVAL
+                async with job_lock:
+                    job.status = JobStatus.AWAITING_APPROVAL
+                    job.requires_approval = True
+                    job.approval_reason = categorization_result.get(
+                        "ambiguity_reason",
+                        f"Low confidence ({categorization_result['confidence']:.2f})"
+                    )
+                    job.approval_timeout_at = datetime.now(UTC) + timedelta(
+                        seconds=HIL_APPROVAL_TIMEOUT_SECONDS
+                    )
+                    job.categorization_result = categorization_result
+                    job.updated_at = datetime.now(UTC)
+
+                    # Store partial result for later resume
+                    job.gamp_category = str(result["gamp_category"])
+                    job.trace_id = result.get("trace_id")
+                    job.trace_url = result.get("trace_url")
+
+                # Log HIL trigger
+                audit_logger.log_event(
+                    job_id=job.job_id,
+                    event_type="hil_triggered",
+                    user_id=job.user_id,
+                    status=JobStatus.AWAITING_APPROVAL,
+                    metadata={
+                        "categorization_result": categorization_result,
+                        "timeout_at": job.approval_timeout_at.isoformat()
+                    }
+                )
+
+                # Wait for HIL approval (polling)
+                approved = await _wait_for_hil_approval(
+                    job=job,
+                    job_repository=job_repository,
+                    job_lock=job_lock,
+                    audit_logger=audit_logger
+                )
+
+                if not approved:
+                    logger.warning(f"[HIL] Job {job.job_id} was rejected or timed out")
+                    return False
+
+                # HIL approved - continue with approved category
+                logger.info(
+                    f"[HIL] Job {job.job_id} approved with category {job.human_category}"
+                )
+
+                # Update job with result (using human-approved category if different)
+                async with job_lock:
+                    job.result_uri = result["result_uri"]
+                    # Use human category if provided, otherwise keep AI category
+                    if job.human_category:
+                        job.gamp_category = str(job.human_category)
+                    else:
+                        job.gamp_category = str(result["gamp_category"])
+
+                return True  # Success after HIL approval
+
+            # No HIL required - update job with result directly
             async with job_lock:
                 job.result_uri = result["result_uri"]
                 job.gamp_category = str(result["gamp_category"])
@@ -338,6 +446,161 @@ async def _execute_workflow(job: JobRecord, executor: WorkflowExecutor) -> dict[
     )
 
     return result
+
+
+async def _wait_for_hil_approval(
+    job: JobRecord,
+    job_repository: dict[str, JobRecord],
+    job_lock: asyncio.Lock,
+    audit_logger: Any,
+    timeout_seconds: int = HIL_APPROVAL_TIMEOUT_SECONDS,
+    poll_interval_seconds: int = HIL_POLL_INTERVAL_SECONDS
+) -> bool:
+    """
+    Poll for HIL approval decision.
+
+    Implements database polling pattern (per user decision):
+    - Polls job status every poll_interval_seconds
+    - Returns True if APPROVED, False if REJECTED or timeout
+
+    Args:
+        job: Job record requiring approval
+        job_repository: Shared job repository
+        job_lock: Lock for repository access
+        audit_logger: Audit logger for compliance
+        timeout_seconds: Maximum wait time before auto-reject
+        poll_interval_seconds: Polling interval
+
+    Returns:
+        True if approved, False if rejected or timeout
+
+    CRITICAL: NO FALLBACK LOGIC
+    - Timeout results in explicit REJECTED status
+    - All state transitions logged to audit trail
+    """
+    job_id = job.job_id
+    start_time = datetime.now(UTC)
+    timeout_at = start_time + timedelta(seconds=timeout_seconds)
+
+    logger.info(
+        f"[HIL] Starting approval polling for job {job_id}\n"
+        f"  Poll interval: {poll_interval_seconds}s\n"
+        f"  Timeout: {timeout_seconds}s ({timeout_at.isoformat()})"
+    )
+
+    # Log HIL wait start
+    audit_logger.log_event(
+        job_id=job_id,
+        event_type="hil_wait_start",
+        user_id=job.user_id,
+        status=JobStatus.AWAITING_APPROVAL,
+        metadata={
+            "timeout_at": timeout_at.isoformat(),
+            "poll_interval_seconds": poll_interval_seconds,
+            "categorization_result": job.categorization_result
+        }
+    )
+
+    poll_count = 0
+    while datetime.now(UTC) < timeout_at:
+        poll_count += 1
+        await asyncio.sleep(poll_interval_seconds)
+
+        # Check job status
+        async with job_lock:
+            current_job = job_repository.get(job_id)
+
+            if current_job is None:
+                logger.error(f"[HIL] Job {job_id} disappeared from repository during polling")
+                return False
+
+            current_status = current_job.status
+
+            if current_status == JobStatus.APPROVED:
+                logger.info(
+                    f"[HIL] Job {job_id} APPROVED after {poll_count} polls "
+                    f"(human_category: {current_job.human_category})"
+                )
+
+                # Log approval received
+                audit_logger.log_event(
+                    job_id=job_id,
+                    event_type="hil_approved",
+                    user_id=job.user_id,
+                    status=JobStatus.APPROVED,
+                    metadata={
+                        "poll_count": poll_count,
+                        "wait_time_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+                        "human_category": current_job.human_category
+                    }
+                )
+
+                # Update job reference to get latest state
+                job.status = current_job.status
+                job.human_category = current_job.human_category
+                job.updated_at = current_job.updated_at
+
+                return True
+
+            if current_status == JobStatus.REJECTED:
+                logger.info(
+                    f"[HIL] Job {job_id} REJECTED after {poll_count} polls"
+                )
+
+                # Log rejection received
+                audit_logger.log_event(
+                    job_id=job_id,
+                    event_type="hil_rejected",
+                    user_id=job.user_id,
+                    status=JobStatus.REJECTED,
+                    metadata={
+                        "poll_count": poll_count,
+                        "wait_time_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+                        "rejection_reason": "human_decision"
+                    }
+                )
+
+                job.status = current_job.status
+                job.updated_at = current_job.updated_at
+
+                return False
+
+            # Still awaiting approval - continue polling
+            if poll_count % 30 == 0:  # Log every 30 polls (60 seconds)
+                remaining = (timeout_at - datetime.now(UTC)).total_seconds()
+                logger.info(
+                    f"[HIL] Job {job_id} still awaiting approval "
+                    f"(poll #{poll_count}, {remaining:.0f}s remaining)"
+                )
+
+    # Timeout reached - auto-reject
+    logger.warning(f"[HIL] Job {job_id} approval TIMEOUT after {poll_count} polls")
+
+    async with job_lock:
+        current_job = job_repository.get(job_id)
+        if current_job and current_job.status == JobStatus.AWAITING_APPROVAL:
+            current_job.status = JobStatus.REJECTED
+            current_job.updated_at = datetime.now(UTC)
+            current_job.error_message = f"HIL approval timeout after {timeout_seconds} seconds"
+
+            job.status = current_job.status
+            job.updated_at = current_job.updated_at
+            job.error_message = current_job.error_message
+
+    # Log timeout rejection
+    audit_logger.log_event(
+        job_id=job_id,
+        event_type="hil_timeout",
+        user_id=job.user_id,
+        status=JobStatus.REJECTED,
+        metadata={
+            "poll_count": poll_count,
+            "timeout_seconds": timeout_seconds,
+            "rejection_reason": "timeout_auto_reject"
+        }
+    )
+
+    return False
 
 
 if __name__ == "__main__":

@@ -4,6 +4,12 @@ Worker execution logic for pharmaceutical test generation workflow.
 This module implements the actual workflow execution for background jobs,
 integrating with the UnifiedWorkflow to process URS documents end-to-end.
 
+Supports Human-in-the-Loop (HIL) workflow:
+- Detects when categorization requires human review
+- Pauses workflow and updates job to AWAITING_APPROVAL
+- Polls for approval decision every 2 seconds
+- Resumes with human-approved category or rejects on timeout
+
 CRITICAL: NO FALLBACK LOGIC
 - All errors must raise exceptions with full context
 - All status updates must reflect actual state
@@ -13,9 +19,10 @@ CRITICAL: NO FALLBACK LOGIC
 import asyncio
 import json
 import logging
+import os
 import traceback
 from contextlib import nullcontext
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +37,12 @@ from main.src.adapters.local_adapter import LocalStorageAdapter
 from main.src.core.unified_workflow import UnifiedTestGenerationWorkflow
 
 logger = logging.getLogger(__name__)
+
+# HIL Configuration (can be overridden via environment variables)
+HIL_APPROVAL_TIMEOUT_SECONDS = int(os.getenv("HIL_APPROVAL_TIMEOUT_SECONDS", "3600"))  # 1 hour default
+HIL_POLL_INTERVAL_SECONDS = int(os.getenv("HIL_POLL_INTERVAL_SECONDS", "2"))  # 2 seconds default
+HIL_CONFIDENCE_THRESHOLD = float(os.getenv("HIL_CONFIDENCE_THRESHOLD", "0.85"))  # Below this triggers HIL
+HIL_ENABLED = os.getenv("HIL_ENABLED", "true").lower() == "true"
 
 
 class WorkflowExecutor:
@@ -212,6 +225,40 @@ class WorkflowExecutor:
                 test_suite_content = workflow_result.get("test_suite")
                 gamp_category = workflow_result.get("gamp_category")
 
+                # Extract HIL-related categorization metadata
+                # The workflow returns categorization info at multiple locations:
+                # 1. workflow_result["categorization"] - primary location with confidence, review_required
+                # 2. workflow_result["summary"] - contains review_required, confidence
+                categorization_data = workflow_result.get("categorization", {})
+                summary_data = workflow_result.get("summary", {})
+
+                if isinstance(categorization_data, dict):
+                    review_required = categorization_data.get("review_required", False)
+                    has_ambiguity_signals = False  # Will be set from summary if available
+                    confidence_score = categorization_data.get("confidence_score",
+                                       categorization_data.get("confidence", 1.0))
+                    alternative_categories = categorization_data.get("alternative_categories")
+                    ambiguity_reason = categorization_data.get("ambiguity_reason")
+                    categorization_reasoning = categorization_data.get("reasoning", "")
+                else:
+                    # Default values if categorization data not available
+                    review_required = False
+                    has_ambiguity_signals = False
+                    confidence_score = 1.0
+                    alternative_categories = None
+                    ambiguity_reason = None
+                    categorization_reasoning = ""
+
+                # Override from summary if available (more reliable source)
+                if isinstance(summary_data, dict):
+                    review_required = summary_data.get("review_required", review_required)
+                    confidence_score = summary_data.get("confidence", confidence_score)
+
+                logger.debug(
+                    f"HIL metadata extracted: review_required={review_required}, "
+                    f"ambiguity={has_ambiguity_signals}, confidence={confidence_score}"
+                )
+
                 if gamp_category:
                     _safe_update_trace(
                         tags=trace_tags + [f"gamp_category:{gamp_category}"],
@@ -284,7 +331,14 @@ class WorkflowExecutor:
                         "start_time": start_time.isoformat() + "Z",
                         "end_time": end_time.isoformat() + "Z",
                         "urs_filename": metadata.get("urs_filename"),
-                        "user_id": user_id
+                        "user_id": user_id,
+                        # HIL-related metadata for Task 3.13
+                        "review_required": review_required,
+                        "has_ambiguity_signals": has_ambiguity_signals,
+                        "confidence_score": confidence_score,
+                        "alternative_categories": alternative_categories,
+                        "ambiguity_reason": ambiguity_reason,
+                        "categorization_reasoning": categorization_reasoning
                     }
                 }
 
