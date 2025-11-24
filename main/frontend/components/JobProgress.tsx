@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
+import InteractiveQuiz from './quiz/InteractiveQuiz';
 
 interface JobProgressProps {
   status: string;
   logs: string[];
   startTime?: number | null;
+  jobId?: string;
 }
 
-export default function JobProgress({ status, logs, startTime }: JobProgressProps) {
+export default function JobProgress({ status, logs, startTime, jobId }: JobProgressProps) {
   const [progress, setProgress] = useState(0);
 
   // Simulate progress based on status or logs
@@ -90,42 +92,9 @@ export default function JobProgress({ status, logs, startTime }: JobProgressProp
         </div>
       </div>
 
-      {/* Logs Console */}
-      <div className="glass-panel p-0 overflow-hidden flex flex-col h-96">
-        <div className="bg-slate-900/80 px-4 py-2 border-b border-slate-700/50 flex justify-between items-center">
-          <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">System Logs</span>
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
-          </div>
-        </div>
-        <div className="flex-1 p-4 overflow-y-auto font-mono text-sm space-y-1 custom-scrollbar bg-slate-950/50">
-          {logs.length === 0 ? (
-            <div className="text-slate-600 italic">Waiting for process to start...</div>
-          ) : (
-            logs.map((log, index) => (
-              <div key={index} className="flex gap-3 text-slate-300 animate-fade-in">
-                <span className="text-slate-600 select-none">{(index + 1).toString().padStart(3, '0')}</span>
-                <span className={
-                  log.includes('ERROR') ? 'text-red-400' :
-                    log.includes('SUCCESS') ? 'text-emerald-400' :
-                      log.includes('WARNING') ? 'text-amber-400' :
-                        'text-slate-300'
-                }>
-                  <span className="opacity-50 mr-2">[{new Date().toLocaleTimeString()}]</span>
-                  {log}
-                </span>
-              </div>
-            ))
-          )}
-          {status === 'PROCESSING' && (
-            <div className="flex gap-3 text-blue-400 animate-pulse">
-              <span className="text-slate-600 select-none">...</span>
-              <span>_</span>
-            </div>
-          )}
-        </div>
+      {/* Interactive Compliance Quiz */}
+      <div className="mt-8">
+        <InteractiveQuiz />
       </div>
     </div>
   );

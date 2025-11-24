@@ -12,7 +12,7 @@ interface MoleculeProps {
 }
 
 // CPK-inspired color scheme for abstract chemical elements
-const ELEMENT_COLORS = {
+const ELEMENT_COLORS: Record<string, string> = {
     'C': '#909090',  // Carbon - Gray
     'N': '#3050F8',  // Nitrogen - Blue
     'O': '#FF0D0D',  // Oxygen - Red

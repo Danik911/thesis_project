@@ -11,12 +11,39 @@ type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'E
 export default function Generate() {
     const { user, isLoaded } = useUser();
     const { getToken } = useAuth();
-    const [status, setStatus] = useState<JobStatus>('IDLE');
-    const [jobId, setJobId] = useState<string | null>(null);
-    const [logs, setLogs] = useState<string[]>([]);
+
+    // Lazy initialization: Read from localStorage BEFORE any useEffect runs
+    // Check for browser environment to avoid SSR errors
+    const [jobId, setJobId] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem('activeJobId');
+    });
+    const [status, setStatus] = useState<JobStatus>(() => {
+        if (typeof window === 'undefined') return 'IDLE';
+        const savedStatus = localStorage.getItem('activeJobStatus') as JobStatus;
+        return savedStatus || 'IDLE';
+    });
+    const [logs, setLogs] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return [];
+        const savedLogs = localStorage.getItem('jobLogs');
+        if (savedLogs) {
+            try {
+                return JSON.parse(savedLogs);
+            } catch (e) {
+                console.error("Failed to parse saved logs", e);
+                return [];
+            }
+        }
+        return [];
+    });
+    const [jobStartTime, setJobStartTime] = useState<number | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const savedStartTime = localStorage.getItem('jobStartTime');
+        return savedStartTime ? parseInt(savedStartTime, 10) : null;
+    });
+
     const [results, setResults] = useState<any>(null);
     const [jobs, setJobs] = useState<any[]>([]);
-    const [jobStartTime, setJobStartTime] = useState<number | null>(null);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Derive display name
@@ -245,64 +272,38 @@ export default function Generate() {
         }, 2000);
     }, [getToken, fetchJobs]);
 
-    const resumePolling = useCallback(async (id: string) => {
-        if (!isLoaded) return;
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-            pollJobStatus(id, apiUrl);
-        } catch (e) {
-            console.error("Failed to resume polling", e);
-        }
-    }, [isLoaded, pollJobStatus]);
-
-    const restoreCompletedJob = useCallback(async (id: string) => {
-        if (!isLoaded) return;
-        try {
-            const token = await getToken();
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-
-            // Fetch results
-            const resultResponse = await fetch(`${apiUrl}/jobs/${id}/result`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (resultResponse.ok) {
-                const resultData = await resultResponse.json();
-                setResults(resultData);
-            }
-        } catch (e) {
-            console.error("Failed to restore completed job", e);
-        }
-    }, [isLoaded, getToken]);
-
-    // Load state from localStorage on mount (moved here to access resumePolling/restoreCompletedJob)
+    // Resume async operations on mount (state already initialized via lazy init)
     useEffect(() => {
-        const savedJobId = localStorage.getItem('activeJobId');
-        const savedStatus = localStorage.getItem('activeJobStatus') as JobStatus;
-        const savedLogs = localStorage.getItem('jobLogs');
-        const savedStartTime = localStorage.getItem('jobStartTime');
+        if (!isLoaded) return;
 
-        if (savedJobId && savedStatus) {
-            setJobId(savedJobId);
-            setStatus(savedStatus);
-            if (savedLogs) {
-                try {
-                    setLogs(JSON.parse(savedLogs));
-                } catch (e) {
-                    console.error("Failed to parse saved logs", e);
-                }
-            }
-            if (savedStartTime) {
-                setJobStartTime(parseInt(savedStartTime, 10));
-            }
+        // State is already restored from localStorage via lazy initialization
+        // Just resume async operations (polling for active jobs, fetching results for completed jobs)
+        if (jobId && status) {
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
-            // Resume polling if active
-            if (savedStatus === 'PENDING' || savedStatus === 'PROCESSING') {
-                resumePolling(savedJobId);
-            } else if (savedStatus === 'COMPLETED') {
-                restoreCompletedJob(savedJobId);
+            if (status === 'PENDING' || status === 'PROCESSING') {
+                // Resume polling for active job
+                pollJobStatus(jobId, apiUrl);
+            } else if (status === 'COMPLETED' && !results) {
+                // Fetch results for completed job
+                (async () => {
+                    try {
+                        const token = await getToken();
+                        const resultResponse = await fetch(`${apiUrl}/jobs/${jobId}/result`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (resultResponse.ok) {
+                            const resultData = await resultResponse.json();
+                            setResults(resultData);
+                        }
+                    } catch (e) {
+                        console.error("Failed to restore completed job results", e);
+                    }
+                })();
             }
         }
-    }, [isLoaded, resumePolling, restoreCompletedJob]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoaded]); // Only run when Clerk finishes loading (other deps intentionally excluded)
 
     const handleDownload = async () => {
         if (!jobId) return;
@@ -486,7 +487,7 @@ export default function Generate() {
 
                         {(status === 'PENDING' || status === 'PROCESSING') && (
                             <div className="animate-fade-in">
-                                <JobProgress status={status} logs={logs} startTime={jobStartTime} />
+                                <JobProgress status={status} logs={logs} startTime={jobStartTime} jobId={jobId || undefined} />
                             </div>
                         )}
 
