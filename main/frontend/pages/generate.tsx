@@ -5,8 +5,10 @@ import Head from 'next/head';
 import FileUpload from '@/components/FileUpload';
 import JobProgress from '@/components/JobProgress';
 import ComplianceDashboard from '@/components/ComplianceDashboard';
+import ApprovalModal from '@/components/ApprovalModal';
+import { useJobStatusPolling } from '@/hooks/useJobStatusPolling';
 
-type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
+type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED' | 'AWAITING_APPROVAL';
 
 export default function Generate() {
     const { user, isLoaded } = useUser();
@@ -46,6 +48,12 @@ export default function Generate() {
     const [jobs, setJobs] = useState<any[]>([]);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Approval modal state
+    const [showApprovalModal, setShowApprovalModal] = useState(false);
+
+    // Poll for approval status separately (5-second interval)
+    const { data: approvalStatus, refetch: refetchApprovalStatus } = useJobStatusPolling(jobId, 5000);
+
     // Derive display name
     const displayName = user?.fullName ??
         user?.firstName ??
@@ -83,6 +91,14 @@ export default function Generate() {
             }
         };
     }, []);
+
+    // Detect when approval is required
+    useEffect(() => {
+        if (approvalStatus?.requires_approval && approvalStatus.status.toUpperCase() === 'AWAITING_APPROVAL') {
+            setStatus('AWAITING_APPROVAL');
+            setShowApprovalModal(true);
+        }
+    }, [approvalStatus]);
 
     useEffect(() => {
         fetchJobs();
@@ -373,6 +389,15 @@ export default function Generate() {
         setResults(null);
         setSelectedFile(null);
         setJobStartTime(null); // Reset start time
+        setShowApprovalModal(false);
+    };
+
+    const handleApprovalSubmitted = () => {
+        // Approval submitted - refetch status and close modal
+        setShowApprovalModal(false);
+        refetchApprovalStatus();
+        setLogs(prev => [...prev, 'Human approval decision submitted. Resuming workflow...']);
+        setStatus('PROCESSING');
     };
 
     if (!isLoaded) {
@@ -420,8 +445,64 @@ export default function Generate() {
                         )}
                     </div>
 
+                    {/* Approval Modal */}
+                    {approvalStatus?.categorization_result && (
+                        <ApprovalModal
+                            isOpen={showApprovalModal}
+                            onClose={() => setShowApprovalModal(false)}
+                            jobId={jobId!}
+                            categorizationResult={approvalStatus.categorization_result}
+                            timeoutRemainingSeconds={approvalStatus.timeout_remaining_seconds}
+                            onApprovalSubmitted={handleApprovalSubmitted}
+                        />
+                    )}
+
                     {/* Main Content Area */}
                     <div className="min-h-[500px]">
+                        {status === 'AWAITING_APPROVAL' && (
+                            <div className="animate-fade-in">
+                                <div className="max-w-3xl mx-auto">
+                                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-8 text-center space-y-6">
+                                        <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto">
+                                            <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-amber-400 mb-2">Awaiting Human Approval</h3>
+                                            <p className="text-slate-300 text-lg mb-2">
+                                                {approvalStatus?.approval_reason || 'AI detected ambiguity in categorization'}
+                                            </p>
+                                            {approvalStatus?.categorization_result && (
+                                                <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                                    <p className="text-sm text-slate-400 mb-1">AI Recommendation</p>
+                                                    <p className="text-xl font-bold text-blue-400 mb-2">
+                                                        Category {approvalStatus.categorization_result.gamp_category}
+                                                    </p>
+                                                    <p className="text-sm text-slate-300">
+                                                        Confidence: <span className="font-bold">
+                                                            {(approvalStatus.categorization_result.confidence_score * 100).toFixed(0)}%
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {approvalStatus?.timeout_remaining_seconds !== null && (
+                                                <p className="text-sm text-amber-300 mt-4">
+                                                    Time remaining: {Math.floor(approvalStatus.timeout_remaining_seconds / 60)}:{String(approvalStatus.timeout_remaining_seconds % 60).padStart(2, '0')}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => setShowApprovalModal(true)}
+                                            className="btn-primary bg-amber-600 hover:bg-amber-700"
+                                        >
+                                            Review Approval Request
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {status === 'IDLE' && (
                             <div className="animate-fade-in space-y-8">
                                 {!selectedFile ? (

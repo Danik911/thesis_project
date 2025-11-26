@@ -35,8 +35,43 @@ except ImportError:  # pragma: no cover - older SDKs
 from main.src.adapters.chroma_adapter import ChromaVectorStoreAdapter
 from main.src.adapters.local_adapter import LocalStorageAdapter
 from main.src.core.unified_workflow import UnifiedTestGenerationWorkflow
+from main.src.exceptions import HumanApprovalRequired
 
 logger = logging.getLogger(__name__)
+
+
+def _find_human_approval_required(exc: Exception) -> HumanApprovalRequired | None:
+    """
+    Search exception chain for HumanApprovalRequired.
+
+    LlamaIndex workflow wraps step exceptions, so we need to check the cause chain.
+
+    Args:
+        exc: The exception to search
+
+    Returns:
+        HumanApprovalRequired if found in cause chain, None otherwise
+    """
+    current = exc
+    seen = set()
+    while current is not None:
+        if id(current) in seen:
+            break
+        seen.add(id(current))
+
+        if isinstance(current, HumanApprovalRequired):
+            return current
+
+        # Check __cause__ (from 'raise ... from')
+        if current.__cause__ is not None:
+            current = current.__cause__
+        # Check __context__ (implicit exception chain)
+        elif current.__context__ is not None:
+            current = current.__context__
+        else:
+            break
+
+    return None
 
 # HIL Configuration (can be overridden via environment variables)
 HIL_APPROVAL_TIMEOUT_SECONDS = int(os.getenv("HIL_APPROVAL_TIMEOUT_SECONDS", "3600"))  # 1 hour default
@@ -80,7 +115,8 @@ class WorkflowExecutor:
         job_id: str,
         urs_content: str,
         user_id: str,
-        metadata: dict[str, Any]
+        metadata: dict[str, Any],
+        approved_category: int | None = None
     ) -> dict[str, Any]:
         """
         Execute the complete pharmaceutical test generation workflow.
@@ -96,6 +132,7 @@ class WorkflowExecutor:
             urs_content: URS document content (Markdown text)
             user_id: User identifier for audit trail
             metadata: Additional metadata (filename, hash, etc.)
+            approved_category: Pre-approved GAMP category from HIL (skips categorization)
 
         Returns:
             dict containing:
@@ -172,11 +209,23 @@ class WorkflowExecutor:
                 temp_urs_path.write_text(urs_content, encoding="utf-8")
 
                 # Initialize UnifiedTestGenerationWorkflow
-                workflow = UnifiedTestGenerationWorkflow()
+                # Pass approved_category if HIL already approved (skips categorization step)
+                workflow = UnifiedTestGenerationWorkflow(
+                    approved_category=approved_category
+                )
                 logger.info(f"UnifiedTestGenerationWorkflow initialized for job {job_id}")
 
-                # Execute workflow (this takes 5-6 minutes for Category 3 URS)
-                logger.info(f"Executing UnifiedTestGenerationWorkflow for job {job_id} (expect 5-6 minutes)...")
+                # Execute workflow
+                # If approved_category is set (HIL re-execution), categorization step will be skipped
+                if approved_category:
+                    logger.info(
+                        f"[HIL-RESUME] Executing workflow with pre-approved category {approved_category}\n"
+                        f"  Job ID: {job_id}\n"
+                        f"  Expected duration: 3-4 minutes (categorization skipped)"
+                    )
+                else:
+                    logger.info(f"Executing UnifiedTestGenerationWorkflow for job {job_id} (expect 5-6 minutes)...")
+
                 workflow_result_raw = await workflow.run(
                     document_path=str(temp_urs_path)
                 )
@@ -343,6 +392,17 @@ class WorkflowExecutor:
                 }
 
         except Exception as e:
+            # Check if this is a HumanApprovalRequired wrapped by LlamaIndex
+            hil_exc = _find_human_approval_required(e)
+            if hil_exc is not None:
+                logger.info(
+                    f"[HIL-WEB] HumanApprovalRequired found in exception chain for job {job_id}\n"
+                    f"  Original error: {type(e).__name__}: {e!s}\n"
+                    f"  HIL message: {str(hil_exc)}"
+                )
+                # Re-raise the HumanApprovalRequired directly so worker can catch it
+                raise hil_exc from e
+
             # Log complete error context for debugging
             logger.exception(
                 f"WORKFLOW EXECUTION FAILED\n"

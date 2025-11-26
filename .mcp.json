@@ -94,9 +94,13 @@
 				"serena",
 				"start-mcp-server",
 				"--context",
-				"ide-assistant",
+				"desktop-app",
+				"--mode",
+				"editing",
+				"--mode",
+				"interactive",
 				"--project",
-				"C:\\Users\\anteb\\Desktop\\Courses\\Projects\\thesis_project"
+				"thesis_project"
 			]
 		},
 		"playwright": {

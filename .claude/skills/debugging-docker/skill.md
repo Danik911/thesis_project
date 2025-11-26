@@ -1,5 +1,5 @@
 ---
-name: debugging-docker-operations
+name: debugging-docker
 description: Debugs Docker build failures, container runtime errors, platform architecture issues (ARM64/AMD64/WSL2), and optimizes Docker workflows. Use when encountering Docker build errors, container crashes, performance problems, platform compatibility issues, networking failures, volume permission errors, or when working with multi-platform Docker images.
 ---
 

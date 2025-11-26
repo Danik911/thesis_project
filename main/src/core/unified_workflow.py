@@ -69,6 +69,7 @@ from src.core.events import (
 from src.core.human_consultation import (
     HumanConsultationManager,
 )
+from main.src.exceptions import HumanApprovalRequired
 from src.monitoring.phoenix_config import setup_phoenix
 from src.monitoring.simple_tracer import get_tracer
 
@@ -449,11 +450,12 @@ class UnifiedTestGenerationWorkflow(Workflow):
         enable_human_consultation: bool = True,
         llm: LLM | None = None,
         enable_part11_compliance: bool = True,
-        user_session_id: str | None = None
+        user_session_id: str | None = None,
+        approved_category: int | None = None
     ):
         """
         Initialize the unified workflow with 21 CFR Part 11 compliance.
-        
+
         Args:
             timeout: Maximum time to wait for workflow completion
             verbose: Enable verbose logging
@@ -463,6 +465,7 @@ class UnifiedTestGenerationWorkflow(Workflow):
             llm: Language model for workflow intelligence
             enable_part11_compliance: Enable 21 CFR Part 11 compliance controls
             user_session_id: Active user session for access control
+            approved_category: Pre-approved GAMP category from HIL (skips categorization step)
         """
         super().__init__(timeout=timeout, verbose=verbose)
 
@@ -474,7 +477,15 @@ class UnifiedTestGenerationWorkflow(Workflow):
         self.enable_human_consultation = enable_human_consultation
         self.enable_part11_compliance = enable_part11_compliance
         self.user_session_id = user_session_id
+        self.approved_category = approved_category  # Pre-approved category from HIL (skips categorization)
         self.logger = logging.getLogger(__name__)
+
+        # Log HIL resume if approved_category is set
+        if approved_category:
+            self.logger.info(
+                f"[HIL-RESUME] Workflow initialized with pre-approved category: {approved_category}\n"
+                f"  Categorization step will be SKIPPED"
+            )
 
         # Initialize LLM using centralized configuration
         # NO FALLBACKS - LLMConfig handles all errors explicitly
@@ -776,17 +787,103 @@ class UnifiedTestGenerationWorkflow(Workflow):
     ) -> GAMPCategorizationEvent:
         """
         Execute GAMP-5 categorization on the ingested document.
-        
+
         Args:
             ctx: Workflow context
             ev: URS ingestion event
-            
+
         Returns:
             GAMPCategorizationEvent with categorization results
         """
         # Initialize comprehensive audit trail for state transitions
         from src.core.audit_trail import get_audit_trail
         audit_trail = get_audit_trail()
+
+        # ============================================================
+        # HIL RESUME: Skip categorization if human-approved category exists
+        # ============================================================
+        if self.approved_category is not None:
+            self.logger.info(
+                f"[HIL-SKIP] Skipping AI categorization - using human-approved category: {self.approved_category}\n"
+                f"  Document: {ev.document_name}\n"
+                f"  Reason: Category pre-approved via HIL consultation"
+            )
+            print(f"\n[HIL-RESUME] Using human-approved GAMP Category: {self.approved_category}")
+            flush_output()
+
+            # Map integer to GAMPCategory enum
+            category_map = {
+                1: GAMPCategory.CATEGORY_1,
+                3: GAMPCategory.CATEGORY_3,
+                4: GAMPCategory.CATEGORY_4,
+                5: GAMPCategory.CATEGORY_5
+            }
+            approved_gamp_category = category_map.get(self.approved_category)
+            if approved_gamp_category is None:
+                raise ValueError(f"Invalid approved_category: {self.approved_category}. Must be 1, 3, 4, or 5.")
+
+            # Create categorization event with human-approved category
+            categorization_event = GAMPCategorizationEvent(
+                gamp_category=approved_gamp_category,
+                confidence_score=1.0,  # Human decision = full confidence
+                justification=f"Human-approved via HIL consultation. Category {self.approved_category} selected by qualified reviewer.",
+                risk_assessment={
+                    "category": self.approved_category,
+                    "category_description": f"GAMP Category {self.approved_category} - Human-approved",
+                    "validation_approach": "Per human reviewer decision",
+                    "confidence_score": 1.0,
+                    "evidence_strength": "Human approval after HIL consultation",
+                    "requires_human_review": False,  # Already reviewed
+                    "source": "hil_approval"
+                },
+                categorized_by="human_approval_hil",
+                review_required=False,  # Already reviewed by human
+                has_ambiguity_signals=False,  # Resolved by human
+                ambiguity_details=None,
+                alternative_categories=None
+            )
+
+            # Store categorization results in context
+            await safe_context_set(ctx, "categorization_result", categorization_event)
+            await safe_context_set(ctx, "gamp_category", approved_gamp_category)
+
+            # Log HIL skip to audit trail
+            audit_trail.log_state_transition(
+                from_state="document_loaded",
+                to_state="categorization_completed_hil",
+                transition_trigger="hil_approved_category",
+                transition_metadata={
+                    "document_name": ev.document_name,
+                    "approved_category": self.approved_category,
+                    "categorization_source": "human_approval",
+                    "ai_categorization_skipped": True
+                },
+                workflow_step="categorize_document",
+                state_data={
+                    "current_step": "gamp_categorization_hil_skip",
+                    "human_approved_category": self.approved_category,
+                    "confidence_score": 1.0
+                },
+                workflow_context={
+                    "workflow_session_id": self._workflow_session_id,
+                    "regulatory_standards": ["GAMP-5"],
+                    "hil_resume": True
+                }
+            )
+
+            # Display categorization results
+            print("\n[CATEGORIZATION] HIL-APPROVED RESULTS:")
+            print(f"   Category: {self.approved_category}")
+            print(f"   Confidence: 100% (Human-approved)")
+            print(f"   Source: HIL Consultation")
+            flush_output()
+
+            self.logger.info(f"[GAMP5] HIL-approved Category {self.approved_category} with 100% confidence")
+
+            return categorization_event
+        # ============================================================
+        # END HIL RESUME SECTION
+        # ============================================================
 
         self.logger.info(f"[GAMP5] Starting GAMP-5 categorization for {ev.document_name}")
         flush_output()
@@ -1635,6 +1732,11 @@ class UnifiedTestGenerationWorkflow(Workflow):
             })
 
             return self._create_planning_event_from_categorization(categorization_event)
+
+        except HumanApprovalRequired:
+            # Re-raise HumanApprovalRequired for worker to catch and set AWAITING_APPROVAL status
+            self.logger.info("[CONSULT] HumanApprovalRequired raised - workflow suspended for async web approval")
+            raise
 
         except Exception as e:
             self.logger.error(f"[CONSULT] Consultation failed: {e!s}")

@@ -8,6 +8,7 @@ and background job processing using asyncio.Queue and in-memory storage.
 import asyncio
 import hashlib
 import logging
+import os
 import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -15,6 +16,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import yaml
 import aiofiles
+import sys
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
@@ -37,14 +39,19 @@ from .dependencies import (
     ApprovalLockDep,
     ApprovalRepositoryDep,
     CurrentUserDep,
+    DbJobRepositoryDep,
     JobLockDep,
     JobQueueDep,
     JobRepositoryDep,
     StorageAdapterDep,
     ValidatedFileDep,
     initialize_approval_infrastructure,
+    initialize_database_repository,
     initialize_job_infrastructure,
+    is_database_mode,
+    shutdown_database_repository,
 )
+from .job_repository import PostgresJobRepository
 from .models import (
     ApprovalDecision,
     ApprovalRecord,
@@ -59,6 +66,13 @@ from .models import (
 from .observability import initialize_langfuse, shutdown_langfuse
 from .worker import process_job_worker
 
+# Configure logging to ensure output to stdout
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,6 +84,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Handles startup and shutdown:
     - Initialize audit logger
     - Initialize job infrastructure (queue, repository, lock)
+    - Initialize database repository (if DATABASE_URL set)
     - Start background worker task
     - Clean shutdown on termination
 
@@ -77,6 +92,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         None
     """
     # Startup
+    print("DEBUG: Lifespan startup initiated", flush=True)
     logger.info("FastAPI application starting...")
 
     # Initialize audit logger
@@ -91,9 +107,68 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.error(f"Failed to initialize LangFuse: {e}. Continuing without observability.")
         # Don't fail startup if LangFuse fails - observability is important but not critical
 
-    # Initialize job infrastructure
+    # Initialize job infrastructure (in-memory, for backward compatibility)
     job_queue, job_repository, job_lock = initialize_job_infrastructure()
-    logger.info("Job infrastructure initialized")
+    logger.info("Job infrastructure initialized (in-memory)")
+
+    # Initialize PostgreSQL database repository (if DATABASE_URL set)
+    # This enables HIL workflow shared state between API and Worker containers
+    database_url = os.getenv("DATABASE_URL")
+    print(f"DEBUG: DATABASE_URL found: {bool(database_url)}", flush=True)
+    
+    db_job_repo: PostgresJobRepository | None = None
+    if database_url:
+        try:
+            print("DEBUG: Initializing DB repo...", flush=True)
+            db_job_repo = await initialize_database_repository(database_url)
+            print("DEBUG: DB repo initialized successfully", flush=True)
+            logger.info(
+                "[HIL] PostgreSQL repository initialized - "
+                "API and Worker containers now share job state"
+            )
+
+            # CRITICAL: Re-enqueue pending jobs from database
+            # This recovers jobs lost from in-memory queue during container restart
+            try:
+                print("DEBUG: Checking for restartable jobs...", flush=True)
+                restartable_jobs = await db_job_repo.get_pending_jobs()
+                print(
+                    f"DEBUG: Found {len(restartable_jobs)} restartable jobs (pending/processing)",
+                    flush=True
+                )
+                
+                if restartable_jobs:
+                    logger.info(
+                        f"[RECOVERY] Found {len(restartable_jobs)} restartable jobs in database. Re-enqueuing..."
+                    )
+                    async with job_lock:
+                        for job in restartable_jobs:
+                            # 1. Restore to in-memory repository (required for worker)
+                            job_repository[job.job_id] = job
+                            # 2. Add to processing queue
+                            await job_queue.put(job.job_id)
+                            print(
+                                f"DEBUG: Re-enqueued job {job.job_id} (status={job.status.value})",
+                                flush=True
+                            )
+                    logger.info(f"[RECOVERY] Successfully re-enqueued {len(restartable_jobs)} jobs")
+            except Exception as e:
+                print(f"DEBUG: Recovery failed: {e}", flush=True)
+                logger.error(f"[RECOVERY] Failed to re-enqueue restartable jobs: {e}")
+
+        except Exception as e:
+            print(f"DEBUG: DB init failed: {e}", flush=True)
+            logger.error(
+                f"[HIL] Failed to initialize PostgreSQL repository: {e}. "
+                f"HIL workflow resumption will NOT work in docker-compose mode!"
+            )
+            # Continue without database - HIL won't work but basic operations might
+    else:
+        print("DEBUG: No DATABASE_URL set", flush=True)
+        logger.warning(
+            "[HIL] DATABASE_URL not set - running in in-memory mode. "
+            "HIL workflow resumption will NOT work between API and Worker containers!"
+        )
 
     # Initialize approval infrastructure for HIL workflow
     approval_repository, approval_lock = initialize_approval_infrastructure()
@@ -104,11 +179,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         process_job_worker(
             job_queue=job_queue,
             job_repository=job_repository,
-            job_lock=job_lock
+            job_lock=job_lock,
+            db_job_repo=db_job_repo  # HIL shared state via PostgreSQL
         ),
         name="background_job_worker"
     )
-    logger.info("Background worker started")
+    logger.info(f"Background worker started (db_mode={db_job_repo is not None})")
 
     logger.info("FastAPI application ready")
 
@@ -123,6 +199,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await worker_task
     except asyncio.CancelledError:
         logger.info("Background worker stopped")
+
+    # Shutdown database repository
+    await shutdown_database_repository()
 
     # Shutdown LangFuse observability (flush pending traces)
     shutdown_langfuse()
@@ -156,6 +235,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# =============================================================================
+# DEBUG MIDDLEWARE - Logs ALL incoming requests BEFORE dependency resolution
+# This helps diagnose issues where POST requests crash during dependency handling
+# and never get logged by uvicorn (uvicorn logs AFTER request completion)
+# =============================================================================
+@app.middleware("http")
+async def debug_request_middleware(request: Request, call_next):
+    """
+    Debug middleware to log all incoming requests immediately.
+
+    This runs BEFORE any route handlers or dependency resolution,
+    allowing us to see if requests reach the server even if they crash
+    during dependency injection.
+    """
+    # Log immediately when request arrives (before any processing)
+    method = request.method
+    url = str(request.url)
+    print(f">>> INCOMING: {method} {url}", file=sys.stderr, flush=True)
+    logger.info(f">>> INCOMING: {method} {url}")
+
+    try:
+        response = await call_next(request)
+        print(f"<<< RESPONSE: {method} {url} -> {response.status_code}", file=sys.stderr, flush=True)
+        logger.info(f"<<< RESPONSE: {method} {url} -> {response.status_code}")
+        return response
+    except Exception as e:
+        print(f"!!! EXCEPTION: {method} {url} -> {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        logger.exception(f"!!! Request failed: {method} {url} -> {e}")
+        raise
 
 
 @app.get("/", response_model=dict[str, str])
@@ -199,13 +309,15 @@ async def health_check() -> dict[str, str]:
 
 
 @app.post("/jobs", response_model=JobSubmitResponse, status_code=status.HTTP_201_CREATED)
-@observe(name="create_test_generation_job")
+# TEMPORARILY DISABLED: @observe decorator suspected of causing hang
+# @observe(name="create_test_generation_job")
 async def submit_job(
     file: ValidatedFileDep,
     storage: StorageAdapterDep,
     job_queue: JobQueueDep,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep
 ) -> JobSubmitResponse:
     """
@@ -241,19 +353,26 @@ async def submit_job(
     """
     try:
         # Generate unique job ID
+        print("[SUBMIT] Step 1: Generating job_id...", flush=True)
         job_id = str(uuid.uuid4())
+        print(f"[SUBMIT] Step 1 DONE: job_id={job_id}", flush=True)
         logger.info(f"Submitting job {job_id} for user {user.sub} ({user.email})")
 
         # Read file content (already in memory from validation)
+        print("[SUBMIT] Step 2: Reading file content...", flush=True)
         urs_content = await file.read()
+        print(f"[SUBMIT] Step 2 DONE: read {len(urs_content)} bytes", flush=True)
 
         # Compute SHA-256 hash (ONCE from memory)
+        print("[SUBMIT] Step 3: Computing hash...", flush=True)
         urs_hash = hashlib.sha256(urs_content).hexdigest()
+        print(f"[SUBMIT] Step 3 DONE: hash={urs_hash[:16]}...", flush=True)
 
         # Persist file via storage adapter
         # Note: Using "5" (custom software) as placeholder until workflow
         # completes GAMP-5 categorization. The workflow will update this
         # to the correct category (1, 3, 4, or 5) based on system analysis.
+        print("[SUBMIT] Step 4: Preparing storage metadata...", flush=True)
         storage_metadata = {
             "gamp_category": "5",  # Valid GAMP-5 placeholder (custom software)
             "job_id": job_id,
@@ -263,14 +382,17 @@ async def submit_job(
             "artifact_type": "urs"
         }
 
+        print("[SUBMIT] Step 5: Saving to storage...", flush=True)
         storage_key = await storage.save_artifact(
             artifact_id=f"{job_id}/urs_document.md",
             content=urs_content,
             metadata=storage_metadata
         )
+        print(f"[SUBMIT] Step 5 DONE: storage_key={storage_key}", flush=True)
         logger.info(f"URS persisted: {storage_key}")
 
         # Create job record
+        print("[SUBMIT] Step 6: Creating job record...", flush=True)
         job_record = JobRecord(
             job_id=job_id,
             status=JobStatus.PENDING,
@@ -281,16 +403,35 @@ async def submit_job(
             urs_size_bytes=len(urs_content),
             user_id=user.sub  # Clerk user ID from JWT 'sub' claim
         )
+        print("[SUBMIT] Step 6 DONE: job record created", flush=True)
 
         # Add to repository (thread-safe)
+        print("[SUBMIT] Step 7: Adding to in-memory repository...", flush=True)
         async with job_lock:
             job_repository[job_id] = job_record
+        print("[SUBMIT] Step 7 DONE: added to in-memory repo", flush=True)
+
+        # Also create in PostgreSQL database (for HIL shared state)
+        if db_job_repo is not None:
+            try:
+                print("[SUBMIT] Step 8: Creating in PostgreSQL...", flush=True)
+                await db_job_repo.create(job_record)
+                print("[SUBMIT] Step 8 DONE: created in PostgreSQL", flush=True)
+                logger.info(f"[HIL-DB] Job {job_id} created in PostgreSQL")
+            except Exception as e:
+                print(f"[SUBMIT] Step 8 FAILED: {e}", flush=True)
+                logger.error(f"[HIL-DB] Failed to create job in database: {e}")
+                # Continue - in-memory job exists, basic operations will work
+                # but HIL workflow resumption may fail
 
         # Enqueue job for background processing
+        print("[SUBMIT] Step 9: Enqueueing job...", flush=True)
         await job_queue.put(job_id)
+        print("[SUBMIT] Step 9 DONE: job enqueued", flush=True)
         logger.info(f"Job {job_id} enqueued for processing")
 
         # Log to audit trail with Clerk authentication context
+        print("[SUBMIT] Step 10: Logging to audit trail...", flush=True)
         audit_logger = get_audit_logger()
         audit_logger.log_event(
             job_id=job_id,
@@ -307,14 +448,18 @@ async def submit_job(
                 "token_exp": user.exp  # JWT expiration for security analysis
             }
         )
+        print("[SUBMIT] Step 10 DONE: audit logged", flush=True)
 
         # Return response immediately (non-blocking)
-        return JobSubmitResponse(
+        print("[SUBMIT] Step 11: Returning response...", flush=True)
+        response = JobSubmitResponse(
             job_id=job_id,
             status=JobStatus.PENDING,
             created_at=job_record.created_at.isoformat(),
             urs_hash=urs_hash
         )
+        print(f"[SUBMIT] Step 11 DONE: returning job_id={job_id}", flush=True)
+        return response
 
     except HTTPException:
         # Re-raise HTTP exceptions (validation errors)
@@ -339,11 +484,21 @@ async def submit_job(
 async def list_jobs(
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep
 ) -> list[JobStatusResponse]:
     """
     List all jobs for the current user.
     """
+    # Try database first (docker-compose mode)
+    if db_job_repo is not None:
+        try:
+            jobs = await db_job_repo.get_jobs_by_user(user.sub)
+            return [job.to_response() for job in jobs]
+        except Exception as e:
+            logger.warning(f"[DB] Failed to list jobs from database: {e}")
+            # Fall through to in-memory
+
     async with job_lock:
         user_jobs = [
             job.to_response() 
@@ -461,6 +616,7 @@ async def get_job_status(
     job_id: str,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     storage: StorageAdapterDep,
     user: CurrentUserDep
 ) -> JobStatusResponse:
@@ -471,6 +627,7 @@ async def get_job_status(
         job_id: Unique job identifier
         job_repository: Job repository dependency
         job_lock: Job lock dependency
+        db_job_repo: Database repository for HIL shared state
         storage: Storage adapter dependency
         user: Current user dependency (Clerk JWT claims)
 
@@ -483,11 +640,24 @@ async def get_job_status(
         HTTPException 404: If job not found
 
     CRITICAL: NO FALLBACK LOGIC - Missing jobs return 404, not empty data
+
+    HIL Note: In docker-compose mode, prefer database for latest status
+    since worker updates database directly for AWAITING_APPROVAL state.
     """
     try:
-        # Get job record from repository
-        async with job_lock:
-            job = job_repository.get(job_id)
+        # Try database first for latest HIL status (docker-compose mode)
+        job = None
+        if db_job_repo is not None:
+            try:
+                job = await db_job_repo.get(job_id)
+            except Exception as e:
+                logger.warning(f"[HIL-DB] Failed to get job from database: {e}")
+                # Fall through to in-memory
+
+        # Fall back to in-memory if database unavailable or returned None
+        if job is None:
+            async with job_lock:
+                job = job_repository.get(job_id)
 
         if job is None:
             raise HTTPException(
@@ -549,6 +719,7 @@ async def get_job_approval_status(
     job_id: str,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep
 ) -> JobStatusWithApproval:
     """
@@ -565,6 +736,7 @@ async def get_job_approval_status(
         job_id: Unique job identifier
         job_repository: Job repository dependency
         job_lock: Job lock dependency
+        db_job_repo: Database repository for HIL shared state
         user: Current user dependency (Clerk JWT claims)
 
     Returns:
@@ -576,9 +748,22 @@ async def get_job_approval_status(
         HTTPException 404: If job not found
 
     CRITICAL: NO FALLBACK LOGIC - All errors propagate explicitly
+
+    HIL Note: In docker-compose mode, prefer database for latest status.
     """
-    async with job_lock:
-        job = job_repository.get(job_id)
+    # Try database first for latest HIL status (docker-compose mode)
+    job = None
+    if db_job_repo is not None:
+        try:
+            job = await db_job_repo.get(job_id)
+        except Exception as e:
+            logger.warning(f"[HIL-DB] Failed to get job from database: {e}")
+            # Fall through to in-memory
+
+    # Fall back to in-memory if database unavailable or returned None
+    if job is None:
+        async with job_lock:
+            job = job_repository.get(job_id)
 
     if job is None:
         raise HTTPException(
@@ -630,6 +815,7 @@ async def submit_job_approval(
     job_lock: JobLockDep,
     approval_repository: ApprovalRepositoryDep,
     approval_lock: ApprovalLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep,
     request: Request
 ) -> ApprovalResponse:
@@ -765,6 +951,32 @@ async def submit_job_approval(
 
             job.updated_at = datetime.now(UTC)
 
+        # CRITICAL: Update PostgreSQL database for HIL shared state
+        # This allows Worker container to see the approval decision
+        if db_job_repo is not None:
+            try:
+                await db_job_repo.set_approval_status(
+                    job_id=job_id,
+                    status=job.status,
+                    human_category=job.human_category
+                )
+                logger.info(
+                    f"[HIL-DB] Updated job {job_id} in PostgreSQL: "
+                    f"status={job.status}, human_category={job.human_category}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"[HIL-DB] Failed to update job {job_id} in PostgreSQL: {e}. "
+                    f"Worker may not see approval!"
+                )
+                # Don't fail the request - in-memory update succeeded
+                # Worker might eventually timeout, but at least API responded
+        else:
+            logger.warning(
+                f"[HIL] Database repository not available - "
+                f"Worker container cannot see approval for job {job_id}!"
+            )
+
         # Store approval record in repository
         async with approval_lock:
             if job_id not in approval_repository:
@@ -896,14 +1108,9 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-# Enable CORS for all origins (public API)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # TODO: Restrict to specific origins in production
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-)
+# CORS middleware for public access removed to prevent duplication
+
+
 
 
 if __name__ == "__main__":

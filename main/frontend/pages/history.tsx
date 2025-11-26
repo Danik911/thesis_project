@@ -89,18 +89,24 @@ export default function History() {
                                     {jobs.map(job => (
                                         <tr
                                             key={job.job_id}
-                                            onClick={() => handleRowClick(job.job_id)}
-                                            className="hover:bg-slate-700/30 transition-colors cursor-pointer"
+                                            className="hover:bg-slate-700/30 transition-colors"
                                         >
                                             <td className="px-6 py-4 font-mono text-xs text-blue-400">{job.job_id.substring(0, 8)}...</td>
                                             <td className="px-6 py-4">{job.urs_filename}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${job.status.toUpperCase() === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' :
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                    job.status.toUpperCase() === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' :
                                                     job.status.toUpperCase() === 'FAILED' ? 'bg-red-500/10 text-red-400' :
-                                                        job.status.toUpperCase() === 'EXPIRED' ? 'bg-amber-500/10 text-amber-400' :
-                                                            'bg-blue-500/10 text-blue-400'
-                                                    }`}>
-                                                    {job.status.toUpperCase()}
+                                                    job.status.toUpperCase() === 'EXPIRED' ? 'bg-amber-500/10 text-amber-400' :
+                                                    job.status.toUpperCase() === 'AWAITING_APPROVAL' ? 'bg-amber-500/10 text-amber-400' :
+                                                    'bg-blue-500/10 text-blue-400'
+                                                }`}>
+                                                    {job.status.toUpperCase() === 'AWAITING_APPROVAL' && (
+                                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                    )}
+                                                    {job.status.toUpperCase() === 'AWAITING_APPROVAL' ? 'AWAITING APPROVAL' : job.status.toUpperCase()}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">{new Date(job.created_at).toLocaleDateString()} {new Date(job.created_at).toLocaleTimeString()}</td>

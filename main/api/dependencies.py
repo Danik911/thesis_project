@@ -3,6 +3,8 @@ FastAPI dependency injection functions.
 
 Provides dependency injection for storage adapters, job repositories,
 queues, and authentication with testability and configurability.
+
+Supports both in-memory (testing) and PostgreSQL (docker-compose) storage.
 """
 
 import asyncio
@@ -10,6 +12,7 @@ import logging
 import os
 from typing import Annotated
 
+import asyncpg
 import jwt
 from fastapi import Depends, HTTPException, UploadFile, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -17,6 +20,7 @@ from jwt import PyJWTError
 from src.adapters.storage import StorageFactory, StorageProvider
 from src.shared.config import get_config
 
+from .job_repository import PostgresJobRepository, create_postgres_pool
 from .models import ApprovalRecord, ClerkClaims, JobRecord
 
 logger = logging.getLogger(__name__)
@@ -40,6 +44,11 @@ _job_queue: asyncio.Queue[str] | None = None
 # Protected by asyncio lock for thread-safe access
 _approval_repository: dict[str, list[ApprovalRecord]] = {}
 _approval_lock: asyncio.Lock | None = None
+
+# PostgreSQL database connection pool and repository
+# Used in docker-compose mode for HIL workflow shared state
+_db_pool: asyncpg.Pool | None = None
+_db_job_repository: PostgresJobRepository | None = None
 
 
 def initialize_job_infrastructure() -> tuple[asyncio.Queue[str], dict[str, JobRecord], asyncio.Lock]:
@@ -71,6 +80,7 @@ def get_job_queue() -> asyncio.Queue[str]:
     Raises:
         HTTPException: If queue not initialized
     """
+    print("[DEP] get_job_queue() called", flush=True)
     if _job_queue is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -89,6 +99,7 @@ def get_job_repository() -> dict[str, JobRecord]:
     Raises:
         HTTPException: If repository not initialized
     """
+    print("[DEP] get_job_repository() called", flush=True)
     if _job_repository is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -107,6 +118,7 @@ def get_job_lock() -> asyncio.Lock:
     Raises:
         HTTPException: If lock not initialized
     """
+    print("[DEP] get_job_lock() called", flush=True)
     if _job_lock is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -173,6 +185,71 @@ def get_approval_lock() -> asyncio.Lock:
     return _approval_lock
 
 
+# =============================================================================
+# Database Repository Functions (PostgreSQL)
+# =============================================================================
+
+
+async def initialize_database_repository(database_url: str) -> PostgresJobRepository:
+    """
+    Initialize PostgreSQL connection pool and job repository.
+
+    Args:
+        database_url: PostgreSQL connection string
+
+    Returns:
+        PostgresJobRepository instance
+
+    Called during app lifespan startup when DATABASE_URL is set.
+    """
+    global _db_pool, _db_job_repository
+
+    logger.info(f"[DB] Initializing PostgreSQL connection pool...")
+    _db_pool = await create_postgres_pool(database_url)
+    _db_job_repository = PostgresJobRepository(_db_pool)
+
+    logger.info("[DB] PostgreSQL job repository initialized (HIL shared state enabled)")
+    return _db_job_repository
+
+
+async def shutdown_database_repository() -> None:
+    """
+    Shutdown PostgreSQL connection pool.
+
+    Called during app lifespan shutdown.
+    """
+    global _db_pool, _db_job_repository
+
+    if _db_pool is not None:
+        await _db_pool.close()
+        logger.info("[DB] PostgreSQL connection pool closed")
+
+    _db_pool = None
+    _db_job_repository = None
+
+
+def get_db_job_repository() -> PostgresJobRepository | None:
+    """
+    Get database job repository dependency.
+
+    Returns:
+        PostgresJobRepository if initialized, None otherwise
+        (None indicates in-memory mode, used for local testing without docker-compose)
+    """
+    print(f"[DEP] get_db_job_repository() called: db_initialized={_db_job_repository is not None}", flush=True)
+    return _db_job_repository
+
+
+def is_database_mode() -> bool:
+    """
+    Check if running in database mode (docker-compose).
+
+    Returns:
+        True if DATABASE_URL is set and pool initialized
+    """
+    return _db_job_repository is not None
+
+
 def get_storage_adapter() -> StorageProvider:
     """
     Get storage adapter dependency.
@@ -185,7 +262,9 @@ def get_storage_adapter() -> StorageProvider:
 
     CRITICAL: NO FALLBACK LOGIC - Errors must propagate explicitly
     """
+    print("[DEP] get_storage_adapter() called", flush=True)
     try:
+        print("[DEP] get_storage_adapter() - calling get_config()...", flush=True)
         config = get_config()
         storage_config = config.storage
 
@@ -228,6 +307,7 @@ async def require_clerk_user(
     CRITICAL: FAIL CLOSED - NO FALLBACK LOGIC
     All authentication failures result in 401 with explicit error details.
     """
+    print("[DEP] require_clerk_user() called", flush=True)
     token = credentials.credentials
 
     # Validate environment configuration
@@ -350,6 +430,7 @@ async def validate_upload_file(file: UploadFile) -> UploadFile:
 
     CRITICAL: NO FALLBACK LOGIC - Invalid files rejected explicitly
     """
+    print(f"[DEP] validate_upload_file() called: filename={file.filename}", flush=True)
     # Maximum file size: 100MB
     MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB in bytes
     ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx", ".md"}
@@ -416,3 +497,6 @@ ValidatedFileDep = Annotated[UploadFile, Depends(validate_upload_file)]
 # HIL Approval type aliases
 ApprovalRepositoryDep = Annotated[dict[str, list[ApprovalRecord]], Depends(get_approval_repository)]
 ApprovalLockDep = Annotated[asyncio.Lock, Depends(get_approval_lock)]
+
+# Database repository type alias (PostgreSQL)
+DbJobRepositoryDep = Annotated[PostgresJobRepository | None, Depends(get_db_job_repository)]

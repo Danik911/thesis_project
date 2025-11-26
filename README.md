@@ -82,9 +82,14 @@ python --version
 # UV package manager
 pip install uv
 
-# Docker (for containerization)
-docker --version
+# Docker Engine in WSL2 (NOT Docker Desktop)
+# Docker Desktop caused memory issues on ARM64 (Qualcomm Snapdragon X Elite)
+# Install Docker Engine directly in Ubuntu WSL2 for better performance
+docker --version   # Should show Docker version 29.x.x
+docker compose version  # Should show Docker Compose version v2.x.x
 ```
+
+**Note:** This project uses Docker Engine installed natively in WSL2 Ubuntu, not Docker Desktop. See [Docker WSL2 Setup Guide](/.claude/plans/glowing-fluttering-pinwheel.md) for installation instructions.
 
 For implementation details and metrics, see the [Technical Architecture Report](TECHNICAL_ARCHITECTURE_REPORT.md).
 
@@ -143,7 +148,13 @@ See [`main/docs/guides/UNIFIED_WORKFLOW_USAGE.md`](main/docs/guides/UNIFIED_WORK
 
 ### Docker Compose Quickstart (Recommended)
 
+**Important:** Run all Docker commands from the **Ubuntu WSL2 terminal**, not Windows PowerShell.
+
 ```bash
+# Open Ubuntu terminal first (WSL2)
+# Navigate to project directory
+cd /mnt/c/Users/anteb/Desktop/Courses/Projects/thesis_project
+
 # Step 1: Configure environment variables
 cp .env.example .env.local
 

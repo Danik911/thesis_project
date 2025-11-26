@@ -7,6 +7,9 @@ the LlamaIndex workflow execution.
 
 Implements GAMP-5 compliant human consultation for pharmaceutical validation
 with full audit trail and regulatory compliance features.
+
+IMPORTANT: When running in web/worker context (no stdin), this handler raises
+HumanApprovalRequired exception to suspend workflow and trigger async web approval.
 """
 
 import sys
@@ -14,6 +17,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from .events import ConsultationInputEvent, HumanResponseEvent
+from main.src.exceptions import HumanApprovalRequired
 
 
 def flush_output():
@@ -34,6 +38,11 @@ class ConsultationEventHandler:
     def __init__(self):
         """Initialize the consultation handler."""
         self.active_consultations = {}
+        self._current_consultation_context = {}
+
+    def _get_current_context(self) -> dict:
+        """Get current consultation context for HumanApprovalRequired exception."""
+        return self._current_consultation_context.copy()
 
     async def handle_consultation_input(self, event: ConsultationInputEvent) -> HumanResponseEvent:
         """
@@ -51,6 +60,9 @@ class ConsultationEventHandler:
         """
         consultation_id = event.consultation_id
         self.active_consultations[consultation_id] = event
+
+        # Store context for HumanApprovalRequired exception if needed
+        self._current_consultation_context = event.consultation_context.copy()
 
         try:
             # Display consultation prompt with clear formatting
@@ -151,7 +163,14 @@ class ConsultationEventHandler:
             except KeyboardInterrupt:
                 raise ValueError("Consultation cancelled by user")
             except EOFError:
-                raise ValueError("Input stream closed")
+                # No stdin available - running in web/worker context
+                # Raise HumanApprovalRequired to suspend workflow for async web approval
+                raise HumanApprovalRequired(
+                    message="Human approval required - no interactive terminal available",
+                    categorization_result=self._get_current_context(),
+                    ambiguity_signals={"reason": "Web context - async approval required"},
+                    timeout_seconds=3600
+                )
 
     def _get_operator_role(self) -> str:
         """Get operator role with validation."""
@@ -178,7 +197,12 @@ class ConsultationEventHandler:
             except KeyboardInterrupt:
                 raise ValueError("Consultation cancelled by user")
             except EOFError:
-                raise ValueError("Input stream closed")
+                raise HumanApprovalRequired(
+                    message="Human approval required - no interactive terminal available",
+                    categorization_result=self._get_current_context(),
+                    ambiguity_signals={"reason": "Web context - async approval required"},
+                    timeout_seconds=3600
+                )
 
     def _get_category_selection(self) -> str:
         """Get GAMP-5 category selection with validation."""
@@ -200,7 +224,12 @@ class ConsultationEventHandler:
             except KeyboardInterrupt:
                 raise ValueError("Consultation cancelled by user")
             except EOFError:
-                raise ValueError("Input stream closed")
+                raise HumanApprovalRequired(
+                    message="Human approval required - no interactive terminal available",
+                    categorization_result=self._get_current_context(),
+                    ambiguity_signals={"reason": "Web context - async approval required"},
+                    timeout_seconds=3600
+                )
 
     def _get_justification(self) -> str:
         """Get decision justification with validation."""
@@ -218,7 +247,12 @@ class ConsultationEventHandler:
             except KeyboardInterrupt:
                 raise ValueError("Consultation cancelled by user")
             except EOFError:
-                raise ValueError("Input stream closed")
+                raise HumanApprovalRequired(
+                    message="Human approval required - no interactive terminal available",
+                    categorization_result=self._get_current_context(),
+                    ambiguity_signals={"reason": "Web context - async approval required"},
+                    timeout_seconds=3600
+                )
 
 
 # Global handler instance for single console mode

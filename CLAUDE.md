@@ -59,10 +59,27 @@ Guidance for Claude Code when working with this pharmaceutical test generation t
 ## 💻 Development Environment
 
 **Hardware:**
-- **CPU:** Qualcomm Oryon (ARM 64-bit architecture)
+- **CPU:** Qualcomm Snapdragon X Elite (ARM 64-bit architecture)
 - **OS:** Windows 11
-- **Virtualization:** WSL2 (Windows Subsystem for Linux)
-- **Docker:** Docker Desktop for Windows on ARM
+- **Virtualization:** WSL2 (Windows Subsystem for Linux) with Ubuntu
+- **Docker:** Docker Engine installed natively in WSL2 Ubuntu (NOT Docker Desktop)
+
+**Docker Setup (Native WSL2):**
+- **Installation:** Docker Engine v29.0.4 installed directly in Ubuntu WSL2
+- **Reason:** Docker Desktop caused memory issues (vmmem), crashes, and slow performance on ARM64
+- **Benefits:** ~50% less memory usage, faster container startup, no extra VM overhead
+- **Docker Compose:** v2.40.3 (plugin version)
+
+**WSL2 Configuration (`C:\Users\anteb\.wslconfig`):**
+```ini
+[wsl2]
+memory=8GB
+processors=4
+swap=2GB
+localhostForwarding=true
+guiApplications=false
+nestedVirtualization=false
+```
 
 **Docker Platform Notes:**
 - **Local Development:** Use `--platform=linux/arm64` for native performance
@@ -71,9 +88,10 @@ Guidance for Claude Code when working with this pharmaceutical test generation t
 - **Build Strategy:** Build AMD64 images for production, ARM64 for local testing
 
 **WSL2 on ARM64:**
-- Docker Desktop works with WSL2 backend on Qualcomm Oryon processors
+- Docker Engine runs natively inside Ubuntu WSL2 (systemd enabled)
 - Native ARM64 containers run at full speed
 - AMD64 containers run via emulation (acceptable for testing, not ideal for development)
+- Auto-start configured via `systemctl enable docker`
 
 ---
 

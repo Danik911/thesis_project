@@ -596,7 +596,14 @@ Group By: gamp_category
 
 ### 5.5 Docker Multi-Container Architecture
 
-Production system deployed as 5-service Docker Compose stack:
+Production system deployed as 5-service Docker Compose stack.
+
+**Development Environment:**
+- **Platform:** Windows 11 with WSL2 Ubuntu
+- **Docker Runtime:** Docker Engine v29.0.4 installed natively in WSL2 (NOT Docker Desktop)
+- **Docker Compose:** v2.40.3 (plugin version)
+- **Reason for Native WSL2:** Docker Desktop caused memory issues (vmmem), crashes, and slow performance on Qualcomm Snapdragon X Elite (ARM64)
+- **WSL2 Memory Limit:** 8GB (configured in `C:\Users\anteb\.wslconfig`)
 
 ```yaml
 # docker-compose.dev.yml (simplified)
@@ -756,7 +763,22 @@ networks:
 
 ### 5.6 Frontend Dashboard Architecture
 
-Next.js Pages Router frontend with Clerk authentication:
+Next.js Pages Router frontend with Clerk authentication.
+
+**Docker Commands (run from Ubuntu WSL2 terminal):**
+```bash
+# Start all services
+docker compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Stop services
+docker compose -f docker-compose.dev.yml down
+
+# Check resource usage
+docker stats
+```
 
 ```typescript
 // frontend/src/pages/api/jobs.ts (API route)

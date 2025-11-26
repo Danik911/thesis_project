@@ -1,105 +1,78 @@
-# Current Task Context
+# Current Task Context: 3.14
+
+## Task File
+PRPs/tasks/3.14-frontend-approval-ui.md
 
 ## Active Task
-**Task ID:** 3.8
-**Task Name:** Fix Local Test Script Visibility
-**Phase:** 3 - Containerization & Local DevOps
-**Status:** pending
-**Priority:** MEDIUM
-**Started:** Not yet started
+**Task ID:** 3.14
+**Task Name:** Frontend - Human Approval UI (Next.js Pages Router)
+**Phase:** 3 - Containerization
+**Status:** in-progress
+**Priority:** CRITICAL - User-facing interface for Human-in-the-Loop approval workflow
+**Started:** 2025-11-24 20:42:27
 
 ---
 
 ## Task Objective
-Make generated test suites automatically visible on Windows host filesystem for convenient development access without manual `docker cp` extraction.
+Build Next.js Pages Router frontend components to display approval requests, collect human decisions with justifications, and integrate with Clerk authentication for ALCOA+ compliant digital signatures. Match architecture from `examples/alex/frontend/` (Pages Router, Clerk v6).
 
-## Problem Statement
-
-**Current Behavior (INCONVENIENT)**:
-- Test suites stored in Docker named volume (`output-data`)
-- Not visible on host filesystem at `./main/output/`
-- Requires manual extraction: `docker cp pharma-api-dev:/app/output/{job_id} ./main/output/`
-- Blocks frontend development (can't read test suites from filesystem)
-- Adds friction to development workflow
-
-**Expected Behavior (AFTER FIX)**:
-- Test suites immediately visible in `./main/output/{job_id}/` on Windows host
-- No manual extraction required
-- Frontend can directly read test suite files
-- Seamless development experience
-
-## Root Cause
-
-Docker Compose configured with named volume instead of bind mount:
-```yaml
-# Current (docker-compose.dev.yml)
-volumes:
-  - output-data:/app/output  # Named volume (isolated from host)
-```
+## Key Requirements
+1. Display AI categorization with confidence score and ambiguity reason
+2. Show approval form with decision options (APPROVE/REJECT/REQUEST_REVISION)
+3. Allow category override if human disagrees with AI
+4. Require justification (minimum 10 characters for audit trail)
+5. Pre-fill digital signature from Clerk JWT
+6. Poll job status every 5 seconds for real-time updates
+7. Match `examples/alex/frontend/` architecture (Pages Router, Clerk v6)
 
 ## Success Criteria
 
-1. ✅ Generated test suites immediately visible in `./main/output/`
-2. ✅ No manual `docker cp` required
-3. ✅ Permissions correct (readable/writable on Windows host)
-4. ✅ Existing workflow functionality preserved
-5. ✅ Frontend development enabled (can read test suites from filesystem)
-6. ✅ Backward compatibility maintained (existing jobs still accessible)
+### ApprovalModal Component
+1. Display AI categorization result (category, confidence, ambiguity reason, alternatives, reasoning)
+2. Approval form fields (decision select, category override, justification textarea, signature)
+3. Form validation (min 10 chars justification, valid category)
 
-## Implementation Plan
+### Job Status Polling
+4. Poll GET /jobs/{job_id}/status every 5 seconds
+5. Detect AWAITING_APPROVAL status
+6. Show ApprovalModal automatically when approval required
+7. Display countdown timer for timeout (1 hour)
 
-### Phase 1: Backup Current Data (5 min)
-1. Extract any existing test suites from named volume:
-   ```bash
-   docker cp pharma-api-dev:/app/output/ ./main/output/
-   ```
-2. Verify extracted data integrity
+### Job Status Display
+8. Job list badge: "⏳ Awaiting Approval"
+9. Show ambiguity reason in tooltip/detail view
+10. Display AI confidence score with color coding (Red <70%, Yellow 70-85%, Green >85%)
+11. Handle timeout with clear error message
 
-### Phase 2: Update Docker Compose (5 min)
-1. Modify `docker-compose.dev.yml`:
-   - Change: `output-data:/app/output`
-   - To: `./main/output:/app/output:rw`
-2. Remove named volume declaration if unused elsewhere
-3. Ensure `./main/output/` directory exists on host
+### Clerk Integration (EU endpoints)
+12. Extract user_id from Clerk JWT
+13. Generate digital signature: {user_id}_{timestamp}
+14. Extract user email and role from Clerk claims
+15. Match architecture from examples/alex/frontend/ (Pages Router, Clerk v6)
 
-### Phase 3: Restart & Verify (5-15 min)
-1. Restart containers: `docker-compose -f docker-compose.dev.yml restart api worker`
-2. Submit test job via API
-3. Verify files immediately visible in `./main/output/{job_id}/`
-4. Confirm no permissions issues on Windows
-5. Test read/write operations from both host and container
+## Files to Create
+1. `main/frontend/components/ApprovalModal.tsx` (~300 lines)
+2. `main/frontend/hooks/useJobStatusPolling.ts` (~80 lines)
 
-## Key Files
-
-**To Modify:**
-1. `docker-compose.dev.yml` (Lines ~220: API service volumes, Lines ~310: volume definitions)
-
-**To Create:**
-- `./main/output/` directory (if not exists)
-
-## Estimated Effort
-**Total:** 15-30 minutes
-- Phase 1 (Backup): 5 min
-- Phase 2 (Config Update): 5 min
-- Phase 3 (Testing): 5-15 min
+## Files to Modify
+1. `main/frontend/pages/generate.tsx` - Add ApprovalModal integration
+2. `main/frontend/pages/history.tsx` - Add approval status display
+3. `main/frontend/package.json` - Add @headlessui/react
 
 ## Dependencies
-
-- ✅ Task 3.6 completed (test suite generation working)
-- ✅ Task 3.7 completed (workflow debugging complete)
-- ✅ Docker Compose stack functional
+- Task 3.12 (categorization ambiguity) - COMPLETED
+- Task 3.13 (backend HIL API) - IN PROGRESS
+- Clerk authentication - CONFIGURED
+- Next.js Pages Router - CONFIGURED
 
 ## Compliance Requirements
+- EU AI Act Article 50 (Transparency)
+- 21 CFR Part 11 (Electronic Signatures)
+- GAMP-5 (Human oversight)
+- WCAG 2.1 AA (Accessibility)
 
-**GAMP-5:** N/A (infrastructure change for development convenience only)
-**ALCOA+:** N/A (audit logs already using bind mount at `./main/logs:/app/main/logs:rw`)
-**NO FALLBACK LOGIC:** N/A (infrastructure change only, no code logic affected)
-
-## Reference Documentation
-
-**Task Specification:** `PRPs/tasks/3.8-fix-local-test-script-visibility.md`
-**Development Guide:** `docs/LOCAL_DEVELOPMENT.md`
-**Previous Task:** `PRPs/tasks/3.7-fix-rag-context-agent.md` (✅ completed)
-
-## Next Task
-**Task 4.1:** Load Testing with Locust (Phase 4 - Production Readiness)
+## Task Metadata
+- Task ID: 3.14
+- Phase: 3 - Containerization
+- Started: 2025-11-24 20:42:27
+- Workflow Status: IN PROGRESS

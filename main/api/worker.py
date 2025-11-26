@@ -7,15 +7,17 @@ with retry logic, error handling, and GAMP-5 audit trail.
 Supports Human-in-the-Loop (HIL) workflow:
 - Detects when categorization requires human review
 - Pauses workflow and updates job to AWAITING_APPROVAL
-- Polls for approval decision every 2 seconds
+- Polls PostgreSQL for approval decision (shared state with API container)
 - Resumes with human-approved category or rejects on timeout
 
 TASK 3.5: Fully implemented worker with UnifiedWorkflow integration.
 TASK 3.13: Extended with HIL pause/resume functionality.
+HIL FIX: Updated to poll PostgreSQL instead of in-memory dict for docker-compose.
 """
 
 import asyncio
 import logging
+import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from .audit import get_audit_logger
+from .job_repository import PostgresJobRepository, create_postgres_pool
 from .models import JobRecord, JobStatus
 from .worker_executor import (
     HIL_APPROVAL_TIMEOUT_SECONDS,
@@ -31,6 +34,7 @@ from .worker_executor import (
     WorkflowExecutor,
     read_urs_from_storage,
 )
+from main.src.exceptions import HumanApprovalRequired
 
 # Load environment variables from .env.local (for local development)
 env_file = Path(__file__).parent.parent.parent / ".env.local"
@@ -43,10 +47,30 @@ else:
 logger = logging.getLogger(__name__)
 
 
+async def _persist_job_state(
+    job: JobRecord,
+    db_job_repo: PostgresJobRepository | None,
+    context: str
+) -> None:
+    """Persist latest job state to PostgreSQL when database mode is enabled."""
+    if db_job_repo is None:
+        return
+
+    try:
+        job.updated_at = datetime.now(UTC)
+        await db_job_repo.update(job)
+        logger.debug(f"[DB] Persisted job {job.job_id} during {context}")
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error(
+            f"[DB] Failed to persist job {job.job_id} during {context}: {exc}"
+        )
+
+
 async def process_job_worker(
     job_queue: asyncio.Queue[str],
     job_repository: dict[str, JobRecord],
-    job_lock: asyncio.Lock
+    job_lock: asyncio.Lock,
+    db_job_repo: PostgresJobRepository | None = None
 ) -> None:
     """
     Background worker coroutine for processing jobs.
@@ -58,6 +82,7 @@ async def process_job_worker(
         job_queue: Asyncio queue containing job IDs to process
         job_repository: Shared dict for job state (protected by lock)
         job_lock: Asyncio lock for repository access
+        db_job_repo: PostgreSQL repository for HIL shared state (docker-compose mode)
 
     CRITICAL: This coroutine runs indefinitely - must not crash on errors.
     All exceptions caught and logged to prevent worker termination.
@@ -66,13 +91,24 @@ async def process_job_worker(
     - Exponential backoff: 1s, 2s, 4s (max 3 retries)
     - Job marked as FAILED after max retries exceeded
     - All retry attempts logged to audit trail
+
+    HIL Support (docker-compose):
+    - When db_job_repo is provided, HIL polling uses PostgreSQL for shared state
+    - Approval decisions from API container are visible to worker container
     """
+    print("DEBUG: process_job_worker started", flush=True)
     audit_logger = get_audit_logger()
 
     logger.info("Background job worker started")
+    if db_job_repo is not None:
+        logger.info("[HIL-DB] Worker using PostgreSQL for HIL shared state")
+    else:
+        logger.warning("[HIL] Worker using in-memory repository (HIL won't work in docker-compose)")
 
     # Initialize workflow executor (single instance, reused across jobs)
+    executor = None
     try:
+        logger.info("Initializing WorkflowExecutor...")
         executor = WorkflowExecutor()
         logger.info("WorkflowExecutor initialized successfully")
     except Exception as e:
@@ -83,7 +119,9 @@ async def process_job_worker(
     while True:
         try:
             # Wait for job from queue
+            print("DEBUG: Worker waiting for job...", flush=True)
             job_id = await job_queue.get()
+            print(f"DEBUG: Worker received job {job_id}", flush=True)
             logger.info(f"Worker processing job: {job_id}")
 
             # Get job record from repository
@@ -108,6 +146,9 @@ async def process_job_worker(
                 # Update status to PROCESSING
                 job.status = JobStatus.PROCESSING
                 job.started_at = datetime.now(UTC)
+                job.updated_at = job.started_at
+
+            await _persist_job_state(job, db_job_repo, "processing_start")
 
             # Log processing start
             audit_logger.log_event(
@@ -127,10 +168,13 @@ async def process_job_worker(
                 job_repository=job_repository,
                 job_lock=job_lock,
                 audit_logger=audit_logger,
-                executor=executor
+                executor=executor,
+                db_job_repo=db_job_repo
             )
 
             # Update final status
+            final_context = "complete" if success else "fail"
+
             async with job_lock:
                 if success:
                     job.status = JobStatus.COMPLETED
@@ -166,6 +210,10 @@ async def process_job_worker(
                     )
                     logger.error(f"Job {job_id} failed after {job.retry_count} retries")
 
+                job.updated_at = datetime.now(UTC)
+
+            await _persist_job_state(job, db_job_repo, f"job_{final_context}")
+
             # Mark queue task as done
             job_queue.task_done()
 
@@ -184,7 +232,8 @@ async def _process_job_with_retries(
     job_repository: dict[str, JobRecord],
     job_lock: asyncio.Lock,
     audit_logger: Any,
-    executor: WorkflowExecutor
+    executor: WorkflowExecutor,
+    db_job_repo: PostgresJobRepository | None = None
 ) -> bool:
     """
     Process job with exponential backoff retry logic and HIL support.
@@ -284,6 +333,8 @@ async def _process_job_with_retries(
                     job.trace_id = result.get("trace_id")
                     job.trace_url = result.get("trace_url")
 
+                await _persist_job_state(job, db_job_repo, "awaiting_approval_workflow")
+
                 # Log HIL trigger
                 audit_logger.log_event(
                     job_id=job.job_id,
@@ -301,7 +352,8 @@ async def _process_job_with_retries(
                     job=job,
                     job_repository=job_repository,
                     job_lock=job_lock,
-                    audit_logger=audit_logger
+                    audit_logger=audit_logger,
+                    db_job_repo=db_job_repo
                 )
 
                 if not approved:
@@ -333,6 +385,115 @@ async def _process_job_with_retries(
 
             return True  # Success
 
+        except HumanApprovalRequired as hil_exc:
+            # HIL triggered by workflow - no stdin available in web context
+            # Set job to AWAITING_APPROVAL and return False to exit retry loop
+            logger.info(
+                f"[HIL-WEB] HumanApprovalRequired raised for job {job.job_id}\n"
+                f"  Message: {str(hil_exc)}\n"
+                f"  Categorization: {hil_exc.categorization_result}\n"
+                f"  Setting job to AWAITING_APPROVAL"
+            )
+
+            async with job_lock:
+                job.status = JobStatus.AWAITING_APPROVAL
+                job.requires_approval = True
+                job.approval_reason = str(hil_exc)
+                job.approval_timeout_at = datetime.now(UTC) + timedelta(
+                    seconds=hil_exc.timeout_seconds
+                )
+                job.categorization_result = hil_exc.categorization_result
+                job.updated_at = datetime.now(UTC)
+
+                # Store metadata from exception
+                if not job.metadata:
+                    job.metadata = {}
+                job.metadata.update(hil_exc.to_metadata())
+
+            await _persist_job_state(job, db_job_repo, "awaiting_approval_exception")
+
+            # Log HIL trigger from web context
+            audit_logger.log_event(
+                job_id=job.job_id,
+                event_type="hil_triggered_web",
+                user_id=job.user_id,
+                status=JobStatus.AWAITING_APPROVAL,
+                metadata={
+                    "categorization_result": hil_exc.categorization_result,
+                    "ambiguity_signals": hil_exc.ambiguity_signals,
+                    "timeout_at": job.approval_timeout_at.isoformat() if job.approval_timeout_at else None,
+                    "trigger_source": "web_context_no_stdin"
+                }
+            )
+
+            # Wait for HIL approval (polling)
+            approved = await _wait_for_hil_approval(
+                job=job,
+                job_repository=job_repository,
+                job_lock=job_lock,
+                audit_logger=audit_logger,
+                timeout_seconds=hil_exc.timeout_seconds,
+                db_job_repo=db_job_repo
+            )
+
+            if not approved:
+                logger.warning(f"[HIL-WEB] Job {job.job_id} was rejected or timed out")
+                return False
+
+            # HIL approved - re-execute workflow with human-approved category
+            logger.info(
+                f"[HIL-WEB] Job {job.job_id} approved with category {job.human_category}\n"
+                f"  Re-executing workflow with pre-approved category (skips categorization)"
+            )
+
+            if not job.human_category:
+                # No human category but approved - unexpected state
+                logger.error(f"[HIL-WEB] Job {job.job_id} approved but no human_category set")
+                return False
+
+            # Reset job status for re-execution
+            async with job_lock:
+                job.status = JobStatus.PROCESSING
+                job.updated_at = datetime.now(UTC)
+
+            await _persist_job_state(job, db_job_repo, "hil_resume_processing")
+
+            # Log workflow re-execution
+            audit_logger.log_event(
+                job_id=job.job_id,
+                event_type="hil_workflow_resume",
+                user_id=job.user_id,
+                status=JobStatus.PROCESSING,
+                metadata={
+                    "human_category": job.human_category,
+                    "reason": "Re-executing workflow with human-approved category"
+                }
+            )
+
+            # Re-execute workflow with human-approved category
+            # The workflow will skip categorization and use the pre-approved category
+            result = await _execute_workflow(
+                job=job,
+                executor=executor,
+                approved_category=job.human_category
+            )
+
+            # Update job with result
+            async with job_lock:
+                job.result_uri = result["result_uri"]
+                job.gamp_category = str(job.human_category)
+                job.trace_id = result.get("trace_id")
+                job.trace_url = result.get("trace_url")
+
+            logger.info(
+                f"[HIL-WEB] Workflow re-execution completed successfully\n"
+                f"  Job ID: {job.job_id}\n"
+                f"  GAMP Category: {job.human_category}\n"
+                f"  Result URI: {result['result_uri']}"
+            )
+
+            return True  # Success after HIL re-execution
+
         except Exception as e:
             retry_count += 1
 
@@ -341,6 +502,9 @@ async def _process_job_with_retries(
                 job.retry_count = retry_count
                 job.error_message = str(e)
                 job.error_type = type(e).__name__
+                job.updated_at = datetime.now(UTC)
+
+            await _persist_job_state(job, db_job_repo, "retry_state")
 
             # Log retry attempt
             audit_logger.log_event(
@@ -383,7 +547,11 @@ async def _process_job_with_retries(
     return False
 
 
-async def _execute_workflow(job: JobRecord, executor: WorkflowExecutor) -> dict[str, Any]:
+async def _execute_workflow(
+    job: JobRecord,
+    executor: WorkflowExecutor,
+    approved_category: int | None = None
+) -> dict[str, Any]:
     """
     Execute the unified pharmaceutical test generation workflow.
 
@@ -392,6 +560,7 @@ async def _execute_workflow(job: JobRecord, executor: WorkflowExecutor) -> dict[
     Args:
         job: Job record with URS content and metadata
         executor: WorkflowExecutor instance
+        approved_category: Pre-approved GAMP category from HIL (skips categorization step)
 
     Returns:
         dict with workflow results (test_suite, gamp_category, result_uri, etc.)
@@ -404,12 +573,21 @@ async def _execute_workflow(job: JobRecord, executor: WorkflowExecutor) -> dict[
     - Never use placeholder/mock values
     - All errors must propagate with full diagnostic information
     """
-    logger.info(
-        f"Executing UnifiedWorkflow for job {job.job_id}\n"
-        f"  URS filename: {job.urs_filename}\n"
-        f"  User ID: {job.user_id}\n"
-        f"  Expected duration: 5-6 minutes"
-    )
+    if approved_category:
+        logger.info(
+            f"[HIL-RESUME] Re-executing workflow for job {job.job_id}\n"
+            f"  Pre-approved category: {approved_category}\n"
+            f"  URS filename: {job.urs_filename}\n"
+            f"  User ID: {job.user_id}\n"
+            f"  Expected duration: 3-4 minutes (categorization skipped)"
+        )
+    else:
+        logger.info(
+            f"Executing UnifiedWorkflow for job {job.job_id}\n"
+            f"  URS filename: {job.urs_filename}\n"
+            f"  User ID: {job.user_id}\n"
+            f"  Expected duration: 5-6 minutes"
+        )
 
     # Read URS content from storage
     from main.src.adapters.local_adapter import LocalStorageAdapter
@@ -426,7 +604,7 @@ async def _execute_workflow(job: JobRecord, executor: WorkflowExecutor) -> dict[
         else:
             raise
 
-    # Execute workflow
+    # Execute workflow (with approved_category if HIL already approved)
     result = await executor.execute_workflow(
         job_id=job.job_id,
         urs_content=urs_content,
@@ -434,7 +612,8 @@ async def _execute_workflow(job: JobRecord, executor: WorkflowExecutor) -> dict[
         metadata={
             "urs_filename": job.urs_filename,
             "urs_hash": job.urs_hash
-        }
+        },
+        approved_category=approved_category
     )
 
     logger.info(
@@ -454,22 +633,25 @@ async def _wait_for_hil_approval(
     job_lock: asyncio.Lock,
     audit_logger: Any,
     timeout_seconds: int = HIL_APPROVAL_TIMEOUT_SECONDS,
-    poll_interval_seconds: int = HIL_POLL_INTERVAL_SECONDS
+    poll_interval_seconds: int = HIL_POLL_INTERVAL_SECONDS,
+    db_job_repo: PostgresJobRepository | None = None
 ) -> bool:
     """
     Poll for HIL approval decision.
 
-    Implements database polling pattern (per user decision):
-    - Polls job status every poll_interval_seconds
+    Implements database polling pattern for docker-compose:
+    - Polls PostgreSQL for approval status (shared state with API container)
+    - Falls back to in-memory if no database
     - Returns True if APPROVED, False if REJECTED or timeout
 
     Args:
         job: Job record requiring approval
-        job_repository: Shared job repository
-        job_lock: Lock for repository access
+        job_repository: In-memory job repository (fallback)
+        job_lock: Lock for in-memory repository access
         audit_logger: Audit logger for compliance
         timeout_seconds: Maximum wait time before auto-reject
         poll_interval_seconds: Polling interval
+        db_job_repo: PostgreSQL repository (docker-compose mode)
 
     Returns:
         True if approved, False if rejected or timeout
@@ -482,10 +664,12 @@ async def _wait_for_hil_approval(
     start_time = datetime.now(UTC)
     timeout_at = start_time + timedelta(seconds=timeout_seconds)
 
+    use_database = db_job_repo is not None
     logger.info(
         f"[HIL] Starting approval polling for job {job_id}\n"
         f"  Poll interval: {poll_interval_seconds}s\n"
-        f"  Timeout: {timeout_seconds}s ({timeout_at.isoformat()})"
+        f"  Timeout: {timeout_seconds}s ({timeout_at.isoformat()})\n"
+        f"  Mode: {'PostgreSQL (docker-compose)' if use_database else 'in-memory (local)'}"
     )
 
     # Log HIL wait start
@@ -497,7 +681,8 @@ async def _wait_for_hil_approval(
         metadata={
             "timeout_at": timeout_at.isoformat(),
             "poll_interval_seconds": poll_interval_seconds,
-            "categorization_result": job.categorization_result
+            "categorization_result": job.categorization_result,
+            "polling_mode": "database" if use_database else "in_memory"
         }
     )
 
@@ -506,86 +691,111 @@ async def _wait_for_hil_approval(
         poll_count += 1
         await asyncio.sleep(poll_interval_seconds)
 
-        # Check job status
-        async with job_lock:
-            current_job = job_repository.get(job_id)
+        # Poll for job status - use database if available, otherwise in-memory
+        current_job: JobRecord | None = None
 
-            if current_job is None:
-                logger.error(f"[HIL] Job {job_id} disappeared from repository during polling")
-                return False
+        if use_database:
+            # CRITICAL: Poll PostgreSQL for shared state with API container
+            try:
+                current_job = await db_job_repo.get(job_id)
+            except Exception as e:
+                logger.error(f"[HIL-DB] Failed to poll database for job {job_id}: {e}")
+                # Continue polling - might recover on next attempt
+                continue
+        else:
+            # Fallback to in-memory (won't work in docker-compose)
+            async with job_lock:
+                current_job = job_repository.get(job_id)
 
-            current_status = current_job.status
+        if current_job is None:
+            logger.error(f"[HIL] Job {job_id} not found during polling")
+            return False
 
-            if current_status == JobStatus.APPROVED:
-                logger.info(
-                    f"[HIL] Job {job_id} APPROVED after {poll_count} polls "
-                    f"(human_category: {current_job.human_category})"
-                )
+        current_status = current_job.status
 
-                # Log approval received
-                audit_logger.log_event(
-                    job_id=job_id,
-                    event_type="hil_approved",
-                    user_id=job.user_id,
-                    status=JobStatus.APPROVED,
-                    metadata={
-                        "poll_count": poll_count,
-                        "wait_time_seconds": (datetime.now(UTC) - start_time).total_seconds(),
-                        "human_category": current_job.human_category
-                    }
-                )
+        if current_status == JobStatus.APPROVED:
+            logger.info(
+                f"[HIL] Job {job_id} APPROVED after {poll_count} polls "
+                f"(human_category: {current_job.human_category})"
+            )
 
-                # Update job reference to get latest state
-                job.status = current_job.status
-                job.human_category = current_job.human_category
-                job.updated_at = current_job.updated_at
+            # Log approval received
+            audit_logger.log_event(
+                job_id=job_id,
+                event_type="hil_approved",
+                user_id=job.user_id,
+                status=JobStatus.APPROVED,
+                metadata={
+                    "poll_count": poll_count,
+                    "wait_time_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+                    "human_category": current_job.human_category,
+                    "polling_mode": "database" if use_database else "in_memory"
+                }
+            )
 
-                return True
+            # Update job reference to get latest state
+            job.status = current_job.status
+            job.human_category = current_job.human_category
+            job.updated_at = current_job.updated_at
 
-            if current_status == JobStatus.REJECTED:
-                logger.info(
-                    f"[HIL] Job {job_id} REJECTED after {poll_count} polls"
-                )
+            return True
 
-                # Log rejection received
-                audit_logger.log_event(
-                    job_id=job_id,
-                    event_type="hil_rejected",
-                    user_id=job.user_id,
-                    status=JobStatus.REJECTED,
-                    metadata={
-                        "poll_count": poll_count,
-                        "wait_time_seconds": (datetime.now(UTC) - start_time).total_seconds(),
-                        "rejection_reason": "human_decision"
-                    }
-                )
+        if current_status == JobStatus.REJECTED:
+            logger.info(
+                f"[HIL] Job {job_id} REJECTED after {poll_count} polls"
+            )
 
-                job.status = current_job.status
-                job.updated_at = current_job.updated_at
+            # Log rejection received
+            audit_logger.log_event(
+                job_id=job_id,
+                event_type="hil_rejected",
+                user_id=job.user_id,
+                status=JobStatus.REJECTED,
+                metadata={
+                    "poll_count": poll_count,
+                    "wait_time_seconds": (datetime.now(UTC) - start_time).total_seconds(),
+                    "rejection_reason": "human_decision",
+                    "polling_mode": "database" if use_database else "in_memory"
+                }
+            )
 
-                return False
+            job.status = current_job.status
+            job.updated_at = current_job.updated_at
 
-            # Still awaiting approval - continue polling
-            if poll_count % 30 == 0:  # Log every 30 polls (60 seconds)
-                remaining = (timeout_at - datetime.now(UTC)).total_seconds()
-                logger.info(
-                    f"[HIL] Job {job_id} still awaiting approval "
-                    f"(poll #{poll_count}, {remaining:.0f}s remaining)"
-                )
+            return False
+
+        # Still awaiting approval - continue polling
+        if poll_count % 30 == 0:  # Log every 30 polls (60 seconds)
+            remaining = (timeout_at - datetime.now(UTC)).total_seconds()
+            logger.info(
+                f"[HIL] Job {job_id} still awaiting approval "
+                f"(poll #{poll_count}, {remaining:.0f}s remaining, mode={'db' if use_database else 'mem'})"
+            )
 
     # Timeout reached - auto-reject
     logger.warning(f"[HIL] Job {job_id} approval TIMEOUT after {poll_count} polls")
 
-    async with job_lock:
-        current_job = job_repository.get(job_id)
-        if current_job and current_job.status == JobStatus.AWAITING_APPROVAL:
-            current_job.status = JobStatus.REJECTED
-            current_job.updated_at = datetime.now(UTC)
-            current_job.error_message = f"HIL approval timeout after {timeout_seconds} seconds"
+    # Update status to REJECTED
+    if use_database:
+        try:
+            await db_job_repo.set_approval_status(
+                job_id=job_id,
+                status=JobStatus.REJECTED,
+                human_category=None
+            )
+        except Exception as e:
+            logger.error(f"[HIL-DB] Failed to update timeout rejection in database: {e}")
+    else:
+        async with job_lock:
+            current_job = job_repository.get(job_id)
+            if current_job and current_job.status == JobStatus.AWAITING_APPROVAL:
+                current_job.status = JobStatus.REJECTED
+                current_job.updated_at = datetime.now(UTC)
+                current_job.error_message = f"HIL approval timeout after {timeout_seconds} seconds"
 
-            job.status = current_job.status
-            job.updated_at = current_job.updated_at
-            job.error_message = current_job.error_message
+    job.status = JobStatus.REJECTED
+    job.updated_at = datetime.now(UTC)
+    job.error_message = f"HIL approval timeout after {timeout_seconds} seconds"
 
     # Log timeout rejection
     audit_logger.log_event(
@@ -596,7 +806,8 @@ async def _wait_for_hil_approval(
         metadata={
             "poll_count": poll_count,
             "timeout_seconds": timeout_seconds,
-            "rejection_reason": "timeout_auto_reject"
+            "rejection_reason": "timeout_auto_reject",
+            "polling_mode": "database" if use_database else "in_memory"
         }
     )
 

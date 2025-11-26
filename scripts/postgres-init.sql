@@ -77,14 +77,15 @@ CREATE TABLE IF NOT EXISTS jobs (
     -- Primary Key
     job_id UUID PRIMARY KEY,
 
-    -- Job Status Lifecycle
+    -- Job Status Lifecycle (includes HIL statuses for Human-in-the-Loop workflow)
     status VARCHAR(20) NOT NULL
-        CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+        CHECK (status IN ('pending', 'processing', 'awaiting_approval', 'approved', 'rejected', 'completed', 'failed')),
 
     -- ALCOA+ Timestamps (Contemporaneous)
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     started_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,  -- HIL: Last state change timestamp
 
     -- URS File Metadata (Original, Accurate)
     urs_filename VARCHAR(255) NOT NULL,
@@ -101,6 +102,18 @@ CREATE TABLE IF NOT EXISTS jobs (
     -- GAMP-5 Categorization Result
     gamp_category VARCHAR(1)
         CHECK (gamp_category IN ('1', '3', '4', '5')),
+
+    -- Human-in-the-Loop (HIL) Approval Fields
+    requires_approval BOOLEAN DEFAULT FALSE,  -- Flag indicating HIL required
+    approval_reason TEXT,  -- Reason for HIL (e.g., "Low confidence", "Ambiguity detected")
+    approval_timeout_at TIMESTAMPTZ,  -- Deadline for approval (auto-reject after)
+    categorization_result JSONB,  -- AI categorization data (confidence, alternatives, etc.)
+    human_category VARCHAR(1)  -- Human-approved GAMP category
+        CHECK (human_category IN ('1', '3', '4', '5')),
+
+    -- Observability
+    trace_id TEXT,  -- Langfuse trace ID for debugging
+    trace_url TEXT,  -- Langfuse trace URL for UI link
 
     -- Error Tracking (explicit failure reporting - NO FALLBACKS)
     error_message TEXT,

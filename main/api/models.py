@@ -175,6 +175,9 @@ class JobRecord(BaseModel):
     approval_timeout_at: datetime | None = None
     categorization_result: dict | None = None  # AI recommendation + ambiguity details
     human_category: int | None = None  # Final human-approved category (1, 3, 4, or 5)
+    
+    # Additional metadata
+    metadata: dict[str, Any] | None = None
 
     def to_response(self, download_url: str | None = None) -> JobStatusResponse:
         """
