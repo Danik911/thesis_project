@@ -1,78 +1,51 @@
-# Current Task Context: 3.14
+# Current Task Context: 3.15
 
 ## Task File
-PRPs/tasks/3.14-frontend-approval-ui.md
+PRPs/tasks/3.15-hil-integration-fixes.md
 
-## Active Task
-**Task ID:** 3.14
-**Task Name:** Frontend - Human Approval UI (Next.js Pages Router)
-**Phase:** 3 - Containerization
-**Status:** in-progress
-**Priority:** CRITICAL - User-facing interface for Human-in-the-Loop approval workflow
-**Started:** 2025-11-24 20:42:27
+## Task Content
 
----
+### Status
+**PENDING**
 
-## Task Objective
-Build Next.js Pages Router frontend components to display approval requests, collect human decisions with justifications, and integrate with Clerk authentication for ALCOA+ compliant digital signatures. Match architecture from `examples/alex/frontend/` (Pages Router, Clerk v6).
+### Priority
+**CRITICAL** - Fixes blocking issues discovered during HIL integration testing
 
-## Key Requirements
-1. Display AI categorization with confidence score and ambiguity reason
-2. Show approval form with decision options (APPROVE/REJECT/REQUEST_REVISION)
-3. Allow category override if human disagrees with AI
-4. Require justification (minimum 10 characters for audit trail)
-5. Pre-fill digital signature from Clerk JWT
-6. Poll job status every 5 seconds for real-time updates
-7. Match `examples/alex/frontend/` architecture (Pages Router, Clerk v6)
+### Objective
+Fix critical bugs discovered during HIL integration testing and complete the end-to-end workflow:
+1. Fix Langfuse `@observe` decorator hanging on file uploads
+2. Fix RecursionError in logging system
+3. **Implement workflow re-execution after human approval** (CRITICAL GAP)
+4. Clean up debug logging added during investigation
 
-## Success Criteria
+### Issues to Fix
 
-### ApprovalModal Component
-1. Display AI categorization result (category, confidence, ambiguity reason, alternatives, reasoning)
-2. Approval form fields (decision select, category override, justification textarea, signature)
-3. Form validation (min 10 chars justification, valid category)
+#### Issue 1: POST /jobs Hanging - `net::ERR_EMPTY_RESPONSE`
+- Langfuse `@observe` decorator serializes file uploads, causing hangs
+- Current workaround: `@observe` decorator commented out
 
-### Job Status Polling
-4. Poll GET /jobs/{job_id}/status every 5 seconds
-5. Detect AWAITING_APPROVAL status
-6. Show ApprovalModal automatically when approval required
-7. Display countdown timer for timeout (1 hour)
+#### Issue 2: RecursionError in Logging
+- Logging initialization timing issue
+- Recursive WeakRef lookups during early access
 
-### Job Status Display
-8. Job list badge: "⏳ Awaiting Approval"
-9. Show ambiguity reason in tooltip/detail view
-10. Display AI confidence score with color coding (Red <70%, Yellow 70-85%, Green >85%)
-11. Handle timeout with clear error message
+#### Issue 3: CRITICAL - Worker Never Re-Executes Workflow After Approval
+- Worker polls for APPROVED jobs but only logs, never re-executes
+- Missing: Fetch approval decision, inject HumanResponseEvent, resume workflow
 
-### Clerk Integration (EU endpoints)
-12. Extract user_id from Clerk JWT
-13. Generate digital signature: {user_id}_{timestamp}
-14. Extract user email and role from Clerk claims
-15. Match architecture from examples/alex/frontend/ (Pages Router, Clerk v6)
+### Success Criteria
+- Fix 1: Langfuse tracing without file serialization
+- Fix 2: No RecursionError on startup/requests
+- Fix 3: Complete workflow resumption after approval
+- Cleanup: Remove debug prints, keep HTTP middleware
 
-## Files to Create
-1. `main/frontend/components/ApprovalModal.tsx` (~300 lines)
-2. `main/frontend/hooks/useJobStatusPolling.ts` (~80 lines)
-
-## Files to Modify
-1. `main/frontend/pages/generate.tsx` - Add ApprovalModal integration
-2. `main/frontend/pages/history.tsx` - Add approval status display
-3. `main/frontend/package.json` - Add @headlessui/react
-
-## Dependencies
-- Task 3.12 (categorization ambiguity) - COMPLETED
-- Task 3.13 (backend HIL API) - IN PROGRESS
-- Clerk authentication - CONFIGURED
-- Next.js Pages Router - CONFIGURED
-
-## Compliance Requirements
-- EU AI Act Article 50 (Transparency)
-- 21 CFR Part 11 (Electronic Signatures)
-- GAMP-5 (Human oversight)
-- WCAG 2.1 AA (Accessibility)
+### Dependencies
+- Task 3.13 completed (Backend HIL API)
+- Task 3.14 completed (Frontend Approval UI)
+- PostgreSQL database with `approval_records` table
+- Langfuse SDK installed
 
 ## Task Metadata
-- Task ID: 3.14
-- Phase: 3 - Containerization
-- Started: 2025-11-24 20:42:27
-- Workflow Status: IN PROGRESS
+- Task ID: 3.15
+- Phase: 3 - Frontend Dashboard
+- Started: 2025-11-26 12:44:44
+- Workflow Status: INITIALIZED

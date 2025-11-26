@@ -80,7 +80,6 @@ def get_job_queue() -> asyncio.Queue[str]:
     Raises:
         HTTPException: If queue not initialized
     """
-    print("[DEP] get_job_queue() called", flush=True)
     if _job_queue is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -99,7 +98,6 @@ def get_job_repository() -> dict[str, JobRecord]:
     Raises:
         HTTPException: If repository not initialized
     """
-    print("[DEP] get_job_repository() called", flush=True)
     if _job_repository is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -118,7 +116,6 @@ def get_job_lock() -> asyncio.Lock:
     Raises:
         HTTPException: If lock not initialized
     """
-    print("[DEP] get_job_lock() called", flush=True)
     if _job_lock is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -236,7 +233,6 @@ def get_db_job_repository() -> PostgresJobRepository | None:
         PostgresJobRepository if initialized, None otherwise
         (None indicates in-memory mode, used for local testing without docker-compose)
     """
-    print(f"[DEP] get_db_job_repository() called: db_initialized={_db_job_repository is not None}", flush=True)
     return _db_job_repository
 
 
@@ -262,9 +258,7 @@ def get_storage_adapter() -> StorageProvider:
 
     CRITICAL: NO FALLBACK LOGIC - Errors must propagate explicitly
     """
-    print("[DEP] get_storage_adapter() called", flush=True)
     try:
-        print("[DEP] get_storage_adapter() - calling get_config()...", flush=True)
         config = get_config()
         storage_config = config.storage
 
@@ -307,7 +301,6 @@ async def require_clerk_user(
     CRITICAL: FAIL CLOSED - NO FALLBACK LOGIC
     All authentication failures result in 401 with explicit error details.
     """
-    print("[DEP] require_clerk_user() called", flush=True)
     token = credentials.credentials
 
     # Validate environment configuration
@@ -430,7 +423,6 @@ async def validate_upload_file(file: UploadFile) -> UploadFile:
 
     CRITICAL: NO FALLBACK LOGIC - Invalid files rejected explicitly
     """
-    print(f"[DEP] validate_upload_file() called: filename={file.filename}", flush=True)
     # Maximum file size: 100MB
     MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB in bytes
     ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx", ".md"}

@@ -5,9 +5,41 @@ Provides async job submission with GAMP-5 compliance, ALCOA+ audit trail,
 and background job processing using asyncio.Queue and in-memory storage.
 """
 
+# CRITICAL: Configure logging FIRST, before ANY other imports that might log
+# This prevents RecursionError from LoggerAdapter WeakRef issues
+import logging
+import sys
+import warnings
+
+# Suppress WeakValueDictionary recursion warnings during GC
+warnings.filterwarnings("ignore", category=ResourceWarning)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    stream=sys.stdout,
+    force=True  # Force reconfiguration if already set
+)
+
+# Suppress DEBUG logging for internal modules to prevent recursion issues
+# These modules can trigger recursive logging during GC cleanup
+# The WeakValueDictionary in Python's logging manager can cause recursion
+# when its remove callback tries to log during garbage collection
+logging.getLogger().setLevel(logging.INFO)  # Root logger - no DEBUG anywhere
+logging.getLogger("asyncio").setLevel(logging.WARNING)
+logging.getLogger("concurrent.futures").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("opentelemetry").setLevel(logging.WARNING)
+logging.getLogger("alembic").setLevel(logging.WARNING)
+logging.getLogger("phoenix").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
+
+# Now safe to import modules that might log during import
 import asyncio
 import hashlib
-import logging
 import os
 import uuid
 from collections.abc import AsyncGenerator
@@ -16,7 +48,6 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import yaml
 import aiofiles
-import sys
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
@@ -29,10 +60,10 @@ from langfuse import observe
 env_file = Path(__file__).parent.parent.parent / ".env.local"
 if env_file.exists():
     load_dotenv(env_file)
-    logging.info(f"Loaded environment variables from {env_file}")
+    logger.info(f"Loaded environment variables from {env_file}")
 else:
     # In Docker, env vars are passed via docker-compose, so file might not exist
-    logging.info(f"Environment file not found: {env_file} (using system env vars)")
+    logger.info(f"Environment file not found: {env_file} (using system env vars)")
 
 from .audit import get_audit_logger, initialize_audit_logger
 from .dependencies import (
@@ -63,17 +94,11 @@ from .models import (
     JobStatusWithApproval,
     JobSubmitResponse,
 )
-from .observability import initialize_langfuse, shutdown_langfuse
+from .observability import initialize_langfuse, shutdown_langfuse, get_langfuse_client
 from .worker import process_job_worker
 
-# Configure logging to ensure output to stdout
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    stream=sys.stdout
-)
-
-logger = logging.getLogger(__name__)
+# Note: logging.basicConfig and logger are configured at the top of the file
+# to prevent RecursionError from early logger access
 
 
 @asynccontextmanager
@@ -92,7 +117,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         None
     """
     # Startup
-    print("DEBUG: Lifespan startup initiated", flush=True)
     logger.info("FastAPI application starting...")
 
     # Initialize audit logger
@@ -114,29 +138,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize PostgreSQL database repository (if DATABASE_URL set)
     # This enables HIL workflow shared state between API and Worker containers
     database_url = os.getenv("DATABASE_URL")
-    print(f"DEBUG: DATABASE_URL found: {bool(database_url)}", flush=True)
-    
+
     db_job_repo: PostgresJobRepository | None = None
     if database_url:
         try:
-            print("DEBUG: Initializing DB repo...", flush=True)
             db_job_repo = await initialize_database_repository(database_url)
-            print("DEBUG: DB repo initialized successfully", flush=True)
             logger.info(
                 "[HIL] PostgreSQL repository initialized - "
                 "API and Worker containers now share job state"
             )
 
-            # CRITICAL: Re-enqueue pending jobs from database
+            # CRITICAL: Re-enqueue pending/approved jobs from database
             # This recovers jobs lost from in-memory queue during container restart
+            # Also recovers APPROVED jobs that were waiting for HIL resumption
             try:
-                print("DEBUG: Checking for restartable jobs...", flush=True)
                 restartable_jobs = await db_job_repo.get_pending_jobs()
-                print(
-                    f"DEBUG: Found {len(restartable_jobs)} restartable jobs (pending/processing)",
-                    flush=True
-                )
-                
+
                 if restartable_jobs:
                     logger.info(
                         f"[RECOVERY] Found {len(restartable_jobs)} restartable jobs in database. Re-enqueuing..."
@@ -147,24 +164,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                             job_repository[job.job_id] = job
                             # 2. Add to processing queue
                             await job_queue.put(job.job_id)
-                            print(
-                                f"DEBUG: Re-enqueued job {job.job_id} (status={job.status.value})",
-                                flush=True
-                            )
+                            logger.debug(f"[RECOVERY] Re-enqueued job {job.job_id} (status={job.status.value})")
                     logger.info(f"[RECOVERY] Successfully re-enqueued {len(restartable_jobs)} jobs")
             except Exception as e:
-                print(f"DEBUG: Recovery failed: {e}", flush=True)
                 logger.error(f"[RECOVERY] Failed to re-enqueue restartable jobs: {e}")
 
         except Exception as e:
-            print(f"DEBUG: DB init failed: {e}", flush=True)
             logger.error(
                 f"[HIL] Failed to initialize PostgreSQL repository: {e}. "
                 f"HIL workflow resumption will NOT work in docker-compose mode!"
             )
             # Continue without database - HIL won't work but basic operations might
     else:
-        print("DEBUG: No DATABASE_URL set", flush=True)
         logger.warning(
             "[HIL] DATABASE_URL not set - running in in-memory mode. "
             "HIL workflow resumption will NOT work between API and Worker containers!"
@@ -309,8 +320,6 @@ async def health_check() -> dict[str, str]:
 
 
 @app.post("/jobs", response_model=JobSubmitResponse, status_code=status.HTTP_201_CREATED)
-# TEMPORARILY DISABLED: @observe decorator suspected of causing hang
-# @observe(name="create_test_generation_job")
 async def submit_job(
     file: ValidatedFileDep,
     storage: StorageAdapterDep,
@@ -350,29 +359,49 @@ async def submit_job(
         HTTPException 500: If storage or job creation fails
 
     CRITICAL: NO FALLBACK LOGIC - All errors propagate explicitly
+
+    Note: Uses manual Langfuse tracing instead of @observe decorator
+    to avoid serialization issues with file uploads (UploadFile contains
+    non-serializable file descriptors that cause infinite hang).
     """
+    # Manual Langfuse tracing - avoids @observe file serialization issue
+    # Only serialize safe metadata (filename, content_type) NOT the file object
+    # Uses start_span() instead of trace() - SDK 3.5.2 API
+    langfuse = get_langfuse_client()
+    span = None
+
     try:
         # Generate unique job ID
-        print("[SUBMIT] Step 1: Generating job_id...", flush=True)
         job_id = str(uuid.uuid4())
-        print(f"[SUBMIT] Step 1 DONE: job_id={job_id}", flush=True)
         logger.info(f"Submitting job {job_id} for user {user.sub} ({user.email})")
 
+        # Start span AFTER job_id is generated so we can include it
+        # Note: user_id goes in metadata since start_span() doesn't have user_id param
+        if langfuse:
+            span = langfuse.start_span(
+                name="create_test_generation_job",
+                input={
+                    "filename": file.filename,
+                    "content_type": file.content_type,
+                    "endpoint": "POST /jobs"
+                },
+                metadata={
+                    "job_id": job_id,
+                    "user_id": user.sub,
+                    "user_email": user.email
+                }
+            )
+
         # Read file content (already in memory from validation)
-        print("[SUBMIT] Step 2: Reading file content...", flush=True)
         urs_content = await file.read()
-        print(f"[SUBMIT] Step 2 DONE: read {len(urs_content)} bytes", flush=True)
 
         # Compute SHA-256 hash (ONCE from memory)
-        print("[SUBMIT] Step 3: Computing hash...", flush=True)
         urs_hash = hashlib.sha256(urs_content).hexdigest()
-        print(f"[SUBMIT] Step 3 DONE: hash={urs_hash[:16]}...", flush=True)
 
         # Persist file via storage adapter
         # Note: Using "5" (custom software) as placeholder until workflow
         # completes GAMP-5 categorization. The workflow will update this
         # to the correct category (1, 3, 4, or 5) based on system analysis.
-        print("[SUBMIT] Step 4: Preparing storage metadata...", flush=True)
         storage_metadata = {
             "gamp_category": "5",  # Valid GAMP-5 placeholder (custom software)
             "job_id": job_id,
@@ -382,17 +411,14 @@ async def submit_job(
             "artifact_type": "urs"
         }
 
-        print("[SUBMIT] Step 5: Saving to storage...", flush=True)
         storage_key = await storage.save_artifact(
             artifact_id=f"{job_id}/urs_document.md",
             content=urs_content,
             metadata=storage_metadata
         )
-        print(f"[SUBMIT] Step 5 DONE: storage_key={storage_key}", flush=True)
         logger.info(f"URS persisted: {storage_key}")
 
         # Create job record
-        print("[SUBMIT] Step 6: Creating job record...", flush=True)
         job_record = JobRecord(
             job_id=job_id,
             status=JobStatus.PENDING,
@@ -403,35 +429,26 @@ async def submit_job(
             urs_size_bytes=len(urs_content),
             user_id=user.sub  # Clerk user ID from JWT 'sub' claim
         )
-        print("[SUBMIT] Step 6 DONE: job record created", flush=True)
 
         # Add to repository (thread-safe)
-        print("[SUBMIT] Step 7: Adding to in-memory repository...", flush=True)
         async with job_lock:
             job_repository[job_id] = job_record
-        print("[SUBMIT] Step 7 DONE: added to in-memory repo", flush=True)
 
         # Also create in PostgreSQL database (for HIL shared state)
         if db_job_repo is not None:
             try:
-                print("[SUBMIT] Step 8: Creating in PostgreSQL...", flush=True)
                 await db_job_repo.create(job_record)
-                print("[SUBMIT] Step 8 DONE: created in PostgreSQL", flush=True)
                 logger.info(f"[HIL-DB] Job {job_id} created in PostgreSQL")
             except Exception as e:
-                print(f"[SUBMIT] Step 8 FAILED: {e}", flush=True)
                 logger.error(f"[HIL-DB] Failed to create job in database: {e}")
                 # Continue - in-memory job exists, basic operations will work
                 # but HIL workflow resumption may fail
 
         # Enqueue job for background processing
-        print("[SUBMIT] Step 9: Enqueueing job...", flush=True)
         await job_queue.put(job_id)
-        print("[SUBMIT] Step 9 DONE: job enqueued", flush=True)
         logger.info(f"Job {job_id} enqueued for processing")
 
         # Log to audit trail with Clerk authentication context
-        print("[SUBMIT] Step 10: Logging to audit trail...", flush=True)
         audit_logger = get_audit_logger()
         audit_logger.log_event(
             job_id=job_id,
@@ -448,30 +465,48 @@ async def submit_job(
                 "token_exp": user.exp  # JWT expiration for security analysis
             }
         )
-        print("[SUBMIT] Step 10 DONE: audit logged", flush=True)
 
         # Return response immediately (non-blocking)
-        print("[SUBMIT] Step 11: Returning response...", flush=True)
         response = JobSubmitResponse(
             job_id=job_id,
             status=JobStatus.PENDING,
             created_at=job_record.created_at.isoformat(),
             urs_hash=urs_hash
         )
-        print(f"[SUBMIT] Step 11 DONE: returning job_id={job_id}", flush=True)
+
+        # Update span with success output
+        if span:
+            span.update(output={"job_id": job_id, "status": "submitted"})
+
         return response
 
     except HTTPException:
         # Re-raise HTTP exceptions (validation errors)
+        if span:
+            span.update(output={"error": "HTTPException"}, level="WARNING")
         raise
     except Exception as e:
         # CRITICAL: NO FALLBACK - Explicit error propagation
         logger.exception(f"Job submission failed: {e}")
+        if span:
+            span.update(output={"error": str(e)}, level="ERROR")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"CRITICAL: Job submission failed: {e}"
         ) from e
     finally:
+        # End span and flush Langfuse to ensure trace is sent
+        if span:
+            try:
+                span.end()
+            except Exception as end_error:
+                logger.warning(f"Failed to end Langfuse span: {end_error}")
+        if langfuse:
+            try:
+                langfuse.flush()
+            except Exception as flush_error:
+                logger.warning(f"Failed to flush Langfuse: {flush_error}")
+
         # Ensure file handle closed (prevent resource leaks)
         try:
             await file.close()
@@ -480,7 +515,6 @@ async def submit_job(
 
 
 @app.get("/jobs", response_model=list[JobStatusResponse])
-@observe(name="list_jobs")
 async def list_jobs(
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
@@ -489,6 +523,9 @@ async def list_jobs(
 ) -> list[JobStatusResponse]:
     """
     List all jobs for the current user.
+
+    Note: @observe decorator removed - causes hang by serializing
+    non-serializable dependency objects (locks, connection pools).
     """
     # Try database first (docker-compose mode)
     if db_job_repo is not None:
@@ -511,7 +548,6 @@ async def list_jobs(
 
 
 @app.get("/jobs/{job_id}/download")
-@observe(name="download_job_result")
 async def download_job_result(
     job_id: str,
     job_repository: JobRepositoryDep,
@@ -520,6 +556,9 @@ async def download_job_result(
 ):
     """
     Download job result file.
+
+    Note: @observe decorator removed - causes hang by serializing
+    non-serializable dependency objects (locks, connection pools).
     """
     async with job_lock:
         job = job_repository.get(job_id)
@@ -563,7 +602,6 @@ async def download_job_result(
 
 
 @app.get("/jobs/{job_id}/result")
-@observe(name="get_job_result_json")
 async def get_job_result_json(
     job_id: str,
     job_repository: JobRepositoryDep,
@@ -572,6 +610,9 @@ async def get_job_result_json(
 ):
     """
     Get job result as JSON for dashboard display.
+
+    Note: @observe decorator removed - causes hang by serializing
+    non-serializable dependency objects (locks, connection pools).
     """
     async with job_lock:
         job = job_repository.get(job_id)
@@ -714,7 +755,6 @@ async def get_job_status(
 
 
 @app.get("/jobs/{job_id}/approval-status", response_model=JobStatusWithApproval)
-@observe(name="get_job_approval_status")
 async def get_job_approval_status(
     job_id: str,
     job_repository: JobRepositoryDep,
@@ -750,64 +790,84 @@ async def get_job_approval_status(
     CRITICAL: NO FALLBACK LOGIC - All errors propagate explicitly
 
     HIL Note: In docker-compose mode, prefer database for latest status.
+
+    FIX: Removed @observe decorator - causes hang by serializing
+    non-serializable dependency objects (locks, connection pools).
+    Manual span created with safe metadata only.
     """
-    # Try database first for latest HIL status (docker-compose mode)
-    job = None
-    if db_job_repo is not None:
-        try:
-            job = await db_job_repo.get(job_id)
-        except Exception as e:
-            logger.warning(f"[HIL-DB] Failed to get job from database: {e}")
-            # Fall through to in-memory
-
-    # Fall back to in-memory if database unavailable or returned None
-    if job is None:
-        async with job_lock:
-            job = job_repository.get(job_id)
-
-    if job is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"CRITICAL: Job {job_id} not found"
+    # Manual Langfuse span - DO NOT use @observe decorator (serialization hang)
+    langfuse = get_langfuse_client()
+    span = None
+    if langfuse:
+        span = langfuse.start_span(
+            name="get_job_approval_status",
+            input={"job_id": job_id, "endpoint": "GET /jobs/{job_id}/approval-status"},
+            metadata={"user_id": user.sub}
         )
 
-    # Authorization check: User can only access their own jobs
-    if job.user_id != user.sub:
-        logger.warning(
-            f"Authorization denied: User {user.sub} ({user.email}) "
-            f"attempted to access job {job_id} owned by {job.user_id}"
+    try:
+        # Try database first for latest HIL status (docker-compose mode)
+        job = None
+        if db_job_repo is not None:
+            try:
+                job = await db_job_repo.get(job_id)
+            except Exception as e:
+                logger.warning(f"[HIL-DB] Failed to get job from database: {e}")
+                # Fall through to in-memory
+
+        # Fall back to in-memory if database unavailable or returned None
+        if job is None:
+            async with job_lock:
+                job = job_repository.get(job_id)
+
+        if job is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"CRITICAL: Job {job_id} not found"
+            )
+
+        # Authorization check: User can only access their own jobs
+        if job.user_id != user.sub:
+            logger.warning(
+                f"Authorization denied: User {user.sub} ({user.email}) "
+                f"attempted to access job {job_id} owned by {job.user_id}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"CRITICAL: User not authorized to view job {job_id}"
+            )
+
+        # Calculate timeout remaining
+        timeout_remaining_seconds: int | None = None
+        if job.approval_timeout_at:
+            remaining = (job.approval_timeout_at - datetime.now(UTC)).total_seconds()
+            timeout_remaining_seconds = max(0, int(remaining))
+
+        # Extract alternative categories from categorization result
+        alternative_categories: list[int] | None = None
+        if job.categorization_result and "alternative_categories" in job.categorization_result:
+            alternative_categories = job.categorization_result["alternative_categories"]
+
+        return JobStatusWithApproval(
+            job_id=job.job_id,
+            status=job.status,
+            requires_approval=job.requires_approval,
+            approval_reason=job.approval_reason,
+            timeout_remaining_seconds=timeout_remaining_seconds,
+            categorization_result=job.categorization_result,
+            alternative_categories=alternative_categories,
+            created_at=job.created_at.isoformat(),
+            updated_at=job.updated_at.isoformat() if job.updated_at else None
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"CRITICAL: User not authorized to view job {job_id}"
-        )
-
-    # Calculate timeout remaining
-    timeout_remaining_seconds: int | None = None
-    if job.approval_timeout_at:
-        remaining = (job.approval_timeout_at - datetime.now(UTC)).total_seconds()
-        timeout_remaining_seconds = max(0, int(remaining))
-
-    # Extract alternative categories from categorization result
-    alternative_categories: list[int] | None = None
-    if job.categorization_result and "alternative_categories" in job.categorization_result:
-        alternative_categories = job.categorization_result["alternative_categories"]
-
-    return JobStatusWithApproval(
-        job_id=job.job_id,
-        status=job.status,
-        requires_approval=job.requires_approval,
-        approval_reason=job.approval_reason,
-        timeout_remaining_seconds=timeout_remaining_seconds,
-        categorization_result=job.categorization_result,
-        alternative_categories=alternative_categories,
-        created_at=job.created_at.isoformat(),
-        updated_at=job.updated_at.isoformat() if job.updated_at else None
-    )
+    finally:
+        if span:
+            span.end()
+        langfuse = get_langfuse_client()
+        if langfuse:
+            langfuse.flush()
 
 
 @app.post("/jobs/{job_id}/approval", response_model=ApprovalResponse)
-@observe(name="submit_job_approval")
 async def submit_job_approval(
     job_id: str,
     approval_request: ApprovalRequest,
@@ -854,7 +914,26 @@ async def submit_job_approval(
         HTTPException 408: If approval timeout expired
 
     CRITICAL: NO FALLBACK LOGIC - All errors propagate explicitly
+
+    FIX: Removed @observe decorator - causes hang by serializing
+    non-serializable dependency objects (locks, connection pools).
+    Manual span created with safe metadata only.
     """
+    # Manual Langfuse span - DO NOT use @observe decorator (serialization hang)
+    langfuse = get_langfuse_client()
+    span = None
+    if langfuse:
+        span = langfuse.start_span(
+            name="submit_job_approval",
+            input={
+                "job_id": job_id,
+                "approval_decision": approval_request.approval_decision.value,
+                "human_category": approval_request.human_category,
+                "endpoint": "POST /jobs/{job_id}/approval"
+            },
+            metadata={"user_id": user.sub}
+        )
+
     try:
         # Get job with lock
         async with job_lock:
@@ -1025,10 +1104,15 @@ async def submit_job_approval(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"CRITICAL: Approval submission failed: {e}"
         ) from e
+    finally:
+        if span:
+            span.end()
+        langfuse = get_langfuse_client()
+        if langfuse:
+            langfuse.flush()
 
 
 @app.get("/jobs/{job_id}/approval-history")
-@observe(name="get_approval_history")
 async def get_approval_history(
     job_id: str,
     job_repository: JobRepositoryDep,

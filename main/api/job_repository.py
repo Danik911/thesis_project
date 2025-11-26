@@ -314,11 +314,16 @@ class PostgresJobRepository:
 
     async def get_pending_jobs(self) -> list[JobRecord]:
         """
-        Get all jobs awaiting processing (pending or mid-flight).
+        Get all jobs awaiting processing (pending, processing, or approved).
 
-        Returns jobs whose status is either 'pending' or 'processing'.
+        Returns jobs whose status is either 'pending', 'processing', or 'approved'.
         Used on startup to re-populate the job queue when the API/worker
         restarts and needs to recover work that never completed.
+
+        CRITICAL: Includes APPROVED status for HIL workflow recovery.
+        When a job is approved by human reviewer but worker restarts before
+        resuming the workflow, this ensures the approved job is re-enqueued
+        and processed with the human-approved category.
 
         Returns:
             List of JobRecord objects
@@ -326,7 +331,8 @@ class PostgresJobRepository:
         async with self._pool.acquire() as conn:
             restartable_statuses = [
                 JobStatus.PENDING.value,
-                JobStatus.PROCESSING.value
+                JobStatus.PROCESSING.value,
+                JobStatus.APPROVED.value  # HIL recovery: resume approved jobs
             ]
 
             rows = await conn.fetch(

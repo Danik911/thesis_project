@@ -146,18 +146,30 @@ export default function Generate() {
     const handleGenerate = async () => {
         if (!selectedFile) return;
 
+        console.log('[DEBUG] handleGenerate called');
+        console.log(`[DEBUG] Selected file: ${selectedFile.name} (${selectedFile.size} bytes)`);
+
         setStatus('PENDING');
         setLogs(['Initializing upload...', 'Validating file format...', 'Checking GAMP-5 compliance requirements...']);
 
         try {
+            console.log('[DEBUG] Getting Clerk auth token...');
             const token = await getToken();
+
+            if (!token) {
+                throw new Error('Authentication failed - no token available. Please sign in again.');
+            }
+            console.log('[DEBUG] Auth token obtained successfully');
+
             const formData = new FormData();
             formData.append('file', selectedFile);
 
             const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+            console.log(`[DEBUG] API URL: ${apiUrl}`);
 
             setLogs(prev => [...prev, `Connecting to secure API at ${apiUrl}...`]);
 
+            console.log('[DEBUG] Sending POST /jobs request...');
             const response = await fetch(`${apiUrl}/jobs`, {
                 method: 'POST',
                 headers: {
@@ -165,13 +177,25 @@ export default function Generate() {
                 },
                 body: formData
             });
+            console.log(`[DEBUG] POST /jobs response: ${response.status} ${response.statusText}`);
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || `API Error: ${response.statusText}`);
+                const errorText = await response.text();
+                console.error(`[DEBUG] POST /jobs error response: ${errorText}`);
+                let errorDetail = `API Error: ${response.statusText}`;
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorDetail = errorData.detail || errorDetail;
+                } catch {
+                    // Not JSON - use raw text
+                    errorDetail = errorText || errorDetail;
+                }
+                throw new Error(errorDetail);
             }
 
             const data = await response.json();
+            console.log(`[DEBUG] Job created: ${data.job_id}`);
+
             setJobId(data.job_id);
             setStatus('PROCESSING');
             setJobStartTime(Date.now()); // Set start time
@@ -181,7 +205,7 @@ export default function Generate() {
             pollJobStatus(data.job_id, apiUrl);
 
         } catch (error) {
-            console.error('Upload failed:', error);
+            console.error('[DEBUG] Upload failed:', error);
             setStatus('FAILED');
             setLogs(prev => [...prev, `ERROR: ${error instanceof Error ? error.message : 'Upload failed'}`]);
         }
@@ -190,9 +214,27 @@ export default function Generate() {
     const pollJobStatus = useCallback((id: string, apiUrl: string) => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
+        // Track consecutive failures to expose errors after multiple attempts
+        let consecutiveFailures = 0;
+        const MAX_CONSECUTIVE_FAILURES = 5;
+
+        console.log(`[DEBUG] Starting poll for job ${id} at ${apiUrl}`);
+
         pollIntervalRef.current = setInterval(async () => {
             try {
                 const token = await getToken();
+                if (!token) {
+                    consecutiveFailures++;
+                    console.error(`[DEBUG] No auth token for polling (failure ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES})`);
+                    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                        setStatus('FAILED');
+                        setLogs(prev => [...prev, 'ERROR: Authentication failed. Please refresh and sign in again.']);
+                    }
+                    return;
+                }
+
+                console.log(`[DEBUG] Polling job status: GET ${apiUrl}/jobs/${id}`);
                 const response = await fetch(`${apiUrl}/jobs/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -206,13 +248,24 @@ export default function Generate() {
                         setLogs(prev => [...prev, 'ERROR: Job session expired. The server may have restarted.']);
                         return;
                     }
-                    throw new Error(`Polling error: ${response.statusText}`);
+                    consecutiveFailures++;
+                    console.error(`[DEBUG] Polling HTTP error ${response.status} (failure ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES})`);
+                    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                        setStatus('FAILED');
+                        setLogs(prev => [...prev, `ERROR: Server communication failed after ${MAX_CONSECUTIVE_FAILURES} attempts (${response.status})`]);
+                    }
+                    return;
                 }
+
+                // Reset failure counter on success
+                consecutiveFailures = 0;
 
                 const data = await response.json();
 
                 // Normalize status to uppercase for comparison
                 const normalizedStatus = data.status.toUpperCase();
+                console.log(`[DEBUG] Job ${id} status: ${normalizedStatus}`);
 
                 if (normalizedStatus === 'COMPLETED') {
                     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -275,49 +328,142 @@ export default function Generate() {
                     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                     setStatus('FAILED');
                     setLogs(prev => [...prev, `Job failed: ${data.error_message || 'Unknown error'}`]);
+                } else if (normalizedStatus === 'AWAITING_APPROVAL') {
+                    // Detected HIL status - update local state
+                    console.log(`[DEBUG] Job ${id} awaiting human approval`);
+                    setStatus('AWAITING_APPROVAL');
+                    // Keep polling but don't show approval modal here - useJobStatusPolling handles that
                 } else {
-                    // Still processing
+                    // Still processing (PENDING or PROCESSING)
                     // We can add "heartbeat" logs occasionally or just wait
                     // setLogs(prev => [...prev, `Processing... (${new Date().toLocaleTimeString()})`]);
                 }
 
             } catch (e) {
-                console.error("Polling failed:", e);
-                // Don't fail immediately on one polling error, but maybe log it
+                consecutiveFailures++;
+                console.error(`[DEBUG] Polling exception (failure ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, e);
+
+                // Expose error to user after multiple failures (NO FALLBACK LOGIC)
+                if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                    setStatus('FAILED');
+                    setLogs(prev => [...prev, `ERROR: Lost connection to server after ${MAX_CONSECUTIVE_FAILURES} attempts. ${e instanceof Error ? e.message : 'Unknown error'}`]);
+                }
             }
         }, 2000);
     }, [getToken, fetchJobs]);
 
     // Resume async operations on mount (state already initialized via lazy init)
+    // CRITICAL: Validate that localStorage job still exists on server before trusting it
     useEffect(() => {
         if (!isLoaded) return;
 
         // State is already restored from localStorage via lazy initialization
-        // Just resume async operations (polling for active jobs, fetching results for completed jobs)
-        if (jobId && status) {
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        // But we MUST validate the job exists on server - localStorage may be stale
+        // (e.g., server restarted and in-memory jobs were lost)
+        const validateAndResume = async () => {
+            if (!jobId || !status) {
+                console.log('[DEBUG] No localStorage state to restore');
+                return;
+            }
 
-            if (status === 'PENDING' || status === 'PROCESSING') {
-                // Resume polling for active job
-                pollJobStatus(jobId, apiUrl);
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+            console.log(`[DEBUG] Validating localStorage job ${jobId} (status: ${status})`);
+
+            // CRITICAL: Validate job exists on server BEFORE trusting localStorage
+            if (status === 'PENDING' || status === 'PROCESSING' || status === 'AWAITING_APPROVAL') {
+                try {
+                    const token = await getToken();
+                    if (!token) {
+                        console.error('[DEBUG] No auth token available for job validation');
+                        // Clear stale state - can't validate without auth
+                        resetDashboard();
+                        setLogs(['Session expired. Please submit a new job.']);
+                        return;
+                    }
+
+                    console.log(`[DEBUG] Fetching job status from ${apiUrl}/jobs/${jobId}`);
+                    const response = await fetch(`${apiUrl}/jobs/${jobId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.status === 404) {
+                        // Job doesn't exist on server - localStorage is stale
+                        console.warn(`[DEBUG] Job ${jobId} not found on server (404) - clearing stale localStorage`);
+                        resetDashboard();
+                        setLogs(['Previous job session expired (server may have restarted). Please submit a new job.']);
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        // Other error - log but don't clear state yet
+                        console.error(`[DEBUG] Job validation failed: ${response.status} ${response.statusText}`);
+                        const errorText = await response.text();
+                        console.error(`[DEBUG] Error details: ${errorText}`);
+                        // Show error but keep state - might be temporary network issue
+                        setLogs(prev => [...prev, `Warning: Could not validate job status (${response.status})`]);
+                    } else {
+                        // Job exists - get current status from server (source of truth)
+                        const jobData = await response.json();
+                        const serverStatus = jobData.status.toUpperCase();
+                        console.log(`[DEBUG] Server reports job status: ${serverStatus}`);
+
+                        // Update local status to match server
+                        if (serverStatus !== status) {
+                            console.log(`[DEBUG] Updating local status from ${status} to ${serverStatus}`);
+                            setStatus(serverStatus as JobStatus);
+                        }
+
+                        // Resume polling if still active
+                        if (serverStatus === 'PENDING' || serverStatus === 'PROCESSING') {
+                            console.log(`[DEBUG] Job is active, resuming polling`);
+                            pollJobStatus(jobId, apiUrl);
+                        } else if (serverStatus === 'COMPLETED' && !results) {
+                            // Fetch results for completed job
+                            console.log(`[DEBUG] Job completed, fetching results`);
+                            const resultResponse = await fetch(`${apiUrl}/jobs/${jobId}/result`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (resultResponse.ok) {
+                                const resultData = await resultResponse.json();
+                                setResults(resultData);
+                            }
+                        } else if (serverStatus === 'AWAITING_APPROVAL') {
+                            console.log(`[DEBUG] Job awaiting approval`);
+                            setShowApprovalModal(true);
+                        } else if (serverStatus === 'FAILED') {
+                            console.log(`[DEBUG] Job failed on server`);
+                            setLogs(prev => [...prev, `Job failed: ${jobData.error_message || 'Unknown error'}`]);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[DEBUG] Failed to validate job:', e);
+                    // Network error - keep state but warn user
+                    setLogs(prev => [...prev, `Warning: Network error validating job. Will retry...`]);
+                    // Try to resume polling anyway - might recover
+                    pollJobStatus(jobId, apiUrl);
+                }
             } else if (status === 'COMPLETED' && !results) {
                 // Fetch results for completed job
-                (async () => {
-                    try {
-                        const token = await getToken();
-                        const resultResponse = await fetch(`${apiUrl}/jobs/${jobId}/result`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (resultResponse.ok) {
-                            const resultData = await resultResponse.json();
-                            setResults(resultData);
-                        }
-                    } catch (e) {
-                        console.error("Failed to restore completed job results", e);
+                try {
+                    const token = await getToken();
+                    const resultResponse = await fetch(`${apiUrl}/jobs/${jobId}/result`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (resultResponse.ok) {
+                        const resultData = await resultResponse.json();
+                        setResults(resultData);
+                    } else if (resultResponse.status === 404) {
+                        // Job doesn't exist - clear stale state
+                        resetDashboard();
                     }
-                })();
+                } catch (e) {
+                    console.error("Failed to restore completed job results", e);
+                }
             }
-        }
+        };
+
+        validateAndResume();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoaded]); // Only run when Clerk finishes loading (other deps intentionally excluded)
 
@@ -486,7 +632,7 @@ export default function Generate() {
                                                     </p>
                                                 </div>
                                             )}
-                                            {approvalStatus?.timeout_remaining_seconds !== null && (
+                                            {approvalStatus?.timeout_remaining_seconds != null && (
                                                 <p className="text-sm text-amber-300 mt-4">
                                                     Time remaining: {Math.floor(approvalStatus.timeout_remaining_seconds / 60)}:{String(approvalStatus.timeout_remaining_seconds % 60).padStart(2, '0')}
                                                 </p>

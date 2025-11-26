@@ -95,8 +95,8 @@ async def process_job_worker(
     HIL Support (docker-compose):
     - When db_job_repo is provided, HIL polling uses PostgreSQL for shared state
     - Approval decisions from API container are visible to worker container
+    - Includes recovery of APPROVED jobs on worker restart
     """
-    print("DEBUG: process_job_worker started", flush=True)
     audit_logger = get_audit_logger()
 
     logger.info("Background job worker started")
@@ -119,9 +119,7 @@ async def process_job_worker(
     while True:
         try:
             # Wait for job from queue
-            print("DEBUG: Worker waiting for job...", flush=True)
             job_id = await job_queue.get()
-            print(f"DEBUG: Worker received job {job_id}", flush=True)
             logger.info(f"Worker processing job: {job_id}")
 
             # Get job record from repository
@@ -283,8 +281,40 @@ async def _process_job_with_retries(
 
     while retry_count <= max_retries:
         try:
+            # CRITICAL: Check if job was pre-approved (HIL recovery scenario)
+            # This handles jobs that were APPROVED by human but worker restarted
+            # before resuming the workflow. The job is re-enqueued with status APPROVED
+            # and human_category set, so we pass approved_category to skip categorization.
+            approved_category = None
+            if job.human_category:
+                approved_category = job.human_category
+                logger.info(
+                    f"[HIL-RECOVERY] Job {job.job_id} has pre-approved category {approved_category}\n"
+                    f"  This job was approved before worker restart\n"
+                    f"  Skipping categorization step, using human-approved category"
+                )
+
             # Execute actual workflow (replaces simulation)
-            result = await _execute_workflow(job, executor)
+            # If approved_category is set, categorization step will be skipped
+            result = await _execute_workflow(job, executor, approved_category=approved_category)
+
+            # If job was pre-approved, skip HIL check (already approved by human)
+            if approved_category:
+                logger.info(
+                    f"[HIL-RECOVERY] Workflow completed with pre-approved category\n"
+                    f"  Job ID: {job.job_id}\n"
+                    f"  Human Category: {approved_category}\n"
+                    f"  Result URI: {result.get('result_uri')}"
+                )
+
+                # Update job with result
+                async with job_lock:
+                    job.result_uri = result["result_uri"]
+                    job.gamp_category = str(approved_category)
+                    job.trace_id = result.get("trace_id")
+                    job.trace_url = result.get("trace_url")
+
+                return True  # Success after HIL recovery
 
             # Check if HIL is required based on workflow result
             # This is determined by categorization ambiguity detection (Task 3.12)
