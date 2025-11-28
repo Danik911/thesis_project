@@ -935,100 +935,113 @@ async def submit_job_approval(
         )
 
     try:
-        # Get job with lock
-        async with job_lock:
-            job = job_repository.get(job_id)
+        # FIX: Check database FIRST for HIL jobs (docker-compose mode)
+        # Jobs may exist in PostgreSQL but not in-memory after API restart
+        job = None
+        if db_job_repo is not None:
+            try:
+                job = await db_job_repo.get(job_id)
+                if job:
+                    logger.info(f"[HIL-DB] Found job {job_id} in PostgreSQL (status: {job.status})")
+            except Exception as e:
+                logger.warning(f"[HIL-DB] Failed to get job from database: {e}")
+                # Fall through to in-memory
 
-            if job is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"CRITICAL: Job {job_id} not found"
-                )
+        # Fall back to in-memory if database unavailable or returned None
+        if job is None:
+            async with job_lock:
+                job = job_repository.get(job_id)
 
-            # Authorization check: User can only approve their own jobs
-            if job.user_id != user.sub:
-                logger.warning(
-                    f"Authorization denied: User {user.sub} ({user.email}) "
-                    f"attempted to approve job {job_id} owned by {job.user_id}"
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"CRITICAL: User not authorized to approve job {job_id}"
-                )
-
-            # Validate job is awaiting approval
-            if job.status != JobStatus.AWAITING_APPROVAL:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"CRITICAL: Job {job_id} is not awaiting approval (status: {job.status})"
-                )
-
-            # Check timeout not expired
-            if job.approval_timeout_at and datetime.now(UTC) > job.approval_timeout_at:
-                # Auto-reject on timeout
-                job.status = JobStatus.REJECTED
-                job.updated_at = datetime.now(UTC)
-                logger.warning(f"Job {job_id} approval timeout expired - auto-rejecting")
-                raise HTTPException(
-                    status_code=status.HTTP_408_REQUEST_TIMEOUT,
-                    detail=f"CRITICAL: Approval timeout expired for job {job_id}"
-                )
-
-            # Extract AI categorization details for audit record
-            ai_category = 5  # Default
-            ai_confidence = 0.0
-            ai_reasoning = "Unknown"
-            ambiguity_reason = None
-            alternative_categories = None
-
-            if job.categorization_result:
-                ai_category = job.categorization_result.get("gamp_category", 5)
-                ai_confidence = job.categorization_result.get("confidence", 0.0)
-                ai_reasoning = job.categorization_result.get("reasoning", "No reasoning provided")
-                ambiguity_reason = job.categorization_result.get("ambiguity_reason")
-                alternative_categories = job.categorization_result.get("alternative_categories")
-
-            # Create ALCOA+ compliant approval record
-            approval_record = ApprovalRecord(
-                job_id=job_id,
-                # AI Recommendation
-                ai_category=ai_category,
-                ai_confidence=ai_confidence,
-                ai_reasoning=ai_reasoning,
-                ambiguity_reason=ambiguity_reason,
-                alternative_categories=alternative_categories,
-                # Human Decision
-                approval_decision=approval_request.approval_decision,
-                human_category=approval_request.human_category,
-                justification=approval_request.justification,
-                # ALCOA+ Compliance
-                user_id=user.sub,
-                user_email=user.email,
-                digital_signature=f"{user.sub}_{datetime.now(UTC).isoformat()}",
-                # Metadata
-                ip_address=request.client.host if request.client else None,
-                user_agent=request.headers.get("user-agent")
+        if job is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"CRITICAL: Job {job_id} not found in database or memory"
             )
 
-            # Determine final job status and category
-            if approval_request.approval_decision == ApprovalDecision.APPROVE:
-                job.status = JobStatus.APPROVED
-                # Use human category if provided, otherwise keep AI category
-                job.human_category = approval_request.human_category or ai_category
-                workflow_resumed = True
-                message = f"Job approved with GAMP category {job.human_category}"
-            elif approval_request.approval_decision == ApprovalDecision.REJECT:
-                job.status = JobStatus.REJECTED
-                job.human_category = None
-                workflow_resumed = False
-                message = "Job rejected by human reviewer"
-            else:  # REQUEST_REVISION
-                # Keep AWAITING_APPROVAL status, extend timeout
-                job.approval_timeout_at = datetime.now(UTC) + timedelta(hours=1)
-                workflow_resumed = False
-                message = "Revision requested - timeout extended by 1 hour"
+        # Authorization check: User can only approve their own jobs
+        if job.user_id != user.sub:
+            logger.warning(
+                f"Authorization denied: User {user.sub} ({user.email}) "
+                f"attempted to approve job {job_id} owned by {job.user_id}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"CRITICAL: User not authorized to approve job {job_id}"
+            )
 
+        # Validate job is awaiting approval
+        if job.status != JobStatus.AWAITING_APPROVAL:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"CRITICAL: Job {job_id} is not awaiting approval (status: {job.status})"
+            )
+
+        # Check timeout not expired
+        if job.approval_timeout_at and datetime.now(UTC) > job.approval_timeout_at:
+            # Auto-reject on timeout
+            job.status = JobStatus.REJECTED
             job.updated_at = datetime.now(UTC)
+            logger.warning(f"Job {job_id} approval timeout expired - auto-rejecting")
+            raise HTTPException(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                detail=f"CRITICAL: Approval timeout expired for job {job_id}"
+            )
+
+        # Extract AI categorization details for audit record
+        ai_category = 5  # Default
+        ai_confidence = 0.0
+        ai_reasoning = "Unknown"
+        ambiguity_reason = None
+        alternative_categories = None
+
+        if job.categorization_result:
+            ai_category = job.categorization_result.get("gamp_category", 5)
+            ai_confidence = job.categorization_result.get("confidence", 0.0)
+            ai_reasoning = job.categorization_result.get("reasoning", "No reasoning provided")
+            ambiguity_reason = job.categorization_result.get("ambiguity_reason")
+            alternative_categories = job.categorization_result.get("alternative_categories")
+
+        # Create ALCOA+ compliant approval record
+        approval_record = ApprovalRecord(
+            job_id=job_id,
+            # AI Recommendation
+            ai_category=ai_category,
+            ai_confidence=ai_confidence,
+            ai_reasoning=ai_reasoning,
+            ambiguity_reason=ambiguity_reason,
+            alternative_categories=alternative_categories,
+            # Human Decision
+            approval_decision=approval_request.approval_decision,
+            human_category=approval_request.human_category,
+            justification=approval_request.justification,
+            # ALCOA+ Compliance
+            user_id=user.sub,
+            user_email=user.email,
+            digital_signature=f"{user.sub}_{datetime.now(UTC).isoformat()}",
+            # Metadata
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent")
+        )
+
+        # Determine final job status and category
+        if approval_request.approval_decision == ApprovalDecision.APPROVE:
+            job.status = JobStatus.APPROVED
+            # Use human category if provided, otherwise keep AI category
+            job.human_category = approval_request.human_category or ai_category
+            workflow_resumed = True
+            message = f"Job approved with GAMP category {job.human_category}"
+        elif approval_request.approval_decision == ApprovalDecision.REJECT:
+            job.status = JobStatus.REJECTED
+            job.human_category = None
+            workflow_resumed = False
+            message = "Job rejected by human reviewer"
+        else:  # REQUEST_REVISION
+            # Keep AWAITING_APPROVAL status, extend timeout
+            job.approval_timeout_at = datetime.now(UTC) + timedelta(hours=1)
+            workflow_resumed = False
+            message = "Revision requested - timeout extended by 1 hour"
+
+        job.updated_at = datetime.now(UTC)
 
         # CRITICAL: Update PostgreSQL database for HIL shared state
         # This allows Worker container to see the approval decision

@@ -150,10 +150,10 @@ class OQTestGeneratorV2:
             # Use centralized LLM configuration (NO FALLBACKS)
             # Note: o3 models are not currently in OSS migration scope
             # Using standard LLM config for now
-            llm = LLMConfig.get_llm(
-                max_tokens=4000,
-                # Additional parameters can be passed as needed
-            )
+            # CRITICAL FIX (Issue 10): Do NOT override max_tokens here!
+            # Global config has max_tokens=30000 which is needed for large OQ batches
+            # Previous max_tokens=4000 caused JSON truncation on batch_2 (6000-8000 tokens needed)
+            llm = LLMConfig.get_llm()
 
             # Determine test count
             if config:

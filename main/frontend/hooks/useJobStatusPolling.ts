@@ -53,14 +53,19 @@ export function useJobStatusPolling(
     /**
      * Fetch job approval status from backend
      * NO FALLBACK LOGIC: Errors are set explicitly, no default values
+     *
+     * CRITICAL FIX (Issue 9): Handle Clerk JWT token expiration (60s default)
+     * - On 401, wait briefly for Clerk's background token refresh
+     * - Retry once with fresh token before reporting error
      */
-    const fetchStatus = useCallback(async () => {
+    const fetchStatus = useCallback(async (isRetry: boolean = false) => {
         if (!jobId) {
             setIsLoading(false);
             return;
         }
 
         try {
+            // CRITICAL: Get fresh token for EACH request (Clerk caches internally)
             const token = await getToken();
             if (!token) {
                 throw new Error('Authentication token not available. Please sign in again.');
@@ -72,6 +77,15 @@ export function useJobStatusPolling(
                     'Authorization': `Bearer ${token}`
                 }
             });
+
+            // Handle 401 Unauthorized - token may have expired
+            if (response.status === 401 && !isRetry) {
+                console.warn('[HIL-POLL] Token expired (401), waiting for Clerk refresh...');
+                // Wait 1 second for Clerk's background token refresh
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Retry once with fresh token
+                return fetchStatus(true);
+            }
 
             if (!response.ok) {
                 // NO FALLBACK LOGIC: Expose HTTP errors explicitly

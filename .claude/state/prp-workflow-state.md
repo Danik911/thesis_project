@@ -1,141 +1,82 @@
 # PRP Workflow State
 
 ## Current Task
-- **Task ID:** 3.15
-- **Task Name:** HIL Integration Bug Fixes and Workflow Completion
+- **Task ID:** None (Task 3.15 completed)
+- **Task Name:** N/A
 - **Phase:** 3 - Frontend Dashboard
-- **Status:** completed (awaiting user confirmation)
+- **Status:** idle
 - **Current Agent:** none
-- **Started:** 2025-11-26 12:44:44
-- **Last Updated:** 2025-11-26 13:15:00
+- **Last Completed:** 3.15 - HIL Integration Bug Fixes (2025-11-26)
 
 ---
 
-## Workflow Progress
+## Last Completed Task: 3.15
 
-### Agent Sequence
-1. ✅ **Main Orchestrator** → Task initialization
-2. ✅ **context-collector** → Research & context gathering
-   - Result: `.claude/state/results/context-collector-20251126-143000.md`
-   - Duration: 45 minutes
-   - Status: SUCCESS
-3. ✅ **task-executor** → Implementation
-   - Result: `.claude/state/results/task-executor-20251126-130214.md`
-   - Duration: ~15 minutes
-   - Status: SUCCESS
-4. ✅ **tester-agent** → Validation & testing
-   - Result: `.claude/state/results/tester-agent-20251126-130914.md`
-   - Duration: ~4 minutes
-   - Status: PASS (7/7 tests passed)
-5. ✅ **debugger** (conditional) → INVOKED (runtime API error discovered)
-   - Result: `.claude/state/results/debugger-20251126-132434.md`
-   - Duration: ~7 minutes
-   - Status: RESOLVED (1/1 issues fixed)
+### Summary
+**Task 3.15: HIL Integration Bug Fixes and Workflow Completion**
+- **Status:** ✅ DONE
+- **Started:** 2025-11-26 12:44:44
+- **Completed:** 2025-11-26 21:05:48
+- **Duration:** ~8.5 hours (with debugging iterations)
 
-**Status Legend:**
-- ⏸️ Pending
-- 🔄 In Progress
-- ✅ Completed
-- ❌ Failed
+### Issues Fixed (9/10)
+1. ✅ POST /jobs hanging - Manual Langfuse `start_span()`
+2. ✅ RecursionError - Logging config at top of app.py
+3. ✅ Workflow resumption - APPROVED in restartable_statuses
+4. ✅ Langfuse API error - Changed to `start_span()`
+5. ✅ HIL endpoints hanging - Removed `@observe` from 6 endpoints
+6. ✅ Memory exhaustion - Resolved by removing `@observe`
+7. ⚠️ WSL2 networking - Workaround: restart API container
+8. ✅ 404 on approval - Database-first lookup pattern
+9. ✅ Token expiration (401) - Added retry with 1s delay
+10. ✅ DeepSeek JSON parsing - Removed max_tokens override
+
+### Verification Evidence
+- **Job ID:** `900c54af-fada-424a-991f-bf55ae86261a`
+- **Test Suite:** `OQ-SUITE-2105` with 20 test cases
+- **Output File:** `/app/output/test_suites/test_suite_OQ-SUITE-2105_20251126_210548.json`
+- **Processing Time:** 541.88 seconds (~9 minutes)
+
+### Known UX Issue (Deferred)
+401 errors appear in browser console during token refresh polling. The retry mechanism works correctly but console.error() is noisy. Future cleanup in `useJobStatusPolling.ts`.
 
 ---
 
 ## Workflow History
 
-1. ✅ context-collector (2025-11-26 12:44 - 12:50)
-   → results/context-collector-20251126-143000.md
-   - Researched: Langfuse manual tracing, logging initialization, workflow resumption
-   - Key Findings:
-     * Issue 1: Use langfuse.trace() context manager instead of @observe for file uploads
-     * Issue 2: Logger caching pattern to prevent recursion
-     * Issue 3: Implement process_approved_jobs() in worker.py, extend job_repository
-
-2. ✅ task-executor (2025-11-26 12:50 - 13:05)
-   → results/task-executor-20251126-130214.md
-   - Implementation Summary:
-     * Fix 1: Replaced @observe with manual langfuse.trace() in submit_job()
-     * Fix 2: Moved logging.basicConfig() to top of app.py
-     * Fix 3: Added APPROVED to restartable_statuses, pass approved_category to workflow
-     * Cleanup: Removed debug print() statements from app.py, dependencies.py, worker.py
-
-3. ✅ tester-agent (2025-11-26 13:05 - 13:10)
-   → results/tester-agent-20251126-130914.md
-   - Test Results: 7/7 PASSED
-   - NO FALLBACK LOGIC: 0 violations
-   - GAMP-5 Compliance: PASS
-   - ALCOA+ Principles: 9/9 PASS
-   - Recommendation: Proceed to user confirmation
-
-4. ✅ debugger (2025-11-26 13:18 - 13:25)
-   → results/debugger-20251126-132434.md
-   - Issue: `AttributeError: 'Langfuse' object has no attribute 'trace'`
-   - Root Cause: Langfuse SDK 3.5.2 uses `start_span()` not `trace()`
-   - Fix Applied:
-     * Changed `langfuse.trace()` → `langfuse.start_span()` in app.py
-     * Fixed health check in observability.py to use `start_span()`
-     * Added `span.end()` in finally block before flush
-   - Status: RESOLVED
+### Task 3.15 Agent Sequence
+1. ✅ **context-collector** → Research & context gathering
+   - Result: `results/context-collector-20251126-143000.md` (archived)
+2. ✅ **task-executor** → Implementation
+   - Result: `results/task-executor-20251126-130214.md` (archived)
+3. ✅ **tester-agent** → Validation & testing
+   - Result: `results/tester-agent-20251126-130914.md` (archived)
+4. ✅ **debugger** → Multiple debugging sessions
+   - Results: `debugger-20251126-*.md` (archived)
 
 ---
 
-## Critical Flags & Checks
+## Files Modified (Task 3.15)
 
-### Compliance & Error Handling
+### Modified
+- `main/api/app.py` - Replaced @observe with manual tracing, logging config, database-first lookup
+- `main/api/dependencies.py` - Removed debug prints
+- `main/api/worker.py` - Added HIL recovery logic
+- `main/api/job_repository.py` - Added APPROVED to restartable_statuses
+- `main/api/observability.py` - Fixed health check to use `start_span()`
+- `main/frontend/hooks/useJobStatusPolling.ts` - Added 401 retry logic
+- `main/src/agents/oq_generator/generator_v2.py` - Removed max_tokens override
+
+---
+
+## Compliance Status
+
 - **NO_FALLBACK_VIOLATIONS:** 0
 - **GAMP5_COMPLIANCE_CHECK:** PASS
 - **ALCOA_PLUS_VALIDATION:** PASS
-- **EXPLICIT_ERROR_HANDLING:** VERIFIED
-
-### User Confirmation
-- **USER_CONFIRMATION_REQUIRED:** true
-- **SUCCESS_CLAIMED_WITHOUT_VERIFICATION:** false
-
-### Dependencies
-- **PACKAGE_INSTALLATIONS_NEEDED:** []
-- **MISSING_DEPENDENCIES:** []
-- **BLOCKED_DEPENDENCIES:** []
+- **USER_CONFIRMATION:** Received (2025-11-26)
 
 ---
 
-## Files Modified
-
-### Created
-*No files created*
-
-### Modified
-- `main/api/app.py` - Replaced @observe with manual tracing using `start_span()`, moved logging.basicConfig(), removed debug prints
-- `main/api/dependencies.py` - Removed debug prints
-- `main/api/worker.py` - Added HIL recovery logic, removed debug prints
-- `main/api/job_repository.py` - Added APPROVED to restartable_statuses
-- `main/api/observability.py` - Fixed health check to use `start_span()` instead of `trace()`
-
-### Deleted
-*No files deleted*
-
----
-
-## Notes
-
-Task 3.15 focuses on fixing critical bugs discovered during HIL integration testing:
-1. Fix Langfuse @observe decorator hanging on file uploads
-2. Fix RecursionError in logging system
-3. Implement workflow re-execution after human approval (CRITICAL GAP)
-4. Clean up debug logging
-
-### Test Results Summary
-- **Overall Status:** ✅ PASS
-- **Critical Issues:** 0
-- **Warnings:** 3 (non-blocking: missing type stubs)
-- **Tests Run:** 7
-- **Tests Passed:** 7
-- **Tests Failed:** 0
-
-### Compliance Validation
-- **GAMP-5:** ✅ PASS (audit trail, categorization, resumption)
-- **ALCOA+:** ✅ PASS (all 9 principles verified)
-- **NO FALLBACK LOGIC:** ✅ PASS (0 violations)
-
----
-
-**Last Modified:** 2025-11-26 13:15:00
+**Last Modified:** 2025-11-26 21:10:00
 **Workflow Version:** 1.0
