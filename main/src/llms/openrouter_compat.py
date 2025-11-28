@@ -3,9 +3,12 @@ OpenRouter LLM Compatibility Wrapper for LlamaIndex.
 
 This module provides a compatibility wrapper that inherits from OpenAI's LLM
 to pass LlamaIndex's Pydantic validation while routing requests to OpenRouter.
+
+Enhanced with cost tracking for GAMP-5 pharmaceutical compliance audit trail.
 """
 
 import json
+import logging
 import os
 import time
 import uuid
@@ -40,6 +43,15 @@ except ImportError:
 
 # Import configurable timeout support
 from src.config.timeout_config import TimeoutConfig
+
+# Import cost tracking utilities
+from src.utils.cost_tracker import (
+    calculate_cost,
+    extract_usage_from_response,
+)
+
+# Setup logger for cost tracking audit trail
+logger = logging.getLogger(__name__)
 
 
 class OpenRouterCompatLLM(OpenAI):
@@ -146,15 +158,15 @@ class OpenRouterCompatLLM(OpenAI):
 
     def _make_openrouter_request(self, messages: list[dict], stream: bool = False) -> dict:
         """
-        Make API request to OpenRouter.
-        
+        Make API request to OpenRouter with usage accounting enabled.
+
         Args:
             messages: List of messages in OpenAI format
             stream: Whether to stream the response
-            
+
         Returns:
-            Response data from OpenRouter API
-            
+            Response data from OpenRouter API (includes usage data for cost tracking)
+
         Raises:
             RuntimeError: If API request fails (NO FALLBACKS)
         """
@@ -170,7 +182,10 @@ class OpenRouterCompatLLM(OpenAI):
             "messages": messages,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
-            "stream": stream
+            "stream": stream,
+            # Enable usage accounting for accurate token tracking (GAMP-5 audit trail)
+            # This includes native_prompt_tokens and native_completion_tokens in response
+            "usage": {"include": True}
         }
 
         # Get configurable timeout with logging
@@ -252,10 +267,34 @@ class OpenRouterCompatLLM(OpenAI):
 
             text = response_data["choices"][0]["message"]["content"]
 
-            # Calculate token usage
-            prompt_tokens = self._calculate_tokens(prompt)
-            completion_tokens = self._calculate_tokens(text)
-            total_tokens = prompt_tokens + completion_tokens
+            # Extract real token usage from OpenRouter response (GAMP-5 audit trail)
+            usage = extract_usage_from_response(response_data)
+
+            if usage:
+                # Use actual token counts from API response
+                prompt_tokens = usage.get_billable_input_tokens()
+                completion_tokens = usage.get_billable_output_tokens()
+                total_tokens = usage.total_tokens
+
+                # Calculate cost for audit trail
+                try:
+                    cost = calculate_cost(usage, self.model)
+                    logger.info(
+                        f"[OPENROUTER_COMPLETE] Cost: ${cost.total_cost_usd:.6f} USD "
+                        f"(model: {self.model}, tokens: {total_tokens})"
+                    )
+                except ValueError as e:
+                    # Model not in pricing dict - log but continue (cost tracking non-fatal)
+                    logger.warning(f"[OPENROUTER_COMPLETE] Cost calculation skipped: {e}")
+            else:
+                # Fallback to estimated tokens if usage not available
+                # This is a degraded mode - log warning for audit trail
+                logger.warning(
+                    "[OPENROUTER_COMPLETE] Using estimated tokens (usage data not in response)"
+                )
+                prompt_tokens = self._calculate_tokens(prompt)
+                completion_tokens = self._calculate_tokens(text)
+                total_tokens = prompt_tokens + completion_tokens
 
             # Update OpenTelemetry span with response
             if span:
@@ -264,6 +303,10 @@ class OpenRouterCompatLLM(OpenAI):
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_COMPLETION, completion_tokens)
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_TOTAL, total_tokens)
                 span.set_attribute("llm.latency_ms", latency * 1000)
+                # Add cost tracking attributes if usage available
+                if usage:
+                    span.set_attribute("llm.usage.native_prompt_tokens", usage.native_prompt_tokens or 0)
+                    span.set_attribute("llm.usage.native_completion_tokens", usage.native_completion_tokens or 0)
                 span.set_status(Status(StatusCode.OK))
 
             # Create response object
@@ -371,10 +414,34 @@ class OpenRouterCompatLLM(OpenAI):
 
             message_data = response_data["choices"][0]["message"]
 
-            # Calculate token usage
-            input_tokens = self._calculate_tokens(messages_text)
-            output_tokens = self._calculate_tokens(message_data["content"])
-            total_tokens = input_tokens + output_tokens
+            # Extract real token usage from OpenRouter response (GAMP-5 audit trail)
+            usage = extract_usage_from_response(response_data)
+
+            if usage:
+                # Use actual token counts from API response
+                input_tokens = usage.get_billable_input_tokens()
+                output_tokens = usage.get_billable_output_tokens()
+                total_tokens = usage.total_tokens
+
+                # Calculate cost for audit trail
+                try:
+                    cost = calculate_cost(usage, self.model)
+                    logger.info(
+                        f"[OPENROUTER_CHAT] Cost: ${cost.total_cost_usd:.6f} USD "
+                        f"(model: {self.model}, tokens: {total_tokens})"
+                    )
+                except ValueError as e:
+                    # Model not in pricing dict - log but continue (cost tracking non-fatal)
+                    logger.warning(f"[OPENROUTER_CHAT] Cost calculation skipped: {e}")
+            else:
+                # Fallback to estimated tokens if usage not available
+                # This is a degraded mode - log warning for audit trail
+                logger.warning(
+                    "[OPENROUTER_CHAT] Using estimated tokens (usage data not in response)"
+                )
+                input_tokens = self._calculate_tokens(messages_text)
+                output_tokens = self._calculate_tokens(message_data["content"])
+                total_tokens = input_tokens + output_tokens
 
             # Update OpenTelemetry span with response
             if span:
@@ -385,6 +452,10 @@ class OpenRouterCompatLLM(OpenAI):
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_COMPLETION, output_tokens)
                 span.set_attribute(SpanAttributes.LLM_TOKEN_COUNT_TOTAL, total_tokens)
                 span.set_attribute("llm.latency_ms", latency * 1000)
+                # Add cost tracking attributes if usage available
+                if usage:
+                    span.set_attribute("llm.usage.native_prompt_tokens", usage.native_prompt_tokens or 0)
+                    span.set_attribute("llm.usage.native_completion_tokens", usage.native_completion_tokens or 0)
                 span.set_status(Status(StatusCode.OK))
 
             # Create response object

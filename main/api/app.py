@@ -873,6 +873,7 @@ async def submit_job_approval(
     approval_request: ApprovalRequest,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    job_queue: JobQueueDep,
     approval_repository: ApprovalRepositoryDep,
     approval_lock: ApprovalLockDep,
     db_job_repo: DbJobRepositoryDep,
@@ -1068,6 +1069,17 @@ async def submit_job_approval(
                 f"[HIL] Database repository not available - "
                 f"Worker container cannot see approval for job {job_id}!"
             )
+
+        # CRITICAL FIX: Re-enqueue APPROVED job to worker queue
+        # This ensures workflow resumes even if the original HIL polling loop was killed
+        # (e.g., by container restart). Without this, approved jobs would sit idle.
+        if approval_request.approval_decision == ApprovalDecision.APPROVE:
+            try:
+                # Add to job queue so worker can resume processing
+                await job_queue.put(job_id)
+                logger.info(f"[HIL-RECOVERY] Re-enqueued approved job {job_id} to worker queue")
+            except Exception as e:
+                logger.error(f"[HIL-RECOVERY] Failed to re-enqueue job {job_id}: {e}")
 
         # Store approval record in repository
         async with approval_lock:

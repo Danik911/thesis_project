@@ -50,6 +50,9 @@ export function useJobStatusPolling(
     const [error, setError] = useState<string | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Track if a request is in-flight to prevent retry storms during token refresh
+    const isRequestInFlight = useRef<boolean>(false);
+
     /**
      * Fetch job approval status from backend
      * NO FALLBACK LOGIC: Errors are set explicitly, no default values
@@ -63,6 +66,18 @@ export function useJobStatusPolling(
         if (!jobId) {
             setIsLoading(false);
             return;
+        }
+
+        // Skip this fetch if a previous request is still in-flight (prevents retry storms)
+        // Only check on initial call (retryCount=0), not during retry backoff
+        if (retryCount === 0 && isRequestInFlight.current) {
+            console.log('[HIL-POLL] Skipping poll - previous request still in flight');
+            return;
+        }
+
+        // Mark request as in-flight only on initial call
+        if (retryCount === 0) {
+            isRequestInFlight.current = true;
         }
 
         const MAX_RETRIES = 5; // Increased from 3 to handle long-running workflows
@@ -116,6 +131,9 @@ export function useJobStatusPolling(
             console.error('Job status polling error:', err);
             setError(err.message || 'Unknown error occurred while fetching job status');
             setIsLoading(false);
+        } finally {
+            // Always reset in-flight flag so next poll cycle can proceed
+            isRequestInFlight.current = false;
         }
     }, [jobId, getToken]);
 

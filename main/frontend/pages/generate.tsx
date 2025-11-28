@@ -49,6 +49,9 @@ export default function Generate() {
     const [jobs, setJobs] = useState<any[]>([]);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Track if a poll request is in-flight to prevent retry storms during token refresh
+    const isPollingInFlight = useRef<boolean>(false);
+
     // Approval modal state
     const [showApprovalModal, setShowApprovalModal] = useState(false);
 
@@ -144,6 +147,14 @@ export default function Generate() {
     const handleGenerate = async () => {
         if (!selectedFile) return;
 
+        // CRITICAL FIX: Prevent submitting new job while another is active
+        // This prevents the race condition where approval modal gets lost
+        if (status === 'PENDING' || status === 'PROCESSING' || status === 'AWAITING_APPROVAL') {
+            console.warn('[DEBUG] Blocking new job submission - another job is active');
+            setLogs(prev => [...prev, `WARNING: A job is already in progress (${status}). Please wait or reset.`]);
+            return;
+        }
+
         console.log('[DEBUG] handleGenerate called');
         console.log(`[DEBUG] Selected file: ${selectedFile.name} (${selectedFile.size} bytes)`);
 
@@ -208,6 +219,13 @@ export default function Generate() {
         console.log(`[DEBUG] Starting poll for job ${id} at ${apiUrl}`);
 
         pollIntervalRef.current = setInterval(async () => {
+            // Skip this poll cycle if a previous request is still in-flight (prevents retry storms)
+            if (isPollingInFlight.current) {
+                console.log('[DEBUG] Skipping poll - previous request still in flight');
+                return;
+            }
+            isPollingInFlight.current = true;
+
             try {
                 console.log(`[DEBUG] Polling job status: GET ${apiUrl}/jobs/${id}`);
                 // Use authenticatedFetch which handles 401 retry internally
@@ -327,10 +345,13 @@ export default function Generate() {
                     setStatus('FAILED');
                     setLogs(prev => [...prev, `Job failed: ${data.error_message || 'Unknown error'}`]);
                 } else if (normalizedStatus === 'AWAITING_APPROVAL') {
-                    // Detected HIL status - update local state
-                    console.log(`[DEBUG] Job ${id} awaiting human approval`);
+                    // Detected HIL status - update local state AND show modal immediately
+                    // CRITICAL FIX: Don't rely on separate approval poll - show modal now to prevent
+                    // race condition where user submits new job before modal appears
+                    console.log(`[DEBUG] Job ${id} awaiting human approval - triggering modal`);
                     setStatus('AWAITING_APPROVAL');
-                    // Keep polling but don't show approval modal here - useJobStatusPolling handles that
+                    setShowApprovalModal(true);  // Show modal immediately!
+                    // Keep polling to get updated timeout countdown
                 } else {
                     // Still processing (PENDING or PROCESSING)
                     // We can add "heartbeat" logs occasionally or just wait
@@ -347,6 +368,9 @@ export default function Generate() {
                     setStatus('FAILED');
                     setLogs(prev => [...prev, `ERROR: Lost connection to server after ${MAX_CONSECUTIVE_FAILURES} attempts. ${e instanceof Error ? e.message : 'Unknown error'}`]);
                 }
+            } finally {
+                // Always reset in-flight flag so next poll cycle can proceed
+                isPollingInFlight.current = false;
             }
         }, 2000);
     }, [getToken, fetchJobs]);

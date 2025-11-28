@@ -6,6 +6,16 @@ interface ComplianceDashboardProps {
   onDownload: () => void;
 }
 
+// Format duration in minutes to human-readable format (e.g., "20h 55m" or "45m")
+function formatDuration(minutes: number): string {
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  }
+  return `${minutes}m`;
+}
+
 export default function ComplianceDashboard({ results, onDownload }: ComplianceDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const [showTracePanel, setShowTracePanel] = useState(false);
@@ -66,8 +76,9 @@ export default function ComplianceDashboard({ results, onDownload }: ComplianceD
           <div className="text-3xl font-bold text-white">Medium</div> {/* Placeholder */}
         </div>
         <div className="card border-l-4 border-l-amber-500">
-          <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Est. Duration</div>
-          <div className="text-3xl font-bold text-white">{results.estimated_execution_time || 0}m</div>
+          <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Est. Total Test Time</div>
+          <div className="text-3xl font-bold text-white">{formatDuration(results.estimated_execution_time || 0)}</div>
+          <p className="text-xs text-slate-500 mt-1">{results.total_test_count || 0} tests (sequential)</p>
         </div>
       </div>
 
