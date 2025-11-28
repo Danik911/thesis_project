@@ -72,6 +72,7 @@ dependencies = [
     "pytest-cov>=7.0.0",
     "boto3>=1.40.61",
     "aioboto3>=15.5.0",
+    "json-repair>=0.54.2",
 ]
 
 [build-system]

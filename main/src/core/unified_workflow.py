@@ -2086,10 +2086,17 @@ class UnifiedTestGenerationWorkflow(Workflow):
                     self.logger.error(f"No valid OQTestSuiteEvent in full_event: {oq_event}")
 
                 # Handle consultation in dictionary format
-                consultation = oq_data.get("consultation", {})
+                # The oq_data dict IS the consultation object, not nested under a "consultation" key
+                consultation_type = oq_data.get("consultation_type", "unknown")
+                consultation_context = oq_data.get("consultation_context", {})
+                error_detail = consultation_context.get("error", "No error details available") if isinstance(consultation_context, dict) else str(consultation_context)
+
                 self.logger.error(f"OQ generation returned consultation requirement: {oq_data}")
+                self.logger.error(f"Consultation type: {consultation_type}")
+                self.logger.error(f"Error detail: {error_detail[:500] if len(error_detail) > 500 else error_detail}")
+
                 raise RuntimeError(
-                    f"OQ generation failed: {consultation.get('consultation_type', 'unknown')}"
+                    f"OQ generation failed: {consultation_type} - {error_detail[:200] if len(error_detail) > 200 else error_detail}"
                 )
 
             # Unexpected result type

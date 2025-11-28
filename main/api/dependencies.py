@@ -327,7 +327,7 @@ async def require_clerk_user(
             "verify_exp": True,
             "verify_iat": True,
             "verify_aud": False,  # Disable audience verification (session tokens don't have 'aud')
-            "leeway": 10  # 10 seconds clock skew tolerance
+            "leeway": 30  # 30 seconds tolerance for async token refresh delays
         }
 
         payload = jwt.decode(

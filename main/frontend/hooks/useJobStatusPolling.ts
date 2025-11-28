@@ -55,18 +55,24 @@ export function useJobStatusPolling(
      * NO FALLBACK LOGIC: Errors are set explicitly, no default values
      *
      * CRITICAL FIX (Issue 9): Handle Clerk JWT token expiration (60s default)
-     * - On 401, wait briefly for Clerk's background token refresh
-     * - Retry once with fresh token before reporting error
+     * - On 401, wait for Clerk's background token refresh with exponential backoff
+     * - Retry up to 3 times before reporting error
+     * - Use longer delays (2s, 4s, 8s) to give Clerk time to refresh
      */
-    const fetchStatus = useCallback(async (isRetry: boolean = false) => {
+    const fetchStatus = useCallback(async (retryCount: number = 0) => {
         if (!jobId) {
             setIsLoading(false);
             return;
         }
 
+        const MAX_RETRIES = 5; // Increased from 3 to handle long-running workflows
+
         try {
-            // CRITICAL: Get fresh token for EACH request (Clerk caches internally)
-            const token = await getToken();
+            // CRITICAL FIX: Force refresh token on retry attempts to get a NEW token
+            // On first attempt (retryCount=0), use cached token for performance
+            // On retry attempts, force refresh to ensure we don't reuse expired token
+            const shouldForceRefresh = retryCount > 0;
+            const token = await getToken(shouldForceRefresh ? { forceRefresh: true } : undefined);
             if (!token) {
                 throw new Error('Authentication token not available. Please sign in again.');
             }
@@ -79,12 +85,13 @@ export function useJobStatusPolling(
             });
 
             // Handle 401 Unauthorized - token may have expired
-            if (response.status === 401 && !isRetry) {
-                console.warn('[HIL-POLL] Token expired (401), waiting for Clerk refresh...');
-                // Wait 1 second for Clerk's background token refresh
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                // Retry once with fresh token
-                return fetchStatus(true);
+            // CRITICAL FIX: Force token refresh on next retry
+            if (response.status === 401 && retryCount < MAX_RETRIES) {
+                const delay = Math.pow(2, retryCount + 1) * 1000; // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                console.warn(`[HIL-POLL] JWT expired (401), forcing token refresh, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                // Retry with incremented counter - next call will force token refresh
+                return fetchStatus(retryCount + 1);
             }
 
             if (!response.ok) {

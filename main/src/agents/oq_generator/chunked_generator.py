@@ -31,10 +31,9 @@ class ChunkedOQGenerator:
         """Initialize chunked generator with OpenAI LLM."""
         if llm is None:
             from src.config.agent_llm_config import AgentLLMConfig, AgentType
-            self.llm = AgentLLMConfig.get_llm_for_agent(
-                AgentType.OQ_GENERATOR,
-                max_tokens=4000  # Stay under 4096 limit
-            )
+            # CRITICAL FIX: Do NOT override max_tokens - use global config (30000)
+            # Previous max_tokens=4000 caused JSON truncation on larger batches
+            self.llm = AgentLLMConfig.get_llm_for_agent(AgentType.OQ_GENERATOR)
         else:
             self.llm = llm
 
@@ -211,7 +210,8 @@ class ChunkedOQGenerator:
             from src.config.llm_config import LLMConfig
 
             self.logger.info(f"Using DeepSeek via OpenRouter for chunk {chunk_idx}")
-            llm = LLMConfig.get_llm(max_tokens=4000)
+            # CRITICAL FIX: Do NOT override max_tokens - use global config (30000)
+            llm = LLMConfig.get_llm()
 
             # Use LlamaIndex interface for all models
             response = llm.complete(prompt)

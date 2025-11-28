@@ -1,0 +1,2180 @@
+{
+  "suite_id": "OQ-SUITE-1145",
+  "gamp_category": 4,
+  "document_name": "1b9e0914-fc80-42bb-a41e-69f58a31d311.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "End-to-End Workflow Template Configuration and Execution",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the platform can successfully configure and execute a complete personalized therapy workflow from apheresis through to infusion, enforcing all configured rules and handoffs.",
+      "prerequisites": [
+        "System installation is complete and verified",
+        "Test environment with configured user roles is available",
+        "Sample workflow template configuration data is prepared",
+        "Test patient and manufacturing lot data is loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the system with administrator credentials and navigate to the workflow template configuration module.",
+          "expected_result": "System authenticates user and displays the workflow template configuration interface successfully.",
+          "data_to_capture": [
+            "Login timestamp",
+            "User interface load time",
+            "Configuration module accessibility"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Configure a new end-to-end workflow template including apheresis, manufacturing slot allocation, QC release, and infusion steps with defined constraints.",
+          "expected_result": "System saves the workflow template configuration without errors and displays a confirmation message.",
+          "data_to_capture": [
+            "Template configuration details",
+            "Save operation status",
+            "Any error messages generated"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Initiate the configured workflow for a test patient and proceed through each step, performing dual-scanning verification at handoff points.",
+          "expected_result": "Workflow progresses through all stages correctly, enforcing chain-of-identity and chain-of-custody requirements at each handoff.",
+          "data_to_capture": [
+            "Workflow progression status",
+            "Scan verification success/failure",
+            "Audit trail entries for each handoff"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify that the system generates a complete audit trail and requires e-signatures for critical actions as configured.",
+          "expected_result": "Complete audit trail is generated for all workflow steps and e-signatures are required and captured for critical actions.",
+          "data_to_capture": [
+            "Audit trail completeness",
+            "E-signature requirements enforcement",
+            "Critical action verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Workflow template configuration is saved and retrievable without data loss",
+        "All configured workflow steps execute in the correct sequence",
+        "Dual-scanning verification is enforced at all handoff points",
+        "Complete audit trail is generated for the entire workflow execution",
+        "E-signatures are required and captured for all critical actions as per 21 CFR Part 11"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for electronic records and signatures",
+        "GDP guidelines for chain-of-custody documentation",
+        "GAMP 5 for configured systems validation"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All workflow steps must generate immutable audit trail entries",
+        "Chain-of-identity must be maintained throughout the workflow",
+        "Electronic signatures must be cryptographically secured",
+        "All configuration changes must be version-controlled"
+      ],
+      "urs_requirements": [
+        "URS-028-001: Configure end-to-end workflow templates",
+        "URS-028-002: Enforce chain-of-identity and chain-of-custody",
+        "URS-028-009: 21 CFR Part 11 e-signatures for critical actions"
+      ],
+      "related_tests": [
+        "OQ-002: Exception Handling Workflow Testing",
+        "OQ-003: Risk Scoring Rules Verification"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Workflow configuration specialist",
+        "Quality assurance validator",
+        "Regulatory compliance expert"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Exception Handling Workflow for Temperature Excursions",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Validate that the system properly detects and routes temperature excursion events through configured exception handling workflows with appropriate notifications and approvals.",
+      "prerequisites": [
+        "Workflow template configuration is verified and active",
+        "Temperature monitoring devices are integrated and calibrated",
+        "Exception handling workflow rules are configured",
+        "Test user accounts with appropriate roles are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure an exception handling workflow for temperature excursions with defined thresholds, notification rules, and approval requirements.",
+          "expected_result": "System accepts and saves the exception handling configuration without errors.",
+          "data_to_capture": [
+            "Exception workflow configuration",
+            "Temperature threshold settings",
+            "Notification rule setup"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a temperature excursion event by sending a temperature reading that exceeds the configured threshold for a test shipment.",
+          "expected_result": "System detects the temperature excursion and automatically triggers the exception handling workflow.",
+          "data_to_capture": [
+            "Temperature event timestamp",
+            "Exception detection time",
+            "Workflow trigger confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify that the system generates appropriate notifications to designated personnel and routes the shipment through the exception workflow.",
+          "expected_result": "Notifications are sent to correct personnel and the shipment is placed in quarantine or exception status as configured.",
+          "data_to_capture": [
+            "Notification recipients",
+            "Notification content",
+            "Shipment status change"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Follow the exception workflow steps including investigation, impact assessment, and required approvals for disposition decision.",
+          "expected_result": "System guides users through all exception workflow steps and captures all required approvals and investigation details.",
+          "data_to_capture": [
+            "Workflow step completion",
+            "Approval records",
+            "Investigation documentation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Temperature excursions are automatically detected when thresholds are exceeded",
+        "Configured exception handling workflow is triggered immediately upon detection",
+        "Appropriate personnel receive notifications as configured",
+        "All exception handling steps require proper documentation and approvals",
+        "Complete audit trail is maintained for the entire exception handling process"
+      ],
+      "regulatory_basis": [
+        "GDP guidelines for temperature-controlled logistics",
+        "21 CFR Part 11 for electronic records and approvals",
+        "ICH Q9 Quality Risk Management principles"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "All temperature readings must be recorded with timestamp and device identity",
+        "Exception workflow actions must be captured in immutable audit trails",
+        "Approval decisions must be electronically signed and timestamped",
+        "All investigation documentation must be securely stored and versioned"
+      ],
+      "urs_requirements": [
+        "URS-028-004: Provide exception handling workflows for temperature excursions",
+        "URS-028-008: Full audit trail for all handoffs and custody events",
+        "URS-028-010: Compliance with GDP for logistics and cold-chain records"
+      ],
+      "related_tests": [
+        "OQ-001: End-to-End Workflow Testing",
+        "OQ-004: Integration with Courier Systems"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Quality management specialist",
+        "Logistics and cold-chain expert",
+        "Regulatory compliance validator"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Chain-of-Identity and Chain-of-Custody Verification with Dual-Scanning",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Verify the system enforces chain-of-identity and chain-of-custody through dual-scanning verification at all critical handoff points to prevent misidentification and ensure sample integrity.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Test patient and sample data created",
+        "Barcode scanners configured and integrated",
+        "Test users with appropriate permissions created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a sample handoff process between two users in the configured workflow",
+          "expected_result": "System prompts both users to scan their unique identification badges",
+          "data_to_capture": [
+            "Timestamp of scan attempts",
+            "User IDs scanned",
+            "System response to scans"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Have both users scan the sample container barcode using separate scanning devices",
+          "expected_result": "System verifies both scans match the same sample identifier and records the custody transfer",
+          "data_to_capture": [
+            "Sample ID scanned",
+            "Scan timestamps",
+            "Verification result",
+            "Custody transfer record ID"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to complete handoff with mismatched sample scans or missing user authentication",
+          "expected_result": "System rejects the handoff and generates an exception requiring resolution",
+          "data_to_capture": [
+            "Error message displayed",
+            "Exception workflow triggered",
+            "Audit trail entry for failed attempt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dual-scanning verification is enforced for all configured handoff points",
+        "All custody transfers are recorded in the audit trail with timestamps and user identities",
+        "Mismatched scans or missing authentication prevent custody transfer completion",
+        "Chain-of-identity is maintained throughout the sample journey"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 Section 11.10 - Controls for identification codes/passwords",
+        "GDP guidelines for documentation of handling and transportation",
+        "General data integrity principles ALCOA+"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "All custody events must be recorded with complete audit trail including who, what, when",
+        "Sample identity must be verified at each handoff point",
+        "Electronic signatures must be applied for critical custody transfers"
+      ],
+      "urs_requirements": [
+        "URS-028-002",
+        "URS-028-008",
+        "URS-028-009",
+        "URS-028-010"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Quality Assurance",
+        "System Administration",
+        "Regulatory Compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Configurable Risk Scoring Rules Execution and Validation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify the system correctly executes configurable risk scoring rules using vendor scripting and provides accurate risk assessments for therapy workflows.",
+      "prerequisites": [
+        "System is installed and configured",
+        "Risk scoring rules configured via vendor scripting interface",
+        "Test patient data with known risk profiles created",
+        "User with permissions to configure and execute risk rules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure a set of risk scoring rules using the vendor scripting interface for patient eligibility assessment",
+          "expected_result": "System accepts the script configuration and validates the syntax without errors",
+          "data_to_capture": [
+            "Script configuration details",
+            "Validation results",
+            "Any error messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute the configured risk scoring rules against test patient data with known risk factors",
+          "expected_result": "System calculates risk scores according to the configured rules and logic",
+          "data_to_capture": [
+            "Input patient data",
+            "Calculated risk scores",
+            "Rule execution timestamps",
+            "Intermediate calculation values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify the risk scoring results against expected outcomes for known test cases",
+          "expected_result": "Calculated risk scores match expected values based on the configured rule logic",
+          "data_to_capture": [
+            "Expected vs actual risk scores",
+            "Variance analysis",
+            "Rule execution logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Modify the risk scoring rules and verify the system recalculates scores appropriately",
+          "expected_result": "System responds to rule changes and produces different risk assessments for the same input data",
+          "data_to_capture": [
+            "Modified rule configuration",
+            "Before and after risk scores",
+            "System response time to rule changes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Configurable risk scoring rules execute without syntax or runtime errors",
+        "Risk scores are calculated consistently according to configured logic",
+        "Rule modifications are immediately effective for new assessments",
+        "All rule executions are logged in the audit trail",
+        "Risk scoring performance meets latency requirements"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 Section 11.10(a) - Validation of systems to ensure accuracy, reliability",
+        "General principles of computerized system validation",
+        "Risk-based approach to quality management"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Risk scoring rules and configurations must be version controlled",
+        "All risk assessments must be traceable to specific rule versions and input data",
+        "Calculation logic must be reproducible and auditable"
+      ],
+      "urs_requirements": [
+        "URS-028-005",
+        "URS-028-008",
+        "URS-028-012",
+        "URS-028-016"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Clinical Operations",
+        "System Configuration",
+        "Quality Assurance",
+        "Risk Management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Concurrent Patient Journey Orchestration Performance Test",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify the system can orchestrate 1,000 concurrent patient journeys while maintaining event processing latency under 1 second as specified in URS-028-011 and URS-028-012.",
+      "prerequisites": [
+        "System deployed in performance test environment",
+        "Test data generator tool available",
+        "Performance monitoring tools configured",
+        "1,000 simulated patient journey templates configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure performance monitoring to capture event processing latency and system resource utilization",
+          "expected_result": "Monitoring tools successfully configured and capturing baseline metrics",
+          "data_to_capture": [
+            "Baseline CPU utilization",
+            "Baseline memory usage",
+            "Network latency baseline"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute test data generator to create 1,000 concurrent patient journeys with simulated events",
+          "expected_result": "1,000 patient journeys successfully initiated and active in the system",
+          "data_to_capture": [
+            "Journey initiation success rate",
+            "Time to create 1,000 journeys",
+            "System response time during load generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor system for 60 minutes while simulating typical workflow events for all concurrent journeys",
+          "expected_result": "System maintains stable performance without crashes or significant degradation",
+          "data_to_capture": [
+            "Event processing latency measurements",
+            "CPU utilization peaks",
+            "Memory usage trends",
+            "Database response times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify event processing latency remains below 1 second for 95% of events",
+          "expected_result": "Latency requirements met with statistical significance",
+          "data_to_capture": [
+            "95th percentile latency",
+            "Maximum latency observed",
+            "Number of events exceeding 1 second threshold"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System successfully orchestrates 1,000 concurrent patient journeys",
+        "Event processing latency remains below 1 second for 95% of events",
+        "No system crashes or unplanned downtime during test",
+        "All patient journeys complete without data loss"
+      ],
+      "regulatory_basis": [
+        "FDA guidance on computerized systems in clinical trials",
+        "ICH E6(R2) Good Clinical Practice",
+        "General principles of software validation"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All patient journey data must be complete and accurate throughout test",
+        "No data corruption or loss during high load conditions",
+        "Audit trail must capture all system events without gaps"
+      ],
+      "urs_requirements": [
+        "URS-028-011",
+        "URS-028-012"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Performance testing",
+        "System architecture",
+        "Database monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Custom Algorithm Module Integration and Explainability Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Validate the integration and functionality of custom-developed algorithm modules for patient-to-lot matching optimization, including verification of explainability artifacts as specified in URS-028-015 and URS-028-016.",
+      "prerequisites": [
+        "Containerized custom algorithm module deployed",
+        "Test patient and lot data sets available",
+        "Explainability artifact validation tools configured",
+        "Integration endpoints accessible"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy containerized custom algorithm module to the test environment using version control",
+          "expected_result": "Module successfully deployed and accessible via defined API endpoints",
+          "data_to_capture": [
+            "Deployment success status",
+            "Module version information",
+            "Container health status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute patient-to-lot matching optimization algorithm with test data sets",
+          "expected_result": "Algorithm processes input data and returns matching recommendations",
+          "data_to_capture": [
+            "Processing time",
+            "Input data validation results",
+            "Matching recommendation output"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify generation of explainability artifacts for algorithm decisions",
+          "expected_result": "System generates comprehensive explainability reports for each matching decision",
+          "data_to_capture": [
+            "Artifact completeness",
+            "Decision rationale clarity",
+            "Feature importance metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Validate algorithm integration with main workflow orchestration platform",
+          "expected_result": "Main platform successfully calls algorithm module and incorporates results into workflow decisions",
+          "data_to_capture": [
+            "Integration API response times",
+            "Data transformation accuracy",
+            "Error handling performance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom algorithm module integrates successfully with main platform",
+        "Patient-to-lot matching recommendations are generated accurately",
+        "Explainability artifacts provide clear rationale for algorithm decisions",
+        "All regulatory requirements for algorithmic decision-making are met"
+      ],
+      "regulatory_basis": [
+        "FDA guidance on software as a medical device",
+        "EU MDR requirements for clinical decision support systems",
+        "Algorithmic transparency and explainability standards"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Algorithm input and output data must maintain integrity throughout processing",
+        "Explainability artifacts must accurately reflect algorithm decision process",
+        "All data transformations must be verifiable and traceable"
+      ],
+      "urs_requirements": [
+        "URS-028-006",
+        "URS-028-015",
+        "URS-028-016"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "Algorithm validation",
+        "Container orchestration",
+        "Regulatory compliance for AI/ML systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Scheduling and Slot Allocation with Configurable Constraints",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the platform correctly enforces configurable scheduling constraints for manufacturing slot allocation and dynamically adjusts to resource availability and priority rules.",
+      "prerequisites": [
+        "Platform is installed and accessible",
+        "Test environment with configured workflow templates",
+        "User accounts with scheduling permissions",
+        "Pre-defined manufacturing resources and calendar",
+        "Sample patient treatment schedules"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure scheduling constraints including manufacturing capacity, resource availability windows, and priority rules for urgent cases.",
+          "expected_result": "Constraints are successfully saved and validated by the system configuration interface.",
+          "data_to_capture": [
+            "Constraint configuration parameters",
+            "System validation messages"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create multiple patient treatment schedules with varying priorities and requested timeframes that test the constraint boundaries.",
+          "expected_result": "System accepts schedule requests and queues them for slot allocation processing.",
+          "data_to_capture": [
+            "Patient schedule requests",
+            "System acceptance confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Execute the scheduling engine to allocate manufacturing slots based on configured constraints and priorities.",
+          "expected_result": "System allocates slots according to constraints, respecting priority rules and resource availability.",
+          "data_to_capture": [
+            "Allocated slot assignments",
+            "Constraint violation reports",
+            "Priority handling log"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Modify resource availability (e.g., mark equipment as unavailable) and re-run scheduling for pending requests.",
+          "expected_result": "System dynamically reallocates slots considering updated resource constraints without disrupting confirmed schedules.",
+          "data_to_capture": [
+            "Reallocation results",
+            "Impact on existing schedules",
+            "System notifications"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All scheduling constraints are correctly enforced during slot allocation",
+        "Priority rules are properly applied when allocating limited manufacturing slots",
+        "System handles constraint violations with appropriate notifications and alternative suggestions",
+        "Dynamic resource changes trigger appropriate schedule adjustments without data loss"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 211 - Current Good Manufacturing Practice",
+        "FDA Guidance for Industry: CGMP for Phase 1 Investigational Drugs"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Audit trail must capture all scheduling decisions and constraint evaluations",
+        "All schedule changes must maintain chain-of-custody integrity",
+        "Timestamp accuracy must be maintained for all scheduling events"
+      ],
+      "urs_requirements": [
+        "URS-028-003: Implement scheduling and slot allocation with configurable constraints"
+      ],
+      "related_tests": [
+        "OQ-001: End-to-End Workflow Template Configuration and Execution",
+        "OQ-005: Concurrent Patient Journey Orchestration Performance Test"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Scheduling system configuration",
+        "Manufacturing operations knowledge",
+        "Constraint-based reasoning understanding"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "GDP Compliance for Cold Chain Logistics and Documentation",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Validate that the platform maintains Good Distribution Practice (GDP) compliance for temperature-sensitive material logistics, including complete documentation and temperature monitoring.",
+      "prerequisites": [
+        "Platform with configured logistics workflows",
+        "Integrated temperature monitoring devices or simulators",
+        "Sample cold chain materials with defined temperature ranges",
+        "User accounts with logistics and quality control permissions"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure GDP requirements including temperature ranges, monitoring frequency, and excursion thresholds for different material types.",
+          "expected_result": "GDP parameters are successfully configured and validated by the system.",
+          "data_to_capture": [
+            "GDP configuration settings",
+            "Validation results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a cold chain shipment with normal temperature conditions throughout the logistics journey.",
+          "expected_result": "System continuously monitors and records temperature data, generating compliant GDP documentation.",
+          "data_to_capture": [
+            "Temperature monitoring records",
+            "GDP documentation generated",
+            "Chain-of-custody updates"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Simulate a temperature excursion event during transit and trigger the exception handling workflow.",
+          "expected_result": "System detects excursion, triggers alerts, and initiates quarantine procedures with proper documentation.",
+          "data_to_capture": [
+            "Excursion detection timestamp",
+            "Alert notifications",
+            "Quarantine initiation records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Complete the logistics journey and verify all GDP documentation is complete, accurate, and available for regulatory review.",
+          "expected_result": "System generates comprehensive GDP-compliant documentation package including temperature logs, chain-of-custody, and excursion handling records.",
+          "data_to_capture": [
+            "Final documentation package",
+            "Regulatory compliance checklist",
+            "Audit trail completeness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All temperature monitoring data is captured with precise timestamps and cannot be altered",
+        "GDP documentation meets regulatory requirements for completeness and accuracy",
+        "Temperature excursions trigger immediate alerts and proper quarantine procedures",
+        "Complete audit trail is maintained for all logistics events and temperature monitoring"
+      ],
+      "regulatory_basis": [
+        "EU Guidelines on Good Distribution Practice of Medicinal Products for Human Use",
+        "21 CFR Part 205 - Guidelines for State Licensing of Wholesale Prescription Drug Distributors",
+        "WHO Technical Report Series, No. 957, 2010 (Annex 5: Good distribution practices for pharmaceutical products)"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Temperature data must be immutable once recorded",
+        "All logistics events must have complete chain-of-custody documentation",
+        "Excursion handling must follow documented procedures with full audit trail",
+        "GDP documentation must be readily available for regulatory inspection"
+      ],
+      "urs_requirements": [
+        "URS-028-010: Compliance with GDP for logistics and cold-chain records",
+        "URS-028-008: Full audit trail for all handoffs and custody events"
+      ],
+      "related_tests": [
+        "OQ-002: Exception Handling Workflow for Temperature Excursions",
+        "OQ-003: Chain-of-Identity and Chain-of-Custody Verification with Dual-Scanning"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Good Distribution Practice (GDP) regulations",
+        "Cold chain management",
+        "Quality assurance and documentation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "SSO Integration with OIDC and Device Identity Verification",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Verify successful integration with Single Sign-On (SSO) using OpenID Connect (OIDC) and proper device identity verification for scanning equipment",
+      "prerequisites": [
+        "OIDC identity provider configured and accessible",
+        "Scanner devices registered with device identity certificates",
+        "Test user accounts with appropriate roles",
+        "Network connectivity between platform and identity provider"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the platform to use the OIDC identity provider with required client credentials",
+          "expected_result": "Platform successfully connects to OIDC provider and accepts configuration",
+          "data_to_capture": [
+            "OIDC configuration status",
+            "Connection test results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt user login via SSO with valid credentials and required scopes",
+          "expected_result": "User successfully authenticates and gains access to platform with correct permissions",
+          "data_to_capture": [
+            "Authentication timestamp",
+            "User roles assigned",
+            "Session token details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Connect scanner device and attempt to authenticate using device identity certificate",
+          "expected_result": "Scanner successfully authenticates and is recognized as trusted device",
+          "data_to_capture": [
+            "Device authentication status",
+            "Certificate validation results",
+            "Device permissions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Perform dual-scanning verification using authenticated scanner device",
+          "expected_result": "Scanning operations complete successfully with device identity recorded in audit trail",
+          "data_to_capture": [
+            "Scan success rate",
+            "Device identity in audit log",
+            "Chain-of-custody events"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All authentication attempts via OIDC SSO complete successfully within 2 seconds",
+        "Device identity verification succeeds for all registered scanners",
+        "Audit trail records include both user and device identity for scanning operations",
+        "Failed authentication attempts are properly logged and prevented from system access"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic signatures and authentication",
+        "GDP requirements for secure access control",
+        "NIST SP 800-63 Digital Identity Guidelines"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Authentication events must be recorded in immutable audit trail",
+        "Device identities must be cryptographically verified",
+        "User sessions must be properly terminated after inactivity timeout"
+      ],
+      "urs_requirements": [
+        "URS-028-014: SSO with OIDC and device identity for scanners",
+        "URS-028-002: Enforce chain-of-identity and chain-of-custody with dual-scanning verification",
+        "URS-028-008: Full audit trail for all handoffs and custody events"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-008"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "OIDC configuration",
+        "Device identity management",
+        "Security testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Event Processing Latency Under Normal Load Conditions",
+      "test_category": "performance",
+      "gamp_category": 4,
+      "objective": "Verify that event processing latency remains below 1 second under normal operational load as specified in performance requirements",
+      "prerequisites": [
+        "Platform configured with typical workflow templates",
+        "Performance monitoring tools configured",
+        "Test environment matching production specifications",
+        "Load generation tools available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure performance monitoring to capture event processing latency metrics",
+          "expected_result": "Monitoring system successfully captures timestamp data for event processing",
+          "data_to_capture": [
+            "Monitoring configuration",
+            "Baseline latency measurements"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate normal operational load simulating 500 concurrent patient journeys",
+          "expected_result": "System processes events without errors under specified load",
+          "data_to_capture": [
+            "Event throughput rate",
+            "System resource utilization",
+            "Error rates"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Measure event processing latency for critical events (scans, status changes, alerts)",
+          "expected_result": "All event processing completes with latency under 1 second",
+          "data_to_capture": [
+            "P50, P90, P99 latency percentiles",
+            "Maximum latency observed",
+            "Event type vs latency correlation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify system stability during sustained load over 30-minute period",
+          "expected_result": "System maintains consistent performance without degradation over time",
+          "data_to_capture": [
+            "Memory usage trends",
+            "CPU utilization",
+            "Garbage collection metrics",
+            "Database response times"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "95th percentile event processing latency remains below 1 second",
+        "No events exceed 2 seconds processing time under normal load",
+        "System maintains stable performance throughout test duration",
+        "No memory leaks or performance degradation observed"
+      ],
+      "regulatory_basis": [
+        "Performance requirements for clinical systems",
+        "GAMP 5 guidance on performance qualification",
+        "FDA guidance on computerized systems in clinical trials"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Performance metrics must be accurately captured and timestamped",
+        "Event processing must maintain data consistency and integrity",
+        "No data loss or corruption during high load conditions"
+      ],
+      "urs_requirements": [
+        "URS-028-012: Event processing latency < 1 second under normal load",
+        "URS-028-011: Orchestrate 1,000 concurrent patient journeys",
+        "URS-028-007: Provide dashboards for vein-to-vein time and release KPIs"
+      ],
+      "related_tests": [
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Performance testing",
+        "System monitoring",
+        "Load generation tools"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-011",
+      "test_name": "21 CFR Part 11 Electronic Signature Compliance Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Verify that the system properly implements 21 CFR Part 11 compliant electronic signatures for all critical actions including workflow approvals, custody transfers, and quality control releases",
+      "prerequisites": [
+        "System configured with user roles and permissions",
+        "Test users with appropriate signing authority",
+        "Critical workflow actions requiring e-signatures configured",
+        "Audit trail functionality enabled"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform a critical workflow action requiring electronic signature (e.g., approve manufacturing slot allocation)",
+          "expected_result": "System prompts for electronic signature with username and password authentication",
+          "data_to_capture": [
+            "Signature prompt timestamp",
+            "User identity verification method"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Enter valid credentials and complete the signature process",
+          "expected_result": "System accepts the signature and records the action with timestamp and user identity",
+          "data_to_capture": [
+            "Signature completion timestamp",
+            "User identity recorded",
+            "Action completed status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to perform the same action with invalid credentials",
+          "expected_result": "System rejects the signature attempt and prevents the action from completing",
+          "data_to_capture": [
+            "Error message displayed",
+            "Authentication failure reason"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Review the audit trail for the signed action",
+          "expected_result": "Audit trail shows complete signature event including before/after values, user identity, timestamp, and meaning of signature",
+          "data_to_capture": [
+            "Audit trail entry completeness",
+            "Signature meaning documentation",
+            "Timestamp accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All critical actions require electronic signature authentication",
+        "Signatures are non-repudiable and uniquely identify the signer",
+        "Audit trail captures complete signature context and meaning",
+        "Invalid signature attempts are properly rejected and logged"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 Electronic Records; Electronic Signatures",
+        "FDA Guidance on Part 11 Scope and Application",
+        "EMA Annex 11: Computerised Systems"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Electronic signatures must be secure, non-repudiable, and auditable",
+        "Signature meaning must be captured and preserved",
+        "Signature events must be timestamped and immutable"
+      ],
+      "urs_requirements": [
+        "URS-028-009: 21 CFR Part 11 e-signatures for critical actions"
+      ],
+      "related_tests": [
+        "OQ-003: Chain-of-Identity and Chain-of-Custody Verification",
+        "OQ-008: GDP Compliance for Cold Chain Logistics"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "21 CFR Part 11 compliance",
+        "Electronic signature validation",
+        "Audit trail review"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-012",
+      "test_name": "Multi-System Integration via Standard APIs Validation",
+      "test_category": "integration",
+      "gamp_category": 4,
+      "objective": "Validate the platform's integration capabilities with external systems including EHR, LIMS, MES, and courier systems using standard API protocols and data exchange formats",
+      "prerequisites": [
+        "Integration endpoints configured and accessible",
+        "Test environments for external systems available",
+        "API documentation and schemas available",
+        "Test data prepared for integration scenarios"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a patient workflow that requires EHR data retrieval via API",
+          "expected_result": "System successfully connects to EHR API and retrieves patient demographic and clinical data",
+          "data_to_capture": [
+            "API response time",
+            "Data completeness",
+            "Error handling behavior"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a manufacturing completion event requiring LIMS integration",
+          "expected_result": "System sends QC release data to LIMS via API and receives confirmation",
+          "data_to_capture": [
+            "Data transmission accuracy",
+            "Confirmation receipt",
+            "Message format compliance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Trigger a logistics event requiring courier system integration",
+          "expected_result": "System exchanges shipment tracking and temperature data with courier system API",
+          "data_to_capture": [
+            "Real-time data synchronization",
+            "Temperature monitoring integration",
+            "Tracking number validation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Test error handling by simulating API endpoint unavailability",
+          "expected_result": "System properly handles integration failures with appropriate error messages and retry mechanisms",
+          "data_to_capture": [
+            "Error logging",
+            "Retry behavior",
+            "System recovery process"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All integrated systems communicate successfully via standard APIs",
+        "Data exchange maintains integrity and accuracy across systems",
+        "Error conditions are properly handled and logged",
+        "Integration meets performance requirements for real-time processing"
+      ],
+      "regulatory_basis": [
+        "FDA Guidance on Data Integrity and Compliance",
+        "ICH Q7 Good Manufacturing Practice",
+        "GDP Guidelines for Logistics Integration"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data exchanged between systems must maintain accuracy and completeness",
+        "API transactions must be logged and auditable",
+        "Integration failures must not compromise data integrity"
+      ],
+      "urs_requirements": [
+        "URS-028-013: Integrate with EHR, LIMS, MES, courier systems via standard APIs",
+        "URS-028-010: Compliance with GDP for logistics and cold-chain records"
+      ],
+      "related_tests": [
+        "OQ-009: SSO Integration with OIDC and Device Identity Verification",
+        "OQ-008: GDP Compliance for Cold Chain Logistics"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "API integration testing",
+        "Healthcare data standards (HL7, FHIR)",
+        "System interoperability validation"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-013",
+      "test_name": "Audit Trail Completeness and Immutability Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Verify that all handoffs, custody events, and critical actions generate complete and immutable audit trail entries that cannot be modified or deleted.",
+      "prerequisites": [
+        "System configured with sample workflow templates",
+        "Test user accounts with appropriate permissions",
+        "Sample patient journey data loaded",
+        "Audit trail functionality enabled"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute a complete patient journey workflow including apheresis, manufacturing slot allocation, and chain-of-custody handoffs",
+          "expected_result": "All workflow steps complete successfully and generate corresponding audit trail entries",
+          "data_to_capture": [
+            "Timestamp of each event",
+            "User performing each action",
+            "Event type and description"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Attempt to modify an existing audit trail entry using administrative tools or database access",
+          "expected_result": "System prevents modification of audit trail entries and logs the attempted modification attempt",
+          "data_to_capture": [
+            "Error message displayed",
+            "System response to modification attempt",
+            "Secondary audit entry for the attempt"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate audit trail report for the completed patient journey and verify all critical events are captured",
+          "expected_result": "Report contains complete sequence of events with timestamps, user identities, and before/after values where applicable",
+          "data_to_capture": [
+            "Completeness of audit trail",
+            "Sequence integrity",
+            "Data integrity of recorded information"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All critical workflow events generate corresponding audit trail entries",
+        "Audit trail entries are immutable and cannot be modified or deleted",
+        "Audit trail contains complete information including timestamp, user, event type, and relevant data",
+        "Attempts to modify audit trail are prevented and logged"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11.10(e) - Audit trails must be secure and computer-generated",
+        "21 CFR Part 211.194 - Laboratory records must include complete data",
+        "EU GMP Annex 11 - Audit trails should be available and regular checks performed"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "ALCOA+ principles must be maintained for all audit trail entries",
+        "Audit trail must be time-synchronized across all system components",
+        "Entries must be protected from tampering or deletion"
+      ],
+      "urs_requirements": [
+        "URS-028-008: Full audit trail for all handoffs and custody events",
+        "URS-028-009: 21 CFR Part 11 e-signatures for critical actions"
+      ],
+      "related_tests": [
+        "OQ-003: Chain-of-Identity and Chain-of-Custody Verification",
+        "OQ-011: 21 CFR Part 11 Electronic Signature Compliance"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Quality Assurance",
+        "Regulatory Compliance",
+        "System Administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-014",
+      "test_name": "Custom Algorithm Module Container Deployment and Version Control",
+      "test_category": "installation",
+      "gamp_category": 4,
+      "objective": "Verify that custom algorithm modules can be properly deployed as containerized applications with version control and rollback capabilities.",
+      "prerequisites": [
+        "Container orchestration platform available",
+        "Sample custom algorithm module container image",
+        "Version control system configured",
+        "Deployment scripts and documentation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy version 1.0 of a custom patient-to-lot matching algorithm module using the container orchestration platform",
+          "expected_result": "Module deploys successfully and registers with the main orchestration platform",
+          "data_to_capture": [
+            "Deployment logs",
+            "Container status",
+            "Module registration confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Execute test patient matching scenarios using the deployed algorithm and capture explainability artifacts",
+          "expected_result": "Algorithm processes requests and generates matching decisions with corresponding explainability documentation",
+          "data_to_capture": [
+            "Algorithm output",
+            "Explainability artifacts",
+            "Processing time",
+            "Decision rationale"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Deploy version 1.1 of the algorithm module and verify version control system tracks the deployment",
+          "expected_result": "New version deploys successfully and version control system maintains deployment history",
+          "data_to_capture": [
+            "Version deployment status",
+            "Version control history",
+            "Rollback capability verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Roll back to version 1.0 and verify system functionality with the previous version",
+          "expected_result": "System successfully rolls back to previous version and maintains functionality",
+          "data_to_capture": [
+            "Rollback success status",
+            "Post-rollback functionality",
+            "System stability"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom algorithm modules deploy successfully as containerized applications",
+        "Version control system accurately tracks all deployments and versions",
+        "Rollback to previous versions functions correctly without data loss",
+        "Explainability artifacts are generated for all algorithm decisions"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11.10(a) - Validation of systems to ensure accuracy and reliability",
+        "FDA Software Validation Guidance - Version control and change management requirements",
+        "EU MDR Article 18 - Requirements for software used in medical devices"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Version control must maintain integrity of algorithm code and configurations",
+        "Deployment processes must ensure data consistency during version transitions",
+        "Explainability artifacts must accurately reflect algorithm decision processes"
+      ],
+      "urs_requirements": [
+        "URS-028-015: Custom algorithm modules shall be containerized and versioned",
+        "URS-028-016: Provide explainability artifacts for algorithm decisions",
+        "URS-028-006: Allow optional custom-developed modules for patient-to-lot matching optimization"
+      ],
+      "related_tests": [
+        "OQ-006: Custom Algorithm Module Integration and Explainability Verification",
+        "OQ-004: Configurable Risk Scoring Rules Execution"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "DevOps/Containerization",
+        "Software Development",
+        "Quality Assurance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-015",
+      "test_name": "Vein-to-Vein Dashboard KPI Accuracy and Real-time Updates",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the platform's vein-to-vein dashboard accurately calculates and displays key performance indicators (KPIs) in real-time, reflecting the current status of all active patient journeys.",
+      "prerequisites": [
+        "Platform is installed and configured with dashboard module",
+        "Test environment with simulated patient journey data is available",
+        "User with dashboard access permissions is logged in",
+        "At least 50 active patient journeys are in various stages of processing"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the vein-to-vein dashboard and verify all configured KPI widgets are displayed correctly",
+          "expected_result": "Dashboard loads successfully showing all configured KPIs including average vein-to-vein time, current active journeys, delayed shipments, and QC release metrics",
+          "data_to_capture": [
+            "Dashboard load time",
+            "KPI widget configuration",
+            "Initial KPI values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate completion of 10 patient journeys by advancing their workflow states through the system",
+          "expected_result": "System processes the workflow state changes and updates the dashboard KPIs within 5 seconds",
+          "data_to_capture": [
+            "Time of state changes",
+            "Dashboard update latency",
+            "KPI value changes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Introduce 5 temperature excursion events and verify dashboard updates for exception tracking",
+          "expected_result": "Dashboard immediately reflects the exception events in the appropriate KPI widgets and exception tracking sections",
+          "data_to_capture": [
+            "Exception event timestamps",
+            "Dashboard response time",
+            "Exception KPI accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Validate KPI calculations by comparing dashboard values against manual calculations from the underlying data",
+          "expected_result": "All KPI values match manual calculations with 100% accuracy for vein-to-vein time, success rates, and exception percentages",
+          "data_to_capture": [
+            "Manual calculation results",
+            "Dashboard KPI values",
+            "Calculation discrepancies if any"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Dashboard displays all configured KPIs with real-time updates within 5 seconds of state changes",
+        "KPI calculations are accurate when compared to manual verification methods",
+        "Exception events are immediately reflected in the appropriate dashboard widgets",
+        "Dashboard maintains performance with up to 1,000 concurrent patient journeys"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for electronic records and displays",
+        "GDP requirements for real-time monitoring and reporting",
+        "Industry best practices for clinical dashboard accuracy"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "KPI calculations must be based on complete and accurate source data",
+        "Dashboard refresh mechanisms must maintain data consistency",
+        "Historical KPI data must be preserved for audit purposes"
+      ],
+      "urs_requirements": [
+        "URS-028-007: Provide dashboards for vein-to-vein time and release KPIs"
+      ],
+      "related_tests": [
+        "OQ-001: End-to-End Workflow Template Configuration and Execution",
+        "OQ-005: Concurrent Patient Journey Orchestration Performance Test"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Dashboard Configuration",
+        "KPI Validation",
+        "Data Analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-016",
+      "test_name": "Custom Algorithm Module Explainability Artifact Generation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that custom algorithm modules generate appropriate explainability artifacts that document decision logic and provide transparency for regulatory review and clinical validation.",
+      "prerequisites": [
+        "Custom algorithm module is deployed and configured in test environment",
+        "Test dataset with known patient matching scenarios is available",
+        "User with algorithm execution permissions is logged in",
+        "Explainability artifact storage location is configured and accessible"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Execute the custom patient-to-lot matching algorithm for 10 different patient scenarios",
+          "expected_result": "Algorithm processes each scenario and generates matching recommendations with corresponding explainability artifacts",
+          "data_to_capture": [
+            "Algorithm execution time",
+            "Matching recommendations",
+            "Artifact generation success rate"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Review the generated explainability artifacts for each algorithm decision",
+          "expected_result": "Artifacts include decision factors, weighting rationale, confidence scores, and alternative scenarios considered",
+          "data_to_capture": [
+            "Artifact completeness",
+            "Decision transparency",
+            "Clinical relevance of explanations"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Validate that artifacts are properly versioned and linked to specific algorithm executions",
+          "expected_result": "Each artifact contains version metadata, execution timestamp, and links to the specific patient journey and algorithm version",
+          "data_to_capture": [
+            "Version metadata accuracy",
+            "Linking integrity",
+            "Timestamp validation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify artifact storage in the designated secure repository with appropriate access controls",
+          "expected_result": "Artifacts are stored securely with proper access controls and cannot be modified after generation",
+          "data_to_capture": [
+            "Storage location security",
+            "Access control effectiveness",
+            "Immutable storage verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Custom algorithms generate explainability artifacts for 100% of executed decisions",
+        "Artifacts provide clinically meaningful explanations of decision logic",
+        "Artifact versioning and linking to specific executions is maintained accurately",
+        "Generated artifacts are stored immutably with proper security controls"
+      ],
+      "regulatory_basis": [
+        "FDA guidance on algorithm transparency in medical devices",
+        "21 CFR Part 11 requirements for electronic records",
+        "EMA guidelines on advanced therapy medicinal products"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Explainability artifacts must be immutable once generated",
+        "Artifact version control must maintain traceability to algorithm versions",
+        "Decision logic documentation must be complete and accurate"
+      ],
+      "urs_requirements": [
+        "URS-028-006: Allow optional custom-developed modules for patient-to-lot matching optimization",
+        "URS-028-016: Provide explainability artifacts for algorithm decisions"
+      ],
+      "related_tests": [
+        "OQ-006: Custom Algorithm Module Integration and Explainability Verification",
+        "OQ-014: Custom Algorithm Module Container Deployment and Version Control"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Algorithm Validation",
+        "Regulatory Compliance",
+        "Clinical Decision Support Systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-017",
+      "test_name": "Manufacturing Slot Allocation with Dynamic Constraint Validation",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify that the system correctly allocates manufacturing slots while respecting configurable constraints including capacity, timing, and resource availability.",
+      "prerequisites": [
+        "Configured workflow templates for manufacturing",
+        "Defined slot allocation constraints",
+        "Test patient data with varying manufacturing requirements",
+        "Configured manufacturing facility calendar"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure manufacturing slot constraints including maximum daily capacity, processing time requirements, and resource availability rules",
+          "expected_result": "Constraints are successfully configured and validated by the system",
+          "data_to_capture": [
+            "Constraint configuration parameters",
+            "Validation results",
+            "Configuration timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Submit 50 concurrent manufacturing slot requests with varying processing requirements and timelines",
+          "expected_result": "System processes all requests and provides slot allocation responses within expected timeframe",
+          "data_to_capture": [
+            "Request submission timestamps",
+            "Allocation response times",
+            "Slot assignment details",
+            "Constraint validation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify that all slot allocations respect configured constraints including capacity limits and timing requirements",
+          "expected_result": "All slot allocations comply with configured constraints without exceeding capacity or violating timing rules",
+          "data_to_capture": [
+            "Constraint compliance verification results",
+            "Capacity utilization metrics",
+            "Timing validation logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Simulate a constraint violation scenario by requesting slots that exceed daily capacity",
+          "expected_result": "System correctly rejects the request and provides appropriate error message indicating constraint violation",
+          "data_to_capture": [
+            "Error message details",
+            "Constraint violation type",
+            "System response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All slot allocations respect configured constraints 100% of the time",
+        "System handles concurrent requests with response time < 2 seconds",
+        "Constraint violations are properly detected and communicated",
+        "Audit trail captures all allocation decisions and constraint validations"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 211 - Current Good Manufacturing Practice",
+        "FDA Guidance for Industry: CGMP for Phase 1 Investigational Drugs"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ principles for all allocation decisions",
+        "Immutable audit trail of constraint validations",
+        "Timestamp integrity for all slot allocation events"
+      ],
+      "urs_requirements": [
+        "URS-028-003: Implement scheduling and slot allocation with configurable constraints"
+      ],
+      "related_tests": [
+        "OQ-007: Scheduling and Slot Allocation with Configurable Constraints"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Manufacturing operations",
+        "Scheduling systems",
+        "Constraint-based optimization"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-018",
+      "test_name": "Cold Chain Exception Handling with GDP Compliance Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 4,
+      "objective": "Validate that temperature excursion exceptions are properly handled with complete GDP-compliant documentation and automated workflow triggers.",
+      "prerequisites": [
+        "Configured temperature excursion workflow",
+        "Test temperature monitoring devices",
+        "Simulated cold chain data with excursions",
+        "GDP documentation templates configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a temperature excursion event by injecting temperature data that exceeds configured thresholds",
+          "expected_result": "System immediately detects the excursion and triggers the exception handling workflow",
+          "data_to_capture": [
+            "Excursion detection timestamp",
+            "Temperature values that triggered the event",
+            "Initial system response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify that the system generates all required GDP documentation including deviation report, impact assessment, and corrective actions",
+          "expected_result": "Complete set of GDP-compliant documentation is automatically generated and stored",
+          "data_to_capture": [
+            "Documentation completeness check",
+            "GDP compliance validation results",
+            "Document generation timestamps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Validate that the audit trail captures the entire exception handling process including all actions taken and decisions made",
+          "expected_result": "Comprehensive audit trail exists showing complete chain of events from detection to resolution",
+          "data_to_capture": [
+            "Audit trail completeness assessment",
+            "Event sequencing validation",
+            "User action documentation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify that appropriate stakeholders are notified according to configured escalation rules and all notifications are documented",
+          "expected_result": "All required stakeholders receive timely notifications and all communications are properly recorded",
+          "data_to_capture": [
+            "Notification timestamps",
+            "Recipient validation",
+            "Communication content accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "100% of temperature excursions trigger proper workflow within 30 seconds",
+        "All GDP documentation requirements are met for each excursion",
+        "Complete audit trail maintained for entire exception process",
+        "All stakeholder notifications are timely and documented"
+      ],
+      "regulatory_basis": [
+        "EU GDP Guidelines 2013/C 343/01",
+        "WHO Technical Report Series, No. 1019, 2019, Annex 5",
+        "21 CFR Part 211.142"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "ALCOA+ compliance for all exception documentation",
+        "Immutable records of temperature data and actions taken",
+        "Timestamp integrity throughout exception handling process"
+      ],
+      "urs_requirements": [
+        "URS-028-004: Provide exception handling workflows for temperature excursions and delays",
+        "URS-028-010: Compliance with GDP for logistics and cold-chain records"
+      ],
+      "related_tests": [
+        "OQ-002: Exception Handling Workflow for Temperature Excursions",
+        "OQ-008: GDP Compliance for Cold Chain Logistics and Documentation"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Good Distribution Practice (GDP)",
+        "Temperature-controlled logistics",
+        "Quality management systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-019",
+      "test_name": "Dual-Scanning Verification Failure Handling and Recovery",
+      "test_category": "functional",
+      "gamp_category": 4,
+      "objective": "Verify the system correctly handles and recovers from dual-scanning verification failures during chain-of-identity/custody events, ensuring data integrity and appropriate workflow escalation.",
+      "prerequisites": [
+        "System configured with dual-scanning verification rules",
+        "Test patient journey created with apheresis and manufacturing steps",
+        "Two authorized users with barcode scanners available",
+        "Exception handling workflows configured for scanning failures"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate a material handoff step in an active patient workflow requiring dual-scanning verification",
+          "expected_result": "System prompts for first user scan and displays scanning interface",
+          "data_to_capture": [
+            "Timestamp of scan attempt",
+            "User ID of first scanner",
+            "Material barcode value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform first successful scan with valid credentials and material barcode",
+          "expected_result": "System accepts first scan and prompts for second user verification",
+          "data_to_capture": [
+            "First scan validation result",
+            "System state after first scan"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt second scan with mismatched material barcode or invalid user credentials",
+          "expected_result": "System rejects the scan and displays appropriate error message",
+          "data_to_capture": [
+            "Error message displayed",
+            "Scan rejection reason",
+            "System response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify system prevents workflow progression and triggers exception handling",
+          "expected_result": "Workflow pauses at handoff step and exception workflow is initiated",
+          "data_to_capture": [
+            "Exception workflow triggered",
+            "Workflow status",
+            "Notification events generated"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Complete corrective action through exception workflow and retry dual-scanning",
+          "expected_result": "System allows retry and successfully completes dual-scanning verification",
+          "data_to_capture": [
+            "Exception resolution details",
+            "Successful scan timestamps",
+            "Final workflow state"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System must reject mismatched or invalid second scans with clear error messaging",
+        "Workflow progression must be blocked until successful dual-scanning completion",
+        "All scanning attempts and failures must be recorded in audit trail",
+        "Exception handling workflow must be triggered automatically upon verification failure",
+        "System must maintain data integrity throughout failure and recovery process"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic records integrity and access controls",
+        "GDP guidelines for material handling and verification procedures",
+        "Chain-of-identity/chain-of-custody regulatory requirements"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All scan attempts (successful and failed) must be timestamped and user-attributed",
+        "Audit trail must capture the complete sequence of verification events",
+        "No partial or incomplete verification states should be allowed to persist",
+        "Exception workflow actions must be fully documented and traceable"
+      ],
+      "urs_requirements": [
+        "URS-028-002: Enforce chain-of-identity and chain-of-custody with dual-scanning verification",
+        "URS-028-004: Provide exception handling workflows for temperature excursions and delays",
+        "URS-028-008: Full audit trail for all handoffs and custody events"
+      ],
+      "related_tests": [
+        "OQ-003: Chain-of-Identity and Chain-of-Custody Verification with Dual-Scanning",
+        "OQ-013: Audit Trail Completeness and Immutability Verification"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Quality Assurance",
+        "Clinical Operations",
+        "System Administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-020",
+      "test_name": "Custom Algorithm Module Version Control and Rollback Capability",
+      "test_category": "installation",
+      "gamp_category": 4,
+      "objective": "Verify the system properly manages custom algorithm module versions, including deployment, activation, and rollback capabilities while maintaining system stability.",
+      "prerequisites": [
+        "Platform with container orchestration capabilities installed",
+        "Multiple versions of a custom algorithm module available in repository",
+        "System administrator access with deployment permissions",
+        "Test patient data sets for algorithm validation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy version 1.2 of a custom patient matching algorithm module to the staging environment",
+          "expected_result": "Module deploys successfully and appears in module management interface",
+          "data_to_capture": [
+            "Deployment timestamp",
+            "Module version identifier",
+            "Container status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Activate version 1.2 and verify it processes test patient data correctly",
+          "expected_result": "Algorithm processes data and produces valid matching results with explainability artifacts",
+          "data_to_capture": [
+            "Algorithm execution results",
+            "Processing time",
+            "Explainability artifact generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Deploy and activate version 1.3 of the same algorithm module",
+          "expected_result": "New version deploys alongside version 1.2 without disrupting active workflows",
+          "data_to_capture": [
+            "Coexistence status",
+            "System performance metrics during deployment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Execute patient matching using version 1.3 and compare results with version 1.2",
+          "expected_result": "Both versions remain operational and produce version-specific results",
+          "data_to_capture": [
+            "Result comparison data",
+            "Version-specific performance characteristics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Initiate rollback procedure to revert to version 1.2 as active production version",
+          "expected_result": "System successfully deactivates version 1.3 and reactivates version 1.2",
+          "data_to_capture": [
+            "Rollback completion time",
+            "System stability during transition",
+            "Active version confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 6,
+          "action": "Verify all version changes are recorded in deployment audit trail",
+          "expected_result": "Complete deployment history with timestamps and user attribution is maintained",
+          "data_to_capture": [
+            "Audit trail entries",
+            "Version change history",
+            "User attribution records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System must support simultaneous deployment of multiple algorithm versions",
+        "Version activation and deactivation must not disrupt active patient workflows",
+        "Rollback procedures must complete within defined maintenance windows",
+        "All version changes must be fully documented in audit trails",
+        "Algorithm explainability artifacts must include version identification"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - System configuration management and change control",
+        "GAMP 5 guidelines for configurable systems and custom software",
+        "FDA guidance on software version control in medical devices"
+      ],
+      "risk_level": "critical",
+      "data_integrity_requirements": [
+        "Algorithm version must be recorded with all patient matching decisions",
+        "Deployment and activation events must be immutably logged",
+        "Version-specific configurations must be preserved during rollback operations",
+        "Explainability artifacts must clearly identify algorithm version used"
+      ],
+      "urs_requirements": [
+        "URS-028-015: Custom algorithm modules shall be containerized and versioned",
+        "URS-028-016: Provide explainability artifacts for algorithm decisions",
+        "URS-028-008: Full audit trail for all handoffs and custody events"
+      ],
+      "related_tests": [
+        "OQ-006: Custom Algorithm Module Integration and Explainability Verification",
+        "OQ-014: Custom Algorithm Module Container Deployment and Version Control"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "DevOps/Infrastructure",
+        "Data Science",
+        "Quality Assurance",
+        "System Administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 20,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": [
+      "OQ-011",
+      "OQ-012",
+      "OQ-013",
+      "OQ-014",
+      "OQ-015",
+      "OQ-016",
+      "OQ-017",
+      "OQ-018",
+      "OQ-019",
+      "OQ-020"
+    ]
+  },
+  "test_categories": {},
+  "estimated_execution_time": 1155,
+  "generation_timestamp": "2025-11-28T11:45:49.357281+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "review_required": true,
+  "timestamp": "2025-11-28T11:45:49.601152+00:00",
+  "workflow_session_id": "unified_workflow_2025-11-28T11:36:00.231346+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

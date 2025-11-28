@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import ComplianceDashboard from '../../components/ComplianceDashboard';
+import { authenticatedFetch, getApiBaseUrl } from '../../lib/authenticatedFetch';
 
 interface Job {
     job_id: string;
@@ -62,13 +63,10 @@ export default function JobDetails() {
             if (!isLoaded || !userId || !id) return;
 
             try {
-                const token = await getToken();
-                const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+                const apiUrl = getApiBaseUrl();
 
-                // Fetch Job Status
-                const jobRes = await fetch(`${apiUrl}/jobs/${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                // Fetch Job Status - authenticatedFetch handles 401 retry
+                const jobRes = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken);
 
                 if (!jobRes.ok) {
                     if (jobRes.status === 404) {
@@ -82,9 +80,7 @@ export default function JobDetails() {
 
                 // If completed, fetch results
                 if (jobData.status.toUpperCase() === 'COMPLETED') {
-                    const resultRes = await fetch(`${apiUrl}/jobs/${id}/result`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const resultRes = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getToken);
                     if (resultRes.ok) {
                         const resultData = await resultRes.json();
                         setResults(resultData);
@@ -104,11 +100,8 @@ export default function JobDetails() {
     const handleDownload = async () => {
         if (!job) return;
         try {
-            const token = await getToken();
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-            const response = await fetch(`${apiUrl}/jobs/${job.job_id}/download`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const apiUrl = getApiBaseUrl();
+            const response = await authenticatedFetch(`${apiUrl}/jobs/${job.job_id}/download`, getToken);
 
             if (!response.ok) throw new Error('Download failed');
 

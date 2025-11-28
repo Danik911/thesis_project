@@ -7,6 +7,7 @@ import JobProgress from '@/components/JobProgress';
 import ComplianceDashboard from '@/components/ComplianceDashboard';
 import ApprovalModal from '@/components/ApprovalModal';
 import { useJobStatusPolling } from '@/hooks/useJobStatusPolling';
+import { authenticatedFetch, getApiBaseUrl } from '@/lib/authenticatedFetch';
 
 type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED' | 'AWAITING_APPROVAL';
 
@@ -69,11 +70,8 @@ export default function Generate() {
     const fetchJobs = useCallback(async () => {
         if (!isLoaded || !user) return;
         try {
-            const token = await getToken();
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-            const response = await fetch(`${apiUrl}/jobs`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const apiUrl = getApiBaseUrl();
+            const response = await authenticatedFetch(`${apiUrl}/jobs`, getToken);
             if (response.ok) {
                 const data = await response.json();
                 setJobs(data);
@@ -153,28 +151,17 @@ export default function Generate() {
         setLogs(['Initializing upload...', 'Validating file format...', 'Checking GAMP-5 compliance requirements...']);
 
         try {
-            console.log('[DEBUG] Getting Clerk auth token...');
-            const token = await getToken();
-
-            if (!token) {
-                throw new Error('Authentication failed - no token available. Please sign in again.');
-            }
-            console.log('[DEBUG] Auth token obtained successfully');
-
             const formData = new FormData();
             formData.append('file', selectedFile);
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+            const apiUrl = getApiBaseUrl();
             console.log(`[DEBUG] API URL: ${apiUrl}`);
 
             setLogs(prev => [...prev, `Connecting to secure API at ${apiUrl}...`]);
 
-            console.log('[DEBUG] Sending POST /jobs request...');
-            const response = await fetch(`${apiUrl}/jobs`, {
+            console.log('[DEBUG] Sending POST /jobs request with authenticated fetch...');
+            const response = await authenticatedFetch(`${apiUrl}/jobs`, getToken, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
                 body: formData
             });
             console.log(`[DEBUG] POST /jobs response: ${response.status} ${response.statusText}`);
@@ -222,24 +209,9 @@ export default function Generate() {
 
         pollIntervalRef.current = setInterval(async () => {
             try {
-                const token = await getToken();
-                if (!token) {
-                    consecutiveFailures++;
-                    console.error(`[DEBUG] No auth token for polling (failure ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES})`);
-                    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-                        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                        setStatus('FAILED');
-                        setLogs(prev => [...prev, 'ERROR: Authentication failed. Please refresh and sign in again.']);
-                    }
-                    return;
-                }
-
                 console.log(`[DEBUG] Polling job status: GET ${apiUrl}/jobs/${id}`);
-                const response = await fetch(`${apiUrl}/jobs/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                // Use authenticatedFetch which handles 401 retry internally
+                const response = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken);
 
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -252,6 +224,35 @@ export default function Generate() {
                     console.error(`[DEBUG] Polling HTTP error ${response.status} (failure ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES})`);
                     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
                         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+
+                        // CRITICAL FIX: Before showing FAILED, do one final check if job actually completed
+                        // The backend worker runs independently - job may have completed despite polling 401s
+                        console.log(`[DEBUG] Max failures reached. Performing final job status check...`);
+                        try {
+                            const finalCheckResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken);
+                            if (finalCheckResponse.ok) {
+                                const finalData = await finalCheckResponse.json();
+                                const finalStatus = finalData.status.toUpperCase();
+                                console.log(`[DEBUG] Final check: job status is ${finalStatus}`);
+
+                                if (finalStatus === 'COMPLETED') {
+                                    // Job actually completed! Fetch results instead of showing error
+                                    setLogs(prev => [...prev, 'Job completed (recovered from polling errors). Retrieving results...']);
+                                    const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getToken);
+                                    if (resultResponse.ok) {
+                                        const resultData = await resultResponse.json();
+                                        setResults(resultData);
+                                        setStatus('COMPLETED');
+                                        fetchJobs();
+                                        return;
+                                    }
+                                }
+                            }
+                        } catch (finalCheckError) {
+                            console.error('[DEBUG] Final check failed:', finalCheckError);
+                        }
+
+                        // Only show FAILED if the final check didn't recover
                         setStatus('FAILED');
                         setLogs(prev => [...prev, `ERROR: Server communication failed after ${MAX_CONSECUTIVE_FAILURES} attempts (${response.status})`]);
                     }
@@ -274,10 +275,7 @@ export default function Generate() {
 
                     // Fetch the JSON result for dashboard
                     try {
-                        const resultToken = await getToken();
-                        const resultResponse = await fetch(`${apiUrl}/jobs/${id}/result`, {
-                            headers: { 'Authorization': `Bearer ${resultToken}` }
-                        });
+                        const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getToken);
 
                         if (resultResponse.ok) {
                             const resultData = await resultResponse.json();
@@ -367,25 +365,14 @@ export default function Generate() {
                 return;
             }
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+            const apiUrl = getApiBaseUrl();
             console.log(`[DEBUG] Validating localStorage job ${jobId} (status: ${status})`);
 
             // CRITICAL: Validate job exists on server BEFORE trusting localStorage
             if (status === 'PENDING' || status === 'PROCESSING' || status === 'AWAITING_APPROVAL') {
                 try {
-                    const token = await getToken();
-                    if (!token) {
-                        console.error('[DEBUG] No auth token available for job validation');
-                        // Clear stale state - can't validate without auth
-                        resetDashboard();
-                        setLogs(['Session expired. Please submit a new job.']);
-                        return;
-                    }
-
                     console.log(`[DEBUG] Fetching job status from ${apiUrl}/jobs/${jobId}`);
-                    const response = await fetch(`${apiUrl}/jobs/${jobId}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const response = await authenticatedFetch(`${apiUrl}/jobs/${jobId}`, getToken);
 
                     if (response.status === 404) {
                         // Job doesn't exist on server - localStorage is stale
@@ -421,9 +408,7 @@ export default function Generate() {
                         } else if (serverStatus === 'COMPLETED' && !results) {
                             // Fetch results for completed job
                             console.log(`[DEBUG] Job completed, fetching results`);
-                            const resultResponse = await fetch(`${apiUrl}/jobs/${jobId}/result`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                            });
+                            const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${jobId}/result`, getToken);
                             if (resultResponse.ok) {
                                 const resultData = await resultResponse.json();
                                 setResults(resultData);
@@ -446,10 +431,7 @@ export default function Generate() {
             } else if (status === 'COMPLETED' && !results) {
                 // Fetch results for completed job
                 try {
-                    const token = await getToken();
-                    const resultResponse = await fetch(`${apiUrl}/jobs/${jobId}/result`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${jobId}/result`, getToken);
                     if (resultResponse.ok) {
                         const resultData = await resultResponse.json();
                         setResults(resultData);
@@ -469,14 +451,11 @@ export default function Generate() {
 
     const handleDownload = async () => {
         if (!jobId) return;
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        const apiUrl = getApiBaseUrl();
         const url = `${apiUrl}/jobs/${jobId}/download`;
 
         try {
-            const token = await getToken();
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await authenticatedFetch(url, getToken);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -499,14 +478,11 @@ export default function Generate() {
     };
 
     const handleHistoryDownload = async (job: any) => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        const apiUrl = getApiBaseUrl();
         const url = `${apiUrl}/jobs/${job.job_id}/download`;
 
         try {
-            const token = await getToken();
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await authenticatedFetch(url, getToken);
 
             if (!response.ok) {
                 const errorText = await response.text();
