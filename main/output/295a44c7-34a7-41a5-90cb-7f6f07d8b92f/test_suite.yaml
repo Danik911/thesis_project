@@ -1,0 +1,957 @@
+suite_id: OQ-SUITE-1229
+gamp_category: 3
+document_name: 295a44c7-34a7-41a5-90cb-7f6f07d8b92f.md
+test_cases:
+- test_id: OQ-001
+  test_name: Document Assignment and Electronic Acknowledgment Workflow
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that documents can be successfully assigned to users and groups
+    via the vendor UI and that users can complete the electronic acknowledgment process.
+  prerequisites:
+  - System is installed and configured
+  - Test user accounts and groups are created
+  - Test documents are loaded into the system
+  - User has permissions to assign documents
+  test_steps:
+  - step_number: 1
+    action: Log into the system with a manager-level account that has document assignment
+      permissions.
+    expected_result: System login is successful and the main dashboard is displayed.
+    data_to_capture:
+    - Screenshot of successful login and dashboard
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Navigate to the document assignment section within the vendor-provided
+      user interface.
+    expected_result: The document assignment interface loads correctly, showing options
+      to select documents and assignees.
+    data_to_capture:
+    - Screenshot of the document assignment interface
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Select a test document and assign it to a pre-defined test user group
+      using the UI controls.
+    expected_result: System confirms the assignment was successful and the task appears
+      in the assignment queue.
+    data_to_capture:
+    - Screenshot of successful assignment confirmation
+    - Name of assigned document and group
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Log out and log in as a user from the assigned group. Navigate to the
+      user's acknowledgment dashboard.
+    expected_result: The assigned document is visible in the user's list of pending
+      acknowledgments.
+    data_to_capture:
+    - Screenshot of user dashboard showing pending acknowledgment
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Open the assigned document, review it, and complete the vendor-provided
+      electronic signature/acknowledgment process.
+    expected_result: The system records the acknowledgment, the pending item is removed,
+      and a completion timestamp is recorded.
+    data_to_capture:
+    - Screenshot of acknowledgment confirmation
+    - Timestamp of acknowledgment
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 6
+    action: Log back in as the manager and view the standard acknowledgment report
+      for the test document.
+    expected_result: The report shows the test user has acknowledged the document,
+      with the correct date and time.
+    data_to_capture:
+    - Screenshot of the acknowledgment report
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Document assignment to a group is successful via the vendor UI.
+  - Assigned document appears correctly in the target user's dashboard.
+  - Electronic acknowledgment process completes successfully and is recorded.
+  - Acknowledgment report accurately reflects the completed user acknowledgment.
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic Records; Electronic Signatures
+  - Internal policy for tracking training and acknowledgment compliance
+  risk_level: medium
+  data_integrity_requirements:
+  - The audit trail must record the assignment event and the acknowledgment event
+    with user ID and timestamp.
+  - The acknowledgment record must be immutable once created.
+  urs_requirements:
+  - URS-021-001
+  - URS-021-005
+  - URS-021-007
+  related_tests:
+  - OQ-002
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Quality System SME
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-002
+  test_name: Automated Reminder and Manager Dashboard Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Validate that the system sends automated reminders for overdue acknowledgments
+    and that role-based dashboards correctly display assignment statuses to managers.
+  prerequisites:
+  - System is installed and configured
+  - Vendor scheduler is configured for reminders
+  - Test documents are assigned with past-due dates
+  - Manager-level test account exists
+  test_steps:
+  - step_number: 1
+    action: Log into the system as an administrator and configure the vendor scheduler
+      to send reminders for acknowledgments overdue by 1 day.
+    expected_result: Scheduler configuration is saved successfully.
+    data_to_capture:
+    - Screenshot of scheduler configuration settings
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Create a test assignment for a document with a due date set in the past
+      to trigger the reminder logic.
+    expected_result: Assignment is created successfully and is immediately flagged
+      as overdue.
+    data_to_capture:
+    - Screenshot of assignment showing overdue status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Force the execution of the reminder job or wait for the scheduled run
+      time. Check the email system or notification log.
+    expected_result: An automated reminder notification is generated and sent for
+      the overdue assignment.
+    data_to_capture:
+    - Screenshot or log entry proving reminder was sent
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Log into the system with a manager-level account and access the role-based
+      dashboard.
+    expected_result: The dashboard loads and displays summary statistics and a list
+      of document assignments.
+    data_to_capture:
+    - Screenshot of the manager dashboard
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Filter the dashboard view to show overdue acknowledgments and verify the
+      test assignment is listed.
+    expected_result: The test overdue assignment is correctly displayed in the filtered
+      list on the dashboard.
+    data_to_capture:
+    - Screenshot of dashboard showing the overdue assignment
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 6
+    action: Generate a standard acknowledgment report from the dashboard for all overdue
+      items.
+    expected_result: The report generates in less than 10 seconds and includes the
+      test overdue assignment.
+    data_to_capture:
+    - Screenshot of the generated report
+    - Time taken to generate the report
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The vendor scheduler successfully triggers and sends an automated reminder for
+    an overdue acknowledgment.
+  - The manager dashboard correctly displays assignment statuses, including overdue
+    items.
+  - The standard acknowledgment report for overdue items generates in less than 10
+    seconds.
+  regulatory_basis:
+  - Internal requirements for timely completion of mandatory reading
+  - Good Documentation Practice (GDP) for maintaining complete records
+  risk_level: medium
+  data_integrity_requirements:
+  - Reminder events must be logged in the audit trail.
+  - Dashboard data must be a real-time reflection of the current system status.
+  urs_requirements:
+  - URS-021-002
+  - URS-021-003
+  - URS-021-004
+  - URS-021-009
+  related_tests:
+  - OQ-001
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Quality System SME
+  - Business User (Manager Role)
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-003
+  test_name: High Volume Assignment and Reporting Performance Test
+  test_category: performance
+  gamp_category: 3
+  objective: Verify the system can handle 10,000 document assignments per day and
+    generate reports for 50k records in under 10 seconds as specified in performance
+    requirements.
+  prerequisites:
+  - System is installed and configured
+  - Test environment with performance monitoring tools
+  - Test dataset of 50,000+ acknowledgment records
+  - Performance baseline established
+  test_steps:
+  - step_number: 1
+    action: Load test environment with 10,000 document assignments using automated
+      script or test tool
+    expected_result: System successfully processes all 10,000 assignments without
+      errors or performance degradation
+    data_to_capture:
+    - Processing time for assignments
+    - System resource utilization (CPU, memory, disk I/O)
+    - Error logs and system alerts
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Execute standard acknowledgment report generation for 50,000+ records
+      using vendor reporting interface
+    expected_result: Report generation completes in less than 10 seconds as specified
+      in URS-021-009
+    data_to_capture:
+    - Report generation execution time
+    - Report accuracy and completeness
+    - System performance metrics during report generation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - System processes 10,000 assignments within acceptable performance thresholds
+  - Report generation completes in under 10 seconds for 50k records
+  - No system crashes or critical errors during high volume operations
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic Records Requirements
+  - Annex 11 - Computerized Systems
+  risk_level: high
+  data_integrity_requirements:
+  - All assignment and acknowledgment data must be complete and accurate
+  - Performance metrics must be reliably captured and documented
+  - No data loss or corruption during high volume operations
+  urs_requirements:
+  - URS-021-008
+  - URS-021-009
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Performance Testing
+  - System Administration
+  - Quality Assurance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-004
+  test_name: Active Directory Integration and User Group Synchronization Test
+  test_category: integration
+  gamp_category: 3
+  objective: Verify the system can successfully synchronize user groups from Active
+    Directory using the standard vendor-provided connector as specified in integration
+    requirements.
+  prerequisites:
+  - System is installed and configured
+  - Active Directory test environment available
+  - Standard AD connector installed and configured
+  - Test user groups created in Active Directory
+  test_steps:
+  - step_number: 1
+    action: Configure the standard AD connector with appropriate connection parameters
+      and synchronization settings
+    expected_result: Connector configuration is successfully saved and validated by
+      the system
+    data_to_capture:
+    - Configuration settings
+    - Connection validation results
+    - Any configuration errors or warnings
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Initiate manual synchronization of user groups from Active Directory to
+      the document acknowledgment system
+    expected_result: User groups are successfully synchronized from AD to the system
+      without errors
+    data_to_capture:
+    - Synchronization execution time
+    - Number of groups synchronized
+    - Synchronization log details and any errors
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify synchronized user groups appear in the document assignment interface
+      and can be used for document assignments
+    expected_result: All synchronized AD groups are available for document assignment
+      in the vendor UI as specified in URS-021-001
+    data_to_capture:
+    - List of available groups in assignment interface
+    - Group membership accuracy
+    - Assignment functionality verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - AD connector successfully synchronizes user groups without errors
+  - Synchronized groups are available for document assignment
+  - Group membership data is accurately maintained between systems
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic Records Requirements
+  - GAMP 5 - Integration Testing Guidelines
+  risk_level: medium
+  data_integrity_requirements:
+  - User group data must be accurately synchronized between systems
+  - No data corruption during synchronization process
+  - Group membership integrity must be maintained
+  urs_requirements:
+  - URS-021-001
+  - URS-021-010
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Active Directory Administration
+  - Integration Testing
+  - System Configuration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-005
+  test_name: Audit Trail Verification for Document Assignments and Acknowledgments
+  test_category: data_integrity
+  gamp_category: 3
+  objective: Verify that the system maintains a complete and unalterable audit trail
+    for all document assignment and acknowledgment activities as required by regulatory
+    standards.
+  prerequisites:
+  - System is installed and configured
+  - Test users with various roles created
+  - Documents available for assignment
+  - Audit trail functionality enabled
+  test_steps:
+  - step_number: 1
+    action: Assign a document to a test user using the vendor UI and record the assignment
+      details
+    expected_result: Assignment is successfully completed and visible in the user's
+      pending acknowledgments
+    data_to_capture:
+    - Assignment timestamp
+    - Assigned document ID
+    - Assigned user ID
+    - Assigning user ID
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Have the test user acknowledge the document using the electronic signature
+      feature
+    expected_result: Document acknowledgment is successfully recorded with electronic
+      signature
+    data_to_capture:
+    - Acknowledgment timestamp
+    - Acknowledging user ID
+    - Electronic signature metadata
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Access the audit trail report for the specific document and user
+    expected_result: Audit trail displays complete record of assignment and acknowledgment
+      events
+    data_to_capture:
+    - Audit trail entries for both assignment and acknowledgment
+    - Timestamp accuracy
+    - User identification data
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify audit trail entries cannot be modified or deleted by any user role
+    expected_result: All audit trail entries are read-only and protected from modification
+    data_to_capture:
+    - Attempted modification results
+    - System response to modification attempts
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Audit trail captures all assignment and acknowledgment events with complete metadata
+  - Audit trail entries are timestamped accurately and sequentially
+  - No modifications to audit trail are possible by any user role
+  - All captured data aligns with regulatory record-keeping requirements
+  regulatory_basis:
+  - 21 CFR Part 11 electronic records requirements
+  - EU Annex 11 computerized systems requirements
+  - FDA data integrity guidance
+  risk_level: high
+  data_integrity_requirements:
+  - ALCOA+ principles applied to all audit trail data
+  - Immutable record storage
+  - Accurate timestamping with timezone information
+  - Complete user identification in all entries
+  urs_requirements:
+  - URS-021-006
+  - URS-021-007
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Quality Assurance
+  - Regulatory Compliance
+  - System Administration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-006
+  test_name: Retention Policy Compliance for Acknowledgment Records
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that the system properly maintains acknowledgment records according
+    to the configured retention policy and prevents premature deletion.
+  prerequisites:
+  - System with configured retention policy
+  - Historical acknowledgment records available
+  - Administrator access configured
+  - Retention policy documentation available
+  test_steps:
+  - step_number: 1
+    action: Review the configured retention policy settings in the system administration
+      interface
+    expected_result: Retention policy is configured according to organizational requirements
+    data_to_capture:
+    - Retention period setting
+    - Policy effective date
+    - Policy scope configuration
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Identify acknowledgment records that have reached their retention period
+      expiration
+    expected_result: System correctly identifies records eligible for retention processing
+    data_to_capture:
+    - Record age calculation
+    - Retention expiration flagging
+    - Record count eligible for processing
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Attempt to delete acknowledgment records that have not reached retention
+      expiration
+    expected_result: System prevents deletion of records still within retention period
+    data_to_capture:
+    - Deletion attempt results
+    - System error messages
+    - Record preservation verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify system handling of records that have exceeded retention period
+      (archive/delete based on configuration)
+    expected_result: System processes expired records according to configured retention
+      policy
+    data_to_capture:
+    - Processing method for expired records
+    - Archive location if applicable
+    - Deletion confirmation if applicable
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Retention policy configuration matches organizational requirements
+  - System prevents deletion of records within retention period
+  - Expired records are processed according to policy
+  - All retention activities are logged in audit trail
+  regulatory_basis:
+  - FDA 21 CFR Part 11 record retention requirements
+  - EU GMP Annex 11 data retention guidelines
+  - ICH Q9 quality risk management principles
+  risk_level: medium
+  data_integrity_requirements:
+  - Retention period enforcement
+  - Prevention of premature deletion
+  - Secure archive process for expired records
+  - Audit trail of retention activities
+  urs_requirements:
+  - URS-021-006
+  related_tests:
+  - OQ-001
+  - OQ-005
+  estimated_duration_minutes: 35
+  required_expertise:
+  - Records Management
+  - Quality Assurance
+  - System Administration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-007
+  test_name: Role-Based Dashboard Access and Functionality Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that role-based dashboards provide appropriate access and functionality
+    to managers as specified in URS-021-004.
+  prerequisites:
+  - System is installed and configured
+  - Test users with different manager roles created
+  - Document assignments exist in the system
+  - User groups are synchronized from AD
+  test_steps:
+  - step_number: 1
+    action: Log in as a Quality Manager user and navigate to the manager dashboard
+    expected_result: Dashboard displays with complete view of all assigned documents
+      and acknowledgment statuses across all departments
+    data_to_capture:
+    - Screenshot of dashboard view
+    - List of available dashboard functions
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Log in as a Department Manager user and navigate to the manager dashboard
+    expected_result: Dashboard displays with restricted view showing only documents
+      assigned to the manager's specific department
+    data_to_capture:
+    - Screenshot of restricted dashboard view
+    - List of visible documents and users
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Generate a standard acknowledgment report from each manager dashboard
+    expected_result: Report generates successfully with appropriate data scope based
+      on user role and displays in less than 10 seconds
+    data_to_capture:
+    - Report generation time
+    - Report content scope validation
+    - Screenshot of generated report
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - All role-based dashboards display appropriate data scope
+  - Dashboard functions operate correctly for each role
+  - Reports generate within specified performance requirements
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic records requirements
+  - Annex 11 - Role-based access control requirements
+  risk_level: medium
+  data_integrity_requirements:
+  - Dashboard must display accurate and current acknowledgment status data
+  - Role-based access restrictions must be consistently enforced
+  urs_requirements:
+  - 'URS-021-004: Provide role-based dashboards for managers'
+  related_tests:
+  - 'OQ-002: Automated Reminder and Manager Dashboard Verification'
+  - 'OQ-003: High Volume Assignment and Reporting Performance Test'
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Quality Management System knowledge
+  - Role-based access control understanding
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-008
+  test_name: Electronic Signature Compliance and Validity Verification
+  test_category: data_integrity
+  gamp_category: 3
+  objective: Verify that electronic acknowledgment signatures comply with regulatory
+    requirements and maintain validity as specified in URS-021-005.
+  prerequisites:
+  - System is installed and configured
+  - Test users created with document assignments
+  - Electronic signature configuration completed
+  test_steps:
+  - step_number: 1
+    action: Assign a document to a test user and have them complete the acknowledgment
+      process
+    expected_result: System captures electronic signature with timestamp, user identity,
+      and meaning of signature (acknowledgment)
+    data_to_capture:
+    - Screenshot of signature capture process
+    - Signature metadata including timestamp and user identity
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Review the audit trail entry for the electronic signature event
+    expected_result: Audit trail contains complete record of signature including all
+      required elements per 21 CFR Part 11
+    data_to_capture:
+    - Audit trail entry details
+    - Compliance checklist for electronic signatures
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Attempt to modify an acknowledged document record after signature capture
+    expected_result: System prevents modification of signed records or requires re-signature
+      with appropriate audit trail entries
+    data_to_capture:
+    - System behavior when attempting modification
+    - Audit trail entries for modification attempts
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Electronic signatures contain all required regulatory elements
+  - Signatures are non-repudiable and securely linked to user identity
+  - Signed records are protected from unauthorized modification
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic signatures requirements
+  - FDA Guidance on Electronic Systems Compliance
+  - EU Annex 11 - Electronic signature requirements
+  risk_level: high
+  data_integrity_requirements:
+  - Electronic signatures must be secure, non-repudiable, and compliant with 21 CFR
+    Part 11
+  - Signed records must be protected from modification after signature
+  urs_requirements:
+  - 'URS-021-005: Support vendor-provided electronic acknowledgment signature'
+  - 'URS-021-007: Provide audit trail for assignments and acknowledgments'
+  related_tests:
+  - 'OQ-001: Document Assignment and Electronic Acknowledgment Workflow'
+  - 'OQ-005: Audit Trail Verification for Document Assignments and Acknowledgments'
+  estimated_duration_minutes: 35
+  required_expertise:
+  - 21 CFR Part 11 compliance knowledge
+  - Electronic signature validation expertise
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-009
+  test_name: Document Assignment and Acknowledgment Workflow Validation
+  test_category: functional
+  gamp_category: 3
+  objective: Verify the end-to-end workflow of assigning documents to users, sending
+    automated reminders, and capturing electronic acknowledgments meets specified
+    requirements.
+  prerequisites:
+  - System is installed and configured
+  - Test users with different roles are created
+  - Test documents are loaded into the system
+  - User groups are synchronized from Active Directory
+  test_steps:
+  - step_number: 1
+    action: Log into the system as a document control administrator and navigate to
+      the document assignment interface.
+    expected_result: System displays the document assignment dashboard with options
+      to assign documents to users and groups.
+    data_to_capture:
+    - Screenshot of assignment interface
+    - Timestamp of login
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Assign a test policy/SOP to a specific user and a user group using the
+      vendor UI.
+    expected_result: System confirms successful assignment and displays the assignment
+      in the pending acknowledgments list.
+    data_to_capture:
+    - Assignment confirmation message
+    - List of assigned users/groups
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log in as an assigned user and navigate to the acknowledgment section.
+    expected_result: System displays the assigned document requiring acknowledgment
+      with electronic signature option.
+    data_to_capture:
+    - User view of assigned documents
+    - Electronic signature interface screenshot
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Complete the electronic acknowledgment process by reviewing and signing
+      the document.
+    expected_result: System records the acknowledgment with timestamp and electronic
+      signature, updating the status to completed.
+    data_to_capture:
+    - Acknowledgment timestamp
+    - Electronic signature record
+    - Completion status
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Verify that automated reminders are sent according to the vendor scheduler
+      for unacknowledged documents.
+    expected_result: System sends reminder notifications to users with pending acknowledgments
+      as per configured schedule.
+    data_to_capture:
+    - Reminder notification log
+    - Scheduler execution timestamp
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Documents are successfully assigned to users and groups
+  - Electronic acknowledgments are properly captured and stored
+  - Automated reminders are sent according to schedule
+  - Acknowledgment status is accurately updated in real-time
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic Records; Electronic Signatures
+  - Annex 11 - Computerized Systems
+  risk_level: medium
+  data_integrity_requirements:
+  - Electronic signatures must be securely linked to respective records
+  - Acknowledgment timestamps must be accurate and non-modifiable
+  - All assignment and acknowledgment transactions must be recorded in audit trail
+  urs_requirements:
+  - URS-021-001
+  - URS-021-002
+  - URS-021-005
+  - URS-021-007
+  related_tests:
+  - OQ-001
+  - OQ-002
+  - OQ-005
+  - OQ-008
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Document Control Specialist
+  - Quality Assurance Tester
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-010
+  test_name: Standard Acknowledgment Report Generation and Performance Validation
+  test_category: performance
+  gamp_category: 3
+  objective: Verify that standard acknowledgment reports can be generated accurately
+    and meet performance requirements for large datasets.
+  prerequisites:
+  - System contains at least 50,000 acknowledgment records
+  - Test user with manager role permissions
+  - Reporting module is configured and accessible
+  test_steps:
+  - step_number: 1
+    action: Log into the system as a manager and navigate to the standard acknowledgment
+      reports section.
+    expected_result: System displays available standard report templates for acknowledgment
+      tracking.
+    data_to_capture:
+    - List of available report templates
+    - User role verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Select a comprehensive acknowledgment report template and configure parameters
+      for a large dataset (50,000+ records).
+    expected_result: System accepts report parameters and displays estimated generation
+      time.
+    data_to_capture:
+    - Report parameter settings
+    - Estimated generation time display
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Execute the report generation and start timing the process.
+    expected_result: System processes the report request and begins generating the
+      output.
+    data_to_capture:
+    - Report execution start timestamp
+    - System response time
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Monitor the report generation process until completion and record the
+      total time.
+    expected_result: Report completes generation within 10 seconds and displays accurate
+      data for all 50,000+ records.
+    data_to_capture:
+    - Report completion timestamp
+    - Total generation time
+    - Record count verification
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Verify the accuracy and completeness of the generated report against the
+      source data.
+    expected_result: Report contains accurate acknowledgment data matching the database
+      records with correct totals and status information.
+    data_to_capture:
+    - Data accuracy verification results
+    - Record count comparison
+    - Sample data validation
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Reports generate in less than 10 seconds for 50,000+ records
+  - All report data accurately reflects the source acknowledgment records
+  - Standard report templates provide comprehensive acknowledgment tracking information
+  - Role-based access controls properly restrict report access
+  regulatory_basis:
+  - FDA 21 CFR Part 11 - Electronic Records Requirements
+  - EU GMP Annex 11 - Reporting and Data Integrity
+  risk_level: medium
+  data_integrity_requirements:
+  - Report data must accurately reflect source records without modification
+  - Report generation timestamps must be recorded in audit trail
+  - Data exports must maintain referential integrity
+  urs_requirements:
+  - URS-021-003
+  - URS-021-004
+  - URS-021-006
+  - URS-021-009
+  related_tests:
+  - OQ-003
+  - OQ-004
+  - OQ-006
+  - OQ-007
+  estimated_duration_minutes: 35
+  required_expertise:
+  - Business Analyst
+  - Performance Tester
+  - Quality Manager
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+test_categories: {}
+requirements_coverage:
+  URS-001:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-005
+  URS-002:
+  - OQ-006
+  - OQ-007
+  - OQ-008
+  - OQ-009
+  - OQ-010
+  URS-003: []
+risk_coverage:
+  low: 0
+  medium: 0
+  high: 0
+compliance_coverage:
+  21_cfr_part_11: true
+  gamp5: true
+  alcoa_plus: true
+total_test_count: 10
+estimated_execution_time: 360
+coverage_percentage: 0.0
+generation_timestamp: '2025-11-29T12:29:38.185623Z'
+generation_method: LLMTextCompletionProgram_deepseek/deepseek-chat
+validation_approach: ''
+created_by: oq_generation_agent_v2_progressive
+review_required: true
+pharmaceutical_compliance:
+  alcoa_plus_compliant: true
+  gamp5_compliant: true
+  cfr_part_11_compliant: true
+  audit_trail_verified: true
+  data_integrity_assured: true
+alcoa_plus_metadata: {}
+is_original: true
+version: '1.0'
+immutable: true
+locked: false
+validated: true
+reconciled: true
+cross_verified: true
+corrections: []
+error_log: []
+audit_trail: {}
+format: yaml
+encoding: utf-8
+data_schema: {}
+metadata: {}
+retention_period: 7_years
+encrypted: false
+protected: true
+backed_up: false
+backup_status: pending
+accessible: true
+retrieval_time: 0.1
+searchable: true
+indexed: true
+export_formats:
+- json
+- xml
+- csv
+download_options:
+- json
+- xml
+- pdf
+system_version: 1.0.0
+change_history: []
+related_records: []
+dependencies: []

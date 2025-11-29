@@ -111,6 +111,13 @@ CREATE TABLE IF NOT EXISTS jobs (
     human_category VARCHAR(1)  -- Human-approved GAMP category
         CHECK (human_category IN ('1', '3', '4', '5')),
 
+    -- Progress Tracking (for frontend progress bar)
+    -- Maps to main/api/models.py::WorkflowStage enum values
+    current_stage VARCHAR(50)
+        CHECK (current_stage IN ('queued', 'ingestion', 'categorization', 'hil_waiting', 'planning', 'agent_execution', 'oq_generation', 'completion')),
+    stage_started_at TIMESTAMPTZ,  -- When current stage started (for elapsed time)
+    stages_completed TEXT[],  -- Array of completed stages (ALCOA+ audit trail)
+
     -- Observability
     trace_id TEXT,  -- Langfuse trace ID for debugging
     trace_url TEXT,  -- Langfuse trace URL for UI link

@@ -49,6 +49,32 @@ export default function Generate() {
     const [jobs, setJobs] = useState<any[]>([]);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Progress tracking from backend - restored from localStorage on navigation
+    const [currentStage, setCurrentStage] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem('currentStage');
+    });
+    const [currentStageLabel, setCurrentStageLabel] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem('currentStageLabel');
+    });
+    const [progressPercentage, setProgressPercentage] = useState<number | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const saved = localStorage.getItem('progressPercentage');
+        return saved ? parseInt(saved, 10) : null;
+    });
+
+    // Displayed progress - tracks what the user actually SAW, not backend progress
+    // This is what the animation reached before navigation
+    const [displayedProgress, setDisplayedProgress] = useState<number>(() => {
+        if (typeof window === 'undefined') return 0;
+        const saved = localStorage.getItem('displayedProgress');
+        return saved ? parseFloat(saved) : 0;
+    });
+
+    // AbortController for cancelling poll requests on unmount/navigation
+    const pollAbortControllerRef = useRef<AbortController | null>(null);
+
     // Track if a poll request is in-flight to prevent retry storms during token refresh
     const isPollingInFlight = useRef<boolean>(false);
 
@@ -87,6 +113,10 @@ export default function Generate() {
     // Cleanup polling on unmount
     useEffect(() => {
         return () => {
+            // Cancel any in-flight poll request
+            if (pollAbortControllerRef.current) {
+                pollAbortControllerRef.current.abort();
+            }
             if (pollIntervalRef.current) {
                 clearInterval(pollIntervalRef.current);
             }
@@ -141,7 +171,42 @@ export default function Generate() {
         }
     }, [jobStartTime]);
 
+    // Persist progress tracking to localStorage on change
+    useEffect(() => {
+        if (currentStage) {
+            localStorage.setItem('currentStage', currentStage);
+        } else {
+            localStorage.removeItem('currentStage');
+        }
+    }, [currentStage]);
 
+    useEffect(() => {
+        if (currentStageLabel) {
+            localStorage.setItem('currentStageLabel', currentStageLabel);
+        } else {
+            localStorage.removeItem('currentStageLabel');
+        }
+    }, [currentStageLabel]);
+
+    useEffect(() => {
+        if (progressPercentage !== null) {
+            localStorage.setItem('progressPercentage', progressPercentage.toString());
+        } else {
+            localStorage.removeItem('progressPercentage');
+        }
+    }, [progressPercentage]);
+
+    // Persist displayedProgress - tracks what user saw, cleared in resetDashboard
+    useEffect(() => {
+        if (displayedProgress > 0) {
+            localStorage.setItem('displayedProgress', displayedProgress.toString());
+        }
+    }, [displayedProgress]);
+
+    // Callback for JobProgress to report its current display value
+    const handleProgressChange = useCallback((progress: number) => {
+        setDisplayedProgress(progress);
+    }, []);
 
     // Persistence Logic
     const handleGenerate = async () => {
@@ -212,6 +277,11 @@ export default function Generate() {
     const pollJobStatus = useCallback((id: string, apiUrl: string) => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
+        // Cancel any previous abort controller
+        if (pollAbortControllerRef.current) {
+            pollAbortControllerRef.current.abort();
+        }
+
         // Track consecutive failures to expose errors after multiple attempts
         let consecutiveFailures = 0;
         const MAX_CONSECUTIVE_FAILURES = 5;
@@ -226,10 +296,14 @@ export default function Generate() {
             }
             isPollingInFlight.current = true;
 
+            // Create new AbortController for this request
+            pollAbortControllerRef.current = new AbortController();
+            const signal = pollAbortControllerRef.current.signal;
+
             try {
                 console.log(`[DEBUG] Polling job status: GET ${apiUrl}/jobs/${id}`);
-                // Use authenticatedFetch which handles 401 retry internally
-                const response = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken);
+                // Use authenticatedFetch which handles 401 retry internally with coordinated refresh
+                const response = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken, {}, signal);
 
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -285,6 +359,19 @@ export default function Generate() {
                 // Normalize status to uppercase for comparison
                 const normalizedStatus = data.status.toUpperCase();
                 console.log(`[DEBUG] Job ${id} status: ${normalizedStatus}`);
+
+                // Extract progress tracking data from backend response
+                if (data.current_stage !== undefined) {
+                    setCurrentStage(data.current_stage);
+                }
+                if (data.current_stage_label !== undefined) {
+                    setCurrentStageLabel(data.current_stage_label);
+                }
+                if (data.progress_percentage !== undefined) {
+                    setProgressPercentage(data.progress_percentage);
+                    // Note: We do NOT update displayedProgress here - it comes from JobProgress callback
+                    // This prevents the bar from jumping backwards when backend lags behind animation
+                }
 
                 if (normalizedStatus === 'COMPLETED') {
                     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -358,7 +445,13 @@ export default function Generate() {
                     // setLogs(prev => [...prev, `Processing... (${new Date().toLocaleTimeString()})`]);
                 }
 
-            } catch (e) {
+            } catch (e: any) {
+                // Ignore AbortError - happens on unmount/navigation, not a real error
+                if (e.name === 'AbortError') {
+                    console.log('[DEBUG] Poll request aborted (navigation/unmount)');
+                    return;
+                }
+
                 consecutiveFailures++;
                 console.error(`[DEBUG] Polling exception (failure ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, e);
 
@@ -425,6 +518,19 @@ export default function Generate() {
                             setStatus(serverStatus as JobStatus);
                         }
 
+                        // Restore progress state from server (in case localStorage is stale)
+                        if (jobData.current_stage !== undefined) {
+                            setCurrentStage(jobData.current_stage);
+                        }
+                        if (jobData.current_stage_label !== undefined) {
+                            setCurrentStageLabel(jobData.current_stage_label);
+                        }
+                        if (jobData.progress_percentage !== undefined) {
+                            setProgressPercentage(jobData.progress_percentage);
+                            // Note: We do NOT update displayedProgress here - it comes from JobProgress callback
+                            // This prevents the bar from jumping backwards when backend lags behind animation
+                        }
+
                         // Resume polling if still active
                         if (serverStatus === 'PENDING' || serverStatus === 'PROCESSING') {
                             console.log(`[DEBUG] Job is active, resuming polling`);
@@ -440,6 +546,8 @@ export default function Generate() {
                         } else if (serverStatus === 'AWAITING_APPROVAL') {
                             console.log(`[DEBUG] Job awaiting approval`);
                             setShowApprovalModal(true);
+                            // Resume polling to get timeout updates
+                            pollJobStatus(jobId, apiUrl);
                         } else if (serverStatus === 'FAILED') {
                             console.log(`[DEBUG] Job failed on server`);
                             setLogs(prev => [...prev, `Job failed: ${jobData.error_message || 'Unknown error'}`]);
@@ -536,6 +644,13 @@ export default function Generate() {
         setSelectedFile(null);
         setJobStartTime(null); // Reset start time
         setShowApprovalModal(false);
+        // Reset progress tracking
+        setCurrentStage(null);
+        setCurrentStageLabel(null);
+        setProgressPercentage(null);
+        // Reset displayed progress and clear from localStorage
+        setDisplayedProgress(0);
+        localStorage.removeItem('displayedProgress');
     };
 
     const handleApprovalSubmitted = () => {
@@ -714,7 +829,17 @@ export default function Generate() {
 
                         {(status === 'PENDING' || status === 'PROCESSING') && (
                             <div className="animate-fade-in">
-                                <JobProgress status={status} logs={logs} startTime={jobStartTime} jobId={jobId || undefined} />
+                                <JobProgress
+                                    status={status}
+                                    logs={logs}
+                                    startTime={jobStartTime}
+                                    jobId={jobId || undefined}
+                                    currentStage={currentStage}
+                                    currentStageLabel={currentStageLabel}
+                                    progressPercentage={progressPercentage}
+                                    initialDisplayProgress={displayedProgress}
+                                    onProgressChange={handleProgressChange}
+                                />
                             </div>
                         )}
 

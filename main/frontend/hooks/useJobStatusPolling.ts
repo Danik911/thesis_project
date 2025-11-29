@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { tokenManager } from '@/lib/tokenManager';
 
 /**
  * JobStatusWithApproval interface matching backend API response
@@ -34,6 +35,11 @@ interface UseJobStatusPollingResult {
  * Polls GET /jobs/{job_id}/approval-status endpoint every 5 seconds
  * to detect AWAITING_APPROVAL status and categorization results
  *
+ * CRITICAL FIXES:
+ * 1. Uses TokenManager singleton for coordinated token refresh (prevents retry storms)
+ * 2. Uses AbortController for proper cleanup on unmount/navigation
+ * 3. Ignores AbortError to prevent console spam on navigation
+ *
  * NO FALLBACK LOGIC: All errors are exposed explicitly
  *
  * @param jobId - Job ID to poll (null disables polling)
@@ -50,7 +56,10 @@ export function useJobStatusPolling(
     const [error, setError] = useState<string | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Track if a request is in-flight to prevent retry storms during token refresh
+    // AbortController ref for cancelling in-flight requests on unmount
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    // Track if a request is in-flight to prevent overlapping requests
     const isRequestInFlight = useRef<boolean>(false);
 
     /**
@@ -58,9 +67,9 @@ export function useJobStatusPolling(
      * NO FALLBACK LOGIC: Errors are set explicitly, no default values
      *
      * CRITICAL FIX (Issue 9): Handle Clerk JWT token expiration (60s default)
-     * - On 401, wait for Clerk's background token refresh with exponential backoff
-     * - Retry up to 3 times before reporting error
-     * - Use longer delays (2s, 4s, 8s) to give Clerk time to refresh
+     * - Uses TokenManager for coordinated refresh (prevents retry storms)
+     * - Uses AbortController for cleanup on unmount
+     * - Retry up to 5 times with exponential backoff
      */
     const fetchStatus = useCallback(async (retryCount: number = 0) => {
         if (!jobId) {
@@ -68,26 +77,36 @@ export function useJobStatusPolling(
             return;
         }
 
-        // Skip this fetch if a previous request is still in-flight (prevents retry storms)
-        // Only check on initial call (retryCount=0), not during retry backoff
+        // Skip if previous request still in flight (only on initial call)
         if (retryCount === 0 && isRequestInFlight.current) {
             console.log('[HIL-POLL] Skipping poll - previous request still in flight');
             return;
         }
+
+        // Cancel any previous request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new AbortController for this request
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
 
         // Mark request as in-flight only on initial call
         if (retryCount === 0) {
             isRequestInFlight.current = true;
         }
 
-        const MAX_RETRIES = 5; // Increased from 3 to handle long-running workflows
+        // Ensure TokenManager has the getToken function
+        tokenManager.setGetTokenFn(getToken);
+
+        const MAX_RETRIES = 5;
 
         try {
-            // CRITICAL FIX: Force refresh token on retry attempts to get a NEW token
-            // On first attempt (retryCount=0), use cached token for performance
-            // On retry attempts, force refresh to ensure we don't reuse expired token
+            // Use TokenManager for coordinated token refresh
+            // First attempt uses cached token, retries force refresh
             const shouldForceRefresh = retryCount > 0;
-            const token = await getToken(shouldForceRefresh ? { forceRefresh: true } : undefined);
+            const token = await tokenManager.getToken(shouldForceRefresh);
             if (!token) {
                 throw new Error('Authentication token not available. Please sign in again.');
             }
@@ -96,16 +115,17 @@ export function useJobStatusPolling(
             const response = await fetch(`${apiUrl}/jobs/${jobId}/approval-status`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
-                }
+                },
+                signal
             });
 
             // Handle 401 Unauthorized - token may have expired
-            // CRITICAL FIX: Force token refresh on next retry
+            // TokenManager coordinates refresh to prevent parallel attempts
             if (response.status === 401 && retryCount < MAX_RETRIES) {
-                const delay = Math.pow(2, retryCount + 1) * 1000; // Exponential backoff: 2s, 4s, 8s, 16s, 32s
-                console.warn(`[HIL-POLL] JWT expired (401), forcing token refresh, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
+                const delay = Math.pow(2, retryCount + 1) * 1000; // 2s, 4s, 8s, 16s, 32s
+                console.warn(`[HIL-POLL] JWT expired (401), coordinated refresh, retry ${retryCount + 1}/${MAX_RETRIES} in ${delay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
-                // Retry with incremented counter - next call will force token refresh
+                // Retry with incremented counter - TokenManager will coordinate the refresh
                 return fetchStatus(retryCount + 1);
             }
 
@@ -127,6 +147,12 @@ export function useJobStatusPolling(
             setIsLoading(false);
 
         } catch (err: any) {
+            // Ignore AbortError - happens on unmount/navigation, not a real error
+            if (err.name === 'AbortError') {
+                console.log('[HIL-POLL] Request aborted (navigation/unmount)');
+                return;
+            }
+
             // NO FALLBACK LOGIC: Expose errors with full diagnostics
             console.error('Job status polling error:', err);
             setError(err.message || 'Unknown error occurred while fetching job status');
@@ -163,6 +189,11 @@ export function useJobStatusPolling(
 
         // Cleanup on unmount or jobId change
         return () => {
+            // Cancel any in-flight request
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+            // Clear interval
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;

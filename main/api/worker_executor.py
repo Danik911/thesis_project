@@ -116,7 +116,8 @@ class WorkflowExecutor:
         urs_content: str,
         user_id: str,
         metadata: dict[str, Any],
-        approved_category: int | None = None
+        approved_category: int | None = None,
+        stage_callback: Any | None = None
     ) -> dict[str, Any]:
         """
         Execute the complete pharmaceutical test generation workflow.
@@ -133,6 +134,8 @@ class WorkflowExecutor:
             user_id: User identifier for audit trail
             metadata: Additional metadata (filename, hash, etc.)
             approved_category: Pre-approved GAMP category from HIL (skips categorization)
+            stage_callback: Optional async callback(stage: str) for progress updates.
+                           Called with 'agent_execution' and 'oq_generation' stages.
 
         Returns:
             dict containing:
@@ -226,9 +229,25 @@ class WorkflowExecutor:
                 else:
                     logger.info(f"Executing UnifiedTestGenerationWorkflow for job {job_id} (expect 5-6 minutes)...")
 
+                # Update stage to AGENT_EXECUTION before running workflow
+                # The workflow includes parallel agent execution (Context, SME, Research)
+                if stage_callback is not None:
+                    try:
+                        await stage_callback("agent_execution")
+                    except Exception as cb_err:
+                        logger.warning(f"Stage callback failed for agent_execution: {cb_err}")
+
                 workflow_result_raw = await workflow.run(
                     document_path=str(temp_urs_path)
                 )
+
+                # Update stage to OQ_GENERATION after workflow completes but before saving
+                # OQ generation happened during workflow.run() - this reflects completion of that phase
+                if stage_callback is not None:
+                    try:
+                        await stage_callback("oq_generation")
+                    except Exception as cb_err:
+                        logger.warning(f"Stage callback failed for oq_generation: {cb_err}")
 
                 if not workflow_result_raw:
                     raise RuntimeError(

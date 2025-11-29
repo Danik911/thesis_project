@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
+import { XMarkIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
 
 interface LangfuseUsage {
   inputTokens?: number | string | null;
@@ -190,50 +192,89 @@ const buildObservationTree = (observations: LangfuseObservation[]): ObservationN
   return roots;
 };
 
-const ObservationTreeView = ({ nodes }: { nodes: ObservationNode[] }) => (
-  <div className="space-y-3">
-    {nodes.map((node) => {
-      const usageTotals = getTokenCounts(node.observation);
-      return (
-        <div key={node.observation.id} className="border border-slate-700/60 rounded-lg bg-slate-900/40 p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-sm text-white font-medium">
-              {node.observation.name || 'Unnamed observation'}
-            </p>
-            <p className="text-xs text-slate-400">
-              {node.observation.type} · {node.observation.level || 'DEFAULT'} · {node.observation.status || 'status unknown'}
-            </p>
+// Status colors for simplified tree view
+const TREE_STATUS_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
+  completed: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', icon: '✓' },
+  success: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', icon: '✓' },
+  running: { bg: 'bg-blue-500/20', text: 'text-blue-400', icon: '◉' },
+  pending: { bg: 'bg-slate-500/20', text: 'text-slate-400', icon: '○' },
+  failed: { bg: 'bg-red-500/20', text: 'text-red-400', icon: '✕' },
+  error: { bg: 'bg-red-500/20', text: 'text-red-400', icon: '✕' },
+  waiting: { bg: 'bg-amber-500/20', text: 'text-amber-400', icon: '⏳' },
+  default: { bg: 'bg-slate-600/20', text: 'text-slate-400', icon: '•' },
+};
+
+const getStatusStyle = (status?: string | null) => {
+  if (!status) return TREE_STATUS_COLORS.default;
+  const lower = status.toLowerCase();
+  if (lower.includes('success') || lower.includes('completed') || lower.includes('done')) return TREE_STATUS_COLORS.completed;
+  if (lower.includes('running') || lower.includes('processing')) return TREE_STATUS_COLORS.running;
+  if (lower.includes('pending') || lower.includes('queued')) return TREE_STATUS_COLORS.pending;
+  if (lower.includes('fail') || lower.includes('error')) return TREE_STATUS_COLORS.failed;
+  if (lower.includes('wait') || lower.includes('approval')) return TREE_STATUS_COLORS.waiting;
+  return TREE_STATUS_COLORS.default;
+};
+
+const truncateObsName = (name: string, maxLen: number = 28): string => {
+  if (name.length <= maxLen) return name;
+  return name.slice(0, maxLen - 1) + '…';
+};
+
+const ObservationTreeView = ({ nodes, depth = 0, maxRootNodes = 4 }: { nodes: ObservationNode[]; depth?: number; maxRootNodes?: number }) => {
+  const [showAll, setShowAll] = useState(false);
+  const isRoot = depth === 0;
+  const visibleNodes = isRoot && !showAll ? nodes.slice(0, maxRootNodes) : nodes;
+  const hiddenCount = isRoot ? nodes.length - maxRootNodes : 0;
+
+  return (
+    <div className="space-y-2">
+      {visibleNodes.map((node) => {
+        const statusStyle = getStatusStyle(node.observation.status);
+        const fullName = node.observation.name || 'Unnamed observation';
+        const duration = formatDuration(node.observation.startTime, node.observation.endTime);
+
+        return (
+          <div
+            key={node.observation.id}
+            className={`rounded-lg ${statusStyle.bg} border border-slate-700/40 p-2.5 transition-all hover:border-slate-600/60`}
+            title={`${fullName}\nType: ${node.observation.type}\nStatus: ${node.observation.status || 'unknown'}\nDuration: ${duration}`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className={`text-sm font-bold ${statusStyle.text}`}>{statusStyle.icon}</span>
+                <span className="text-sm text-white font-medium truncate" title={fullName}>
+                  {truncateObsName(fullName)}
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 whitespace-nowrap font-mono">{duration}</span>
+            </div>
+            {node.children.length > 0 && (
+              <div className="mt-2 ml-4 border-l-2 border-slate-700/50 pl-3">
+                <ObservationTreeView nodes={node.children} depth={depth + 1} />
+              </div>
+            )}
           </div>
-          <div className="text-xs text-slate-300 text-right">
-            <p>{formatDuration(node.observation.startTime, node.observation.endTime)}</p>
-            <p>{new Date(node.observation.startTime ?? Date.now()).toLocaleTimeString()}</p>
-          </div>
-        </div>
-        <div className="mt-2 text-xs text-slate-400 grid grid-cols-2 gap-3">
-          <div>
-            <span className="block text-slate-500 text-[11px] uppercase tracking-wider">Model</span>
-            <span>{node.observation.model || 'N/A'}</span>
-          </div>
-          <div>
-            <span className="block text-slate-500 text-[11px] uppercase tracking-wider">Tokens</span>
-            <span>
-              {usageTotals.total.toLocaleString()} total ·
-              {' '}
-              {usageTotals.input.toLocaleString()} in / {usageTotals.output.toLocaleString()} out
-            </span>
-          </div>
-        </div>
-        {node.children.length > 0 && (
-          <div className="mt-3 border-l border-slate-700/40 pl-4">
-            <ObservationTreeView nodes={node.children} />
-          </div>
-        )}
-        </div>
-      );
-    })}
-  </div>
-);
+        );
+      })}
+      {isRoot && hiddenCount > 0 && !showAll && (
+        <button
+          onClick={() => setShowAll(true)}
+          className="w-full py-2 text-sm text-blue-400 hover:text-blue-300 bg-slate-800/50 rounded-lg border border-slate-700/40 hover:border-blue-500/30 transition-colors"
+        >
+          + {hiddenCount} more observation{hiddenCount !== 1 ? 's' : ''}
+        </button>
+      )}
+      {isRoot && showAll && nodes.length > maxRootNodes && (
+        <button
+          onClick={() => setShowAll(false)}
+          className="w-full py-2 text-sm text-slate-400 hover:text-slate-300 bg-slate-800/50 rounded-lg border border-slate-700/40 transition-colors"
+        >
+          Show less
+        </button>
+      )}
+    </div>
+  );
+};
 
 const ObservationTimeline = ({ observations }: { observations: LangfuseObservation[] }) => {
   const timeline = useMemo(() => {
@@ -356,6 +397,7 @@ export default function LangfuseTraceDashboard({ traceId, traceUrl, jobId }: Lan
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshCounter, setRefreshCounter] = useState(0);
+  const [showExpandedTree, setShowExpandedTree] = useState(false);
 
   useEffect(() => {
     if (!traceId || traceId === 'unknown') {
@@ -502,7 +544,16 @@ export default function LangfuseTraceDashboard({ traceId, traceUrl, jobId }: Lan
             </div>
             <div className="rounded-xl border border-slate-800/60 bg-slate-900/60 p-4 max-h-[460px] overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-white font-semibold">Observation Tree</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-white font-semibold">Observation Tree</h4>
+                  <button
+                    onClick={() => setShowExpandedTree(true)}
+                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+                    title="Expand to fullscreen"
+                  >
+                    <ArrowsPointingOutIcon className="w-4 h-4" />
+                  </button>
+                </div>
                 <p className="text-xs text-slate-500">Parent/child call graph</p>
               </div>
               {observationTree.length ? (
@@ -522,6 +573,108 @@ export default function LangfuseTraceDashboard({ traceId, traceUrl, jobId }: Lan
             </div>
             <ObservationsTable observations={observations} />
           </div>
+
+          {/* Expanded Tree Modal */}
+          <Transition appear show={showExpandedTree} as={Fragment}>
+            <Dialog as="div" className="relative z-50" onClose={() => setShowExpandedTree(false)}>
+              {/* Backdrop */}
+              <TransitionChild
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0"
+                enterTo="opacity-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100"
+                leaveTo="opacity-0"
+              >
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
+              </TransitionChild>
+
+              {/* Modal panel */}
+              <div className="fixed inset-0 overflow-y-auto">
+                <div className="flex min-h-full items-center justify-center p-4">
+                  <TransitionChild
+                    as={Fragment}
+                    enter="ease-out duration-300"
+                    enterFrom="opacity-0 scale-95"
+                    enterTo="opacity-100 scale-100"
+                    leave="ease-in duration-200"
+                    leaveFrom="opacity-100 scale-100"
+                    leaveTo="opacity-0 scale-95"
+                  >
+                    <DialogPanel className="w-full max-w-4xl max-h-[85vh] transform overflow-hidden rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl transition-all flex flex-col">
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex-shrink-0">
+                        <div>
+                          <DialogTitle className="text-lg font-semibold text-white">
+                            Workflow Observation Tree
+                          </DialogTitle>
+                          <p className="text-sm text-slate-400 mt-0.5">
+                            {data?.name || 'Trace'} • {observations.length} observation{observations.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {traceUrl && (
+                            <a
+                              href={traceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-400 hover:text-blue-300 underline"
+                            >
+                              Open in Langfuse
+                            </a>
+                          )}
+                          <button
+                            onClick={() => setShowExpandedTree(false)}
+                            className="rounded-lg p-2 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                            aria-label="Close dialog"
+                          >
+                            <XMarkIcon className="h-6 w-6" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Scrollable content */}
+                      <div className="flex-1 overflow-y-auto p-6">
+                        {observationTree.length ? (
+                          <ObservationTreeView nodes={observationTree} maxRootNodes={100} />
+                        ) : (
+                          <p className="text-sm text-slate-400">No hierarchical data found for this trace.</p>
+                        )}
+                      </div>
+
+                      {/* Footer legend */}
+                      <div className="px-6 py-3 border-t border-slate-700 bg-slate-800/50 flex-shrink-0">
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                          <span className="font-medium text-slate-300">Status:</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-emerald-400">✓</span>
+                            <span>Completed</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-blue-400">◉</span>
+                            <span>Running</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400">○</span>
+                            <span>Pending</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-red-400">✕</span>
+                            <span>Failed</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-amber-400">⏳</span>
+                            <span>Waiting</span>
+                          </div>
+                        </div>
+                      </div>
+                    </DialogPanel>
+                  </TransitionChild>
+                </div>
+              </div>
+            </Dialog>
+          </Transition>
         </>
       )}
     </div>

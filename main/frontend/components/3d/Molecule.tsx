@@ -99,16 +99,22 @@ export default function Molecule({ scale = 1, color = "#60A5FA", position = [0, 
 
     useFrame((state, delta) => {
         if (groupRef.current) {
-            // Smoothly interpolate rotation speed
-            const targetSpeed = hovered ? 3 : 1;
-            rotationSpeed.current = THREE.MathUtils.lerp(rotationSpeed.current, targetSpeed, 0.05);
+            // Organic drift movement using multi-frequency sine waves
+            const time = state.clock.elapsedTime;
 
-            groupRef.current.rotation.y += delta * 0.2 * rotationSpeed.current;
-            groupRef.current.rotation.x += delta * 0.1 * rotationSpeed.current;
-            groupRef.current.rotation.z += delta * 0.05 * rotationSpeed.current;
+            // Rotation with organic variation (not uniform)
+            groupRef.current.rotation.x = Math.sin(time * 0.3) * 0.15;
+            groupRef.current.rotation.y = Math.sin(time * 0.2) * 0.2 + time * 0.05; // Slow continuous rotation
+            groupRef.current.rotation.z = Math.sin(time * 0.25) * 0.1;
 
-            // Smoothly interpolate scale
-            const targetScale = hovered ? scale * 1.2 : scale;
+            // Vertical drift (breathing effect)
+            groupRef.current.position.y = Math.sin(time * 0.5) * 0.1;
+
+            // Horizontal wobble (subtle)
+            groupRef.current.position.x = Math.sin(time * 0.4) * 0.05;
+
+            // Smoothly interpolate scale on hover
+            const targetScale = hovered ? scale * 1.15 : scale;
             currentScale.current = THREE.MathUtils.lerp(currentScale.current, targetScale, 0.1);
             groupRef.current.scale.setScalar(currentScale.current);
         }
@@ -129,19 +135,20 @@ export default function Molecule({ scale = 1, color = "#60A5FA", position = [0, 
                     <group key={i}>
                         <Sphere args={[atom.size, 32, 32]} position={atom.position}>
                             <MeshTransmissionMaterial
-                                // Glass effect properties
-                                transmission={1}              // Full transparency
-                                thickness={0.3}               // Subtle refraction depth
-                                roughness={0}                 // Polished glass surface
-                                ior={1.3}                     // Index of refraction (glass ~1.5)
-                                chromaticAberration={0.02}    // Rainbow edge effect
+                                // Liquid metal mercury effect - enhanced transmission
+                                transmission={0.95}           // More translucent for mercury feel
+                                thickness={0.5}               // Deeper refraction depth
+                                roughness={0.1}               // Smooth mercury surface
+                                ior={1.5}                     // Glass-to-water transition
+                                chromaticAberration={0.04}    // Stronger rainbow edge effect
+                                metalness={0.3}               // Subtle metallic sheen
 
                                 // Color based on element type or prop color for cores
                                 color={atom.type === 'core' ? color : ELEMENT_COLORS[atom.element]}
 
-                                // Emissive glow for bloom effect
+                                // Enhanced emissive glow for bloom effect
                                 emissive={atom.type === 'core' ? color : ELEMENT_COLORS[atom.element]}
-                                emissiveIntensity={0.15}
+                                emissiveIntensity={0.25}      // Increased internal glow
 
                                 // Additional glass properties
                                 backside={true}
@@ -178,14 +185,17 @@ function Bond({ start, end, color }: { start: [number, number, number]; end: [nu
     return (
         <Cylinder args={[0.12, 0.12, length, 16]} position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>
             <MeshTransmissionMaterial
-                transmission={0.9}
-                thickness={0.2}
+                // Enhanced bond material matching liquid metal aesthetic
+                transmission={0.92}
+                thickness={0.35}
                 roughness={0.1}
-                ior={1.3}
+                ior={1.5}
+                chromaticAberration={0.03}
+                metalness={0.2}
                 color={color}
                 emissive={color}
-                emissiveIntensity={0.1}
-                opacity={0.85}
+                emissiveIntensity={0.18}
+                opacity={0.88}
                 transparent={true}
                 backside={true}
             />

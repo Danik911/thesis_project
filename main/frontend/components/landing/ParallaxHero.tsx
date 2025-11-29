@@ -38,20 +38,26 @@ export default function ParallaxHero() {
             {/* 3D Molecules Layer - Single Canvas */}
             <div className="absolute inset-0 z-0">
                 <Canvas camera={{ position: [0, 0, 10], fov: 45 }} gl={{ alpha: true }}>
+                    {/* 3-Point Lighting Setup for Depth Perception */}
                     <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 10, 10]} intensity={1.5} />
-                    <Environment preset="city" environmentIntensity={0.8} />
+                    {/* Key light - main illumination */}
+                    <pointLight position={[10, 10, 10]} intensity={2} color="#ffffff" />
+                    {/* Fill light - cyan tinted to enhance mercury effect */}
+                    <pointLight position={[-10, 5, -5]} intensity={0.8} color="#06b6d4" />
+                    {/* Rim light - creates depth separation */}
+                    <spotLight position={[0, 10, -10]} intensity={1.5} angle={0.3} />
+                    <Environment preset="city" environmentIntensity={0.6} />
 
                     {/* Single Molecule - Top Left, closer to center */}
                     <Molecule scale={0.6} color="#60A5FA" position={[-3, 2, 0]} />
 
-                    {/* Bloom Post-Processing for Ethereal Glow */}
+                    {/* Enhanced Bloom for Mercury Glow */}
                     <EffectComposer>
                         <Bloom
                             luminanceThreshold={0}
                             luminanceSmoothing={0.9}
-                            intensity={2.5}
-                            radius={0.8}
+                            intensity={3.0}
+                            radius={1.0}
                         />
                     </EffectComposer>
                 </Canvas>

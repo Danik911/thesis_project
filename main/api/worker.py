@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 
 from .audit import get_audit_logger
 from .job_repository import PostgresJobRepository, create_postgres_pool
-from .models import JobRecord, JobStatus
+from .models import JobRecord, JobStatus, WorkflowStage
 from .worker_executor import (
     HIL_APPROVAL_TIMEOUT_SECONDS,
     HIL_ENABLED,
@@ -64,6 +64,40 @@ async def _persist_job_state(
         logger.error(
             f"[DB] Failed to persist job {job.job_id} during {context}: {exc}"
         )
+
+
+async def _update_job_stage(
+    job: JobRecord,
+    stage: WorkflowStage,
+    job_lock: asyncio.Lock,
+    db_job_repo: PostgresJobRepository | None
+) -> None:
+    """
+    Update job stage for frontend progress tracking.
+
+    Updates the current_stage field with timestamp for grounded progress display.
+    Records stage completion in stages_completed list for audit trail.
+
+    Args:
+        job: Job record to update
+        stage: New workflow stage
+        job_lock: Lock for job state updates
+        db_job_repo: PostgreSQL repository for persistence
+    """
+    async with job_lock:
+        # Update stage info
+        job.current_stage = stage
+        job.stage_started_at = datetime.now(UTC)
+        job.updated_at = job.stage_started_at
+
+        # Track completed stages (for audit trail)
+        if stage.value not in job.stages_completed:
+            job.stages_completed.append(stage.value)
+
+    # Persist to database
+    await _persist_job_state(job, db_job_repo, f"stage_update:{stage.value}")
+
+    logger.info(f"[PROGRESS] Job {job.job_id} stage → {stage.value}")
 
 
 async def process_job_worker(
@@ -145,6 +179,10 @@ async def process_job_worker(
                 job.status = JobStatus.PROCESSING
                 job.started_at = datetime.now(UTC)
                 job.updated_at = job.started_at
+                # Initialize stage tracking
+                job.current_stage = WorkflowStage.INGESTION
+                job.stage_started_at = job.started_at
+                job.stages_completed = [WorkflowStage.QUEUED.value, WorkflowStage.INGESTION.value]
 
             await _persist_job_state(job, db_job_repo, "processing_start")
 
@@ -173,6 +211,10 @@ async def process_job_worker(
             # Update final status
             final_context = "complete" if success else "fail"
 
+            # Update to COMPLETION stage if successful (for progress bar)
+            if success:
+                await _update_job_stage(job, WorkflowStage.COMPLETION, job_lock, db_job_repo)
+
             async with job_lock:
                 if success:
                     job.status = JobStatus.COMPLETED
@@ -186,7 +228,8 @@ async def process_job_worker(
                         status=JobStatus.COMPLETED,
                         metadata={
                             "result_uri": job.result_uri,
-                            "gamp_category": job.gamp_category
+                            "gamp_category": job.gamp_category,
+                            "stages_completed": job.stages_completed
                         }
                     )
                     logger.info(f"Job {job_id} completed successfully")
@@ -293,10 +336,30 @@ async def _process_job_with_retries(
                     f"  This job was approved before worker restart\n"
                     f"  Skipping categorization step, using human-approved category"
                 )
+                # Skip to planning stage since categorization is pre-approved
+                await _update_job_stage(job, WorkflowStage.PLANNING, job_lock, db_job_repo)
+            else:
+                # Update to categorization stage before workflow execution
+                await _update_job_stage(job, WorkflowStage.CATEGORIZATION, job_lock, db_job_repo)
+
+            # Create stage callback for progress tracking during workflow execution
+            async def stage_callback(stage_name: str) -> None:
+                """Update job stage from executor callback."""
+                stage_map = {
+                    "agent_execution": WorkflowStage.AGENT_EXECUTION,
+                    "oq_generation": WorkflowStage.OQ_GENERATION,
+                }
+                stage = stage_map.get(stage_name)
+                if stage:
+                    await _update_job_stage(job, stage, job_lock, db_job_repo)
 
             # Execute actual workflow (replaces simulation)
             # If approved_category is set, categorization step will be skipped
-            result = await _execute_workflow(job, executor, approved_category=approved_category)
+            result = await _execute_workflow(
+                job, executor,
+                approved_category=approved_category,
+                stage_callback=stage_callback
+            )
 
             # If job was pre-approved, skip HIL check (already approved by human)
             if approved_category:
@@ -344,6 +407,9 @@ async def _process_job_with_retries(
                     f"  Reason: {categorization_result.get('ambiguity_reason', 'Low confidence')}"
                 )
 
+                # Update stage to HIL_WAITING for progress bar
+                await _update_job_stage(job, WorkflowStage.HIL_WAITING, job_lock, db_job_repo)
+
                 # Update job status to AWAITING_APPROVAL
                 async with job_lock:
                     job.status = JobStatus.AWAITING_APPROVAL
@@ -390,6 +456,9 @@ async def _process_job_with_retries(
                     logger.warning(f"[HIL] Job {job.job_id} was rejected or timed out")
                     return False
 
+                # HIL approved - update stage to PLANNING before continuing
+                await _update_job_stage(job, WorkflowStage.PLANNING, job_lock, db_job_repo)
+
                 # HIL approved - continue with approved category
                 logger.info(
                     f"[HIL] Job {job.job_id} approved with category {job.human_category}"
@@ -424,6 +493,9 @@ async def _process_job_with_retries(
                 f"  Categorization: {hil_exc.categorization_result}\n"
                 f"  Setting job to AWAITING_APPROVAL"
             )
+
+            # Update stage to HIL_WAITING for progress bar
+            await _update_job_stage(job, WorkflowStage.HIL_WAITING, job_lock, db_job_repo)
 
             async with job_lock:
                 job.status = JobStatus.AWAITING_APPROVAL
@@ -481,6 +553,9 @@ async def _process_job_with_retries(
                 logger.error(f"[HIL-WEB] Job {job.job_id} approved but no human_category set")
                 return False
 
+            # Update stage to PLANNING before re-execution (categorization was already done)
+            await _update_job_stage(job, WorkflowStage.PLANNING, job_lock, db_job_repo)
+
             # Reset job status for re-execution
             async with job_lock:
                 job.status = JobStatus.PROCESSING
@@ -500,12 +575,24 @@ async def _process_job_with_retries(
                 }
             )
 
+            # Create stage callback for progress tracking during workflow re-execution
+            async def hil_stage_callback(stage_name: str) -> None:
+                """Update job stage from executor callback (HIL re-execution)."""
+                stage_map = {
+                    "agent_execution": WorkflowStage.AGENT_EXECUTION,
+                    "oq_generation": WorkflowStage.OQ_GENERATION,
+                }
+                stage = stage_map.get(stage_name)
+                if stage:
+                    await _update_job_stage(job, stage, job_lock, db_job_repo)
+
             # Re-execute workflow with human-approved category
             # The workflow will skip categorization and use the pre-approved category
             result = await _execute_workflow(
                 job=job,
                 executor=executor,
-                approved_category=job.human_category
+                approved_category=job.human_category,
+                stage_callback=hil_stage_callback
             )
 
             # Update job with result
@@ -580,7 +667,8 @@ async def _process_job_with_retries(
 async def _execute_workflow(
     job: JobRecord,
     executor: WorkflowExecutor,
-    approved_category: int | None = None
+    approved_category: int | None = None,
+    stage_callback: Any | None = None
 ) -> dict[str, Any]:
     """
     Execute the unified pharmaceutical test generation workflow.
@@ -591,6 +679,7 @@ async def _execute_workflow(
         job: Job record with URS content and metadata
         executor: WorkflowExecutor instance
         approved_category: Pre-approved GAMP category from HIL (skips categorization step)
+        stage_callback: Optional async callback(stage: str) for progress updates
 
     Returns:
         dict with workflow results (test_suite, gamp_category, result_uri, etc.)
@@ -643,7 +732,8 @@ async def _execute_workflow(
             "urs_filename": job.urs_filename,
             "urs_hash": job.urs_hash
         },
-        approved_category=approved_category
+        approved_category=approved_category,
+        stage_callback=stage_callback
     )
 
     logger.info(

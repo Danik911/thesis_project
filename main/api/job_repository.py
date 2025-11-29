@@ -18,7 +18,7 @@ from uuid import UUID
 
 import asyncpg
 
-from .models import JobRecord, JobStatus
+from .models import JobRecord, JobStatus, WorkflowStage
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +112,7 @@ class PostgresJobRepository:
                     user_id, result_uri, gamp_category,
                     requires_approval, approval_reason, approval_timeout_at,
                     categorization_result, human_category,
+                    current_stage, stage_started_at, stages_completed,
                     trace_id, trace_url,
                     error_message, error_type, retry_count, max_retries
                 ) VALUES (
@@ -120,8 +121,9 @@ class PostgresJobRepository:
                     $11, $12, $13,
                     $14, $15, $16,
                     $17, $18,
-                    $19, $20,
-                    $21, $22, $23, $24
+                    $19, $20, $21,
+                    $22, $23,
+                    $24, $25, $26, $27
                 )
                 """,
                 UUID(job.job_id),
@@ -142,6 +144,9 @@ class PostgresJobRepository:
                 job.approval_timeout_at,
                 json.dumps(job.categorization_result) if job.categorization_result else None,
                 str(job.human_category) if job.human_category else None,
+                job.current_stage.value if job.current_stage else None,
+                job.stage_started_at,
+                job.stages_completed if job.stages_completed else None,
                 job.trace_id,
                 job.trace_url,
                 job.error_message,
@@ -174,11 +179,14 @@ class PostgresJobRepository:
                     approval_timeout_at = $10,
                     categorization_result = $11,
                     human_category = $12,
-                    trace_id = $13,
-                    trace_url = $14,
-                    error_message = $15,
-                    error_type = $16,
-                    retry_count = $17
+                    current_stage = $13,
+                    stage_started_at = $14,
+                    stages_completed = $15,
+                    trace_id = $16,
+                    trace_url = $17,
+                    error_message = $18,
+                    error_type = $19,
+                    retry_count = $20
                 WHERE job_id = $1
                 """,
                 UUID(job.job_id),
@@ -193,6 +201,9 @@ class PostgresJobRepository:
                 job.approval_timeout_at,
                 json.dumps(job.categorization_result) if job.categorization_result else None,
                 str(job.human_category) if job.human_category else None,
+                job.current_stage.value if job.current_stage else None,
+                job.stage_started_at,
+                job.stages_completed if job.stages_completed else None,
                 job.trace_id,
                 job.trace_url,
                 job.error_message,
@@ -365,6 +376,14 @@ class PostgresJobRepository:
         if row['human_category']:
             human_category = int(row['human_category'])
 
+        # Parse current_stage from VARCHAR to WorkflowStage enum
+        current_stage = None
+        if row.get('current_stage'):
+            current_stage = WorkflowStage(row['current_stage'])
+
+        # Parse stages_completed from TEXT[] to list
+        stages_completed = row.get('stages_completed') or []
+
         return JobRecord(
             job_id=str(row['job_id']),
             status=JobStatus(row['status']),
@@ -384,6 +403,9 @@ class PostgresJobRepository:
             approval_timeout_at=row['approval_timeout_at'],
             categorization_result=categorization_result,
             human_category=human_category,
+            current_stage=current_stage,
+            stage_started_at=row.get('stage_started_at'),
+            stages_completed=stages_completed,
             trace_id=row['trace_id'],
             trace_url=row['trace_url'],
             error_message=row['error_message'],

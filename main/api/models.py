@@ -58,6 +58,50 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 
+class WorkflowStage(str, Enum):
+    """
+    Workflow stages for frontend progress tracking.
+
+    Maps to stages in UnifiedTestGenerationWorkflow for grounded progress display.
+    Progress percentages are fixed per stage (not time-based).
+    """
+
+    QUEUED = "queued"                      # 0% - Job submitted, waiting in queue
+    INGESTION = "ingestion"                # 10% - Loading document, OWASP validation
+    CATEGORIZATION = "categorization"      # 25% - GAMP-5 AI categorization
+    HIL_WAITING = "hil_waiting"            # 30% - Human-in-the-loop approval pause
+    PLANNING = "planning"                  # 45% - Test strategy generation
+    AGENT_EXECUTION = "agent_execution"    # 65% - Parallel agent execution (Context, Research, SME)
+    OQ_GENERATION = "oq_generation"        # 85% - OQ test case generation
+    COMPLETION = "completion"              # 100% - Finalizing, saving results
+
+
+# Stage-to-progress mapping for server-side calculation
+STAGE_PROGRESS_MAP: dict[str, int] = {
+    "queued": 0,
+    "ingestion": 10,
+    "categorization": 25,
+    "hil_waiting": 30,
+    "planning": 45,
+    "agent_execution": 65,
+    "oq_generation": 85,
+    "completion": 100
+}
+
+
+# Human-readable stage labels for frontend display
+STAGE_LABELS: dict[str, str] = {
+    "queued": "Queued",
+    "ingestion": "Loading Document",
+    "categorization": "GAMP-5 Classification",
+    "hil_waiting": "Awaiting Human Approval",
+    "planning": "Planning Test Strategy",
+    "agent_execution": "Executing AI Agents",
+    "oq_generation": "Generating Test Cases",
+    "completion": "Finalizing Results"
+}
+
+
 class ApprovalDecision(str, Enum):
     """Human approval decision options for GAMP-5 categorization."""
 
@@ -115,26 +159,36 @@ class JobStatusResponse(BaseModel):
     user_id: str = Field(description="User identifier (Clerk user ID)")
     gamp_category: str | None = Field(default=None, description="GAMP-5 categorization result")
 
+    # Progress tracking (for frontend progress bar)
+    current_stage: str | None = Field(default=None, description="Current workflow stage (e.g., 'categorization', 'oq_generation')")
+    current_stage_label: str | None = Field(default=None, description="Human-readable stage label (e.g., 'GAMP-5 Classification')")
+    progress_percentage: int | None = Field(default=None, ge=0, le=100, description="Progress percentage (0-100) based on current stage")
+    stage_started_at: str | None = Field(default=None, description="When current stage started (ISO 8601)")
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "job_id": "550e8400-e29b-41d4-a716-446655440000",
-                "status": "completed",
+                "status": "processing",
                 "created_at": "2025-11-11T14:30:00Z",
                 "started_at": "2025-11-11T14:30:05Z",
-                "completed_at": "2025-11-11T14:32:45Z",
+                "completed_at": None,
                 "urs_filename": "requirements.txt",
                 "urs_hash": "a3b2c1d4e5f6...",
                 "urs_size_bytes": 5432,
-                "result_uri": "file:///output/job_550e8400/test_suite.md",
+                "result_uri": None,
                 "trace_id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
                 "trace_url": "https://cloud.langfuse.com/project/example/traces/a1b2c3",
-                "download_url": "http://localhost:8000/jobs/550e8400.../download",
+                "download_url": None,
                 "error_message": None,
                 "error_type": None,
                 "retry_count": 0,
                 "user_id": "user_2abc123xyz",
-                "gamp_category": "5"
+                "gamp_category": None,
+                "current_stage": "categorization",
+                "current_stage_label": "GAMP-5 Classification",
+                "progress_percentage": 25,
+                "stage_started_at": "2025-11-11T14:30:10Z"
             }
         }
     )
@@ -175,7 +229,12 @@ class JobRecord(BaseModel):
     approval_timeout_at: datetime | None = None
     categorization_result: dict | None = None  # AI recommendation + ambiguity details
     human_category: int | None = None  # Final human-approved category (1, 3, 4, or 5)
-    
+
+    # Progress tracking (for frontend progress bar)
+    current_stage: WorkflowStage | None = None  # Current workflow stage
+    stage_started_at: datetime | None = None    # When current stage started
+    stages_completed: list[str] = []            # List of completed stages (for audit trail)
+
     # Additional metadata
     metadata: dict[str, Any] | None = None
 
@@ -189,6 +248,28 @@ class JobRecord(BaseModel):
         Returns:
             JobStatusResponse model for API response
         """
+        # Calculate progress percentage based on current stage
+        progress_percentage: int | None = None
+        current_stage_str: str | None = None
+        current_stage_label: str | None = None
+
+        if self.status == JobStatus.COMPLETED:
+            progress_percentage = 100
+            current_stage_str = "completion"
+            current_stage_label = STAGE_LABELS.get("completion")
+        elif self.status == JobStatus.FAILED:
+            progress_percentage = 100  # Show 100% on failure (job ended)
+            current_stage_str = self.current_stage.value if self.current_stage else None
+            current_stage_label = STAGE_LABELS.get(current_stage_str) if current_stage_str else None
+        elif self.current_stage:
+            current_stage_str = self.current_stage.value
+            progress_percentage = STAGE_PROGRESS_MAP.get(current_stage_str, 0)
+            current_stage_label = STAGE_LABELS.get(current_stage_str)
+        elif self.status == JobStatus.PENDING:
+            progress_percentage = 0
+            current_stage_str = "queued"
+            current_stage_label = STAGE_LABELS.get("queued")
+
         return JobStatusResponse(
             job_id=self.job_id,
             status=self.status,
@@ -206,7 +287,12 @@ class JobRecord(BaseModel):
             error_type=self.error_type,
             retry_count=self.retry_count,
             user_id=self.user_id,
-            gamp_category=self.gamp_category
+            gamp_category=self.gamp_category,
+            # Progress tracking fields
+            current_stage=current_stage_str,
+            current_stage_label=current_stage_label,
+            progress_percentage=progress_percentage,
+            stage_started_at=self.stage_started_at.isoformat() if self.stage_started_at else None
         )
 
 
@@ -435,6 +521,11 @@ class JobStatusWithApproval(BaseModel):
         default=None,
         description="Other plausible GAMP categories if ambiguous"
     )
+
+    # Progress tracking (for frontend progress bar)
+    current_stage: str | None = Field(default=None, description="Current workflow stage")
+    current_stage_label: str | None = Field(default=None, description="Human-readable stage label")
+    progress_percentage: int | None = Field(default=None, ge=0, le=100, description="Progress percentage (0-100)")
 
     # Timestamps
     created_at: str = Field(..., description="Job creation timestamp (ISO 8601)")

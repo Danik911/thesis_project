@@ -52,7 +52,22 @@
   }
 
   .input-field {
-    @apply w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 
+    @apply w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100
     focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all;
+  }
+}
+
+@layer utilities {
+  /* Fluid Typography - Responsive text sizes using clamp() */
+  .text-fluid-3xl {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+
+  .text-fluid-6xl {
+    font-size: clamp(3rem, 8vw, 6rem);
+  }
+
+  .text-fluid-8xl {
+    font-size: clamp(4rem, 10vw, 8rem);
   }
 }
