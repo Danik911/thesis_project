@@ -35,6 +35,7 @@ from .worker_executor import (
     read_urs_from_storage,
 )
 from main.src.exceptions import HumanApprovalRequired
+from .observability import initialize_langfuse, shutdown_langfuse
 
 # Load environment variables from .env.local (for local development)
 env_file = Path(__file__).parent.parent.parent / ".env.local"
@@ -963,6 +964,13 @@ if __name__ == "__main__":
         # This is normally done by FastAPI lifespan, but worker runs independently
         logger.info("Initializing worker infrastructure...")
 
+        # Initialize Langfuse observability for trace collection
+        try:
+            initialize_langfuse()
+            logger.info("Langfuse observability initialized - traces will be sent to cloud")
+        except Exception as e:
+            logger.warning(f"Langfuse initialization failed (traces will be local only): {e}")
+
         # Create in-memory job queue and repository (shared with API via FastAPI state)
         # Note: In Docker Compose, worker picks up jobs via SQS, not in-memory queue
         # This is a placeholder for standalone mode
@@ -989,6 +997,13 @@ if __name__ == "__main__":
         except Exception as e:
             logger.exception(f"Unexpected error in worker: {e}")
             raise
+        finally:
+            # Flush pending Langfuse traces before shutdown
+            try:
+                shutdown_langfuse()
+                logger.info("Langfuse traces flushed successfully")
+            except Exception as e:
+                logger.warning(f"Langfuse shutdown error: {e}")
 
     try:
         asyncio.run(standalone_worker())

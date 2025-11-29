@@ -1,0 +1,800 @@
+suite_id: OQ-SUITE-1855
+gamp_category: 3
+document_name: 30d17a8b-ba58-4902-84d0-58a988a22dc7.md
+test_cases:
+- test_id: OQ-001
+  test_name: Verify Continuous Temperature Monitoring and Recording Intervals
+  test_category: functional
+  gamp_category: 3
+  objective: To verify that the EMS continuously monitors temperature in GMP storage
+    areas and records readings at intervals not exceeding 5 minutes.
+  prerequisites:
+  - EMS system is installed and configured.
+  - Temperature sensors are installed and calibrated in GMP storage areas.
+  - Access to EMS software and data logs.
+  test_steps:
+  - step_number: 1
+    action: Observe the EMS software interface for a designated GMP storage area.
+    expected_result: The EMS displays real-time temperature readings for the selected
+      storage area.
+    data_to_capture:
+    - Screenshot of EMS interface showing real-time temperature.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Access the historical data logs for the same storage area over a period
+      of at least 10 minutes.
+    expected_result: Temperature readings are recorded at intervals of 5 minutes or
+      less.
+    data_to_capture:
+    - Exported data log showing timestamps and temperature readings.
+    - Analysis of recorded intervals.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The EMS continuously displays real-time temperature readings.
+  - All recorded temperature data points are within 5-minute intervals.
+  regulatory_basis:
+  - URS-EMS-001
+  - URS-EMS-002
+  risk_level: low
+  data_integrity_requirements:
+  - Data must be recorded accurately and without loss.
+  - Timestamps must be accurate and sequential.
+  urs_requirements:
+  - URS-EMS-001
+  - URS-EMS-002
+  related_tests: []
+  estimated_duration_minutes: 30
+  required_expertise:
+  - EMS Administrator
+  - Quality Assurance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-002
+  test_name: Verify Temperature Range, Accuracy, and Alarm Deviation
+  test_category: functional
+  gamp_category: 3
+  objective: To verify that the EMS operates within the specified temperature range
+    and accuracy, and generates alerts when temperature deviates from the setpoint.
+  prerequisites:
+  - EMS system is installed and configured.
+  - Temperature sensors are installed and calibrated in GMP storage areas.
+  - Access to EMS software and alarm configuration.
+  - Calibrated reference thermometer.
+  test_steps:
+  - step_number: 1
+    action: Set a target temperature within the EMS for a specific storage area (e.g.,
+      20°C).
+    expected_result: The EMS accepts the setpoint and displays it correctly.
+    data_to_capture:
+    - Screenshot of EMS setpoint configuration.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Using a calibrated reference thermometer, introduce a temperature change
+      in the storage area to simulate a deviation of +2°C from the setpoint (e.g.,
+      22°C).
+    expected_result: The EMS detects the temperature deviation and generates an alert
+      within 30 seconds.
+    data_to_capture:
+    - Reading from reference thermometer.
+    - Screenshot of EMS alert notification.
+    - Timestamp of alert generation.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Using a calibrated reference thermometer, introduce a temperature change
+      in the storage area to simulate a deviation of -2°C from the setpoint (e.g.,
+      18°C).
+    expected_result: The EMS detects the temperature deviation and generates an alert
+      within 30 seconds.
+    data_to_capture:
+    - Reading from reference thermometer.
+    - Screenshot of EMS alert notification.
+    - Timestamp of alert generation.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify the accuracy of the EMS readings by comparing them to the calibrated
+      reference thermometer at various points within the specified range (-80°C to
+      +50°C).
+    expected_result: Temperature readings from the EMS are within ±0.5°C of the reference
+      thermometer.
+    data_to_capture:
+    - Readings from reference thermometer at multiple points.
+    - Corresponding EMS readings.
+    - Calculated difference between readings.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The EMS accepts and displays setpoints correctly.
+  - Alerts are generated within 30 seconds for temperature deviations of ±2°C from
+    setpoint.
+  - EMS temperature readings are accurate within ±0.5°C compared to a calibrated reference
+    thermometer across the specified range.
+  regulatory_basis:
+  - URS-EMS-004
+  - URS-EMS-005
+  - URS-EMS-011
+  risk_level: low
+  data_integrity_requirements:
+  - Temperature readings must be accurate and reliable.
+  - Alarm notifications must be timely and correctly triggered.
+  urs_requirements:
+  - URS-EMS-004
+  - URS-EMS-005
+  - URS-EMS-011
+  related_tests: []
+  estimated_duration_minutes: 45
+  required_expertise:
+  - EMS Administrator
+  - Quality Assurance
+  - Calibration Technician
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-003
+  test_name: Verify Vendor Software Unmodified and Data Storage Format
+  test_category: functional
+  gamp_category: 3
+  objective: To verify that the vendor-supplied software is used without modification
+    and that data is stored in the vendor's standard database format.
+  prerequisites:
+  - EMS system is installed and configured.
+  - Access to system logs and database.
+  test_steps:
+  - step_number: 1
+    action: Access the EMS system's software installation directory and review file
+      properties for any modifications.
+    expected_result: No unauthorized modifications to vendor-supplied software files
+      are observed. File timestamps and versions match vendor specifications.
+    data_to_capture:
+    - List of checked files and their properties.
+    - Confirmation of no modifications.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Generate a sample report or query the EMS database for recorded temperature
+      data.
+    expected_result: The data retrieved is in the vendor's standard database format,
+      as documented by the vendor.
+    data_to_capture:
+    - Sample of retrieved data.
+    - Database schema or format description.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The EMS software is confirmed to be unmodified vendor-supplied software.
+  - All recorded data is stored in the vendor's standard database format.
+  regulatory_basis:
+  - URS-EMS-003
+  - URS-EMS-006
+  risk_level: low
+  data_integrity_requirements:
+  - Data must be stored in a format that ensures its integrity and is retrievable.
+  urs_requirements:
+  - URS-EMS-003
+  - URS-EMS-006
+  related_tests: []
+  estimated_duration_minutes: 45
+  required_expertise:
+  - System Administrator
+  - QA Engineer
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-004
+  test_name: Verify Alarm Notification and Response Time
+  test_category: performance
+  gamp_category: 3
+  objective: To verify that the system generates alerts when temperature deviates
+    from setpoint and that the system response time for alarm conditions does not
+    exceed 30 seconds.
+  prerequisites:
+  - EMS system is operational and monitoring.
+  - Defined temperature setpoints are configured.
+  - Site paging system is accessible and configured for integration.
+  - Ability to simulate temperature deviations.
+  test_steps:
+  - step_number: 1
+    action: Manually adjust a temperature sensor in a monitored area to simulate a
+      deviation of +2°C from its setpoint.
+    expected_result: An alarm notification is generated by the EMS system.
+    data_to_capture:
+    - Timestamp of temperature adjustment.
+    - Observed alarm generation.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Measure the time from the temperature deviation to the generation of the
+      alarm notification within the EMS system.
+    expected_result: The system response time for the alarm condition is less than
+      or equal to 30 seconds.
+    data_to_capture:
+    - Start time of deviation.
+    - End time of alarm notification.
+    - Calculated response time.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify that the alarm notification is sent to the site paging system via
+      the vendor API.
+    expected_result: The alarm notification is successfully received by the site paging
+      system.
+    data_to_capture:
+    - Confirmation of notification received by paging system.
+    - Content of the notification.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Manually adjust the temperature sensor back to within the acceptable range.
+    expected_result: The alarm condition is cleared in the EMS system.
+    data_to_capture:
+    - Timestamp of temperature correction.
+    - Observed alarm clearing.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The system generates an alert when temperature deviates ±2°C from setpoint.
+  - System response time for alarm conditions does not exceed 30 seconds.
+  - Alarm notifications are successfully integrated with the site paging system.
+  regulatory_basis:
+  - URS-EMS-005
+  - URS-EMS-011
+  - URS-EMS-015
+  risk_level: medium
+  data_integrity_requirements:
+  - Alarm events must be accurately logged with timestamps.
+  - Notifications must be reliably transmitted.
+  urs_requirements:
+  - URS-EMS-005
+  - URS-EMS-011
+  - URS-EMS-015
+  related_tests: []
+  estimated_duration_minutes: 60
+  required_expertise:
+  - EMS Specialist
+  - IT Support (for paging system integration)
+  - QA Engineer
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-005
+  test_name: Verify Audit Trail and Electronic Signature Functionality
+  test_category: data_integrity
+  gamp_category: 3
+  objective: To verify that the EMS system maintains a comprehensive audit trail and
+    supports electronic signatures as per 21 CFR Part 11.
+  prerequisites:
+  - EMS system is installed and configured.
+  - User accounts with appropriate permissions are created.
+  - A simulated event requiring an audit trail entry (e.g., configuration change)
+    is planned.
+  test_steps:
+  - step_number: 1
+    action: Perform a minor configuration change within the EMS system (e.g., adjust
+      a setpoint or alert threshold).
+    expected_result: An audit trail entry is generated, recording the user, date,
+      time, action performed, and the old and new values.
+    data_to_capture:
+    - Audit trail log entries for the configuration change.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Attempt to approve a report or acknowledge an alarm using an electronic
+      signature.
+    expected_result: The system prompts for user credentials and applies a valid electronic
+      signature, linking it to the action.
+    data_to_capture:
+    - Electronic signature details captured in the audit trail.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Review the audit trail report generated by the system.
+    expected_result: The audit trail report accurately reflects all recorded events,
+      including the configuration change and electronic signature, with sufficient
+      detail.
+    data_to_capture:
+    - Generated audit trail report.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - All audit trail entries are accurate, complete, and timestamped.
+  - Electronic signatures are correctly applied and linked to specific actions.
+  - The audit trail report is comprehensive and meets the requirements of 21 CFR Part
+    11.
+  regulatory_basis:
+  - 21 CFR Part 11
+  risk_level: high
+  data_integrity_requirements:
+  - Audit trail must be secure, unalterable, and time-stamped.
+  - Electronic signatures must be unique to the individual and linked to the signed
+    record.
+  urs_requirements:
+  - URS-EMS-008
+  - URS-EMS-009
+  related_tests:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-006
+  estimated_duration_minutes: 60
+  required_expertise:
+  - System Administrator
+  - QA/QC Personnel
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-006
+  test_name: Verify Data Archival and Retention Period
+  test_category: data_integrity
+  gamp_category: 3
+  objective: To verify that the EMS system can archive historical data and retain
+    it for the required 7-year period.
+  prerequisites:
+  - EMS system is installed and configured.
+  - Sufficient historical data exists to test archival (or simulated data can be generated).
+  - Archival storage location is accessible and configured.
+  test_steps:
+  - step_number: 1
+    action: Initiate the data archival process for a defined period of historical
+      data (e.g., 1 year).
+    expected_result: The system successfully archives the selected historical data
+      to the designated archival location.
+    data_to_capture:
+    - Confirmation of successful archival.
+    - Archived data file(s) and location.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Verify that the archived data is in the vendor's standard database format
+      and is retrievable.
+    expected_result: The archived data can be accessed and is in a readable format,
+      consistent with the vendor's specifications.
+    data_to_capture:
+    - Sample of retrieved archived data.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Confirm that the system's retention policy is configured to retain data
+      for a minimum of 7 years.
+    expected_result: The system's configuration clearly indicates a data retention
+      period of at least 7 years.
+    data_to_capture:
+    - Screenshot of system retention policy configuration.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Simulate the passage of time or use system tools to verify that data older
+      than 7 years is managed according to the retention policy (e.g., marked for
+      deletion or moved to long-term storage).
+    expected_result: The system correctly manages data based on the 7-year retention
+      policy.
+    data_to_capture:
+    - System logs or reports indicating data management based on retention policy.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Data archival process completes successfully.
+  - Archived data is retrievable and in the correct format.
+  - System is configured for a minimum 7-year data retention.
+  - Data management aligns with the defined retention policy.
+  regulatory_basis:
+  - 21 CFR Part 11
+  - Good Manufacturing Practices (GMP)
+  risk_level: high
+  data_integrity_requirements:
+  - Archived data must be preserved and retrievable for the required duration.
+  - Data retention policies must be clearly defined and enforced.
+  urs_requirements:
+  - URS-EMS-010
+  related_tests:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-005
+  estimated_duration_minutes: 75
+  required_expertise:
+  - System Administrator
+  - Database Administrator
+  - QA/QC Personnel
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-007
+  test_name: Verify Standard Report Usage for Batch Release
+  test_category: functional
+  gamp_category: 3
+  objective: To verify that the system's standard vendor-provided reports are suitable
+    for use in batch release processes.
+  prerequisites:
+  - Environmental Monitoring System (EMS) is installed and configured.
+  - Sufficient historical data exists for report generation.
+  - Access to vendor-provided standard reports is available.
+  test_steps:
+  - step_number: 1
+    action: Access the reporting module of the EMS.
+    expected_result: The reporting module is accessible and displays available report
+      options.
+    data_to_capture:
+    - Screenshot of the reporting module interface.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Generate a standard report for a specific storage area over a defined
+      period (e.g., 24 hours).
+    expected_result: The report is generated successfully, containing relevant temperature
+      and humidity data for the specified period and area.
+    data_to_capture:
+    - Generated report file (e.g., PDF, CSV).
+    - Screenshot of report generation parameters.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Review the generated report for accuracy, completeness, and clarity of
+      information relevant to batch release decisions.
+    expected_result: The report contains accurate, complete, and clearly presented
+      data that aligns with the URS requirements for environmental monitoring and
+      can be used to support batch release.
+    data_to_capture:
+    - Notes on report content and clarity.
+    - Comparison of report data against raw data logs (if accessible).
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The system successfully generates standard vendor reports.
+  - Generated reports contain accurate and complete environmental monitoring data.
+  - The format and content of the reports are suitable for review and approval for
+    batch release.
+  regulatory_basis:
+  - 'URS-EMS-007: Standard reports provided by vendor shall be used for batch release.'
+  risk_level: low
+  data_integrity_requirements:
+  - Report data accurately reflects recorded environmental conditions.
+  - Report generation process does not alter or corrupt original data.
+  urs_requirements:
+  - URS-EMS-007
+  related_tests:
+  - OQ-003
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Quality Assurance
+  - System Administrator
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-008
+  test_name: Verify Facility Management System Integration and Alarm Notification
+  test_category: integration
+  gamp_category: 3
+  objective: To verify that the EMS successfully interfaces with the existing facility
+    management system and integrates alarm notifications with the site paging system.
+  prerequisites:
+  - Environmental Monitoring System (EMS) is installed and configured.
+  - Facility Management System (FMS) is operational and accessible.
+  - Site paging system is operational and configured to receive notifications.
+  - Vendor API for alarm notifications is available and documented.
+  test_steps:
+  - step_number: 1
+    action: Configure the EMS to interface with the FMS using standard protocols as
+      specified in URS-EMS-014.
+    expected_result: The EMS successfully establishes a connection with the FMS, and
+      data exchange is configured.
+    data_to_capture:
+    - Screenshot of FMS integration configuration settings in EMS.
+    - Confirmation message of successful connection.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Induce a temperature deviation that triggers an alarm condition (e.g.,
+      by temporarily altering a sensor's environment or simulating a fault).
+    expected_result: An alarm is generated within the EMS.
+    data_to_capture:
+    - Screenshot of the alarm notification within the EMS.
+    - Timestamp of alarm generation.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify that the alarm notification is sent to the site paging system via
+      the vendor API as per URS-EMS-015.
+    expected_result: A notification is received on the designated paging system, containing
+      relevant alarm details (e.g., area, parameter, severity).
+    data_to_capture:
+    - Screenshot of the received page/notification.
+    - Timestamp of notification receipt.
+    - Content of the notification.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify that the alarm condition is also reflected or logged within the
+      FMS.
+    expected_result: The alarm condition is visible or logged within the FMS, indicating
+      successful integration.
+    data_to_capture:
+    - Screenshot of the alarm status within the FMS.
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - The EMS successfully interfaces with the FMS.
+  - Alarm conditions trigger notifications to the site paging system.
+  - Alarm notifications contain accurate and relevant information.
+  - Alarm conditions are logged or reflected in the FMS.
+  regulatory_basis:
+  - 'URS-EMS-014: System shall interface with existing facility management system
+    via standard protocols.'
+  - 'URS-EMS-015: Alarm notifications shall integrate with site paging system using
+    vendor API.'
+  risk_level: medium
+  data_integrity_requirements:
+  - Alarm data is accurately transmitted between systems.
+  - Integration does not compromise the integrity of the original sensor data.
+  urs_requirements:
+  - URS-EMS-014
+  - URS-EMS-015
+  related_tests:
+  - OQ-004
+  estimated_duration_minutes: 60
+  required_expertise:
+  - System Integrator
+  - Network Administrator
+  - Quality Assurance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-009
+  test_name: Verify System Availability and Data Storage Capacity
+  test_category: performance
+  gamp_category: 3
+  objective: To verify that the Environmental Monitoring System meets the specified
+    availability and data storage capacity requirements.
+  prerequisites:
+  - EMS system is fully installed and configured.
+  - Access to system logs and monitoring tools.
+  - Documentation of planned maintenance schedules.
+  test_steps:
+  - step_number: 1
+    action: Monitor system uptime over a defined period (e.g., 30 days) and record
+      any unplanned downtime.
+    expected_result: The total unplanned downtime does not exceed the allowed percentage
+      for 99.5% availability.
+    data_to_capture:
+    - System uptime logs
+    - Downtime start and end times
+    - Reason for downtime
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Review system configuration and historical data to estimate the current
+      storage utilization.
+    expected_result: The current data storage utilization indicates sufficient capacity
+      for at least 10 years of continuous monitoring.
+    data_to_capture:
+    - Current storage usage metrics
+    - System configuration for storage
+    - Estimated data growth rate
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - System availability is >= 99.5% excluding planned maintenance.
+  - Data storage capacity is sufficient for a minimum of 10 years of continuous monitoring.
+  regulatory_basis:
+  - URS-EMS-012
+  - URS-EMS-013
+  risk_level: low
+  data_integrity_requirements:
+  - Ensure monitoring data is not lost or corrupted during system operation.
+  urs_requirements:
+  - URS-EMS-012
+  - URS-EMS-013
+  related_tests:
+  - OQ-001
+  - OQ-004
+  estimated_duration_minutes: 60
+  required_expertise:
+  - System Administrator
+  - QA Engineer
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-010
+  test_name: Verify Electronic Signature and Audit Trail Compliance
+  test_category: data_integrity
+  gamp_category: 3
+  objective: To verify that the system's electronic signature and audit trail functionalities
+    comply with 21 CFR Part 11 requirements.
+  prerequisites:
+  - EMS system is fully installed and configured.
+  - User accounts with appropriate permissions are created.
+  - Access to audit trail logs and electronic signature records.
+  test_steps:
+  - step_number: 1
+    action: Perform an action requiring an electronic signature (e.g., acknowledging
+      an alarm, approving a report).
+    expected_result: The system prompts for and captures a valid electronic signature,
+      including user ID, date, and time.
+    data_to_capture:
+    - Electronic signature record
+    - User ID, date, and time of signature
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Review the audit trail for the action performed in Step 1 and other system
+      events.
+    expected_result: The audit trail logs all significant events, including user actions,
+      system changes, and electronic signatures, in a secure and unalterable manner.
+    data_to_capture:
+    - Audit trail log entries
+    - Details of user actions and system events
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Attempt to modify or delete an audit trail entry.
+    expected_result: The system prevents modification or deletion of audit trail entries.
+    data_to_capture:
+    - Error messages or logs indicating failed modification/deletion attempt
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Electronic signatures are captured with user ID, date, and time.
+  - Audit trail records all significant events and user actions.
+  - Audit trail entries are protected from modification and deletion.
+  regulatory_basis:
+  - URS-EMS-008
+  - URS-EMS-009
+  - 21 CFR Part 11
+  risk_level: medium
+  data_integrity_requirements:
+  - Ensure all electronic records are attributable, legible, contemporaneous, and
+    original.
+  - Ensure audit trails are created, retained, and protected.
+  urs_requirements:
+  - URS-EMS-008
+  - URS-EMS-009
+  related_tests:
+  - OQ-005
+  estimated_duration_minutes: 45
+  required_expertise:
+  - QA Engineer
+  - Validation Specialist
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+test_categories: {}
+requirements_coverage:
+  URS-001:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-005
+  URS-002:
+  - OQ-006
+  - OQ-007
+  - OQ-008
+  - OQ-009
+  - OQ-010
+  URS-003: []
+risk_coverage:
+  low: 0
+  medium: 0
+  high: 0
+compliance_coverage:
+  21_cfr_part_11: true
+  gamp5: true
+  alcoa_plus: true
+total_test_count: 10
+estimated_execution_time: 525
+coverage_percentage: 0.0
+generation_timestamp: '2025-11-29T18:55:29.094277Z'
+generation_method: LLMTextCompletionProgram_deepseek/deepseek-chat
+validation_approach: ''
+created_by: oq_generation_agent_v2_progressive
+review_required: true
+pharmaceutical_compliance:
+  alcoa_plus_compliant: true
+  gamp5_compliant: true
+  cfr_part_11_compliant: true
+  audit_trail_verified: true
+  data_integrity_assured: true
+alcoa_plus_metadata: {}
+is_original: true
+version: '1.0'
+immutable: true
+locked: false
+validated: true
+reconciled: true
+cross_verified: true
+corrections: []
+error_log: []
+audit_trail: {}
+format: yaml
+encoding: utf-8
+data_schema: {}
+metadata: {}
+retention_period: 7_years
+encrypted: false
+protected: true
+backed_up: false
+backup_status: pending
+accessible: true
+retrieval_time: 0.1
+searchable: true
+indexed: true
+export_formats:
+- json
+- xml
+- csv
+download_options:
+- json
+- xml
+- pdf
+system_version: 1.0.0
+change_history: []
+related_records: []
+dependencies: []

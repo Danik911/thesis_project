@@ -20,6 +20,10 @@ interface JobStatusWithApproval {
         alternative_categories: number[];
         reasoning: string;
     } | null;
+    // Progress tracking fields (from backend)
+    current_stage: string | null;
+    current_stage_label: string | null;
+    progress_percentage: number | null;
 }
 
 interface UseJobStatusPollingResult {

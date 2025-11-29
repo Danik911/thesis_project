@@ -388,6 +388,15 @@ class WorkflowExecutor:
                 except Exception as trace_error:
                     logger.warning(f"Failed to capture Langfuse trace metadata: {trace_error}")
 
+                # Flush traces to Langfuse immediately after job completion
+                try:
+                    langfuse_client = get_client()
+                    if langfuse_client:
+                        langfuse_client.flush()
+                        logger.info(f"Langfuse traces flushed for job (trace_id={trace_id})")
+                except Exception as flush_error:
+                    logger.warning(f"Failed to flush Langfuse traces: {flush_error}")
+
                 return {
                     "test_suite_content": test_suite_content,
                     "gamp_category": gamp_category,

@@ -93,6 +93,8 @@ from .models import (
     JobStatusResponse,
     JobStatusWithApproval,
     JobSubmitResponse,
+    STAGE_LABELS,
+    STAGE_PROGRESS_MAP,
 )
 from .observability import initialize_langfuse, shutdown_langfuse, get_langfuse_client
 from .worker import process_job_worker
@@ -848,6 +850,37 @@ async def get_job_approval_status(
         if job.categorization_result and "alternative_categories" in job.categorization_result:
             alternative_categories = job.categorization_result["alternative_categories"]
 
+        # Compute progress fields (same logic as JobRecord.to_response)
+        progress_percentage: int | None = None
+        current_stage_str: str | None = None
+        current_stage_label: str | None = None
+
+        if job.status == JobStatus.COMPLETED:
+            progress_percentage = 100
+            current_stage_str = "completion"
+            current_stage_label = STAGE_LABELS.get("completion")
+        elif job.status == JobStatus.FAILED or job.status == JobStatus.REJECTED:
+            progress_percentage = 100  # Show 100% on failure (job ended)
+            current_stage_str = job.current_stage.value if job.current_stage else None
+            current_stage_label = STAGE_LABELS.get(current_stage_str) if current_stage_str else None
+        elif job.current_stage:
+            current_stage_str = job.current_stage.value
+            progress_percentage = STAGE_PROGRESS_MAP.get(current_stage_str, 0)
+            current_stage_label = STAGE_LABELS.get(current_stage_str)
+        elif job.status == JobStatus.PENDING:
+            progress_percentage = 0
+            current_stage_str = "queued"
+            current_stage_label = STAGE_LABELS.get("queued")
+        elif job.status == JobStatus.PROCESSING:
+            # PROCESSING but no stage set yet - default to ingestion (10%)
+            progress_percentage = 10
+            current_stage_str = "ingestion"
+            current_stage_label = STAGE_LABELS.get("ingestion")
+        elif job.status == JobStatus.AWAITING_APPROVAL:
+            progress_percentage = 30
+            current_stage_str = "hil_waiting"
+            current_stage_label = STAGE_LABELS.get("hil_waiting")
+
         return JobStatusWithApproval(
             job_id=job.job_id,
             status=job.status,
@@ -857,7 +890,10 @@ async def get_job_approval_status(
             categorization_result=job.categorization_result,
             alternative_categories=alternative_categories,
             created_at=job.created_at.isoformat(),
-            updated_at=job.updated_at.isoformat() if job.updated_at else None
+            updated_at=job.updated_at.isoformat() if job.updated_at else None,
+            current_stage=current_stage_str,
+            current_stage_label=current_stage_label,
+            progress_percentage=progress_percentage
         )
     finally:
         if span:
