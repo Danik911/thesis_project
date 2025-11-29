@@ -6,8 +6,11 @@ import FileUpload from '@/components/FileUpload';
 import JobProgress from '@/components/JobProgress';
 import ComplianceDashboard from '@/components/ComplianceDashboard';
 import ApprovalModal from '@/components/ApprovalModal';
+import TemplateSelector from '@/components/TemplateSelector';
+import TemplateEditor from '@/components/TemplateEditor';
 import { useJobStatusPolling } from '@/hooks/useJobStatusPolling';
 import { authenticatedFetch, getApiBaseUrl } from '@/lib/authenticatedFetch';
+import { URSTemplate, URSTemplateData, cloneTemplateData } from '@/lib/templates';
 
 type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED' | 'AWAITING_APPROVAL';
 
@@ -23,8 +26,13 @@ export default function Generate() {
     });
     const [status, setStatus] = useState<JobStatus>(() => {
         if (typeof window === 'undefined') return 'IDLE';
+        const savedJobId = localStorage.getItem('activeJobId');
         const savedStatus = localStorage.getItem('activeJobStatus') as JobStatus;
-        return savedStatus || 'IDLE';
+        // Only restore non-IDLE status if jobId exists (prevents orphaned status)
+        if (savedJobId && savedStatus && savedStatus !== 'IDLE') {
+            return savedStatus;
+        }
+        return 'IDLE';
     });
     const [logs, setLogs] = useState<string[]>(() => {
         if (typeof window === 'undefined') return [];
@@ -72,6 +80,15 @@ export default function Generate() {
         return saved ? parseFloat(saved) : 0;
     });
 
+    // Validation state - prevents rendering stale job UI before server validation
+    // Starts true if there's a saved job that needs checking
+    const [isValidating, setIsValidating] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        const savedJobId = localStorage.getItem('activeJobId');
+        const savedStatus = localStorage.getItem('activeJobStatus');
+        return !!(savedJobId && savedStatus && savedStatus !== 'IDLE');
+    });
+
     // AbortController for cancelling poll requests on unmount/navigation
     const pollAbortControllerRef = useRef<AbortController | null>(null);
 
@@ -92,8 +109,53 @@ export default function Generate() {
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    // Template mode state
+    type InputMode = 'select' | 'edit' | 'upload';
+    const [inputMode, setInputMode] = useState<InputMode>('select');
+    const [selectedTemplate, setSelectedTemplate] = useState<URSTemplate | null>(null);
+    const [templateData, setTemplateData] = useState<URSTemplateData | null>(null);
+
     const handleFileSelect = (file: File) => {
         setSelectedFile(file);
+    };
+
+    // Template selection handler
+    const handleTemplateSelect = (template: URSTemplate) => {
+        setSelectedTemplate(template);
+        setTemplateData(cloneTemplateData(template.data));
+        setInputMode('edit');
+    };
+
+    // Template submission handler - converts to File and uses existing flow
+    const handleTemplateSubmit = (markdown: string) => {
+        // Convert markdown to File object
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const filename = `${selectedTemplate?.id || 'template'}.md`;
+        const file = new File([blob], filename, { type: 'text/markdown' });
+
+        // Set as selected file
+        setSelectedFile(file);
+
+        // Reset template state
+        setInputMode('select');
+        setSelectedTemplate(null);
+        setTemplateData(null);
+
+        // Trigger generation after a brief delay for state to update
+        setTimeout(() => {
+            // The file is now set, so handleGenerate will use it
+            const generateBtn = document.querySelector('[data-generate-trigger]') as HTMLButtonElement;
+            if (generateBtn) {
+                generateBtn.click();
+            }
+        }, 100);
+    };
+
+    // Back to template selector
+    const handleBackToTemplates = () => {
+        setInputMode('select');
+        setSelectedTemplate(null);
+        setTemplateData(null);
     };
 
     const fetchJobs = useCallback(async () => {
@@ -196,10 +258,12 @@ export default function Generate() {
         }
     }, [progressPercentage]);
 
-    // Persist displayedProgress - tracks what user saw, cleared in resetDashboard
+    // Persist displayedProgress - tracks what user saw
     useEffect(() => {
         if (displayedProgress > 0) {
             localStorage.setItem('displayedProgress', displayedProgress.toString());
+        } else {
+            localStorage.removeItem('displayedProgress');
         }
     }, [displayedProgress]);
 
@@ -441,8 +505,11 @@ export default function Generate() {
                     // Keep polling to get updated timeout countdown
                 } else {
                     // Still processing (PENDING or PROCESSING)
-                    // We can add "heartbeat" logs occasionally or just wait
-                    // setLogs(prev => [...prev, `Processing... (${new Date().toLocaleTimeString()})`]);
+                    // Update status if it changed (e.g., PENDING → PROCESSING)
+                    if (normalizedStatus !== status) {
+                        console.log(`[DEBUG] Status changed: ${status} → ${normalizedStatus}`);
+                        setStatus(normalizedStatus as JobStatus);
+                    }
                 }
 
             } catch (e: any) {
@@ -477,8 +544,10 @@ export default function Generate() {
         // But we MUST validate the job exists on server - localStorage may be stale
         // (e.g., server restarted and in-memory jobs were lost)
         const validateAndResume = async () => {
-            if (!jobId || !status) {
+            // If no job to validate, clear validating state immediately
+            if (!jobId || status === 'IDLE') {
                 console.log('[DEBUG] No localStorage state to restore');
+                setIsValidating(false);
                 return;
             }
 
@@ -486,94 +555,83 @@ export default function Generate() {
             console.log(`[DEBUG] Validating localStorage job ${jobId} (status: ${status})`);
 
             // CRITICAL: Validate job exists on server BEFORE trusting localStorage
-            if (status === 'PENDING' || status === 'PROCESSING' || status === 'AWAITING_APPROVAL') {
-                try {
-                    console.log(`[DEBUG] Fetching job status from ${apiUrl}/jobs/${jobId}`);
-                    const response = await authenticatedFetch(`${apiUrl}/jobs/${jobId}`, getToken);
+            // After the early return above, we know jobId exists and status !== 'IDLE'
+            try {
+                console.log(`[DEBUG] Fetching job status from ${apiUrl}/jobs/${jobId}`);
+                const response = await authenticatedFetch(`${apiUrl}/jobs/${jobId}`, getToken);
 
-                    if (response.status === 404) {
-                        // Job doesn't exist on server - localStorage is stale
-                        console.warn(`[DEBUG] Job ${jobId} not found on server (404) - clearing stale localStorage`);
-                        resetDashboard();
-                        setLogs(['Previous job session expired (server may have restarted). Please submit a new job.']);
-                        return;
-                    }
-
-                    if (!response.ok) {
-                        // Other error - log but don't clear state yet
-                        console.error(`[DEBUG] Job validation failed: ${response.status} ${response.statusText}`);
-                        const errorText = await response.text();
-                        console.error(`[DEBUG] Error details: ${errorText}`);
-                        // Show error but keep state - might be temporary network issue
-                        setLogs(prev => [...prev, `Warning: Could not validate job status (${response.status})`]);
-                    } else {
-                        // Job exists - get current status from server (source of truth)
-                        const jobData = await response.json();
-                        const serverStatus = jobData.status.toUpperCase();
-                        console.log(`[DEBUG] Server reports job status: ${serverStatus}`);
-
-                        // Update local status to match server
-                        if (serverStatus !== status) {
-                            console.log(`[DEBUG] Updating local status from ${status} to ${serverStatus}`);
-                            setStatus(serverStatus as JobStatus);
-                        }
-
-                        // Restore progress state from server (in case localStorage is stale)
-                        if (jobData.current_stage !== undefined) {
-                            setCurrentStage(jobData.current_stage);
-                        }
-                        if (jobData.current_stage_label !== undefined) {
-                            setCurrentStageLabel(jobData.current_stage_label);
-                        }
-                        if (jobData.progress_percentage !== undefined) {
-                            setProgressPercentage(jobData.progress_percentage);
-                            // Note: We do NOT update displayedProgress here - it comes from JobProgress callback
-                            // This prevents the bar from jumping backwards when backend lags behind animation
-                        }
-
-                        // Resume polling if still active
-                        if (serverStatus === 'PENDING' || serverStatus === 'PROCESSING') {
-                            console.log(`[DEBUG] Job is active, resuming polling`);
-                            pollJobStatus(jobId, apiUrl);
-                        } else if (serverStatus === 'COMPLETED' && !results) {
-                            // Fetch results for completed job
-                            console.log(`[DEBUG] Job completed, fetching results`);
-                            const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${jobId}/result`, getToken);
-                            if (resultResponse.ok) {
-                                const resultData = await resultResponse.json();
-                                setResults(resultData);
-                            }
-                        } else if (serverStatus === 'AWAITING_APPROVAL') {
-                            console.log(`[DEBUG] Job awaiting approval`);
-                            setShowApprovalModal(true);
-                            // Resume polling to get timeout updates
-                            pollJobStatus(jobId, apiUrl);
-                        } else if (serverStatus === 'FAILED') {
-                            console.log(`[DEBUG] Job failed on server`);
-                            setLogs(prev => [...prev, `Job failed: ${jobData.error_message || 'Unknown error'}`]);
-                        }
-                    }
-                } catch (e) {
-                    console.error('[DEBUG] Failed to validate job:', e);
-                    // Network error - keep state but warn user
-                    setLogs(prev => [...prev, `Warning: Network error validating job. Will retry...`]);
-                    // Try to resume polling anyway - might recover
-                    pollJobStatus(jobId, apiUrl);
+                if (response.status === 404) {
+                    // Job doesn't exist on server - localStorage is stale
+                    console.warn(`[DEBUG] Job ${jobId} not found on server (404) - clearing stale localStorage`);
+                    resetDashboard();
+                    setLogs(['Previous job session expired (server may have restarted). Please submit a new job.']);
+                    setIsValidating(false);
+                    return;
                 }
-            } else if (status === 'COMPLETED' && !results) {
-                // Fetch results for completed job
-                try {
-                    const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${jobId}/result`, getToken);
-                    if (resultResponse.ok) {
-                        const resultData = await resultResponse.json();
-                        setResults(resultData);
-                    } else if (resultResponse.status === 404) {
-                        // Job doesn't exist - clear stale state
-                        resetDashboard();
+
+                if (!response.ok) {
+                    // Other error - log but don't clear state yet
+                    console.error(`[DEBUG] Job validation failed: ${response.status} ${response.statusText}`);
+                    const errorText = await response.text();
+                    console.error(`[DEBUG] Error details: ${errorText}`);
+                    // Show error but keep state - might be temporary network issue
+                    setLogs(prev => [...prev, `Warning: Could not validate job status (${response.status})`]);
+                } else {
+                    // Job exists - get current status from server (source of truth)
+                    const jobData = await response.json();
+                    const serverStatus = jobData.status.toUpperCase();
+                    console.log(`[DEBUG] Server reports job status: ${serverStatus}`);
+
+                    // Update local status to match server
+                    if (serverStatus !== status) {
+                        console.log(`[DEBUG] Updating local status from ${status} to ${serverStatus}`);
+                        setStatus(serverStatus as JobStatus);
                     }
-                } catch (e) {
-                    console.error("Failed to restore completed job results", e);
+
+                    // Restore progress state from server (in case localStorage is stale)
+                    if (jobData.current_stage !== undefined) {
+                        setCurrentStage(jobData.current_stage);
+                    }
+                    if (jobData.current_stage_label !== undefined) {
+                        setCurrentStageLabel(jobData.current_stage_label);
+                    }
+                    if (jobData.progress_percentage !== undefined) {
+                        setProgressPercentage(jobData.progress_percentage);
+                        // Note: We do NOT update displayedProgress here - it comes from JobProgress callback
+                        // This prevents the bar from jumping backwards when backend lags behind animation
+                    }
+
+                    // Resume polling if still active
+                    if (serverStatus === 'PENDING' || serverStatus === 'PROCESSING') {
+                        console.log(`[DEBUG] Job is active, resuming polling`);
+                        pollJobStatus(jobId, apiUrl);
+                    } else if (serverStatus === 'COMPLETED' && !results) {
+                        // Fetch results for completed job
+                        console.log(`[DEBUG] Job completed, fetching results`);
+                        const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${jobId}/result`, getToken);
+                        if (resultResponse.ok) {
+                            const resultData = await resultResponse.json();
+                            setResults(resultData);
+                        }
+                    } else if (serverStatus === 'AWAITING_APPROVAL') {
+                        console.log(`[DEBUG] Job awaiting approval`);
+                        setShowApprovalModal(true);
+                        // Resume polling to get timeout updates
+                        pollJobStatus(jobId, apiUrl);
+                    } else if (serverStatus === 'FAILED') {
+                        console.log(`[DEBUG] Job failed on server`);
+                        setLogs(prev => [...prev, `Job failed: ${jobData.error_message || 'Unknown error'}`]);
+                    }
                 }
+            } catch (e) {
+                console.error('[DEBUG] Failed to validate job:', e);
+                // Network error - keep state but warn user
+                setLogs(prev => [...prev, `Warning: Network error validating job. Will retry...`]);
+                // Try to resume polling anyway - might recover
+                pollJobStatus(jobId, apiUrl);
+            } finally {
+                // Always clear validating state after server check completes
+                setIsValidating(false);
             }
         };
 
@@ -648,8 +706,21 @@ export default function Generate() {
         setCurrentStage(null);
         setCurrentStageLabel(null);
         setProgressPercentage(null);
-        // Reset displayed progress and clear from localStorage
+        // Reset displayed progress
         setDisplayedProgress(0);
+        // Reset template state
+        setInputMode('select');
+        setSelectedTemplate(null);
+        setTemplateData(null);
+
+        // Explicit localStorage clears (belt and suspenders - useEffects should handle this too)
+        localStorage.removeItem('activeJobId');
+        localStorage.removeItem('activeJobStatus');
+        localStorage.removeItem('jobLogs');
+        localStorage.removeItem('jobStartTime');
+        localStorage.removeItem('currentStage');
+        localStorage.removeItem('currentStageLabel');
+        localStorage.removeItem('progressPercentage');
         localStorage.removeItem('displayedProgress');
     };
 
@@ -766,9 +837,74 @@ export default function Generate() {
 
                         {status === 'IDLE' && (
                             <div className="animate-fade-in space-y-8">
-                                {!selectedFile ? (
-                                    <FileUpload onFileSelect={handleFileSelect} isUploading={false} />
-                                ) : (
+                                {/* Mode Toggle - only show when not editing template and no file selected */}
+                                {inputMode !== 'edit' && !selectedFile && (
+                                    <div className="flex justify-center gap-4 mb-8">
+                                        <button
+                                            onClick={() => setInputMode('select')}
+                                            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                                                inputMode === 'select'
+                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                                                    : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                                            }`}
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                            </svg>
+                                            Use Template
+                                        </button>
+                                        <button
+                                            onClick={() => setInputMode('upload')}
+                                            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                                                inputMode === 'upload'
+                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                                                    : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                                            }`}
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            Upload URS File
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Template Selector */}
+                                {inputMode === 'select' && !selectedFile && (
+                                    <TemplateSelector
+                                        onSelect={handleTemplateSelect}
+                                        selectedId={selectedTemplate?.id || null}
+                                    />
+                                )}
+
+                                {/* Template Editor */}
+                                {inputMode === 'edit' && selectedTemplate && templateData && (
+                                    <TemplateEditor
+                                        template={selectedTemplate}
+                                        initialData={templateData}
+                                        onSubmit={handleTemplateSubmit}
+                                        onBack={handleBackToTemplates}
+                                    />
+                                )}
+
+                                {/* File Upload */}
+                                {inputMode === 'upload' && !selectedFile && (
+                                    <div>
+                                        <button
+                                            onClick={() => setInputMode('select')}
+                                            className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                            Back to Templates
+                                        </button>
+                                        <FileUpload onFileSelect={handleFileSelect} isUploading={false} />
+                                    </div>
+                                )}
+
+                                {/* Selected File Confirmation */}
+                                {selectedFile && (
                                     <div className="max-w-2xl mx-auto">
                                         <div className="bg-slate-800/50 border border-blue-500/30 rounded-xl p-8 text-center space-y-6">
                                             <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto">
@@ -795,6 +931,7 @@ export default function Generate() {
                                                 </button>
                                                 <button
                                                     onClick={handleGenerate}
+                                                    data-generate-trigger
                                                     className="btn-primary flex items-center gap-2"
                                                 >
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -807,27 +944,43 @@ export default function Generate() {
                                     </div>
                                 )}
 
-                                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <FeatureCard
-                                        title="GAMP-5 Compliant"
-                                        description="Automated categorization and validation logic aligned with ISPE GAMP 5 guidelines."
-                                        icon="shield"
-                                    />
-                                    <FeatureCard
-                                        title="AI-Powered Analysis"
-                                        description="Advanced LLM processing to extract requirements and generate precise test cases."
-                                        icon="chip"
-                                    />
-                                    <FeatureCard
-                                        title="Audit Ready"
-                                        description="Full ALCOA+ traceability with immutable logs and user attribution."
-                                        icon="document"
-                                    />
-                                </div>
+                                {/* Feature Cards - only show in template select mode */}
+                                {inputMode === 'select' && !selectedFile && (
+                                    <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <FeatureCard
+                                            title="GAMP-5 Compliant"
+                                            description="Automated categorization and validation logic aligned with ISPE GAMP 5 guidelines."
+                                            icon="shield"
+                                        />
+                                        <FeatureCard
+                                            title="AI-Powered Analysis"
+                                            description="Advanced LLM processing to extract requirements and generate precise test cases."
+                                            icon="chip"
+                                        />
+                                        <FeatureCard
+                                            title="Audit Ready"
+                                            description="Full ALCOA+ traceability with immutable logs and user attribution."
+                                            icon="document"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )}
 
-                        {(status === 'PENDING' || status === 'PROCESSING') && (
+                        {/* Show validating state while checking server */}
+                        {isValidating && (
+                            <div className="animate-fade-in text-center py-12">
+                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/10 mb-4 animate-pulse">
+                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </div>
+                                <p className="text-slate-400">Validating session...</p>
+                            </div>
+                        )}
+
+                        {/* Only show progress bar after validation confirms job exists */}
+                        {(status === 'PENDING' || status === 'PROCESSING') && !isValidating && (
                             <div className="animate-fade-in">
                                 <JobProgress
                                     status={status}

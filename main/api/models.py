@@ -269,6 +269,11 @@ class JobRecord(BaseModel):
             progress_percentage = 0
             current_stage_str = "queued"
             current_stage_label = STAGE_LABELS.get("queued")
+        elif self.status == JobStatus.PROCESSING:
+            # PROCESSING but no stage set yet - default to ingestion (10%)
+            progress_percentage = 10
+            current_stage_str = "ingestion"
+            current_stage_label = STAGE_LABELS.get("ingestion")
 
         return JobStatusResponse(
             job_id=self.job_id,

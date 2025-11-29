@@ -1,0 +1,1019 @@
+{
+  "suite_id": "OQ-SUITE-1813",
+  "gamp_category": 3,
+  "document_name": "c4482247-17da-4a0b-b0e5-600005623837.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify Standard Item Master Creation and Tracking",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the system can successfully create and track standard inventory items including raw materials, packaging components, and finished goods.",
+      "prerequisites": [
+        "Access to the inventory management system with appropriate user roles.",
+        "List of sample raw materials, packaging components, and finished goods with their details (e.g., SKU, description, unit of measure)."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the Item Master creation module within the inventory management system.",
+          "expected_result": "The Item Master creation screen is displayed, allowing for the input of item details.",
+          "data_to_capture": [
+            "Screenshot of the Item Master creation screen."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Create a new item record for a raw material (e.g., 'API-XYZ', 'Unit: KG').",
+          "expected_result": "The raw material item is successfully created and saved in the system.",
+          "data_to_capture": [
+            "Item ID of the created raw material.",
+            "Confirmation message of successful creation."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Create a new item record for a packaging component (e.g., 'BOTTLE-100ML', 'Unit: EA').",
+          "expected_result": "The packaging component item is successfully created and saved in the system.",
+          "data_to_capture": [
+            "Item ID of the created packaging component.",
+            "Confirmation message of successful creation."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Create a new item record for a finished good (e.g., 'PRODUCT-ABC', 'Unit: BOX').",
+          "expected_result": "The finished good item is successfully created and saved in the system.",
+          "data_to_capture": [
+            "Item ID of the created finished good.",
+            "Confirmation message of successful creation."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Search for the created raw material, packaging component, and finished good items in the system.",
+          "expected_result": "All three created items are found and their details are displayed accurately.",
+          "data_to_capture": [
+            "Screenshot of search results showing all three items."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All three types of inventory items (raw material, packaging component, finished good) are successfully created and retrievable.",
+        "Item details are accurately reflected in the system after creation."
+      ],
+      "regulatory_basis": [
+        "URS-INV-002: Track raw materials, packaging components, and finished goods using standard item master."
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Item master data must be accurate and complete.",
+        "No data corruption during item creation."
+      ],
+      "urs_requirements": [
+        "URS-INV-002"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Inventory Management System Administrator",
+        "QA Tester"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Verify FIFO and FEFO Inventory Rotation Logic",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the system correctly implements First-In-First-Out (FIFO) and First-Expired-First-Out (FEFO) inventory rotation logic for stock management.",
+      "prerequisites": [
+        "Access to the inventory management system with appropriate user roles.",
+        "At least two batches of the same raw material with different receipt dates and expiry dates.",
+        "System configured to support FIFO and FEFO."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Receive Batch A of a raw material with an earlier receipt date and an earlier expiry date (e.g., Receipt Date: 2023-01-01, Expiry Date: 2024-01-01).",
+          "expected_result": "Batch A is successfully recorded in inventory with its associated receipt and expiry dates.",
+          "data_to_capture": [
+            "Inventory record for Batch A showing receipt and expiry dates."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Receive Batch B of the same raw material with a later receipt date and a later expiry date (e.g., Receipt Date: 2023-02-01, Expiry Date: 2024-02-01).",
+          "expected_result": "Batch B is successfully recorded in inventory with its associated receipt and expiry dates.",
+          "data_to_capture": [
+            "Inventory record for Batch B showing receipt and expiry dates."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Initiate a stock pick for a quantity of the raw material, ensuring the system defaults to FIFO.",
+          "expected_result": "The system proposes to pick from Batch A first, as it was received earlier.",
+          "data_to_capture": [
+            "Picking list or system prompt showing Batch A as the primary pick source."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Receive Batch C of the same raw material with an earlier expiry date than Batch B but a later receipt date (e.g., Receipt Date: 2023-03-01, Expiry Date: 2023-12-31).",
+          "expected_result": "Batch C is successfully recorded in inventory with its associated receipt and expiry dates.",
+          "data_to_capture": [
+            "Inventory record for Batch C showing receipt and expiry dates."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Initiate a stock pick for a quantity of the raw material, ensuring the system defaults to FEFO.",
+          "expected_result": "The system proposes to pick from Batch C first, as it has the earliest expiry date.",
+          "data_to_capture": [
+            "Picking list or system prompt showing Batch C as the primary pick source."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "The system correctly prioritizes Batch A for picking when FIFO is applied.",
+        "The system correctly prioritizes Batch C for picking when FEFO is applied, overriding the receipt date.",
+        "Inventory rotation logic is applied as expected based on receipt and expiry dates."
+      ],
+      "regulatory_basis": [
+        "URS-INV-003: Implement First-In-First-Out (FIFO) inventory rotation using vendor default algorithms.",
+        "URS-INV-004: Support First-Expired-First-Out (FEFO) rotation for expiry date management."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Accurate tracking of receipt dates and expiry dates for all inventory batches.",
+        "Correct application of FIFO and FEFO logic to prevent stock obsolescence or expiry."
+      ],
+      "urs_requirements": [
+        "URS-INV-003",
+        "URS-INV-004"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Inventory Management System Administrator",
+        "QA Tester",
+        "Warehouse Operations Specialist"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify Real-time Inventory Quantity Tracking and Barcode Scanning",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the system accurately tracks inventory quantities in real-time and supports barcode scanning for inventory movements.",
+      "prerequisites": [
+        "System is installed and configured.",
+        "Item master data is populated.",
+        "Barcode scanner is connected and functional."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform a manual inventory adjustment for a specific SKU, increasing its quantity.",
+          "expected_result": "The system reflects the updated inventory quantity for the SKU in real-time.",
+          "data_to_capture": [
+            "SKU identifier",
+            "Initial quantity",
+            "Adjusted quantity",
+            "Timestamp of adjustment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Scan the barcode of the same SKU during a simulated receiving or put-away process.",
+          "expected_result": "The system correctly identifies the SKU via barcode scan and updates its quantity accordingly.",
+          "data_to_capture": [
+            "Scanned barcode data",
+            "SKU identifier",
+            "Quantity recorded after scan",
+            "Timestamp of scan"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Perform a manual inventory adjustment for a specific SKU, decreasing its quantity.",
+          "expected_result": "The system reflects the updated inventory quantity for the SKU in real-time.",
+          "data_to_capture": [
+            "SKU identifier",
+            "Initial quantity",
+            "Adjusted quantity",
+            "Timestamp of adjustment"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Scan the barcode of the same SKU during a simulated picking process.",
+          "expected_result": "The system correctly identifies the SKU via barcode scan and decrements its quantity accordingly.",
+          "data_to_capture": [
+            "Scanned barcode data",
+            "SKU identifier",
+            "Quantity recorded after scan",
+            "Timestamp of scan"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Inventory quantities are updated and displayed accurately within 30 seconds of any adjustment or scan.",
+        "Barcode scanning correctly identifies SKUs and initiates the appropriate inventory transaction (increase or decrease)."
+      ],
+      "regulatory_basis": [
+        "URS-INV-006: Track inventory quantities in real-time using standard database updates.",
+        "URS-INV-007: Support barcode scanning using vendor's barcode integration module."
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "All inventory quantity changes must be accurately recorded.",
+        "Barcode scan data must be correctly interpreted and mapped to the corresponding SKU."
+      ],
+      "urs_requirements": [
+        "URS-INV-006",
+        "URS-INV-007"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Inventory Management",
+        "System Administrator"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Verify Cycle Count Scheduling and Inventory Movement Reporting",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify the system's ability to generate cycle count schedules and produce standard inventory movement reports.",
+      "prerequisites": [
+        "System is installed and configured.",
+        "Sufficient inventory data exists for reporting.",
+        "User has permissions to generate reports and schedule counts."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure and generate a cycle count schedule for a specific location or set of SKUs using the vendor's standard scheduling engine.",
+          "expected_result": "A cycle count schedule is generated, listing the items and locations to be counted.",
+          "data_to_capture": [
+            "Cycle count schedule parameters (e.g., frequency, scope)",
+            "Generated cycle count list",
+            "Timestamp of schedule generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform a physical count for a subset of items on the generated cycle count schedule and record the results in the system.",
+          "expected_result": "The system accepts the physical count data and flags any discrepancies.",
+          "data_to_capture": [
+            "Items counted",
+            "Physical count quantities",
+            "System recorded quantities",
+            "Discrepancy details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate an inventory movement report for a defined period using a pre-built template.",
+          "expected_result": "The system generates an inventory movement report that accurately reflects all recorded inventory transactions within the specified period.",
+          "data_to_capture": [
+            "Report period",
+            "Report template used",
+            "Generated report content",
+            "Timestamp of report generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify that the inventory movement report includes details such as item, quantity, movement type, date, and user.",
+          "expected_result": "All relevant inventory movement details are present and accurate in the generated report.",
+          "data_to_capture": [
+            "Specific transaction details from the report",
+            "Comparison with system logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Cycle count schedules are generated accurately based on configured parameters.",
+        "Inventory movement reports are generated within 5 minutes and contain accurate transaction data for the specified period.",
+        "The system correctly identifies and highlights inventory discrepancies during cycle counting."
+      ],
+      "regulatory_basis": [
+        "URS-INV-008: Generate cycle count schedules using vendor's standard scheduling engine.",
+        "URS-INV-009: Create inventory movement reports using pre-built templates.",
+        "URS-INV-018: Generate inventory accuracy reports using standard reconciliation features."
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Cycle count schedules must be comprehensive and accurate.",
+        "Inventory movement reports must accurately reflect all recorded transactions.",
+        "Discrepancies identified during cycle counts must be clearly reported."
+      ],
+      "urs_requirements": [
+        "URS-INV-008",
+        "URS-INV-009",
+        "URS-INV-018"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Inventory Management",
+        "Reporting"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify Multi-Location Support and Reorder Alerts",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify the system's capability to manage inventory across multiple storage locations and generate timely reorder alerts based on defined minimum stock levels.",
+      "prerequisites": [
+        "System is installed and configured.",
+        "User has administrative privileges.",
+        "At least two distinct storage locations are defined in the system.",
+        "Several items are stocked in different locations with varying quantities."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Navigate to the inventory management module and access the location management section.",
+          "expected_result": "The system displays a list of all configured storage locations.",
+          "data_to_capture": [
+            "List of configured storage locations."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify that inventory items can be assigned to and tracked within specific storage locations.",
+          "expected_result": "Inventory quantities are accurately reflected for each item within its assigned location.",
+          "data_to_capture": [
+            "Inventory quantities per item per location."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "For a selected item, reduce its stock level in a specific location to below its defined minimum stock level.",
+          "expected_result": "The system accurately updates the stock level for the item in the specified location.",
+          "data_to_capture": [
+            "New stock level after reduction."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Trigger the reorder alert mechanism (e.g., by running a scheduled job or manually initiating the check).",
+          "expected_result": "A reorder alert is generated for the item whose stock level has fallen below the minimum threshold.",
+          "data_to_capture": [
+            "Confirmation of reorder alert generation.",
+            "Details of the reorder alert (item, location, quantity needed)."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "The system successfully displays and allows management of multiple storage locations.",
+        "Inventory quantities are correctly associated with their respective storage locations.",
+        "A reorder alert is generated when an item's stock level drops below the predefined minimum.",
+        "The generated reorder alert contains accurate information about the item and the required action."
+      ],
+      "regulatory_basis": [
+        "URS-INV-010: Support multiple storage locations with standard location master setup.",
+        "URS-INV-011: Generate reorder alerts based on minimum stock levels using standard alerting."
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Inventory quantities must be accurately maintained across all locations.",
+        "Reorder alerts must be generated based on correct stock levels and minimum thresholds."
+      ],
+      "urs_requirements": [
+        "URS-INV-010",
+        "URS-INV-011"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Inventory Management",
+        "System Administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Verify ERP System Integration and Data Export to Excel",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To verify the system's ability to interface with the existing ERP system and to export inventory data into an Excel format.",
+      "prerequisites": [
+        "System is installed and configured.",
+        "User has appropriate access to the inventory management system and ERP system.",
+        "The ERP system is accessible and configured for integration.",
+        "Sample inventory data exists in the system."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate an inventory data synchronization process with the ERP system.",
+          "expected_result": "The system successfully communicates with the ERP system, and inventory data is exchanged as per the defined integration parameters.",
+          "data_to_capture": [
+            "Confirmation of successful ERP synchronization.",
+            "Any error logs or messages generated during synchronization."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify that key inventory data (e.g., item codes, quantities, locations) in the inventory system accurately reflects the data in the ERP system after synchronization.",
+          "expected_result": "Inventory data is consistent between the inventory management system and the ERP system.",
+          "data_to_capture": [
+            "Sample inventory data from both systems for comparison."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Navigate to the reporting section and select an option to export inventory data to Excel.",
+          "expected_result": "The system presents an option to export data to Excel format.",
+          "data_to_capture": [
+            "Screenshot of export options."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Execute the export function for a comprehensive inventory report.",
+          "expected_result": "An Excel file containing the selected inventory data is generated and downloaded.",
+          "data_to_capture": [
+            "Confirmation of file download.",
+            "The generated Excel file."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Open the downloaded Excel file and verify the accuracy and completeness of the exported data.",
+          "expected_result": "The Excel file contains all expected inventory data, formatted correctly, and matches the data within the system.",
+          "data_to_capture": [
+            "Sample data from the Excel file for verification."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "The system successfully integrates with the ERP system, exchanging inventory data without errors.",
+        "Inventory data is consistent between the inventory management system and the ERP system post-synchronization.",
+        "The system allows for the export of inventory data to an Excel file.",
+        "The exported Excel file accurately and completely represents the inventory data from the system."
+      ],
+      "regulatory_basis": [
+        "URS-INV-020: Interface with existing ERP system using vendor's standard connectors.",
+        "URS-INV-021: Export inventory data to Excel format using built-in export functionality."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data exchanged with the ERP system must be accurate and complete.",
+        "Exported data to Excel must be a true and accurate representation of the system's inventory data."
+      ],
+      "urs_requirements": [
+        "URS-INV-020",
+        "URS-INV-021"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-009"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System Integration",
+        "ERP Systems",
+        "Data Analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Verify User Access Controls and Role-Based Security",
+      "test_category": "security",
+      "gamp_category": 3,
+      "objective": "To verify that the system enforces user access controls and role-based security as per URS-INV-017.",
+      "prerequisites": [
+        "System is installed and configured.",
+        "User accounts with different roles (e.g., Administrator, Warehouse Operator, Viewer) are created.",
+        "Permissions for each role are defined in the system."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the system using an Administrator account.",
+          "expected_result": "Administrator can access all system functionalities and settings.",
+          "data_to_capture": [
+            "Login success/failure",
+            "Accessed functionalities"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Log out and log in using a Warehouse Operator account.",
+          "expected_result": "Warehouse Operator can perform inventory management tasks (e.g., receiving, picking, moving) but cannot access administrative settings or user management.",
+          "data_to_capture": [
+            "Login success/failure",
+            "Accessed functionalities",
+            "Attempted access to restricted areas"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Log out and log in using a Viewer account.",
+          "expected_result": "Viewer can only view inventory data and reports, with no ability to modify or create records.",
+          "data_to_capture": [
+            "Login success/failure",
+            "Accessed functionalities",
+            "Attempted access to restricted areas"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Attempt to access functionalities restricted to other roles from each logged-in user session.",
+          "expected_result": "Access is denied for all unauthorized actions, with appropriate error messages displayed.",
+          "data_to_capture": [
+            "Error messages for denied access"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Users can only access functionalities permitted by their assigned role.",
+        "Unauthorized access attempts are blocked and logged.",
+        "System correctly enforces role-based security."
+      ],
+      "regulatory_basis": [
+        "URS-INV-017: Support user access controls through vendor's role-based security."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "User access logs are maintained.",
+        "Role definitions are accurate and consistently applied."
+      ],
+      "urs_requirements": [
+        "URS-INV-017"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "System Administrator",
+        "QA Engineer"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Verify Inventory Audit Trail and Transaction History Archiving",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "To verify that the system maintains a comprehensive audit trail for all inventory transactions and that transaction history can be archived according to retention policies.",
+      "prerequisites": [
+        "System is installed and configured.",
+        "Sufficient inventory transactions have been performed to populate the audit trail.",
+        "Vendor's data retention policies are understood and configured (if applicable)."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform a series of inventory transactions (e.g., receiving, issuing, adjusting quantity, changing location) for a specific item.",
+          "expected_result": "Each transaction is successfully recorded in the system.",
+          "data_to_capture": [
+            "Details of each transaction (item, quantity, type, user, timestamp)"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Access the inventory audit trail report for the performed transactions.",
+          "expected_result": "The audit trail report accurately reflects all performed transactions, including user, date/time, transaction type, and any changes made.",
+          "data_to_capture": [
+            "Audit trail report content",
+            "Comparison of report with performed transactions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify that the audit trail includes details of user logins and logouts.",
+          "expected_result": "User login/logout events are present in the audit trail.",
+          "data_to_capture": [
+            "Login/logout entries in audit trail"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Initiate the archiving process for historical transaction data based on vendor's retention policies (if manual archiving is supported or if a scheduled archive is to be verified).",
+          "expected_result": "Historical transaction data is successfully archived and no longer readily accessible in the active system, or the archive process completes as scheduled.",
+          "data_to_capture": [
+            "Confirmation of archive process completion",
+            "Verification of data removal from active system (if applicable)",
+            "Archive log details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 5,
+          "action": "Attempt to retrieve archived data (if applicable and supported by the system).",
+          "expected_result": "Archived data can be retrieved and is consistent with the original transaction records.",
+          "data_to_capture": [
+            "Retrieved archived data",
+            "Comparison of retrieved data with original records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All inventory transactions are logged in the audit trail.",
+        "The audit trail provides sufficient detail to reconstruct transaction history.",
+        "Transaction history archiving is performed according to defined policies.",
+        "Archived data is retrievable and accurate."
+      ],
+      "regulatory_basis": [
+        "URS-INV-016: Maintain inventory audit trail using vendor's standard logging functionality.",
+        "URS-INV-019: Archive transaction history using vendor's data retention policies."
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail is immutable and tamper-evident.",
+        "Archived data is stored securely and is accessible for the required retention period.",
+        "Data integrity is maintained throughout the archiving process."
+      ],
+      "urs_requirements": [
+        "URS-INV-016",
+        "URS-INV-019"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System Administrator",
+        "QA Engineer",
+        "Database Administrator (if applicable)"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify System Performance Under Load and Concurrent User Access",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "To verify that the inventory management system can handle the specified number of SKUs and concurrent users without performance degradation.",
+      "prerequisites": [
+        "System is installed and configured according to vendor specifications.",
+        "Test environment is set up with sufficient resources.",
+        "Test data representing 10,000 SKUs is loaded into the system.",
+        "User accounts for 25 concurrent users are created."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate 25 concurrent users performing typical inventory operations (e.g., receiving, picking, stock adjustments) for a sustained period.",
+          "expected_result": "Inventory updates are reflected within 30 seconds, and system response times remain within acceptable limits.",
+          "data_to_capture": [
+            "System response times for various operations.",
+            "Inventory update latency.",
+            "CPU and memory utilization of the system."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate a complex inventory report (e.g., a full stock valuation report) while 25 users are actively using the system.",
+          "expected_result": "The inventory report generates within 5 minutes.",
+          "data_to_capture": [
+            "Time taken to generate the report.",
+            "System performance during report generation."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Inventory updates are consistently reflected within 30 seconds.",
+        "System response times for all operations remain within acceptable thresholds.",
+        "Complex reports are generated within the specified 5-minute timeframe.",
+        "System resource utilization remains within acceptable levels during peak load."
+      ],
+      "regulatory_basis": [
+        "URS-INV-012",
+        "URS-INV-013",
+        "URS-INV-014",
+        "URS-INV-015"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "No data loss or corruption during high load.",
+        "Accurate reflection of inventory quantities."
+      ],
+      "urs_requirements": [
+        "URS-INV-012",
+        "URS-INV-013",
+        "URS-INV-014",
+        "URS-INV-015"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "System Administrator",
+        "Performance Tester"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Verify Inventory Accuracy Reporting and Data Retention Policies",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "To verify the accuracy of inventory reports generated through reconciliation and ensure that transaction history is archived according to defined retention policies.",
+      "prerequisites": [
+        "System is installed and configured.",
+        "Sufficient transaction history exists to test archiving.",
+        "Inventory data is available for reconciliation."
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Perform a cycle count and initiate a reconciliation process using the system's standard reconciliation features.",
+          "expected_result": "The system generates an inventory accuracy report highlighting discrepancies between physical counts and system records.",
+          "data_to_capture": [
+            "Generated inventory accuracy report.",
+            "Details of discrepancies identified."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify that the system correctly identifies and reports inventory discrepancies based on the reconciliation.",
+          "expected_result": "The accuracy report accurately reflects the identified discrepancies.",
+          "data_to_capture": [
+            "Comparison of physical count data with report findings."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Access and review archived transaction history that has exceeded the defined retention period.",
+          "expected_result": "Archived transaction history is accessible and remains intact as per the vendor's data retention policies.",
+          "data_to_capture": [
+            "Confirmation of archived data accessibility.",
+            "Verification of data integrity in archived records."
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Inventory accuracy reports accurately identify and quantify discrepancies.",
+        "Archived transaction history is retrievable and maintains data integrity.",
+        "The system adheres to the defined data retention policies for transaction history."
+      ],
+      "regulatory_basis": [
+        "URS-INV-018",
+        "URS-INV-019"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Accurate reporting of inventory discrepancies.",
+        "Preservation of historical transaction data.",
+        "Compliance with data retention policies."
+      ],
+      "urs_requirements": [
+        "URS-INV-018",
+        "URS-INV-019"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-008"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "Warehouse Operations Specialist",
+        "System Administrator"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 600,
+  "generation_timestamp": "2025-11-29T18:13:44.518173+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "review_required": true,
+  "timestamp": "2025-11-29T18:13:44.716142+00:00",
+  "workflow_session_id": "unified_workflow_2025-11-29T18:11:23.309620+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

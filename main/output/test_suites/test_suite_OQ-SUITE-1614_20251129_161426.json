@@ -1,0 +1,989 @@
+{
+  "suite_id": "OQ-SUITE-1614",
+  "gamp_category": 3,
+  "document_name": "3932e510-68e5-4c4e-ac64-4313589588aa.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Temperature Monitoring and Alarm Functionality Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS continuously monitors temperature, records data at 5-minute intervals, and generates alarms when deviations exceed \u00b12\u00b0C from the setpoint.",
+      "prerequisites": [
+        "EMS software is installed and configured",
+        "Temperature sensors are calibrated and connected",
+        "Test setpoints are configured in the system",
+        "User accounts with appropriate permissions are available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the EMS software and navigate to the real-time monitoring display for a designated test sensor.",
+          "expected_result": "System displays current temperature reading for the selected sensor in real-time.",
+          "data_to_capture": [
+            "Screenshot of real-time display",
+            "Timestamp of observation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the system for 15 minutes and verify data is recorded at intervals not exceeding 5 minutes.",
+          "expected_result": "System creates a new temperature record at least every 5 minutes as evidenced by the data log.",
+          "data_to_capture": [
+            "Data log export showing timestamped entries",
+            "Calculation of time intervals between records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Induce a temperature deviation exceeding +2\u00b0C from the setpoint using a calibrated simulator.",
+          "expected_result": "System generates an audible and visual alarm within 30 seconds of the deviation.",
+          "data_to_capture": [
+            "Timestamp of deviation induction",
+            "Timestamp of alarm activation",
+            "Screenshot of alarm message"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Acknowledge the alarm and verify the alarm event is recorded in the system audit trail.",
+          "expected_result": "Alarm event is properly logged in the audit trail with timestamp and user who acknowledged it.",
+          "data_to_capture": [
+            "Audit trail export showing alarm event",
+            "User identification of who acknowledged alarm"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Temperature is displayed and updated in real-time",
+        "Data points are recorded at intervals of 5 minutes or less",
+        "Alarms activate within 30 seconds when temperature deviates \u00b12\u00b0C from setpoint",
+        "All alarm events are properly recorded in the audit trail"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for electronic records and audit trails",
+        "EU GMP Annex 11 for computerized systems",
+        "FDA guidance on process validation"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "All temperature readings must be time-stamped",
+        "Alarm events must be recorded in secure audit trail",
+        "Data must be stored in vendor's standard database format without modification"
+      ],
+      "urs_requirements": [
+        "URS-EMS-001",
+        "URS-EMS-002",
+        "URS-EMS-005",
+        "URS-EMS-008",
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "PQ-001"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Quality Assurance",
+        "Validation Engineer",
+        "EMS Operator"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "System Integration and Alarm Notification Verification",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS properly interfaces with the facility management system and integrates alarm notifications with the site paging system.",
+      "prerequisites": [
+        "EMS is fully operational",
+        "Facility management system is available for testing",
+        "Site paging system is configured and operational",
+        "Integration protocols are properly configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify the EMS is communicating with the facility management system using the standard protocol.",
+          "expected_result": "EMS establishes successful connection and data exchange with facility management system.",
+          "data_to_capture": [
+            "Connection status log",
+            "Data transmission verification report"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a test data packet from EMS to facility management system and verify receipt.",
+          "expected_result": "Facility management system receives and processes the test data packet correctly.",
+          "data_to_capture": [
+            "Test data packet details",
+            "Receipt confirmation from facility management system"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Generate a test alarm in the EMS and verify integration with site paging system via vendor API.",
+          "expected_result": "Alarm notification is successfully sent to site paging system within specified response time.",
+          "data_to_capture": [
+            "Timestamp of alarm generation",
+            "Timestamp of paging system receipt",
+            "API call log"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Verify the alarm message content and priority are correctly transmitted to paging system.",
+          "expected_result": "Paging system displays correct alarm message with appropriate priority level.",
+          "data_to_capture": [
+            "Screenshot of paging system display",
+            "Alarm message content verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS successfully interfaces with facility management system using standard protocols",
+        "Data transmission between systems occurs without errors",
+        "Alarm notifications are sent to paging system within 30 seconds",
+        "Alarm message content and priority are correctly transmitted"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 for electronic system interfaces",
+        "EU GMP Annex 11 for system integration",
+        "ISPE GAMP 5 for integrated systems"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Interface transactions must be logged",
+        "Alarm transmission must be verified and recorded",
+        "Integration points must maintain data accuracy"
+      ],
+      "urs_requirements": [
+        "URS-EMS-014",
+        "URS-EMS-015",
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "IQ-003"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "IT Specialist",
+        "Validation Engineer",
+        "Facility Operations"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Audit Trail Functionality and Data Integrity Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that the system maintains a complete and secure audit trail for all critical data changes as required by 21 CFR Part 11",
+      "prerequisites": [
+        "System installation completed",
+        "User accounts configured with appropriate privileges",
+        "System operational with sample data loaded"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log into the system with administrator credentials and access the audit trail configuration settings",
+          "expected_result": "System displays audit trail configuration options showing all critical data elements are being tracked",
+          "data_to_capture": [
+            "Screenshot of audit trail configuration",
+            "List of tracked data elements"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform various data modifications including temperature setpoint changes, user account modifications, and system configuration updates",
+          "expected_result": "All modifications are successfully executed and recorded in the system",
+          "data_to_capture": [
+            "List of performed modifications",
+            "Timestamp of each action"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Access the audit trail report function and generate a report for the test period",
+          "expected_result": "System generates a comprehensive audit trail report showing all modifications with user identification and timestamps",
+          "data_to_capture": [
+            "Audit trail report output",
+            "Verification of user identification for each action"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Attempt to modify or delete an audit trail entry using standard user privileges",
+          "expected_result": "System prevents any modification or deletion of audit trail entries with appropriate error message",
+          "data_to_capture": [
+            "Error message displayed",
+            "Confirmation of audit trail integrity"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All critical data modifications are recorded in the audit trail",
+        "Audit trail entries include user identification, timestamp, and nature of change",
+        "Audit trail cannot be modified or deleted by users",
+        "Audit trail reporting function operates correctly"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records; Electronic Signatures",
+        "EU Annex 11 - Computerised Systems"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ principles must be maintained for all audit trail data",
+        "Audit trail must be secure and tamper-proof",
+        "All critical data changes must be recorded with user identity and timestamp"
+      ],
+      "urs_requirements": [
+        "URS-EMS-008",
+        "URS-EMS-009"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Quality Assurance",
+        "System Administration",
+        "Regulatory Compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Data Retention and Archival Capability Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that the system properly retains and archives monitoring data for the required 7-year period using vendor's standard features",
+      "prerequisites": [
+        "System operational with historical data",
+        "Archival configuration completed",
+        "Backup storage media available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the data retention configuration settings and verify the retention period is set to 7 years",
+          "expected_result": "System displays retention period configuration set to 7 years as required",
+          "data_to_capture": [
+            "Screenshot of retention settings",
+            "Configuration verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate the archival process using the vendor's standard archival feature",
+          "expected_result": "System successfully archives data to the designated storage location without errors",
+          "data_to_capture": [
+            "Archival process log",
+            "Confirmation of successful completion",
+            "Storage location verification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify archived data integrity by comparing original and archived data samples",
+          "expected_result": "Archived data matches original data with no corruption or data loss",
+          "data_to_capture": [
+            "Data comparison results",
+            "Integrity verification report"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Test data retrieval from the archive by restoring a sample dataset",
+          "expected_result": "System successfully retrieves and restores data from the archive with full integrity",
+          "data_to_capture": [
+            "Restoration process log",
+            "Data integrity verification after restoration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System retains data for minimum 7 years as configured",
+        "Archival process completes successfully without data loss",
+        "Archived data maintains integrity and can be fully restored",
+        "Vendor's standard archival feature functions as specified"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 - Electronic Records; Electronic Signatures",
+        "FDA Data Integrity Guidance",
+        "EU GMP Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data must be retained in original format without alteration",
+        "Archival process must maintain data completeness and accuracy",
+        "Restored data must be identical to original data"
+      ],
+      "urs_requirements": [
+        "URS-EMS-010",
+        "URS-EMS-012"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Data Management",
+        "System Administration",
+        "Quality Assurance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "System Performance and Response Time Verification",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "To verify that the EMS meets the specified performance requirements for response time, data storage capacity, and system availability as defined in the URS.",
+      "prerequisites": [
+        "EMS system is installed and operational",
+        "Test user accounts with appropriate permissions are created",
+        "System clock is synchronized for accurate timing measurements"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate an alarm condition by adjusting a sensor reading to exceed the \u00b12\u00b0C setpoint deviation",
+          "expected_result": "System generates an alert within 30 seconds of the deviation occurring",
+          "data_to_capture": [
+            "Time of deviation simulation",
+            "Time of alert generation",
+            "Alert response time calculation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify system data storage capacity by reviewing database configuration and projected storage requirements",
+          "expected_result": "System storage capacity is confirmed to support minimum 10 years of continuous monitoring data",
+          "data_to_capture": [
+            "Current database size",
+            "Data growth rate calculations",
+            "Storage capacity projections"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor system uptime over a 24-hour period during normal operation",
+          "expected_result": "System maintains 99.5% availability excluding any planned maintenance windows",
+          "data_to_capture": [
+            "System uptime metrics",
+            "Downtime incidents",
+            "Maintenance window documentation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All alarm conditions are responded to within 30 seconds as specified in URS-EMS-011",
+        "Data storage capacity is verified to support 10+ years of continuous monitoring per URS-EMS-012",
+        "System availability meets or exceeds 99.5% during the monitoring period per URS-EMS-013"
+      ],
+      "regulatory_basis": [
+        "FDA 21 CFR Part 11 for electronic records reliability",
+        "EU GMP Annex 11 for computerized systems performance requirements"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "All performance metrics must be accurately recorded and timestamped",
+        "Storage capacity calculations must be based on actual data growth patterns",
+        "Uptime monitoring must include verifiable system logs"
+      ],
+      "urs_requirements": [
+        "URS-EMS-011",
+        "URS-EMS-012",
+        "URS-EMS-013"
+      ],
+      "related_tests": [
+        "OQ-001: Temperature Monitoring and Alarm Functionality Verification",
+        "OQ-002: System Integration and Alarm Notification Verification"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "System Administration",
+        "Performance Testing",
+        "Data Analysis"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Standard Software Configuration and Vendor Feature Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the EMS operates using vendor-supplied software without modification and utilizes standard features as specified in the URS.",
+      "prerequisites": [
+        "EMS system is installed with vendor's standard software package",
+        "Vendor documentation for standard features is available",
+        "System is configured with default vendor settings"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify software installation by checking version numbers and comparing against vendor's standard release documentation",
+          "expected_result": "System is running vendor-supplied software without any custom modifications",
+          "data_to_capture": [
+            "Software version information",
+            "Vendor release documentation reference",
+            "Customization verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Test the vendor's built-in electronic signature functionality by performing a sample data review and approval process",
+          "expected_result": "Electronic signatures function correctly using vendor's standard implementation",
+          "data_to_capture": [
+            "Signature application process",
+            "Audit trail entries for signature events",
+            "Signature verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Execute standard reports provided by the vendor and verify they contain all required data for batch release",
+          "expected_result": "Vendor standard reports contain complete and accurate data suitable for batch release decisions",
+          "data_to_capture": [
+            "Report execution results",
+            "Data completeness verification",
+            "Report format compliance"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System operates using vendor-supplied software without modification as required by URS-EMS-003",
+        "Electronic signatures function using vendor's built-in functionality per URS-EMS-009",
+        "Standard reports provided by vendor are suitable for batch release per URS-EMS-007"
+      ],
+      "regulatory_basis": [
+        "FDA 21 CFR Part 11 for electronic signatures",
+        "GAMP 5 guidelines for standard software configuration"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Software configuration must be verified against vendor documentation",
+        "Electronic signature implementation must comply with 21 CFR Part 11",
+        "Report data must be complete, accurate, and traceable"
+      ],
+      "urs_requirements": [
+        "URS-EMS-003",
+        "URS-EMS-007",
+        "URS-EMS-009"
+      ],
+      "related_tests": [
+        "OQ-003: Audit Trail Functionality and Data Integrity Verification",
+        "OQ-004: Data Retention and Archival Capability Verification"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "GxP Compliance",
+        "Software Validation",
+        "Quality Assurance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Standard Software Configuration and Vendor Feature Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS operates using vendor-supplied standard software without modifications and utilizes built-in features as specified in URS requirements",
+      "prerequisites": [
+        "System installation completed",
+        "Vendor software installed",
+        "Administrator access credentials available",
+        "URS document available for reference"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the system administration console and verify software version matches vendor-supplied standard release",
+          "expected_result": "Software version confirmed as vendor standard release without custom modifications",
+          "data_to_capture": [
+            "Software version number",
+            "Release date",
+            "Modification history"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Navigate to electronic signature configuration and verify vendor's built-in functionality is enabled",
+          "expected_result": "Electronic signature functionality uses vendor's standard implementation per URS-EMS-009",
+          "data_to_capture": [
+            "Signature configuration settings",
+            "User authentication method",
+            "Audit trail settings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Access reporting module and verify standard vendor reports are available for batch release",
+          "expected_result": "All required standard reports provided by vendor are accessible and functional",
+          "data_to_capture": [
+            "Available report types",
+            "Report generation time",
+            "Data export formats"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Software operates without custom modifications",
+        "Vendor's built-in electronic signature functionality is operational",
+        "Standard reports meet batch release requirements"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 compliance for electronic signatures",
+        "GAMP Category 3 guidelines for standard software"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Audit trail must capture all configuration changes",
+        "Electronic signatures must be securely linked to user actions",
+        "Report data must maintain integrity during generation"
+      ],
+      "urs_requirements": [
+        "URS-EMS-003",
+        "URS-EMS-007",
+        "URS-EMS-009"
+      ],
+      "related_tests": [
+        "OQ-003",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "System administration",
+        "GxP compliance",
+        "Vendor software knowledge"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Integration Interface and Protocol Verification",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify successful integration between EMS and external systems using standard protocols and APIs as specified in integration requirements",
+      "prerequisites": [
+        "EMS fully operational",
+        "Facility management system available",
+        "Paging system accessible",
+        "Network connectivity verified"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure EMS to communicate with facility management system using standard protocols (e.g., Modbus, OPC-UA)",
+          "expected_result": "Successful handshake and data exchange established between systems",
+          "data_to_capture": [
+            "Protocol used",
+            "Connection status",
+            "Data transfer rate",
+            "Error logs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Test alarm notification integration by simulating temperature deviation and verifying paging system activation",
+          "expected_result": "Alarm notifications successfully trigger paging system alerts within specified response time",
+          "data_to_capture": [
+            "Alarm trigger time",
+            "Paging system response time",
+            "Notification content",
+            "Delivery confirmation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify API functionality for external system integration using vendor-provided documentation",
+          "expected_result": "Vendor API functions correctly for all required integration points",
+          "data_to_capture": [
+            "API endpoint responses",
+            "Data format validation",
+            "Error handling",
+            "Performance metrics"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "EMS successfully integrates with facility management system",
+        "Alarm notifications properly trigger paging system",
+        "Vendor API functions as documented",
+        "All integration points operate within performance specifications"
+      ],
+      "regulatory_basis": [
+        "GAMP 5 guidelines for system integration",
+        "Industry standards for protocol interoperability"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Data integrity maintained during system-to-system transfers",
+        "Audit trail captures integration events",
+        "Alarm notifications preserve original data context"
+      ],
+      "urs_requirements": [
+        "URS-EMS-014",
+        "URS-EMS-015",
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-002",
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Network administration",
+        "API integration",
+        "System interoperability testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "System Availability and Uptime Verification",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS meets the 99.5% availability requirement excluding planned maintenance periods.",
+      "prerequisites": [
+        "System fully installed and configured",
+        "Monitoring tools configured to track system uptime/downtime",
+        "Planned maintenance schedule documented"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Deploy system monitoring tool to track EMS availability over 30-day period",
+          "expected_result": "Monitoring tool successfully captures system status and records uptime/downtime events",
+          "data_to_capture": [
+            "Monitoring tool configuration",
+            "Start time of monitoring period"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Record any planned maintenance activities during the monitoring period",
+          "expected_result": "All maintenance activities are properly documented with start/end times",
+          "data_to_capture": [
+            "Maintenance activity logs",
+            "Duration of each maintenance event"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Calculate system availability excluding planned maintenance time after 30 days",
+          "expected_result": "System availability meets or exceeds 99.5% requirement when planned maintenance is excluded",
+          "data_to_capture": [
+            "Total uptime",
+            "Total downtime",
+            "Calculated availability percentage"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System availability equals or exceeds 99.5% excluding planned maintenance",
+        "All downtime events are properly documented and categorized"
+      ],
+      "regulatory_basis": [
+        "GMP requirements for continuous monitoring systems",
+        "Quality system requirements for system reliability"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Uptime/downtime records must be complete and accurate",
+        "Time stamps must be synchronized and reliable"
+      ],
+      "urs_requirements": [
+        "URS-EMS-013"
+      ],
+      "related_tests": [
+        "OQ-005: System Performance and Response Time Verification"
+      ],
+      "estimated_duration_minutes": 43200,
+      "required_expertise": [
+        "System Administrator",
+        "Quality Assurance Specialist"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Standard Vendor Report Functionality Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the standard reports provided by the vendor meet batch release requirements without customization.",
+      "prerequisites": [
+        "System operational with historical monitoring data",
+        "Sample batch data available in system",
+        "Vendor documentation for standard reports"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the vendor's standard reporting module within the EMS",
+          "expected_result": "Reporting interface is accessible and displays available standard reports",
+          "data_to_capture": [
+            "List of available standard reports",
+            "Report access permissions"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Generate temperature monitoring report for a specific batch storage period",
+          "expected_result": "Report generates successfully with all required temperature data points",
+          "data_to_capture": [
+            "Report generation time",
+            "Report content completeness"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify report contains all required elements for batch release documentation",
+          "expected_result": "Report includes temperature readings, timestamps, alarm events, and compliance status",
+          "data_to_capture": [
+            "Missing report elements",
+            "Data accuracy in report"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 4,
+          "action": "Validate report format meets regulatory documentation standards",
+          "expected_result": "Report format is consistent, readable, and includes all required regulatory elements",
+          "data_to_capture": [
+            "Report formatting issues",
+            "Regulatory compliance gaps"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All standard reports generate without errors",
+        "Reports contain complete data required for batch release",
+        "Report format meets regulatory documentation standards"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11 electronic records requirements",
+        "EU Annex 11 requirements for computerized systems",
+        "GMP documentation requirements"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Reports must accurately reflect system data without modification",
+        "Report generation must preserve data integrity and context"
+      ],
+      "urs_requirements": [
+        "URS-EMS-007",
+        "URS-EMS-003"
+      ],
+      "related_tests": [
+        "OQ-004: Data Retention and Archival Capability Verification",
+        "OQ-003: Audit Trail Functionality and Data Integrity Verification"
+      ],
+      "estimated_duration_minutes": 120,
+      "required_expertise": [
+        "Quality Assurance Specialist",
+        "Regulatory Affairs Specialist"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 43740,
+  "generation_timestamp": "2025-11-29T16:14:26.449024+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "review_required": true,
+  "timestamp": "2025-11-29T16:14:26.971320+00:00",
+  "workflow_session_id": "unified_workflow_2025-11-29T16:08:26.364625+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

@@ -1,0 +1,955 @@
+suite_id: OQ-SUITE-1446
+gamp_category: 3
+document_name: f2eb6baa-7975-46ed-86e4-e59ea1a39420.md
+test_cases:
+- test_id: OQ-001
+  test_name: Inventory Tracking and Real-time Updates Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that the system correctly tracks inventory quantities in real-time
+    and reflects updates within the specified 30-second timeframe using standard database
+    functionality.
+  prerequisites:
+  - System installation completed successfully
+  - Test items created in item master
+  - Test storage locations configured
+  - User with appropriate access rights logged in
+  test_steps:
+  - step_number: 1
+    action: Navigate to inventory management module and select a test item with known
+      initial quantity
+    expected_result: System displays current inventory quantity for selected item
+      accurately
+    data_to_capture:
+    - Initial quantity displayed
+    - Timestamp of display
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Perform inventory transaction (receipt or issue) for the test item using
+      standard transaction screen
+    expected_result: Transaction completes successfully and system confirms the action
+    data_to_capture:
+    - Transaction type
+    - Quantity changed
+    - Transaction timestamp
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Immediately refresh inventory screen and verify updated quantity within
+      30 seconds
+    expected_result: Inventory quantity updates reflect the transaction within 30
+      seconds of completion
+    data_to_capture:
+    - Updated quantity
+    - Time elapsed for update
+    - Final displayed quantity
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - All inventory transactions are accurately recorded
+  - Quantity updates are reflected within 30 seconds of transaction completion
+  - System maintains accurate real-time inventory counts
+  regulatory_basis:
+  - FDA 21 CFR Part 211.68 - Automatic equipment requirements
+  - EU GMP Annex 11 - Electronic records and electronic signatures
+  risk_level: medium
+  data_integrity_requirements:
+  - ALCOA+ principles must be maintained for all inventory transactions
+  - Audit trail must capture all quantity changes automatically
+  - Data must be consistent across all system modules
+  urs_requirements:
+  - 'URS-INV-002: Track raw materials, packaging components, and finished goods'
+  - 'URS-INV-006: Track inventory quantities in real-time'
+  - 'URS-INV-013: Inventory updates within 30 seconds'
+  related_tests:
+  - OQ-002
+  - OQ-003
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Inventory Management
+  - System Navigation
+  - Data Verification
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-002
+  test_name: FIFO/FEFO Inventory Rotation Algorithm Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that the system correctly implements FIFO and FEFO inventory rotation
+    using vendor default algorithms without customization.
+  prerequisites:
+  - System installation completed successfully
+  - Multiple batches of test items with different receipt dates and expiry dates
+  - FIFO/FEFO functionality enabled in system configuration
+  - User with picking permissions logged in
+  test_steps:
+  - step_number: 1
+    action: Create multiple batches of the same test item with different receipt dates
+      and expiry dates
+    expected_result: System accepts and stores all batches with correct date attributes
+    data_to_capture:
+    - Batch numbers
+    - Receipt dates
+    - Expiry dates
+    - Quantities
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Generate picking list for the test item using standard picking template
+    expected_result: System generates picking list showing correct batch selection
+      based on FIFO/FEFO algorithm
+    data_to_capture:
+    - Generated picking list
+    - Batch selection order
+    - Algorithm applied
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify that batches are selected in correct chronological order (FIFO
+      for receipt dates, FEFO for expiry dates)
+    expected_result: System correctly prioritizes oldest receipt dates for FIFO and
+      earliest expiry dates for FEFO
+    data_to_capture:
+    - Actual selection order
+    - Expected order based on dates
+    - Algorithm accuracy
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - FIFO algorithm correctly selects batches based on receipt date chronology
+  - FEFO algorithm correctly selects batches based on expiry date priority
+  - Standard vendor algorithms function as specified without errors
+  regulatory_basis:
+  - FDA 21 CFR Part 211.142 - Warehousing procedures
+  - EU GMP Chapter 5 - Production requirements for stock rotation
+  risk_level: medium
+  data_integrity_requirements:
+  - Date attributes must be accurately maintained and unchangeable after transaction
+  - Rotation algorithms must be consistently applied across all inventory
+  - Batch selection must be traceable and reproducible
+  urs_requirements:
+  - 'URS-INV-003: Implement FIFO inventory rotation'
+  - 'URS-INV-004: Support FEFO rotation for expiry date management'
+  - 'URS-INV-005: Generate standard picking lists'
+  related_tests:
+  - OQ-001
+  - OQ-004
+  estimated_duration_minutes: 30
+  required_expertise:
+  - Inventory Rotation Principles
+  - Batch Management
+  - System Configuration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-003
+  test_name: Barcode Scanning Integration and Data Capture Verification
+  test_category: integration
+  gamp_category: 3
+  objective: Verify that the vendor's barcode integration module correctly captures
+    and processes scanned data into the inventory system in real-time.
+  prerequisites:
+  - Barcode scanner hardware connected and configured
+  - Inventory items with valid barcodes created in the system
+  - User with appropriate permissions to perform scanning operations
+  - Barcode integration module installed and activated
+  test_steps:
+  - step_number: 1
+    action: Navigate to the inventory receiving screen using vendor's standard interface
+    expected_result: Receiving screen loads successfully with barcode scanning field
+      visible
+    data_to_capture:
+    - Screen load time
+    - Interface responsiveness
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Scan barcode of a known inventory item using the connected scanner
+    expected_result: System automatically populates item details in the receiving
+      form
+    data_to_capture:
+    - Scan success rate
+    - Data population accuracy
+    - Time to populate data
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify the scanned item details match the item master record
+    expected_result: All item details (SKU, description, lot number) match master
+      data exactly
+    data_to_capture:
+    - Data accuracy percentage
+    - Mismatch details if any
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Complete the receiving transaction and confirm inventory update
+    expected_result: Inventory quantities update immediately in the system database
+    data_to_capture:
+    - Transaction completion time
+    - Inventory update timestamp
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Barcode scanning functionality operates without errors
+  - Scanned data populates inventory fields within 5 seconds
+  - 100% accuracy in data capture from barcode to system fields
+  - Real-time inventory updates occur within 30 seconds as specified
+  regulatory_basis:
+  - 21 CFR Part 211.68 - Automated equipment requirements
+  - Annex 11 - Electronic data capture validation requirements
+  risk_level: medium
+  data_integrity_requirements:
+  - Barcode data must maintain integrity during scanning and transmission
+  - No data corruption or loss during the scanning process
+  - Audit trail must record all scanning transactions
+  urs_requirements:
+  - 'URS-INV-007: Support barcode scanning using vendor''s barcode integration module'
+  - 'URS-INV-006: Track inventory quantities in real-time using standard database
+    updates'
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Inventory Operations
+  - Barcode Technology
+  - System Integration
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-004
+  test_name: Cycle Count Scheduling and Execution Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that the vendor's standard scheduling engine correctly generates
+    cycle count schedules and supports the counting process according to predefined
+    parameters.
+  prerequisites:
+  - Cycle count scheduling module configured with standard parameters
+  - Inventory items with varying ABC classifications in the system
+  - User with cycle count execution permissions
+  - Standard counting templates available and accessible
+  test_steps:
+  - step_number: 1
+    action: Access the cycle count scheduling module through the vendor's standard
+      interface
+    expected_result: Scheduling interface loads with all configuration options available
+    data_to_capture:
+    - Interface accessibility
+    - Configuration options available
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Generate a cycle count schedule using the vendor's default scheduling
+      algorithm
+    expected_result: System generates a complete schedule based on ABC classification
+      and frequency settings
+    data_to_capture:
+    - Schedule generation time
+    - Number of items scheduled
+    - ABC distribution
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Execute a cycle count for a scheduled location using the standard counting
+      template
+    expected_result: Counting template displays all required fields and allows data
+      entry
+    data_to_capture:
+    - Template completeness
+    - Data entry functionality
+    - User interface responsiveness
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Complete the count and submit discrepancies for reconciliation
+    expected_result: System processes count results and generates discrepancy report
+      using standard templates
+    data_to_capture:
+    - Processing time
+    - Discrepancy calculation accuracy
+    - Report generation success
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Cycle count schedules generate within 2 minutes using vendor defaults
+  - 100% of scheduled items appear in the counting template
+  - Discrepancy calculations match manual verification within 1% tolerance
+  - Standard reports generate within 5 minutes as specified in requirements
+  regulatory_basis:
+  - 21 CFR Part 211.142 - Warehousing procedures requirements
+  - EU GMP Annex 15 - Qualification and validation requirements for inventory control
+  risk_level: medium
+  data_integrity_requirements:
+  - Cycle count data must maintain accuracy throughout the process
+  - No unauthorized modifications to count results
+  - Complete audit trail of all counting activities
+  urs_requirements:
+  - 'URS-INV-008: Generate cycle count schedules using vendor''s standard scheduling
+    engine'
+  - 'URS-INV-009: Create inventory movement reports using pre-built templates'
+  - 'URS-INV-018: Generate inventory accuracy reports using standard reconciliation
+    features'
+  related_tests:
+  - OQ-001
+  - OQ-002
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Inventory Control
+  - Quality Assurance
+  - Data Analysis
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-005
+  test_name: Inventory Reorder Alerts and Minimum Stock Level Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that the system generates accurate reorder alerts when inventory
+    levels fall below predefined minimum thresholds using vendor's standard alerting
+    functionality.
+  prerequisites:
+  - System installed and configured with vendor default settings
+  - User with inventory management permissions logged in
+  - Test items with defined minimum stock levels configured
+  - Inventory levels below minimum threshold for test items
+  test_steps:
+  - step_number: 1
+    action: Access the inventory management module and navigate to the reorder alert
+      settings section
+    expected_result: System displays reorder alert configuration options using vendor's
+      standard interface
+    data_to_capture:
+    - Alert configuration screen screenshot
+    - Minimum stock level settings
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Review and document the minimum stock levels configured for test items
+      in the system
+    expected_result: System displays accurate minimum stock levels as per predefined
+      test data
+    data_to_capture:
+    - Minimum stock level values for test items
+    - Item master configuration details
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Perform inventory transactions to reduce stock levels below minimum thresholds
+      for test items
+    expected_result: System processes transactions and updates inventory quantities
+      in real-time
+    data_to_capture:
+    - Transaction details
+    - Updated inventory quantities
+    - Timestamp of transactions
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Monitor the system for automatic generation of reorder alerts
+    expected_result: System generates reorder alerts within 30 seconds of falling
+      below minimum levels
+    data_to_capture:
+    - Alert generation timestamp
+    - Alert content and format
+    - Affected items list
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - Reorder alerts are generated automatically when stock levels fall below minimum
+    thresholds
+  - Alerts are generated within 30 seconds of threshold breach
+  - Alert information includes correct item details and current stock levels
+  - System uses vendor's standard alerting functionality without customization
+  regulatory_basis:
+  - FDA 21 CFR Part 211.142 - Warehousing procedures
+  - EU GMP Annex 15 - Qualification and Validation
+  - 'GAMP 5 Guide: Category 3 Software Validation'
+  risk_level: medium
+  data_integrity_requirements:
+  - Alert generation must be consistent and reproducible
+  - Minimum stock level data must be accurately maintained
+  - Transaction history must be complete and auditable
+  urs_requirements:
+  - 'URS-INV-011: Generate reorder alerts based on minimum stock levels using standard
+    alerting'
+  related_tests:
+  - 'OQ-001: Inventory Tracking and Real-time Updates Verification'
+  - 'OQ-006: User Access Controls and Role-Based Security Verification'
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Inventory Management
+  - System Configuration
+  - Quality Assurance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-006
+  test_name: User Access Controls and Role-Based Security Verification
+  test_category: security
+  gamp_category: 3
+  objective: Verify that the system properly implements role-based access controls
+    using vendor's standard security module to ensure appropriate user permissions.
+  prerequisites:
+  - System installed with vendor's standard security module
+  - Multiple test user accounts with different role assignments
+  - Predefined user roles with specific permissions
+  - Access to user management administration functions
+  test_steps:
+  - step_number: 1
+    action: Log in with administrator credentials and access the user role management
+      section
+    expected_result: System displays user role configuration interface with vendor's
+      standard security settings
+    data_to_capture:
+    - Role management screen screenshot
+    - Available permission options
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Review and document the predefined user roles and their associated permissions
+    expected_result: System displays accurate role definitions with appropriate permission
+      assignments
+    data_to_capture:
+    - Role definitions
+    - Permission assignments
+    - User-role mappings
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Log in with a test user account having restricted permissions and attempt
+      to access inventory management functions
+    expected_result: System allows access only to authorized functions based on assigned
+      role permissions
+    data_to_capture:
+    - Successful access attempts
+    - Access denied messages
+    - Function availability
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Attempt to perform inventory transactions that exceed the user's assigned
+      permissions
+    expected_result: System prevents unauthorized transactions and generates appropriate
+      security alerts
+    data_to_capture:
+    - Transaction attempt results
+    - Security alert messages
+    - Audit trail entries
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - User access is properly restricted based on assigned roles and permissions
+  - Unauthorized access attempts are prevented and logged
+  - Role-based security functions as per vendor's standard implementation
+  - Audit trail captures all security-related events
+  regulatory_basis:
+  - FDA 21 CFR Part 11.10 - Controls for closed systems
+  - EU GMP Annex 11 - Computerised Systems
+  - 'GAMP 5 Guide: Security and Access Control'
+  risk_level: high
+  data_integrity_requirements:
+  - User access logs must be complete and tamper-proof
+  - Role permissions must be consistently enforced
+  - Security events must be properly recorded in audit trail
+  urs_requirements:
+  - 'URS-INV-017: Support user access controls through vendor''s role-based security'
+  related_tests:
+  - 'OQ-005: Inventory Reorder Alerts and Minimum Stock Level Verification'
+  - 'OQ-001: Inventory Tracking and Real-time Updates Verification'
+  estimated_duration_minutes: 60
+  required_expertise:
+  - System Security
+  - User Administration
+  - Quality Assurance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-007
+  test_name: Inventory Movement Report Generation and Data Accuracy Verification
+  test_category: functional
+  gamp_category: 3
+  objective: Verify that the system can generate standard inventory movement reports
+    using pre-built templates and that the data accurately reflects transaction history.
+  prerequisites:
+  - System is installed and operational
+  - Test user with report generation permissions is logged in
+  - Inventory transactions have been performed (receipts, issues, transfers)
+  - Vendor's standard report templates are available
+  test_steps:
+  - step_number: 1
+    action: Navigate to the inventory movement reports section using the vendor's
+      standard menu structure
+    expected_result: System displays available report templates for inventory movement
+      reporting
+    data_to_capture:
+    - Available report templates
+    - Date range selection options
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Select a predefined inventory movement report template and specify a date
+      range covering recent transactions
+    expected_result: System accepts the parameters and displays preview of report
+      criteria
+    data_to_capture:
+    - Selected template name
+    - Date range parameters
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Execute the report generation using the vendor's standard execution command
+    expected_result: System generates the report within 5 minutes as specified in
+      performance requirements
+    data_to_capture:
+    - Report generation time
+    - Any error messages
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Verify the report contains all required data fields including item codes,
+      quantities, dates, and transaction types
+    expected_result: Report displays complete transaction data matching the predefined
+      template format
+    data_to_capture:
+    - Report completeness
+    - Data field accuracy
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Compare report data against actual inventory transactions performed during
+      the test period
+    expected_result: Report data accurately reflects all inventory movements with
+      correct quantities and timestamps
+    data_to_capture:
+    - Data accuracy percentage
+    - Discrepancies found
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - System generates inventory movement reports using standard vendor templates
+  - Reports contain accurate and complete transaction data matching actual inventory
+    movements
+  - Report generation completes within 5 minutes as specified in URS-INV-014
+  - All required data fields are present and correctly formatted
+  regulatory_basis:
+  - FDA 21 CFR Part 11 - Electronic records requirements
+  - EU GMP Annex 11 - Computerized systems reporting capabilities
+  - Good Documentation Practices for report accuracy
+  risk_level: medium
+  data_integrity_requirements:
+  - Report data must accurately reflect transaction history without modification
+  - Data must be complete and consistent across all report fields
+  - Timestamp accuracy must be maintained for audit trail purposes
+  urs_requirements:
+  - 'URS-INV-009: Create inventory movement reports using pre-built templates'
+  - 'URS-INV-014: Standard reports shall generate within 5 minutes using vendor default
+    settings'
+  - 'URS-INV-016: Maintain inventory audit trail using vendor''s standard logging
+    functionality'
+  related_tests:
+  - 'OQ-001: Inventory Tracking and Real-time Updates Verification'
+  - 'OQ-004: Cycle Count Scheduling and Execution Verification'
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Inventory Management
+  - Report Generation
+  - Data Verification
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-008
+  test_name: Data Export to Excel and Integration Verification
+  test_category: integration
+  gamp_category: 3
+  objective: Verify that the system can export inventory data to Excel format using
+    built-in export functionality and maintain data integrity during the export process.
+  prerequisites:
+  - System is installed and operational
+  - Test user with data export permissions is logged in
+  - Inventory data is available for export
+  - Microsoft Excel or compatible spreadsheet software is installed
+  test_steps:
+  - step_number: 1
+    action: Navigate to the data export functionality using the vendor's standard
+      interface
+    expected_result: System displays export options including Excel format selection
+    data_to_capture:
+    - Available export formats
+    - Data selection options
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Select inventory data set for export (e.g., current stock levels, transaction
+      history)
+    expected_result: System displays data preview and export parameters
+    data_to_capture:
+    - Selected data set
+    - Record count
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Choose Excel format from the built-in export options and initiate the
+      export process
+    expected_result: System generates Excel file with appropriate file extension (.xlsx
+      or .xls)
+    data_to_capture:
+    - Export completion time
+    - File format generated
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 4
+    action: Open the exported Excel file and verify data structure and formatting
+    expected_result: Excel file opens successfully with data properly organized in
+      columns and rows
+    data_to_capture:
+    - File accessibility
+    - Data structure integrity
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 5
+    action: Compare exported data against source data in the inventory system
+    expected_result: All data fields match exactly between source system and exported
+      Excel file
+    data_to_capture:
+    - Data accuracy verification
+    - Any data corruption or loss
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 6
+    action: Verify that special characters, dates, and numeric values are correctly
+      formatted in Excel
+    expected_result: All data types maintain proper formatting during export process
+    data_to_capture:
+    - Format preservation
+    - Data type accuracy
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - System successfully exports inventory data to Excel format using built-in functionality
+  - Exported data maintains complete integrity and accuracy compared to source data
+  - Excel file is properly formatted and accessible without corruption
+  - All data types and special characters are preserved correctly
+  regulatory_basis:
+  - FDA 21 CFR Part 11 - Data export and integrity requirements
+  - EU GMP Annex 11 - Data transfer integrity
+  - Data integrity principles for electronic records
+  risk_level: medium
+  data_integrity_requirements:
+  - Data must be exported without alteration or corruption
+  - All data fields must be preserved during the export process
+  - Formatting must be maintained for dates, numbers, and special characters
+  urs_requirements:
+  - 'URS-INV-021: Export inventory data to Excel format using built-in export functionality'
+  - 'URS-INV-016: Maintain inventory audit trail using vendor''s standard logging
+    functionality'
+  - 'URS-INV-019: Archive transaction history using vendor''s data retention policies'
+  related_tests:
+  - 'OQ-001: Inventory Tracking and Real-time Updates Verification'
+  - 'OQ-007: Inventory Movement Report Generation and Data Accuracy Verification'
+  estimated_duration_minutes: 35
+  required_expertise:
+  - Data Export
+  - Excel Verification
+  - Integration Testing
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-009
+  test_name: Audit Trail Logging and Data Retention Verification
+  test_category: data_integrity
+  gamp_category: 3
+  objective: Verify that the system maintains a complete audit trail of inventory
+    transactions and properly archives data according to vendor retention policies.
+  prerequisites:
+  - System installed and configured
+  - Test inventory items created
+  - User with appropriate access rights logged in
+  - Historical transaction data available
+  test_steps:
+  - step_number: 1
+    action: Perform multiple inventory transactions including receipts, issues, and
+      transfers
+    expected_result: All transactions are successfully processed and recorded in the
+      system
+    data_to_capture:
+    - Transaction timestamps
+    - User IDs
+    - Transaction types
+    - Item quantities
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Access the vendor's standard audit trail logging functionality
+    expected_result: Complete audit trail showing all performed transactions with
+      user and timestamp details
+    data_to_capture:
+    - Audit trail completeness
+    - Data accuracy
+    - Log accessibility
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify data retention by checking archived transaction history
+    expected_result: Historical data is properly archived according to vendor's data
+      retention policies
+    data_to_capture:
+    - Archive accessibility
+    - Data integrity in archives
+    - Retention period compliance
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - All inventory transactions are logged in the audit trail
+  - Audit trail contains complete user and timestamp information
+  - Data retention complies with vendor policies
+  - Archived data maintains integrity and accessibility
+  regulatory_basis:
+  - 21 CFR Part 11 - Electronic Records
+  - EU Annex 11 - Computerised Systems
+  - FDA Data Integrity Requirements
+  risk_level: high
+  data_integrity_requirements:
+  - Complete and accurate audit trail maintenance
+  - Secure data archiving
+  - Prevention of data tampering
+  - Data retention compliance
+  urs_requirements:
+  - URS-INV-016
+  - URS-INV-019
+  related_tests:
+  - 'OQ-006: User Access Controls and Role-Based Security Verification'
+  - 'OQ-007: Inventory Movement Report Generation and Data Accuracy Verification'
+  estimated_duration_minutes: 45
+  required_expertise:
+  - Quality Assurance
+  - Data Integrity
+  - Regulatory Compliance
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+- test_id: OQ-010
+  test_name: Multi-User Concurrency and System Performance Verification
+  test_category: performance
+  gamp_category: 3
+  objective: Verify that the system supports the required number of concurrent users
+    and maintains performance standards under load.
+  prerequisites:
+  - System fully configured and operational
+  - Multiple user accounts with appropriate permissions
+  - Test inventory data available
+  - Performance monitoring tools configured
+  test_steps:
+  - step_number: 1
+    action: Simulate 25 concurrent users performing various inventory operations simultaneously
+    expected_result: System remains responsive and functional under concurrent user
+      load
+    data_to_capture:
+    - System response times
+    - Error rates
+    - Transaction completion rates
+    - Resource utilization
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 2
+    action: Monitor system performance metrics during concurrent usage
+    expected_result: Performance metrics remain within vendor-specified limits
+    data_to_capture:
+    - CPU usage
+    - Memory consumption
+    - Database response times
+    - Network latency
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  - step_number: 3
+    action: Verify inventory updates are reflected within 30 seconds during concurrent
+      usage
+    expected_result: All inventory updates are visible to other users within the specified
+      timeframe
+    data_to_capture:
+    - Update propagation time
+    - Data consistency across users
+    - Real-time update accuracy
+    verification_method: visual_inspection
+    acceptance_criteria: Result matches expected outcome
+    performed_by: QA Technician
+    timestamp_required: true
+  acceptance_criteria:
+  - System supports 25 concurrent users without performance degradation
+  - Inventory updates are reflected within 30 seconds
+  - System resources remain within vendor-specified limits
+  - No data corruption or loss during concurrent operations
+  regulatory_basis:
+  - FDA Guidance on Computerized Systems in Clinical Investigations
+  - EU GMP Annex 11 - Computerised Systems
+  risk_level: medium
+  data_integrity_requirements:
+  - Data consistency during concurrent access
+  - Real-time data synchronization
+  - Transaction integrity under load
+  urs_requirements:
+  - URS-INV-013
+  - URS-INV-015
+  related_tests:
+  - 'OQ-001: Inventory Tracking and Real-time Updates Verification'
+  - 'OQ-007: Inventory Movement Report Generation and Data Accuracy Verification'
+  estimated_duration_minutes: 60
+  required_expertise:
+  - Performance Testing
+  - System Administration
+  - Database Management
+  reviewed_by: QA Manager
+  data_retention_period: 10 years
+  execution_timestamp_required: true
+test_categories: {}
+requirements_coverage:
+  URS-001:
+  - OQ-001
+  - OQ-002
+  - OQ-003
+  - OQ-004
+  - OQ-005
+  URS-002:
+  - OQ-006
+  - OQ-007
+  - OQ-008
+  - OQ-009
+  - OQ-010
+  URS-003: []
+risk_coverage:
+  low: 0
+  medium: 0
+  high: 0
+compliance_coverage:
+  21_cfr_part_11: true
+  gamp5: true
+  alcoa_plus: true
+total_test_count: 10
+estimated_execution_time: 455
+coverage_percentage: 0.0
+generation_timestamp: '2025-11-29T14:46:16.648492Z'
+generation_method: LLMTextCompletionProgram_deepseek/deepseek-chat
+validation_approach: ''
+created_by: oq_generation_agent_v2_progressive
+review_required: true
+pharmaceutical_compliance:
+  alcoa_plus_compliant: true
+  gamp5_compliant: true
+  cfr_part_11_compliant: true
+  audit_trail_verified: true
+  data_integrity_assured: true
+alcoa_plus_metadata: {}
+is_original: true
+version: '1.0'
+immutable: true
+locked: false
+validated: true
+reconciled: true
+cross_verified: true
+corrections: []
+error_log: []
+audit_trail: {}
+format: yaml
+encoding: utf-8
+data_schema: {}
+metadata: {}
+retention_period: 7_years
+encrypted: false
+protected: true
+backed_up: false
+backup_status: pending
+accessible: true
+retrieval_time: 0.1
+searchable: true
+indexed: true
+export_formats:
+- json
+- xml
+- csv
+download_options:
+- json
+- xml
+- pdf
+system_version: 1.0.0
+change_history: []
+related_records: []
+dependencies: []
