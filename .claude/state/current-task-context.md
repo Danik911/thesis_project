@@ -1,51 +1,70 @@
-# Current Task Context: 3.15
+# Current Task Context: 4.1
 
 ## Task File
-PRPs/tasks/3.15-hil-integration-fixes.md
+PRPs/tasks/4.1-terraform-ecs-deploy.md
 
 ## Task Content
 
-### Status
-**PENDING**
+### Task P4.1 – Terraform ECS & Fargate Deployment
 
-### Priority
-**CRITICAL** - Fixes blocking issues discovered during HIL integration testing
+#### What to Do
+- Author Terraform modules for ECS cluster, task definitions, and Fargate services (**API, Worker, and Frontend**).
+- Configure Service Auto Scaling based on SQS queue depth (Worker) and CPU/Memory utilization (API/Frontend).
+- Wire ECS execution role with access to pull images from ECR and read secrets from AWS Secrets Manager.
 
-### Objective
-Fix critical bugs discovered during HIL integration testing and complete the end-to-end workflow:
-1. Fix Langfuse `@observe` decorator hanging on file uploads
-2. Fix RecursionError in logging system
-3. **Implement workflow re-execution after human approval** (CRITICAL GAP)
-4. Clean up debug logging added during investigation
+#### Dependencies
+- Builds on Terraform backend (Task P0.3), IAM roles (Task P0.4), and Docker optimizations (Task P3.1).
 
-### Issues to Fix
+#### Best Practices
+- Parameterize container memory/cpu to allow environment-specific overrides.
+- Use Terraform `lifecycle` blocks to prevent accidental replacement of stateful resources.
+- Enable container insights for CloudWatch metrics to aid LangFuse correlation.
 
-#### Issue 1: POST /jobs Hanging - `net::ERR_EMPTY_RESPONSE`
-- Langfuse `@observe` decorator serializes file uploads, causing hangs
-- Current workaround: `@observe` decorator commented out
+#### Code Example
+```hcl
+resource "aws_ecs_service" "api" {
+  name            = "compliance-api"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.api.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+  network_configuration {
+    subnets         = var.private_subnets
+    assign_public_ip = false
+    security_groups  = [aws_security_group.api.id]
+  }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.api.arn
+    container_name   = "api"
+    container_port   = 8080
+  }
+}
+```
 
-#### Issue 2: RecursionError in Logging
-- Logging initialization timing issue
-- Recursive WeakRef lookups during early access
+#### Testing Strategy
+- Run `terraform plan` in CI with `-lock=false` to ensure no drift.
+- Deploy to staging workspace and validate health checks before promoting to production.
+- Confirm SQS scaling policies trigger desired count changes under load test.
 
-#### Issue 3: CRITICAL - Worker Never Re-Executes Workflow After Approval
-- Worker polls for APPROVED jobs but only logs, never re-executes
-- Missing: Fetch approval decision, inject HumanResponseEvent, resume workflow
-
-### Success Criteria
-- Fix 1: Langfuse tracing without file serialization
-- Fix 2: No RecursionError on startup/requests
-- Fix 3: Complete workflow resumption after approval
-- Cleanup: Remove debug prints, keep HTTP middleware
-
-### Dependencies
-- Task 3.13 completed (Backend HIL API)
-- Task 3.14 completed (Frontend Approval UI)
-- PostgreSQL database with `approval_records` table
-- Langfuse SDK installed
+#### Common Issues to Avoid
+- Forgetting to pin Terraform provider versions leading to unexpected diffs.
+- Not granting CloudWatch logging permissions, resulting in silent failure diagnostics.
+- Hardcoding subnets/security groups; use data sources to fetch from VPC module.
 
 ## Task Metadata
-- Task ID: 3.15
-- Phase: 3 - Frontend Dashboard
-- Started: 2025-11-26 12:44:44
+- Task ID: 4.1
+- Phase: 4 - AWS Deployment
+- Started: 2025-11-30T11:15:00
 - Workflow Status: INITIALIZED
+
+## Project Context
+- Project Root: C:\Users\anteb\Desktop\Courses\Projects\thesis_project
+- Existing Dockerfiles: Dockerfile.api, Dockerfile.worker, Dockerfile.frontend
+- AWS Directory: aws/ (contains iam-policies/, scripts/)
+- Terraform Directory: aws/terraform/ (to be created)
+- Region: eu-west-2 (London)
+
+## Verified Dependencies
+- ✅ Task 0.3 - Terraform Backend (user confirmed)
+- ✅ Task 0.4 - IAM Roles (user confirmed)
+- ✅ Task 3.1 - Docker Multistage (Dockerfiles exist)

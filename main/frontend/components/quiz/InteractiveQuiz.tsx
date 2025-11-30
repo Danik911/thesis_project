@@ -10,6 +10,7 @@ export default function InteractiveQuiz() {
   const [retakeKey, setRetakeKey] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
   // Randomly select 10 questions from the pool of 20
@@ -24,14 +25,15 @@ export default function InteractiveQuiz() {
 
   const handleSelectAnswer = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
+    setShowFeedback(true);
+
+    // Save answer immediately
+    const newAnswers = [...userAnswers];
+    newAnswers[currentQuestion] = answerIndex;
+    setUserAnswers(newAnswers);
   };
 
   const handleNext = () => {
-    // Save the selected answer
-    const newAnswers = [...userAnswers];
-    newAnswers[currentQuestion] = selectedAnswer;
-    setUserAnswers(newAnswers);
-
     // Check if this was the last question
     if (currentQuestion === selectedQuestions.length - 1) {
       setShowResults(true);
@@ -39,6 +41,7 @@ export default function InteractiveQuiz() {
       // Move to next question
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
+      setShowFeedback(false);
     }
   };
 
@@ -47,6 +50,7 @@ export default function InteractiveQuiz() {
     setCurrentQuestion(0);
     setUserAnswers(new Array(10).fill(null));
     setSelectedAnswer(null);
+    setShowFeedback(false);
     setShowResults(false);
   };
 
@@ -101,7 +105,12 @@ export default function InteractiveQuiz() {
           {/* Progress pills - showing 10 questions */}
           <div className="flex gap-2">
             {[...Array(10)].map((_, i) => (
-              <div key={i} className="h-1 w-12 bg-slate-700 rounded-full" />
+              <div
+                key={i}
+                className={`h-1 w-12 rounded-full transition-colors duration-300 ${i < currentQuestion ? 'bg-cyan-500' :
+                    i === currentQuestion ? 'bg-cyan-400' : 'bg-slate-700'
+                  }`}
+              />
             ))}
           </div>
         </motion.div>
@@ -115,6 +124,7 @@ export default function InteractiveQuiz() {
           currentQuestion={currentQuestion + 1}
           totalQuestions={selectedQuestions.length}
           selectedAnswer={selectedAnswer}
+          showFeedback={showFeedback}
           onSelectAnswer={handleSelectAnswer}
           onNext={handleNext}
         />

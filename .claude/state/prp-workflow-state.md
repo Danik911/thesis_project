@@ -1,82 +1,125 @@
 # PRP Workflow State
 
 ## Current Task
-- **Task ID:** None (Task 3.15 completed)
-- **Task Name:** N/A
-- **Phase:** 3 - Frontend Dashboard
-- **Status:** idle
-- **Current Agent:** none
-- **Last Completed:** 3.15 - HIL Integration Bug Fixes (2025-11-26)
+- **Task ID:** 4.1
+- **Task Name:** Terraform ECS & Fargate Deployment
+- **Phase:** 4 - AWS Deployment
+- **Status:** in-progress
+- **Current Agent:** Main Orchestrator
+- **Started:** 2025-11-30T11:15:00
+- **Last Updated:** 2025-11-30T11:15:00
 
 ---
 
-## Last Completed Task: 3.15
+## Workflow Progress
+
+### Agent Sequence
+1. ✅ **Main Orchestrator** → Task initialization
+2. ✅ **context-collector** → Research & context gathering
+   - Result: `.claude/state/results/context-collector-20251130-111500.md`
+3. ✅ **task-executor** → Implementation
+   - Result: `.claude/state/results/task-executor-20251130-120000.md`
+4. ✅ **tester-agent** → Validation & testing
+   - Result: `.claude/state/results/tester-agent-20251130-114909.md`
+5. ⏸️ **debugger** (conditional) → Issue resolution (NOT REQUIRED - ALL TESTS PASSED)
+   - Result: `.claude/state/results/debugger-{timestamp}.md`
+
+**Status Legend:**
+- ⏸️ Pending
+- 🔄 In Progress
+- ✅ Completed
+- ❌ Failed
+
+---
+
+## Previous Completed Task: 3.15
 
 ### Summary
 **Task 3.15: HIL Integration Bug Fixes and Workflow Completion**
 - **Status:** ✅ DONE
-- **Started:** 2025-11-26 12:44:44
-- **Completed:** 2025-11-26 21:05:48
-- **Duration:** ~8.5 hours (with debugging iterations)
-
-### Issues Fixed (9/10)
-1. ✅ POST /jobs hanging - Manual Langfuse `start_span()`
-2. ✅ RecursionError - Logging config at top of app.py
-3. ✅ Workflow resumption - APPROVED in restartable_statuses
-4. ✅ Langfuse API error - Changed to `start_span()`
-5. ✅ HIL endpoints hanging - Removed `@observe` from 6 endpoints
-6. ✅ Memory exhaustion - Resolved by removing `@observe`
-7. ⚠️ WSL2 networking - Workaround: restart API container
-8. ✅ 404 on approval - Database-first lookup pattern
-9. ✅ Token expiration (401) - Added retry with 1s delay
-10. ✅ DeepSeek JSON parsing - Removed max_tokens override
-
-### Verification Evidence
-- **Job ID:** `900c54af-fada-424a-991f-bf55ae86261a`
-- **Test Suite:** `OQ-SUITE-2105` with 20 test cases
-- **Output File:** `/app/output/test_suites/test_suite_OQ-SUITE-2105_20251126_210548.json`
-- **Processing Time:** 541.88 seconds (~9 minutes)
-
-### Known UX Issue (Deferred)
-401 errors appear in browser console during token refresh polling. The retry mechanism works correctly but console.error() is noisy. Future cleanup in `useJobStatusPolling.ts`.
+- **Completed:** 2025-11-26
 
 ---
 
 ## Workflow History
 
-### Task 3.15 Agent Sequence
-1. ✅ **context-collector** → Research & context gathering
-   - Result: `results/context-collector-20251126-143000.md` (archived)
-2. ✅ **task-executor** → Implementation
-   - Result: `results/task-executor-20251126-130214.md` (archived)
-3. ✅ **tester-agent** → Validation & testing
-   - Result: `results/tester-agent-20251126-130914.md` (archived)
-4. ✅ **debugger** → Multiple debugging sessions
-   - Results: `debugger-20251126-*.md` (archived)
+*Workflow initiated 2025-11-30 for Task 4.1*
 
 ---
 
-## Files Modified (Task 3.15)
+## Critical Flags & Checks
 
-### Modified
-- `main/api/app.py` - Replaced @observe with manual tracing, logging config, database-first lookup
-- `main/api/dependencies.py` - Removed debug prints
-- `main/api/worker.py` - Added HIL recovery logic
-- `main/api/job_repository.py` - Added APPROVED to restartable_statuses
-- `main/api/observability.py` - Fixed health check to use `start_span()`
-- `main/frontend/hooks/useJobStatusPolling.ts` - Added 401 retry logic
-- `main/src/agents/oq_generator/generator_v2.py` - Removed max_tokens override
-
----
-
-## Compliance Status
-
+### Compliance & Error Handling
 - **NO_FALLBACK_VIOLATIONS:** 0
 - **GAMP5_COMPLIANCE_CHECK:** PASS
 - **ALCOA_PLUS_VALIDATION:** PASS
-- **USER_CONFIRMATION:** Received (2025-11-26)
+- **EXPLICIT_ERROR_HANDLING:** PASS
+
+### User Confirmation
+- **USER_CONFIRMATION_REQUIRED:** true
+- **SUCCESS_CLAIMED_WITHOUT_VERIFICATION:** false
+
+### Dependencies
+- **PACKAGE_INSTALLATIONS_NEEDED:** []
+- **MISSING_DEPENDENCIES:** []
+- **BLOCKED_DEPENDENCIES:** []
+- **VERIFIED_DEPENDENCIES:** [Task 0.3 - Terraform Backend, Task 0.4 - IAM Roles, Task 3.1 - Docker Multistage]
 
 ---
 
-**Last Modified:** 2025-11-26 21:10:00
+## Files Modified
+
+### Created (22 files)
+**Root Module (5 files):**
+- `aws/terraform/versions.tf`
+- `aws/terraform/variables.tf`
+- `aws/terraform/backend.tf`
+- `aws/terraform/main.tf`
+- `aws/terraform/outputs.tf`
+
+**ECR Module (3 files):**
+- `aws/terraform/modules/ecr/main.tf`
+- `aws/terraform/modules/ecr/variables.tf`
+- `aws/terraform/modules/ecr/outputs.tf`
+
+**ECS Cluster Module (3 files):**
+- `aws/terraform/modules/ecs-cluster/main.tf`
+- `aws/terraform/modules/ecs-cluster/variables.tf`
+- `aws/terraform/modules/ecs-cluster/outputs.tf`
+
+**SQS Module (3 files):**
+- `aws/terraform/modules/sqs/main.tf`
+- `aws/terraform/modules/sqs/variables.tf`
+- `aws/terraform/modules/sqs/outputs.tf`
+
+**ALB Module (3 files):**
+- `aws/terraform/modules/alb/main.tf`
+- `aws/terraform/modules/alb/variables.tf`
+- `aws/terraform/modules/alb/outputs.tf`
+
+**ECS Service Module (3 files):**
+- `aws/terraform/modules/ecs-service/main.tf`
+- `aws/terraform/modules/ecs-service/variables.tf`
+- `aws/terraform/modules/ecs-service/outputs.tf`
+
+**Environment Configs (2 files):**
+- `aws/terraform/environments/staging.tfvars`
+- `aws/terraform/environments/production.tfvars`
+
+### Modified
+*No existing files modified*
+
+### Deleted
+*No files deleted*
+
+---
+
+## Notes
+
+- User confirmed prerequisite tasks (0.3, 0.4, 3.1) are complete
+- Dockerfiles for API, Worker, Frontend exist at project root
+
+---
+
+**Last Modified:** 2025-11-30T11:15:00
 **Workflow Version:** 1.0

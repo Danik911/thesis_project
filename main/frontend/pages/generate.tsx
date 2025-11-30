@@ -11,8 +11,44 @@ import TemplateEditor from '@/components/TemplateEditor';
 import { useJobStatusPolling } from '@/hooks/useJobStatusPolling';
 import { authenticatedFetch, getApiBaseUrl } from '@/lib/authenticatedFetch';
 import { URSTemplate, URSTemplateData, cloneTemplateData } from '@/lib/templates';
+import { motion, AnimatePresence } from 'framer-motion';
+import Background3D from '@/components/Background3D';
+import InteractiveQuiz from '@/components/quiz/InteractiveQuiz';
 
-type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED' | 'AWAITING_APPROVAL';
+type JobStatus = 'IDLE' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED';
+
+const STAGE_PROGRESS_MAP: Record<string, number> = {
+    queued: 0,
+    ingestion: 10,
+    categorization: 25,
+    hil_waiting: 30,
+    planning: 45,
+    agent_execution: 65,
+    oq_generation: 85,
+    completion: 100
+};
+
+const STAGE_LABEL_MAP: Record<string, string> = {
+    queued: 'Queued',
+    ingestion: 'Loading Document',
+    categorization: 'GAMP-5 Classification',
+    hil_waiting: 'Awaiting Human Approval',
+    planning: 'Planning Test Strategy',
+    agent_execution: 'Executing AI Agents',
+    oq_generation: 'Generating Test Cases',
+    completion: 'Finalizing Results'
+};
+
+const STAGE_ORDER_MAP: Record<string, number> = {
+    queued: 0,
+    ingestion: 1,
+    categorization: 2,
+    hil_waiting: 3,
+    planning: 4,
+    agent_execution: 5,
+    oq_generation: 6,
+    completion: 7
+};
 
 export default function Generate() {
     const { user, isLoaded } = useUser();
@@ -79,6 +115,16 @@ export default function Generate() {
         const saved = localStorage.getItem('displayedProgress');
         return saved ? parseFloat(saved) : 0;
     });
+
+    const lastStageTimestampRef = useRef<number | null>(null);
+    const lastStageOrderRef = useRef<number>(-1);
+    const progressJobRef = useRef<string | null>(null);
+
+    const resetProgressGuards = useCallback(() => {
+        lastStageTimestampRef.current = null;
+        lastStageOrderRef.current = -1;
+        progressJobRef.current = null;
+    }, []);
 
     // Validation state - prevents rendering stale job UI before server validation
     // Starts true if there's a saved job that needs checking
@@ -158,6 +204,102 @@ export default function Generate() {
         setTemplateData(null);
     };
 
+    // /jobs/{id} polling is the single source of truth for progress and stage data.
+    const applyAuthoritativeProgress = useCallback((payload: {
+        job_id?: string | null;
+        created_at?: string | null;
+        status?: string | null;
+        current_stage?: string | null;
+        current_stage_label?: string | null;
+        progress_percentage?: number | null;
+        stage_started_at?: string | null;
+    }) => {
+        const payloadJobId = payload.job_id ?? jobId ?? null;
+        if (payloadJobId && progressJobRef.current && payloadJobId !== progressJobRef.current) {
+            resetProgressGuards();
+        }
+        if (payloadJobId) {
+            progressJobRef.current = payloadJobId;
+        }
+
+        const normalizedStatus = payload.status ? payload.status.toUpperCase() : null;
+        const isTerminalStatus = normalizedStatus ? ['COMPLETED', 'FAILED', 'REJECTED'].includes(normalizedStatus) : false;
+
+        let stageFromPayload = payload.current_stage ?? null;
+        if (isTerminalStatus) {
+            stageFromPayload = 'completion';
+        }
+
+        const stageOrder = stageFromPayload ? STAGE_ORDER_MAP[stageFromPayload] ?? null : null;
+        const stageTimestampMs = payload.stage_started_at ? Date.parse(payload.stage_started_at) : null;
+        const createdAtMs = payload.created_at ? Date.parse(payload.created_at) : null;
+        const jobStartReference = jobStartTime ?? createdAtMs ?? null;
+
+        const stageAfterJobStart =
+            stageTimestampMs === null ||
+            jobStartReference === null ||
+            (!Number.isNaN(stageTimestampMs) && stageTimestampMs >= jobStartReference - 1000);
+
+        const timestampForward =
+            stageTimestampMs === null ||
+            lastStageTimestampRef.current === null ||
+            stageTimestampMs >= lastStageTimestampRef.current;
+
+        const orderForward =
+            stageOrder === null ||
+            lastStageOrderRef.current === -1 ||
+            stageOrder >= lastStageOrderRef.current;
+
+        const shouldIgnore =
+            !isTerminalStatus &&
+            (!stageAfterJobStart || (stageTimestampMs !== null && !timestampForward) || (stageTimestampMs === null && !orderForward));
+
+        if (shouldIgnore) {
+            console.log('[PROGRESS-DEBUG] Ignoring stale stage payload', {
+                stage: stageFromPayload,
+                stageStartedAt: payload.stage_started_at,
+                progress: payload.progress_percentage
+            });
+            return;
+        }
+
+        if (stageTimestampMs !== null && !Number.isNaN(stageTimestampMs)) {
+            lastStageTimestampRef.current = stageTimestampMs;
+        } else if (isTerminalStatus) {
+            lastStageTimestampRef.current = Date.now();
+        }
+
+        if (stageOrder !== null) {
+            lastStageOrderRef.current = Math.max(lastStageOrderRef.current, stageOrder);
+        }
+
+        const hasStageField = Object.prototype.hasOwnProperty.call(payload, 'current_stage') || isTerminalStatus;
+        const hasLabelField = Object.prototype.hasOwnProperty.call(payload, 'current_stage_label') || hasStageField;
+        const hasProgressField = Object.prototype.hasOwnProperty.call(payload, 'progress_percentage') || hasStageField;
+
+        if (hasStageField) {
+            setCurrentStage(stageFromPayload);
+        }
+
+        if (hasLabelField) {
+            const labelFromPayload = payload.current_stage_label ?? null;
+            const fallbackLabel = stageFromPayload ? STAGE_LABEL_MAP[stageFromPayload] ?? null : null;
+            setCurrentStageLabel(labelFromPayload ?? fallbackLabel ?? null);
+        }
+
+        if (hasProgressField) {
+            if (typeof payload.progress_percentage === 'number') {
+                setProgressPercentage(payload.progress_percentage);
+            } else if (stageFromPayload && STAGE_PROGRESS_MAP[stageFromPayload] !== undefined) {
+                setProgressPercentage(STAGE_PROGRESS_MAP[stageFromPayload]);
+            } else if (isTerminalStatus) {
+                setProgressPercentage(100);
+            } else {
+                setProgressPercentage(null);
+            }
+        }
+    }, [jobId, jobStartTime, resetProgressGuards]);
+
     const fetchJobs = useCallback(async () => {
         if (!isLoaded || !user) return;
         try {
@@ -193,6 +335,9 @@ export default function Generate() {
         }
     }, [approvalStatus]);
 
+    // Approval polling stays focused on human-in-the-loop flows.
+    // Progress/state updates now rely exclusively on pollJobStatus to avoid race conditions.
+
     useEffect(() => {
         fetchJobs();
     }, [fetchJobs]);
@@ -206,8 +351,9 @@ export default function Generate() {
             localStorage.setItem('activeJobId', jobId);
         } else {
             localStorage.removeItem('activeJobId');
+            resetProgressGuards();
         }
-    }, [jobId]);
+    }, [jobId, resetProgressGuards]);
 
     useEffect(() => {
         if (status) {
@@ -289,6 +435,12 @@ export default function Generate() {
 
         setStatus('PENDING');
         setLogs(['Initializing upload...', 'Validating file format...', 'Checking GAMP-5 compliance requirements...']);
+        // Clear any stale progress before the new job starts polling
+        setCurrentStage(null);
+        setCurrentStageLabel(null);
+        setProgressPercentage(null);
+        setDisplayedProgress(0);
+        resetProgressGuards();
 
         try {
             const formData = new FormData();
@@ -422,20 +574,10 @@ export default function Generate() {
 
                 // Normalize status to uppercase for comparison
                 const normalizedStatus = data.status.toUpperCase();
-                console.log(`[DEBUG] Job ${id} status: ${normalizedStatus}`);
+                console.log(`[DEBUG] Job ${id} status: ${normalizedStatus}, stage: ${data.current_stage}, label: ${data.current_stage_label}, progress: ${data.progress_percentage}%`);
 
-                // Extract progress tracking data from backend response
-                if (data.current_stage !== undefined) {
-                    setCurrentStage(data.current_stage);
-                }
-                if (data.current_stage_label !== undefined) {
-                    setCurrentStageLabel(data.current_stage_label);
-                }
-                if (data.progress_percentage !== undefined) {
-                    setProgressPercentage(data.progress_percentage);
-                    // Note: We do NOT update displayedProgress here - it comes from JobProgress callback
-                    // This prevents the bar from jumping backwards when backend lags behind animation
-                }
+                // Synchronize stage/progress from the authoritative job endpoint only.
+                applyAuthoritativeProgress(data);
 
                 if (normalizedStatus === 'COMPLETED') {
                     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
@@ -505,11 +647,14 @@ export default function Generate() {
                     // Keep polling to get updated timeout countdown
                 } else {
                     // Still processing (PENDING or PROCESSING)
-                    // Update status if it changed (e.g., PENDING → PROCESSING)
-                    if (normalizedStatus !== status) {
-                        console.log(`[DEBUG] Status changed: ${status} → ${normalizedStatus}`);
-                        setStatus(normalizedStatus as JobStatus);
-                    }
+                    // Use setState callback to avoid stale closure - compare against current state
+                    setStatus(prevStatus => {
+                        if (normalizedStatus !== prevStatus) {
+                            console.log(`[DEBUG] Status changed: ${prevStatus} → ${normalizedStatus}`);
+                            return normalizedStatus as JobStatus;
+                        }
+                        return prevStatus;
+                    });
                 }
 
             } catch (e: any) {
@@ -533,7 +678,7 @@ export default function Generate() {
                 isPollingInFlight.current = false;
             }
         }, 2000);
-    }, [getToken, fetchJobs]);
+    }, [getToken, fetchJobs, applyAuthoritativeProgress]);
 
     // Resume async operations on mount (state already initialized via lazy init)
     // CRITICAL: Validate that localStorage job still exists on server before trusting it
@@ -589,17 +734,7 @@ export default function Generate() {
                     }
 
                     // Restore progress state from server (in case localStorage is stale)
-                    if (jobData.current_stage !== undefined) {
-                        setCurrentStage(jobData.current_stage);
-                    }
-                    if (jobData.current_stage_label !== undefined) {
-                        setCurrentStageLabel(jobData.current_stage_label);
-                    }
-                    if (jobData.progress_percentage !== undefined) {
-                        setProgressPercentage(jobData.progress_percentage);
-                        // Note: We do NOT update displayedProgress here - it comes from JobProgress callback
-                        // This prevents the bar from jumping backwards when backend lags behind animation
-                    }
+                    applyAuthoritativeProgress(jobData);
 
                     // Resume polling if still active
                     if (serverStatus === 'PENDING' || serverStatus === 'PROCESSING') {
@@ -712,6 +847,7 @@ export default function Generate() {
         setInputMode('select');
         setSelectedTemplate(null);
         setTemplateData(null);
+        resetProgressGuards();
 
         // Explicit localStorage clears (belt and suspenders - useEffects should handle this too)
         localStorage.removeItem('activeJobId');
@@ -732,6 +868,8 @@ export default function Generate() {
         setStatus('PROCESSING');
     };
 
+    const hasAuthoritativeProgress = progressPercentage !== null || currentStage !== null || currentStageLabel !== null;
+
     if (!isLoaded) {
         return (
             <Layout>
@@ -751,23 +889,27 @@ export default function Generate() {
                 <title>Generate Test Suite - PharmaGen AI</title>
                 <meta name="description" content="GAMP-5 compliant pharmaceutical test generation dashboard" />
             </Head>
-            <Layout>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                    {/* Welcome Section */}
-                    <div className="flex justify-between items-end">
+            {/* 3D Background Layer */}
+            <Background3D />
+
+            <Layout>
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+                    {/* Header / Hero Section */}
+                    <div className="flex justify-between items-end border-b border-slate-800/50 pb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">
-                                Welcome, <span className="text-blue-400">{displayName}</span>
+                            <h1 className="font-display text-5xl font-bold text-white tracking-tight">
+                                Validation <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Intelligence</span>
                             </h1>
-                            <p className="mt-2 text-slate-400">
-                                Manage your pharmaceutical test generation workflows
+                            <p className="mt-4 text-xl text-slate-400 font-light max-w-2xl">
+                                Generate GAMP-5 compliant test suites with AI precision.
                             </p>
                         </div>
-                        {status !== 'IDLE' && (
+                        {['COMPLETED', 'FAILED', 'EXPIRED'].includes(status) && (
                             <button
                                 onClick={resetDashboard}
-                                className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2"
+                                className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2 px-4 py-2 rounded-full border border-slate-700 hover:border-slate-500 hover:bg-slate-800/50"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -790,247 +932,305 @@ export default function Generate() {
                     )}
 
                     {/* Main Content Area */}
-                    <div className="min-h-[500px]">
-                        {status === 'AWAITING_APPROVAL' && (
-                            <div className="animate-fade-in">
-                                <div className="max-w-3xl mx-auto">
-                                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-8 text-center space-y-6">
-                                        <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto">
-                                            <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="min-h-[600px]">
+                        <AnimatePresence mode="wait">
+                            {status === 'AWAITING_APPROVAL' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="max-w-3xl mx-auto"
+                                >
+                                    <div className="glass-panel p-8 text-center space-y-6 border-amber-500/30 bg-amber-500/5">
+                                        <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                                            <svg className="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
                                         <div>
-                                            <h3 className="text-2xl font-bold text-amber-400 mb-2">Awaiting Human Approval</h3>
-                                            <p className="text-slate-300 text-lg mb-2">
+                                            <h3 className="text-3xl font-display font-bold text-amber-400 mb-2">Human Insight Required</h3>
+                                            <p className="text-slate-300 text-lg mb-4">
                                                 {approvalStatus?.approval_reason || 'AI detected ambiguity in categorization'}
                                             </p>
+
                                             {approvalStatus?.categorization_result && (
-                                                <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                                                    <p className="text-sm text-slate-400 mb-1">AI Recommendation</p>
-                                                    <p className="text-xl font-bold text-blue-400 mb-2">
-                                                        Category {approvalStatus.categorization_result.gamp_category}
-                                                    </p>
-                                                    <p className="text-sm text-slate-300">
-                                                        Confidence: <span className="font-bold">
-                                                            {(approvalStatus.categorization_result.confidence_score * 100).toFixed(0)}%
+                                                <div className="inline-block text-left mt-4 p-6 bg-slate-900/80 rounded-xl border border-slate-700/50 backdrop-blur-xl">
+                                                    <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">AI Recommendation</p>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-4xl font-display font-bold text-white">
+                                                            {approvalStatus.categorization_result.gamp_category}
                                                         </span>
-                                                    </p>
+                                                        <div className="h-10 w-px bg-slate-700"></div>
+                                                        <div>
+                                                            <p className="text-sm text-blue-400 font-medium">Confidence Score</p>
+                                                            <p className="text-2xl font-bold text-white">
+                                                                {(approvalStatus.categorization_result.confidence_score * 100).toFixed(0)}%
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
+
                                             {approvalStatus?.timeout_remaining_seconds != null && (
-                                                <p className="text-sm text-amber-300 mt-4">
-                                                    Time remaining: {Math.floor(approvalStatus.timeout_remaining_seconds / 60)}:{String(approvalStatus.timeout_remaining_seconds % 60).padStart(2, '0')}
+                                                <p className="text-sm text-amber-300/80 mt-6 font-mono">
+                                                    AUTO-APPROVAL IN: {Math.floor(approvalStatus.timeout_remaining_seconds / 60)}:{String(approvalStatus.timeout_remaining_seconds % 60).padStart(2, '0')}
                                                 </p>
                                             )}
                                         </div>
                                         <button
                                             onClick={() => setShowApprovalModal(true)}
-                                            className="btn-primary bg-amber-600 hover:bg-amber-700"
+                                            className="btn-primary bg-amber-600 hover:bg-amber-700 text-lg px-8 py-4 shadow-amber-500/20"
                                         >
-                                            Review Approval Request
+                                            Review Decision
                                         </button>
                                     </div>
-                                </div>
-                            </div>
-                        )}
+                                </motion.div>
+                            )}
 
-                        {status === 'IDLE' && (
-                            <div className="animate-fade-in space-y-8">
-                                {/* Mode Toggle - only show when not editing template and no file selected */}
-                                {inputMode !== 'edit' && !selectedFile && (
-                                    <div className="flex justify-center gap-4 mb-8">
-                                        <button
-                                            onClick={() => setInputMode('select')}
-                                            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
-                                                inputMode === 'select'
-                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                                                    : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
-                                            }`}
+                            {status === 'IDLE' && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="space-y-12"
+                                >
+                                    {/* Input Mode Selection */}
+                                    {inputMode !== 'edit' && !selectedFile && (
+                                        <div className="flex justify-center gap-6">
+                                            <button
+                                                onClick={() => setInputMode('select')}
+                                                className={`group relative px-8 py-6 rounded-2xl transition-all duration-300 border ${inputMode === 'select'
+                                                    ? 'bg-blue-600/10 border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.2)]'
+                                                    : 'bg-slate-800/40 border-slate-700 hover:bg-slate-800/60 hover:border-slate-600'
+                                                    }`}
+                                            >
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className={`p-3 rounded-xl ${inputMode === 'select' ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-400 group-hover:text-white'} transition-colors`}>
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                                        </svg>
+                                                    </div>
+                                                    <span className="font-medium text-lg">Use Template</span>
+                                                </div>
+                                            </button>
+
+                                            <button
+                                                onClick={() => setInputMode('upload')}
+                                                className={`group relative px-8 py-6 rounded-2xl transition-all duration-300 border ${inputMode === 'upload'
+                                                    ? 'bg-blue-600/10 border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.2)]'
+                                                    : 'bg-slate-800/40 border-slate-700 hover:bg-slate-800/60 hover:border-slate-600'
+                                                    }`}
+                                            >
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className={`p-3 rounded-xl ${inputMode === 'upload' ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-400 group-hover:text-white'} transition-colors`}>
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                        </svg>
+                                                    </div>
+                                                    <span className="font-medium text-lg">Upload URS File</span>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Template Selector */}
+                                    {inputMode === 'select' && !selectedFile && (
+                                        <TemplateSelector
+                                            onSelect={handleTemplateSelect}
+                                            selectedId={selectedTemplate?.id || null}
+                                        />
+                                    )}
+
+                                    {/* Template Editor */}
+                                    {inputMode === 'edit' && selectedTemplate && templateData && (
+                                        <TemplateEditor
+                                            template={selectedTemplate}
+                                            initialData={templateData}
+                                            onSubmit={handleTemplateSubmit}
+                                            onBack={handleBackToTemplates}
+                                        />
+                                    )}
+
+                                    {/* File Upload */}
+                                    {inputMode === 'upload' && !selectedFile && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="max-w-3xl mx-auto"
                                         >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                                            </svg>
-                                            Use Template
-                                        </button>
-                                        <button
-                                            onClick={() => setInputMode('upload')}
-                                            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
-                                                inputMode === 'upload'
-                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                                                    : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
-                                            }`}
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                            </svg>
-                                            Upload URS File
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Template Selector */}
-                                {inputMode === 'select' && !selectedFile && (
-                                    <TemplateSelector
-                                        onSelect={handleTemplateSelect}
-                                        selectedId={selectedTemplate?.id || null}
-                                    />
-                                )}
-
-                                {/* Template Editor */}
-                                {inputMode === 'edit' && selectedTemplate && templateData && (
-                                    <TemplateEditor
-                                        template={selectedTemplate}
-                                        initialData={templateData}
-                                        onSubmit={handleTemplateSubmit}
-                                        onBack={handleBackToTemplates}
-                                    />
-                                )}
-
-                                {/* File Upload */}
-                                {inputMode === 'upload' && !selectedFile && (
-                                    <div>
-                                        <button
-                                            onClick={() => setInputMode('select')}
-                                            className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                            </svg>
-                                            Back to Templates
-                                        </button>
-                                        <FileUpload onFileSelect={handleFileSelect} isUploading={false} />
-                                    </div>
-                                )}
-
-                                {/* Selected File Confirmation */}
-                                {selectedFile && (
-                                    <div className="max-w-2xl mx-auto">
-                                        <div className="bg-slate-800/50 border border-blue-500/30 rounded-xl p-8 text-center space-y-6">
-                                            <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto">
-                                                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            <button
+                                                onClick={() => setInputMode('select')}
+                                                className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                                 </svg>
+                                                Back to Templates
+                                            </button>
+                                            <div className="glass-panel p-1">
+                                                <FileUpload onFileSelect={handleFileSelect} isUploading={false} />
                                             </div>
-                                            <div>
-                                                <h3 className="text-xl font-medium text-white mb-2">Ready to Generate</h3>
-                                                <p className="text-slate-400">
-                                                    Selected file: <span className="text-blue-400 font-mono">{selectedFile.name}</span>
-                                                </p>
-                                                <p className="text-xs text-slate-400 mt-2">
-                                                    {(selectedFile.size / 1024).toFixed(2)} KB
-                                                </p>
-                                            </div>
+                                        </motion.div>
+                                    )}
 
-                                            <div className="flex gap-4 justify-center">
-                                                <button
-                                                    onClick={() => setSelectedFile(null)}
-                                                    className="px-6 py-3 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    onClick={handleGenerate}
-                                                    data-generate-trigger
-                                                    className="btn-primary flex items-center gap-2"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    {/* Selected File Confirmation */}
+                                    {selectedFile && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="max-w-2xl mx-auto"
+                                        >
+                                            <div className="glass-panel p-10 text-center space-y-8 border-blue-500/20">
+                                                <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto border border-blue-500/20">
+                                                    <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                     </svg>
-                                                    Generate Test Suite
-                                                </button>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-display font-medium text-white mb-2">Ready to Generate</h3>
+                                                    <p className="text-slate-400 text-lg">
+                                                        Selected file: <span className="text-blue-400 font-mono">{selectedFile.name}</span>
+                                                    </p>
+                                                    <p className="text-sm text-slate-500 mt-2 font-mono">
+                                                        {(selectedFile.size / 1024).toFixed(2)} KB
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex gap-4 justify-center">
+                                                    <button
+                                                        onClick={() => setSelectedFile(null)}
+                                                        className="px-8 py-3 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        onClick={handleGenerate}
+                                                        data-generate-trigger
+                                                        className="btn-primary flex items-center gap-3 text-lg px-8"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                        </svg>
+                                                        Generate Test Suite
+                                                    </button>
+                                                </div>
                                             </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Feature Cards */}
+                                    {inputMode === 'select' && !selectedFile && (
+                                        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+                                            <FeatureCard
+                                                title="GAMP-5 Compliant"
+                                                description="Automated categorization and validation logic aligned with ISPE GAMP 5 guidelines."
+                                                icon="shield"
+                                            />
+                                            <FeatureCard
+                                                title="AI-Powered Analysis"
+                                                description="Advanced LLM processing to extract requirements and generate precise test cases."
+                                                icon="chip"
+                                            />
+                                            <FeatureCard
+                                                title="Audit Ready"
+                                                description="Full ALCOA+ traceability with immutable logs and user attribution."
+                                                icon="document"
+                                            />
+                                        </div>
+                                    )}
+                                </motion.div>
+                            )}
+
+                            {/* Processing State - Split View */}
+                            {(status === 'PENDING' || status === 'PROCESSING' || status === 'APPROVED' || status === 'FAILED') && !isValidating && hasAuthoritativeProgress && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+                                >
+                                    {/* Left Column: Progress Timeline */}
+                                    <div className="space-y-6">
+                                        <h2 className="text-2xl font-display font-bold text-white flex items-center gap-3">
+                                            <span className="w-2 h-8 bg-blue-500 rounded-full"></span>
+                                            Generation Progress
+                                        </h2>
+                                        <JobProgress
+                                            status={status}
+                                            logs={logs}
+                                            startTime={jobStartTime}
+                                            jobId={jobId || undefined}
+                                            currentStage={currentStage}
+                                            currentStageLabel={currentStageLabel}
+                                            progressPercentage={progressPercentage}
+                                            initialDisplayProgress={displayedProgress}
+                                            onProgressChange={handleProgressChange}
+                                        />
+                                    </div>
+
+                                    {/* Right Column: Quiz / Waiting Activity */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <h2 className="text-2xl font-display font-bold text-white flex items-center gap-3">
+                                                <span className="w-2 h-8 bg-cyan-500 rounded-full"></span>
+                                                While You Wait
+                                            </h2>
+                                            <span className="text-xs font-mono text-cyan-400 border border-cyan-500/30 px-2 py-1 rounded">
+                                                INTERACTIVE
+                                            </span>
+                                        </div>
+                                        <div className="glass-panel p-6 border-cyan-500/20 bg-cyan-900/5">
+                                            <InteractiveQuiz />
                                         </div>
                                     </div>
-                                )}
+                                </motion.div>
+                            )}
 
-                                {/* Feature Cards - only show in template select mode */}
-                                {inputMode === 'select' && !selectedFile && (
-                                    <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <FeatureCard
-                                            title="GAMP-5 Compliant"
-                                            description="Automated categorization and validation logic aligned with ISPE GAMP 5 guidelines."
-                                            icon="shield"
-                                        />
-                                        <FeatureCard
-                                            title="AI-Powered Analysis"
-                                            description="Advanced LLM processing to extract requirements and generate precise test cases."
-                                            icon="chip"
-                                        />
-                                        <FeatureCard
-                                            title="Audit Ready"
-                                            description="Full ALCOA+ traceability with immutable logs and user attribution."
-                                            icon="document"
-                                        />
+                            {/* Completed State - Results Dashboard */}
+                            {status === 'COMPLETED' && results && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="space-y-8"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-3xl font-display font-bold text-white flex items-center gap-4">
+                                            <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                                <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            Validation Results
+                                        </h2>
                                     </div>
-                                )}
-                            </div>
-                        )}
 
-                        {/* Show validating state while checking server */}
-                        {isValidating && (
-                            <div className="animate-fade-in text-center py-12">
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/10 mb-4 animate-pulse">
-                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                </div>
-                                <p className="text-slate-400">Validating session...</p>
-                            </div>
-                        )}
+                                    <ComplianceDashboard results={results} onDownload={handleDownload} />
+                                </motion.div>
+                            )}
 
-                        {/* Only show progress bar after validation confirms job exists */}
-                        {(status === 'PENDING' || status === 'PROCESSING') && !isValidating && (
-                            <div className="animate-fade-in">
-                                <JobProgress
-                                    status={status}
-                                    logs={logs}
-                                    startTime={jobStartTime}
-                                    jobId={jobId || undefined}
-                                    currentStage={currentStage}
-                                    currentStageLabel={currentStageLabel}
-                                    progressPercentage={progressPercentage}
-                                    initialDisplayProgress={displayedProgress}
-                                    onProgressChange={handleProgressChange}
-                                />
-                            </div>
-                        )}
-
-                        {status === 'COMPLETED' && results && (
-                            <ComplianceDashboard results={results} onDownload={handleDownload} />
-                        )}
-
-                        {status === 'FAILED' && (
-                            <div className="text-center py-12 animate-fade-in">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 mb-4">
-                                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-medium text-white mb-2">Generation Failed</h3>
-                                <p className="text-slate-400 mb-6">An error occurred while processing your request.</p>
-                                <button onClick={resetDashboard} className="btn-primary">Try Again</button>
-
-                                <div className="mt-8 max-w-2xl mx-auto text-left">
-                                    <div className="bg-slate-900/50 rounded-lg p-4 border border-red-500/20 font-mono text-sm text-red-400">
-                                        {logs[logs.length - 1]}
+                            {/* Failed State (if no progress data) */}
+                            {status === 'FAILED' && !hasAuthoritativeProgress && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="text-center py-12"
+                                >
+                                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 mb-6 border border-red-500/20">
+                                        <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
                                     </div>
-                                </div>
-                            </div>
-                        )}
+                                    <h3 className="text-2xl font-display font-bold text-white mb-2">Generation Failed</h3>
+                                    <p className="text-slate-400 mb-8 max-w-md mx-auto">An error occurred while processing your request. Please check the logs or try again.</p>
+                                    <button onClick={resetDashboard} className="btn-primary">Try Again</button>
 
-                        {status === 'EXPIRED' && (
-                            <div className="text-center py-12 animate-fade-in">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 mb-4">
-                                    <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-medium text-white mb-2">Session Expired</h3>
-                                <p className="text-slate-400 mb-6">The job session is no longer available (server may have restarted).</p>
-                                <button onClick={resetDashboard} className="btn-primary bg-amber-600 hover:bg-amber-700">Start New Job</button>
-                            </div>
-                        )}
+                                    <div className="mt-8 max-w-2xl mx-auto text-left">
+                                        <div className="bg-slate-900/50 rounded-lg p-6 border border-red-500/20 font-mono text-sm text-red-400 shadow-inner">
+                                            {logs[logs.length - 1]}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </Layout>

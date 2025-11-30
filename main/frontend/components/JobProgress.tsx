@@ -1,5 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
-import InteractiveQuiz from './quiz/InteractiveQuiz';
+import {
+  CheckCircleIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  TagIcon,
+  UserIcon,
+  LightBulbIcon,
+  CpuChipIcon,
+  CommandLineIcon,
+  CheckIcon
+} from '@heroicons/react/24/outline';
 
 /**
  * Human-readable labels for workflow stages.
@@ -19,16 +28,30 @@ const STAGE_LABELS: Record<string, string> = {
 /**
  * Stage icons for visual indicator
  */
-const STAGE_ICONS: Record<string, string> = {
-  queued: "clock",
-  ingestion: "document",
-  categorization: "tag",
-  hil_waiting: "user",
-  planning: "lightbulb",
-  agent_execution: "cpu",
-  oq_generation: "code",
-  completion: "check"
+const STAGE_ICONS: Record<string, any> = {
+  queued: ClockIcon,
+  ingestion: DocumentTextIcon,
+  categorization: TagIcon,
+  hil_waiting: UserIcon,
+  planning: LightBulbIcon,
+  agent_execution: CpuChipIcon,
+  oq_generation: CommandLineIcon,
+  completion: CheckIcon
 };
+
+/**
+ * Ordered list of stages for the timeline
+ */
+const STAGE_ORDER = [
+  'queued',
+  'ingestion',
+  'categorization',
+  'hil_waiting',
+  'planning',
+  'agent_execution',
+  'oq_generation',
+  'completion'
+];
 
 interface JobProgressProps {
   status: string;
@@ -56,174 +79,183 @@ export default function JobProgress({
   initialDisplayProgress = 0,
   onProgressChange
 }: JobProgressProps) {
-  // Target progress from backend (what we're animating toward)
-  // Initialize from parent's persisted value so we don't regress below it
-  const [targetProgress, setTargetProgress] = useState(initialDisplayProgress);
-  // Displayed progress (what the user sees, animates smoothly)
-  // Initialize from parent's persisted value to prevent reset on remount
-  const [displayProgress, setDisplayProgress] = useState(initialDisplayProgress);
-  // Track if we've initialized - on first render with progress, jump to that value
-  const hasInitialized = useRef(initialDisplayProgress > 0);
+  // Determine the index of the current stage
+  const currentStageIndex = currentStage ? STAGE_ORDER.indexOf(currentStage) : -1;
 
-  // Update target when backend progress changes
-  useEffect(() => {
-    let newTarget = 0;
-
-    // Priority 1: Use backend-provided progress percentage if available
-    if (progressPercentage !== null && progressPercentage !== undefined) {
-      newTarget = progressPercentage;
-    } else {
-      // Priority 2: Fall back to status-based progress
-      if (status === 'PENDING') {
-        newTarget = 5;
-      } else if (status === 'PROCESSING') {
-        newTarget = 10;
-      } else if (status === 'AWAITING_APPROVAL') {
-        newTarget = 30;
-      } else if (status === 'APPROVED') {
-        newTarget = 35;
-      } else if (status === 'COMPLETED') {
-        newTarget = 100;
-      } else if (status === 'FAILED' || status === 'REJECTED') {
-        newTarget = 100;
-      }
-    }
-
-    // On first render with progress > 0, jump immediately (no animation from 0)
-    // This handles navigation back to the page with existing progress
-    if (!hasInitialized.current && newTarget > 0) {
-      hasInitialized.current = true;
-      setTargetProgress(newTarget);
-      setDisplayProgress(newTarget);
-      return;
-    }
-
-    // After initialization, only update target (never decrease)
-    // Animation effect will handle smooth transitions
-    setTargetProgress(prev => Math.max(prev, newTarget));
-  }, [status, progressPercentage]);
-
-  // Very slow animation: bar grows steadily over minutes, not seconds
-  // Designed for ~6-9 minute workflows
-  useEffect(() => {
-    // If we're already at or past target, no animation needed
-    if (displayProgress >= targetProgress) {
-      return;
-    }
-
-    // Slow growth calibrated for 15-minute workflows
-    // 0.022% per 200ms = 100% in ~15 minutes
-    const baseInterval = 200; // ms between increments
-    const increment = 0.022; // 100% in 15 minutes
-
-    const animationInterval = setInterval(() => {
-      setDisplayProgress(prev => {
-        const next = prev + increment;
-        if (next >= targetProgress) {
-          clearInterval(animationInterval);
-          return targetProgress;
-        }
-        return next;
-      });
-    }, baseInterval);
-
-    return () => clearInterval(animationInterval);
-  }, [targetProgress, displayProgress]);
-
-  // Report display progress changes to parent for persistence
-  // This allows parent to save what the user actually saw
-  useEffect(() => {
-    if (onProgressChange && displayProgress > 0) {
-      onProgressChange(displayProgress);
-    }
-  }, [displayProgress, onProgressChange]);
-
-  // Determine stage label to display
-  const stageLabel = currentStageLabel || (currentStage ? STAGE_LABELS[currentStage] : null);
+  // If status is COMPLETED, treat as if we are at the end
+  const effectiveStageIndex = status === 'COMPLETED' ? STAGE_ORDER.length - 1 : currentStageIndex;
 
   // Determine progress bar color based on status
-  const getProgressBarColor = () => {
-    if (status === 'FAILED' || status === 'REJECTED') return 'bg-red-500';
-    if (status === 'COMPLETED') return 'bg-emerald-500';
-    if (status === 'AWAITING_APPROVAL') return 'bg-amber-500';
-    return 'bg-blue-600';
+  const getStatusColor = (stageKey: string, index: number) => {
+    if (status === 'FAILED' || status === 'REJECTED') {
+      if (index === effectiveStageIndex) return 'text-red-500 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]';
+      if (index < effectiveStageIndex) return 'text-emerald-500 border-emerald-500'; // Completed stages still green
+      return 'text-slate-600 border-slate-700';
+    }
+    if (index < effectiveStageIndex) return 'text-emerald-500 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]';
+    if (index === effectiveStageIndex) {
+      if (stageKey === 'hil_waiting' && status === 'AWAITING_APPROVAL') return 'text-amber-500 border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)]';
+      return 'text-blue-400 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.6)]';
+    }
+    return 'text-slate-700 border-slate-800';
   };
 
-  // Determine status indicator color
-  const getStatusIndicatorColor = () => {
-    if (status === 'COMPLETED') return 'bg-emerald-500';
-    if (status === 'FAILED' || status === 'REJECTED') return 'bg-red-500';
-    if (status === 'AWAITING_APPROVAL') return 'bg-amber-500';
-    return 'bg-blue-500';
+  const getIconBg = (stageKey: string, index: number) => {
+    if (status === 'FAILED' || status === 'REJECTED') {
+      if (index === effectiveStageIndex) return 'bg-red-500/10';
+      if (index < effectiveStageIndex) return 'bg-emerald-500/10';
+      return 'bg-slate-900';
+    }
+    if (index < effectiveStageIndex) return 'bg-emerald-500/10';
+    if (index === effectiveStageIndex) {
+      if (stageKey === 'hil_waiting' && status === 'AWAITING_APPROVAL') return 'bg-amber-500/10';
+      return 'bg-blue-500/10';
+    }
+    return 'bg-slate-900';
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Status Bar */}
-      <div className="glass-panel p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-slate-200 flex items-center gap-2">
+    <div className="w-full">
+      {/* Main Status Panel */}
+      <div className="glass-panel p-6 border-blue-500/10 bg-slate-900/40 backdrop-blur-xl">
+        <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-800/50">
+          <h3 className="text-lg font-display font-medium text-slate-200 flex items-center gap-3">
             <span className="relative flex h-3 w-3">
               {(status === 'PROCESSING' || status === 'AWAITING_APPROVAL') && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status === 'AWAITING_APPROVAL' ? 'bg-amber-400' : 'bg-blue-400'}`}></span>
               )}
-              <span className={`relative inline-flex rounded-full h-3 w-3 ${getStatusIndicatorColor()}`}></span>
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${status === 'COMPLETED' ? 'bg-emerald-500' :
+                status === 'FAILED' || status === 'REJECTED' ? 'bg-red-500' :
+                  status === 'AWAITING_APPROVAL' ? 'bg-amber-500' :
+                    'bg-blue-500'
+                }`}></span>
             </span>
-            Generation Status: <span className="text-blue-400 font-mono">{status}</span>
+            <span className="tracking-wide text-sm uppercase text-slate-400">Status</span>
+            <span className={`font-mono font-bold ${status === 'COMPLETED' ? 'text-emerald-400' :
+              status === 'FAILED' || status === 'REJECTED' ? 'text-red-400' :
+                status === 'AWAITING_APPROVAL' ? 'text-amber-400' :
+                  'text-blue-400'
+              }`}>{status}</span>
           </h3>
-          <span className="text-sm font-mono text-slate-400">{Math.round(displayProgress)}%</span>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
-          <div
-            className={`h-2.5 rounded-full transition-all duration-500 ease-out ${getProgressBarColor()} ${status === 'PROCESSING' ? 'relative overflow-hidden' : ''}`}
-            style={{ width: `${displayProgress}%` }}
-          >
-            {status === 'PROCESSING' && (
-              <div className="absolute top-0 left-0 bottom-0 right-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[progress-bar-stripes_1s_linear_infinite]"></div>
-            )}
-          </div>
-        </div>
-
-        {/* Stage Label - Detailed Display */}
-        {stageLabel && (status === 'PROCESSING' || status === 'AWAITING_APPROVAL' || status === 'APPROVED') && (
-          <div className="mt-4 flex items-center gap-2">
-            <span className="text-sm text-slate-400">Current Stage:</span>
-            <span className="text-sm font-medium text-blue-400 bg-slate-800/50 px-3 py-1 rounded-full">
-              {stageLabel}
-            </span>
-            {status === 'AWAITING_APPROVAL' && (
-              <span className="text-xs text-amber-400 ml-2 animate-pulse">
-                Waiting for human review...
+          {progressPercentage !== null && (
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-24 bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+              <span className="text-sm font-mono text-blue-400 font-bold">
+                {progressPercentage}%
               </span>
-            )}
+            </div>
+          )}
+        </div>
+
+        {/* Stage Timeline */}
+        <div className="relative pl-2">
+          {/* Vertical Line */}
+          <div className="absolute left-8 top-4 bottom-4 w-px bg-gradient-to-b from-blue-500/50 via-slate-800 to-slate-800" aria-hidden="true"></div>
+
+          <div className="space-y-8 relative">
+            {STAGE_ORDER.map((stageKey, index) => {
+              // Use CheckCircleIcon as generic fallback if icon missing
+              const Icon = STAGE_ICONS[stageKey] || CheckCircleIcon;
+              const isCompleted = index < effectiveStageIndex;
+              const isCurrent = index === effectiveStageIndex;
+              const isPending = index > effectiveStageIndex;
+              const label = STAGE_LABELS[stageKey];
+
+              return (
+                <div key={stageKey} className={`group flex items-start gap-6 transition-all duration-500 ${isPending ? 'opacity-40 blur-[0.5px]' : 'opacity-100'}`}>
+                  {/* Icon Bubble */}
+                  <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-xl border transition-all duration-500 ${getStatusColor(stageKey, index)} ${getIconBg(stageKey, index)} ${isCurrent ? 'scale-110' : 'scale-100'}`}>
+                    {isCompleted ? (
+                      <CheckIcon className="w-6 h-6" />
+                    ) : (
+                      <Icon className={`w-6 h-6 ${isCurrent && status === 'PROCESSING' ? 'animate-pulse' : ''}`} />
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 pt-2">
+                    <div className="flex justify-between items-center">
+                      <h4 className={`text-lg font-display font-medium transition-colors ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                        {label}
+                      </h4>
+                      {isCurrent && (status === 'PROCESSING' || status === 'AWAITING_APPROVAL') && (
+                        <span className="text-xs font-mono text-blue-400 animate-pulse border border-blue-500/30 px-2 py-0.5 rounded bg-blue-500/10">
+                          {stageKey === 'agent_execution' ? 'PROCESSING' :
+                            stageKey === 'hil_waiting' ? 'ACTION REQUIRED' : 'IN PROGRESS'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Contextual Description / Indeterminate Bar for Active Stage */}
+                    {isCurrent && status !== 'FAILED' && status !== 'REJECTED' && (
+                      <div className="mt-3 animate-fade-in">
+                        {stageKey === 'agent_execution' && (
+                          <div className="space-y-3">
+                            <p className="text-sm text-slate-400 font-light">
+                              AI agents are analyzing the document and generating test scenarios. This typically takes 4-6 minutes.
+                            </p>
+                            {/* Indeterminate Loading Bar */}
+                            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-400 w-1/3 animate-[shimmer_2s_infinite_linear] bg-[linear-gradient(90deg,transparent,rgba(96,165,250,0.8),transparent)]"></div>
+                            </div>
+                          </div>
+                        )}
+                        {stageKey === 'hil_waiting' && (
+                          <p className="text-sm text-amber-400 border-l-2 border-amber-500 pl-3">
+                            Please review the GAMP-5 categorization in the modal to proceed.
+                          </p>
+                        )}
+                        {stageKey === 'oq_generation' && (
+                          <div className="space-y-3">
+                            <p className="text-sm text-slate-400 font-light">
+                              Formatting final test cases...
+                            </p>
+                            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-400 w-1/3 animate-[shimmer_1.5s_infinite_linear] bg-[linear-gradient(90deg,transparent,rgba(96,165,250,0.8),transparent)]"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {/* Completion Message */}
         {status === 'COMPLETED' && (
-          <div className="mt-4 flex items-center gap-2">
-            <span className="text-sm text-emerald-400 font-medium">
-              Test suite generation complete!
-            </span>
+          <div className="mt-8 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl flex items-center gap-4 animate-fade-in">
+            <div className="p-2 bg-emerald-500/10 rounded-lg">
+              <CheckCircleIcon className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div>
+              <h4 className="text-base font-medium text-emerald-400">Generation Complete</h4>
+              <p className="text-sm text-emerald-400/70">Your test suite is ready for review.</p>
+            </div>
           </div>
         )}
 
         {/* Failure Message */}
         {(status === 'FAILED' || status === 'REJECTED') && (
-          <div className="mt-4 flex items-center gap-2">
-            <span className="text-sm text-red-400 font-medium">
-              {status === 'REJECTED' ? 'Job was rejected or timed out' : 'Generation failed'}
-            </span>
+          <div className="mt-8 p-4 bg-red-500/5 border border-red-500/20 rounded-xl animate-fade-in">
+            <h4 className="text-base font-medium text-red-400 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-red-500"></span>
+              {status === 'REJECTED' ? 'Job Rejected' : 'Generation Failed'}
+            </h4>
+            <p className="text-sm text-red-400/70 mt-2 font-mono bg-red-950/30 p-2 rounded">
+              {logs[logs.length - 1] || 'An error occurred during processing.'}
+            </p>
           </div>
         )}
-      </div>
-
-      {/* Interactive Compliance Quiz */}
-      <div className="mt-8">
-        <InteractiveQuiz />
       </div>
     </div>
   );
 }
+

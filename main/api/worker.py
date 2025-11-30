@@ -339,6 +339,9 @@ async def _process_job_with_retries(
                 )
                 # Skip to planning stage since categorization is pre-approved
                 await _update_job_stage(job, WorkflowStage.PLANNING, job_lock, db_job_repo)
+                # Allow frontend polling to see PLANNING stage (45%) before AGENT_EXECUTION (65%)
+                logger.info(f"[STAGE-PROGRESS] Job {job.job_id} at PLANNING (45%) - waiting 3s for frontend visibility")
+                await asyncio.sleep(3)
             else:
                 # Update to categorization stage before workflow execution
                 await _update_job_stage(job, WorkflowStage.CATEGORIZATION, job_lock, db_job_repo)
@@ -556,6 +559,11 @@ async def _process_job_with_retries(
 
             # Update stage to PLANNING before re-execution (categorization was already done)
             await _update_job_stage(job, WorkflowStage.PLANNING, job_lock, db_job_repo)
+
+            # Allow frontend polling to see PLANNING stage (45%) before moving to AGENT_EXECUTION (65%)
+            # Frontend polls every 2 seconds, so 3 second delay ensures at least 1 poll sees PLANNING
+            logger.info(f"[STAGE-PROGRESS] Job {job.job_id} at PLANNING (45%) - waiting 3s for frontend visibility")
+            await asyncio.sleep(3)
 
             # Reset job status for re-execution
             async with job_lock:

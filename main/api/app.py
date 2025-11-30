@@ -237,8 +237,12 @@ app = FastAPI(
 # Configure CORS
 # GAMP-5 Compliance: Restrict origins to known trusted domains
 origins = [
-    "http://localhost:3000",  # Local development frontend
+    "http://localhost:3000",  # Local development frontend (Docker)
+    "http://localhost:3001",  # Local development frontend (npm run dev)
+    "http://localhost:3002",  # Local development frontend (npm run dev alt port)
     "http://127.0.0.1:3000",  # Local development frontend (alternative)
+    "http://127.0.0.1:3001",  # Local development frontend (alternative)
+    "http://127.0.0.1:3002",  # Local development frontend (alternative)
 ]
 
 app.add_middleware(

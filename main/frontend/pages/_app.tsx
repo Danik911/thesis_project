@@ -5,6 +5,20 @@ import Head from 'next/head'
 import React from 'react'
 import reportAccessibility from '../utils/reportAccessibility'
 import { ModalProvider } from '@/context/ModalContext'
+import { Space_Grotesk, Instrument_Sans } from 'next/font/google'
+
+// Initialize fonts
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+})
+
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+})
 
 // Initialize axe-core accessibility testing (development only)
 if (process.env.NODE_ENV !== 'production') {
@@ -22,7 +36,9 @@ export default function App({ Component, pageProps }: AppProps) {
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.png" />
         </Head>
-        <Component {...pageProps} />
+        <main className={`${spaceGrotesk.variable} ${instrumentSans.variable} font-sans`}>
+          <Component {...pageProps} />
+        </main>
       </ModalProvider>
     </ClerkProvider>
   )

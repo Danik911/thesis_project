@@ -246,6 +246,10 @@ class WorkflowExecutor:
                 if stage_callback is not None:
                     try:
                         await stage_callback("oq_generation")
+                        # Allow frontend polling to see OQ_GENERATION (85%) before COMPLETION (100%)
+                        # Frontend polls every 2 seconds, so 3 second delay ensures visibility
+                        logger.info(f"[STAGE-PROGRESS] Job {job_id} at OQ_GENERATION (85%) - waiting 3s for frontend visibility")
+                        await asyncio.sleep(3)
                     except Exception as cb_err:
                         logger.warning(f"Stage callback failed for oq_generation: {cb_err}")
 

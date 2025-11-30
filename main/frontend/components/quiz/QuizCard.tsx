@@ -2,12 +2,14 @@
 
 import { motion } from 'framer-motion';
 import { QuizQuestion } from './quizData';
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
 interface QuizCardProps {
   question: QuizQuestion;
   currentQuestion: number;
   totalQuestions: number;
   selectedAnswer: number | null;
+  showFeedback: boolean;
   onSelectAnswer: (answerIndex: number) => void;
   onNext: () => void;
 }
@@ -17,6 +19,7 @@ export default function QuizCard({
   currentQuestion,
   totalQuestions,
   selectedAnswer,
+  showFeedback,
   onSelectAnswer,
   onNext,
 }: QuizCardProps) {
@@ -46,13 +49,12 @@ export default function QuizCard({
         {Array.from({ length: totalQuestions }).map((_, index) => (
           <div
             key={index}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index < currentQuestion - 1
+            className={`h-2 rounded-full transition-all duration-300 ${index < currentQuestion - 1
                 ? 'bg-cyan-500 w-4'
                 : index === currentQuestion - 1
-                ? 'bg-cyan-400 w-6'
-                : 'bg-gray-600 w-4'
-            }`}
+                  ? 'bg-cyan-400 w-6'
+                  : 'bg-gray-600 w-4'
+              }`}
           />
         ))}
       </div>
@@ -67,63 +69,102 @@ export default function QuizCard({
 
       {/* Answer Options */}
       <div className="space-y-3 mb-8">
-        {question.options.map((option, index) => (
-          <motion.button
-            key={index}
-            onClick={() => onSelectAnswer(index)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className={`
-              w-full p-4 text-left rounded-lg transition-all duration-200
-              ${
-                selectedAnswer === index
-                  ? 'bg-cyan-600 text-white border-cyan-500 border-2 shadow-lg shadow-cyan-500/30'
-                  : 'bg-slate-700/50 text-slate-200 border border-slate-600/50 hover:bg-slate-600/50 hover:border-slate-500/50'
-              }
-            `}
-            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`
-                w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0
-                ${
-                  selectedAnswer === index
-                    ? 'border-white bg-white'
-                    : 'border-slate-400'
-                }
+        {question.options.map((option, index) => {
+          const isSelected = selectedAnswer === index;
+          const isCorrect = index === question.correctAnswer;
+
+          let cardStyle = 'bg-slate-700/50 text-slate-200 border-slate-600/50';
+          let iconStyle = 'border-slate-400';
+
+          if (showFeedback) {
+            if (isCorrect) {
+              cardStyle = 'bg-emerald-500/10 border-emerald-500/50 text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.2)]';
+              iconStyle = 'border-emerald-400 bg-emerald-400 text-white';
+            } else if (isSelected && !isCorrect) {
+              cardStyle = 'bg-red-500/10 border-red-500/50 text-red-100';
+              iconStyle = 'border-red-400 bg-red-400 text-white';
+            } else {
+              cardStyle = 'bg-slate-800/30 text-slate-500 border-slate-700/30 opacity-60';
+              iconStyle = 'border-slate-600';
+            }
+          } else if (isSelected) {
+            cardStyle = 'bg-cyan-600 text-white border-cyan-500 shadow-lg shadow-cyan-500/30';
+            iconStyle = 'border-white bg-white';
+          }
+
+          return (
+            <motion.button
+              key={index}
+              onClick={() => !showFeedback && onSelectAnswer(index)}
+              disabled={showFeedback}
+              whileHover={!showFeedback ? { scale: 1.02 } : {}}
+              whileTap={!showFeedback ? { scale: 0.98 } : {}}
+              className={`
+                w-full p-4 text-left rounded-lg transition-all duration-200 border-2
+                ${cardStyle}
               `}
-              >
-                {selectedAnswer === index && (
-                  <div className="w-3 h-3 rounded-full bg-cyan-600" />
-                )}
+              style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`
+                  w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
+                  ${iconStyle}
+                `}
+                >
+                  {showFeedback && isCorrect && <CheckCircleIcon className="w-4 h-4" />}
+                  {showFeedback && isSelected && !isCorrect && <XCircleIcon className="w-4 h-4" />}
+                  {!showFeedback && isSelected && <div className="w-3 h-3 rounded-full bg-cyan-600" />}
+                </div>
+                <span className="flex-1 font-medium">{option}</span>
               </div>
-              <span className="flex-1">{option}</span>
-            </div>
-          </motion.button>
-        ))}
+            </motion.button>
+          );
+        })}
       </div>
 
-      {/* Next Button */}
-      <div className="flex justify-end">
-        <motion.button
-          onClick={onNext}
-          disabled={selectedAnswer === null}
-          whileHover={selectedAnswer !== null ? { scale: 1.05 } : {}}
-          whileTap={selectedAnswer !== null ? { scale: 0.95 } : {}}
-          className={`
-            px-8 py-3 rounded-lg font-medium transition-all duration-200
-            ${
-              selectedAnswer !== null
-                ? 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg shadow-cyan-500/30 cursor-pointer'
-                : 'bg-slate-700/30 text-slate-500 cursor-not-allowed'
-            }
-          `}
-          style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+      {/* Feedback / Explanation */}
+      {showFeedback && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-4 rounded-lg bg-cyan-900/20 border border-cyan-500/30"
         >
-          {currentQuestion === totalQuestions ? 'See Results' : 'Next Question'} →
-        </motion.button>
-      </div>
+          <div className="flex items-start gap-3">
+            <div className="mt-1">
+              <div className="p-1 bg-cyan-500/20 rounded-full">
+                <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-cyan-400 mb-1">Explanation</h4>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {question.explanation}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Next Button */}
+      {showFeedback && (
+        <div className="flex justify-end animate-fade-in">
+          <motion.button
+            onClick={onNext}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-8 py-3 rounded-lg font-medium transition-all duration-200 bg-cyan-600 text-white hover:bg-cyan-500 shadow-lg shadow-cyan-500/30 flex items-center gap-2"
+            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+          >
+            {currentQuestion === totalQuestions ? 'Finish Quiz' : 'Next Question'}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </motion.button>
+        </div>
+      )}
     </motion.div>
   );
 }
