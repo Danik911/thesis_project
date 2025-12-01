@@ -9,12 +9,12 @@
 
 ## Executive Summary
 
-This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test generation system from local development to AWS production. The system uses LlamaIndex workflows with multi-agent orchestration, RAG capabilities (ChromaDB → S3 Vectors), and regulatory observability (Phoenix local → LangFuse AWS).
+This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test generation system from local development to AWS production. The system uses LlamaIndex workflows with multi-agent orchestration, RAG capabilities (ChromaDB → S3 + ChromaDB Lambda), and regulatory observability (Phoenix local → LangFuse AWS).
 
 **Key Decisions:**
 - **Compute:** ECS Fargate (handles 7-8 min workflows, no Lambda timeout risk)
 - **Database:** Aurora Serverless v2 with Data API (no VPC complexity)
-- **RAG Storage:** S3 Vectors (90% cost reduction vs alternatives)
+- **RAG Storage:** S3 + ChromaDB Lambda (98% cost reduction vs Aurora pgvector)
 - **LLM Provider:** Amazon Bedrock (DeepSeek-V3.1) - $0.90/1M input, $2.61/1M output
 - **Region:** eu-west-2 (London, UK)
 - **Observability:** Phoenix (local dev) + LangFuse (AWS production) + CloudWatch
@@ -138,9 +138,9 @@ This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test 
 │       │                          │                                   │
 │       ▼                          ▼                                   │
 │  ┌─────────────┐      ┌──────────────────┐                          │
-│  │   Bedrock   │      │   S3 Vectors     │                          │
-│  │  Claude 3.5 │      │   (RAG Index)    │                          │
-│  │   Sonnet    │      │   1536 dims      │                          │
+│  │   Bedrock   │      │  Lambda (RAG)    │                          │
+│  │  DeepSeek   │      │  ChromaDB from   │                          │
+│  │   V3.1      │      │  S3 bucket       │                          │
 │  └─────────────┘      └──────────────────┘                          │
 │       │                          │                                   │
 │       │                          │                                   │
@@ -226,13 +226,14 @@ This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test 
 - **Backups:** Automated snapshots (7-day retention)
 - **Cost:** ~$50/month (dev), ~$150/month (prod)
 
-#### RAG Storage (S3 Vectors)
+#### RAG Storage (S3 + ChromaDB Lambda)
+- **Architecture:** Lambda function loads ChromaDB from S3 tarball
 - **Dimensions:** 1536 (OpenAI text-embedding-3-small)
 - **Similarity:** Cosine
 - **Metadata:** document_type, gamp_category, version, upload_date
-- **Strategy:** Over-fetch + post-filter (S3 Vectors limitation)
-- **Migration:** ChromaDB export → S3 Vectors import script
-- **Cost:** ~$5/month (200 documents)
+- **Warm-up:** EventBridge rule every 5 min prevents cold starts
+- **Update Process:** Upload new ChromaDB tarball to S3, Lambda auto-refreshes
+- **Cost:** ~$2/month (S3 storage + Lambda invocations)
 
 #### LLM Provider (Amazon Bedrock)
 - **Model:** DeepSeek-V3.1 (deepseek-ai.DeepSeek-V3)
@@ -253,7 +254,7 @@ This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test 
 | Component | Options Evaluated | Decision | Rationale |
 |-----------|-------------------|----------|-----------|
 | **Compute** | Lambda, ECS Fargate, EKS | ECS Fargate | Workflows average 7-8 min (50% of Lambda 15-min limit = risky), heavy dependencies, no cold starts |
-| **RAG Storage** | OpenSearch, Aurora pgvector, S3 Vectors | S3 Vectors | 90% cheaper (~$5 vs $50/month), sufficient for use case, native S3 integration |
+| **RAG Storage** | OpenSearch, Aurora pgvector, S3 Vectors | S3 + ChromaDB Lambda | 98% cheaper (~$2 vs $150/month), perfect for 26 static docs, minimal code changes |
 | **Database** | RDS, Aurora Serverless v2, DynamoDB | Aurora Serverless v2 | Relational audit requirements, Data API simplifies access, auto-scaling |
 | **Observability** | Phoenix only, CloudWatch only, LangFuse | LangFuse + CloudWatch | LangFuse for LLM-specific traces, CloudWatch for infrastructure, Phoenix for local dev |
 | **LLM Provider** | OpenRouter, Bedrock, Direct OpenAI | Bedrock | Cost reduction, EU sovereignty, integrated IAM, no API key rotation |
@@ -802,7 +803,7 @@ CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp DESC);
 CREATE INDEX idx_audit_user ON audit_logs(user_id, timestamp DESC);
 CREATE INDEX idx_audit_job ON audit_logs(job_id);
 
--- RAG document metadata (S3 Vectors metadata cache)
+-- RAG document metadata (for ChromaDB sync tracking)
 CREATE TABLE rag_documents (
     document_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     s3_key VARCHAR(1024) NOT NULL UNIQUE,
@@ -816,7 +817,7 @@ CREATE TABLE rag_documents (
     -- Embedding
     embedding_model VARCHAR(100) DEFAULT 'text-embedding-3-small',
     embedding_dimensions INTEGER DEFAULT 1536,
-    vector_id VARCHAR(255), -- S3 Vectors ID
+    chroma_id VARCHAR(255), -- ChromaDB document ID
 
     -- Lifecycle
     uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -1024,7 +1025,7 @@ Each gate must include: (1) updated ORR checklist, (2) rollback validation, (3) 
 - **Backend Services:** Preserve FastAPI routes and Pydantic schemas; reuse `StorageAdapter`/`VectorStoreProvider` toggles instead of new services; limit workflow edits to dependency injection and logging hooks; no long-running state persisted outside Aurora/S3.
 - **Frontend Experience:** Keep existing Next.js routing and Tailwind scaffolding; only add Clerk wrappers, upload widget, and status polling; defer any design refresh; reuse SWR polling cadence from Alex example; no breaking API assumptions.
 - **Local Developer Stack:** Maintain current Docker Compose layout and Phoenix instrumentation; feature flags (`ENVIRONMENT`, `USE_S3`, `RAG_MODE`) must default to local-friendly values; avoid extra containers beyond optional LangFuse; continue supporting ChromaDB for offline use.
-- **AWS Infrastructure & Observability:** Stick to current Terraform module boundaries; prefer managed defaults (Fargate, Aurora Data API, S3 Vectors) over custom VPC changes; reuse IAM roles/policies already drafted; add logging/alarms through existing observability module to avoid duplicate tooling.
+- **AWS Infrastructure & Observability:** Stick to current Terraform module boundaries; prefer managed defaults (Fargate, Aurora Data API, Lambda) over custom VPC changes; reuse IAM roles/policies already drafted; add logging/alarms through existing observability module to avoid duplicate tooling.
 
 ### 6.4 Task Matrix by Stage
 | Workstream | Stage 0 - Local Parity (Evidence) | Stage 1 - Staging Hardened (Evidence) | Stage 2 - Production GA (Evidence) |
@@ -1032,7 +1033,7 @@ Each gate must include: (1) updated ORR checklist, (2) rollback validation, (3) 
 | Backend Services | Finalize storage/vector adapters, Clerk auth verifier, async job submission; run local integration + Locust smoke (`tests/load/locustfile.py`). | Deploy API + worker to staging cluster, connect SQS/Aurora; verify LangFuse traces and S3 Object Lock in staging; run P95 latency + RAG overlap tests. | Enable autoscaling, DLQ alarms, and rollback drill; deliver signed ORR packet with LangFuse dashboards + CloudWatch alert screenshots. |
 | Frontend Experience | Implement Clerk wrappers, upload/status pages, compliance badges; Cypress smoke against local API. | Point staging build to AWS endpoints via env config; validate Clerk EU tenancy and job polling; bundle Lighthouse report. | Promote static build to prod S3/CloudFront; capture GA playbook (cache invalidation, feature flag) and monitoring links in ORR annex. |
 | Local Developer Stack | Update Docker Compose, ensure phoenix/langfuse toggles, document local run steps in README; record parity demo. | Provide staging vs local comparison doc; run `docker compose` regression with staged feature flags; collect feedback for ORR. | Maintain hotfix workflow (local override path) documented in rollback playbook; ensure developers can reproduce prod issues locally. |
-| AWS Infrastructure & Observability | Refresh Terraform backend, IAM scaffolding, cost guardrails; draft ORR checklist sections for compliance/audit. | Apply staging stack, configure S3 Vectors migration test, CloudWatch dashboards, LangFuse in ECS; capture drift reports. | Promote Terraform workspace to prod, enable Object Lock + Secrets Manager, execute cost/monitoring alarms, attach signed rollback drill to ORR package. |
+| AWS Infrastructure & Observability | Refresh Terraform backend, IAM scaffolding, cost guardrails; draft ORR checklist sections for compliance/audit. | Apply staging stack, deploy Lambda RAG provider, CloudWatch dashboards, LangFuse in ECS; capture drift reports. | Promote Terraform workspace to prod, enable Object Lock + Secrets Manager, execute cost/monitoring alarms, attach signed rollback drill to ORR package. |
 
 ### 6.5 Validation & ORR Packet Contents
 - Current ORR checklist with status/mitigations, traceable to OPS05-BP02 (test & validation), OPS06-BP03 (safe deployments), and OPS07-BP02 (operational readiness review cadence).
@@ -1061,7 +1062,7 @@ Each gate must include: (1) updated ORR checklist, (2) rollback validation, (3) 
 | S3 (test output + vectors) | 100 GB standard, 10K PUT, 50K GET | $5 |
 | S3 Object Lock | Governance mode, 7-year retention | $10 |
 | **RAG** |
-| S3 Vectors | 200 docs, 1M queries/month | $5 |
+| Lambda (RAG) | ChromaDB context provider | $2 |
 | **LLM** |
 | Amazon Bedrock | 50 workflows/day, DeepSeek-V3.1 | $70 |
 | **Networking** |
@@ -1106,182 +1107,119 @@ Each gate must include: (1) updated ORR checklist, (2) rollback validation, (3) 
 
 ---
 
-## 8. RAG Migration Guide
+## 8. RAG Migration Guide (S3 + ChromaDB Lambda)
 
-### 8.1 Export from ChromaDB
+### 8.1 Upload ChromaDB to S3
+
+The migration is simple: compress and upload the existing ChromaDB to S3.
 
 ```python
-# scripts/export_chromadb.py
-import chromadb
-import json
+# aws/scripts/1_upload_chroma_to_s3.py
+import os
+import tarfile
+import boto3
 from pathlib import Path
 
-def export_chromadb(output_path: str = "rag_export.jsonl"):
-    """Export all ChromaDB embeddings to JSONL."""
+CHROMA_DB_PATH = Path("chroma_db")
+S3_BUCKET = "pharma-vectors-eu"
+S3_KEY = "chroma_db.tar.gz"
+AWS_REGION = "eu-west-2"
 
-    client = chromadb.PersistentClient(path="./chroma_db")
-    collection = client.get_collection("pharma_docs")
+def create_tarball():
+    """Create compressed tarball of ChromaDB"""
+    tarball_path = Path("chroma_db.tar.gz")
+    with tarfile.open(tarball_path, "w:gz") as tar:
+        tar.add(CHROMA_DB_PATH, arcname="chroma_db")
+    return tarball_path
 
-    # Get all documents
-    results = collection.get(
-        include=["embeddings", "metadatas", "documents"]
-    )
-
-    # Write JSONL
-    with open(output_path, 'w') as f:
-        for i, (emb, meta, doc) in enumerate(zip(
-            results['embeddings'],
-            results['metadatas'],
-            results['documents']
-        )):
-            record = {
-                "id": f"doc-{i}",
-                "embedding": emb,
-                "metadata": meta,
-                "document": doc
-            }
-            f.write(json.dumps(record) + '\n')
-
-    print(f"Exported {len(results['embeddings'])} documents to {output_path}")
+def upload_to_s3(tarball_path):
+    """Upload tarball to S3"""
+    s3 = boto3.client('s3', region_name=AWS_REGION)
+    s3.upload_file(str(tarball_path), S3_BUCKET, S3_KEY)
+    tarball_path.unlink()  # Clean up
 
 if __name__ == "__main__":
-    export_chromadb()
+    tarball = create_tarball()
+    upload_to_s3(tarball)
+    print(f"✅ Uploaded to s3://{S3_BUCKET}/{S3_KEY}")
 ```
 
-### 8.2 Import to S3 Vectors
+### 8.2 Deploy Lambda Function
 
-```python
-# scripts/import_s3_vectors.py
-import boto3
-import json
+```bash
+# One-time: Create Lambda layer
+bash aws/scripts/2_create_lambda_layer.sh
 
-def import_to_s3_vectors(
-    input_path: str = "rag_export.jsonl",
-    index_name: str = "pharma-docs-prod",
-    region: str = "eu-west-2"
-):
-    """Import embeddings to S3 Vectors."""
+# Deploy Lambda
+bash aws/scripts/3_deploy_lambda.sh
 
-    client = boto3.client('s3-vectors', region_name=region)
-
-    # Create index if not exists
-    try:
-        client.create_index(
-            IndexName=index_name,
-            Dimensions=1536,
-            Similarity="cosine"
-        )
-        print(f"Created index: {index_name}")
-    except client.exceptions.ResourceAlreadyExistsException:
-        print(f"Index already exists: {index_name}")
-
-    # Import documents
-    with open(input_path) as f:
-        for line in f:
-            record = json.loads(line)
-
-            client.put_item(
-                IndexName=index_name,
-                ItemId=record['id'],
-                Vector=record['embedding'],
-                Metadata=record['metadata']
-            )
-
-    print(f"Import complete")
-
-if __name__ == "__main__":
-    import_to_s3_vectors()
+# Configure warm-up
+bash aws/scripts/5_setup_warmup.sh
 ```
 
 ### 8.3 Validation
 
 ```python
-# tests/test_rag_migration.py
-import pytest
-from main.src.adapters.vector_store import VectorStoreProvider
+# aws/scripts/4_test_lambda.py
+import json
+import boto3
+import numpy as np
 
-@pytest.mark.asyncio
-async def test_retrieval_parity():
-    """Validate S3 Vectors matches ChromaDB."""
+FUNCTION_NAME = "pharma-context-provider"
+REGION = "eu-west-2"
 
-    test_queries = [
-        "GAMP-5 category 4 software validation",
-        "21 CFR Part 11 electronic signatures",
-        "ALCOA+ data integrity principles"
-    ]
+def test_lambda():
+    """Test Lambda with sample query"""
+    lambda_client = boto3.client('lambda', region_name=REGION)
 
-    chromadb = VectorStoreProvider(mode="chromadb")
-    s3_vectors = VectorStoreProvider(mode="s3_vectors")
+    # Generate sample embedding (1536 dimensions)
+    sample_embedding = np.random.rand(1536).tolist()
 
-    for query in test_queries:
-        # Get embeddings
-        from openai import OpenAI
-        client = OpenAI()
-        embedding = client.embeddings.create(
-            input=query,
-            model="text-embedding-3-small"
-        ).data[0].embedding
-
-        # Query both
-        chromadb_results = await chromadb.query(embedding, top_k=5)
-        s3_results = await s3_vectors.query(embedding, top_k=5)
-
-        # Compare IDs
-        chromadb_ids = {r['id'] for r in chromadb_results}
-        s3_ids = {r['id'] for r in s3_results}
-
-        overlap = len(chromadb_ids & s3_ids) / 5
-        print(f"Query: {query[:50]}... | Overlap: {overlap:.0%}")
-
-        assert overlap >= 0.80, f"Low overlap for query: {query}"
-
-@pytest.mark.asyncio
-async def test_metadata_filtering():
-    """Validate metadata filters work correctly."""
-
-    s3_vectors = VectorStoreProvider(mode="s3_vectors")
-
-    # Query with filter
-    results = await s3_vectors.query(
-        query_embedding=[0.1] * 1536,  # Dummy
-        top_k=5,
-        filters={"gamp_category": "4"}
+    response = lambda_client.invoke(
+        FunctionName=FUNCTION_NAME,
+        InvocationType='RequestResponse',
+        Payload=json.dumps({
+            'embedding': sample_embedding,
+            'n_results': 5
+        })
     )
 
-    # Validate all results match filter
-    for result in results:
-        assert result['metadata']['gamp_category'] == "4"
+    result = json.loads(response['Payload'].read())
+    print(f"✅ Status: {result['statusCode']}")
 
-@pytest.mark.asyncio
-async def test_latency():
-    """Validate P95 latency ≤ 200ms."""
+    if result['statusCode'] == 200:
+        body = json.loads(result['body'])
+        print(f"📄 Found {body['count']} documents")
 
-    import time
-    s3_vectors = VectorStoreProvider(mode="s3_vectors")
+if __name__ == "__main__":
+    test_lambda()
+```
 
-    latencies = []
-    for _ in range(100):
-        start = time.time()
-        await s3_vectors.query([0.1] * 1536, top_k=5)
-        latencies.append((time.time() - start) * 1000)
+### 8.4 Update Process (Quarterly)
 
-    latencies.sort()
-    p95 = latencies[94]
+When FDA guidance updates:
 
-    print(f"P95 latency: {p95:.1f}ms")
-    assert p95 <= 200, f"Latency too high: {p95:.1f}ms"
+```bash
+# 1. Update local ChromaDB with new documents
+uv run python scripts/update_chroma.py
+
+# 2. Re-upload to S3
+python aws/scripts/1_upload_chroma_to_s3.py
+
+# 3. Lambda picks up new data on next cold start
+# (EventBridge warm-up triggers refresh)
 ```
 
 Run migration:
 ```bash
-# 1. Export ChromaDB
-python scripts/export_chromadb.py
+# 1. Upload ChromaDB to S3
+python aws/scripts/1_upload_chroma_to_s3.py
 
-# 2. Import to S3 Vectors
-python scripts/import_s3_vectors.py
+# 2. Deploy Lambda (if not already deployed)
+bash aws/scripts/3_deploy_lambda.sh
 
-# 3. Validate
-pytest tests/test_rag_migration.py -v
+# 3. Test
+python aws/scripts/4_test_lambda.py
 ```
 
 ---
@@ -1445,7 +1383,7 @@ echo "📊 Monitor: aws ecs describe-services --cluster pharma-prod --services b
 
 | Risk | Probability | Impact | Mitigation | Owner |
 |------|------------|--------|------------|-------|
-| **S3 Vectors quota/availability** | Low | High | Pre-validate service in eu-west-2; maintain ChromaDB fallback; escalate to AWS TAM if needed | Platform Eng |
+| **Lambda cold start latency** | Medium | Low | EventBridge warm-up schedule every 5 min; monitor via CloudWatch; consider provisioned concurrency if needed | Platform Eng |
 | **Workflow spikes beyond Fargate limits** | Medium | Medium | Right-size tasks (4 vCPU/8GB); autoscaling min=1, max=4; consider Step Functions if complex orchestration needed | Platform Eng |
 | **Bedrock throttling** | Low | Medium | Implement exponential backoff; request quota increase; cache embeddings; evaluate Bedrock Provisioned Throughput | Platform Eng |
 | **LangFuse operational complexity** | Medium | Low | Maintain CloudWatch-only fallback profile; consider managed LangFuse Cloud if self-hosted becomes burden | Platform Eng |
@@ -1550,7 +1488,7 @@ echo "📊 Monitor: aws ecs describe-services --cluster pharma-prod --services b
      - Created: pharma-test-gen-deploy (GitHub Actions), pharma-test-gen-ecs-execution, pharma-test-gen-ecs-task
      - Created: GitHub OIDC provider, ECR repositories (backend, worker)
    - ✅ **DONE:** Enable CloudTrail and Config recording - Task 0.2 completed (verified 2025-11-10)
-   - 🔄 **PENDING:** Validate S3 Vectors availability in eu-west-2
+   - ✅ **DONE:** RAG approach decided - S3 + ChromaDB Lambda (Task 4.2 updated)
 
 3. **Weekly Checkpoints:**
    - Monday: Review previous week's deliverables
@@ -1577,7 +1515,7 @@ echo "📊 Monitor: aws ecs describe-services --cluster pharma-prod --services b
 | **Backend** | FastAPI (localhost:8000) | ECS Fargate + ALB |
 | **Worker** | Python async | ECS Fargate |
 | **Database** | SQLite / Postgres (dev) | Aurora Serverless v2 |
-| **RAG** | ChromaDB | S3 Vectors |
+| **RAG** | ChromaDB | S3 + ChromaDB Lambda |
 | **LLM** | OpenRouter (dev) | Amazon Bedrock |
 | **Queue** | In-memory / Redis | Amazon SQS |
 | **Observability** | Phoenix | LangFuse + CloudWatch |

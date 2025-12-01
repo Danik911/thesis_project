@@ -255,3 +255,32 @@ Prices vary by region. eu-west-2 (London) costs:
 
 **Recommendation:** Stay in eu-west-2 for EU data residency compliance.
 The ~10% premium is worth it for GDPR compliance.
+
+---
+
+## MCP Validation Commands
+
+Before deploying any pattern, verify service availability:
+
+```
+# Check product availability
+mcp__aws-knowledge-mcp__aws___get_regional_availability(
+  region="eu-west-2",
+  resource_type="product",
+  filters=["Amazon ECS", "AWS Fargate", "Amazon RDS", "Amazon Aurora"]
+)
+
+# Check CloudFormation resource types
+mcp__aws-knowledge-mcp__aws___get_regional_availability(
+  region="eu-west-2",
+  resource_type="cfn",
+  filters=["AWS::ECS::Service", "AWS::RDS::DBInstance", "AWS::SQS::Queue"]
+)
+
+# Verify current pricing
+mcp__aws-knowledge-mcp__aws___search_documentation(
+  search_phrase="ECS Fargate pricing eu-west-2",
+  topics=["general"],
+  limit=3
+)
+```

@@ -104,15 +104,70 @@
 			]
 		},
 		"playwright": {
-		"type": "stdio",
-		"command": "cmd",
-		"args": [
-			"/c",
-			"npx",
-			"-y",
-			"@playwright/mcp@latest"
-		]
-	}
-
+			"type": "stdio",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npx",
+				"-y",
+				"@playwright/mcp@latest"
+			]
+		},
+		"aws-knowledge-mcp": {
+			"type": "http",
+			"url": "https://knowledge-mcp.global.api.aws",
+			"disabled": false
+		},
+		"aws-documentation-mcp": {
+			"type": "stdio",
+			"command": "uv",
+			"args": [
+				"tool",
+				"run",
+				"--from",
+				"awslabs.aws-documentation-mcp-server@latest",
+				"awslabs.aws-documentation-mcp-server.exe"
+			],
+			"env": {
+				"FASTMCP_LOG_LEVEL": "ERROR",
+				"AWS_DOCUMENTATION_PARTITION": "aws"
+			},
+			"disabled": false
+		},
+		"aws-api-mcp": {
+			"type": "stdio",
+			"command": "uv",
+			"args": [
+				"tool",
+				"run",
+				"--from",
+				"awslabs.aws-api-mcp-server@latest",
+				"awslabs.aws-api-mcp-server.exe"
+			],
+			"env": {
+				"AWS_REGION": "eu-west-2",
+				"READ_OPERATIONS_ONLY": "false",
+				"FASTMCP_LOG_LEVEL": "ERROR"
+			},
+			"disabled": false
+		},
+		"aws-ccapi-mcp": {
+			"type": "stdio",
+			"command": "uv",
+			"args": [
+				"tool",
+				"run",
+				"--from",
+				"awslabs.ccapi-mcp-server@latest",
+				"awslabs.ccapi-mcp-server.exe"
+			],
+			"env": {
+				"AWS_REGION": "eu-west-2",
+				"DEFAULT_TAGS": "enabled",
+				"SECURITY_SCANNING": "enabled",
+				"FASTMCP_LOG_LEVEL": "ERROR"
+			},
+			"disabled": false
+		}
 	}
 }

@@ -207,3 +207,45 @@ desired_count = 2  # minimum for HA
 - "Users are signing up"
 - "We're processing real orders"
 - "Compliance audit coming"
+
+---
+
+## Security Scanning with Checkov (AWS CCAPI MCP)
+
+Validate infrastructure security before deployment using built-in Checkov scanning.
+
+### Security Scan Workflow
+
+```
+# 1. Generate CloudFormation code
+code_token = mcp__aws-ccapi-mcp__generate_infrastructure_code(
+  resource_type="AWS::ECS::Service",
+  properties={...},
+  credentials_token="..."
+)
+
+# 2. Explain the generated code (show to user)
+explained = mcp__aws-ccapi-mcp__explain(generated_code_token=code_token)
+
+# 3. Run Checkov security scan
+scan_result = mcp__aws-ccapi-mcp__run_checkov(explained_token=explained.token)
+```
+
+### Handling Security Findings
+
+| Finding Severity | Prototype Response | Production Response |
+|------------------|-------------------|---------------------|
+| CRITICAL | Review, may block | Must fix before deploy |
+| HIGH | Review, user decision | Should fix |
+| MEDIUM | Accept with note | Review |
+| LOW | Accept | Accept |
+
+### Common Checkov Findings
+
+| Finding | Prototype Action | Production Action |
+|---------|-----------------|-------------------|
+| Public S3 bucket | Accept for demo data | Block - never allow |
+| No encryption at rest | Accept | Require KMS encryption |
+| Overly permissive SG | Accept with justification | Restrict to minimum |
+| No logging enabled | Skip for cost | Enable CloudTrail/CloudWatch |
+| No backup configured | Skip | Enable automated backups |

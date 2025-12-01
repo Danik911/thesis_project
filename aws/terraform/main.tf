@@ -650,7 +650,17 @@ module "ecs_frontend" {
     { name = "NEXT_PUBLIC_API_BASE_URL", value = "https://${module.alb_api.alb_dns_name}" }
   ]
 
-  secrets = []  # Frontend uses NEXT_PUBLIC_ env vars, not secrets
+  # Clerk authentication secrets from Secrets Manager
+  secrets = [
+    {
+      name      = "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/clerk:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY::"
+    },
+    {
+      name      = "CLERK_SECRET_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/clerk:CLERK_SECRET_KEY::"
+    }
+  ]
 
   health_check_command      = ["CMD-SHELL", "curl -f http://localhost:${var.frontend_port}${var.frontend_health_check_path} || exit 1"]
   health_check_start_period = 15  # Next.js takes longer to start

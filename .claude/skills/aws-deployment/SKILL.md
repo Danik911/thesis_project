@@ -1,7 +1,28 @@
 ---
 name: aws-deployment
-description: Deploys AWS infrastructure with research-first approach. ALWAYS searches AWS documentation before writing code, explains services and abbreviations, considers alternatives, maintains organized aws/ folder, and CRITICALLY offers to destroy resources after testing. Use PROACTIVELY for any AWS deployment, Terraform, ECS, Fargate, Lambda, S3, RDS, or cloud infrastructure tasks. MUST BE USED for prototype/learning projects to avoid unexpected costs.
-allowed-tools: ["Bash", "Read", "Write", "Edit", "Grep", "Glob", "WebSearch", "WebFetch", "AskUserQuestion", "mcp__one-search-mcp__one_search"]
+description: Deploys AWS infrastructure with research-first approach. Uses AWS MCP tools for documentation, regional availability, and resource management. ALWAYS searches AWS documentation before writing code, explains services and abbreviations, considers alternatives, maintains organized aws/ folder, and CRITICALLY offers to destroy resources after testing. Use PROACTIVELY for any AWS deployment, Terraform, ECS, Fargate, Lambda, S3, RDS, or cloud infrastructure tasks. MUST BE USED for prototype/learning projects to avoid unexpected costs.
+allowed-tools: [
+  "Bash", "Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "WebFetch",
+  "mcp__aws-knowledge-mcp__aws___search_documentation",
+  "mcp__aws-knowledge-mcp__aws___read_documentation",
+  "mcp__aws-knowledge-mcp__aws___recommend",
+  "mcp__aws-knowledge-mcp__aws___get_regional_availability",
+  "mcp__aws-knowledge-mcp__aws___list_regions",
+  "mcp__aws-api-mcp__suggest_aws_commands",
+  "mcp__aws-api-mcp__call_aws",
+  "mcp__aws-ccapi-mcp__check_environment_variables",
+  "mcp__aws-ccapi-mcp__get_aws_session_info",
+  "mcp__aws-ccapi-mcp__get_resource_schema_information",
+  "mcp__aws-ccapi-mcp__list_resources",
+  "mcp__aws-ccapi-mcp__get_resource",
+  "mcp__aws-ccapi-mcp__generate_infrastructure_code",
+  "mcp__aws-ccapi-mcp__explain",
+  "mcp__aws-ccapi-mcp__run_checkov",
+  "mcp__aws-ccapi-mcp__create_resource",
+  "mcp__aws-ccapi-mcp__update_resource",
+  "mcp__aws-ccapi-mcp__delete_resource",
+  "mcp__aws-ccapi-mcp__get_aws_account_info"
+]
 ---
 
 # AWS Deployment Skill
@@ -79,37 +100,125 @@ THIS PHASE CANNOT BE SKIPPED. EVER.
 
 ---
 
+## AWS MCP Tools Reference
+
+This skill uses AWS MCP servers for authoritative documentation and resource management.
+
+### Documentation Research (aws-knowledge-mcp)
+
+| Tool | Use For |
+|------|---------|
+| `aws___search_documentation` | Search with topic filters |
+| `aws___read_documentation` | Fetch full doc page |
+| `aws___recommend` | Find related docs |
+| `aws___get_regional_availability` | Check service availability |
+
+**Search Topics:**
+- `reference_documentation` - API/SDK/CLI references
+- `current_awareness` - New features, announcements
+- `troubleshooting` - Error messages, debugging
+- `cloudformation` - CFN templates, SAM
+- `cdk_docs` / `cdk_constructs` - CDK guidance
+- `general` - Architecture, best practices, blogs
+
+### AWS Operations (aws-api-mcp)
+
+| Tool | Use For |
+|------|---------|
+| `suggest_aws_commands` | Natural language to CLI |
+| `call_aws` | Execute AWS CLI commands |
+
+### Resource Management (aws-ccapi-mcp)
+
+| Tool | Use For |
+|------|---------|
+| `check_environment_variables` | Validate AWS env setup (ALWAYS FIRST) |
+| `get_aws_session_info` | Confirm account/region (ALWAYS SECOND) |
+| `list_resources` | List resources by type |
+| `get_resource` | Get resource details |
+| `run_checkov` | Security scanning |
+| `generate_infrastructure_code` | Generate CloudFormation |
+| `create_resource` / `update_resource` / `delete_resource` | Manage resources |
+
+**CCAPI Workflow (mandatory order):**
+1. `check_environment_variables()` → Get environment_token
+2. `get_aws_session_info(environment_token)` → Get credentials_token
+3. Use tokens for subsequent operations
+
+### Fallback: WebFetch
+
+Use `WebFetch` only when MCP search returns no results for:
+- AWS Pricing Calculator pages
+- Specific blog posts not indexed
+- External comparison articles
+
+---
+
 ## 6-Phase Workflow
 
 ### Phase 1: Research & Discovery (10-15 min)
 
-**Objective:** Gather current AWS documentation before writing any code
+**Objective:** Gather current AWS documentation using MCP tools
 
 **Steps:**
-1. Identify all AWS services needed for the deployment
-2. For EACH service, use WebSearch with query: `site:docs.aws.amazon.com {service} pricing 2025`
-3. Check for December 2025 updates/changes
-4. Search for known issues or deprecations
-5. Create research notes file
 
-**Create file:** `aws/docs/research-{timestamp}.md`
+1. **Identify AWS services** needed for the deployment
+
+2. **Research each service** using AWS Knowledge MCP:
+   ```
+   # For service features and pricing
+   mcp__aws-knowledge-mcp__aws___search_documentation(
+     search_phrase="{service} pricing features eu-west-2",
+     topics=["general", "reference_documentation"],
+     limit=5
+   )
+
+   # For recent updates/changes
+   mcp__aws-knowledge-mcp__aws___search_documentation(
+     search_phrase="{service} new features 2025",
+     topics=["current_awareness"],
+     limit=3
+   )
+   ```
+
+3. **Check regional availability** (eu-west-2):
+   ```
+   mcp__aws-knowledge-mcp__aws___get_regional_availability(
+     region="eu-west-2",
+     resource_type="product",
+     filters=["Amazon ECS", "Amazon RDS", "Amazon S3"]
+   )
+   ```
+
+4. **Read specific documentation** when needed:
+   ```
+   mcp__aws-knowledge-mcp__aws___read_documentation(
+     url="https://docs.aws.amazon.com/...",
+     max_length=5000
+   )
+   ```
+
+5. **Create research notes file:** `aws/docs/research-{timestamp}.md`
+
+**Research Notes Template:**
 ```markdown
 # AWS Research Notes - {Date}
 
-## Services Researched
+## MCP Search Results
 
 ### {Service 1 Name}
 - **Full Name:** {Expand abbreviation}
-- **Pricing (Dec 2025):** {Current pricing}
+- **Pricing (Dec 2025):** {From MCP search results}
+- **Regional Availability:** {From get_regional_availability}
 - **Key Features:** {Relevant features}
 - **Known Issues:** {Any deprecations or problems}
-- **Source:** {URL}
+- **Source URLs:** {From MCP results}
 
 ### {Service 2 Name}
 ...
 ```
 
-**Quality Gate:** Research file created with at least one citation per service
+**Quality Gate:** Research file created with MCP search results documented
 
 ### Phase 2: Service Selection & Explanation (5-10 min)
 
@@ -145,11 +254,42 @@ THIS PHASE CANNOT BE SKIPPED. EVER.
 
 ### Phase 3: Cost & Security Planning (5-10 min)
 
-**Objective:** Estimate costs, identify security requirements for prototype
+**Objective:** Estimate costs, validate environment, identify security requirements
+
+**Pre-Deployment Validation (MANDATORY):**
+```
+# Step 1: Check environment (ALWAYS FIRST)
+mcp__aws-ccapi-mcp__check_environment_variables()
+# Returns: environment_token, aws_region, readonly_mode
+
+# Step 2: Get session info (ALWAYS SECOND)
+mcp__aws-ccapi-mcp__get_aws_session_info(
+  environment_token="env_xxx..."
+)
+# Returns: credentials_token, account_id, region
+```
+
+**Verify CloudFormation resource availability:**
+```
+mcp__aws-knowledge-mcp__aws___get_regional_availability(
+  region="eu-west-2",
+  resource_type="cfn",
+  filters=["AWS::ECS::Service", "AWS::RDS::DBCluster", "AWS::SQS::Queue"]
+)
+```
 
 **Read reference file:** `reference/cost-security-tradeoffs.md`
 
 **Generate cost estimate using:** `scripts/estimate_costs.py`
+
+**Verify pricing with MCP:**
+```
+mcp__aws-knowledge-mcp__aws___search_documentation(
+  search_phrase="ECS Fargate pricing eu-west-2",
+  topics=["general"],
+  limit=3
+)
+```
 
 **Present to user:**
 ```markdown
@@ -177,34 +317,113 @@ THIS PHASE CANNOT BE SKIPPED. EVER.
 
 ### Phase 4: Infrastructure Deployment (15-45 min)
 
-**Objective:** Deploy infrastructure using existing scripts and Terraform
+**Objective:** Deploy infrastructure with security validation
 
 **Use existing scripts in:** `aws/scripts/`
 - `deploy.py` - Main deployment orchestrator
 - `destroy.py` - Teardown orchestrator
 
+**Pre-Deployment Security Scan (Recommended):**
+
+When generating CloudFormation via CCAPI:
+```
+# 1. Generate infrastructure code
+mcp__aws-ccapi-mcp__generate_infrastructure_code(
+  resource_type="AWS::ECS::Service",
+  properties={...},
+  credentials_token="..."
+)
+
+# 2. Explain the generated code (MANDATORY - show to user)
+mcp__aws-ccapi-mcp__explain(generated_code_token="...")
+
+# 3. Run Checkov security scan
+mcp__aws-ccapi-mcp__run_checkov(explained_token="...")
+```
+
+**Security Scan Results:**
+- `scan_status='PASSED'`: Proceed with deployment
+- `scan_status='FAILED'`: Present findings to user, ask how to proceed:
+  - **Fix issues**: Address security findings first
+  - **Proceed anyway**: User accepts risk (document in research notes)
+  - **Cancel**: Abort deployment
+
 **Steps:**
-1. Verify prerequisites (Docker, Terraform, AWS CLI)
-2. Update Terraform variables if needed
-3. Run deployment:
+1. **Validate AWS credentials** via CLI:
+   ```
+   mcp__aws-api-mcp__call_aws(
+     cli_command="aws sts get-caller-identity --region eu-west-2"
+   )
+   ```
+2. Verify prerequisites (Docker, Terraform, AWS CLI)
+3. Update Terraform variables if needed
+4. Run deployment:
    ```bash
    python aws/scripts/deploy.py
    ```
-4. Capture outputs (URLs, ARNs, etc.)
-5. Update `aws/scripts/README.md` with new resources
+5. Capture outputs (URLs, ARNs, etc.)
+6. Update `aws/scripts/README.md` with new resources
 
 **On deployment failure:**
-- Check CloudWatch logs
-- Review ECS service events
+- Check CloudWatch logs via CLI:
+  ```
+  mcp__aws-api-mcp__call_aws(
+    cli_command="aws logs describe-log-groups --region eu-west-2"
+  )
+  ```
+- Search troubleshooting docs:
+  ```
+  mcp__aws-knowledge-mcp__aws___search_documentation(
+    search_phrase="{error message}",
+    topics=["troubleshooting"],
+    limit=5
+  )
+  ```
 - Fix issue and retry
 
 **Quality Gate:** Deployment successful, all services healthy
 
 ### Phase 5: Validation & Testing (10-20 min)
 
-**Objective:** Verify deployment works
+**Objective:** Verify deployment using MCP tools and manual tests
 
-**Tests to run:**
+**Resource Verification via MCP:**
+```
+# List deployed ECS services
+mcp__aws-ccapi-mcp__list_resources(
+  resource_type="AWS::ECS::Service",
+  region="eu-west-2"
+)
+
+# Get specific resource details with security analysis
+mcp__aws-ccapi-mcp__get_resource(
+  resource_type="AWS::ECS::Service",
+  identifier="pharma-test-gen-api",
+  region="eu-west-2",
+  analyze_security=True
+)
+
+# List ALBs
+mcp__aws-ccapi-mcp__list_resources(
+  resource_type="AWS::ElasticLoadBalancingV2::LoadBalancer",
+  region="eu-west-2"
+)
+```
+
+**Health Checks via AWS CLI:**
+```
+# Check target group health
+mcp__aws-api-mcp__call_aws(
+  cli_command="aws elbv2 describe-target-health --target-group-arn {ARN} --region eu-west-2"
+)
+
+# Check ECS service status
+mcp__aws-api-mcp__call_aws(
+  cli_command="aws ecs describe-services --cluster {CLUSTER} --services {SERVICE} --region eu-west-2"
+)
+```
+
+**Manual Tests:**
 1. Health endpoint check: `curl {ALB_URL}/health`
 2. API connectivity: Test main endpoints
 3. Worker connectivity: Submit test job
@@ -216,6 +435,7 @@ THIS PHASE CANNOT BE SKIPPED. EVER.
 
 | Test | Expected | Actual | Status |
 |------|----------|--------|--------|
+| CCAPI list_resources | Resources found | ... | PASS/FAIL |
 | API health | 200 OK | ... | PASS/FAIL |
 | Frontend loads | 200 OK | ... | PASS/FAIL |
 | Worker processes | Job completes | ... | PASS/FAIL |
@@ -320,7 +540,14 @@ When deploying ANY AWS service, use this template:
 **Cost for prototype:** ~${X}/hour (Dec 2025 pricing)
 ```
 
-**Always verify pricing with WebSearch before stating costs.**
+**Always verify pricing with MCP before stating costs:**
+```
+mcp__aws-knowledge-mcp__aws___search_documentation(
+  search_phrase="{service} pricing eu-west-2",
+  topics=["general"],
+  limit=3
+)
+```
 
 ---
 
