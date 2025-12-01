@@ -87,11 +87,8 @@ variable "aurora_database_name" {
 # S3 Buckets
 # -----------------------------------------------------------------------------
 
-variable "vector_bucket" {
-  description = "S3 Vectors bucket name for RAG retrieval (REQUIRED)"
-  type        = string
-  # NO DEFAULT - must be explicitly provided
-}
+# ChromaDB bucket is created automatically in main.tf (Task 4.2)
+# Named: ${project_name}-chromadb-${account_id}
 
 variable "output_bucket" {
   description = "S3 bucket for test suite output storage (REQUIRED)"

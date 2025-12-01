@@ -1,43 +1,92 @@
-# AWS Lambda + ChromaDB Deployment Guide
+# AWS Deployment Guide
 
-## 🎯 Overview
+## Overview
 
-This directory contains scripts and code to deploy your ChromaDB-based Context Provider Agent to AWS Lambda.
+This directory contains Terraform infrastructure and scripts for deploying the pharmaceutical test generation system to AWS.
 
-## 📁 Structure
+## Architecture
+
+```
+ECS Worker → S3 (download on startup) → In-memory ChromaDB → RAG retrieval
+```
+
+### Key Components
+
+| Component | Resource | Purpose |
+|-----------|----------|---------|
+| Worker | ECS Fargate (4 vCPU, 8GB) | Process test generation jobs |
+| ChromaDB Storage | S3 Bucket | Store ChromaDB tarball (~2MB) |
+| Job Queue | SQS + DLQ | Async job processing |
+| LLM | Bedrock (DeepSeek-V3.1) | Test case generation |
+
+### ChromaDB RAG (Task 4.2)
+
+The Context Provider Agent uses ChromaDB for regulatory document retrieval:
+
+1. **S3 Storage**: Compressed ChromaDB tarball in S3 bucket
+2. **Worker Startup**: Downloads and extracts to `/app/chroma_db`
+3. **In-Process Query**: ChromaDB runs embedded in worker (<10ms latency)
+
+**Cost**: ~$0.02/month (S3 storage only)
+
+## Directory Structure
 
 ```
 aws/
-├── lambda/
-│   └── context_provider/
-│       ├── lambda_function.py      # Lambda handler
-│       └── requirements.txt        # Dependencies
+├── terraform/                  # Infrastructure as Code
+│   ├── main.tf                # Core resources (ECS, S3, IAM, SQS)
+│   ├── variables.tf           # Input variables
+│   ├── outputs.tf             # Output values
+│   └── modules/               # Reusable modules
+│       ├── ecr/               # Container registry
+│       ├── ecs-cluster/       # ECS cluster
+│       ├── ecs-service/       # ECS services
+│       ├── alb/               # Load balancers
+│       └── sqs/               # Job queue
 ├── scripts/
-│   ├── 1_upload_chroma_to_s3.py   # Upload ChromaDB to S3
-│   ├── 2_create_lambda_layer.sh   # Create ChromaDB layer
-│   ├── 3_deploy_lambda.sh         # Deploy Lambda function
-│   ├── 4_test_lambda.py           # Test deployment
-│   └── 5_setup_warmup.sh          # Configure warm-up schedule
-└── README.md                       # This file
+│   ├── 1_upload_chroma_to_s3.py  # Upload ChromaDB to S3
+│   ├── deploy.py                 # Deployment automation
+│   ├── destroy.py                # Teardown automation
+│   ├── import_ecr.sh             # Import existing ECR repos
+│   └── run_local.py              # Local development
+└── README.md                     # This file
 ```
 
-## 🚀 Deployment Steps
+## Deployment Steps
 
 ### Prerequisites
 
 ```bash
 # Install AWS CLI
-pip install awscli
+pip install awscli boto3
 
 # Configure credentials
 aws configure
-# Enter: Access Key, Secret Key, Region (eu-central-1), Output (json)
-
-# Install boto3
-pip install boto3
+# Enter: Access Key, Secret Key, Region (eu-west-2), Output (json)
 ```
 
-### Step 1: Upload ChromaDB to S3
+### Step 1: Deploy Infrastructure
+
+```bash
+cd aws/terraform
+
+# Initialize Terraform
+terraform init
+
+# Review changes
+terraform plan
+
+# Deploy infrastructure
+terraform apply
+```
+
+This creates:
+- S3 bucket for ChromaDB (`pharma-test-gen-chromadb-{account_id}`)
+- ECS Cluster, Services, Task Definitions
+- SQS Queue + Dead Letter Queue
+- IAM Roles with least-privilege permissions
+
+### Step 2: Upload ChromaDB to S3
 
 ```bash
 # From project root
@@ -45,210 +94,127 @@ python aws/scripts/1_upload_chroma_to_s3.py
 ```
 
 **What it does:**
-- Creates tarball of `chroma_db/` directory
-- Uploads to S3 bucket `pharma-vectors-eu`
-- Enables versioning and encryption
+- Creates tarball of `main/chroma_db/` directory
+- Uploads to S3 bucket with versioning
+- Enables encryption (AES-256)
 
 **Output:**
 ```
-✅ Uploaded to s3://pharma-vectors-eu/chroma_db.tar.gz
+Uploaded to s3://pharma-test-gen-chromadb-{account}/chroma_db.tar.gz
 ```
 
-### Step 2: Create Lambda Layer
+### Step 3: Build and Push Docker Images
 
 ```bash
-# Run in WSL/Linux (not Windows PowerShell)
-bash aws/scripts/2_create_lambda_layer.sh
+# Build and push worker image
+docker build -t pharma-test-gen-worker -f Dockerfile.worker.pip .
+docker tag pharma-test-gen-worker:latest {ecr_url}/worker:latest
+docker push {ecr_url}/worker:latest
 ```
 
-**What it does:**
-- Installs ChromaDB and dependencies
-- Creates Lambda layer zip (~150 MB)
-- Publishes to AWS Lambda
-
-**Output:**
-```
-✅ Layer published: arn:aws:lambda:eu-central-1:ACCOUNT:layer:chromadb-layer:1
-```
-
-### Step 3: Deploy Lambda Function
+### Step 4: Verify Deployment
 
 ```bash
-bash aws/scripts/3_deploy_lambda.sh
+# Check ECS service status
+aws ecs describe-services \
+  --cluster pharma-test-gen-cluster \
+  --services pharma-test-gen-worker
+
+# Check CloudWatch logs
+aws logs tail /ecs/pharma-test-gen/worker --follow
 ```
 
-**What it does:**
-- Creates IAM role with S3 read permissions
-- Deploys Lambda function
-- Attaches ChromaDB layer
-- Configures environment variables
+## Environment Variables (Production)
 
-**Output:**
-```
-✅ Lambda deployed successfully!
-   Function: pharma-context-provider
-   Region: eu-central-1
-```
+Set automatically by ECS task definition:
 
-### Step 4: Test Deployment
+| Variable | Description |
+|----------|-------------|
+| `ENVIRONMENT` | `production` |
+| `S3_CHROMADB_BUCKET` | S3 bucket for ChromaDB |
+| `S3_CHROMADB_KEY` | `chroma_db.tar.gz` |
+| `RAG_VECTOR_STORE_PATH` | `/app/chroma_db` |
+| `AWS_REGION` | `eu-west-2` |
+| `SQS_QUEUE_URL` | Job queue URL |
 
-```bash
-python aws/scripts/4_test_lambda.py
-```
+## Updating ChromaDB (Quarterly)
 
-**Expected output:**
-```
-✅ Status: 200
-📄 Found 5 documents
-
-1. Distance: 0.2341
-   Metadata: {'category': 'GAMP-5', 'page': 42}
-   Preview: GAMP 5 Category 5 software requires...
-```
-
-### Step 5: Setup Warm-Up (Optional)
-
-```bash
-bash aws/scripts/5_setup_warmup.sh
-```
-
-**What it does:**
-- Creates EventBridge rule (every 5 minutes)
-- Keeps Lambda warm (reduces cold starts)
-- Cost: ~$0.20/month
-
-## 🔧 Integration with Your Code
-
-### Option 1: Use Lambda Backend
-
-```python
-# main/src/core/unified_workflow.py
-from src.agents.parallel.context_provider_lambda import LambdaContextProvider
-
-# Replace local ChromaDB
-context_provider = LambdaContextProvider(
-    function_name="pharma-context-provider",
-    region="eu-central-1"
-)
-
-# Query context
-contexts = context_provider.get_gamp5_context(
-    "What are Category 5 validation requirements?"
-)
-```
-
-### Option 2: Environment-Based Switching
-
-```python
-import os
-from src.agents.parallel.context_provider_lambda import ContextProviderAgent
-
-# Automatically uses Lambda if AWS credentials available
-use_lambda = os.environ.get('USE_LAMBDA', 'true').lower() == 'true'
-context_provider = ContextProviderAgent(use_lambda=use_lambda)
-
-# Same API for both local and Lambda
-contexts = context_provider.get_context("GAMP-5 requirements")
-```
-
-## 📊 Performance Metrics
-
-| Metric | Value |
-|--------|-------|
-| **Cold Start** | 400-700ms |
-| **Warm Start** | 10-20ms |
-| **Memory Usage** | ~200 MB |
-| **Cost (1000 invocations/month)** | ~$2 |
-| **S3 Storage** | $0.12/month |
-
-## 🔒 Security Configuration
-
-### IAM Role Permissions
-
-The Lambda function has:
-- ✅ S3 read access (download ChromaDB)
-- ✅ CloudWatch Logs (monitoring)
-- ❌ No write permissions (read-only)
-
-### S3 Bucket Security
-
-- ✅ Versioning enabled (audit trail)
-- ✅ AES-256 encryption at rest
-- ✅ Private (no public access)
-
-## 🐛 Troubleshooting
-
-### Issue: "Layer too large"
-
-```bash
-# Check layer size
-du -sh aws/lambda/layers/chromadb/python/
-# Should be < 250 MB
-
-# If too large, remove test files
-find aws/lambda/layers/chromadb/python/ -name "tests" -exec rm -rf {} +
-```
-
-### Issue: "ChromaDB not found in /tmp/"
-
-```bash
-# Verify S3 upload
-aws s3 ls s3://pharma-vectors-eu/chroma_db.tar.gz
-
-# Check Lambda logs
-aws logs tail /aws/lambda/pharma-context-provider --follow
-```
-
-### Issue: "Cold starts too slow"
-
-```bash
-# Enable warm-up schedule
-bash aws/scripts/5_setup_warmup.sh
-
-# Or use provisioned concurrency (more expensive)
-aws lambda put-provisioned-concurrency-config \
-    --function-name pharma-context-provider \
-    --provisioned-concurrent-executions 1
-```
-
-## 💰 Cost Breakdown
-
-```yaml
-Monthly Costs (Low Traffic):
-  - Lambda compute: $1.67 (1000 invocations, 1024 MB)
-  - S3 storage: $0.12 (5 GB)
-  - EventBridge warm-up: $0.20 (8640 invocations)
-  - Data transfer: $0.01 (negligible)
-  Total: ~$2/month
-```
-
-## 🔄 Updating ChromaDB
-
-When you add new regulatory documents:
+When regulatory documents change:
 
 ```bash
 # 1. Update local ChromaDB
-python main/scripts/index_documents.py
+python main/scripts/seed_chroma.py
 
 # 2. Re-upload to S3
 python aws/scripts/1_upload_chroma_to_s3.py
 
-# 3. Lambda will automatically use new version on next cold start
-# Or force refresh:
-aws lambda update-function-configuration \
-    --function-name pharma-context-provider \
-    --environment "Variables={S3_BUCKET=pharma-vectors-eu,S3_KEY=chroma_db.tar.gz,REFRESH=$(date +%s)}"
+# 3. ECS worker picks up new version on next container restart
+# Or force restart:
+aws ecs update-service \
+  --cluster pharma-test-gen-cluster \
+  --service pharma-test-gen-worker \
+  --force-new-deployment
 ```
 
-## 📚 Additional Resources
+## Cost Estimate (Monthly)
 
-- [AWS Lambda Documentation](https://docs.aws.amazon.com/lambda/)
+| Component | Cost |
+|-----------|------|
+| ECS Fargate Worker (1 task) | ~$50 |
+| S3 ChromaDB Storage (2MB) | $0.02 |
+| SQS Queue | $0.50 |
+| Bedrock (1000 invocations) | ~$50 |
+| CloudWatch Logs | $5 |
+| **Total** | **~$105/month** |
+
+## Security
+
+- **IAM Roles**: Least-privilege permissions
+- **S3 Encryption**: AES-256 server-side
+- **VPC**: Private subnets for ECS tasks
+- **Secrets Manager**: API keys and credentials
+- **Public Access Blocked**: S3 buckets
+
+## Troubleshooting
+
+### ChromaDB Download Fails
+
+```bash
+# Check S3 bucket exists and has data
+aws s3 ls s3://pharma-test-gen-chromadb-{account}/
+
+# Check worker IAM role has s3:GetObject
+aws ecs describe-task-definition \
+  --task-definition pharma-test-gen-worker \
+  --query 'taskDefinition.taskRoleArn'
+```
+
+### Worker Not Starting
+
+```bash
+# Check CloudWatch logs for errors
+aws logs tail /ecs/pharma-test-gen/worker --since 10m
+
+# Common issues:
+# - S3_CHROMADB_BUCKET not set
+# - IAM permission denied
+# - Insufficient memory (needs 8GB)
+```
+
+### ECS Service Unhealthy
+
+```bash
+# Check task status
+aws ecs list-tasks --cluster pharma-test-gen-cluster
+
+# Describe stopped tasks
+aws ecs describe-tasks \
+  --cluster pharma-test-gen-cluster \
+  --tasks {task_arn}
+```
+
+## Resources
+
+- [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
+- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 - [ChromaDB Documentation](https://docs.trychroma.com/)
-- [Lambda Layers Guide](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html)
-
-## 🆘 Support
-
-For issues, check:
-1. CloudWatch Logs: `/aws/lambda/pharma-context-provider`
-2. Lambda metrics: AWS Console → Lambda → Monitoring
-3. S3 bucket: `s3://pharma-vectors-eu/`

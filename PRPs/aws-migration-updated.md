@@ -7,6 +7,68 @@
 
 ---
 
+## 🚀 Current Deployment Status (Live)
+
+**Last Updated:** 2025-12-01
+**Environment:** Staging (eu-west-2 London)
+**AWS Account:** 275333454012
+
+### Live URLs
+
+| Service | URL | Status |
+|---------|-----|--------|
+| **Frontend** | http://pharma-test-gen-frontend-alb-1846570432.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **API** | http://pharma-test-gen-api-alb-983674865.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **API Health** | http://pharma-test-gen-api-alb-983674865.eu-west-2.elb.amazonaws.com/health | ✅ Healthy |
+
+### Running Services
+
+| Service | Desired | Running | Task Definition | Resources |
+|---------|---------|---------|-----------------|-----------|
+| pharma-test-gen-api | 1 | 1 | v4 | 1 vCPU / 2 GB |
+| pharma-test-gen-worker | 1 | 1 | v4 | 2 vCPU / 4 GB |
+| pharma-test-gen-frontend | 1 | 1 | v4 | 0.25 vCPU / 0.5 GB |
+
+### AWS Resources
+
+| Resource Type | Identifier | Region |
+|---------------|------------|--------|
+| ECS Cluster | `pharma-test-gen-cluster` | eu-west-2 |
+| ECR (API) | `pharma-test-gen-api` | eu-west-2 |
+| ECR (Worker) | `pharma-test-gen-worker` | eu-west-2 |
+| ECR (Frontend) | `pharma-test-gen-frontend` | eu-west-2 |
+| ALB (API) | `pharma-test-gen-api-alb` | eu-west-2 |
+| ALB (Frontend) | `pharma-test-gen-frontend-alb` | eu-west-2 |
+| SQS Queue | `pharma-test-gen-worker-jobs` | eu-west-2 |
+| SQS DLQ | `pharma-test-gen-worker-jobs-dlq` | eu-west-2 |
+| Secrets Manager | `pharma-test-gen/clerk` | eu-west-2 |
+| CloudWatch Logs | `/ecs/pharma-test-gen-*` | eu-west-2 |
+
+### Quick Commands
+
+```bash
+# Check service status
+aws ecs describe-services --cluster pharma-test-gen-cluster \
+  --services pharma-test-gen-api pharma-test-gen-worker pharma-test-gen-frontend \
+  --region eu-west-2 --query "services[*].{Service:serviceName,Running:runningCount}" --output table
+
+# Force new deployment (after pushing new images)
+aws ecs update-service --cluster pharma-test-gen-cluster \
+  --service pharma-test-gen-api --force-new-deployment --region eu-west-2
+
+# View logs
+aws logs tail /ecs/pharma-test-gen-api --follow --region eu-west-2
+
+# Destroy infrastructure (to save costs when not in use)
+cd aws/terraform && terraform destroy -var-file=environments/staging.tfvars
+```
+
+### Cost Warning
+
+⚠️ **Running Cost:** ~$5.28/day (~$160/month) when all services are active. Run `terraform destroy` when not in use to save costs.
+
+---
+
 ## Executive Summary
 
 This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test generation system from local development to AWS production. The system uses LlamaIndex workflows with multi-agent orchestration, RAG capabilities (ChromaDB → S3 + ChromaDB Lambda), and regulatory observability (Phoenix local → LangFuse AWS).
@@ -1537,9 +1599,99 @@ echo "📊 Monitor: aws ecs describe-services --cluster pharma-prod --services b
 
 ---
 
-**Document Version:** 2.1
-**Last Updated:** 2025-11-10
-**Next Review:** 2025-11-17 (Phase 0 completion)
+---
+
+## Appendix C: File Reference
+
+### Terraform Infrastructure (`aws/terraform/`)
+
+| File | Description |
+|------|-------------|
+| [`main.tf`](../aws/terraform/main.tf) | Root module - orchestrates all infrastructure (ECS, ALB, SQS, CloudWatch). Defines 3 ECS services with task definitions, networking, and secrets injection. |
+| [`variables.tf`](../aws/terraform/variables.tf) | Input variables - project name, environment, region, container resources (CPU/memory), image tags. |
+| [`outputs.tf`](../aws/terraform/outputs.tf) | Output values - ALB URLs, ECR repository URLs, SQS queue URL, cluster ARN. |
+| [`backend.tf`](../aws/terraform/backend.tf) | Remote state configuration - S3 bucket + DynamoDB lock table for team collaboration. |
+| [`versions.tf`](../aws/terraform/versions.tf) | Provider versions - AWS provider ~5.0, Terraform >=1.5. |
+
+### Terraform Modules (`aws/terraform/modules/`)
+
+| Module | Description |
+|--------|-------------|
+| [`modules/ecr/`](../aws/terraform/modules/ecr/) | ECR repositories for Docker images with lifecycle policies (keep last 5 images). |
+| [`modules/ecs-cluster/`](../aws/terraform/modules/ecs-cluster/) | ECS Fargate cluster with Container Insights enabled. |
+| [`modules/ecs-service/`](../aws/terraform/modules/ecs-service/) | ECS service definition - task definitions, auto-scaling, health checks, log groups. |
+| [`modules/alb/`](../aws/terraform/modules/alb/) | Application Load Balancer with target groups and HTTP listeners. |
+| [`modules/sqs/`](../aws/terraform/modules/sqs/) | SQS queue for worker jobs with Dead Letter Queue (DLQ) for failed messages. |
+
+### Environment Configurations (`aws/terraform/environments/`)
+
+| File | Description |
+|------|-------------|
+| [`staging.tfvars`](../aws/terraform/environments/staging.tfvars) | Staging environment variables - smaller resources, single task per service. |
+| [`production.tfvars`](../aws/terraform/environments/production.tfvars) | Production environment variables - larger resources, multiple tasks, auto-scaling. |
+
+### Docker Build Files (Project Root)
+
+| File | Description |
+|------|-------------|
+| [`Dockerfile.frontend`](../Dockerfile.frontend) | Next.js frontend - multi-stage build, standalone output, non-root user. Requires `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` build arg. |
+| [`Dockerfile.api.pip`](../Dockerfile.api.pip) | FastAPI backend - QEMU-compatible pip-based build (no UV). Health check endpoint on port 8080. |
+| [`Dockerfile.worker.pip`](../Dockerfile.worker.pip) | Background worker - QEMU-compatible pip-based build. No HTTP endpoint (SQS polling). |
+| [`Dockerfile.api`](../Dockerfile.api) | FastAPI backend - UV-based build (faster but not QEMU-compatible on ARM64). |
+| [`Dockerfile.worker`](../Dockerfile.worker) | Background worker - UV-based build (faster but not QEMU-compatible on ARM64). |
+| [`requirements-prod.txt`](../requirements-prod.txt) | Pinned Python dependencies for production Docker builds. |
+
+### PRP Task Definitions (`PRPs/tasks/`)
+
+| Task ID | File | Description |
+|---------|------|-------------|
+| 4.1 | [`4.1-terraform-ecs-deploy.md`](tasks/4.1-terraform-ecs-deploy.md) | ECS Fargate deployment - ✅ DONE. Includes all issues encountered and solutions. |
+| 4.2 | [`4.2-aurora-data-api.md`](tasks/4.2-aurora-data-api.md) | Aurora Serverless v2 with Data API - Next task. |
+| 4.3 | [`4.3-bedrock-deepseek.md`](tasks/4.3-bedrock-deepseek.md) | Amazon Bedrock DeepSeek integration. |
+| 4.4 | [`4.4-traffic-cutover.md`](tasks/4.4-traffic-cutover.md) | Blue/green deployment and traffic cutover. |
+
+### Application Code
+
+| Path | Description |
+|------|-------------|
+| [`main/api/app.py`](../main/api/app.py) | FastAPI application - job submission, status endpoints, health checks. |
+| [`main/api/worker.py`](../main/api/worker.py) | SQS worker - polls queue, executes workflows, updates job status. |
+| [`main/frontend/`](../main/frontend/) | Next.js frontend - Pages Router, Clerk auth, job management UI. |
+| [`main/src/core/unified_workflow.py`](../main/src/core/unified_workflow.py) | LlamaIndex workflow - GAMP-5 categorization, multi-agent orchestration. |
+
+### Deployment Commands
+
+```bash
+# Full deployment from scratch
+cd aws/terraform
+terraform init
+terraform apply -var-file=environments/staging.tfvars
+
+# Build and push Docker images (from project root)
+aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 275333454012.dkr.ecr.eu-west-2.amazonaws.com
+
+# Frontend (requires Clerk key at build time)
+docker buildx build --platform linux/amd64 -f Dockerfile.frontend \
+  --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$(aws secretsmanager get-secret-value --secret-id pharma-test-gen/clerk --region eu-west-2 --query 'SecretString' --output text | python -c "import sys,json; print(json.load(sys.stdin)['NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'])") \
+  -t 275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-frontend:staging-latest --push .
+
+# API and Worker (pip-based for QEMU compatibility on ARM64)
+docker buildx build --platform linux/amd64 -f Dockerfile.api.pip \
+  -t 275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-api:staging-latest --push .
+docker buildx build --platform linux/amd64 -f Dockerfile.worker.pip \
+  -t 275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-worker:staging-latest --push .
+
+# Force ECS to pull new images
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-frontend --force-new-deployment --region eu-west-2
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-api --force-new-deployment --region eu-west-2
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-worker --force-new-deployment --region eu-west-2
+```
+
+---
+
+**Document Version:** 2.2
+**Last Updated:** 2025-12-01
+**Next Review:** 2025-12-08 (Task 4.2 completion)
 **Approved By:** [Pending stakeholder review]
 
 ---

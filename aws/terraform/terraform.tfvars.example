@@ -1,0 +1,63 @@
+# =============================================================================
+# Terraform Variables - COPY TO terraform.tfvars AND FILL IN VALUES
+# =============================================================================
+# These values are REQUIRED and depend on your AWS account setup.
+# Run the infrastructure scripts first or use existing resources.
+
+# -----------------------------------------------------------------------------
+# Network Configuration (REQUIRED)
+# -----------------------------------------------------------------------------
+# Get these from AWS Console → VPC → Your VPCs/Subnets
+# Or run: aws ec2 describe-vpcs / aws ec2 describe-subnets
+
+vpc_id = "vpc-xxxxxxxxxxxxxxxxx"
+
+private_subnet_ids = [
+  "subnet-xxxxxxxxxxxxxxxxx",  # Private subnet AZ-a
+  "subnet-yyyyyyyyyyyyyyyyy"   # Private subnet AZ-b
+]
+
+public_subnet_ids = [
+  "subnet-zzzzzzzzzzzzzzzzz",  # Public subnet AZ-a
+  "subnet-wwwwwwwwwwwwwwwww"   # Public subnet AZ-b
+]
+
+# -----------------------------------------------------------------------------
+# Database Configuration (REQUIRED)
+# -----------------------------------------------------------------------------
+# These are created by Task 4.3 (Aurora setup) or can be placeholder ARNs
+
+# Aurora Serverless v2 cluster ARN
+# Format: arn:aws:rds:eu-west-2:{account}:cluster:pharma-test-gen-aurora
+aurora_cluster_arn = "arn:aws:rds:eu-west-2:123456789012:cluster:pharma-test-gen-aurora"
+
+# Secrets Manager secret ARN for Aurora credentials
+# Format: arn:aws:secretsmanager:eu-west-2:{account}:secret:pharma-test-gen/aurora-xxxxxx
+aurora_secret_arn = "arn:aws:secretsmanager:eu-west-2:123456789012:secret:pharma-test-gen/aurora-AbCdEf"
+
+# Aurora database name
+aurora_database_name = "pharma_test_gen"
+
+# -----------------------------------------------------------------------------
+# S3 Configuration (REQUIRED)
+# -----------------------------------------------------------------------------
+# S3 bucket for storing generated test suites
+# Note: ChromaDB bucket is created automatically by Terraform
+
+output_bucket = "pharma-test-gen-output-123456789012"
+
+# -----------------------------------------------------------------------------
+# SSL/TLS Configuration (REQUIRED for HTTPS)
+# -----------------------------------------------------------------------------
+# ACM certificate for ALB HTTPS listeners
+# Get from: AWS Console → Certificate Manager → Certificates
+# Leave empty for HTTP-only staging deployment
+
+acm_certificate_arn = "arn:aws:acm:eu-west-2:123456789012:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# -----------------------------------------------------------------------------
+# Optional: SNS Alarm Topic (for CloudWatch alarms)
+# -----------------------------------------------------------------------------
+# Leave empty to disable CloudWatch alarms
+
+# sns_alarm_topic_arn = "arn:aws:sns:eu-west-2:123456789012:pharma-test-gen-alarms"

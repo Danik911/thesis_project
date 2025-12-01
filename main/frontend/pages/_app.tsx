@@ -3,9 +3,15 @@ import type { AppProps } from 'next/app'
 import { ClerkProvider } from '@clerk/nextjs'
 import Head from 'next/head'
 import React from 'react'
+import dynamic from 'next/dynamic'
 import reportAccessibility from '../utils/reportAccessibility'
 import { ModalProvider } from '@/context/ModalContext'
 import { Space_Grotesk, Instrument_Sans } from 'next/font/google'
+
+// Dynamic import for custom cursor (client-side only)
+const CustomCursor = dynamic(() => import('@/components/CustomCursor'), {
+  ssr: false,
+})
 
 // Initialize fonts
 const spaceGrotesk = Space_Grotesk({
@@ -37,6 +43,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <link rel="icon" href="/favicon.png" />
         </Head>
         <main className={`${spaceGrotesk.variable} ${instrumentSans.variable} font-sans`}>
+          <CustomCursor />
           <Component {...pageProps} />
         </main>
       </ModalProvider>

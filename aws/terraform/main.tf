@@ -67,6 +67,48 @@ module "sqs_worker" {
 }
 
 # -----------------------------------------------------------------------------
+# S3 Bucket for ChromaDB RAG Storage (Task 4.2)
+# -----------------------------------------------------------------------------
+# Stores compressed ChromaDB tarball for worker download on startup
+# Cost: ~$0.02/month for 2MB storage
+
+resource "aws_s3_bucket" "chromadb" {
+  bucket = "${var.project_name}-chromadb-${data.aws_caller_identity.current.account_id}"
+
+  tags = {
+    Name        = "${var.project_name}-chromadb"
+    Environment = var.environment
+    GAMP5       = "true"
+    Component   = "rag"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "chromadb" {
+  bucket = aws_s3_bucket.chromadb.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "chromadb" {
+  bucket = aws_s3_bucket.chromadb.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "chromadb" {
+  bucket = aws_s3_bucket.chromadb.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# -----------------------------------------------------------------------------
 # IAM Roles
 # -----------------------------------------------------------------------------
 
@@ -246,14 +288,13 @@ resource "aws_iam_role_policy" "worker_task" {
         ]
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
       },
-      # S3 Vectors - RAG retrieval
+      # S3 ChromaDB - Download RAG database on startup (Task 4.2)
       {
         Effect = "Allow"
         Action = [
-          "s3vectors:QueryVectors",
-          "s3vectors:GetVectors"
+          "s3:GetObject"
         ]
-        Resource = "arn:aws:s3vectors:${var.aws_region}:${data.aws_caller_identity.current.account_id}:bucket/${var.vector_bucket}/index/*"
+        Resource = "${aws_s3_bucket.chromadb.arn}/*"
       },
       # Bedrock - DeepSeek V3 inference
       {
@@ -592,10 +633,13 @@ module "ecs_worker" {
     { name = "BEDROCK_REGION", value = var.bedrock_region },
     { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
-    { name = "VECTOR_BUCKET", value = var.vector_bucket },
     { name = "OUTPUT_BUCKET", value = var.output_bucket },
     { name = "DATABASE_NAME", value = var.aurora_database_name },
-    { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn }
+    { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn },
+    # ChromaDB RAG Configuration (Task 4.2)
+    { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
+    { name = "S3_CHROMADB_KEY", value = "chroma_db.tar.gz" },
+    { name = "RAG_VECTOR_STORE_PATH", value = "/app/chroma_db" }
   ]
 
   secrets = [
@@ -735,4 +779,18 @@ resource "aws_cloudwatch_metric_alarm" "api_5xx_errors" {
     Component = "monitoring"
     GAMP5     = "true"
   }
+}
+
+# -----------------------------------------------------------------------------
+# Outputs (Task 4.2 - ChromaDB RAG)
+# -----------------------------------------------------------------------------
+
+output "chromadb_bucket_name" {
+  description = "S3 bucket name for ChromaDB RAG storage"
+  value       = aws_s3_bucket.chromadb.id
+}
+
+output "chromadb_bucket_arn" {
+  description = "S3 bucket ARN for ChromaDB RAG storage"
+  value       = aws_s3_bucket.chromadb.arn
 }

@@ -86,3 +86,25 @@
     font-size: clamp(4rem, 10vw, 8rem);
   }
 }
+
+/* Custom Cursor Styles */
+.custom-cursor-active,
+.custom-cursor-active * {
+  cursor: none !important;
+}
+
+/* Restore text cursor for inputs */
+.custom-cursor-active input,
+.custom-cursor-active textarea,
+.custom-cursor-active select,
+.custom-cursor-active [contenteditable="true"] {
+  cursor: text !important;
+}
+
+/* Disable custom cursor for accessibility and touch devices */
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .custom-cursor-active,
+  .custom-cursor-active * {
+    cursor: auto !important;
+  }
+}

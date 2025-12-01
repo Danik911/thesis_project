@@ -9,7 +9,7 @@ import boto3
 from pathlib import Path
 
 # Configuration
-CHROMA_DB_PATH = Path("chroma_db")
+CHROMA_DB_PATH = Path("main/chroma_db")
 S3_BUCKET = "pharma-vectors-eu"
 S3_KEY = "chroma_db.tar.gz"
 AWS_REGION = "eu-west-2"
