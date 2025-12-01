@@ -100,6 +100,12 @@ variable "security_group_ids" {
   type        = list(string)
 }
 
+variable "assign_public_ip" {
+  description = "Assign public IP to tasks (required for public subnets without NAT)"
+  type        = bool
+  default     = false
+}
+
 # -----------------------------------------------------------------------------
 # Load Balancer (optional)
 # -----------------------------------------------------------------------------

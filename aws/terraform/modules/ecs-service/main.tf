@@ -113,7 +113,7 @@ resource "aws_ecs_service" "this" {
   network_configuration {
     subnets          = var.subnet_ids
     security_groups  = var.security_group_ids
-    assign_public_ip = false  # Private subnets, no public IP (security)
+    assign_public_ip = var.assign_public_ip  # True for public subnets without NAT
   }
 
   # Load balancer integration (only for API and Frontend)
@@ -128,14 +128,12 @@ resource "aws_ecs_service" "this" {
 
   # Deployment configuration with circuit breaker
   # GAMP-5: NO FALLBACK - failed deployments trigger automatic rollback
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
 
-    deployment_circuit_breaker {
-      enable   = true
-      rollback = true  # Auto rollback on deployment failure
-    }
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true  # Auto rollback on deployment failure
   }
 
   # Health check grace period (only when ALB is attached)
@@ -150,8 +148,8 @@ resource "aws_ecs_service" "this" {
     ignore_changes = [desired_count]
   }
 
-  # Dependencies
-  depends_on = var.depends_on_resources
+  # Dependencies are inferred through resource references
+  # Note: depends_on requires static list, cannot use variables
 
   tags = {
     Service = var.service_name

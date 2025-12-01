@@ -15,27 +15,35 @@ project_name = "pharma-test-gen"
 aws_region   = "eu-west-2"
 
 # -----------------------------------------------------------------------------
-# Networking (REQUIRED - Update with your VPC/Subnet IDs)
+# Networking (Updated with actual VPC/Subnet IDs)
 # -----------------------------------------------------------------------------
 
-# vpc_id = "vpc-xxxxxxxxxxxxxxxxx"
-# private_subnet_ids = ["subnet-xxxxxxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyyyyyy"]
-# public_subnet_ids  = ["subnet-aaaaaaaaaaaaaaaa", "subnet-bbbbbbbbbbbbbbbb"]
+vpc_id = "vpc-07de5cd5ef4073ad4"
+
+# Using default VPC subnets (all public) for staging
+# For production, create private subnets with NAT Gateway
+private_subnet_ids = ["subnet-0809d351e731b6c9d", "subnet-05a62658586e5cbaa", "subnet-04c12c181726055dc"]
+public_subnet_ids  = ["subnet-0809d351e731b6c9d", "subnet-05a62658586e5cbaa", "subnet-04c12c181726055dc"]
+
+# Assign public IP to tasks (required for staging with public subnets and no NAT)
+assign_public_ip = true
 
 # -----------------------------------------------------------------------------
-# Aurora Database (REQUIRED - From Task 4.2)
+# Aurora Database (SKIPPED for initial testing - saves ~$3/hour)
+# Set to placeholder values - ECS will start but won't connect to database
+# Complete Task 4.2 to deploy real Aurora cluster
 # -----------------------------------------------------------------------------
 
-# aurora_cluster_arn   = "arn:aws:rds:eu-west-2:ACCOUNT_ID:cluster:pharma-test-gen-aurora"
-# aurora_secret_arn    = "arn:aws:secretsmanager:eu-west-2:ACCOUNT_ID:secret:pharma-test-gen/aurora-XXXXXX"
-# aurora_database_name = "pharma_test_gen"
+aurora_cluster_arn   = "arn:aws:rds:eu-west-2:275333454012:cluster:placeholder"
+aurora_secret_arn    = "arn:aws:secretsmanager:eu-west-2:275333454012:secret:placeholder-p1v3ys"
+aurora_database_name = "pharma_test_gen"
 
 # -----------------------------------------------------------------------------
-# S3 Buckets (REQUIRED)
+# S3 Buckets (Created with versioning enabled)
 # -----------------------------------------------------------------------------
 
-# vector_bucket = "pharma-test-gen-vectors-staging"
-# output_bucket = "pharma-test-gen-output-staging"
+vector_bucket = "pharma-test-gen-vectors-staging"
+output_bucket = "pharma-test-gen-output-staging"
 
 # -----------------------------------------------------------------------------
 # Bedrock Configuration

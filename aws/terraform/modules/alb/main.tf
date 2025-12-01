@@ -76,9 +76,9 @@ resource "aws_lb_target_group" "this" {
   }
 }
 
-# HTTPS Listener (primary)
+# HTTPS Listener (primary) - only created when certificate is provided
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.certificate_arn != null && var.certificate_arn != "" ? 1 : 0
 
   load_balancer_arn = aws_lb.this.arn
   port              = 443
@@ -92,18 +92,23 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# HTTP Listener (redirect to HTTPS)
+# Local variable for certificate check
+locals {
+  has_certificate = var.certificate_arn != null && var.certificate_arn != ""
+}
+
+# HTTP Listener (redirect to HTTPS or forward directly)
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.this.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    type = var.certificate_arn != null ? "redirect" : "forward"
+    type = local.has_certificate ? "redirect" : "forward"
 
     # Redirect to HTTPS if certificate is configured
     dynamic "redirect" {
-      for_each = var.certificate_arn != null ? [1] : []
+      for_each = local.has_certificate ? [1] : []
       content {
         port        = "443"
         protocol    = "HTTPS"
@@ -111,7 +116,7 @@ resource "aws_lb_listener" "http" {
       }
     }
 
-    # Forward to target group if no certificate (development only)
-    target_group_arn = var.certificate_arn == null ? aws_lb_target_group.this.arn : null
+    # Forward to target group if no certificate (development/staging only)
+    target_group_arn = local.has_certificate ? null : aws_lb_target_group.this.arn
   }
 }

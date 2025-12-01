@@ -114,7 +114,8 @@ resource "aws_iam_role_policy" "ecs_task_execution_custom" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*"
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*",
+          var.aurora_secret_arn  # Allow access to the Aurora/placeholder secret
         ]
       },
       # CloudWatch Logs (push container logs)
@@ -530,6 +531,7 @@ module "ecs_api" {
 
   subnet_ids         = var.private_subnet_ids
   security_group_ids = [aws_security_group.api.id]
+  assign_public_ip   = var.assign_public_ip
   target_group_arn   = module.alb_api.target_group_arn
   container_port     = var.api_port
 
@@ -557,10 +559,7 @@ module "ecs_api" {
   scale_out_cooldown        = var.scale_out_cooldown
   log_retention_days        = var.log_retention_days
 
-  depends_on_resources = [
-    module.alb_api.https_listener_arn,
-    aws_iam_role_policy.api_task
-  ]
+  # Dependencies are inferred through resource references
 }
 
 # Worker Service
@@ -583,6 +582,7 @@ module "ecs_worker" {
 
   subnet_ids         = var.private_subnet_ids
   security_group_ids = [aws_security_group.worker.id]
+  assign_public_ip   = var.assign_public_ip
   target_group_arn   = null  # Worker has no ALB
   container_port     = null  # Worker has no HTTP endpoint
 
@@ -609,15 +609,16 @@ module "ecs_worker" {
   max_capacity              = var.worker_max_capacity
   cpu_target_utilization    = null  # Worker scales on SQS, not CPU
   memory_target_utilization = null  # Worker scales on SQS, not memory
-  sqs_queue_name            = module.sqs_worker.queue_name
+  # SQS scaling disabled for initial deployment (requires queue data)
+  # Re-enable after first messages are in queue:
+  # sqs_queue_name            = module.sqs_worker.queue_name
+  sqs_queue_name            = null
   sqs_target_value          = var.worker_target_messages_per_task
   sqs_scale_in_cooldown     = 600  # 10 minutes to prevent thrashing
   scale_out_cooldown        = var.scale_out_cooldown
   log_retention_days        = var.log_retention_days
 
-  depends_on_resources = [
-    aws_iam_role_policy.worker_task
-  ]
+  # Dependencies are inferred through resource references
 }
 
 # Frontend Service
@@ -640,6 +641,7 @@ module "ecs_frontend" {
 
   subnet_ids         = var.private_subnet_ids
   security_group_ids = [aws_security_group.frontend.id]
+  assign_public_ip   = var.assign_public_ip
   target_group_arn   = module.alb_frontend.target_group_arn
   container_port     = var.frontend_port
 
@@ -663,9 +665,7 @@ module "ecs_frontend" {
   scale_out_cooldown        = var.scale_out_cooldown
   log_retention_days        = var.log_retention_days
 
-  depends_on_resources = [
-    module.alb_frontend.https_listener_arn
-  ]
+  # Dependencies are inferred through resource references
 }
 
 # -----------------------------------------------------------------------------

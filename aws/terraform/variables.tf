@@ -55,6 +55,12 @@ variable "public_subnet_ids" {
   # NO DEFAULT - must be explicitly provided
 }
 
+variable "assign_public_ip" {
+  description = "Assign public IP to ECS tasks (required for public subnets without NAT Gateway)"
+  type        = bool
+  default     = false
+}
+
 # -----------------------------------------------------------------------------
 # Aurora Database (from Task 4.2)
 # -----------------------------------------------------------------------------
@@ -114,9 +120,9 @@ variable "bedrock_model_id" {
 # -----------------------------------------------------------------------------
 
 variable "acm_certificate_arn" {
-  description = "ACM certificate ARN for HTTPS (REQUIRED for production)"
+  description = "ACM certificate ARN for HTTPS (REQUIRED for production, empty for HTTP-only staging)"
   type        = string
-  # NO DEFAULT - must be explicitly provided
+  default     = ""  # Empty for HTTP-only staging; MUST be set for production
 }
 
 # -----------------------------------------------------------------------------
