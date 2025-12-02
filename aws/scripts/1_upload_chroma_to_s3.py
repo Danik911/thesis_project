@@ -10,30 +10,30 @@ from pathlib import Path
 
 # Configuration
 CHROMA_DB_PATH = Path("main/chroma_db")
-S3_BUCKET = "pharma-vectors-eu"
+S3_BUCKET = "pharma-test-gen-vectors-staging"  # Existing bucket from Task 4.1 deployment
 S3_KEY = "chroma_db.tar.gz"
 AWS_REGION = "eu-west-2"
 
 def create_tarball():
     """Create compressed tarball of ChromaDB"""
-    print(f"📦 Creating tarball from {CHROMA_DB_PATH}...")
-    
+    print(f"[*] Creating tarball from {CHROMA_DB_PATH}...")
+
     if not CHROMA_DB_PATH.exists():
         raise FileNotFoundError(f"ChromaDB not found at {CHROMA_DB_PATH}")
-    
+
     tarball_path = Path("chroma_db.tar.gz")
-    
+
     with tarfile.open(tarball_path, "w:gz") as tar:
         tar.add(CHROMA_DB_PATH, arcname="chroma_db")
-    
+
     size_mb = tarball_path.stat().st_size / (1024 * 1024)
-    print(f"✅ Created {tarball_path} ({size_mb:.2f} MB)")
-    
+    print(f"[+] Created {tarball_path} ({size_mb:.2f} MB)")
+
     return tarball_path
 
 def upload_to_s3(tarball_path):
     """Upload tarball to S3"""
-    print(f"☁️  Uploading to s3://{S3_BUCKET}/{S3_KEY}...")
+    print(f"[*] Uploading to s3://{S3_BUCKET}/{S3_KEY}...")
     
     s3 = boto3.client('s3', region_name=AWS_REGION)
     
@@ -79,20 +79,20 @@ def upload_to_s3(tarball_path):
         }
     )
     
-    print(f"✅ Uploaded to s3://{S3_BUCKET}/{S3_KEY}")
-    
+    print(f"[+] Uploaded to s3://{S3_BUCKET}/{S3_KEY}")
+
     # Clean up local tarball
     tarball_path.unlink()
-    print("🧹 Cleaned up local tarball")
+    print("[+] Cleaned up local tarball")
 
 def main():
-    print("🚀 Starting ChromaDB S3 upload...\n")
-    
+    print("[*] Starting ChromaDB S3 upload...\n")
+
     tarball = create_tarball()
     upload_to_s3(tarball)
-    
-    print("\n✅ Done! ChromaDB ready for Lambda deployment")
-    print(f"   S3 URI: s3://{S3_BUCKET}/{S3_KEY}")
+
+    print("\n[+] Done! ChromaDB ready for ECS worker")
+    print(f"    S3 URI: s3://{S3_BUCKET}/{S3_KEY}")
 
 if __name__ == "__main__":
     main()

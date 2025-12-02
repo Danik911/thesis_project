@@ -972,9 +972,10 @@ if __name__ == "__main__":
         # This is normally done by FastAPI lifespan, but worker runs independently
         logger.info("Initializing worker infrastructure...")
 
-        # Task 4.2: Initialize ChromaDB from S3 in production
+        # Task 4.2: Initialize ChromaDB from S3 in staging/production
         # Downloads and extracts ChromaDB tarball if not already present
-        if os.getenv("ENVIRONMENT") == "production" and os.getenv("S3_CHROMADB_BUCKET"):
+        env = os.getenv("ENVIRONMENT", "")
+        if env in ("staging", "production") and os.getenv("S3_CHROMADB_BUCKET"):
             try:
                 from main.scripts.init_chromadb import init_chromadb_from_s3
                 chroma_path = init_chromadb_from_s3()

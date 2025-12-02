@@ -289,12 +289,13 @@ resource "aws_iam_role_policy" "worker_task" {
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
       },
       # S3 ChromaDB - Download RAG database on startup (Task 4.2)
+      # Using existing bucket pharma-test-gen-vectors-staging (manually created during initial deployment)
       {
         Effect = "Allow"
         Action = [
           "s3:GetObject"
         ]
-        Resource = "${aws_s3_bucket.chromadb.arn}/*"
+        Resource = "arn:aws:s3:::pharma-test-gen-vectors-staging/*"
       },
       # Bedrock - DeepSeek V3 inference
       {
@@ -637,7 +638,8 @@ module "ecs_worker" {
     { name = "DATABASE_NAME", value = var.aurora_database_name },
     { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn },
     # ChromaDB RAG Configuration (Task 4.2)
-    { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
+    # Using existing bucket pharma-test-gen-vectors-staging (manually created during initial deployment)
+    { name = "S3_CHROMADB_BUCKET", value = "pharma-test-gen-vectors-staging" },
     { name = "S3_CHROMADB_KEY", value = "chroma_db.tar.gz" },
     { name = "RAG_VECTOR_STORE_PATH", value = "/app/chroma_db" }
   ]

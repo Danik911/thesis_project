@@ -2,13 +2,12 @@
 """
 Deploy the Pharmaceutical Test Generation ECS/Fargate Infrastructure.
 
-This script:
-1. Checks prerequisites (Docker, Terraform, AWS CLI)
-2. Builds Docker images for API, Worker, Frontend
-3. Pushes images to Amazon ECR
-4. Deploys infrastructure with Terraform
-5. Waits for ECS services to be healthy
-6. Displays deployment URLs and cost information
+This script uses a TWO-PHASE DEPLOYMENT to handle the chicken-and-egg problem
+where the frontend needs the API URL at build time, but the URL is only known
+after Terraform creates the ALB.
+
+Phase 1: Build API + Worker, Deploy Infrastructure
+Phase 2: Get API URL, Rebuild Frontend with correct URL, Update ECS
 
 GAMP-5 Compliance: All deployments are tracked via Terraform state with full audit trail.
 """
@@ -27,6 +26,13 @@ PROJECT_NAME = "pharma-test-gen"
 AWS_REGION = "eu-west-2"
 TERRAFORM_DIR = "aws/terraform"
 TFVARS_FILE = "environments/staging.tfvars"
+
+# Clerk configuration (from AWS Secrets Manager or environment)
+# These are used for frontend build - update as needed
+CLERK_PUBLISHABLE_KEY = os.environ.get(
+    "CLERK_PUBLISHABLE_KEY",
+    "pk_test_aGVscGVkLXN0dXJnZW9uLTE5LmNsZXJrLmFjY291bnRzLmRldiQ"
+)
 
 # Estimated hourly cost (without Aurora)
 ESTIMATED_HOURLY_COST = 0.75  # ~$0.50-1.00/hour
@@ -195,25 +201,31 @@ def create_ecr_repositories(account_id):
             print(f"     {repo_name}: created")
 
 
-def build_docker_images():
-    """Build Docker images for all services."""
-    print("\n4. Building Docker images (linux/amd64 for Fargate)...")
+def build_backend_images():
+    """Build Docker images for API and Worker (Phase 1).
+
+    These services don't need the API URL at build time.
+    """
+    print("\n4. Building backend Docker images (linux/amd64 for Fargate)...")
 
     project_root = get_project_root()
-    services = {
-        "api": project_root / "main" / "api",
-        "worker": project_root / "main" / "api",  # Same Dockerfile, different command
-        "frontend": project_root / "main" / "frontend"
+
+    # Map service name to (dockerfile_path, build_context)
+    # Dockerfiles are at project root, build context is project root
+    backend_services = {
+        "api": ("Dockerfile.api.pip", project_root),
+        "worker": ("Dockerfile.worker.pip", project_root),
     }
 
     built_images = {}
 
-    for service, dockerfile_dir in services.items():
+    for service, (dockerfile_name, build_context) in backend_services.items():
         image_name = f"{PROJECT_NAME}-{service}:latest"
+        dockerfile = project_root / dockerfile_name
+
         print(f"     Building {image_name}...")
 
         # Check if Dockerfile exists
-        dockerfile = dockerfile_dir / "Dockerfile"
         if not dockerfile.exists():
             print(f"     Dockerfile not found: {dockerfile}")
             print(f"     Skipping {service} - will use placeholder image")
@@ -221,13 +233,15 @@ def build_docker_images():
             continue
 
         # Build for linux/amd64 (AWS Fargate requirement)
+        # Use buildx for cross-platform build on ARM hosts
         result = run_command([
-            "docker", "build",
+            "docker", "buildx", "build",
             "--platform", "linux/amd64",
             "-t", image_name,
             "-f", str(dockerfile),
-            str(dockerfile_dir)
-        ], timeout=600)
+            "--load",  # Load into local docker
+            str(build_context)
+        ], timeout=900)
 
         if result:
             built_images[service] = image_name
@@ -237,6 +251,128 @@ def build_docker_images():
             built_images[service] = None
 
     return built_images
+
+
+def build_frontend_image(api_url: str, ecr_url: str):
+    """Build Frontend Docker image with API URL (Phase 2).
+
+    IMPORTANT: Next.js NEXT_PUBLIC_* variables are embedded at BUILD TIME.
+    This function must be called AFTER Terraform deployment to get the correct API URL.
+
+    Args:
+        api_url: The API ALB URL (e.g., http://pharma-test-gen-api-alb-xxx.eu-west-2.elb.amazonaws.com)
+        ecr_url: ECR URL for pushing the image
+
+    Returns:
+        ECR image tag if successful, None otherwise
+    """
+    print("\n8. Building frontend Docker image with API URL...")
+    print(f"     API URL: {api_url}")
+    print(f"     Clerk Key: {CLERK_PUBLISHABLE_KEY[:20]}...")
+
+    project_root = get_project_root()
+    dockerfile = project_root / "Dockerfile.frontend"
+
+    if not dockerfile.exists():
+        print(f"     Dockerfile not found: {dockerfile}")
+        return None
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    image_tag = f"staging-{timestamp}"
+    ecr_image = f"{ecr_url}/{PROJECT_NAME}-frontend:{image_tag}"
+
+    # Build with buildx and push directly to ECR
+    # Pass NEXT_PUBLIC_* as build args - these get embedded at build time
+    result = run_command([
+        "docker", "buildx", "build",
+        "--platform", "linux/amd64",
+        "--build-arg", f"NEXT_PUBLIC_API_BASE_URL={api_url}",
+        "--build-arg", f"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY={CLERK_PUBLISHABLE_KEY}",
+        "-t", ecr_image,
+        "-f", str(dockerfile),
+        "--push",  # Push directly to ECR
+        str(project_root)
+    ], timeout=900)
+
+    if result:
+        print(f"     Frontend image built and pushed: {ecr_image}")
+        return image_tag
+    else:
+        print(f"     Frontend build failed")
+        return None
+
+
+def update_frontend_service(cluster_name: str, frontend_image_tag: str, ecr_url: str):
+    """Update the frontend ECS service with the new image (Phase 2).
+
+    This creates a new task definition revision and updates the service.
+    """
+    print("\n9. Updating frontend ECS service...")
+
+    # Get current task definition
+    result = run_command([
+        "aws", "ecs", "describe-task-definition",
+        "--task-definition", f"{PROJECT_NAME}-frontend",
+        "--region", AWS_REGION,
+        "--query", "taskDefinition",
+        "--output", "json"
+    ], capture_output=True, check=False)
+
+    if not result:
+        print("     Failed to get current task definition")
+        return False
+
+    task_def = json.loads(result)
+
+    # Update image in container definition
+    new_image = f"{ecr_url}/{PROJECT_NAME}-frontend:{frontend_image_tag}"
+    task_def["containerDefinitions"][0]["image"] = new_image
+
+    # Remove fields that can't be in register-task-definition
+    for field in ["taskDefinitionArn", "revision", "status", "requiresAttributes",
+                  "compatibilities", "registeredAt", "registeredBy"]:
+        task_def.pop(field, None)
+
+    # Write to temp file for registration
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump(task_def, f)
+        temp_file = f.name
+
+    # Register new task definition
+    result = run_command([
+        "aws", "ecs", "register-task-definition",
+        "--cli-input-json", f"file://{temp_file}",
+        "--region", AWS_REGION,
+        "--query", "taskDefinition.taskDefinitionArn",
+        "--output", "text"
+    ], capture_output=True)
+
+    os.unlink(temp_file)  # Clean up temp file
+
+    if not result:
+        print("     Failed to register new task definition")
+        return False
+
+    new_task_def_arn = result.strip()
+    print(f"     New task definition: {new_task_def_arn}")
+
+    # Update service to use new task definition
+    result = run_command([
+        "aws", "ecs", "update-service",
+        "--cluster", cluster_name,
+        "--service", f"{PROJECT_NAME}-frontend",
+        "--task-definition", new_task_def_arn,
+        "--force-new-deployment",
+        "--region", AWS_REGION
+    ], capture_output=True, check=False)
+
+    if result:
+        print("     Frontend service updated - new deployment started")
+        return True
+    else:
+        print("     Failed to update frontend service")
+        return False
 
 
 def push_to_ecr(account_id, ecr_url, built_images):
@@ -420,10 +556,18 @@ def display_deployment_info(outputs):
 
 
 def main():
-    """Main deployment function."""
+    """Main deployment function using TWO-PHASE DEPLOYMENT.
+
+    Phase 1: Build backend images (API + Worker), push to ECR, deploy Terraform
+    Phase 2: Get API URL from Terraform, build frontend with correct URL, update ECS
+
+    This solves the chicken-and-egg problem where:
+    - Next.js NEXT_PUBLIC_* variables are embedded at BUILD TIME
+    - The API URL is only known AFTER Terraform creates the ALB
+    """
     print("\n" + "=" * 70)
     print("   PHARMACEUTICAL TEST GENERATION - AWS ECS DEPLOYMENT")
-    print("   GAMP-5 Compliant Infrastructure")
+    print("   GAMP-5 Compliant Infrastructure (Two-Phase Deployment)")
     print("=" * 70)
     print(f"\n   Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"   Region:  {AWS_REGION}")
@@ -438,20 +582,66 @@ def main():
     # Create ECR repositories
     create_ecr_repositories(account_id)
 
-    # Build Docker images
-    built_images = build_docker_images()
+    # ============================================================
+    # PHASE 1: Build backend, deploy infrastructure
+    # ============================================================
+    print("\n" + "-" * 70)
+    print("   PHASE 1: Backend Deployment")
+    print("-" * 70)
 
-    # Push to ECR
+    # Build backend Docker images (API + Worker) - these don't need API URL
+    built_images = build_backend_images()
+
+    # Push backend images to ECR
     push_to_ecr(account_id, ecr_url, built_images)
 
-    # Deploy Terraform
+    # Deploy Terraform infrastructure (creates ALB, gets API URL)
     outputs = deploy_terraform()
 
-    # Wait for services
+    # Get cluster name and API URL from Terraform outputs
     cluster_name = outputs.get("ecs_cluster_name", {}).get("value", f"{PROJECT_NAME}-cluster")
+    api_url = outputs.get("api_url", {}).get("value")
+
+    if not api_url:
+        print("\n   ERROR: Could not get API URL from Terraform outputs!")
+        print("   The frontend cannot be built without the API URL.")
+        print("   Check Terraform outputs manually: terraform output api_url")
+        sys.exit(1)
+
+    # Wait for backend services to be healthy
+    print("\n   Waiting for backend services...")
     wait_for_services(cluster_name)
 
-    # Display info
+    # ============================================================
+    # PHASE 2: Build frontend with correct API URL, update ECS
+    # ============================================================
+    print("\n" + "-" * 70)
+    print("   PHASE 2: Frontend Deployment (with API URL)")
+    print("-" * 70)
+    print(f"   API URL from Terraform: {api_url}")
+
+    # Build frontend with the correct API URL embedded
+    frontend_image_tag = build_frontend_image(api_url, ecr_url)
+
+    if not frontend_image_tag:
+        print("\n   ERROR: Frontend build failed!")
+        print("   Backend services are running but frontend needs manual fix.")
+        print(f"   API URL to use: {api_url}")
+        sys.exit(1)
+
+    # Update frontend ECS service with new image
+    success = update_frontend_service(cluster_name, frontend_image_tag, ecr_url)
+
+    if not success:
+        print("\n   WARNING: Frontend service update failed.")
+        print("   You may need to update the frontend service manually.")
+
+    # Wait for frontend to be healthy
+    print("\n   Waiting for frontend service...")
+    time.sleep(30)  # Give ECS time to start the new task
+    wait_for_services(cluster_name)
+
+    # Display deployment info
     display_deployment_info(outputs)
 
     print(f"\n   Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

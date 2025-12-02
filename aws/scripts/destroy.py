@@ -83,7 +83,7 @@ def run_command(cmd, cwd=None, check=True, capture_output=False, timeout=None):
         return None
 
 
-def confirm_destruction():
+def confirm_destruction(auto_approve=False):
     """Ask for confirmation before destroying resources."""
     print("\n" + "=" * 70)
     print("   WARNING: INFRASTRUCTURE DESTRUCTION")
@@ -112,6 +112,7 @@ def confirm_destruction():
 
    MONITORING:
      - Amazon CloudWatch Log Groups
+     - AWS Config recorder (stopped, not deleted)
 
    SECURITY:
      - AWS IAM Roles and Policies
@@ -125,6 +126,10 @@ def confirm_destruction():
     print("=" * 70)
     print(f"   Estimated savings: ~${ESTIMATED_HOURLY_COST:.2f}/hour")
     print("=" * 70)
+
+    if auto_approve:
+        print("\n   Auto-approved with --yes flag")
+        return True
 
     response = input("\n   Type 'yes' to confirm destruction: ")
     return response.lower().strip() == 'yes'
@@ -281,11 +286,20 @@ def destroy_terraform():
         return False
 
 
-def cleanup_ecr_images():
+def cleanup_ecr_images(skip=False):
     """Optionally clean up ECR images."""
     print("\n4. ECR Image Cleanup (Optional)...")
 
-    response = input("     Delete ECR images? (y/N): ")
+    if skip:
+        print("     Skipping ECR cleanup (--skip-ecr flag)")
+        print("     Keeping ECR images for faster re-deployment")
+        return
+
+    try:
+        response = input("     Delete ECR images? (y/N): ")
+    except EOFError:
+        print("     Non-interactive mode - keeping ECR images")
+        return
 
     if response.lower().strip() != 'y':
         print("     Keeping ECR images for faster re-deployment")
@@ -324,9 +338,37 @@ def cleanup_ecr_images():
             print(f"     {repo_name}: no images found")
 
 
+def stop_config_recorder():
+    """Stop AWS Config recorder to save costs during development.
+
+    AWS Config is NOT used by the application - it's infrastructure monitoring.
+    Saves ~$3-5/month when stopped.
+    """
+    print("\n5. Stopping AWS Config recorder...")
+
+    # Check current status
+    result = run_command([
+        "aws", "configservice", "describe-configuration-recorder-status",
+        "--configuration-recorder-name", "pharma",
+        "--region", AWS_REGION,
+        "--query", "ConfigurationRecordersStatus[0].recording",
+        "--output", "text"
+    ], capture_output=True, check=False)
+
+    if result and result.lower() == "true":
+        run_command([
+            "aws", "configservice", "stop-configuration-recorder",
+            "--configuration-recorder-name", "pharma",
+            "--region", AWS_REGION
+        ], check=False, capture_output=True)
+        print("     AWS Config recorder stopped (saves ~$3-5/month)")
+    else:
+        print("     AWS Config recorder already stopped or not found")
+
+
 def cleanup_local_artifacts():
     """Clean up local build artifacts."""
-    print("\n5. Cleaning up local artifacts...")
+    print("\n6. Cleaning up local artifacts...")
 
     project_root = get_project_root()
     terraform_dir = project_root / TERRAFORM_DIR
@@ -362,6 +404,8 @@ def display_summary():
      - S3 Bucket: pharma-test-gen-terraform-state
      - DynamoDB Table: pharma-test-gen-terraform-locks
      - ECR Repositories (unless you chose to delete images)
+     - AWS Config (stopped, restart with: aws configservice start-configuration-recorder --configuration-recorder-name pharma --region eu-west-2)
+     - CloudTrail (still logging)
 
    Total monthly cost of preserved resources: ~$0.10
 
@@ -377,6 +421,12 @@ def display_summary():
 
 def main():
     """Main destruction function."""
+    import argparse
+    parser = argparse.ArgumentParser(description="Destroy AWS infrastructure")
+    parser.add_argument("--yes", "-y", action="store_true", help="Auto-approve destruction without prompting")
+    parser.add_argument("--skip-ecr", action="store_true", help="Skip ECR image deletion prompt")
+    args = parser.parse_args()
+
     print("\n" + "=" * 70)
     print("   PHARMACEUTICAL TEST GENERATION - AWS INFRASTRUCTURE DESTRUCTION")
     print("=" * 70)
@@ -385,7 +435,7 @@ def main():
     print(f"   Project: {PROJECT_NAME}")
 
     # Confirm destruction
-    if not confirm_destruction():
+    if not confirm_destruction(auto_approve=args.yes):
         print("\n   Destruction cancelled.")
         sys.exit(0)
 
@@ -403,7 +453,10 @@ def main():
 
     # Optionally cleanup ECR images
     if success:
-        cleanup_ecr_images()
+        cleanup_ecr_images(skip=args.skip_ecr or args.yes)
+
+    # Stop AWS Config recorder (saves ~$3-5/month)
+    stop_config_recorder()
 
     # Cleanup local artifacts
     cleanup_local_artifacts()

@@ -4,29 +4,73 @@
 
 This directory contains Terraform infrastructure and scripts for deploying the pharmaceutical test generation system to AWS.
 
+## Current Deployment Status (Live)
+
+**Last Updated:** 2025-12-02
+**Environment:** Staging (eu-west-2 London)
+**AWS Account:** 275333454012
+
+### Live URLs
+
+| Service | URL | Status |
+|---------|-----|--------|
+| **CloudFront (HTTPS)** | https://d2yiysdqio0ryi.cloudfront.net | ✅ Running |
+| **Frontend ALB (HTTP)** | http://pharma-test-gen-frontend-alb-1050082060.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **API ALB (HTTP)** | http://pharma-test-gen-api-alb-1013891260.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **API Health** | https://d2yiysdqio0ryi.cloudfront.net/health | ✅ Healthy |
+
+### CloudFront Distribution
+
+| Property | Value |
+|----------|-------|
+| **Distribution ID** | E3CO1HBNMIUKPB |
+| **Domain** | d2yiysdqio0ryi.cloudfront.net |
+| **SSL/TLS** | CloudFront default certificate |
+| **Origins** | Frontend ALB (default), API ALB (/jobs*, /api/*, /health*) |
+| **Cache Policy** | CachingDisabled for API routes |
+
+### Running Services
+
+| Service | Task Definition | Image Tag | Resources |
+|---------|-----------------|-----------|-----------|
+| pharma-test-gen-frontend | v9 | cloudfront-api | 0.25 vCPU / 0.5 GB |
+| pharma-test-gen-api | v6 | staging-latest | 1 vCPU / 2 GB |
+| pharma-test-gen-worker | v4 | staging-latest | 2 vCPU / 4 GB |
+
 ## Architecture
 
 ```
-ECS Worker → S3 (download on startup) → In-memory ChromaDB → RAG retrieval
+CloudFront (d2yiysdqio0ryi.cloudfront.net)
+├── / → Frontend ALB (HTTP) → ECS Frontend
+├── /jobs* → API ALB (HTTP) → ECS API
+├── /api/* → API ALB (HTTP) → ECS API
+└── /health* → API ALB (HTTP) → ECS API
+
+ECS Worker → SQS Queue → Process jobs → S3 output
+           → ChromaDB (embedded) → RAG retrieval
 ```
 
 ### Key Components
 
 | Component | Resource | Purpose |
 |-----------|----------|---------|
-| Worker | ECS Fargate (4 vCPU, 8GB) | Process test generation jobs |
-| ChromaDB Storage | S3 Bucket | Store ChromaDB tarball (~2MB) |
+| Frontend | ECS Fargate (0.25 vCPU, 0.5GB) | Next.js + Clerk auth |
+| API | ECS Fargate (1 vCPU, 2GB) | FastAPI job management |
+| Worker | ECS Fargate (2 vCPU, 4GB) | Process test generation jobs |
+| CDN | CloudFront | HTTPS termination, path routing |
 | Job Queue | SQS + DLQ | Async job processing |
-| LLM | Bedrock (DeepSeek-V3.1) | Test case generation |
+| Auth | Clerk (EU) | JWT authentication |
+| LLM | OpenRouter (DeepSeek V3) | Test case generation |
 
-### ChromaDB RAG (Task 4.2)
+### ChromaDB RAG (Task 4.2 - IN PROGRESS)
 
 The Context Provider Agent uses ChromaDB for regulatory document retrieval:
 
-1. **S3 Storage**: Compressed ChromaDB tarball in S3 bucket
+1. **S3 Storage**: Compressed ChromaDB tarball in S3 bucket (PENDING)
 2. **Worker Startup**: Downloads and extracts to `/app/chroma_db`
 3. **In-Process Query**: ChromaDB runs embedded in worker (<10ms latency)
 
+**Status:** Task 4.2.2-4.2.5 PENDING - Worker needs S3 ChromaDB configuration
 **Cost**: ~$0.02/month (S3 storage only)
 
 ## Directory Structure

@@ -2,8 +2,8 @@
 
 Complete architecture documentation for the pharmaceutical test generation system AWS migration.
 
-**Last Updated:** 2025-11-11 (Task 2.3 frontend architecture change)
-**Phase:** Phase 2 - Backend Abstraction
+**Last Updated:** 2025-12-02 (CloudFront + Clerk authentication integration)
+**Phase:** Phase 4 - AWS Deployment (Task 4.2 In Progress)
 **Region:** eu-west-2 (London, UK)
 **Account ID:** 275333454012
 
@@ -24,36 +24,83 @@ Complete architecture documentation for the pharmaceutical test generation syste
 
 ## 🏗️ Architecture Overview
 
-### Current State (Phase 0 Complete)
+### Current State (Phase 4 - Task 4.2 In Progress)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     AWS Account: 275333454012                    │
-│                        Region: eu-west-2                         │
-└─────────────────────────────────────────────────────────────────┘
-                                  │
-                ┌─────────────────┼─────────────────┐
-                │                 │                 │
-                ▼                 ▼                 ▼
-       ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-       │  CloudTrail  │  │  AWS Config  │  │     KMS      │
-       │   (Active)   │  │   (Active)   │  │   Key: a8d2  │
-       └──────────────┘  └──────────────┘  └──────────────┘
-                │                 │                 │
-                │                 │                 │
-                ▼                 ▼                 ▼
-       ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-       │ S3: pharma-  │  │ S3: pharma-  │  │ S3: pharma-  │
-       │ cloudtrail-  │  │ config-logs- │  │ test-output- │
-       │ logs-eu      │  │ eu           │  │ compliance   │
-       │              │  │              │  │              │
-       │ CloudTrail   │  │ Config       │  │ Application  │
-       │ API logs     │  │ Snapshots    │  │ Test Outputs │
-       └──────────────┘  └──────────────┘  └──────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       AWS Account: 275333454012                           │
+│                          Region: eu-west-2                               │
+│                   CloudFront: d2yiysdqio0ryi.cloudfront.net              │
+└─────────────────────────────────────────────────────────────────────────┘
+                                     │
+                              HTTPS (TLS 1.2)
+                                     │
+                                     ▼
+                         ┌─────────────────────┐
+                         │     CloudFront      │
+                         │   Distribution ID:  │
+                         │   E3CO1HBNMIUKPB    │
+                         └─────────┬───────────┘
+                                   │
+            ┌──────────────────────┼──────────────────────┐
+            │ /                    │ /jobs*, /api/*       │ /health*
+            ▼                      ▼                      ▼
+   ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+   │  Frontend ALB  │    │    API ALB     │    │    API ALB     │
+   │  (HTTP origin) │    │  (HTTP origin) │    │  (HTTP origin) │
+   └───────┬────────┘    └───────┬────────┘    └───────┬────────┘
+           │                     │                     │
+           ▼                     ▼                     ▼
+   ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+   │  ECS Frontend  │    │   ECS API      │    │   ECS API      │
+   │  (Task v9)     │    │  (Task v6)     │    │  (Task v6)     │
+   │  Clerk Auth    │    │  Clerk JWT     │    │  Health Check  │
+   └────────────────┘    └───────┬────────┘    └────────────────┘
+                                 │
+                                 │ SQS Queue
+                                 ▼
+                         ┌────────────────┐
+                         │   ECS Worker   │
+                         │   (Task v4)    │
+                         │  ChromaDB RAG  │
+                         │  (INCOMPLETE)  │
+                         └────────────────┘
+```
 
-                         All encrypted at rest
-                         All versioning enabled
-                         All public access blocked
+### Live Services Status
+
+| Service | URL | Task Def | Status |
+|---------|-----|----------|--------|
+| CloudFront | https://d2yiysdqio0ryi.cloudfront.net | - | ✅ Deployed |
+| Frontend | pharma-test-gen-frontend-alb-1050082060.eu-west-2.elb.amazonaws.com | v9 | ✅ Running |
+| API | pharma-test-gen-api-alb-1013891260.eu-west-2.elb.amazonaws.com | v6 | ✅ Running |
+| Worker | SQS polling | v4 | ⚠️ Missing config |
+
+### Blocking Issues (Task 4.2)
+
+The worker cannot complete test generation because:
+1. **OpenRouter API key** - Not configured in worker environment
+2. **S3 ChromaDB bucket** - Not created/uploaded (Task 4.2.3-4.2.4)
+3. **LangFuse integration** - Not configured
+
+### Foundation Services (Phase 0 Complete)
+
+```
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  CloudTrail  │  │  AWS Config  │  │     KMS      │
+│   (Active)   │  │   (Active)   │  │   Key: a8d2  │
+└──────────────┘  └──────────────┘  └──────────────┘
+        │                 │                 │
+        ▼                 ▼                 ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ S3: pharma-  │  │ S3: pharma-  │  │ S3: pharma-  │
+│ cloudtrail-  │  │ config-logs- │  │ test-output- │
+│ logs-eu      │  │ eu           │  │ compliance   │
+└──────────────┘  └──────────────┘  └──────────────┘
+
+                 All encrypted at rest
+                 All versioning enabled
+                 All public access blocked
 ```
 
 ### Target State (Phase 4-5)
@@ -647,9 +694,10 @@ terraform/
 
 ---
 
-**Document Version:** 1.1
-**Last Review:** 2025-11-11
-**Next Review:** 2025-12-11 (monthly during migration)
-**Status:** Phase 2 In Progress
+**Document Version:** 1.2
+**Last Review:** 2025-12-02
+**Next Review:** 2025-12-09 (weekly during Phase 4)
+**Status:** Phase 4 In Progress (Task 4.2)
 **Changelog:**
+- 2025-12-02: Added CloudFront distribution (E3CO1HBNMIUKPB), updated live service URLs, documented blocking issues for worker
 - 2025-11-11: Updated frontend deployment from S3 static hosting to ECS Fargate (Task 2.3)

@@ -1,0 +1,45 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes", "sqs:ChangeMessageVisibility"],
+      "Effect": "Allow",
+      "Resource": "arn:aws:sqs:eu-west-2:275333454012:pharma-test-gen-worker-jobs"
+    },
+    {
+      "Action": ["s3:PutObject", "s3:PutObjectAcl", "s3:GetObject"],
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::pharma-test-gen-output-staging/*"
+    },
+    {
+      "Sid": "ChromaDBDownload",
+      "Action": ["s3:GetObject", "s3:HeadObject"],
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::pharma-test-gen-vectors-staging/*"
+    },
+    {
+      "Action": ["s3vectors:QueryVectors", "s3vectors:GetVectors"],
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3vectors:eu-west-2:275333454012:bucket/pharma-test-gen-vectors-staging/index/*"
+    },
+    {
+      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+      "Effect": "Allow",
+      "Resource": ["arn:aws:bedrock:us-east-1::foundation-model/*", "arn:aws:bedrock:us-east-1:*:inference-profile/*"]
+    },
+    {
+      "Action": ["rds-data:ExecuteStatement", "rds-data:BatchExecuteStatement", "rds-data:BeginTransaction", "rds-data:CommitTransaction", "rds-data:RollbackTransaction"],
+      "Effect": "Allow",
+      "Resource": "arn:aws:rds:eu-west-2:275333454012:cluster:placeholder"
+    },
+    {
+      "Action": ["secretsmanager:GetSecretValue"],
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:secretsmanager:eu-west-2:275333454012:secret:placeholder-p1v3ys",
+        "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/langfuse-*",
+        "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openrouter-*"
+      ]
+    }
+  ]
+}

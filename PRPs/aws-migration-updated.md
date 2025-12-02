@@ -9,7 +9,7 @@
 
 ## 🚀 Current Deployment Status (Live)
 
-**Last Updated:** 2025-12-01
+**Last Updated:** 2025-12-02
 **Environment:** Staging (eu-west-2 London)
 **AWS Account:** 275333454012
 
@@ -17,22 +17,40 @@
 
 | Service | URL | Status |
 |---------|-----|--------|
-| **Frontend** | http://pharma-test-gen-frontend-alb-1846570432.eu-west-2.elb.amazonaws.com | ✅ Running |
-| **API** | http://pharma-test-gen-api-alb-983674865.eu-west-2.elb.amazonaws.com | ✅ Running |
-| **API Health** | http://pharma-test-gen-api-alb-983674865.eu-west-2.elb.amazonaws.com/health | ✅ Healthy |
+| **CloudFront (HTTPS)** | https://d2yiysdqio0ryi.cloudfront.net | ✅ Running |
+| **Frontend ALB** | http://pharma-test-gen-frontend-alb-1050082060.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **API ALB** | http://pharma-test-gen-api-alb-1013891260.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **API Health** | https://d2yiysdqio0ryi.cloudfront.net/health | ✅ Healthy |
+
+### CloudFront Distribution
+
+| Property | Value |
+|----------|-------|
+| **Distribution ID** | E3CO1HBNMIUKPB |
+| **Domain** | d2yiysdqio0ryi.cloudfront.net |
+| **SSL** | CloudFront Default Certificate |
+| **Origins** | Frontend ALB (default), API ALB (/jobs*, /api/*, /health*) |
 
 ### Running Services
 
-| Service | Desired | Running | Task Definition | Resources |
-|---------|---------|---------|-----------------|-----------|
-| pharma-test-gen-api | 1 | 1 | v4 | 1 vCPU / 2 GB |
-| pharma-test-gen-worker | 1 | 1 | v4 | 2 vCPU / 4 GB |
-| pharma-test-gen-frontend | 1 | 1 | v4 | 0.25 vCPU / 0.5 GB |
+| Service | Desired | Running | Task Definition | Image Tag | Resources |
+|---------|---------|---------|-----------------|-----------|-----------|
+| pharma-test-gen-frontend | 1 | 1 | v9 | cloudfront-api | 0.25 vCPU / 0.5 GB |
+| pharma-test-gen-api | 1 | 1 | v6 | staging-latest | 1 vCPU / 2 GB |
+| pharma-test-gen-worker | 1 | 1 | v4 | staging-latest | 2 vCPU / 4 GB |
+
+### Blocking Issues (Task 4.2)
+
+**Why test generation doesn't complete:**
+1. ❌ **OpenRouter API key** - Not configured in worker environment
+2. ❌ **S3 ChromaDB bucket** - Not created/uploaded (Task 4.2.3-4.2.4)
+3. ❌ **LangFuse integration** - Not configured for production
 
 ### AWS Resources
 
 | Resource Type | Identifier | Region |
 |---------------|------------|--------|
+| CloudFront | `E3CO1HBNMIUKPB` | Global |
 | ECS Cluster | `pharma-test-gen-cluster` | eu-west-2 |
 | ECR (API) | `pharma-test-gen-api` | eu-west-2 |
 | ECR (Worker) | `pharma-test-gen-worker` | eu-west-2 |
@@ -77,7 +95,7 @@ This PRP outlines a 10-week migration of a GAMP-5 compliant pharmaceutical test 
 - **Compute:** ECS Fargate (handles 7-8 min workflows, no Lambda timeout risk)
 - **Database:** Aurora Serverless v2 with Data API (no VPC complexity)
 - **RAG Storage:** S3 + ChromaDB Lambda (98% cost reduction vs Aurora pgvector)
-- **LLM Provider:** Amazon Bedrock (DeepSeek-V3.1) - $0.90/1M input, $2.61/1M output
+- **LLM Provider:** OpenRouter (DeepSeek V3) - $0.14/1M input, $0.28/1M output (85% cheaper than Bedrock)
 - **Region:** eu-west-2 (London, UK)
 - **Observability:** Phoenix (local dev) + LangFuse (AWS production) + CloudWatch
 - **Frontend:** ECS Fargate (containerized Next.js) + CloudFront with Clerk authentication (EU endpoints)
@@ -1647,7 +1665,7 @@ echo "📊 Monitor: aws ecs describe-services --cluster pharma-prod --services b
 |---------|------|-------------|
 | 4.1 | [`4.1-terraform-ecs-deploy.md`](tasks/4.1-terraform-ecs-deploy.md) | ECS Fargate deployment - ✅ DONE. Includes all issues encountered and solutions. |
 | 4.2 | [`4.2-aurora-data-api.md`](tasks/4.2-aurora-data-api.md) | Aurora Serverless v2 with Data API - Next task. |
-| 4.3 | [`4.3-bedrock-deepseek.md`](tasks/4.3-bedrock-deepseek.md) | Amazon Bedrock DeepSeek integration. |
+| 4.3 | [`4.3-bedrock-deepseek-integration.md`](tasks/4.3-bedrock-deepseek-integration.md) | ~~Bedrock DeepSeek~~ - SKIPPED (keeping OpenRouter). |
 | 4.4 | [`4.4-traffic-cutover.md`](tasks/4.4-traffic-cutover.md) | Blue/green deployment and traffic cutover. |
 
 ### Application Code
@@ -1689,10 +1707,13 @@ aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-g
 
 ---
 
-**Document Version:** 2.2
-**Last Updated:** 2025-12-01
-**Next Review:** 2025-12-08 (Task 4.2 completion)
+**Document Version:** 2.3
+**Last Updated:** 2025-12-02
+**Next Review:** 2025-12-09 (Task 4.2 completion)
 **Approved By:** [Pending stakeholder review]
+**Changelog:**
+- 2025-12-02: Added CloudFront distribution with API routing, documented blocking issues, updated task definition versions
+- 2025-12-01: Added live deployment status section
 
 ---
 

@@ -58,10 +58,9 @@
    - Migrate ChromaDB to Aurora pgvector
    - Update FastAPI connection layer
 
-2. **Task 4.3** - Bedrock DeepSeek Integration
-   - Configure Amazon Bedrock access
-   - Migrate from OpenRouter to Bedrock
-   - Update LLM provider abstraction
+2. ~~**Task 4.3** - Bedrock DeepSeek Integration~~ **SKIPPED**
+   - Decision: Keep using OpenRouter (85% cheaper)
+   - No migration needed
 
 3. **Task 4.4** - Traffic Cutover Plan
    - Blue/green deployment strategy

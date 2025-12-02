@@ -1,0 +1,55 @@
+{
+  "family": "pharma-test-gen-frontend",
+  "taskRoleArn": "arn:aws:iam::275333454012:role/pharma-test-gen-frontend-task-role",
+  "executionRoleArn": "arn:aws:iam::275333454012:role/pharma-test-gen-ecs-task-execution-role",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-frontend:cloudfront-api",
+      "cpu": 256,
+      "memory": 512,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {"name": "NODE_ENV", "value": "production"},
+        {"name": "NEXT_PUBLIC_API_BASE_URL", "value": "https://d2yiysdqio0ryi.cloudfront.net"}
+      ],
+      "secrets": [
+        {"name": "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/clerk:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY::"},
+        {"name": "CLERK_SECRET_KEY", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/clerk:CLERK_SECRET_KEY::"}
+      ],
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 15
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/pharma-test-gen/frontend",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "frontend"
+        }
+      }
+    }
+  ]
+}
