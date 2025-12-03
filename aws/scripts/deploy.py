@@ -172,6 +172,52 @@ def get_ecr_login():
     return account_id, ecr_url
 
 
+def import_ecr_to_terraform_state():
+    """Import existing ECR repositories into Terraform state if they exist but aren't tracked.
+
+    This prevents 'already exists' errors during terraform apply when ECR repos
+    were created manually or survived a partial destroy.
+    """
+    print("\n   Checking ECR repositories in Terraform state...")
+
+    project_root = get_project_root()
+    terraform_dir = project_root / TERRAFORM_DIR
+
+    services = ["api", "worker", "frontend"]
+
+    for service in services:
+        repo_name = f"{PROJECT_NAME}-{service}"
+        resource_address = f'module.ecr.aws_ecr_repository.this["{service}"]'
+
+        # Check if repo exists in AWS
+        aws_check = run_command(
+            ["aws", "ecr", "describe-repositories", "--repository-names", repo_name, "--region", AWS_REGION],
+            capture_output=True, check=False
+        )
+
+        if not aws_check:
+            # Repo doesn't exist in AWS, nothing to import
+            continue
+
+        # Check if repo is in Terraform state
+        state_check = run_command(
+            ["terraform", "state", "show", resource_address],
+            cwd=str(terraform_dir),
+            capture_output=True, check=False
+        )
+
+        if state_check and "aws_ecr_repository" in state_check:
+            print(f"     {repo_name}: already in Terraform state")
+        else:
+            # Import into state
+            print(f"     {repo_name}: importing into Terraform state...")
+            run_command(
+                ["terraform", "import", f"-var-file={TFVARS_FILE}", resource_address, repo_name],
+                cwd=str(terraform_dir),
+                capture_output=True, check=False
+            )
+
+
 def create_ecr_repositories(account_id):
     """Create ECR repositories if they don't exist."""
     print("\n3. Creating Amazon ECR repositories...")
@@ -253,22 +299,30 @@ def build_backend_images():
     return built_images
 
 
-def build_frontend_image(api_url: str, ecr_url: str):
-    """Build Frontend Docker image with API URL (Phase 2).
+def build_frontend_image(ecr_url: str):
+    """Build Frontend Docker image with CloudFront-relative URLs.
 
     IMPORTANT: Next.js NEXT_PUBLIC_* variables are embedded at BUILD TIME.
-    This function must be called AFTER Terraform deployment to get the correct API URL.
+    We use an EMPTY string for NEXT_PUBLIC_API_BASE_URL so all API calls use
+    relative paths (e.g., /jobs instead of http://alb.../jobs). CloudFront
+    routes these paths to the API ALB automatically.
+
+    This eliminates the chicken-and-egg problem where we needed the API URL
+    before building the frontend.
 
     Args:
-        api_url: The API ALB URL (e.g., http://pharma-test-gen-api-alb-xxx.eu-west-2.elb.amazonaws.com)
         ecr_url: ECR URL for pushing the image
 
     Returns:
         ECR image tag if successful, None otherwise
     """
-    print("\n8. Building frontend Docker image with API URL...")
-    print(f"     API URL: {api_url}")
+    print("\n8. Building frontend Docker image...")
+    print(f"     API URL: (empty - using CloudFront-relative URLs)")
     print(f"     Clerk Key: {CLERK_PUBLISHABLE_KEY[:20]}...")
+    print("")
+    print("     NOTE: Frontend uses relative URLs (e.g., /jobs)")
+    print("           CloudFront routes /jobs*, /api/*, /health* to API ALB")
+    print("")
 
     project_root = get_project_root()
     dockerfile = project_root / "Dockerfile.frontend"
@@ -282,11 +336,21 @@ def build_frontend_image(api_url: str, ecr_url: str):
     ecr_image = f"{ecr_url}/{PROJECT_NAME}-frontend:{image_tag}"
 
     # Build with buildx and push directly to ECR
-    # Pass NEXT_PUBLIC_* as build args - these get embedded at build time
+    # NEXT_PUBLIC_API_BASE_URL="" means relative URLs - CloudFront handles routing
+    #
+    # WARNING: On ARM64 hosts (Snapdragon, Apple Silicon), QEMU emulation for
+    # linux/amd64 may crash with SIGBUS. If this happens:
+    # 1. Run: wsl --shutdown (on Windows)
+    # 2. Retry the build
+    # 3. Consider using AWS CodeBuild for production builds
+    print("     WARNING: Building linux/amd64 on ARM64 uses QEMU emulation")
+    print("              If build crashes, run 'wsl --shutdown' and retry")
+    print("")
+
     result = run_command([
         "docker", "buildx", "build",
         "--platform", "linux/amd64",
-        "--build-arg", f"NEXT_PUBLIC_API_BASE_URL={api_url}",
+        "--build-arg", "NEXT_PUBLIC_API_BASE_URL=",  # Empty = relative URLs
         "--build-arg", f"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY={CLERK_PUBLISHABLE_KEY}",
         "-t", ecr_image,
         "-f", str(dockerfile),
@@ -299,6 +363,7 @@ def build_frontend_image(api_url: str, ecr_url: str):
         return image_tag
     else:
         print(f"     Frontend build failed")
+        print("     If QEMU crashed, run 'wsl --shutdown' and retry")
         return None
 
 
@@ -419,10 +484,16 @@ def deploy_terraform():
         print(f"   Terraform directory not found: {terraform_dir}")
         sys.exit(1)
 
-    # Initialize Terraform if needed
-    if not (terraform_dir / ".terraform").exists():
+    # Initialize Terraform if needed (check both .terraform dir and lock file)
+    terraform_initialized = (terraform_dir / ".terraform").exists()
+    lock_file_exists = (terraform_dir / ".terraform.lock.hcl").exists()
+
+    if not terraform_initialized or not lock_file_exists:
         print("     Initializing Terraform...")
-        run_command(["terraform", "init"], cwd=str(terraform_dir))
+        result = run_command(["terraform", "init"], cwd=str(terraform_dir))
+        if not result:
+            print("   ERROR: Terraform init failed")
+            sys.exit(1)
 
     # Plan the deployment
     print("     Planning deployment...")
@@ -509,6 +580,39 @@ def wait_for_services(cluster_name):
     return False
 
 
+def verify_deployment_health(outputs):
+    """Verify deployment health by checking API and CloudFront endpoints."""
+    import urllib.request
+    import urllib.error
+
+    api_alb = outputs.get("api_alb_dns_name", {}).get("value")
+    cloudfront_url = outputs.get("cloudfront_url", {}).get("value")
+
+    # Check API health endpoint via ALB
+    if api_alb:
+        api_health_url = f"http://{api_alb}/health"
+        print(f"\n   Checking API health: {api_health_url}")
+        try:
+            with urllib.request.urlopen(api_health_url, timeout=10) as response:
+                data = response.read().decode('utf-8')
+                print(f"     API Health: OK - {data[:100]}")
+        except Exception as e:
+            print(f"     API Health: FAILED - {e}")
+
+    # Check CloudFront endpoint (may take time to propagate)
+    if cloudfront_url:
+        print(f"\n   Checking CloudFront: {cloudfront_url}")
+        try:
+            with urllib.request.urlopen(cloudfront_url, timeout=15) as response:
+                status = response.status
+                print(f"     CloudFront: OK (HTTP {status})")
+        except urllib.error.HTTPError as e:
+            print(f"     CloudFront: HTTP {e.code} - May need cache invalidation")
+        except Exception as e:
+            print(f"     CloudFront: PENDING - {e}")
+            print("     Note: CloudFront may take 5-10 minutes to propagate changes")
+
+
 def display_deployment_info(outputs):
     """Display deployment information and cost warnings."""
     print("\n" + "=" * 70)
@@ -517,13 +621,15 @@ def display_deployment_info(outputs):
 
     api_url = outputs.get("api_url", {}).get("value", "N/A")
     frontend_url = outputs.get("frontend_url", {}).get("value", "N/A")
+    cloudfront_url = outputs.get("cloudfront_url", {}).get("value", "N/A")
     cluster_name = outputs.get("ecs_cluster_name", {}).get("value", "N/A")
 
     print(f"""
-   Frontend URL:  {frontend_url}
-   API URL:       {api_url}
-   ECS Cluster:   {cluster_name}
-   Region:        {AWS_REGION}
+   CloudFront URL: {cloudfront_url}  <-- PRIMARY ACCESS POINT (HTTPS)
+   Frontend ALB:   {frontend_url}
+   API ALB:        {api_url}
+   ECS Cluster:    {cluster_name}
+   Region:         {AWS_REGION}
     """)
 
     # Cost warning
@@ -537,6 +643,7 @@ def display_deployment_info(outputs):
    Services running:
      - 3 ECS Fargate tasks (~$0.04/hour each)
      - 2 Application Load Balancers (~$0.02/hour each)
+     - CloudFront distribution (~$0.01/hour + data transfer)
      - CloudWatch Logs (pay per GB ingested)
      - SQS Queue (minimal cost)
     """)
@@ -595,38 +702,52 @@ def main():
     # Push backend images to ECR
     push_to_ecr(account_id, ecr_url, built_images)
 
+    # Import existing ECR repos to Terraform state if needed
+    # (prevents "already exists" errors after partial destroy)
+    import_ecr_to_terraform_state()
+
     # Deploy Terraform infrastructure (creates ALB, gets API URL)
     outputs = deploy_terraform()
 
-    # Get cluster name and API URL from Terraform outputs
+    # Get cluster name from Terraform outputs
+    # NOTE: API URL is no longer needed - frontend uses CloudFront-relative URLs
     cluster_name = outputs.get("ecs_cluster_name", {}).get("value", f"{PROJECT_NAME}-cluster")
-    api_url = outputs.get("api_url", {}).get("value")
+    api_url = outputs.get("api_url", {}).get("value")  # Still retrieved for display purposes
 
     if not api_url:
-        print("\n   ERROR: Could not get API URL from Terraform outputs!")
-        print("   The frontend cannot be built without the API URL.")
-        print("   Check Terraform outputs manually: terraform output api_url")
-        sys.exit(1)
+        print("\n   WARNING: Could not get API URL from Terraform outputs")
+        print("   This is OK - frontend uses CloudFront-relative URLs")
+        print("   API should still be accessible via CloudFront: /jobs, /api/*, /health")
 
     # Wait for backend services to be healthy
     print("\n   Waiting for backend services...")
     wait_for_services(cluster_name)
 
     # ============================================================
-    # PHASE 2: Build frontend with correct API URL, update ECS
+    # PHASE 2: Build frontend with CloudFront-relative URLs
     # ============================================================
     print("\n" + "-" * 70)
-    print("   PHASE 2: Frontend Deployment (with API URL)")
+    print("   PHASE 2: Frontend Deployment (CloudFront-relative URLs)")
     print("-" * 70)
-    print(f"   API URL from Terraform: {api_url}")
+    print("   Using empty NEXT_PUBLIC_API_BASE_URL for relative paths")
+    print("   CloudFront routes /jobs*, /api/*, /health* to API ALB")
 
-    # Build frontend with the correct API URL embedded
-    frontend_image_tag = build_frontend_image(api_url, ecr_url)
+    # Build frontend with relative URLs (CloudFront handles routing)
+    frontend_image_tag = build_frontend_image(ecr_url)
 
     if not frontend_image_tag:
         print("\n   ERROR: Frontend build failed!")
         print("   Backend services are running but frontend needs manual fix.")
-        print(f"   API URL to use: {api_url}")
+        print("")
+        print("   If QEMU crashed (SIGBUS error), try:")
+        print("   1. wsl --shutdown")
+        print("   2. Re-run: python aws/scripts/deploy.py")
+        print("")
+        print("   Or build manually with:")
+        print(f"   docker buildx build --platform linux/amd64 -f Dockerfile.frontend \\")
+        print(f"     --build-arg NEXT_PUBLIC_API_BASE_URL= \\")
+        print(f"     --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY={CLERK_PUBLISHABLE_KEY} \\")
+        print(f"     --push {ecr_url}/{PROJECT_NAME}-frontend:staging-manual .")
         sys.exit(1)
 
     # Update frontend ECS service with new image
@@ -643,6 +764,12 @@ def main():
 
     # Display deployment info
     display_deployment_info(outputs)
+
+    # Post-deployment health verification
+    print("\n" + "=" * 70)
+    print("   POST-DEPLOYMENT HEALTH CHECK")
+    print("=" * 70)
+    verify_deployment_health(outputs)
 
     print(f"\n   Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("\n" + "=" * 70)

@@ -115,7 +115,7 @@ export default function ApprovalModal({
                 throw new Error('Authentication token not available. Please sign in again.');
             }
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
             const payload: ApprovalRequest = {
                 approval_decision: approvalDecision,

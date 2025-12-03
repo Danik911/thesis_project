@@ -550,6 +550,23 @@ module "alb_frontend" {
 }
 
 # -----------------------------------------------------------------------------
+# CloudFront Distribution (HTTPS + Path-Based Routing)
+# -----------------------------------------------------------------------------
+# Automatically updates when ALB DNS names change (fixes destroy/deploy issue)
+# Origins:
+#   - frontend-alb: Default origin for static frontend content
+#   - api-alb: API origin for /jobs*, /api/*, /health* routes
+
+module "cloudfront" {
+  source = "./modules/cloudfront"
+
+  project_name          = var.project_name
+  environment           = var.environment
+  frontend_alb_dns_name = module.alb_frontend.alb_dns_name
+  api_alb_dns_name      = module.alb_api.alb_dns_name
+}
+
+# -----------------------------------------------------------------------------
 # ECS Services
 # -----------------------------------------------------------------------------
 

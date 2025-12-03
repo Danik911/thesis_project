@@ -29,16 +29,32 @@ class ModelProvider(Enum):
 class LLMConfig:
     """
     Centralized LLM configuration for model selection.
-    
+
     CRITICAL RULES:
     - NO FALLBACK MODELS
     - NO DEFAULT VALUES ON FAILURE
     - FAIL EXPLICITLY WITH FULL DIAGNOSTICS
     - HUMAN CONSULTATION FOR UNCERTAINTIES
+
+    ENVIRONMENT-BASED MODEL SELECTION:
+    - staging/production: Uses deepseek/deepseek-chat (GAMP-5 compliant)
+    - development: Uses google/gemini-2.5-flash-lite (faster iteration)
+    - Override: Set LLM_MODEL env var to use specific model
     """
 
     # Set provider from environment (default to OpenRouter for OSS migration)
     PROVIDER = ModelProvider(os.getenv("LLM_PROVIDER", "openrouter"))
+
+    # Environment-based model selection (NO FALLBACKS - explicit environment configuration)
+    _ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+    _LLM_MODEL = os.getenv("LLM_MODEL")
+
+    # If no explicit model, use environment-appropriate default
+    if not _LLM_MODEL:
+        _LLM_MODEL = (
+            "deepseek/deepseek-chat" if _ENVIRONMENT in ("staging", "production")
+            else "google/gemini-2.5-flash-lite"  # Development only
+        )
 
     # Model configurations (NO FALLBACKS - single model per provider)
     MODELS = {
@@ -48,7 +64,7 @@ class LLMConfig:
             "max_tokens": 2000,
         },
         ModelProvider.OPENROUTER: {
-            "model": "google/gemini-2.5-flash-lite", # "deepseek/deepseek-chat-v3.1, "google/gemini-2.5-flash-lite" ; gemini used for development testing / Deepseek for production
+            "model": _LLM_MODEL,  # Environment-configurable: staging/prod=DeepSeek, dev=Gemini
             "temperature": 0.1,
             "max_tokens": 30000,  # Increased to 30000 to prevent JSON truncation of 25 OQ test cases
         }
@@ -166,12 +182,15 @@ class LLMConfig:
     def get_provider_info(cls) -> dict[str, Any]:
         """
         Get information about current provider configuration.
-        
+
         Returns:
             dict: Provider information including model and settings
         """
         return {
             "provider": cls.PROVIDER.value,
+            "environment": cls._ENVIRONMENT,
+            "model": cls._LLM_MODEL,
+            "model_source": "LLM_MODEL env var" if os.getenv("LLM_MODEL") else f"environment default ({cls._ENVIRONMENT})",
             "configuration": cls.MODELS[cls.PROVIDER],
             "api_key_env_var": (
                 "OPENAI_API_KEY" if cls.PROVIDER == ModelProvider.OPENAI

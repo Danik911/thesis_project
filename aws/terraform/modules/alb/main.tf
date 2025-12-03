@@ -32,6 +32,10 @@ resource "aws_lb" "this" {
     Component = "alb"
     GAMP5     = "true"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Target Group

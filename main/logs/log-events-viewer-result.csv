@@ -1,0 +1,201 @@
+timestamp,message
+1764677552367,>>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status
+1764677552367,"2025-12-02 12:12:32,367 - main.api.app - INFO - >>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status"
+1764677552368,"2025-12-02 12:12:32,368 - main.api.dependencies - WARNING - JWT missing 'email' claim for user user_35KgiAcvIC0tdtFvJUN1vDkrNYc - will fetch from Clerk API if needed"
+1764677552368,<<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status -> 200
+1764677552369,"2025-12-02 12:12:32,368 - main.api.app - INFO - <<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status -> 200"
+1764677552750,"   ⏱️  Research & Regulatory Updates: 70s elapsed, 230s remaining..."
+1764677554366,>>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0
+1764677554366,"2025-12-02 12:12:34,366 - main.api.app - INFO - >>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0"
+1764677554367,"2025-12-02 12:12:34,367 - src.adapters.local_adapter - INFO - LocalStorageAdapter initialized: base_path=/app/output"
+1764677554368,"2025-12-02 12:12:34,368 - main.api.dependencies - WARNING - JWT missing 'email' claim for user user_35KgiAcvIC0tdtFvJUN1vDkrNYc - will fetch from Clerk API if needed"
+1764677554368,<<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0 -> 200
+1764677554368,"2025-12-02 12:12:34,368 - main.api.app - INFO - <<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0 -> 200"
+1764677554751,"   ⏱️  Research & Regulatory Updates: 72s elapsed, 228s remaining..."
+1764677556358,>>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0
+1764677556358,"2025-12-02 12:12:36,358 - main.api.app - INFO - >>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0"
+1764677556359,"2025-12-02 12:12:36,359 - src.adapters.local_adapter - INFO - LocalStorageAdapter initialized: base_path=/app/output"
+1764677556359,"2025-12-02 12:12:36,359 - main.api.dependencies - WARNING - JWT missing 'email' claim for user user_35KgiAcvIC0tdtFvJUN1vDkrNYc - will fetch from Clerk API if needed"
+1764677556360,<<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0 -> 200
+1764677556360,"2025-12-02 12:12:36,360 - main.api.app - INFO - <<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0 -> 200"
+1764677556752,"   ⏱️  Research & Regulatory Updates: 74s elapsed, 226s remaining..."
+1764677557284,>>> INCOMING: GET http://localhost:8080/health
+1764677557284,"2025-12-02 12:12:37,284 - main.api.app - INFO - >>> INCOMING: GET http://localhost:8080/health"
+1764677557284,<<< RESPONSE: GET http://localhost:8080/health -> 200
+1764677557284,"2025-12-02 12:12:37,284 - main.api.app - INFO - <<< RESPONSE: GET http://localhost:8080/health -> 200"
+1764677557347,>>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status
+1764677557347,"2025-12-02 12:12:37,347 - main.api.app - INFO - >>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status"
+1764677557348,"2025-12-02 12:12:37,348 - main.api.dependencies - WARNING - JWT missing 'email' claim for user user_35KgiAcvIC0tdtFvJUN1vDkrNYc - will fetch from Clerk API if needed"
+1764677557348,<<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status -> 200
+1764677557349,"2025-12-02 12:12:37,348 - main.api.app - INFO - <<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status -> 200"
+1764677557958,"2025-12-02 12:12:37,958 - src.agents.parallel.regulatory_data_sources.audit - INFO - Regulatory data access: FDA_API_20251202_121237_fbc95e46 - Source: FDA_API, Success: True"
+1764677557958,"2025-12-02 12:12:37,958 - src.agents.parallel.research_agent - WARNING - EMA integration not yet implemented - skipping EMA queries"
+1764677557958,"2025-12-02 12:12:37,958 - src.agents.parallel.research_agent - WARNING - ICH integration not yet implemented - skipping ICH queries"
+1764677557958,"2025-12-02 12:12:37,958 - src.agents.parallel.research_agent - INFO - [HEARTBEAT] Completed regulatory updates research: 6 updates found"
+1764677557959,"2025-12-02 12:12:37,958 - src.agents.parallel.research_agent - INFO - [HEARTBEAT] Starting best practices research"
+1764677557959,"2025-12-02 12:12:37,959 - src.agents.parallel.research_agent - INFO - [HEARTBEAT] Completed best practices research: 2 practices found"
+1764677557959,"2025-12-02 12:12:37,959 - src.agents.parallel.research_agent - INFO - [HEARTBEAT] Starting industry trends research"
+1764677557959,"2025-12-02 12:12:37,959 - src.agents.parallel.research_agent - INFO - [HEARTBEAT] Completed industry trends research: 4 trends found"
+1764677557962,✅ Research & Regulatory Updates completed successfully in 75.2s
+1764677557962,"2025-12-02 12:12:37,962 - main.src.core.unified_workflow - INFO - [AGENT] research agent completed successfully in 75.22s (timeout was 300.0s)"
+1764677557971,"2025-12-02 12:12:37,971 - main.src.core.unified_workflow - INFO - [PARALLEL] Emitting agent request 3/3"
+1764677557973,"2025-12-02 12:12:37,973 - main.src.core.unified_workflow - INFO - [AGENT] Executing sme agent request"
+1764677557973,"2025-12-02 12:12:37,973 - main.src.core.unified_workflow - INFO - [AGENT] Starting sme agent with 300.0s timeout"
+1764677557976,🔄 SME Analysis for sme agent starting (timeout: 300.0s)...
+1764677562007,"2025-12-02 12:12:42,007 - src.llms.openrouter_compat - WARNING - [OPENROUTER_COMPLETE] Cost calculation skipped: Unknown model for pricing: 'google/gemini-2.5-flash-lite'. NO FALLBACK ALLOWED - Add model to OPENROUTER_PRICING dict in cost_tracker.py. Available models: ['deepseek/deepseek-chat', 'deepseek/deepseek-chat-v3', 'deepseek/deepseek-chat-v3.1', 'deepseek/deepseek-coder']"
+1764677562008,"2025-12-02 12:12:42,008 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] compliance_assessment - Response length: 4313"
+1764677562009,"2025-12-02 12:12:42,008 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] compliance_assessment - Response preview (first 500 chars): ```json"
+1764677562009,{
+1764677562009,"    ""level"": ""high"","
+1764677562009,"    ""applicable_standards"": ["
+1764677562009,"        ""21 CFR Part 11"","
+1764677562009,"        ""ICH Q7"","
+1764677562009,"        ""ICH Q9"","
+1764677562009,"        ""ICH Q10"","
+1764677562009,"        ""GAMP 5 (specifically guidance for Category 3 systems)"""
+1764677562009,"    ],"
+1764677562009,"    ""compliance_gaps"": ["
+1764677562009,        {
+1764677562009,"            ""gap"": ""GAMP Category is unknown, which is a critical piece of information for tailoring validation efforts. Without knowing the category, the appropriate level of validation rigor and documentation cannot be definitively determined."","
+1764677562009,    ...
+1764677562009,"2025-12-02 12:12:42,008 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] compliance_assessment - Format analysis:"
+1764677562009,"2025-12-02 12:12:42,009 - src.agents.parallel.sme_agent - INFO -   - Has markdown blocks: True"
+1764677562009,"2025-12-02 12:12:42,009 - src.agents.parallel.sme_agent - INFO -   - Has JSON start chars: True"
+1764677562009,"2025-12-02 12:12:42,009 - src.agents.parallel.sme_agent - INFO -   - Has JSON end chars: True"
+1764677562009,"2025-12-02 12:12:42,009 - src.agents.parallel.sme_agent - INFO -   - Starts with JSON: False"
+1764677562009,"2025-12-02 12:12:42,009 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] compliance_assessment - Response ending (last 200 chars): ...or personnel involved in system operation and validation."","
+1764677562009,"        ""Audit trail review procedures."","
+1764677562009,"        ""Disaster recovery and business continuity plans."""
+1764677562009,"    ],"
+1764677562009,"    ""certainty_score"": 0.2"
+1764677562009,}
+1764677562009,```
+1764677568318,"2025-12-02 12:12:48,317 - src.llms.openrouter_compat - WARNING - [OPENROUTER_COMPLETE] Cost calculation skipped: Unknown model for pricing: 'google/gemini-2.5-flash-lite'. NO FALLBACK ALLOWED - Add model to OPENROUTER_PRICING dict in cost_tracker.py. Available models: ['deepseek/deepseek-chat', 'deepseek/deepseek-chat-v3', 'deepseek/deepseek-chat-v3.1', 'deepseek/deepseek-coder']"
+1764677574442,"2025-12-02 12:12:54,442 - src.llms.openrouter_compat - WARNING - [OPENROUTER_COMPLETE] Cost calculation skipped: Unknown model for pricing: 'google/gemini-2.5-flash-lite'. NO FALLBACK ALLOWED - Add model to OPENROUTER_PRICING dict in cost_tracker.py. Available models: ['deepseek/deepseek-chat', 'deepseek/deepseek-chat-v3', 'deepseek/deepseek-chat-v3.1', 'deepseek/deepseek-coder']"
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] recommendations_generation - Response length: 8174"
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] recommendations_generation - Response preview (first 500 chars): ```json"
+1764677574444,[
+1764677574444,    {
+1764677574444,"        ""category"": ""GAMP Category Determination"","
+1764677574444,"        ""priority"": ""critical"","
+1764677574444,"        ""recommendation"": ""Immediately conduct a formal assessment to definitively determine the GAMP Category of the system. This assessment should be documented and based on the system's complexity, intended use, and the level of direct impact on product quality and patient safety, referencing GAMP 5 guidelines."","
+1764677574444,"        ""rationale"": ""The 'GAMP Category: unknown' is a critical compliance gap and..."
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] recommendations_generation - Format analysis:"
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO -   - Has markdown blocks: True"
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO -   - Has JSON start chars: True"
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO -   - Has JSON end chars: True"
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO -   - Starts with JSON: False"
+1764677574444,"2025-12-02 12:12:54,444 - src.agents.parallel.sme_agent - INFO - [LLM DEBUG] recommendations_generation - Response ending (last 200 chars): ...acts the ongoing validation status and compliance of the system."","
+1764677574444,"        ""implementation_effort"": ""medium"","
+1764677574444,"        ""expected_benefit"": ""Operational Consistency & Compliance Maintenance"""
+1764677574444,    }
+1764677574444,]
+1764677574444,```
+1764677574448,"2025-12-02 12:12:54,448 - src.agents.parallel.sme_agent - ERROR - SME Agent error: SME analysis failed: CRITICAL: Recommendations generation LLM call failed."
+1764677574448,Error: CRITICAL: LLM recommendations generation failed to return valid JSON.
+1764677574448,Parse Error: Recommendation 6 missing required field: recommendation
+1764677574448,LLM Response: ```json
+1764677574448,[
+1764677574448,    {
+1764677574448,"        ""category"": ""GAMP Category Determination"","
+1764677574448,"        ""priority"": ""critical"","
+1764677574448,"        ""recommendation"": ""Immediately conduct a formal assessment to definitively determine the GAMP Category of the system. This assessment should be documented and based on the system's complexity, intended use, and the level of direct impact on product quality and patient safety, referencing GAMP 5 guidelines."","
+1764677574448,"        ""rationale"": ""The 'GAMP Category: unknown' is a critical compliance gap and a high-impact risk. Without this determination, the validation strategy, rigor, and documentation cannot be appropriately tailored, leading to potential under- or over-validation and regulatory non-compliance."","
+1764677574448,"        ""implementation_effort"": ""medium"","
+1764677574448,"        ""expected_benefit"": ""Compliance Assurance"""
+1764677574448,"    },"
+1764677574448,    {
+1764677574448,"        ""category"": ""Risk Assessment & Validation Strategy"","
+1764677574448,"        ""priority"": ""critical"","
+1764677574448,"        ""recommendation"": ""Following the GAMP Category determination, perform a comprehensive, documented risk assessment (e.g., FMEA) to identify critical quality attributes (CQAs) and critical process parameters (CPPs) related to the system. Develop a tailored validation strategy and plan that aligns with the determined GAMP Category and the 'high' compliance level, explicitly addressing identified risks."","
+1764677574448,"        ""rationale"": ""The 'Confidence Score of 0.0' and 'Validation Focus: standard' are critical compliance gaps and risks. A robust risk assessment is essential for a 'high' compliance level and will inform the appropriate validation rigor, ensuring the 'standard' approach is sufficient or needs adaptation for GAMP Category 3."","
+1764677574448,"        ""implementation_effort"": ""high"","
+1764677574448,"        ""expected_benefit"": ""Risk Mitigation & Compliance Assurance"""
+1764677574448,"    },"
+1764677574448,    {
+1764677574448,"        ""category"": ""Operational Qualification (OQ) Enhancement"","
+1764677574448,"        ""priority"": ""critical"","
+1764677574448,"        ""recommendation"": ""Review, revise, and document all OQ test protocols and results to ensure they comprehensively..."
+1764677574448,This violates pharmaceutical system requirements for explicit failure handling.
+1764677574448,"Request: GAMP Category 3, high"
+1764677574448,This violates pharmaceutical system requirements - recommendations cannot use fallback logic.
+1764677574448,✅ SME Analysis completed successfully in 16.5s
+1764677574449,"2025-12-02 12:12:54,449 - main.src.core.unified_workflow - INFO - [AGENT] sme agent completed successfully in 16.48s (timeout was 300.0s)"
+1764677574450,>>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0
+1764677574450,"2025-12-02 12:12:54,450 - main.api.app - INFO - >>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0"
+1764677574454,"2025-12-02 12:12:54,454 - main.src.core.unified_workflow - INFO - [RESULTS] Collected all 3 agent results"
+1764677574459,"2025-12-02 12:12:54,459 - main.src.core.unified_workflow - INFO - [SIGNATURE] Creating deferred categorization signature"
+1764677574459,"2025-12-02 12:12:54,459 - main.src.core.unified_workflow - WARNING - [CTX] Context retrieval exception for key categorization_for_signature, returning default: Path 'categorization_for_signature' not found in state"
+1764677574459,"2025-12-02 12:12:54,459 - main.src.core.unified_workflow - WARNING - [SIGNATURE] No categorization data found for signature - skipping"
+1764677574465,"2025-12-02 12:12:54,465 - main.src.core.unified_workflow - INFO - [OQ] Starting OQ test generation"
+1764677574465,"2025-12-02 12:12:54,465 - main.src.core.unified_workflow - INFO - GAMP-5 State Validation: PASSED - All required keys present: ['planning_event', 'categorization_result']"
+1764677574466,"2025-12-02 12:12:54,465 - main.src.core.unified_workflow - INFO - Creating OQ generation workflow..."
+1764677574466,"2025-12-02 12:12:54,466 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] Creating OQ workflow instance: 0da7123d"
+1764677574466,"2025-12-02 12:12:54,466 - src.agents.oq_generator.workflow - INFO - [OQ-RESOURCE] Initial memory usage: 474.23 MB"
+1764677574466,"2025-12-02 12:12:54,466 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] Creating OQTestGeneratorV2 for workflow 0da7123d"
+1764677574466,"2025-12-02 12:12:54,466 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] OQTestGeneratorV2 instantiated successfully"
+1764677574466,"2025-12-02 12:12:54,466 - main.src.core.unified_workflow - INFO - OQ workflow created successfully"
+1764677574466,"2025-12-02 12:12:54,466 - main.src.core.unified_workflow - INFO - Running OQ test generation workflow with data..."
+1764677574466,"2025-12-02 12:12:54,466 - main.src.core.unified_workflow - INFO - Calling workflow.run() with data keys: ['gamp_category', 'urs_content', 'document_metadata', 'required_test_count', 'test_strategy', 'agent_results', 'categorization_confidence', 'correlation_id']"
+1764677574466,"2025-12-02 12:12:54,466 - main.src.core.unified_workflow - INFO - About to call OQ workflow.run() - checking before execution"
+1764677574468,>>> INCOMING: GET http://172.31.17.54:8080/health
+1764677574468,"2025-12-02 12:12:54,468 - main.api.app - INFO - >>> INCOMING: GET http://172.31.17.54:8080/health"
+1764677574470,>>> INCOMING: GET http://172.31.17.54:8080/health
+1764677574470,"2025-12-02 12:12:54,469 - main.api.app - INFO - >>> INCOMING: GET http://172.31.17.54:8080/health"
+1764677574470,"2025-12-02 12:12:54,470 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] [Workflow 0da7123d] STEP 1/3: start_oq_generation"
+1764677574470,"2025-12-02 12:12:54,470 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] Starting OQ test generation workflow"
+1764677574470,"2025-12-02 12:12:54,470 - src.agents.oq_generator.workflow - INFO - [OQ-RESOURCE] Memory at step start: 474.23 MB"
+1764677574471,"2025-12-02 12:12:54,470 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] Step 'start_oq_generation' completed in 0.00s"
+1764677574475,"2025-12-02 12:12:54,475 - langfuse - WARNING - Authentication error: Langfuse client initialized without public_key. Client will be disabled. Provide a public_key parameter or set LANGFUSE_PUBLIC_KEY environment variable. "
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] [Workflow 0da7123d] STEP 2/3: generate_oq_tests"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-RESOURCE] Memory before generation: 474.23 MB"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] 🚀 STARTING OQ GENERATION: GAMP Category GAMPCategory.CATEGORY_3, Target: 6 tests"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] 📋 PROGRESS: Initializing test generation workflow..."
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-BATCH] Batch configuration: 6 tests in batches of 2"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] Starting batch generation implementation"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] 🔧 GENERATING: Using DeepSeek V3 for GAMP Category 3"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] 📄 DOCUMENT: 3923a600-4208-4f83-a2b5-7d89cdd213d0.md"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-TRACE] 🎯 TARGET COUNT: 6 tests"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.workflow - INFO - [OQ-BATCH] Expected batches: 3"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.generator_v2 - INFO - Starting OQ generation with model deepseek/deepseek-chat for GAMP Category 3 (timeout: 300s)"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.generator_v2 - INFO - Using progressive generation for DeepSeek model with 10 tests"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.generator_v2 - INFO - Starting progressive generation: 10 tests in 5 batches"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.generator_v2 - INFO - 🔄 PROGRESS: Generating batch 1/5: Tests 1-2 (ETA: 600s)"
+1764677574476,"2025-12-02 12:12:54,476 - src.agents.oq_generator.generator_v2 - INFO - ⏱️  BATCH TIMEOUT: 120s (base: 60s, minimum: 120s)"
+1764677579129,"2025-12-02 12:12:59,129 - src.llms.openrouter_compat - WARNING - [OPENROUTER_COMPLETE] Cost calculation skipped: Unknown model for pricing: 'google/gemini-2.5-flash-lite'. NO FALLBACK ALLOWED - Add model to OPENROUTER_PRICING dict in cost_tracker.py. Available models: ['deepseek/deepseek-chat', 'deepseek/deepseek-chat-v3', 'deepseek/deepseek-chat-v3.1', 'deepseek/deepseek-coder']"
+1764677579131,"2025-12-02 12:12:59,131 - src.agents.oq_generator.generator_v2 - INFO - O3 model google/gemini-2.5-flash-lite returned response of 6259 characters"
+1764677579132,"2025-12-02 12:12:59,132 - src.agents.oq_generator.generator_v2 - INFO - Successfully parsed batch 1 with 2 tests"
+1764677579132,"2025-12-02 12:12:59,132 - src.agents.oq_generator.generator_v2 - INFO - ✅ BATCH COMPLETE: 1/5 (20.0%) - 2 tests generated so far"
+1764677579132,<<< RESPONSE: GET http://172.31.17.54:8080/health -> 200
+1764677579132,"2025-12-02 12:12:59,132 - main.api.app - INFO - <<< RESPONSE: GET http://172.31.17.54:8080/health -> 200"
+1764677579132,<<< RESPONSE: GET http://172.31.17.54:8080/health -> 200
+1764677579132,"2025-12-02 12:12:59,132 - main.api.app - INFO - <<< RESPONSE: GET http://172.31.17.54:8080/health -> 200"
+1764677579133,>>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status
+1764677579133,"2025-12-02 12:12:59,133 - main.api.app - INFO - >>> INCOMING: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status"
+1764677579134,"2025-12-02 12:12:59,134 - main.api.dependencies - WARNING - JWT missing 'email' claim for user user_35KgiAcvIC0tdtFvJUN1vDkrNYc - will fetch from Clerk API if needed"
+1764677579135,"2025-12-02 12:12:59,135 - src.adapters.local_adapter - INFO - LocalStorageAdapter initialized: base_path=/app/output"
+1764677579135,<<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status -> 200
+1764677579135,"2025-12-02 12:12:59,135 - main.api.app - INFO - <<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0/approval-status -> 200"
+1764677579135,"2025-12-02 12:12:59,135 - main.api.dependencies - WARNING - JWT missing 'email' claim for user user_35KgiAcvIC0tdtFvJUN1vDkrNYc - will fetch from Clerk API if needed"
+1764677579136,<<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0 -> 200
+1764677579136,"2025-12-02 12:12:59,136 - main.api.app - INFO - <<< RESPONSE: GET http://d2yiysdqio0ryi.cloudfront.net/jobs/3923a600-4208-4f83-a2b5-7d89cdd213d0 -> 200"
+1764677579637,>>> INCOMING: GET http://172.31.17.54:8080/health
+1764677579637,"2025-12-02 12:12:59,637 - main.api.app - INFO - >>> INCOMING: GET http://172.31.17.54:8080/health"
+1764677579637,<<< RESPONSE: GET http://172.31.17.54:8080/health -> 200
+1764677579638,"2025-12-02 12:12:59,637 - main.api.app - INFO - <<< RESPONSE: GET http://172.31.17.54:8080/health -> 200"
+1764677581132,"2025-12-02 12:13:01,132 - src.agents.oq_generator.generator_v2 - INFO - 🔄 PROGRESS: Generating batch 2/5: Tests 3-4 (ETA: 480s)"
+1764677581132,"2025-12-02 12:13:01,132 - src.agents.oq_generator.generator_v2 - INFO - ⏱️  BATCH TIMEOUT: 120s (base: 60s, minimum: 120s)"
+1764677585739,"2025-12-02 12:13:05,739 - src.llms.openrouter_compat - WARNING - [OPENROUTER_COMPLETE] Cost calculation skipped: Unknown model for pricing: 'google/gemini-2.5-flash-lite'. NO FALLBACK ALLOWED - Add model to OPENROUTER_PRICING dict in cost_tracker.py. Available models: ['deepseek/deepseek-chat', 'deepseek/deepseek-chat-v3', 'deepseek/deepseek-chat-v3.1', 'deepseek/deepseek-coder']"
+1764677585741,"2025-12-02 12:13:05,741 - src.agents.oq_generator.generator_v2 - INFO - O3 model google/gemini-2.5-flash-lite returned response of 6692 characters"
+1764677585742,"2025-12-02 12:13:05,742 - src.agents.oq_generator.generator_v2 - INFO - Successfully parsed batch 2 with 2 tests"
+1764677585742,"2025-12-02 12:13:05,742 - src.agents.oq_generator.generator_v2 - INFO - ✅ BATCH COMPLETE: 2/5 (40.0%) - 4 tests generated so far"
+1764677586327,>>> INCOMING: GET http://13.43.153.23/
+1764677586327,"2025-12-02 12:13:06,327 - main.api.app - INFO - >>> INCOMING: GET http://13.43.153.23/"
+1764677586328,<<< RESPONSE: GET http://13.43.153.23/ -> 200
+1764677586328,"2025-12-02 12:13:06,328 - main.api.app - INFO - <<< RESPONSE: GET http://13.43.153.23/ -> 200"
+1764677587301,>>> INCOMING: GET http://localhost:8080/health
+1764677587301,"2025-12-02 12:13:07,301 - main.api.app - INFO - >>> INCOMING: GET http://localhost:8080/health"
+1764677587301,<<< RESPONSE: GET http://localhost:8080/health -> 200
+1764677587302,"2025-12-02 12:13:07,302 - main.api.app - INFO - <<< RESPONSE: GET http://localhost:8080/health -> 200"
+1764677587742,"2025-12-02 12:13:07,742 - src.agents.oq_generator.generator_v2 - INFO - 🔄 PROGRESS: Generating batch 3/5: Tests 5-6 (ETA: 360s)"
+1764677587742,"2025-12-02 12:13:07,742 - src.agents.oq_generator.generator_v2 - INFO - ⏱️  BATCH TIMEOUT: 120s (base: 60s, minimum: 120s)"

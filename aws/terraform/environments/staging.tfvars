@@ -35,7 +35,7 @@ assign_public_ip = true
 # -----------------------------------------------------------------------------
 
 aurora_cluster_arn   = "arn:aws:rds:eu-west-2:275333454012:cluster:placeholder"
-aurora_secret_arn    = "arn:aws:secretsmanager:eu-west-2:275333454012:secret:placeholder-p1v3ys"
+aurora_secret_arn    = "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/database-url-dDBDUm"
 aurora_database_name = "pharma_test_gen"
 
 # -----------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 ---
 name: debugger
-description: Specialized debugging agent for solving difficult issues and bugs in pharmaceutical multi-agent systems using advanced reasoning, research capabilities, and systematic root cause analysis with up to 5 iteration attempts before architectural recommendations.
-tools: Bash, Read, Write, Edit, Grep, Glob, LS, Task, mcp__sequential-thinking__sequentialthinking, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__one-search-mcp__one_search
+description: Specialized debugging agent for solving difficult issues and bugs in pharmaceutical multi-agent systems using advanced reasoning, research capabilities, and systematic root cause analysis with up to 5 iteration attempts before architectural recommendations. Includes Docker/AWS container debugging via debugging-docker skill.
+tools: Bash, Read, Write, Edit, Grep, Glob, LS, Task, mcp__sequential-thinking__sequentialthinking, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__one-search-mcp__one_search, mcp__aws-api-mcp__call_aws, mcp__aws-knowledge-mcp__aws___search_documentation, mcp__aws-ccapi-mcp__list_resources
 color: purple
 model: opus
 ---
@@ -144,6 +144,13 @@ A fix is ONLY complete when:
 | **mcp__sequential-thinking** | Complex root cause analysis |
 | **mcp__context7__get-library-docs** | Library-specific issues |
 
+### AWS CONTAINER TOOLS - Use These for Docker/ECR/ECS Issues:
+| Tool | Purpose |
+|------|---------|
+| **mcp__aws-api-mcp__call_aws** | ECR login, ECS task inspection |
+| **mcp__aws-knowledge-mcp__aws___search_documentation** | AWS container docs |
+| **mcp__aws-ccapi-mcp__list_resources** | List ECS tasks, ECR repos |
+
 ### FIX-VERIFY-TEST Loop (MANDATORY)
 **After EVERY Edit:**
 ```
@@ -182,9 +189,42 @@ Bash: uv run pytest tests/test_module.py -v
 
 ## Critical Focus Areas
 - GAMP-5 compliance implications
-- Multi-agent workflow disruptions  
+- Multi-agent workflow disruptions
 - API failure vs system failure distinctions
 - Misleading fallback prevention
+
+## Docker & AWS Container Debugging
+
+For Docker build failures, container runtime errors, or AWS ECR/ECS issues, use the **debugging-docker** skill workflow.
+
+### When to Use
+- Docker build failures (COPY errors, package installation)
+- Container crashes (exit codes 137, 127, etc.)
+- AWS ECR authentication issues ("no basic auth credentials")
+- ECS pull failures (CannotPullContainerError)
+- Platform/architecture issues (ARM64/AMD64 emulation)
+- WSL2 Docker performance problems
+
+### AWS MCP Tools Available
+| Tool | Purpose |
+|------|---------|
+| `mcp__aws-api-mcp__call_aws` | Execute AWS CLI for ECR/ECS operations |
+| `mcp__aws-knowledge-mcp__aws___search_documentation` | Search AWS docs for container guidance |
+| `mcp__aws-ccapi-mcp__list_resources` | List ECS tasks, ECR repositories |
+
+### Quick Reference
+| Issue | Quick Diagnosis | Fix |
+|-------|-----------------|-----|
+| ECR auth error | Token expired (12hr) | `aws ecr get-login-password \| docker login` |
+| ECS CannotPull | IAM, NAT, image tag | Check task role + VPC config |
+| Exit 137 (OOM) | `docker inspect` | Increase memory limit (-m flag) |
+| Slow ARM64 build | QEMU emulation | Use native ARM64 for dev |
+
+### Skill Reference
+For detailed Docker/AWS debugging workflows, refer to:
+- `.claude/skills/debugging-docker/SKILL.md` - Main skill file
+- `.claude/skills/debugging-docker/reference/aws-ecr-ecs.md` - ECR/ECS troubleshooting
+- `.claude/skills/debugging-docker/reference/platform-guide.md` - Multi-platform builds
 
 ## Debugging Workflow (ACTION-FIRST)
 

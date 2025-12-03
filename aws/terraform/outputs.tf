@@ -203,11 +203,31 @@ output "frontend_log_group_name" {
 output "deployment_info" {
   description = "Deployment information summary"
   value = {
-    environment  = var.environment
-    region       = var.aws_region
-    cluster_name = module.ecs_cluster.cluster_name
-    api_url      = "https://${module.alb_api.alb_dns_name}"
-    frontend_url = "https://${module.alb_frontend.alb_dns_name}"
-    ecr_registry = "${module.ecr.registry_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+    environment    = var.environment
+    region         = var.aws_region
+    cluster_name   = module.ecs_cluster.cluster_name
+    api_url        = "https://${module.alb_api.alb_dns_name}"
+    frontend_url   = "https://${module.alb_frontend.alb_dns_name}"
+    cloudfront_url = module.cloudfront.url
+    ecr_registry   = "${module.ecr.registry_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
   }
+}
+
+# -----------------------------------------------------------------------------
+# CloudFront Distribution
+# -----------------------------------------------------------------------------
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID"
+  value       = module.cloudfront.distribution_id
+}
+
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain name"
+  value       = module.cloudfront.domain_name
+}
+
+output "cloudfront_url" {
+  description = "CloudFront HTTPS URL (primary access point)"
+  value       = module.cloudfront.url
 }

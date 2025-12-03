@@ -102,6 +102,10 @@ def confirm_destruction(auto_approve=False):
      - Target Groups
      - Security Groups
 
+   CDN:
+     - Amazon CloudFront distribution (Terraform managed)
+       Note: CloudFront auto-updates origins on next deploy
+
    STORAGE:
      - Amazon S3 Bucket contents (pharma-test-gen-vectors-staging)
      - Amazon S3 Bucket contents (pharma-test-gen-output-staging)
@@ -120,7 +124,7 @@ def confirm_destruction(auto_approve=False):
    PRESERVED (for quick re-deployment):
      - Amazon S3: pharma-test-gen-terraform-state (~$0.02/month)
      - Amazon DynamoDB: pharma-test-gen-terraform-locks (~$0.00/month)
-     - Amazon ECR repositories (images can be deleted separately)
+     - Amazon ECR repositories (protected by lifecycle rule - images kept)
     """)
 
     print("=" * 70)
@@ -252,6 +256,41 @@ def scale_down_ecs_services():
     time.sleep(30)
 
 
+def remove_ecr_from_state():
+    """Remove ECR repos from Terraform state to allow destroy to proceed.
+
+    ECR repos have prevent_destroy lifecycle rule, so we remove them from state
+    before destruction. The repos remain in AWS for quick re-deployment.
+    """
+    print("\n   Removing ECR repositories from Terraform state...")
+    print("     (ECR repos have prevent_destroy - keeping in AWS for quick redeploy)")
+
+    project_root = get_project_root()
+    terraform_dir = project_root / TERRAFORM_DIR
+
+    services = ["api", "worker", "frontend"]
+
+    for service in services:
+        resource_address = f'module.ecr.aws_ecr_repository.this["{service}"]'
+        policy_address = f'module.ecr.aws_ecr_lifecycle_policy.this["{service}"]'
+
+        # Remove repo from state
+        run_command(
+            ["terraform", "state", "rm", resource_address],
+            cwd=str(terraform_dir),
+            capture_output=True, check=False
+        )
+
+        # Remove lifecycle policy from state
+        run_command(
+            ["terraform", "state", "rm", policy_address],
+            cwd=str(terraform_dir),
+            capture_output=True, check=False
+        )
+
+    print("     ECR resources removed from state (kept in AWS)")
+
+
 def destroy_terraform():
     """Destroy infrastructure with Terraform."""
     print("\n3. Destroying infrastructure with Terraform...")
@@ -266,6 +305,9 @@ def destroy_terraform():
     if not (terraform_dir / ".terraform").exists():
         print("   Terraform not initialized, nothing to destroy")
         return True
+
+    # Remove ECR repos from state first (they have prevent_destroy)
+    remove_ecr_from_state()
 
     # Run terraform destroy
     print("     Running terraform destroy...")
@@ -373,9 +415,10 @@ def cleanup_local_artifacts():
     project_root = get_project_root()
     terraform_dir = project_root / TERRAFORM_DIR
 
+    # Only delete tfplan - keep .terraform.lock.hcl to avoid 'terraform init' requirement on redeploy
     artifacts = [
         terraform_dir / "tfplan",
-        terraform_dir / ".terraform.lock.hcl",
+        # NOTE: Don't delete .terraform.lock.hcl - it causes deploy failures
     ]
 
     for artifact in artifacts:
@@ -403,11 +446,16 @@ def display_summary():
    PRESERVED RESOURCES (for quick re-deployment):
      - S3 Bucket: pharma-test-gen-terraform-state
      - DynamoDB Table: pharma-test-gen-terraform-locks
-     - ECR Repositories (unless you chose to delete images)
+     - ECR Repositories (removed from Terraform state, kept in AWS)
      - AWS Config (stopped, restart with: aws configservice start-configuration-recorder --configuration-recorder-name pharma --region eu-west-2)
      - CloudTrail (still logging)
 
    Total monthly cost of preserved resources: ~$0.10
+
+   NOTE: CloudFront distribution was destroyed. On next deploy:
+     - New ALBs will be created
+     - CloudFront will be recreated with correct ALB origins
+     - No manual intervention needed (Terraform manages CloudFront)
 
    TO RE-DEPLOY:
      python aws/scripts/deploy.py

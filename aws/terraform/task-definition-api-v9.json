@@ -1,0 +1,70 @@
+{
+  "family": "pharma-test-gen-api",
+  "taskRoleArn": "arn:aws:iam::275333454012:role/pharma-test-gen-api-task-role",
+  "executionRoleArn": "arn:aws:iam::275333454012:role/pharma-test-gen-ecs-task-execution-role",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-api:staging-auth-check",
+      "cpu": 1024,
+      "memory": 2048,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {"name": "AWS_REGION", "value": "eu-west-2"},
+        {"name": "SQS_QUEUE_URL", "value": "https://sqs.eu-west-2.amazonaws.com/275333454012/pharma-test-gen-worker-jobs"},
+        {"name": "DATABASE_NAME", "value": "pharma_test_gen"},
+        {"name": "AURORA_CLUSTER_ARN", "value": "arn:aws:rds:eu-west-2:275333454012:cluster:placeholder"},
+        {"name": "ENVIRONMENT", "value": "staging"},
+        {"name": "OUTPUT_BUCKET", "value": "pharma-test-gen-output-staging"},
+        {"name": "LLM_PROVIDER", "value": "openrouter"},
+        {"name": "LLM_MODEL", "value": "deepseek/deepseek-chat"},
+        {"name": "LANGFUSE_HOST", "value": "https://cloud.langfuse.com"},
+        {"name": "S3_CHROMADB_BUCKET", "value": "pharma-test-gen-vectors-staging"},
+        {"name": "S3_CHROMADB_KEY", "value": "chroma_db.tar.gz"},
+        {"name": "RAG_VECTOR_STORE_PATH", "value": "/app/chroma_db"}
+      ],
+      "secrets": [
+        {"name": "DATABASE_URL", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/database-uSIzYF:DATABASE_URL::"},
+        {"name": "CLERK_PEM_PUBLIC_KEY", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/clerk-Ts79iN:CLERK_PEM_PUBLIC_KEY::"},
+        {"name": "CLERK_ISSUER", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/clerk-Ts79iN:CLERK_ISSUER::"},
+        {"name": "OPENAI_API_KEY", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openrouter-9BAg9h:OPENAI_API_KEY::"},
+        {"name": "OPENROUTER_API_KEY", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openrouter-9BAg9h:OPENROUTER_API_KEY::"},
+        {"name": "LANGFUSE_PUBLIC_KEY", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/langfuse-5TMVwo:LANGFUSE_PUBLIC_KEY::"},
+        {"name": "LANGFUSE_SECRET_KEY", "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/langfuse-5TMVwo:LANGFUSE_SECRET_KEY::"}
+      ],
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 10
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/pharma-test-gen/api",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    }
+  ]
+}

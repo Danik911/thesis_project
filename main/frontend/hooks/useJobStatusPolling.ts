@@ -115,7 +115,7 @@ export function useJobStatusPolling(
                 throw new Error('Authentication token not available. Please sign in again.');
             }
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/jobs/${jobId}/approval-status`, {
                 headers: {
                     'Authorization': `Bearer ${token}`

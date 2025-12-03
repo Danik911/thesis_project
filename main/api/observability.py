@@ -106,27 +106,42 @@ class LangFuseObservability:
             except Exception as e:
                 logger.warning(f"Failed to initialize LlamaIndex instrumentation: {e}")
 
-            # Health check: attempt to create a test span
-            # This verifies credentials and network connectivity
-            # Uses start_span() - the correct API for Langfuse SDK 3.5.2
+            # Health check: Use auth_check() for synchronous verification
+            # This actually makes an HTTP request and verifies credentials + network
+            auth_result = False
+            try:
+                auth_result = self.client.auth_check()
+                logger.info(f"LangFuse auth_check() result: {auth_result}")
+            except Exception as auth_error:
+                logger.error(f"LangFuse auth_check() failed: {type(auth_error).__name__}: {auth_error}")
+
+            if not auth_result:
+                logger.error(
+                    f"LangFuse authentication FAILED!\n"
+                    f"  Host: {self._host}\n"
+                    f"  Public Key: {self._public_key[:8]}...\n"
+                    f"  This indicates network connectivity issues or invalid credentials."
+                )
+                # Continue anyway but mark as warning
+
+            # Create test span for additional verification
             try:
                 test_span = self.client.start_span(
                     name="health_check_span",
-                    metadata={"health_check": True, "environment": "startup"}
+                    metadata={"health_check": True, "environment": "startup", "auth_check": auth_result}
                 )
-                test_span.end()  # Close span to prevent orphan spans in LangFuse
-                self.client.flush()  # Ensure health check span is sent
+                test_span.end()
+                self.client.flush()
+                logger.info("LangFuse health_check_span created and flushed")
             except Exception as e:
-                logger.warning(f"LangFuse health check failed (non-critical): {e}")
-                # We continue anyway as the client might still be valid for @observe
-                pass
+                logger.warning(f"LangFuse health check span failed: {e}")
 
             self.enabled = True
             logger.info(
                 f"LangFuse initialized successfully\n"
                 f"  Host: {self._host}\n"
                 f"  Public Key: {self._public_key[:8]}...\n"
-                f"  Health Check: PASSED"
+                f"  Auth Check: {'PASSED' if auth_result else 'FAILED'}"
             )
 
         except Exception as e:

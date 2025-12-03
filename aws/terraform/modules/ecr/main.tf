@@ -30,6 +30,12 @@ resource "aws_ecr_repository" "this" {
     Service = each.key
     GAMP5   = "true"
   }
+
+  lifecycle {
+    # Prevent accidental deletion of ECR repositories (images are valuable)
+    # Remove from state with `terraform state rm` if intentional deletion needed
+    prevent_destroy = true
+  }
 }
 
 # Lifecycle policies to manage image retention

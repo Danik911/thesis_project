@@ -1,0 +1,12 @@
+{
+  "gamp_category": "5",
+  "job_id": "e71234b3-7101-47c1-951f-a3c400f9214e",
+  "created_at": "2025-12-02T16:42:52.961741Z",
+  "created_by": "user_35KgiAcvIC0tdtFvJUN1vDkrNYc",
+  "created_by_email": null,
+  "artifact_type": "urs",
+  "storage_mode": "local",
+  "storage_path": "/app/output/e71234b3-7101-47c1-951f-a3c400f9214e/urs_document.md",
+  "storage_timestamp": "2025-12-02T16:42:53.051891Z",
+  "file_size_bytes": 1874
+}

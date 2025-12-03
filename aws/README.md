@@ -6,7 +6,7 @@ This directory contains Terraform infrastructure and scripts for deploying the p
 
 ## Current Deployment Status (Live)
 
-**Last Updated:** 2025-12-02
+**Last Updated:** 2025-12-03
 **Environment:** Staging (eu-west-2 London)
 **AWS Account:** 275333454012
 
@@ -15,11 +15,11 @@ This directory contains Terraform infrastructure and scripts for deploying the p
 | Service | URL | Status |
 |---------|-----|--------|
 | **CloudFront (HTTPS)** | https://d2yiysdqio0ryi.cloudfront.net | ✅ Running |
-| **Frontend ALB (HTTP)** | http://pharma-test-gen-frontend-alb-1050082060.eu-west-2.elb.amazonaws.com | ✅ Running |
-| **API ALB (HTTP)** | http://pharma-test-gen-api-alb-1013891260.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **Frontend ALB (HTTP)** | http://pharma-test-gen-frontend-alb-1248845402.eu-west-2.elb.amazonaws.com | ✅ Running |
+| **API ALB (HTTP)** | http://pharma-test-gen-api-alb-1215564166.eu-west-2.elb.amazonaws.com | ✅ Running |
 | **API Health** | https://d2yiysdqio0ryi.cloudfront.net/health | ✅ Healthy |
 
-### CloudFront Distribution
+### CloudFront Distribution (Terraform Managed)
 
 | Property | Value |
 |----------|-------|
@@ -28,14 +28,21 @@ This directory contains Terraform infrastructure and scripts for deploying the p
 | **SSL/TLS** | CloudFront default certificate |
 | **Origins** | Frontend ALB (default), API ALB (/jobs*, /api/*, /health*) |
 | **Cache Policy** | CachingDisabled for API routes |
+| **Managed By** | Terraform (`aws/terraform/modules/cloudfront/`) |
+
+**Note:** CloudFront is fully managed by Terraform. When ALBs are recreated during destroy/deploy cycles, CloudFront origins auto-update. No manual intervention needed.
 
 ### Running Services
 
 | Service | Task Definition | Image Tag | Resources |
 |---------|-----------------|-----------|-----------|
-| pharma-test-gen-frontend | v9 | cloudfront-api | 0.25 vCPU / 0.5 GB |
-| pharma-test-gen-api | v6 | staging-latest | 1 vCPU / 2 GB |
-| pharma-test-gen-worker | v4 | staging-latest | 2 vCPU / 4 GB |
+| pharma-test-gen-frontend | v13 | staging-nullish-fix | 0.25 vCPU / 0.5 GB |
+| pharma-test-gen-api | v15 | staging-latest | 1 vCPU / 2 GB |
+| pharma-test-gen-worker | v12 | staging-latest | 2 vCPU / 4 GB |
+
+**Golden Task Definitions (use after redeploy):**
+- `aws/terraform/task-definition-api-v15.json` - API with all secrets (Clerk, OpenRouter, LangFuse)
+- `aws/terraform/task-definition-frontend-v13.json` - Frontend without API URL env var
 
 ## Architecture
 
@@ -82,18 +89,19 @@ aws/
 │   ├── variables.tf           # Input variables
 │   ├── outputs.tf             # Output values
 │   └── modules/               # Reusable modules
-│       ├── ecr/               # Container registry
+│       ├── ecr/               # Container registry (prevent_destroy lifecycle)
 │       ├── ecs-cluster/       # ECS cluster
 │       ├── ecs-service/       # ECS services
-│       ├── alb/               # Load balancers
+│       ├── alb/               # Load balancers (create_before_destroy)
+│       ├── cloudfront/        # CloudFront distribution (auto-updates with ALBs)
 │       └── sqs/               # Job queue
 ├── scripts/
-│   ├── 1_upload_chroma_to_s3.py  # Upload ChromaDB to S3
-│   ├── deploy.py                 # Deployment automation
-│   ├── destroy.py                # Teardown automation
-│   ├── import_ecr.sh             # Import existing ECR repos
-│   └── run_local.py              # Local development
-└── README.md                     # This file
+│   ├── 1_upload_chroma_to_s3.py      # Upload ChromaDB to S3
+│   ├── deploy.py                     # Deployment automation
+│   ├── destroy.py                    # Teardown automation
+│   ├── DEPLOY_DESTROY_FIXES.md       # Troubleshooting guide
+│   └── run_local.py                  # Local development
+└── README.md                         # This file
 ```
 
 ## Deployment Steps
@@ -127,8 +135,60 @@ terraform apply
 This creates:
 - S3 bucket for ChromaDB (`pharma-test-gen-chromadb-{account_id}`)
 - ECS Cluster, Services, Task Definitions
+- CloudFront distribution (HTTPS termination)
 - SQS Queue + Dead Letter Queue
 - IAM Roles with least-privilege permissions
+
+### Automated Deploy/Destroy Scripts
+
+For a streamlined workflow, use the automation scripts:
+
+```bash
+# Deploy everything (two-phase: backend first, then frontend with API URL)
+python aws/scripts/deploy.py
+
+# Destroy everything (preserves ECR repos and Terraform state)
+python aws/scripts/destroy.py --yes --skip-ecr
+
+# Redeploy after destroy (CloudFront auto-updates, no manual intervention)
+python aws/scripts/deploy.py
+```
+
+**Key Features:**
+- `deploy.py`: Two-phase deployment, imports existing ECR repos, health verification
+- `destroy.py`: Removes ECR from state (repos kept in AWS), CloudFront destroyed cleanly
+- **CloudFront auto-updates**: When ALBs change, Terraform updates CloudFront origins automatically
+
+### Post-Redeploy: Register Golden Task Definitions
+
+After `destroy.py` + `deploy.py`, Terraform recreates task definitions but **loses manually-added secrets** (Clerk, OpenRouter, LangFuse). Re-register the golden task definitions:
+
+```bash
+# 1. Register API task definition (includes ALL secrets)
+aws ecs register-task-definition \
+  --cli-input-json file://aws/terraform/task-definition-api-v15.json \
+  --region eu-west-2
+
+# 2. Update API service
+aws ecs update-service --cluster pharma-test-gen-cluster \
+  --service pharma-test-gen-api --task-definition pharma-test-gen-api \
+  --force-new-deployment --region eu-west-2
+
+# 3. Register frontend task definition (no API URL env var)
+aws ecs register-task-definition \
+  --cli-input-json file://aws/terraform/task-definition-frontend-v13.json \
+  --region eu-west-2
+
+# 4. Update frontend service
+aws ecs update-service --cluster pharma-test-gen-cluster \
+  --service pharma-test-gen-frontend --task-definition pharma-test-gen-frontend \
+  --force-new-deployment --region eu-west-2
+
+# 5. Invalidate CloudFront cache
+aws cloudfront create-invalidation --distribution-id E3CO1HBNMIUKPB --paths '/*'
+```
+
+See `aws/scripts/DEPLOY_DESTROY_FIXES.md` for full post-redeploy checklist and troubleshooting.
 
 ### Step 2: Upload ChromaDB to S3
 
@@ -204,12 +264,13 @@ aws ecs update-service \
 
 | Component | Cost |
 |-----------|------|
-| ECS Fargate Worker (1 task) | ~$50 |
+| ECS Fargate (3 tasks) | ~$75 |
+| CloudFront distribution | ~$10 |
 | S3 ChromaDB Storage (2MB) | $0.02 |
 | SQS Queue | $0.50 |
-| Bedrock (1000 invocations) | ~$50 |
+| Application Load Balancers (2) | ~$30 |
 | CloudWatch Logs | $5 |
-| **Total** | **~$105/month** |
+| **Total** | **~$120/month** |
 
 ## Security
 
@@ -218,6 +279,57 @@ aws ecs update-service \
 - **VPC**: Private subnets for ECS tasks
 - **Secrets Manager**: API keys and credentials
 - **Public Access Blocked**: S3 buckets
+
+## Known Issues & Workarounds
+
+### QEMU Emulation Crashes (ARM64 Hosts)
+
+If you're building on ARM64 (Snapdragon X Elite, Apple Silicon) and see:
+```
+qemu-x86_64: QEMU internal SIGBUS
+fatal error: fault
+```
+
+**Solution:**
+```powershell
+# On Windows
+wsl --shutdown
+# Wait a few seconds, then retry the build
+```
+
+For production, consider using AWS CodeBuild to build AMD64 images natively.
+
+### CloudFront-Relative URLs (Mixed Content Fix)
+
+The frontend uses **empty** `NEXT_PUBLIC_API_BASE_URL` so API calls use relative paths:
+- `/jobs` instead of `http://alb.../jobs`
+- CloudFront routes `/jobs*`, `/api/*`, `/health*` to API ALB
+
+**Important:** Frontend code uses `??` (nullish coalescing) instead of `||`:
+```typescript
+// CORRECT: Only falls back for null/undefined
+process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
+
+// WRONG: Empty string "" is falsy, falls back to localhost
+process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+```
+
+This avoids Mixed Content errors (HTTPS page calling HTTP API).
+
+### Missing Secrets After Redeploy
+
+Terraform doesn't preserve manually-added secrets (Clerk, OpenRouter, LangFuse). After `destroy.py` + `deploy.py`:
+
+**Symptom:**
+```
+CRITICAL: Authentication system not configured (missing CLERK_PEM_PUBLIC_KEY)
+```
+
+**Solution:** Register golden task definitions (see "Post-Redeploy" section above).
+
+See `aws/scripts/DEPLOY_DESTROY_FIXES.md` for full troubleshooting guide.
+
+---
 
 ## Troubleshooting
 

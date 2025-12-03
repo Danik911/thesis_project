@@ -379,6 +379,95 @@ docker buildx build \
   .
 ```
 
+### Buildx Cache Strategies
+
+**Problem:** Multi-platform builds are slow, especially when rebuilding frequently
+
+**Solution:** Use registry-based or local caching to reduce rebuild times by 60-80%
+
+**Registry Cache (Recommended for CI/CD):**
+```bash
+# Build with registry cache
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --cache-to type=registry,ref=<account>.dkr.ecr.eu-west-2.amazonaws.com/<repo>:cache \
+  --cache-from type=registry,ref=<account>.dkr.ecr.eu-west-2.amazonaws.com/<repo>:cache \
+  -t <account>.dkr.ecr.eu-west-2.amazonaws.com/<repo>:latest \
+  --push \
+  .
+```
+
+**Local Cache (Development):**
+```bash
+# Build with local cache
+docker buildx build \
+  --platform linux/amd64 \
+  --cache-to type=local,dest=/tmp/buildx-cache \
+  --cache-from type=local,src=/tmp/buildx-cache \
+  -t image:dev \
+  --load \
+  .
+```
+
+**GitHub Actions Cache:**
+```bash
+# Use GitHub Actions cache in CI
+docker buildx build \
+  --cache-to type=gha,mode=max \
+  --cache-from type=gha \
+  --push \
+  .
+```
+
+### QEMU Emulation Gotchas
+
+**Problem:** Building for different architecture uses QEMU emulation (slow)
+
+**Symptoms:**
+- Build takes 10-15x longer than expected
+- Terminal shows "WARNING: The requested image's platform (linux/amd64) does not match..."
+- CPU usage very high during package installation
+
+**Diagnosis:**
+```bash
+# Check if emulation is active
+docker run --rm --platform=linux/amd64 alpine uname -m
+# Output on ARM64 host: x86_64 (emulated)
+# Output on AMD64 host: x86_64 (native)
+
+# Check QEMU handlers
+ls /proc/sys/fs/binfmt_misc/ | grep qemu
+```
+
+**Mitigation Strategies:**
+
+1. **Use native platform for development:**
+   ```bash
+   # Fast: Build for host architecture
+   docker build -t image:dev .
+
+   # Only build target platform when deploying
+   docker build --platform=linux/amd64 -t image:prod .
+   ```
+
+2. **Multi-stage with BUILDPLATFORM:**
+   ```dockerfile
+   # Build stage runs on host (fast)
+   FROM --platform=${BUILDPLATFORM} python:3.12 AS builder
+   RUN pip wheel --no-cache-dir -w /wheels -r requirements.txt
+
+   # Runtime uses target platform
+   FROM python:3.12-slim
+   COPY --from=builder /wheels /wheels
+   RUN pip install --no-cache /wheels/*
+   ```
+
+3. **Build on CI runners with matching architecture:**
+   - Use AWS Graviton for ARM64 builds
+   - Use standard runners for AMD64 builds
+
+---
+
 ### Platform-Aware Dockerfiles
 
 **Using BUILDPLATFORM and TARGETPLATFORM**:

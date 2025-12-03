@@ -24,7 +24,7 @@ export default function History() {
 
             try {
                 const token = await getToken();
-                const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+                const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/jobs`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
