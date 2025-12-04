@@ -459,49 +459,37 @@ class ContextProviderAgent:
         """Initialize ChromaDB with pharmaceutical compliance features."""
         try:
             # Initialize ChromaDB client with persistent storage
+            # NOTE: Only use 'path' parameter - do NOT use 'persist_directory' in Settings
+            # as that creates a second database path causing collection discovery failures
             self.chroma_client = chromadb.PersistentClient(
                 path=str(self.vector_store_path),
                 settings=chromadb.Settings(
-                    anonymized_telemetry=False,  # HIPAA/pharmaceutical compliance
-                    persist_directory=str(self.vector_store_path)
+                    anonymized_telemetry=False  # HIPAA/pharmaceutical compliance
                 )
             )
 
             # Create collections for different pharmaceutical document types
-            self.collections = {
-                "gamp5": self.chroma_client.get_or_create_collection(
-                    name="gamp5_documents",
-                    metadata={
-                        "description": "GAMP-5 validation and testing guidelines",
-                        "compliance_level": "regulatory",
-                        "last_updated": datetime.now(UTC).isoformat()
-                    }
-                ),
-                "regulatory": self.chroma_client.get_or_create_collection(
-                    name="regulatory_documents",
-                    metadata={
-                        "description": "FDA, EMA, ICH regulatory requirements",
-                        "compliance_level": "mandatory",
-                        "last_updated": datetime.now(UTC).isoformat()
-                    }
-                ),
-                "sops": self.chroma_client.get_or_create_collection(
-                    name="sop_documents",
-                    metadata={
-                        "description": "Standard Operating Procedures",
-                        "compliance_level": "internal",
-                        "last_updated": datetime.now(UTC).isoformat()
-                    }
-                ),
-                "best_practices": self.chroma_client.get_or_create_collection(
-                    name="best_practices",
-                    metadata={
-                        "description": "Industry best practices and methodologies",
-                        "compliance_level": "recommended",
-                        "last_updated": datetime.now(UTC).isoformat()
-                    }
-                )
+            # NOTE: Use get_collection() first to find existing collections,
+            # fall back to get_or_create_collection() only if not found.
+            # This fixes the issue where get_or_create_collection() with metadata
+            # was not properly finding existing collections in ChromaDB 1.0+
+            self.collections = {}
+            collection_configs = {
+                "gamp5": "gamp5_documents",
+                "regulatory": "regulatory_documents",
+                "sops": "sop_documents",
+                "best_practices": "best_practices"
             }
+
+            for key, name in collection_configs.items():
+                try:
+                    # First try to get existing collection (no metadata change)
+                    self.collections[key] = self.chroma_client.get_collection(name=name)
+                    self.logger.info(f"Found existing collection '{name}': {self.collections[key].count()} documents")
+                except Exception:
+                    # Collection doesn't exist, create it
+                    self.collections[key] = self.chroma_client.get_or_create_collection(name=name)
+                    self.logger.info(f"Created new collection '{name}'")
 
             # Initialize embedding model with thread-safe callback handling for cross-validation
             # CRITICAL FIX: Always disable callback manager to prevent cross-validation conflicts
