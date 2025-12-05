@@ -52,7 +52,7 @@ class LLMConfig:
     # If no explicit model, use environment-appropriate default
     if not _LLM_MODEL:
         _LLM_MODEL = (
-            "deepseek/deepseek-chat" if _ENVIRONMENT in ("staging", "production")
+            "deepseek/deepseek-chat-v3.1" if _ENVIRONMENT in ("staging", "production")
             else "google/gemini-2.5-flash-lite"  # Development only
         )
 

@@ -348,4 +348,8 @@ aws/**/Thumbs.db
 !aws/terraform/**/*.tf
 !aws/terraform/**/*.tfvars.example
 
+# Archive directory (local backups, not tracked in Git)
+/archive/
 
+# Production ChromaDB tarball (kept locally for S3 upload)
+chroma_db.tar.gz

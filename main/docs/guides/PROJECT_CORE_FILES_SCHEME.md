@@ -1,10 +1,11 @@
 # Project Core Files Scheme
 
-**Last Updated:** 2025-11-20
-**System Phase:** Phase 3 Complete (Containerization)
-**Architecture:** Docker Compose 5-service stack (postgres, localstack, api, worker, frontend)
-**Observability:** LangFuse Cloud (Phoenix removed)
-**Status:** End-to-end functional locally with Docker containers
+**Last Updated:** 2025-12-05
+**System Phase:** Phase 4 - AWS Staging
+**Architecture:** ECS Fargate 3-service stack (Frontend, API, Worker) + CloudFront CDN
+**Observability:** LangFuse Cloud (EU)
+**AWS URL:** https://d2yiysdqio0ryi.cloudfront.net
+**Local Dev:** Docker Compose 5-service stack (postgres, localstack, api, worker, frontend)
 
 ---
 
@@ -137,6 +138,44 @@ scripts/seed_chroma.py               # ChromaDB document ingestion
                                      # Collections: gamp5_docs, regulatory_guides
                                      # Usage: docker exec pharma-api-dev python scripts/seed_chroma.py
 ```
+
+---
+
+## AWS Infrastructure (`aws/`)
+
+**Purpose:** Production deployment on ECS Fargate with CloudFront CDN.
+
+**→ See [aws/README.md](../../../aws/README.md) for complete deployment guide**
+
+### Terraform Modules (`aws/terraform/`)
+
+| File/Module | Purpose |
+|-------------|---------|
+| `main.tf` | Core resources (ECS cluster, S3, IAM, SQS, ALB) |
+| `variables.tf` | Configuration variables |
+| `outputs.tf` | Export endpoints, ARNs |
+| `modules/ecr/` | Container registry for API, Worker, Frontend |
+| `modules/ecs-service/` | ECS service + task definitions |
+| `modules/cloudfront/` | CDN distribution (HTTPS termination) |
+
+### Golden Task Definitions
+
+| File | Purpose | Resources |
+|------|---------|-----------|
+| `task-definition-api-v19.json` | API container config | 1 vCPU / 2 GB |
+| `task-definition-worker-v21.json` | Worker container config | 2 vCPU / 4 GB |
+| `task-definition-frontend-v13.json` | Frontend container config | 0.25 vCPU / 0.5 GB |
+
+**Note:** These are the "golden" configs with secrets. Update and run `redeploy.py` for changes.
+
+### Deployment Scripts (`aws/scripts/`)
+
+| Script | Purpose |
+|--------|---------|
+| `deploy.py` | Full deployment automation |
+| `redeploy.py` | Quick task definition updates (no Docker build) |
+| `destroy.py` | Infrastructure teardown |
+| `1_upload_chroma_to_s3.py` | Upload ChromaDB vectors to S3 |
 
 ---
 

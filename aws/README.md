@@ -37,11 +37,12 @@ This directory contains Terraform infrastructure and scripts for deploying the p
 | Service | Task Definition | Image Tag | Resources |
 |---------|-----------------|-----------|-----------|
 | pharma-test-gen-frontend | v13 | staging-nullish-fix | 0.25 vCPU / 0.5 GB |
-| pharma-test-gen-api | v15 | staging-latest | 1 vCPU / 2 GB |
-| pharma-test-gen-worker | v12 | staging-latest | 2 vCPU / 4 GB |
+| pharma-test-gen-api | v21 | chromadb-settings-fix | 1 vCPU / 2 GB |
+| pharma-test-gen-worker | v24 | diagnostic-v2 | 2 vCPU / 4 GB |
 
 **Golden Task Definitions (use after redeploy):**
-- `aws/terraform/task-definition-api-v15.json` - API with all secrets (Clerk, OpenRouter, LangFuse)
+- `aws/terraform/task-definition-api-v19.json` - API with all secrets (Clerk, OpenRouter, LangFuse)
+- `aws/terraform/task-definition-worker-v21.json` - Worker with all secrets and ChromaDB config
 - `aws/terraform/task-definition-frontend-v13.json` - Frontend without API URL env var
 
 ## Architecture
@@ -166,26 +167,41 @@ After `destroy.py` + `deploy.py`, Terraform recreates task definitions but **los
 ```bash
 # 1. Register API task definition (includes ALL secrets)
 aws ecs register-task-definition \
-  --cli-input-json file://aws/terraform/task-definition-api-v15.json \
+  --cli-input-json file://aws/terraform/task-definition-api-v19.json \
   --region eu-west-2
 
-# 2. Update API service
+# 2. Register Worker task definition (includes ALL secrets)
+aws ecs register-task-definition \
+  --cli-input-json file://aws/terraform/task-definition-worker-v21.json \
+  --region eu-west-2
+
+# 3. Update API service
 aws ecs update-service --cluster pharma-test-gen-cluster \
   --service pharma-test-gen-api --task-definition pharma-test-gen-api \
   --force-new-deployment --region eu-west-2
 
-# 3. Register frontend task definition (no API URL env var)
+# 4. Update Worker service
+aws ecs update-service --cluster pharma-test-gen-cluster \
+  --service pharma-test-gen-worker --task-definition pharma-test-gen-worker \
+  --force-new-deployment --region eu-west-2
+
+# 5. Register frontend task definition (no API URL env var)
 aws ecs register-task-definition \
   --cli-input-json file://aws/terraform/task-definition-frontend-v13.json \
   --region eu-west-2
 
-# 4. Update frontend service
+# 6. Update frontend service
 aws ecs update-service --cluster pharma-test-gen-cluster \
   --service pharma-test-gen-frontend --task-definition pharma-test-gen-frontend \
   --force-new-deployment --region eu-west-2
 
-# 5. Invalidate CloudFront cache
+# 7. Invalidate CloudFront cache
 aws cloudfront create-invalidation --distribution-id E3CO1HBNMIUKPB --paths '/*'
+```
+
+**Quick Redeploy Script** (no Terraform, just task definitions):
+```bash
+python aws/scripts/redeploy.py
 ```
 
 See `aws/scripts/DEPLOY_DESTROY_FIXES.md` for full post-redeploy checklist and troubleshooting.
@@ -408,6 +424,82 @@ aws ecs describe-tasks \
   --cluster pharma-test-gen-cluster \
   --tasks {task_arn}
 ```
+
+## Recovery After Destroy
+
+If infrastructure was destroyed (overnight cleanup, manual destroy, Terraform issue), use these steps to recover quickly.
+
+### 1. Check If Services Exist
+
+```bash
+aws ecs describe-services --cluster pharma-test-gen-cluster \
+  --services pharma-test-gen-api pharma-test-gen-worker pharma-test-gen-frontend \
+  --region eu-west-2
+```
+
+If cluster doesn't exist, run full `terraform apply`. If services exist but tasks are failing, see step 2.
+
+### 2. Quick Recovery (No Terraform)
+
+When only task definitions need updating (secrets lost, config changed):
+
+```bash
+# Use the redeploy script (recommended)
+python aws/scripts/redeploy.py
+
+# Or manually:
+aws ecs register-task-definition --cli-input-json file://aws/terraform/task-definition-api-v19.json --region eu-west-2
+aws ecs register-task-definition --cli-input-json file://aws/terraform/task-definition-worker-v21.json --region eu-west-2
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-api --task-definition pharma-test-gen-api --force-new-deployment --region eu-west-2
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-worker --task-definition pharma-test-gen-worker --force-new-deployment --region eu-west-2
+```
+
+### 3. Full Recovery (Terraform + Secrets)
+
+When infrastructure was completely destroyed:
+
+```bash
+# 1. Deploy infrastructure
+cd aws/terraform && terraform init && terraform apply
+
+# 2. Register golden task definitions (Terraform creates basic ones without secrets)
+aws ecs register-task-definition --cli-input-json file://aws/terraform/task-definition-api-v19.json --region eu-west-2
+aws ecs register-task-definition --cli-input-json file://aws/terraform/task-definition-worker-v21.json --region eu-west-2
+aws ecs register-task-definition --cli-input-json file://aws/terraform/task-definition-frontend-v13.json --region eu-west-2
+
+# 3. Force redeploy all services
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-api --task-definition pharma-test-gen-api --force-new-deployment --region eu-west-2
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-worker --task-definition pharma-test-gen-worker --force-new-deployment --region eu-west-2
+aws ecs update-service --cluster pharma-test-gen-cluster --service pharma-test-gen-frontend --task-definition pharma-test-gen-frontend --force-new-deployment --region eu-west-2
+
+# 4. Wait for services to stabilize (2-5 minutes)
+aws ecs wait services-stable --cluster pharma-test-gen-cluster --services pharma-test-gen-api pharma-test-gen-worker --region eu-west-2
+```
+
+### 4. Verify Health
+
+```bash
+# Check service status
+aws ecs describe-services --cluster pharma-test-gen-cluster --services pharma-test-gen-api pharma-test-gen-worker --region eu-west-2 --query 'services[*].[serviceName,runningCount,desiredCount]'
+
+# Check API health
+curl https://d2yiysdqio0ryi.cloudfront.net/health
+
+# Check CloudWatch logs for errors
+aws logs tail /ecs/pharma-test-gen/api --since 5m --region eu-west-2
+aws logs tail /ecs/pharma-test-gen/worker --since 5m --region eu-west-2
+```
+
+### Common Recovery Scenarios
+
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| "Missing CLERK_PEM_PUBLIC_KEY" | Secrets lost after Terraform | Register golden task definitions |
+| "QEMU internal SIGBUS" | ARM64 cross-compilation crash | Run `wsl --shutdown`, retry |
+| Services at 0/1 desired | Task definition outdated | Register + force redeploy |
+| CloudFront 502 errors | ALBs changed, origins stale | Wait for Terraform update or invalidate cache |
+
+---
 
 ## Resources
 

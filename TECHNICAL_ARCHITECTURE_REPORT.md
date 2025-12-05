@@ -7,7 +7,7 @@
 
 This technical report provides a comprehensive architectural analysis of the implemented production system for LLM-driven Operational Qualification (OQ) test generation in pharmaceutical Computerised System Validation (CSV). The system successfully demonstrates a **91% cost reduction** while generating **30 comprehensive test cases** for GAMP Category 5 systems, exceeding the target of 25 tests by 20%. The implementation utilizes **DeepSeek V3** (671B parameters with Mixture-of-Experts architecture) via OpenRouter, deployed as a **multi-container Docker stack** with **LangFuse Cloud observability** for production-grade traceability and full regulatory compliance.
 
-**Phase 3 Status (November 2025):** ✅ 100% PRODUCTION READY - Containerized infrastructure with FastAPI backend, Next.js frontend, and PostgreSQL + ChromaDB storage.
+**Phase 4 Status (December 2025):** ✅ AWS STAGING DEPLOYED - ECS Fargate 3-service stack with CloudFront CDN, live at https://d2yiysdqio0ryi.cloudfront.net
 
 ---
 
@@ -1200,6 +1200,53 @@ uv run python main.py path/to/urs.md --verbose
 # Note: Does not include API, frontend, or LangFuse integration
 # Use only for testing core workflow logic
 ```
+
+### 7.5 AWS Infrastructure (Phase 4 - Staging)
+
+**Live URL:** https://d2yiysdqio0ryi.cloudfront.net
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AWS Architecture                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   CloudFront ──► ALB ──► ECS Cluster (Fargate)              │
+│                          ├── API Service (1 vCPU/2GB)        │
+│                          ├── Worker Service (2 vCPU/4GB)     │
+│                          └── Frontend Service (0.25 vCPU)    │
+│                                    │                         │
+│                               ┌────┴────┐                    │
+│                               │   SQS   │                    │
+│                               │ + DLQ   │                    │
+│                               └────┬────┘                    │
+│                                    │                         │
+│                    ┌───────────────┼───────────────┐        │
+│                    │               │               │         │
+│                ┌───▼───┐      ┌───▼───┐      ┌───▼───┐     │
+│                │  S3   │      │Secrets│      │  ECR  │     │
+│                │Outputs│      │Manager│      │       │     │
+│                └───────┘      └───────┘      └───────┘     │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Resources:**
+
+| Resource | Type | Purpose |
+|----------|------|---------|
+| CloudFront | E3CO1HBNMIUKPB | HTTPS termination, CDN |
+| ALB | pharma-test-gen-alb | Load balancing to API |
+| ECS Cluster | pharma-test-gen-cluster | Fargate compute |
+| SQS | pharma-test-gen-worker-jobs | Job queue + DLQ |
+| S3 | pharma-test-gen-chromadb-* | Vector store data |
+| Secrets Manager | pharma-test-gen/* | API keys, DB credentials |
+
+**Model Configuration:**
+- Development: `google/gemini-2.5-flash-lite` (fast, cost-effective)
+- Production: `deepseek/deepseek-chat-v3.1` (quality, 91% cost savings)
+- Configuration: Via task definition JSON files in `aws/terraform/`
+
+**→ See [aws/README.md](aws/README.md) for complete deployment and operations guide**
 
 ---
 

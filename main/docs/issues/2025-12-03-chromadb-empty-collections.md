@@ -1,68 +1,180 @@
 # Issue: ChromaDB Empty Collections on AWS ECS
 
 **Date:** 2025-12-03
-**Status:** ✅ DEPLOYED - 2025-12-05 08:00 UTC - OpenAI Embedding API Key Fix Deployed
-**Severity:** CRITICAL (BLOCKING)
+**Status:** ✅ RESOLVED - 2025-12-05 08:05 UTC
+**Severity:** CRITICAL (was BLOCKING)
 **Component:** Context Provider Agent / RAG System
-**Root Issue:** OpenRouter API key used for OpenAI Embeddings API (wrong key type)
-**Current Symptom:** 401 AuthenticationError: "Incorrect API key provided: sk-or-v1..."
+**Resolution:** Created separate AWS secret for OpenAI embeddings API key
+**Duration:** 3 days (Dec 3-5, 2025) | 14 root causes investigated
 
 ---
 
-## 🔧 UPDATE: 2025-12-05 09:30 UTC - ROOT CAUSE #14: WRONG API KEY FOR OPENAI EMBEDDINGS
+## ✅ RESOLUTION SUMMARY
 
-### Discovery
+### The Problem (One Sentence)
+The application was sending an **OpenRouter API key** (`sk-or-v1-...`) to **OpenAI's embeddings API**, which only accepts native OpenAI keys (`sk-proj-...`).
 
-After redeploying infrastructure (destroyed overnight), ChromaDB loads correctly but RAG retrieval fails with embedding API authentication error:
+### Why This Happened
+
+The system uses **two different LLM providers** for different purposes:
+
+| Function | Provider | API Endpoint | Key Format |
+|----------|----------|--------------|------------|
+| **Chat Completions** (LLM) | OpenRouter | `api.openrouter.ai` | `sk-or-v1-...` |
+| **Text Embeddings** (RAG) | OpenAI Direct | `api.openai.com` | `sk-proj-...` |
+
+**The Mistake:** When setting up AWS Secrets Manager, both `OPENROUTER_API_KEY` and `OPENAI_API_KEY` were stored in the same secret (`pharma-test-gen/openrouter`), and **both contained the OpenRouter key**. This worked for chat completions (OpenRouter) but failed for embeddings (OpenAI).
+
+### The Fix
+
+1. **Created new secret:** `pharma-test-gen/openai-SiOzCm` with the real OpenAI API key
+2. **Updated task definitions** to reference the correct secrets:
+   - `OPENAI_API_KEY` → `pharma-test-gen/openai` (for embeddings)
+   - `OPENROUTER_API_KEY` → `pharma-test-gen/openrouter` (for chat)
+3. **Redeployed services** with corrected configuration
+
+### Verification
+- **User tested** RAG workflow at 08:05 UTC
+- **Context Provider agent** invoked successfully
+- **Embeddings retrieved** from ChromaDB (230 documents)
+- **Test generation** completed without errors
+
+---
+
+## 🎯 FINAL ROOT CAUSE ANALYSIS
+
+### Architecture Insight: Embeddings vs Chat Completions
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    APPLICATION ARCHITECTURE                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────┐     ┌─────────────────────────────────────┐   │
+│  │   User      │     │        Context Provider             │   │
+│  │   Query     │────>│   (RAG Retrieval Agent)             │   │
+│  └─────────────┘     └──────────────┬──────────────────────┘   │
+│                                     │                           │
+│                      ┌──────────────┴──────────────┐           │
+│                      ▼                             ▼            │
+│         ┌─────────────────────┐      ┌─────────────────────┐   │
+│         │   EMBEDDINGS API    │      │   CHAT COMPLETIONS  │   │
+│         │   (Query Vector)    │      │   (Response Gen)    │   │
+│         └──────────┬──────────┘      └──────────┬──────────┘   │
+│                    │                            │               │
+│                    ▼                            ▼               │
+│         ┌─────────────────────┐      ┌─────────────────────┐   │
+│         │   api.openai.com    │      │  api.openrouter.ai  │   │
+│         │   text-embedding-   │      │  deepseek/deepseek- │   │
+│         │   3-small           │      │  chat               │   │
+│         └─────────────────────┘      └─────────────────────┘   │
+│                    │                            │               │
+│         REQUIRES: sk-proj-...       REQUIRES: sk-or-v1-...     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Insight:** OpenRouter is a **proxy for LLM chat completions only**. It does NOT proxy embedding requests. The LlamaIndex `OpenAIEmbedding` class connects **directly to OpenAI's API**, bypassing OpenRouter entirely.
+
+### Why This Was Hard to Debug
+
+1. **Layered Issues:** 13 other root causes were discovered first (S3 permissions, ChromaDB settings, tarball structure, etc.)
+2. **Error Only at Query Time:** The 401 error only appeared when a user query triggered embedding generation, not at container startup
+3. **Misleading Key Prefix:** The error showed `sk-or-v1****` which looked like a truncated key, not a wrong key type
+4. **ChromaDB Loaded Successfully:** All collections and documents were present, masking the embedding API issue
+
+### The Debugging Journey (14 Root Causes)
+
+| # | Date | Root Cause | Status |
+|---|------|------------|--------|
+| 1 | Dec 3 | ChromaDB not finding collections | Fixed |
+| 2 | Dec 3 | Collection name mismatch | Fixed |
+| 3 | Dec 3 | Empty collections in tarball | Fixed |
+| 4 | Dec 3 | S3 bucket permissions | Fixed |
+| 5 | Dec 3 | Tarball nested directory structure | Fixed |
+| 6 | Dec 4 | Worker not downloading from S3 | Fixed |
+| 7 | Dec 4 | S3 key path mismatch | Fixed |
+| 8 | Dec 4 | Task role missing S3 permissions | Fixed |
+| 9 | Dec 4 | Execution role missing secret access | Fixed |
+| 10 | Dec 4 | Security group deleted | Fixed |
+| 11 | Dec 4 | Target group ARN changed | Fixed |
+| 12 | Dec 4 | ChromaDB telemetry settings mismatch | Fixed |
+| 13 | Dec 4 | ChromaDB client instance conflict | Fixed |
+| **14** | **Dec 5** | **OpenRouter key sent to OpenAI embeddings** | **RESOLVED** |
+
+---
+
+## 📋 CONFIGURATION REFERENCE
+
+### AWS Secrets Manager (Correct Configuration)
+
+| Secret Name | Key | Purpose | Value Format |
+|-------------|-----|---------|--------------|
+| `pharma-test-gen/openai-SiOzCm` | `OPENAI_API_KEY` | Embeddings | `sk-proj-...` |
+| `pharma-test-gen/openrouter-9BAg9h` | `OPENROUTER_API_KEY` | Chat | `sk-or-v1-...` |
+
+### Task Definition References
+
+**API (v20) and Worker (v23):**
+```json
+{
+    "secrets": [
+        {
+            "name": "OPENAI_API_KEY",
+            "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openai-SiOzCm:OPENAI_API_KEY::"
+        },
+        {
+            "name": "OPENROUTER_API_KEY",
+            "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openrouter-9BAg9h:OPENROUTER_API_KEY::"
+        }
+    ]
+}
+```
+
+---
+
+## 🛡️ LESSONS LEARNED
+
+1. **Separate Secrets by Provider:** Never store multiple provider keys in the same secret with the same key name
+2. **Validate Key Formats:** OpenAI keys start with `sk-proj-`, OpenRouter with `sk-or-v1-`
+3. **Test Embeddings Separately:** Add integration test that validates embedding API connectivity at startup
+4. **Document API Architecture:** Clearly document which APIs use which credentials
+
+---
+
+## 📊 TIMELINE
+
+| Time (UTC) | Event |
+|------------|-------|
+| Dec 3, 11:00 | Issue first reported: Empty collections |
+| Dec 3-4 | Root causes #1-13 investigated and fixed |
+| Dec 5, 03:00 | Infrastructure destroyed (end of day) |
+| Dec 5, 07:30 | Infrastructure redeployed |
+| Dec 5, 07:45 | New error discovered: 401 AuthenticationError |
+| Dec 5, 07:55 | Root cause #14 identified: Wrong API key type |
+| Dec 5, 07:55 | New secret created: `pharma-test-gen/openai` |
+| Dec 5, 07:57 | Task definitions updated (API:20, Worker:23) |
+| Dec 5, 08:00 | Services redeployed |
+| Dec 5, 08:05 | **User verification: WORKFLOW WORKS** |
+
+---
+
+## 🔧 HISTORICAL: ROOT CAUSE #14 DETAILS
+
+### Error Message
 
 ```
 AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-or-v1****3c2. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
 ```
 
-### Root Cause
+### Old Configuration (Broken)
 
-The AWS Secrets Manager secret `pharma-test-gen/openrouter` contains both keys:
-- `OPENROUTER_API_KEY`: sk-or-v1-... (correct for chat completions)
-- `OPENAI_API_KEY`: sk-or-v1-... (WRONG - also OpenRouter key!)
-
-The Context Provider uses OpenAI's `text-embedding-3-small` model which requires a real OpenAI API key (`sk-proj-...`), NOT an OpenRouter key.
-
-### Evidence from Task Definition (v18/v20)
-
-```json
-{
-    "name": "OPENAI_API_KEY",
-    "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openrouter-9BAg9h:OPENAI_API_KEY::"
-}
-```
-
-The secret is pulling OPENAI_API_KEY from the OpenRouter secret, which contains an OpenRouter key.
-
-### Fix Plan
-
-1. Create new AWS secret: `pharma-test-gen/openai` with real OpenAI key
-2. Update task definitions to reference the new secret for OPENAI_API_KEY
-3. Redeploy services
-
-### Fix Status
-
-- [x] Create `pharma-test-gen/openai` secret with real key
-  - Created: `arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openai-SiOzCm`
-- [x] Update API task definition (v20) - uses new OpenAI secret
-- [x] Update Worker task definition (v23) - uses new OpenAI secret
-- [x] Redeploy services - deployments COMPLETED (08:00 UTC)
-  - API: `pharma-test-gen-api:20` running, health checks passing
-  - Worker: `pharma-test-gen-worker:23` running, ChromaDB loaded (230 docs)
-- [ ] Test end-to-end RAG workflow (USER ACTION REQUIRED)
-
-### Key Change
-
-Old (broken):
 ```json
 "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openrouter-9BAg9h:OPENAI_API_KEY::"
 ```
 
-New (fixed):
+### New Configuration (Fixed)
+
 ```json
 "valueFrom": "arn:aws:secretsmanager:eu-west-2:275333454012:secret:pharma-test-gen/openai-SiOzCm:OPENAI_API_KEY::"
 ```

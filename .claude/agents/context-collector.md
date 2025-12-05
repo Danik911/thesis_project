@@ -139,11 +139,6 @@ When researching error handling patterns:
 - ❌ NEVER recommend default/fallback values
 - ❌ NEVER suggest masking errors with success responses
 
-### Model Constraints
-- **MUST RECOMMEND:** DeepSeek V3 (deepseek/deepseek-chat) via OpenRouter
-- **FORBIDDEN:** GPT-4, O3, O1, Claude, or any OpenAI generation models
-- Verify model compatibility in any examples found
-
 ### Package Installation
 - Specify installation method: `uv add {package}` (NOT pip install)
 - Provide exact version constraints

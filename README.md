@@ -13,6 +13,25 @@ This project implements a **multi-agent LLM system** for generating Operational 
 3. **Security**: Implement OWASP LLM Top 10 risk mitigation ✅ **NO FALLBACKS policy**
 4. **Quality**: Maintain ≥90% requirements coverage with <5% false positives ✅ **316 tests generated**
 
+## 🚀 AWS Deployment (Phase 4 - Staging)
+
+**Live URL:** https://d2yiysdqio0ryi.cloudfront.net
+
+| Service | Resources | Status |
+|---------|-----------|--------|
+| Frontend | ECS Fargate 0.25 vCPU / 0.5 GB | ✅ Running |
+| API | ECS Fargate 1 vCPU / 2 GB | ✅ Running |
+| Worker | ECS Fargate 2 vCPU / 4 GB | ✅ Running |
+
+**Quick Commands:**
+```bash
+python aws/scripts/redeploy.py              # Redeploy all services
+python aws/scripts/redeploy.py --api        # Redeploy API only
+python aws/scripts/redeploy.py --status-only # Check status
+```
+
+→ See [aws/README.md](aws/README.md) for full deployment guide and recovery procedures
+
 ## 📊 THESIS EVIDENCE PACKAGE
 
 **Location**: [THESIS_EVIDENCE_PACKAGE/](https://github.com/Danik911/thesis_project/tree/main/THESIS_EVIDENCE_PACKAGE)
@@ -225,10 +244,24 @@ See `CLAUDE.md` for complete PRP workflow documentation.
 ## 🛠️ Development Workflow
 
 ### Model Configuration
-- **Production**: `deepseek/deepseek-chat` (DeepSeek V3 - 671B MoE) via OpenRouter
-- **Development**: `gpt-4.1-mini-2025-04-14` (for rapid prototyping)
-- **Cost**: 91% reduction achieved - $1.35 per 1M tokens
-- **Details**: See [`main/docs/guides/OSS_MIGRATION_SUMMARY.md`](main/docs/guides/OSS_MIGRATION_SUMMARY.md)
+
+| Environment | Model | Purpose |
+|-------------|-------|---------|
+| **AWS Staging/Prod** | `deepseek/deepseek-chat-v3.1` | GAMP-5 compliant generation |
+| **Local Development** | `google/gemini-2.5-flash-lite` | Fast iteration, lower cost |
+
+**Switching Models:**
+```bash
+# Local: Edit .env
+LLM_MODEL=google/gemini-2.5-flash-lite
+
+# AWS: Edit task definitions, then redeploy
+# aws/terraform/task-definition-api-v19.json
+# aws/terraform/task-definition-worker-v21.json
+python aws/scripts/redeploy.py --api --worker
+```
+
+→ See [aws/README.md#model-switching](aws/README.md) for detailed instructions
 
 ### Integrated Development Approach
 
@@ -325,40 +358,29 @@ thesis_project/
 ├── main/                           # Main application code
 │   ├── src/                        # Source code
 │   │   ├── core/                   # Workflow orchestration
-│   │   │   └── unified_workflow.py # Master orchestrator
 │   │   ├── agents/                 # Multi-agent components
-│   │   │   ├── categorization/     # GAMP-5 categorization
-│   │   │   ├── oq_generator/       # OQ test generation
-│   │   │   └── parallel/           # Context, Research, SME
+│   │   ├── adapters/               # Storage/Vector store abstractions
 │   │   ├── compliance/             # Regulatory compliance
-│   │   │   └── alcoa_validator.py  # ALCOA+ implementation
-│   │   ├── validation/             # Statistical & audit validation
-│   │   │   └── audit_coverage_validator.py
-│   │   └── monitoring/             # Observability
-│   │       └── custom_span_exporter.py
-│   ├── tests/                      # Test suites
-│   └── output/                     # Generated test outputs
-│       └── test_suites/
-├── THESIS_EVIDENCE_PACKAGE/       # 📊 Complete thesis proof
-│   ├── 00_URS/                    # User Requirements (30+ docs)
-│   ├── 01_TEST_EXECUTION_EVIDENCE/ # Test execution data
-│   │   ├── corpus_1/
-│   │   ├── corpus_2/
-│   │   ├── corpus_3/
-│   │   └── unified_analysis/      # Cross-corpus analysis
-│   ├── 02_STATISTICAL_ANALYSIS/   # Statistical validation
-│   ├── 03_COMPLIANCE_DOCUMENTATION/ # GAMP-5, OWASP compliance
-│   ├── 04_PERFORMANCE_METRICS/    # Cost & performance analysis
-│   ├── 05_THESIS_DOCUMENTS/       # Academic documentation
-│   ├── 06_SOURCE_CODE_EVIDENCE/   # Implementation artifacts
-│   └── 07_UNIFIED_ANALYSIS/       # Visualizations & reports
-├── .taskmaster/                   # Legacy task management (not actively used)
-│   ├── tasks/                     # Historical task files
-│   ├── docs/                      # PRD and research documents
-│   └── reports/                   # Complexity and analysis reports
-├── PRPs/                          # PRP documents (technical specs)
-└── .claude/                       # Claude Code commands
+│   │   └── config/                 # LLM and app configuration
+│   ├── api/                        # FastAPI backend
+│   ├── frontend/                   # Next.js dashboard
+│   └── scripts/                    # Utility scripts
+├── aws/                            # 🚀 AWS Infrastructure
+│   ├── terraform/                  # Terraform IaC modules
+│   │   ├── modules/                # ECR, ECS, ALB, CloudFront, SQS
+│   │   └── task-definition-*.json  # Golden task definitions
+│   ├── scripts/                    # Deployment automation
+│   │   ├── deploy.py               # Full deployment
+│   │   ├── redeploy.py             # Quick task def updates
+│   │   └── destroy.py              # Teardown
+│   └── README.md                   # AWS deployment guide
+├── THESIS_EVIDENCE_PACKAGE/        # 📊 Complete thesis proof
+├── PRPs/                           # Production Readiness Plans
+│   └── tasks/                      # 23 tasks (0.1-5.3)
+└── .claude/                        # Claude Code agents & commands
 ```
+
+→ See [main/docs/guides/PROJECT_CORE_FILES_SCHEME.md](main/docs/guides/PROJECT_CORE_FILES_SCHEME.md) for detailed file reference
 
 ## 🔬 Research Contributions
 
@@ -407,34 +429,16 @@ See [`docs/OBSERVABILITY_MIGRATION.md`](docs/OBSERVABILITY_MIGRATION.md) for Pho
 
 ## 🖥️ Frontend Dashboard
 
-✅ **Next.js Web UI Operational** (as of 2025-11-20)
+| Environment | URL | Status |
+|-------------|-----|--------|
+| **AWS (Production)** | https://d2yiysdqio0ryi.cloudfront.net | ✅ Running |
+| **Local Development** | http://localhost:3000 | ✅ Available |
 
-Access the pharmaceutical test generation dashboard at **http://localhost:3000**
+**Features:** Clerk Auth, URS Upload, Job Tracking, Test Suite Download, GAMP-5 Display
 
-**Features:**
-- 🔐 **Clerk Authentication** - Secure user sign-in with JWT tokens
-- 📄 **URS File Upload** - Drag-and-drop interface for User Requirements Specifications
-- 📊 **Job Status Tracking** - Real-time monitoring of test generation progress
-- 📥 **Test Suite Download** - Download generated OQ tests in YAML format
-- 🎯 **GAMP-5 Category Display** - See categorization results with confidence scores
+**Tech Stack:** Next.js 14 (Pages Router) • Clerk v6 (EU) • Tailwind CSS • TypeScript
 
-**Tech Stack:**
-```yaml
-Framework: Next.js 14 (standalone build)
-Authentication: Clerk (dev keys: pk_test_*)
-API Connection: http://localhost:8080
-Port: 3000
-Container: pharma-frontend-dev
-```
-
-**Deployment Status:**
-- ✅ Containerized with Dockerfile.frontend
-- ✅ Integrated with docker-compose.dev.yml
-- ✅ Clerk authentication configured
-- ✅ Ready for ECS Fargate deployment
-- ⏳ CloudFront CDN integration (planned for AWS phase)
-
-See [`docs/FRONTEND_DOCKER_STATUS.md`](docs/FRONTEND_DOCKER_STATUS.md) for detailed configuration and [`docs/FRONTEND_INTEGRATION.md`](docs/FRONTEND_INTEGRATION.md) for API integration guide.
+→ See [aws/README.md](aws/README.md) for AWS deployment and [main/frontend/](main/frontend/) for source code
 
 ## 🤝 Contributing
 

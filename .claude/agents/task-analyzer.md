@@ -3,6 +3,7 @@ name: task-analyzer
 description: Pre-flight checker for PRP tasks. Analyzes manual setup requirements, identifies AWS/Clerk/infrastructure prerequisites, and provides engineer guidance BEFORE executing /prp workflow.
 tools: Read, Grep, Glob, Write, mcp__perplexity-mcp__deep_research, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__sequential-thinking__sequentialthinking
 color: yellow
+model: sonnet
 ---
 
 # Task Analyzer Agent
