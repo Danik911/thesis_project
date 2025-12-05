@@ -333,6 +333,46 @@ See `aws/scripts/DEPLOY_DESTROY_FIXES.md` for full troubleshooting guide.
 
 ## Troubleshooting
 
+### ChromaDB Empty Collections (CRITICAL - 2025-12-03)
+
+**Symptom:**
+```
+CRITICAL: Context Provider cannot execute - ALL ChromaDB collections are empty.
+Empty collections: ['gamp5', 'regulatory', 'best_practices']
+```
+
+**Root Causes:**
+1. **Tarball extraction path mismatch**: `init_chromadb.py` may extract to wrong location
+2. **Collection name mismatch**: Code expects different collection names than what exists
+3. **Docker images not updated**: ECS containers running old code without fixes
+
+**Verification Steps:**
+```bash
+# 1. Verify S3 tarball exists and has size
+aws s3 ls s3://pharma-test-gen-vectors-staging/chroma_db.tar.gz
+
+# 2. Check tarball structure (should have chroma_db/ directory)
+aws s3 cp s3://pharma-test-gen-vectors-staging/chroma_db.tar.gz - | tar -tzf - | head -20
+
+# 3. Verify in ECS container (use ECS Exec)
+aws ecs execute-command --cluster pharma-test-gen-cluster \
+  --task <task-id> --container worker --interactive \
+  --command "/bin/sh"
+
+# Inside container:
+ls -la /app/chroma_db/
+python -c "import chromadb; c=chromadb.PersistentClient(path='/app/chroma_db'); [print(f'{col.name}: {col.count()}') for col in c.list_collections()]"
+```
+
+**Resolution (Full Redeployment Required):**
+1. Destroy services: `python aws/scripts/destroy.py --yes --skip-ecr`
+2. Rebuild Docker images with fixes (need AMD64 builder)
+3. Redeploy: `python aws/scripts/deploy.py`
+4. Re-upload ChromaDB: `python aws/scripts/1_upload_chroma_to_s3.py`
+5. Restart worker service
+
+**Full Issue Documentation:** `main/docs/issues/2025-12-03-chromadb-empty-collections.md`
+
 ### ChromaDB Download Fails
 
 ```bash

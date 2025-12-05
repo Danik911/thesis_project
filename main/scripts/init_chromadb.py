@@ -19,6 +19,7 @@ GAMP-5 Compliance:
 
 import logging
 import os
+import shutil
 import tarfile
 from pathlib import Path
 
@@ -76,7 +77,8 @@ def init_chromadb_from_s3() -> Path:
         chroma_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Extract tarball
-        # Note: The tarball should contain a 'chroma_db' directory
+        # Note: The tarball contains a 'chroma_db' directory that needs to be
+        # flattened to avoid nested /app/chroma_db/chroma_db/ structure
         with tarfile.open(tmp_path, "r:gz") as tar:
             # Security: Check for path traversal
             for member in tar.getmembers():
@@ -84,12 +86,49 @@ def init_chromadb_from_s3() -> Path:
                     raise RuntimeError(
                         f"Unsafe path in tarball: {member.name}"
                     )
-            tar.extractall(chroma_path.parent)
+
+            # Extract to temp directory first to handle nested structure
+            extract_dir = chroma_path.parent / "chroma_extract_tmp"
+            extract_dir.mkdir(parents=True, exist_ok=True)
+            tar.extractall(extract_dir)
+
+        # Handle nested chroma_db directory from tarball
+        # Tarball structure: chroma_db/chroma.sqlite3, chroma_db/collections/...
+        # We need: /app/chroma_db/chroma.sqlite3 (not /app/chroma_db/chroma_db/)
+        nested_dir = extract_dir / "chroma_db"
+        if nested_dir.exists() and nested_dir.is_dir():
+            logger.info(f"Flattening nested chroma_db directory from tarball")
+            # Ensure target directory exists
+            chroma_path.mkdir(parents=True, exist_ok=True)
+            # Move contents from nested directory to target
+            for item in nested_dir.iterdir():
+                dest = chroma_path / item.name
+                if dest.exists():
+                    if dest.is_dir():
+                        shutil.rmtree(dest)
+                    else:
+                        dest.unlink()
+                shutil.move(str(item), str(dest))
+            # Clean up temp extraction directory
+            shutil.rmtree(extract_dir)
+        else:
+            # Direct extraction (tarball structure doesn't have nested dir)
+            logger.info(f"Direct extraction (no nested directory)")
+            chroma_path.mkdir(parents=True, exist_ok=True)
+            for item in extract_dir.iterdir():
+                dest = chroma_path / item.name
+                if dest.exists():
+                    if dest.is_dir():
+                        shutil.rmtree(dest)
+                    else:
+                        dest.unlink()
+                shutil.move(str(item), str(dest))
+            shutil.rmtree(extract_dir)
 
         # Clean up temp file
         tmp_path.unlink()
 
-        # Verify extraction
+        # Verify extraction - file exists
         if not (chroma_path / "chroma.sqlite3").exists():
             raise RuntimeError(
                 f"ChromaDB extraction failed: {chroma_path / 'chroma.sqlite3'} not found. "
@@ -97,6 +136,33 @@ def init_chromadb_from_s3() -> Path:
             )
 
         logger.info(f"ChromaDB extracted to {chroma_path}")
+
+        # DEBUG: Verify what ChromaDB actually contains BEFORE Context Provider initializes
+        # NOTE: Must use SAME settings as context_provider.py to avoid
+        # "An instance of Chroma already exists with different settings" error
+        try:
+            import chromadb
+            logger.info(f"DEBUG: Opening ChromaDB at {chroma_path} to verify contents...")
+            # Use matching settings to avoid conflict with Context Provider
+            debug_client = chromadb.PersistentClient(
+                path=str(chroma_path),
+                settings=chromadb.Settings(
+                    anonymized_telemetry=False  # Must match context_provider.py
+                )
+            )
+            collections = debug_client.list_collections()
+            logger.info(f"DEBUG: Found {len(collections)} collections in extracted ChromaDB:")
+            for col in collections:
+                count = col.count()
+                logger.info(f"DEBUG:   - {col.name}: {count} documents")
+            # Close client to release SQLite lock - use proper reset
+            # Note: del alone doesn't fully release ChromaDB instance tracking
+            # The matching settings now ensures compatibility with Context Provider
+            del debug_client
+            logger.info("DEBUG: ChromaDB verification complete, client closed")
+        except Exception as e:
+            logger.error(f"DEBUG: Failed to verify ChromaDB contents: {e}")
+
         return chroma_path
 
     except ClientError as e:

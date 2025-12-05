@@ -15,8 +15,8 @@ dependencies = [
     "llama-index-vector-stores-faiss>=0.2.0",
     "llama-index-llms-perplexity>=0.2.0",
     "llama-index-readers-web>=0.2.0",
-    # ChromaDB integration
-    "chromadb>=0.4.22",
+    # ChromaDB integration (pinned to prevent version mismatch with persisted data)
+    "chromadb==1.0.20",
     "llama-index-vector-stores-chroma>=0.3.0",
     # OpenAI client
     "openai>=1.12.0",

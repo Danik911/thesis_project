@@ -43,6 +43,7 @@ from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field, field_validator
 
 from src.config.llm_config import LLMConfig
+from src.config.chromadb_collections import KEY_TO_COLLECTION
 from src.core.events import AgentRequestEvent, AgentResultEvent, ValidationStatus
 from src.monitoring.agent_instrumentation import trace_agent_method
 from src.monitoring.simple_tracer import get_tracer
@@ -458,6 +459,74 @@ class ContextProviderAgent:
     def _initialize_chromadb(self) -> None:
         """Initialize ChromaDB with pharmaceutical compliance features."""
         try:
+            # ========== DIAGNOSTIC: Log filesystem state BEFORE ChromaDB client ==========
+            import subprocess
+            self.logger.info(f"[DIAGNOSTIC] ===== ChromaDB Filesystem Check =====")
+            self.logger.info(f"[DIAGNOSTIC] RAG_VECTOR_STORE_PATH env: {os.getenv('RAG_VECTOR_STORE_PATH', 'NOT SET')}")
+            self.logger.info(f"[DIAGNOSTIC] Resolved path: {self.vector_store_path}")
+            self.logger.info(f"[DIAGNOSTIC] Absolute path: {self.vector_store_path.absolute()}")
+            self.logger.info(f"[DIAGNOSTIC] Path exists: {self.vector_store_path.exists()}")
+            self.logger.info(f"[DIAGNOSTIC] Path is_dir: {self.vector_store_path.is_dir()}")
+
+            if self.vector_store_path.exists():
+                # List directory contents
+                self.logger.info(f"[DIAGNOSTIC] Directory contents of {self.vector_store_path}:")
+                try:
+                    for item in sorted(self.vector_store_path.iterdir()):
+                        if item.is_file():
+                            size_kb = item.stat().st_size / 1024
+                            self.logger.info(f"[DIAGNOSTIC]   FILE: {item.name} ({size_kb:.2f} KB)")
+                        elif item.is_dir():
+                            # Count items in subdirectory
+                            subdir_count = len(list(item.iterdir()))
+                            self.logger.info(f"[DIAGNOSTIC]   DIR:  {item.name}/ ({subdir_count} items)")
+                except Exception as dir_err:
+                    self.logger.error(f"[DIAGNOSTIC] Failed to list directory: {dir_err}")
+
+                # Check for chroma.sqlite3 specifically
+                sqlite_path = self.vector_store_path / "chroma.sqlite3"
+                if sqlite_path.exists():
+                    size_mb = sqlite_path.stat().st_size / 1024 / 1024
+                    self.logger.info(f"[DIAGNOSTIC] chroma.sqlite3 found: {size_mb:.2f} MB")
+
+                    # Query SQLite directly to see collection metadata
+                    try:
+                        import sqlite3
+                        conn = sqlite3.connect(str(sqlite_path))
+                        cursor = conn.cursor()
+
+                        # Get collections from SQLite
+                        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                        tables = cursor.fetchall()
+                        self.logger.info(f"[DIAGNOSTIC] SQLite tables: {[t[0] for t in tables]}")
+
+                        # Try to get collection info
+                        try:
+                            cursor.execute("SELECT id, name FROM collections;")
+                            collections = cursor.fetchall()
+                            self.logger.info(f"[DIAGNOSTIC] Collections in SQLite: {collections}")
+                        except Exception as col_err:
+                            self.logger.warning(f"[DIAGNOSTIC] Could not query collections table: {col_err}")
+
+                        # Try to count embeddings
+                        try:
+                            cursor.execute("SELECT collection_id, COUNT(*) FROM embeddings GROUP BY collection_id;")
+                            embedding_counts = cursor.fetchall()
+                            self.logger.info(f"[DIAGNOSTIC] Embeddings per collection: {embedding_counts}")
+                        except Exception as emb_err:
+                            self.logger.warning(f"[DIAGNOSTIC] Could not count embeddings: {emb_err}")
+
+                        conn.close()
+                    except Exception as sql_err:
+                        self.logger.error(f"[DIAGNOSTIC] SQLite query failed: {sql_err}")
+                else:
+                    self.logger.error(f"[DIAGNOSTIC] chroma.sqlite3 NOT FOUND at {sqlite_path}")
+            else:
+                self.logger.error(f"[DIAGNOSTIC] Path does not exist: {self.vector_store_path}")
+
+            self.logger.info(f"[DIAGNOSTIC] ===== End Filesystem Check =====")
+            # ========== END DIAGNOSTIC ==========
+
             # Initialize ChromaDB client with persistent storage
             # NOTE: Only use 'path' parameter - do NOT use 'persist_directory' in Settings
             # as that creates a second database path causing collection discovery failures
@@ -469,27 +538,66 @@ class ContextProviderAgent:
             )
 
             # Create collections for different pharmaceutical document types
-            # NOTE: Use get_collection() first to find existing collections,
-            # fall back to get_or_create_collection() only if not found.
-            # This fixes the issue where get_or_create_collection() with metadata
-            # was not properly finding existing collections in ChromaDB 1.0+
+            # NOTE: Collections MUST already exist (seeded via init_chromadb.py).
+            # Never create empty collections here—doing so silently masks bugs
+            # where the tarball failed to extract or the wrong path is used.
             self.collections = {}
             collection_configs = {
-                "gamp5": "gamp5_documents",
-                "regulatory": "regulatory_documents",
-                "sops": "sop_documents",
-                "best_practices": "best_practices"
+                "gamp5": KEY_TO_COLLECTION["gamp5"],
+                "regulatory": KEY_TO_COLLECTION["regulatory"],
+                "sops": KEY_TO_COLLECTION["sops"],
+                "best_practices": KEY_TO_COLLECTION["best_practices"]
             }
 
+            # Log ChromaDB path for debugging AWS vs local discrepancies
+            self.logger.info(f"[CHROMADB] Initializing collections at path: {self.vector_store_path.absolute()}")
+
+            # List ALL existing collections in the database for debugging
+            existing_counts: dict[str, int] = {}
+            try:
+                existing_collections = self.chroma_client.list_collections()
+                self.logger.info(f"[CHROMADB] Database contains {len(existing_collections)} existing collections:")
+                for col in existing_collections:
+                    try:
+                        col_count = col.count()
+                        existing_counts[col.name] = col_count
+                        self.logger.info(f"[CHROMADB]   - {col.name}: {col_count} documents")
+                    except Exception as count_err:
+                        self.logger.warning(
+                            f"[CHROMADB] Failed to count collection '{col.name}': {count_err}"
+                        )
+            except Exception as list_err:
+                self.logger.warning(f"[CHROMADB] Failed to list existing collections: {list_err}")
+
+            def _available_inventory() -> str:
+                if not existing_counts:
+                    return "none"
+                return ", ".join(
+                    f"{name} ({count} documents)" for name, count in existing_counts.items()
+                )
+
             for key, name in collection_configs.items():
+                if name not in existing_counts:
+                    raise RuntimeError(
+                        f"CRITICAL: Required ChromaDB collection '{name}' not found at {self.vector_store_path}.\n"
+                        f"Available collections: {_available_inventory()}\n"
+                        f"Ensure init_chromadb.py successfully downloaded the tarball and that the worker "
+                        f"image includes the latest context_provider.py code."
+                    )
+
                 try:
-                    # First try to get existing collection (no metadata change)
-                    self.collections[key] = self.chroma_client.get_collection(name=name)
-                    self.logger.info(f"Found existing collection '{name}': {self.collections[key].count()} documents")
-                except Exception:
-                    # Collection doesn't exist, create it
-                    self.collections[key] = self.chroma_client.get_or_create_collection(name=name)
-                    self.logger.info(f"Created new collection '{name}'")
+                    collection = self.chroma_client.get_collection(name=name)
+                except Exception as e:
+                    raise RuntimeError(
+                        f"CRITICAL: Failed to load ChromaDB collection '{name}' from {self.vector_store_path}.\n"
+                        f"Available collections: {_available_inventory()}"
+                    ) from e
+
+                doc_count = existing_counts.get(name, collection.count())
+                self.collections[key] = collection
+                self.logger.info(
+                    f"[CHROMADB] Loaded collection '{name}' for key '{key}': {doc_count} documents"
+                )
 
             # Initialize embedding model with thread-safe callback handling for cross-validation
             # CRITICAL FIX: Always disable callback manager to prevent cross-validation conflicts

@@ -125,6 +125,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     initialize_audit_logger(audit_directory="logs/audit/jobs")
     logger.info("Audit logger initialized")
 
+    # Initialize ChromaDB from S3 in staging/production
+    # CRITICAL: API container needs ChromaDB for RAG workflow (Context Provider agent)
+    # Worker also initializes this, but API runs the workflow directly
+    env = os.getenv("ENVIRONMENT", "")
+    if env in ("staging", "production") and os.getenv("S3_CHROMADB_BUCKET"):
+        try:
+            from main.scripts.init_chromadb import init_chromadb_from_s3
+            chroma_path = init_chromadb_from_s3()
+            logger.info(f"ChromaDB initialized from S3: {chroma_path}")
+        except Exception as e:
+            logger.error(f"CRITICAL: Failed to initialize ChromaDB from S3: {e}")
+            raise  # Cannot proceed without RAG database - fail loudly
+
     # Initialize LangFuse observability
     try:
         initialize_langfuse()

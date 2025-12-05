@@ -4440,7 +4440,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.8.0" },
     { name = "arize-phoenix", specifier = ">=4.0.0" },
     { name = "boto3", specifier = ">=1.40.61" },
-    { name = "chromadb", specifier = ">=0.4.22" },
+    { name = "chromadb", specifier = "==1.0.20" },
     { name = "clerk-backend-api", specifier = "==4.0.0" },
     { name = "cryptography", specifier = ">=45.0.6" },
     { name = "faiss-cpu", specifier = ">=1.7.4" },

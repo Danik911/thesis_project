@@ -31,6 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "main"))
 
 from src.agents.parallel.context_provider import create_context_provider_agent
+from src.config.chromadb_collections import KEY_TO_COLLECTION
 
 
 async def seed_all_collections(force_reseed: bool = False) -> None:
@@ -65,21 +66,27 @@ async def seed_all_collections(force_reseed: bool = False) -> None:
     print()
 
     # Define collection mappings
-    # Map: (source_path, collection_name, description)
+    # Map: (source_path, collection_key, description)
+    # NOTE: collection_key must match the DICTIONARY KEY used in context_provider.py,
+    # NOT the ChromaDB collection name. The mapping is:
+    #   - "gamp5" → ChromaDB collection "gamp5_documents"
+    #   - "regulatory" → ChromaDB collection "regulatory_documents"
+    #   - "best_practices" → ChromaDB collection "best_practices"
+    #   - "sops" → ChromaDB collection "sop_documents"
     collection_mappings = [
         (
             "main/docs/regulatory_guides",
-            "regulatory_documents",
+            "regulatory",  # Dictionary key (not "regulatory_documents")
             "FDA, ISPE, ICH, ISO regulatory standards"
         ),
         (
             "main/docs/regulatory_guides",  # Same source for GAMP-5 subset
-            "gamp5_documents",
+            "gamp5",  # Dictionary key (not "gamp5_documents")
             "GAMP-5 validation and testing guidelines"
         ),
         (
             "main/docs/regulatory_guides",  # Same source for best practices
-            "best_practices",
+            "best_practices",  # This one matches both key and name
             "Industry best practices and methodologies"
         )
     ]
@@ -90,16 +97,20 @@ async def seed_all_collections(force_reseed: bool = False) -> None:
     failed_collections = []
 
     # Seed each collection
-    for source_path, collection_name, description in collection_mappings:
+    for source_path, collection_key, description in collection_mappings:
+        # Get the actual ChromaDB collection name from the key
+        chromadb_name = KEY_TO_COLLECTION.get(collection_key, collection_key)
+
         print("-" * 80)
-        print(f"📥 Collection: {collection_name}")
+        print(f"📥 Collection: {chromadb_name} (key: {collection_key})")
         print(f"   Description: {description}")
         print(f"   Source: {source_path}")
         print()
 
         try:
             # Check if already seeded (idempotency)
-            current_count = agent.collections[collection_name].count()
+            # Access using dictionary key (not ChromaDB name)
+            current_count = agent.collections[collection_key].count()
 
             if current_count > 0 and not force_reseed:
                 print(f"✓ Already seeded: {current_count} chunks (skipping)")
@@ -109,10 +120,11 @@ async def seed_all_collections(force_reseed: bool = False) -> None:
 
             if current_count > 0 and force_reseed:
                 print(f"⚠️  Force reseed: Clearing {current_count} existing chunks...")
-                agent.chroma_client.delete_collection(collection_name)
-                # Recreate collection
-                agent.collections[collection_name] = agent.chroma_client.get_or_create_collection(
-                    name=collection_name,
+                # Delete using actual ChromaDB collection name
+                agent.chroma_client.delete_collection(chromadb_name)
+                # Recreate collection with actual ChromaDB name
+                agent.collections[collection_key] = agent.chroma_client.get_or_create_collection(
+                    name=chromadb_name,
                     metadata={
                         "description": description,
                         "compliance_level": "regulatory",
@@ -143,7 +155,7 @@ async def seed_all_collections(force_reseed: bool = False) -> None:
             print(f"🔨 Starting ingestion...")
             stats = await agent.ingest_documents(
                 documents_path=str(full_source_path),
-                collection_name=collection_name,
+                collection_name=collection_key,  # Use short key (not ChromaDB name)
                 force_reprocess=force_reseed
             )
 
@@ -153,7 +165,7 @@ async def seed_all_collections(force_reseed: bool = False) -> None:
                     f"Ingestion failed with status: {stats['status']}"
                 )
 
-            final_count = agent.collections[collection_name].count()
+            final_count = agent.collections[collection_key].count()
             if final_count == 0:
                 raise RuntimeError(
                     f"Ingestion reported success but collection is empty.\n"
@@ -173,7 +185,7 @@ async def seed_all_collections(force_reseed: bool = False) -> None:
 
         except Exception as e:
             print(f"❌ FAILED: {e}")
-            failed_collections.append((collection_name, str(e)))
+            failed_collections.append((collection_key, str(e)))
             print()
 
     # Final summary
