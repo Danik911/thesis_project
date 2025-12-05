@@ -98,6 +98,7 @@ from .models import (
 )
 from .observability import initialize_langfuse, shutdown_langfuse, get_langfuse_client
 from .worker import process_job_worker
+from .langfuse_routes import router as langfuse_router
 
 # Note: logging.basicConfig and logger are configured at the top of the file
 # to prevent RecursionError from early logger access
@@ -256,6 +257,8 @@ origins = [
     "http://127.0.0.1:3000",  # Local development frontend (alternative)
     "http://127.0.0.1:3001",  # Local development frontend (alternative)
     "http://127.0.0.1:3002",  # Local development frontend (alternative)
+    # AWS CloudFront (production/staging)
+    "https://d2yiysdqio0ryi.cloudfront.net",
 ]
 
 app.add_middleware(
@@ -265,6 +268,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include Langfuse API routes (for /api/langfuse/trace endpoint)
+# This proxies requests to Langfuse Cloud API for frontend observability dashboard
+app.include_router(langfuse_router)
 
 
 # =============================================================================

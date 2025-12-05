@@ -7,7 +7,7 @@ with GAMP-5 compliance requirements.
 
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -557,3 +557,83 @@ class JobStatusWithApproval(BaseModel):
             }
         }
     )
+
+
+# =============================================================================
+# Langfuse Trace API Models
+# =============================================================================
+
+
+class LangfuseObservation(BaseModel):
+    """
+    Single observation (span) within a Langfuse trace.
+
+    Maps to Langfuse API observation structure with flexible fields
+    to handle varying LLM providers and observation types.
+    """
+
+    id: str = Field(..., description="Unique observation ID")
+    name: str | None = Field(default=None, description="Observation name (e.g., step name)")
+    type: str = Field(..., description="Observation type (SPAN, GENERATION, EVENT)")
+    startTime: str | None = Field(default=None, description="Start timestamp (ISO 8601)")
+    endTime: str | None = Field(default=None, description="End timestamp (ISO 8601)")
+    level: str | None = Field(default=None, description="Log level (DEFAULT, DEBUG, WARNING, ERROR)")
+    model: str | None = Field(default=None, description="LLM model name if applicable")
+    parentObservationId: str | None = Field(default=None, description="Parent observation ID for hierarchy")
+    metadata: dict | str | None = Field(default=None, description="Observation metadata (JSON)")
+    totalCost: float | str | None = Field(default=None, description="Cost for this observation")
+    inputUsage: int | str | None = Field(default=None, description="Input tokens/units")
+    outputUsage: int | str | None = Field(default=None, description="Output tokens/units")
+    totalUsage: int | str | None = Field(default=None, description="Total tokens/units")
+    latency: float | int | None = Field(default=None, description="Latency in milliseconds")
+    statusMessage: str | None = Field(default=None, description="Status message")
+
+    model_config = ConfigDict(extra="allow")  # Langfuse may add new fields
+
+
+class LangfuseTracePayload(BaseModel):
+    """
+    Full Langfuse trace response payload.
+
+    Contains trace metadata and nested observations for workflow visualization.
+    """
+
+    id: str = Field(..., description="Unique trace ID")
+    name: str | None = Field(default=None, description="Trace name")
+    timestamp: str | None = Field(default=None, description="Trace start timestamp (ISO 8601)")
+    userId: str | None = Field(default=None, description="User ID associated with trace")
+    environment: str | None = Field(default=None, description="Environment (default, production, etc.)")
+    tags: list[str] | None = Field(default=None, description="Trace tags (e.g., job_id, user_id)")
+    totalCost: float | None = Field(default=None, description="Total cost across all observations")
+    latency: float | None = Field(default=None, description="Total trace latency in seconds")
+    observations: list[LangfuseObservation] | None = Field(default=None, description="Nested observations")
+    scores: list[dict] | None = Field(default=None, description="Evaluation scores")
+    input: str | None = Field(default=None, description="Trace input data")
+    output: str | None = Field(default=None, description="Trace output data")
+    metadata: dict | str | None = Field(default=None, description="Trace metadata (JSON)")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class LangfuseTraceMetadata(BaseModel):
+    """Metadata about the trace fetch operation."""
+
+    fetchedAt: str = Field(..., description="Timestamp when trace was fetched (ISO 8601)")
+    traceId: str = Field(..., description="Requested trace ID")
+    cacheHit: bool = Field(..., description="Whether response was served from cache")
+
+
+class LangfuseTraceSuccessResponse(BaseModel):
+    """Successful response from /api/langfuse/trace endpoint."""
+
+    success: Literal[True] = True
+    data: LangfuseTracePayload = Field(..., description="Langfuse trace data")
+    metadata: LangfuseTraceMetadata = Field(..., description="Fetch metadata")
+
+
+class LangfuseTraceErrorResponse(BaseModel):
+    """Error response from /api/langfuse/trace endpoint."""
+
+    success: Literal[False] = False
+    error: str = Field(..., description="Error title")
+    details: str | None = Field(default=None, description="Detailed error message")
