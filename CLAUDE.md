@@ -30,6 +30,7 @@ Guidance for Claude Code on the pharmaceutical test generation thesis project.
 | File Structure | `main/docs/guides/PROJECT_CORE_FILES_SCHEME.md` |
 | PRP Workflow | `.claude/commands/prp.md` |
 | PRP Tasks | `PRPs/tasks/` (0.1-5.3, 23 tasks) |
+| Issues & Gotchas | `main/docs/issues/` (common deployment pitfalls) |
 
 ---
 
@@ -106,6 +107,17 @@ uv run ruff check --fix && uv run mypy .
 | Development | Gemini 2.5 Flash Lite | LangFuse Cloud (EU) | - |
 
 **Auth**: Clerk | **IaC**: Terraform | **Queue**: SQS
+
+---
+
+## Development Environment
+
+- **OS**: Windows with WSL2 (Ubuntu Linux)
+- **Docker**: Runs in WSL Ubuntu (NOT Docker Desktop)
+- **Terraform**: Installed in WSL at `~/bin/terraform`
+- **AWS CLI**: Available in both Windows and WSL
+
+**Important**: All Docker and Terraform commands should be run via `wsl -e bash -c "..."` wrapper.
 
 ---
 

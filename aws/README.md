@@ -501,6 +501,122 @@ aws logs tail /ecs/pharma-test-gen/worker --since 5m --region eu-west-2
 
 ---
 
+## Destroy/Deploy Cycle Troubleshooting (2025-12-06)
+
+This section documents issues encountered during destroy/deploy cycles and their solutions.
+
+### Issue 1: ECR "Already Exists" Error
+
+**Symptom:**
+```
+Error: creating ECR Repository (pharma-test-gen-api): RepositoryAlreadyExistsException
+```
+
+**Cause:** ECR repos have `prevent_destroy = true` and are removed from Terraform state during destroy. On redeploy, Terraform tries to create repos that already exist in AWS.
+
+**Solution:** Use Terraform import blocks (already created in `aws/terraform/imports.tf`):
+```hcl
+import {
+  to = module.ecr.aws_ecr_repository.this["api"]
+  id = "pharma-test-gen-api"
+}
+```
+
+**Prevention:** `deploy.py` includes `import_ecr_to_terraform_state()` that handles this automatically.
+
+### Issue 2: Terraform Not in PATH (Windows)
+
+**Symptom:**
+```
+terraform: command not found
+```
+
+**Cause:** Windows Git Bash doesn't have terraform in PATH.
+
+**Solution:** All scripts (`deploy.py`, `destroy.py`) use WSL wrapper:
+```python
+if is_windows():
+    cmd = ["wsl", "-e", "bash", "-c", f"export PATH=$HOME/bin:$PATH && {cmd}"]
+```
+
+**Prevention:** Install terraform in WSL at `~/bin/terraform`.
+
+### Issue 3: ChromaDB S3 Bucket Empty
+
+**Symptom:**
+```
+Worker at 0/1 - failing repeatedly
+403 Forbidden on s3://pharma-test-gen-chromadb-*/chroma_db.tar.gz
+```
+
+**Cause:** `destroy.py` previously emptied all S3 buckets including chromadb.
+
+**Solution (Applied):**
+1. `destroy.py` now preserves chromadb bucket by default
+2. `deploy.py` now includes `ensure_chromadb_in_s3()` that uploads if empty
+
+**Manual Fix (if needed):**
+```bash
+# From project root (WSL)
+tar -czvf /tmp/chroma_db.tar.gz -C lib chroma_db
+aws s3 cp /tmp/chroma_db.tar.gz s3://pharma-test-gen-chromadb-275333454012/chroma_db.tar.gz --region eu-west-2
+```
+
+### Issue 4: IAM Policy References Wrong Bucket
+
+**Symptom:**
+```
+AccessDenied when worker tries to download chromadb from S3
+```
+
+**Cause:** `main.tf` worker IAM policy hardcoded legacy bucket name (`pharma-test-gen-vectors-staging`) instead of Terraform-managed bucket.
+
+**Solution (Applied):** Updated `main.tf` to use Terraform resource ARN:
+```hcl
+Resource = [
+  aws_s3_bucket.chromadb.arn,
+  "${aws_s3_bucket.chromadb.arn}/*"
+]
+```
+
+### Issue 5: Windows Path Conversion in AWS CLI
+
+**Symptom:**
+```
+aws logs tail /ecs/pharma-test-gen/worker
+# Error: path converted to C:/Program Files/Git/ecs/...
+```
+
+**Cause:** Git Bash on Windows converts paths starting with `/` to Windows paths.
+
+**Solution:** Use WSL for AWS CLI commands with paths:
+```bash
+wsl -e bash -c "aws logs tail /ecs/pharma-test-gen/worker --since 10m --region eu-west-2"
+```
+
+### Quick Recovery After Destroy
+
+```bash
+# 1. Deploy infrastructure (includes ECR import check, chromadb upload)
+python aws/scripts/deploy.py
+
+# 2. Register golden task definitions and wait for health
+python aws/scripts/redeploy.py --wait
+
+# 3. Verify all services healthy
+python aws/scripts/redeploy.py --status-only
+```
+
+### Preserved Resources (Cost: ~$0.12/month)
+
+After `destroy.py`, these resources are preserved for quick re-deployment:
+- S3: `pharma-test-gen-terraform-state` (~$0.02/month)
+- S3: `pharma-test-gen-chromadb-*` (RAG database, ~$0.08/month)
+- DynamoDB: `pharma-test-gen-terraform-locks` (~$0.00/month)
+- ECR repos (3): Images kept for instant redeploy (~$0.02/month)
+
+---
+
 ## Resources
 
 - [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)

@@ -18,34 +18,74 @@ Usage:
 """
 
 import argparse
+import glob
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
 # Configuration
 REGION = "eu-west-2"
 CLUSTER = "pharma-test-gen-cluster"
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# Golden task definition files (source of truth for secrets)
-TASK_DEFINITIONS = {
-    "api": {
-        "file": "aws/terraform/task-definition-api-v19.json",
-        "service": "pharma-test-gen-api",
-        "family": "pharma-test-gen-api",
-    },
-    "worker": {
-        "file": "aws/terraform/task-definition-worker-v21.json",
-        "service": "pharma-test-gen-worker",
-        "family": "pharma-test-gen-worker",
-    },
-    "frontend": {
-        "file": "aws/terraform/task-definition-frontend-v13.json",
-        "service": "pharma-test-gen-frontend",
-        "family": "pharma-test-gen-frontend",
-    },
-}
+
+def find_latest_task_definition(service: str) -> str | None:
+    """Find the latest task definition file for a service.
+
+    Looks for files matching pattern: task-definition-{service}-v*.json
+    Returns the one with highest version number.
+    """
+    terraform_dir = PROJECT_ROOT / "aws" / "terraform"
+    pattern = f"task-definition-{service}-v*.json"
+    files = list(terraform_dir.glob(pattern))
+
+    if not files:
+        return None
+
+    # Sort by version number (extract vN from filename)
+    def get_version(path: Path) -> int:
+        name = path.stem  # task-definition-api-v19
+        parts = name.split("-v")
+        if len(parts) >= 2:
+            try:
+                return int(parts[-1])
+            except ValueError:
+                return 0
+        return 0
+
+    files.sort(key=get_version, reverse=True)
+    return str(files[0].relative_to(PROJECT_ROOT))
+
+
+def get_task_definitions() -> dict:
+    """Get task definition config, dynamically finding latest versions."""
+    services = ["api", "worker", "frontend"]
+    result = {}
+
+    for service in services:
+        task_def_file = find_latest_task_definition(service)
+        if task_def_file:
+            result[service] = {
+                "file": task_def_file,
+                "service": f"pharma-test-gen-{service}",
+                "family": f"pharma-test-gen-{service}",
+            }
+        else:
+            # Fallback: use family name only (uses latest registered in AWS)
+            result[service] = {
+                "file": None,
+                "service": f"pharma-test-gen-{service}",
+                "family": f"pharma-test-gen-{service}",
+            }
+
+    return result
+
+
+# Task definitions loaded dynamically
+TASK_DEFINITIONS = get_task_definitions()
 
 
 def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
@@ -69,12 +109,76 @@ def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
         return False, e.stderr
 
 
+def wait_for_services_healthy(services: list[str], timeout: int = 300) -> bool:
+    """Wait until all services show running tasks matching desired count.
+
+    Args:
+        services: List of service names to wait for
+        timeout: Maximum seconds to wait (default 5 minutes)
+
+    Returns:
+        True if all services healthy, False if timeout reached
+    """
+    print(f"\nWaiting for services to be healthy (timeout: {timeout}s)...")
+
+    start_time = time.time()
+    poll_interval = 15
+
+    while time.time() - start_time < timeout:
+        all_healthy = True
+        status_lines = []
+
+        for name in services:
+            config = TASK_DEFINITIONS[name]
+            cmd = [
+                "aws", "ecs", "describe-services",
+                "--cluster", CLUSTER,
+                "--services", config["service"],
+                "--region", REGION,
+                "--query", "services[0].[runningCount,desiredCount]",
+                "--output", "text",
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0 and result.stdout.strip():
+                parts = result.stdout.strip().split()
+                if len(parts) >= 2:
+                    running = int(parts[0])
+                    desired = int(parts[1])
+                    status = "✓" if running >= desired and desired > 0 else "..."
+                    status_lines.append(f"  {name}: {running}/{desired} {status}")
+                    if running < desired or desired == 0:
+                        all_healthy = False
+                else:
+                    status_lines.append(f"  {name}: unknown")
+                    all_healthy = False
+            else:
+                status_lines.append(f"  {name}: error")
+                all_healthy = False
+
+        # Print status update
+        elapsed = int(time.time() - start_time)
+        print(f"\n[{elapsed}s] Service status:")
+        for line in status_lines:
+            print(line)
+
+        if all_healthy:
+            print("\n✓ All services healthy!")
+            return True
+
+        time.sleep(poll_interval)
+
+    print(f"\n✗ Timeout after {timeout}s - some services not healthy")
+    return False
+
+
 def register_task_definition(name: str, config: dict) -> bool:
     """Register a task definition from JSON file."""
-    # Find project root
-    script_dir = Path(__file__).parent
-    project_root = script_dir.parent.parent
-    task_def_path = project_root / config["file"]
+    if config["file"] is None:
+        print(f"  No task definition file for {name} - using AWS-registered version")
+        return True
+
+    task_def_path = PROJECT_ROOT / config["file"]
 
     if not task_def_path.exists():
         print(f"ERROR: Task definition file not found: {task_def_path}")
@@ -142,6 +246,8 @@ def main():
     parser.add_argument("--frontend", action="store_true", help="Redeploy Frontend service only")
     parser.add_argument("--skip-register", action="store_true", help="Skip task definition registration")
     parser.add_argument("--status-only", action="store_true", help="Only check service status")
+    parser.add_argument("--wait", action="store_true", help="Wait for services to be healthy after redeployment")
+    parser.add_argument("--timeout", type=int, default=300, help="Timeout in seconds for --wait (default: 300)")
 
     args = parser.parse_args()
 
@@ -201,6 +307,15 @@ def main():
     for name in services:
         check_service_status(name, TASK_DEFINITIONS[name])
 
+    # Wait for services if requested
+    if args.wait:
+        print("\n" + "-"*60)
+        print("  PHASE 4: Wait for Healthy Services")
+        print("-"*60)
+        healthy = wait_for_services_healthy(services, timeout=args.timeout)
+        if not healthy:
+            errors.append("Services did not become healthy within timeout")
+
     # Summary
     print("\n" + "="*60)
     if errors:
@@ -212,8 +327,10 @@ def main():
     else:
         print("  REDEPLOY COMPLETE")
         print("="*60)
-        print("\nServices are updating. New tasks will be running in 2-5 minutes.")
-        print("Monitor with: aws ecs wait services-stable --cluster pharma-test-gen-cluster --services " + " ".join([TASK_DEFINITIONS[s]["service"] for s in services]) + f" --region {REGION}")
+        if not args.wait:
+            print("\nServices are updating. New tasks will be running in 2-5 minutes.")
+            print("Use --wait flag to wait for services to be healthy.")
+            print("Monitor with: aws ecs wait services-stable --cluster pharma-test-gen-cluster --services " + " ".join([TASK_DEFINITIONS[s]["service"] for s in services]) + f" --region {REGION}")
 
 
 if __name__ == "__main__":

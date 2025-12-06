@@ -1,0 +1,626 @@
+{
+  "suite_id": "OQ-SUITE-1008",
+  "gamp_category": 3,
+  "document_name": "043b75e7-85cf-4495-9f30-d8a98b4915a4.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Verify Continuous Temperature Monitoring Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the Environmental Monitoring System continuously monitors temperature in GMP storage areas as per URS-EMS-001.",
+      "prerequisites": [
+        "System installed and configured",
+        "Temperature sensors calibrated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Access the EMS software interface.",
+          "expected_result": "Software interface is accessible and displays current temperature readings.",
+          "data_to_capture": [
+            "Current temperature readings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Observe temperature readings for 30 minutes.",
+          "expected_result": "Temperature readings are recorded continuously at intervals not exceeding 5 minutes.",
+          "data_to_capture": [
+            "Temperature readings over time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Temperature readings are continuous and recorded at intervals \u22645 minutes."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Data must be accurate and consistent"
+      ],
+      "urs_requirements": [
+        "URS-EMS-001",
+        "URS-EMS-002"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS software operation",
+        "GMP compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Validate Alarm Generation for Temperature Deviations",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To confirm the system generates alerts when temperature deviates \u00b12\u00b0C from the setpoint as per URS-EMS-005.",
+      "prerequisites": [
+        "System installed and configured",
+        "Temperature setpoint defined"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the temperature setpoint to 20\u00b0C.",
+          "expected_result": "Setpoint is successfully configured in the system.",
+          "data_to_capture": [
+            "Setpoint value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate a temperature deviation to 22\u00b0C.",
+          "expected_result": "System generates an alert indicating a temperature deviation.",
+          "data_to_capture": [
+            "Alert notification"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alerts are generated within 30 seconds of temperature deviation."
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Alerts must be logged and timestamped"
+      ],
+      "urs_requirements": [
+        "URS-EMS-005",
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "EMS software operation",
+        "Alarm configuration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Verify Temperature Data Recording Interval",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To confirm that temperature readings are recorded at intervals not exceeding 5 minutes as specified in URS-EMS-002.",
+      "prerequisites": [
+        "System installed and operational",
+        "Temperature sensors calibrated"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set up the system to monitor temperature in a controlled environment.",
+          "expected_result": "System begins recording temperature data.",
+          "data_to_capture": [
+            "Timestamp of each temperature reading"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor the system for 30 minutes.",
+          "expected_result": "Temperature readings are recorded at intervals not exceeding 5 minutes.",
+          "data_to_capture": [
+            "Interval between readings"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Temperature readings are recorded at intervals \u2264 5 minutes"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data must be accurate and consistent"
+      ],
+      "urs_requirements": [
+        "URS-EMS-002"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Operator"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Validate Alarm Notification Integration",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To ensure that alarm notifications integrate with the site paging system using the vendor API as per URS-EMS-015.",
+      "prerequisites": [
+        "System installed and operational",
+        "Paging system configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a temperature deviation exceeding \u00b12\u00b0C from the setpoint.",
+          "expected_result": "System generates an alarm condition.",
+          "data_to_capture": [
+            "Alarm generation timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify that the alarm notification is sent to the site paging system.",
+          "expected_result": "Alarm notification is received by the paging system.",
+          "data_to_capture": [
+            "Paging system response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm notification is successfully integrated with the paging system"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Notifications must be timely and accurate"
+      ],
+      "urs_requirements": [
+        "URS-EMS-015"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Operator",
+        "IT Specialist"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Verify System Response Time for Alarm Conditions",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "To ensure the system responds to alarm conditions within the specified 30-second timeframe.",
+      "prerequisites": [
+        "System is operational",
+        "Alarm conditions are configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a temperature deviation exceeding \u00b12\u00b0C from the setpoint.",
+          "expected_result": "The system generates an alarm within 30 seconds.",
+          "data_to_capture": [
+            "Time of deviation",
+            "Time of alarm generation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm is generated within 30 seconds of deviation"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure accurate timestamping of alarm events"
+      ],
+      "urs_requirements": [
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Configuration",
+        "Performance Testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "Validate Data Retention and Archival Functionality",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "To verify that the system retains data for the required 7 years using the vendor's archival feature.",
+      "prerequisites": [
+        "System is operational",
+        "Archival feature is configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate sample temperature data and initiate archival process.",
+          "expected_result": "Data is successfully archived and can be retrieved after 7 years.",
+          "data_to_capture": [
+            "Archival timestamp",
+            "Data retrieval timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data is retained and retrievable for 7 years"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Ensure data integrity during archival and retrieval"
+      ],
+      "urs_requirements": [
+        "URS-EMS-010"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Data Management",
+        "Archival Processes"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Verify Vendor-Supplied Software Functionality",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To ensure the vendor-supplied software operates as intended without modifications.",
+      "prerequisites": [
+        "System installed and configured",
+        "Vendor software installed"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Launch the vendor-supplied software.",
+          "expected_result": "Software launches successfully without errors.",
+          "data_to_capture": [
+            "Software version",
+            "Launch status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Perform a temperature reading using the software.",
+          "expected_result": "Temperature reading is displayed accurately within \u00b10.5\u00b0C.",
+          "data_to_capture": [
+            "Temperature reading",
+            "Accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Software operates without modifications",
+        "Temperature readings are accurate"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "low",
+      "data_integrity_requirements": [
+        "Ensure data integrity is maintained"
+      ],
+      "urs_requirements": [
+        "URS-EMS-003"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Software Testing",
+        "Environmental Monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "Validate System Interface with Facility Management System",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "To ensure the EMS interfaces correctly with the existing facility management system.",
+      "prerequisites": [
+        "EMS installed",
+        "Facility management system operational"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Configure the EMS to interface with the facility management system.",
+          "expected_result": "Interface configuration is successful.",
+          "data_to_capture": [
+            "Interface status",
+            "Configuration details"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Send a test temperature reading from EMS to the facility management system.",
+          "expected_result": "Temperature reading is received accurately by the facility management system.",
+          "data_to_capture": [
+            "Temperature reading",
+            "Receipt status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Interface configuration is successful",
+        "Temperature readings are accurately received"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure data integrity is maintained during transfer"
+      ],
+      "urs_requirements": [
+        "URS-EMS-014"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System Integration",
+        "Environmental Monitoring"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "Verify Temperature Range Accuracy",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "To verify that the Environmental Monitoring System accurately measures temperature within the specified range of -80\u00b0C to +50\u00b0C with an accuracy of \u00b10.5\u00b0C.",
+      "prerequisites": [
+        "System installed and operational",
+        "Calibrated temperature reference device"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set the temperature reference device to -80\u00b0C.",
+          "expected_result": "System displays temperature within -80.5\u00b0C to -79.5\u00b0C.",
+          "data_to_capture": [
+            "Displayed temperature"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Set the temperature reference device to +50\u00b0C.",
+          "expected_result": "System displays temperature within +49.5\u00b0C to +50.5\u00b0C.",
+          "data_to_capture": [
+            "Displayed temperature"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Temperature readings must be within \u00b10.5\u00b0C of the reference device"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure temperature data is accurately recorded"
+      ],
+      "urs_requirements": [
+        "URS-EMS-004"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "Calibration technician"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "Validate System Availability",
+      "test_category": "performance",
+      "gamp_category": 3,
+      "objective": "To validate that the Environmental Monitoring System achieves 99.5% availability excluding planned maintenance.",
+      "prerequisites": [
+        "System installed and operational",
+        "Monitoring period defined"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Monitor system uptime over a defined period (e.g., 30 days).",
+          "expected_result": "System uptime meets or exceeds 99.5% excluding planned maintenance.",
+          "data_to_capture": [
+            "Uptime percentage",
+            "Downtime incidents"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System availability must be \u226599.5% excluding planned maintenance"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Ensure uptime data is accurately recorded"
+      ],
+      "urs_requirements": [
+        "URS-EMS-013"
+      ],
+      "related_tests": [
+        "OQ-005"
+      ],
+      "estimated_duration_minutes": 30,
+      "required_expertise": [
+        "System administrator"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 300,
+  "generation_timestamp": "2025-12-06T10:08:12.172335+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "review_required": true,
+  "timestamp": "2025-12-06T10:08:12.410039+00:00",
+  "workflow_session_id": "unified_workflow_2025-12-06T10:05:05.739985+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

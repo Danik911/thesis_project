@@ -12,8 +12,9 @@ This script:
 IMPORTANT: This will permanently delete all AWS resources except:
 - Terraform state bucket (pharma-test-gen-terraform-state)
 - DynamoDB lock table (pharma-test-gen-terraform-locks)
+- ChromaDB bucket (pharma-test-gen-chromadb-*) - RAG vector database preserved
 
-These resources cost ~$0.10/month and allow quick re-deployment.
+These resources cost ~$0.12/month and allow quick re-deployment.
 """
 
 import subprocess
@@ -124,7 +125,10 @@ def confirm_destruction(auto_approve=False):
    PRESERVED (for quick re-deployment):
      - Amazon S3: pharma-test-gen-terraform-state (~$0.02/month)
      - Amazon DynamoDB: pharma-test-gen-terraform-locks (~$0.00/month)
+     - Amazon S3: pharma-test-gen-chromadb-* (RAG vector database)
      - Amazon ECR repositories (protected by lifecycle rule - images kept)
+
+   NOTE: Use --delete-chromadb to also empty the ChromaDB bucket (not recommended)
     """)
 
     print("=" * 70)
@@ -163,14 +167,31 @@ def get_terraform_outputs():
     return {}
 
 
-def empty_s3_buckets():
-    """Empty S3 buckets before Terraform destruction."""
+def empty_s3_buckets(preserve_chromadb=True):
+    """Empty S3 buckets before Terraform destruction.
+
+    Args:
+        preserve_chromadb: If True, skip the chromadb bucket to preserve RAG database
+    """
     print("\n1. Emptying Amazon S3 buckets...")
 
     buckets = [
         f"{PROJECT_NAME}-vectors-staging",
         f"{PROJECT_NAME}-output-staging"
     ]
+
+    # ChromaDB bucket is preserved by default for quick re-deployment
+    if not preserve_chromadb:
+        # Get AWS account ID for chromadb bucket name
+        account_id = run_command(
+            ["aws", "sts", "get-caller-identity", "--query", "Account", "--output", "text", "--region", AWS_REGION],
+            capture_output=True, check=False
+        )
+        if account_id:
+            buckets.append(f"{PROJECT_NAME}-chromadb-{account_id.strip()}")
+            print("     WARNING: ChromaDB bucket will be emptied (--delete-chromadb flag)")
+    else:
+        print("     NOTE: ChromaDB bucket preserved (RAG database for quick redeploy)")
 
     for bucket in buckets:
         print(f"     Checking bucket: {bucket}")
@@ -445,12 +466,13 @@ def display_summary():
 
    PRESERVED RESOURCES (for quick re-deployment):
      - S3 Bucket: pharma-test-gen-terraform-state
+     - S3 Bucket: pharma-test-gen-chromadb-* (RAG vector database)
      - DynamoDB Table: pharma-test-gen-terraform-locks
      - ECR Repositories (removed from Terraform state, kept in AWS)
      - AWS Config (stopped, restart with: aws configservice start-configuration-recorder --configuration-recorder-name pharma --region eu-west-2)
      - CloudTrail (still logging)
 
-   Total monthly cost of preserved resources: ~$0.10
+   Total monthly cost of preserved resources: ~$0.12
 
    NOTE: CloudFront distribution was destroyed. On next deploy:
      - New ALBs will be created
@@ -473,6 +495,7 @@ def main():
     parser = argparse.ArgumentParser(description="Destroy AWS infrastructure")
     parser.add_argument("--yes", "-y", action="store_true", help="Auto-approve destruction without prompting")
     parser.add_argument("--skip-ecr", action="store_true", help="Skip ECR image deletion prompt")
+    parser.add_argument("--delete-chromadb", action="store_true", help="Also empty the ChromaDB bucket (not recommended)")
     args = parser.parse_args()
 
     print("\n" + "=" * 70)
@@ -490,8 +513,8 @@ def main():
     # Get terraform outputs before destruction
     outputs = get_terraform_outputs()
 
-    # Empty S3 buckets first
-    empty_s3_buckets()
+    # Empty S3 buckets first (chromadb preserved by default)
+    empty_s3_buckets(preserve_chromadb=not args.delete_chromadb)
 
     # Scale down ECS services for faster destruction
     scale_down_ecs_services()

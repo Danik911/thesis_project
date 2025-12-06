@@ -232,6 +232,18 @@ resource "aws_iam_role_policy" "api_task" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = var.aurora_secret_arn
+      },
+      # S3 ChromaDB - Download RAG database for context agent (Task 4.2)
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.chromadb.arn,
+          "${aws_s3_bucket.chromadb.arn}/*"
+        ]
       }
     ]
   })
@@ -289,13 +301,16 @@ resource "aws_iam_role_policy" "worker_task" {
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
       },
       # S3 ChromaDB - Download RAG database on startup (Task 4.2)
-      # Using existing bucket pharma-test-gen-vectors-staging (manually created during initial deployment)
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject"
+          "s3:GetObject",
+          "s3:ListBucket"
         ]
-        Resource = "arn:aws:s3:::pharma-test-gen-vectors-staging/*"
+        Resource = [
+          aws_s3_bucket.chromadb.arn,
+          "${aws_s3_bucket.chromadb.arn}/*"
+        ]
       },
       # Bedrock - DeepSeek V3 inference
       {

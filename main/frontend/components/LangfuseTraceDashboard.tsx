@@ -1,6 +1,8 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
 import { XMarkIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '@clerk/nextjs';
+import { authenticatedFetch } from '@/lib/authenticatedFetch';
 
 interface LangfuseUsage {
   inputTokens?: number | string | null;
@@ -392,6 +394,7 @@ const ObservationsTable = ({ observations }: { observations: LangfuseObservation
 };
 
 export default function LangfuseTraceDashboard({ traceId, traceUrl, jobId }: LangfuseTraceDashboardProps) {
+  const { getToken } = useAuth();
   const [data, setData] = useState<LangfuseTracePayload | null>(null);
   const [metadata, setMetadata] = useState<ApiSuccess['metadata']>();
   const [error, setError] = useState<string | null>(null);
@@ -411,9 +414,12 @@ export default function LangfuseTraceDashboard({ traceId, traceUrl, jobId }: Lan
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/langfuse/trace?traceId=${encodeURIComponent(traceId)}`, {
-          signal: controller.signal,
-        });
+        const response = await authenticatedFetch(
+          `/api/langfuse/trace?traceId=${encodeURIComponent(traceId)}`,
+          getToken,
+          {},
+          controller.signal
+        );
         const payload = (await response.json()) as ApiResponse;
         if (!payload.success) {
           throw new Error(payload.details || payload.error || 'Unknown Langfuse error');
@@ -433,7 +439,7 @@ export default function LangfuseTraceDashboard({ traceId, traceUrl, jobId }: Lan
 
     fetchTrace();
     return () => controller.abort();
-  }, [traceId, refreshCounter]);
+  }, [traceId, refreshCounter, getToken]);
 
   const observations = useMemo(() => data?.observations ?? [], [data]);
   const observationTree = useMemo(() => buildObservationTree(observations), [observations]);

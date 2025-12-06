@@ -259,6 +259,7 @@ origins = [
     "http://127.0.0.1:3002",  # Local development frontend (alternative)
     # AWS CloudFront (production/staging)
     "https://d2yiysdqio0ryi.cloudfront.net",
+    "https://d3ij3pn3g49dzz.cloudfront.net",  # Current production CloudFront
 ]
 
 app.add_middleware(

@@ -172,6 +172,71 @@ def get_ecr_login():
     return account_id, ecr_url
 
 
+def ensure_chromadb_in_s3(account_id: str):
+    """Upload ChromaDB to S3 if bucket is empty.
+
+    This ensures the RAG vector database is available for worker service startup.
+    The chromadb bucket is preserved during destroy.py, so this only uploads
+    if the bucket is completely empty (fresh deploy or accidental deletion).
+    """
+    print("\n   Checking ChromaDB in S3...")
+
+    bucket_name = f"{PROJECT_NAME}-chromadb-{account_id}"
+    project_root = get_project_root()
+    local_chromadb = project_root / "lib" / "chroma_db"
+
+    # Check if bucket has content
+    result = run_command(
+        ["aws", "s3", "ls", f"s3://{bucket_name}/", "--region", AWS_REGION],
+        capture_output=True, check=False
+    )
+
+    if result and "chroma_db.tar.gz" in result:
+        print(f"     {bucket_name}: ChromaDB exists")
+        return True
+
+    # Check if local chromadb exists
+    if not local_chromadb.exists():
+        print(f"     WARNING: No local ChromaDB at {local_chromadb}")
+        print("     Worker service may fail to start without RAG database")
+        return False
+
+    print(f"     {bucket_name}: uploading ChromaDB from {local_chromadb}...")
+
+    # Create tar.gz of chromadb
+    import tempfile
+    tar_file = tempfile.mktemp(suffix=".tar.gz")
+
+    # Use tar command - WSL wrapper handles Windows
+    tar_result = run_command(
+        ["tar", "-czvf", tar_file, "-C", str(local_chromadb.parent), "chroma_db"],
+        capture_output=True, check=False
+    )
+
+    if not tar_result:
+        print("     Failed to create chromadb tar.gz")
+        return False
+
+    # Upload to S3
+    upload_result = run_command(
+        ["aws", "s3", "cp", tar_file, f"s3://{bucket_name}/chroma_db.tar.gz", "--region", AWS_REGION],
+        capture_output=True, check=False
+    )
+
+    # Cleanup temp file
+    try:
+        os.unlink(tar_file)
+    except Exception:
+        pass
+
+    if upload_result:
+        print(f"     ChromaDB uploaded to s3://{bucket_name}/chroma_db.tar.gz")
+        return True
+    else:
+        print("     Failed to upload ChromaDB to S3")
+        return False
+
+
 def import_ecr_to_terraform_state():
     """Import existing ECR repositories into Terraform state if they exist but aren't tracked.
 
@@ -708,6 +773,9 @@ def main():
 
     # Deploy Terraform infrastructure (creates ALB, gets API URL)
     outputs = deploy_terraform()
+
+    # Ensure ChromaDB is in S3 (preserved during destroy, but may be missing on fresh deploy)
+    ensure_chromadb_in_s3(account_id)
 
     # Get cluster name from Terraform outputs
     # NOTE: API URL is no longer needed - frontend uses CloudFront-relative URLs
