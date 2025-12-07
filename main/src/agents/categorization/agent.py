@@ -71,7 +71,6 @@ from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.llms import LLM
 from llama_index.core.tools import FunctionTool
 from pydantic import ValidationError
-
 from src.agents.categorization.error_handler import (
     CategorizationError,
     CategorizationErrorHandler,
@@ -89,8 +88,7 @@ from src.agents.parallel.context_provider import (
 from src.config.llm_config import LLMConfig
 from src.core.events import AgentRequestEvent, GAMPCategorizationEvent, GAMPCategory
 from src.monitoring.phoenix_config import instrument_tool
-
-
+from src.security.prompt_architecture import get_secure_prompt_architecture
 
 
 def parse_structured_response(response_text: str, output_cls=GAMPCategorizationResult) -> GAMPCategorizationResult:
@@ -1342,10 +1340,20 @@ def categorize_with_pydantic_structured_output(
     )
 
     try:
-        # Enhanced prompt with Chain-of-Thought reasoning and Universal Ambiguity Detection (Task 3.12)
-        categorization_prompt = f"""You are a GAMP-5 categorization expert with pharmaceutical regulatory compliance expertise.
+        # SECURITY ENHANCEMENT (Task 6.1): Use structural prompt isolation
+        # User content is now in separate USER message with boundary markers
+        # This prevents prompt injection attacks where malicious URS content
+        # could manipulate categorization through embedded instructions
 
-##GAMP-5 Categories
+        prompt_architecture = get_secure_prompt_architecture(
+            audit_author=f"categorization_agent_{document_name}",
+            enable_audit_logging=True,
+            strict_mode=True
+        )
+
+        # Additional categorization-specific instructions for the system prompt
+        categorization_instructions = """
+## GAMP-5 Categories
 
 **Category 1**: Operating systems, firmware, infrastructure software (NOT directly affecting product quality)
 **Category 3**: Non-configured commercial off-the-shelf (COTS) software used as supplied
@@ -1358,39 +1366,39 @@ Before assigning a category, ANALYZE for ambiguity signals across ALL category b
 
 ### Category 1 vs 3 Ambiguity
 - Does the URS describe infrastructure (OS, database) OR application software?
-- Is it directly affecting product quality? (Yes → Cat 3+, No → Cat 1)
-- **IF UNCLEAR** → set `requires_human_review = true`
+- Is it directly affecting product quality? (Yes -> Cat 3+, No -> Cat 1)
+- **IF UNCLEAR** -> set `requires_human_review = true`
 
 ### Category 3 vs 4 Ambiguity
 - Is software used "as-is" (Cat 3) OR does it require configuration/parameterization (Cat 4)?
 - Does URS mention: "configured workflows", "customizable settings", "parameter adjustments"?
-- **IF BOTH POSSIBLE** → set `requires_human_review = true`
+- **IF BOTH POSSIBLE** -> set `requires_human_review = true`
 
 ### Category 4 vs 5 Ambiguity
-- Configuration only (XML, INI, GUI settings) → Category 4
-- Custom source code (Python, Java, C#) → Category 5
-- BOTH (hybrid: configured platform + custom modules) → **AMBIGUOUS** → set `requires_human_review = true`
+- Configuration only (XML, INI, GUI settings) -> Category 4
+- Custom source code (Python, Java, C#) -> Category 5
+- BOTH (hybrid: configured platform + custom modules) -> **AMBIGUOUS** -> set `requires_human_review = true`
 - Keywords: "optional custom modules", "extensible", "plugin architecture", "API customization"
-- **IF UNSURE** → set `requires_human_review = true`
+- **IF UNSURE** -> set `requires_human_review = true`
 
 ### General Ambiguity Signals
 
 **Mandatory HIL triggers** (set `requires_human_review = true` if ANY detected):
-- ❌ Keywords: "optional", "customizable", "hybrid", "ambiguous", "unclear", "may include"
-- ❌ Conflicting indicators (e.g., "standard package with custom algorithms")
-- ❌ Vague/incomplete URS (missing critical details)
-- ❌ Multiple valid interpretations possible
-- ❌ Confidence score < 85%
+- Keywords: "optional", "customizable", "hybrid", "ambiguous", "unclear", "may include"
+- Conflicting indicators (e.g., "standard package with custom algorithms")
+- Vague/incomplete URS (missing critical details)
+- Multiple valid interpretations possible
+- Confidence score < 85%
 
 ## Conservative Stance
 
-**Default Assumption**: When uncertain → `requires_human_review = true`
+**Default Assumption**: When uncertain -> `requires_human_review = true`
 
 You must **explicitly justify** why it's NOT ambiguous to set `requires_human_review = false`.
 
 ## Response Format (JSON - 7 fields required)
 
-{{
+{
     "category": 4,
     "confidence_score": 0.75,
     "reasoning": "System involves configuration BUT 'optional custom modules' suggests potential Category 5",
@@ -1398,53 +1406,63 @@ You must **explicitly justify** why it's NOT ambiguous to set `requires_human_re
     "ambiguity_details": "Category 4/5 boundary: 'optional custom modules' indicates potential custom development",
     "requires_human_review": true,
     "alternative_categories": [5]
-}}
+}
 
 ## Chain-of-Thought Examples
 
 **Example 1: Clear Category 4 (No Ambiguity)**
 Input: "Commercial LIMS configured via XML files. No source code modifications. No custom development."
 Chain-of-Thought: 1) Commercial product, 2) Configuration only (XML), 3) Explicit 'no custom development', 4) Category 4, 5) Confidence 0.90
-Output: {{"category": 4, "confidence_score": 0.90, "reasoning": "Configured COTS with XML parameterization, no custom code", "has_ambiguity_signals": false, "ambiguity_details": null, "requires_human_review": false, "alternative_categories": null}}
+Output: {"category": 4, "confidence_score": 0.90, "reasoning": "Configured COTS with XML parameterization, no custom code", "has_ambiguity_signals": false, "ambiguity_details": null, "requires_human_review": false, "alternative_categories": null}
 
 **Example 2: Category 4/5 Ambiguity (REQUIRES HIL)**
 Input: "Personalized Medicine Orchestration Platform with configured workflows and optional custom algorithm modules"
 Chain-of-Thought: 1) Platform product, 2) Configured workflows (Cat 4 indicator), 3) "Optional custom modules" (Cat 5 indicator), 4) Category 4/5 boundary detected, 5) Confidence 0.75
-Output: {{"category": 4, "confidence_score": 0.75, "reasoning": "Configured platform BUT 'optional custom modules' suggests potential Cat 5 characteristics", "has_ambiguity_signals": true, "ambiguity_details": "Category 4/5 boundary: 'optional custom modules' indicates potential custom development", "requires_human_review": true, "alternative_categories": [5]}}
+Output: {"category": 4, "confidence_score": 0.75, "reasoning": "Configured platform BUT 'optional custom modules' suggests potential Cat 5 characteristics", "has_ambiguity_signals": true, "ambiguity_details": "Category 4/5 boundary: 'optional custom modules' indicates potential custom development", "requires_human_review": true, "alternative_categories": [5]}
 
 **Example 3: Category 3/4 Ambiguity**
 Input: "Microsoft Excel for data analysis. May require custom macros for specific workflows."
 Chain-of-Thought: 1) COTS product, 2) "May require" suggests uncertainty, 3) Custom macros could be Cat 4 (if using built-in VBA) or Cat 5 (if proprietary code), 4) Category 3/4 boundary, 5) Confidence 0.65
-Output: {{"category": 3, "confidence_score": 0.65, "reasoning": "Excel COTS but 'may require custom macros' creates Cat 3/4/5 ambiguity", "has_ambiguity_signals": true, "ambiguity_details": "Category 3/4 boundary: uncertain if macros are simple configuration or custom development", "requires_human_review": true, "alternative_categories": [4, 5]}}
+Output: {"category": 3, "confidence_score": 0.65, "reasoning": "Excel COTS but 'may require custom macros' creates Cat 3/4/5 ambiguity", "has_ambiguity_signals": true, "ambiguity_details": "Category 3/4 boundary: uncertain if macros are simple configuration or custom development", "requires_human_review": true, "alternative_categories": [4, 5]}
 
 **Example 4: Clear Category 5 (No Ambiguity)**
 Input: "Custom-developed laboratory data management system with proprietary algorithms for analytical data processing"
 Chain-of-Thought: 1) Custom development explicit, 2) Proprietary algorithms (Cat 5 indicator), 3) Bespoke system, 4) Category 5, 5) Confidence 0.95
-Output: {{"category": 5, "confidence_score": 0.95, "reasoning": "Bespoke development with proprietary algorithms clearly Category 5", "has_ambiguity_signals": false, "ambiguity_details": null, "requires_human_review": false, "alternative_categories": null}}
+Output: {"category": 5, "confidence_score": 0.95, "reasoning": "Bespoke development with proprietary algorithms clearly Category 5", "has_ambiguity_signals": false, "ambiguity_details": null, "requires_human_review": false, "alternative_categories": null}
 
 **Example 5: Vague URS (REQUIRES HIL)**
 Input: "Software system for clinical trial management. Details to be determined."
 Chain-of-Thought: 1) Clinical trial management (application), 2) "Details TBD" means missing critical info, 3) Cannot determine category reliably, 4) Multiple possibilities (3/4/5), 5) Confidence 0.50
-Output: {{"category": 4, "confidence_score": 0.50, "reasoning": "Insufficient detail - could be COTS (3), configured (4), or custom (5)", "has_ambiguity_signals": true, "ambiguity_details": "Vague/incomplete URS: missing critical categorization details", "requires_human_review": true, "alternative_categories": [3, 5]}}
+Output: {"category": 4, "confidence_score": 0.50, "reasoning": "Insufficient detail - could be COTS (3), configured (4), or custom (5)", "has_ambiguity_signals": true, "ambiguity_details": "Vague/incomplete URS: missing critical categorization details", "requires_human_review": true, "alternative_categories": [3, 5]}
 
 ## Mandatory Rules
 
-1. **IF** confidence < 85% → `requires_human_review = true`
-2. **IF** any ambiguity keyword detected → `requires_human_review = true`
-3. **IF** multiple category interpretations valid → `requires_human_review = true`
-4. **IF** URS missing critical details → `requires_human_review = true`
+1. **IF** confidence < 85% -> `requires_human_review = true`
+2. **IF** any ambiguity keyword detected -> `requires_human_review = true`
+3. **IF** multiple category interpretations valid -> `requires_human_review = true`
+4. **IF** URS missing critical details -> `requires_human_review = true`
 5. **NEVER** set `requires_human_review = false` without explicit justification
 
-Now analyze this URS and respond with ONLY the JSON object (all 7 fields):
+Analyze the URS document in the USER message and respond with ONLY the JSON object (all 7 fields).
+"""
 
-{urs_content}"""
+        # Build structurally isolated messages using SecurePromptArchitecture
+        # This ensures URS content is in a separate USER message with boundary markers
+        messages = prompt_architecture.build_categorization_prompt(
+            urs_content=urs_content,
+            rag_context=None,  # RAG context can be added in future if needed
+            additional_instructions=categorization_instructions
+        )
 
-        # Use direct LLM call instead of LLMTextCompletionProgram
-        error_handler.logger.info(f"Starting structured categorization for document: {document_name}")
+        # Use direct LLM call with ChatMessage role separation
+        error_handler.logger.info(
+            f"Starting structured categorization for document: {document_name} "
+            f"(using structural isolation: {len(messages)} messages)"
+        )
 
-        # Call LLM directly
-        response = llm.complete(categorization_prompt)
-        response_text = response.text if hasattr(response, "text") else str(response)
+        # Call LLM with isolated messages (Task 6.1 security enhancement)
+        response = llm.chat(messages)
+        response_text = response.message.content if hasattr(response.message, "content") else str(response)
 
         error_handler.logger.debug(f"LLM response (first 200 chars): {response_text[:200]}")
 

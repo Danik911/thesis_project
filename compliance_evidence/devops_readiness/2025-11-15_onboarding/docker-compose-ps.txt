@@ -1,5 +1,0 @@
-NAME                    IMAGE                     STATUS                 PORTS
-pharma-api-dev          thesis_project-api        Up 9 hours (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
-pharma-localstack-dev   localstack/localstack:3   Up 9 hours (healthy)   0.0.0.0:4566->4566/tcp, [::]:4566->4566/tcp
-pharma-postgres-dev     pgvector/pgvector:pg15    Up 9 hours (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
-pharma-worker-dev       thesis_project-worker     Up 9 hours             

@@ -420,15 +420,123 @@ class PharmaceuticalInputSecurityWrapper:
             error_message=None if overall_valid else f"Security validation failed: {len(all_patterns)} threats detected"
         )
 
+    def validate_structural_isolation(
+        self,
+        prompt_content: str,
+        validation_id: UUID | None = None
+    ) -> SecurityValidationResult:
+        """
+        Validate that a prompt uses proper structural isolation (Task 6.1).
+
+        This method checks for dangerous patterns that indicate user content
+        has been concatenated into system prompts instead of using proper
+        ChatMessage role separation.
+
+        SECURITY CHECKS:
+        1. Detects boundary markers within system instruction context
+        2. Flags prompts where user content appears before security boundaries
+        3. Identifies missing structural isolation markers
+
+        Args:
+            prompt_content: The prompt string to validate
+            validation_id: Optional validation ID for audit trail
+
+        Returns:
+            SecurityValidationResult with structural isolation assessment
+        """
+        if validation_id is None:
+            validation_id = uuid4()
+
+        logger.debug(f"[{validation_id}] Running structural isolation validation")
+
+        detected_issues = []
+        max_confidence = 0.0
+
+        # Check for dangerous concatenation patterns
+        dangerous_patterns = [
+            # User content appears right after system template markers
+            (r"--- USER CONTENT BEGINS ---.*?<<<", "user_content_in_system_context"),
+            # Missing end markers (truncated injection attempt)
+            (r"--- USER CONTENT BEGINS ---(?!.*--- USER CONTENT ENDS ---)", "missing_end_marker"),
+            # Forged boundary markers in user content
+            (r"<<<BEGIN_UNTRUSTED.*<<<BEGIN_UNTRUSTED", "duplicate_boundary_start"),
+            (r">>>.*<<<END_UNTRUSTED.*<<<END_UNTRUSTED", "duplicate_boundary_end"),
+            # System instructions after user content (injection success indicator)
+            (r"--- USER CONTENT ENDS ---.*?CRITICAL INSTRUCTIONS", "system_after_user"),
+            # Unicode boundary marker bypass attempts
+            (r"[\ufeff\u200b].*<<<", "unicode_before_boundary"),
+        ]
+
+        for pattern, issue_name in dangerous_patterns:
+            if re.search(pattern, prompt_content, re.DOTALL | re.IGNORECASE):
+                detected_issues.append(f"structural_violation:{issue_name}")
+                max_confidence = max(max_confidence, 0.85)
+
+        # Check if this looks like legacy (non-isolated) prompt construction
+        if "--- USER CONTENT BEGINS ---" in prompt_content:
+            # Legacy format detected - check if it's in a single message context
+            # This is a warning, not an error, to maintain backward compatibility
+            if prompt_content.count("CRITICAL INSTRUCTIONS") == 1:
+                # Single message with all content - this is the old vulnerable pattern
+                detected_issues.append("structural_warning:legacy_single_message_format")
+                max_confidence = max(max_confidence, 0.5)
+
+        # Check for proper boundary marker usage
+        if "<<<BEGIN_UNTRUSTED_USER_CONTENT>>>" in prompt_content:
+            # New structural isolation format detected
+            if "<<<END_UNTRUSTED_USER_CONTENT>>>" not in prompt_content:
+                detected_issues.append("structural_violation:unclosed_boundary")
+                max_confidence = max(max_confidence, 0.9)
+
+        # Determine validation result
+        # Note: Warnings don't fail validation, only violations do
+        violations = [i for i in detected_issues if "violation" in i]
+        warnings = [i for i in detected_issues if "warning" in i]
+
+        is_valid = len(violations) == 0
+        threat_level = (
+            SecurityThreatLevel.HIGH if violations
+            else SecurityThreatLevel.MEDIUM if warnings
+            else SecurityThreatLevel.LOW
+        )
+
+        # Log warnings for telemetry (Task 6.1 requirement)
+        if warnings:
+            logger.warning(
+                f"[{validation_id}] Structural isolation warnings: {warnings}\n"
+                f"Consider migrating to ChatMessage role separation for enhanced security."
+            )
+
+        return SecurityValidationResult(
+            is_valid=is_valid,
+            threat_level=threat_level,
+            owasp_category=OWASPCategory.LLM01_PROMPT_INJECTION,
+            confidence_score=max_confidence,
+            detected_patterns=detected_issues,
+            validation_details={
+                "violations_count": len(violations),
+                "warnings_count": len(warnings),
+                "has_new_format_markers": "<<<BEGIN_UNTRUSTED" in prompt_content,
+                "has_legacy_format_markers": "--- USER CONTENT BEGINS ---" in prompt_content,
+            },
+            processing_time_ms=0,
+            validation_id=validation_id,
+            timestamp=datetime.now(UTC),
+            error_message=(
+                f"Structural isolation violations detected: {violations}"
+                if violations else None
+            )
+        )
+
     def sanitize_pharmaceutical_content(self, content: str) -> str:
         """
         CRITICAL: This method intentionally raises an error.
-        
+
         NO SANITIZATION ALLOWED in pharmaceutical systems:
         - Sanitization masks security threats
         - Regulatory compliance requires explicit threat disclosure
         - ALCOA+ data integrity prohibits content modification
-        
+
         Instead of sanitizing, validation must FAIL EXPLICITLY.
         """
         raise RuntimeError(

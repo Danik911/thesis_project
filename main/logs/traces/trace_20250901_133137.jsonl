@@ -1,1 +1,0 @@
-{"event_type": "api_call", "timestamp": "2025-09-01T13:31:40.181441", "data": {"service": "openai", "endpoint": "embeddings", "duration": 2.263932228088379, "success": true, "timestamp": 1756729900.1814373, "details": {"model": "text-embedding-3-small"}}}

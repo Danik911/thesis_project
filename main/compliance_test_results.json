@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-12-07T11:33:41.812469",
+  "document": "URS-001.md",
+  "compliance_features": {
+    "basic_workflow": {
+      "status": "FAILED",
+      "duration": 0.22478532791137695,
+      "returncode": 1,
+      "output_length": 0
+    },
+    "alcoa_plus": {
+      "status": "SUCCESS",
+      "score": 8.333333333333334,
+      "target": 9.0,
+      "meets_target": false
+    },
+    "cfr_part_11": {
+      "status": "NOT_IMPLEMENTED",
+      "error": "Modules not found",
+      "claimed": "Task 25 claimed 100% compliance"
+    },
+    "owasp_security": {
+      "status": "FAILED",
+      "error": "'OWASPTestScenarios' object has no attribute 'get_test_scenarios'"
+    },
+    "audit_trail": {
+      "status": "NOT_FOUND",
+      "error": "Audit log file not found",
+      "claimed": "Task 22 claimed 100% coverage"
+    },
+    "ed25519_signatures": {
+      "status": "NOT_IMPLEMENTED",
+      "error": "Crypto utilities not found"
+    },
+    "cv_framework": {
+      "status": "NOT_IMPLEMENTED",
+      "error": "Framework modules not found",
+      "claimed": "Task 27 claimed complete framework"
+    }
+  },
+  "actual_vs_claimed": {},
+  "errors": []
+}
