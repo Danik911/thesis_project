@@ -1,10 +1,15 @@
 # Langfuse Trace Dashboard 403 Forbidden Error
 
 **Date**: 2025-12-06
-**Status**: RESOLVED
+**Status**: RESOLVED (Round 2)
 **Environment**: AWS ECS (eu-west-2)
-**Deployed Image Tag**: `langfuse-fix-20251206`
-**Resolution**: Containers were never deployed with new code due to ECR immutable tags and task definition image tag mismatch.
+**Deployed Image Tags**:
+- Round 1: `langfuse-fix-20251206` (API + Frontend)
+- Round 2: `langfuse-fix-v2-20251206` (Frontend only)
+
+**Resolution**:
+1. Round 1: Containers were never deployed with new code due to ECR immutable tags
+2. Round 2: Second location in `pages/jobs/[id].tsx` using plain `fetch()` without auth
 
 ## Symptom
 

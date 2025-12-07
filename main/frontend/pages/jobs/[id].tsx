@@ -4,7 +4,6 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import ComplianceDashboard from '../../components/ComplianceDashboard';
-import { authenticatedFetch, getApiBaseUrl } from '../../lib/authenticatedFetch';
 
 interface Job {
     job_id: string;
@@ -63,14 +62,28 @@ export default function JobDetails() {
             if (!isLoaded || !userId || !id) return;
 
             try {
-                const apiUrl = getApiBaseUrl();
+                // Use same direct fetch pattern as history.tsx for reliability
+                const token = await getToken();
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
 
-                // Fetch Job Status - authenticatedFetch handles 401 retry
-                const jobRes = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken);
+                const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+
+                // Fetch Job Status
+                const jobRes = await fetch(`${apiUrl}/jobs/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
 
                 if (!jobRes.ok) {
                     if (jobRes.status === 404) {
                         throw new Error('Job not found');
+                    }
+                    if (jobRes.status === 401 || jobRes.status === 403) {
+                        throw new Error('Not authenticated');
                     }
                     throw new Error('Failed to fetch job details');
                 }
@@ -80,7 +93,12 @@ export default function JobDetails() {
 
                 // If completed, fetch results
                 if (jobData.status.toUpperCase() === 'COMPLETED') {
-                    const resultRes = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getToken);
+                    const resultRes = await fetch(`${apiUrl}/jobs/${id}/result`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
                     if (resultRes.ok) {
                         const resultData = await resultRes.json();
                         setResults(resultData);
@@ -100,8 +118,18 @@ export default function JobDetails() {
     const handleDownload = async () => {
         if (!job) return;
         try {
-            const apiUrl = getApiBaseUrl();
-            const response = await authenticatedFetch(`${apiUrl}/jobs/${job.job_id}/download`, getToken);
+            const token = await getToken();
+            if (!token) {
+                alert('Not authenticated');
+                return;
+            }
+
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+            const response = await fetch(`${apiUrl}/jobs/${job.job_id}/download`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
 
             if (!response.ok) throw new Error('Download failed');
 
@@ -144,9 +172,21 @@ export default function JobDetails() {
             setIsTraceLoading(true);
             setTraceError(null);
             try {
-                const response = await fetch(`/api/langfuse/trace?traceId=${encodeURIComponent(job.trace_id!)}`, {
-                    signal: controller.signal,
-                });
+                const token = await getToken();
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
+
+                const response = await fetch(
+                    `/api/langfuse/trace?traceId=${encodeURIComponent(job.trace_id!)}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        signal: controller.signal,
+                    }
+                );
                 const payload = await response.json() as LangfuseApiResponse;
                 if (!payload.success) {
                     throw new Error(payload.details || payload.error || 'Failed to load Langfuse trace');
@@ -166,7 +206,7 @@ export default function JobDetails() {
 
         fetchTrace();
         return () => controller.abort();
-    }, [job?.trace_id, job]);
+    }, [job?.trace_id, job, getToken]);
 
     const observationCount = traceSummary?.observations?.length ?? 0;
     const formattedCostValue = (() => {

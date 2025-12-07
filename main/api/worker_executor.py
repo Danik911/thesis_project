@@ -28,9 +28,10 @@ from typing import Any
 
 from langfuse import get_client, observe
 try:
-    from langfuse.decorators import propagate_attributes  # type: ignore[attr-defined]
+    from langfuse.decorators import propagate_attributes, langfuse_context  # type: ignore[attr-defined]
 except ImportError:  # pragma: no cover - older SDKs
     propagate_attributes = None
+    langfuse_context = None
 
 from main.src.adapters.chroma_adapter import ChromaVectorStoreAdapter
 from main.src.adapters.local_adapter import LocalStorageAdapter
@@ -380,15 +381,32 @@ class WorkflowExecutor:
                 end_time = datetime.now(UTC)
                 execution_time = (end_time - start_time).total_seconds()
 
+                # Capture trace_id INSIDE the @observe context (before function returns)
+                # Using langfuse_context.get_current_trace_id() which works within decorator context
+                # get_client().get_current_trace_id() may return None if trace context is cleared
                 trace_id = "unknown"
                 trace_url = None
                 try:
-                    langfuse_client = get_client()
-                    if langfuse_client:
-                        current_trace_id = langfuse_client.get_current_trace_id()
+                    # Primary method: Use langfuse_context (works inside @observe decorator)
+                    if langfuse_context is not None:
+                        current_trace_id = langfuse_context.get_current_trace_id()
                         if current_trace_id:
                             trace_id = current_trace_id
-                            trace_url = langfuse_client.get_trace_url(trace_id=current_trace_id)
+                            # Build trace URL for Langfuse Cloud (EU region)
+                            langfuse_host = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+                            trace_url = f"{langfuse_host}/trace/{current_trace_id}"
+                            logger.info(f"Captured Langfuse trace_id via langfuse_context: {trace_id}")
+
+                    # Fallback: Use get_client() if langfuse_context didn't work
+                    if trace_id == "unknown":
+                        langfuse_client = get_client()
+                        if langfuse_client:
+                            current_trace_id = langfuse_client.get_current_trace_id()
+                            if current_trace_id:
+                                trace_id = current_trace_id
+                                trace_url = langfuse_client.get_trace_url(trace_id=current_trace_id)
+                                logger.info(f"Captured Langfuse trace_id via get_client: {trace_id}")
+
                 except Exception as trace_error:
                     logger.warning(f"Failed to capture Langfuse trace metadata: {trace_error}")
 

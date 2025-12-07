@@ -93,6 +93,11 @@ export default function Generate() {
     const [jobs, setJobs] = useState<any[]>([]);
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+    // CRITICAL: Use ref for getToken to prevent stale closure in polling
+    // Clerk refreshes JWT tokens every 60s, but setInterval captures old getToken
+    // Without this ref, polling would use stale tokens causing 401 errors
+    const getTokenRef = useRef(getToken);
+
     // Progress tracking from backend - restored from localStorage on navigation
     const [currentStage, setCurrentStage] = useState<string | null>(() => {
         if (typeof window === 'undefined') return null;
@@ -327,6 +332,12 @@ export default function Generate() {
         };
     }, []);
 
+    // Keep getTokenRef updated when Clerk refreshes the token
+    // This prevents stale closure issues in long-running polling intervals
+    useEffect(() => {
+        getTokenRef.current = getToken;
+    }, [getToken]);
+
     // Detect when approval is required
     useEffect(() => {
         if (approvalStatus?.requires_approval && approvalStatus.status.toUpperCase() === 'AWAITING_APPROVAL') {
@@ -518,8 +529,9 @@ export default function Generate() {
 
             try {
                 console.log(`[DEBUG] Polling job status: GET ${apiUrl}/jobs/${id}`);
-                // Use authenticatedFetch which handles 401 retry internally with coordinated refresh
-                const response = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken, {}, signal);
+                // Use authenticatedFetch with getTokenRef to prevent stale closure
+                // getTokenRef.current always has the latest token from Clerk
+                const response = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getTokenRef.current, {}, signal);
 
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -537,7 +549,7 @@ export default function Generate() {
                         // The backend worker runs independently - job may have completed despite polling 401s
                         console.log(`[DEBUG] Max failures reached. Performing final job status check...`);
                         try {
-                            const finalCheckResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getToken);
+                            const finalCheckResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getTokenRef.current);
                             if (finalCheckResponse.ok) {
                                 const finalData = await finalCheckResponse.json();
                                 const finalStatus = finalData.status.toUpperCase();
@@ -546,10 +558,16 @@ export default function Generate() {
                                 if (finalStatus === 'COMPLETED') {
                                     // Job actually completed! Fetch results instead of showing error
                                     setLogs(prev => [...prev, 'Job completed (recovered from polling errors). Retrieving results...']);
-                                    const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getToken);
+                                    const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getTokenRef.current);
                                     if (resultResponse.ok) {
                                         const resultData = await resultResponse.json();
-                                        setResults(resultData);
+                                        // Merge trace info from job data for observability
+                                        setResults({
+                                            ...resultData,
+                                            job_id: finalData.job_id,
+                                            trace_id: finalData.trace_id,
+                                            trace_url: finalData.trace_url
+                                        });
                                         setStatus('COMPLETED');
                                         fetchJobs();
                                         return;
@@ -586,17 +604,75 @@ export default function Generate() {
 
                     // Fetch the JSON result for dashboard
                     try {
-                        const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getToken);
+                        // CRITICAL FIX (Round 2): Fetch fresh job data with RETRY LOOP
+                        // NEVER fall back to stale polling 'data' which may have undefined trace_id
+                        // The issue: if polling had 401 errors, 'data' could be from a failed response
+                        let freshJobData = null;
+                        for (let attempt = 1; attempt <= 3; attempt++) {
+                            try {
+                                console.log(`[DEBUG] Fresh job fetch attempt ${attempt}/3`);
+                                const freshJobResponse = await authenticatedFetch(
+                                    `${apiUrl}/jobs/${id}`,
+                                    getTokenRef.current
+                                );
+                                if (freshJobResponse.ok) {
+                                    freshJobData = await freshJobResponse.json();
+                                    console.log(`[DEBUG] Fresh job data retrieved:`, {
+                                        job_id: freshJobData.job_id,
+                                        trace_id: freshJobData.trace_id,
+                                        trace_url: freshJobData.trace_url
+                                    });
+                                    break;
+                                } else {
+                                    console.warn(`[DEBUG] Fresh job fetch attempt ${attempt} returned ${freshJobResponse.status}`);
+                                }
+                                // Wait before retry (exponential backoff)
+                                if (attempt < 3) {
+                                    await new Promise(r => setTimeout(r, 1000 * attempt));
+                                }
+                            } catch (fetchErr) {
+                                console.warn(`[DEBUG] Fresh job fetch attempt ${attempt} failed:`, fetchErr);
+                                if (attempt < 3) {
+                                    await new Promise(r => setTimeout(r, 1000 * attempt));
+                                }
+                            }
+                        }
+
+                        // If all retries failed, use job ID from URL param but mark trace as unavailable
+                        if (!freshJobData) {
+                            console.error('[DEBUG] Could not fetch fresh job data after 3 attempts - trace info will be unavailable');
+                            freshJobData = {
+                                job_id: id,
+                                trace_id: undefined,
+                                trace_url: undefined
+                            };
+                        }
+
+                        const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}/result`, getTokenRef.current);
 
                         if (resultResponse.ok) {
                             const resultData = await resultResponse.json();
-                            setResults(resultData);
+                            // Merge trace info from FRESH job data (NEVER stale polling data)
+                            const finalResults = {
+                                ...resultData,
+                                job_id: freshJobData.job_id || id,
+                                trace_id: freshJobData.trace_id,
+                                trace_url: freshJobData.trace_url
+                            };
+                            console.log('[DEBUG] Setting results with:', {
+                                job_id: finalResults.job_id,
+                                trace_id: finalResults.trace_id,
+                                trace_url: finalResults.trace_url
+                            });
+                            setResults(finalResults);
                             setLogs(prev => [...prev, 'Results retrieved successfully.']);
                         } else {
                             console.warn("Failed to retrieve JSON results, using fallback.");
                             // Fallback result object to allow download button to appear
-                            setResults({
-                                job_id: id,
+                            const fallbackResults = {
+                                job_id: freshJobData.job_id || id,
+                                trace_id: freshJobData.trace_id,
+                                trace_url: freshJobData.trace_url,
                                 total_test_count: 0,
                                 gamp_category: 'Unknown (JSON Missing)',
                                 estimated_execution_time: 0,
@@ -606,7 +682,13 @@ export default function Generate() {
                                 requirements_coverage: {},
                                 pharmaceutical_compliance: {},
                                 test_cases: []
+                            };
+                            console.log('[DEBUG] Setting fallback results with:', {
+                                job_id: fallbackResults.job_id,
+                                trace_id: fallbackResults.trace_id,
+                                trace_url: fallbackResults.trace_url
                             });
+                            setResults(fallbackResults);
                             setLogs(prev => [...prev, 'WARNING: Could not retrieve detailed results JSON. You can still try downloading the test suite.']);
                         }
 
@@ -617,9 +699,32 @@ export default function Generate() {
                     } catch (err) {
                         console.error("Error fetching results:", err);
                         // Even on error, set COMPLETED with fallback so user can try to download
+                        // Try to get fresh job data for trace info with retry loop
+                        let jobDataForFallback = { job_id: id, trace_id: undefined, trace_url: undefined };
+                        for (let attempt = 1; attempt <= 3; attempt++) {
+                            try {
+                                console.log(`[DEBUG] Fallback job fetch attempt ${attempt}/3`);
+                                const fallbackJobResponse = await authenticatedFetch(`${apiUrl}/jobs/${id}`, getTokenRef.current);
+                                if (fallbackJobResponse.ok) {
+                                    jobDataForFallback = await fallbackJobResponse.json();
+                                    console.log(`[DEBUG] Fallback job data retrieved:`, {
+                                        job_id: jobDataForFallback.job_id,
+                                        trace_id: jobDataForFallback.trace_id,
+                                        trace_url: jobDataForFallback.trace_url
+                                    });
+                                    break;
+                                }
+                                if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
+                            } catch {
+                                if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
+                            }
+                        }
+
                         setStatus('COMPLETED');
-                        setResults({
-                            job_id: id,
+                        const errorFallbackResults = {
+                            job_id: jobDataForFallback.job_id || id,
+                            trace_id: jobDataForFallback.trace_id,
+                            trace_url: jobDataForFallback.trace_url,
                             total_test_count: 0,
                             gamp_category: 'Error Loading Results',
                             estimated_execution_time: 0,
@@ -629,7 +734,13 @@ export default function Generate() {
                             requirements_coverage: {},
                             pharmaceutical_compliance: {},
                             test_cases: []
+                        };
+                        console.log('[DEBUG] Setting error fallback results with:', {
+                            job_id: errorFallbackResults.job_id,
+                            trace_id: errorFallbackResults.trace_id,
+                            trace_url: errorFallbackResults.trace_url
                         });
+                        setResults(errorFallbackResults);
                         setLogs(prev => [...prev, 'ERROR: Failed to retrieve result data. Download may still be available.']);
                     }
 
@@ -703,7 +814,7 @@ export default function Generate() {
             // After the early return above, we know jobId exists and status !== 'IDLE'
             try {
                 console.log(`[DEBUG] Fetching job status from ${apiUrl}/jobs/${jobId}`);
-                const response = await authenticatedFetch(`${apiUrl}/jobs/${jobId}`, getToken);
+                const response = await authenticatedFetch(`${apiUrl}/jobs/${jobId}`, getTokenRef.current);
 
                 if (response.status === 404) {
                     // Job doesn't exist on server - localStorage is stale
@@ -743,10 +854,16 @@ export default function Generate() {
                     } else if (serverStatus === 'COMPLETED' && !results) {
                         // Fetch results for completed job
                         console.log(`[DEBUG] Job completed, fetching results`);
-                        const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${jobId}/result`, getToken);
+                        const resultResponse = await authenticatedFetch(`${apiUrl}/jobs/${jobId}/result`, getTokenRef.current);
                         if (resultResponse.ok) {
                             const resultData = await resultResponse.json();
-                            setResults(resultData);
+                            // Merge trace info from job data for observability
+                            setResults({
+                                ...resultData,
+                                job_id: jobData.job_id,
+                                trace_id: jobData.trace_id,
+                                trace_url: jobData.trace_url
+                            });
                         }
                     } else if (serverStatus === 'AWAITING_APPROVAL') {
                         console.log(`[DEBUG] Job awaiting approval`);

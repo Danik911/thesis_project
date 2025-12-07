@@ -29,6 +29,7 @@ from pathlib import Path
 # Configuration
 REGION = "eu-west-2"
 CLUSTER = "pharma-test-gen-cluster"
+CLOUDFRONT_DISTRIBUTION_ID = "E1SZ3E811RNB22"  # d2bpslte3aitr1.cloudfront.net
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
@@ -107,6 +108,34 @@ def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
     except subprocess.CalledProcessError as e:
         print(f"FAILED: {e.stderr}")
         return False, e.stderr
+
+
+def invalidate_cloudfront_cache(distribution_id: str = CLOUDFRONT_DISTRIBUTION_ID) -> bool:
+    """Invalidate CloudFront cache after deployment.
+
+    This ensures users get fresh content after frontend redeployment,
+    preventing 404 errors caused by build ID mismatches.
+    """
+    cmd = [
+        "aws", "cloudfront", "create-invalidation",
+        "--distribution-id", distribution_id,
+        "--paths", "/*",
+        "--region", "us-east-1",  # CloudFront is global, always us-east-1
+    ]
+
+    success, output = run_command(cmd, f"Invalidating CloudFront cache ({distribution_id})")
+
+    if success:
+        try:
+            data = json.loads(output)
+            invalidation_id = data["Invalidation"]["Id"]
+            print(f"  Invalidation ID: {invalidation_id}")
+            print(f"  Status: {data['Invalidation']['Status']}")
+            print("  Note: Invalidation takes 1-2 minutes to propagate")
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    return success
 
 
 def wait_for_services_healthy(services: list[str], timeout: int = 300) -> bool:
@@ -248,6 +277,7 @@ def main():
     parser.add_argument("--status-only", action="store_true", help="Only check service status")
     parser.add_argument("--wait", action="store_true", help="Wait for services to be healthy after redeployment")
     parser.add_argument("--timeout", type=int, default=300, help="Timeout in seconds for --wait (default: 300)")
+    parser.add_argument("--skip-invalidate", action="store_true", help="Skip CloudFront cache invalidation")
 
     args = parser.parse_args()
 
@@ -315,6 +345,14 @@ def main():
         healthy = wait_for_services_healthy(services, timeout=args.timeout)
         if not healthy:
             errors.append("Services did not become healthy within timeout")
+
+    # Invalidate CloudFront cache (important when frontend is redeployed)
+    if "frontend" in services and not args.skip_invalidate:
+        print("\n" + "-"*60)
+        print("  PHASE 5: Invalidate CloudFront Cache")
+        print("-"*60)
+        if not invalidate_cloudfront_cache():
+            errors.append("Failed to invalidate CloudFront cache")
 
     # Summary
     print("\n" + "="*60)

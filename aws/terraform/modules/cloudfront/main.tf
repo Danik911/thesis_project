@@ -72,8 +72,12 @@ resource "aws_cloudfront_distribution" "this" {
     allowed_methods = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods  = ["GET", "HEAD"]
 
-    # Use managed policies
-    cache_policy_id          = local.cache_optimized_policy_id
+    # Disable caching for HTML pages to prevent 404 errors after deployment.
+    # Next.js embeds build IDs in HTML that reference specific JS chunks.
+    # If CloudFront caches old HTML with old build IDs, browsers request
+    # non-existent chunks from the new deployment, causing 404s.
+    # Static assets (_next/static/*) are immutable and cached by browsers.
+    cache_policy_id          = local.cache_disabled_policy_id
     origin_request_policy_id = local.all_viewer_policy_id
   }
 
