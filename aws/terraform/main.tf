@@ -579,6 +579,13 @@ module "cloudfront" {
   environment           = var.environment
   frontend_alb_dns_name = module.alb_frontend.alb_dns_name
   api_alb_dns_name      = module.alb_api.alb_dns_name
+
+  # Custom domain configuration (csvgeneration.com)
+  # Include root domain, frontend subdomain, and API subdomain for HTTPS support
+  aliases             = var.domain_name != "" ? [var.domain_name, "${var.frontend_subdomain}.${var.domain_name}", "${var.api_subdomain}.${var.domain_name}"] : []
+  acm_certificate_arn = var.domain_name != "" ? aws_acm_certificate_validation.cloudfront[0].certificate_arn : null
+
+  depends_on = [aws_acm_certificate_validation.cloudfront]
 }
 
 # -----------------------------------------------------------------------------

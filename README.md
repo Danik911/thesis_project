@@ -15,7 +15,7 @@ This project implements a **multi-agent LLM system** for generating Operational 
 
 ## 🚀 AWS Deployment (Phase 4 - Staging)
 
-**Live URL:** https://d2yiysdqio0ryi.cloudfront.net
+**Live URL:** https://csvgeneration.com
 
 | Service | Resources | Status |
 |---------|-----------|--------|
@@ -431,7 +431,7 @@ See [`docs/OBSERVABILITY_MIGRATION.md`](docs/OBSERVABILITY_MIGRATION.md) for Pho
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| **AWS (Production)** | https://d2yiysdqio0ryi.cloudfront.net | ✅ Running |
+| **AWS (Production)** | https://csvgeneration.com | ✅ Running |
 | **Local Development** | http://localhost:3000 | ✅ Available |
 
 **Features:** Clerk Auth, URS Upload, Job Tracking, Test Suite Download, GAMP-5 Display

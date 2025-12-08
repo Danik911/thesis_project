@@ -124,10 +124,11 @@ aws configservice stop-configuration-recorder --configuration-recorder-name phar
 
 | Service | Endpoint |
 |---------|----------|
-| API | `http://{API_ALB}/health` |
-| Frontend | `http://{FRONTEND_ALB}/` |
+| Production (Route 53) | `https://csvgeneration.com/` |
+| API Health | `https://csvgeneration.com/health` |
+| Frontend | `https://csvgeneration.com/generate` |
 
-### Get ALB DNS
+### Get ALB DNS (internal)
 ```bash
 aws elbv2 describe-load-balancers --names pharma-test-gen-api-alb pharma-test-gen-frontend-alb --region eu-west-2 --query 'LoadBalancers[].{name:LoadBalancerName,dns:DNSName}' --output table
 ```

@@ -2,16 +2,18 @@
 # ECR Repository Module
 # =============================================================================
 # GAMP-5 Compliance:
-# - IMMUTABLE tags prevent image overwrites (audit trail requirement)
+# - MUTABLE tags for staging (allows staging-latest overwrites)
+# - Timestamp tags (staging-YYYYMMDD-HHMMSS) provide audit trail
 # - Scan on push for security vulnerability detection
 # - Lifecycle policies for compliance-aware image management
+# NOTE: Production should use IMMUTABLE tags
 
 # Create ECR repositories for each service
 resource "aws_ecr_repository" "this" {
   for_each = var.repositories
 
   name                 = "${var.project_name}-${each.key}"
-  image_tag_mutability = "IMMUTABLE"  # GAMP-5: Prevent tag overwrites
+  image_tag_mutability = "MUTABLE"  # Staging: Allow staging-latest overwrites (timestamp tags provide audit trail)
 
   # Encryption configuration
   encryption_configuration {

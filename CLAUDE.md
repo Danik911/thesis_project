@@ -18,6 +18,22 @@ Guidance for Claude Code on the pharmaceutical test generation thesis project.
 - NEVER skip package installation due to permission issues
 - ALWAYS ask user to install missing packages
 
+### Issue Management Protocol
+When encountering bugs, errors, or unexpected behavior:
+
+1. **Search First** - Use Explore subagent to check `main/docs/issues/` for existing solutions
+2. **Create Before Solving** - If no solution exists, create new issue file BEFORE attempting fix:
+   - Format: `ISSUE-###-short-description.md` (increment from highest existing number, currently ISSUE-005)
+   - Include: Date, Symptom, Error messages, Affected files
+3. **Document Solution** - After resolving, update the issue file with:
+   - Root Cause analysis
+   - Files Modified (table format)
+   - Code changes (Before/After)
+   - Prevention guidance
+4. **Cross-Reference** - Link related issues when applicable
+
+**Issue File Template**: See `main/docs/issues/ISSUE-001-cloudfront-404-errors.md` for format example.
+
 ---
 
 ## Documentation References

@@ -7,7 +7,7 @@
 
 This technical report provides a comprehensive architectural analysis of the implemented production system for LLM-driven Operational Qualification (OQ) test generation in pharmaceutical Computerised System Validation (CSV). The system successfully demonstrates a **91% cost reduction** while generating **30 comprehensive test cases** for GAMP Category 5 systems, exceeding the target of 25 tests by 20%. The implementation utilizes **DeepSeek V3** (671B parameters with Mixture-of-Experts architecture) via OpenRouter, deployed as a **multi-container Docker stack** with **LangFuse Cloud observability** for production-grade traceability and full regulatory compliance.
 
-**Phase 4 Status (December 2025):** ✅ AWS STAGING DEPLOYED - ECS Fargate 3-service stack with CloudFront CDN, live at https://d2yiysdqio0ryi.cloudfront.net
+**Phase 4 Status (December 2025):** ✅ AWS STAGING DEPLOYED - ECS Fargate 3-service stack with CloudFront CDN, live at https://csvgeneration.com
 
 ---
 
@@ -1203,7 +1203,7 @@ uv run python main.py path/to/urs.md --verbose
 
 ### 7.5 AWS Infrastructure (Phase 4 - Staging)
 
-**Live URL:** https://d2yiysdqio0ryi.cloudfront.net
+**Live URL:** https://csvgeneration.com
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1234,12 +1234,62 @@ uv run python main.py path/to/urs.md --verbose
 
 | Resource | Type | Purpose |
 |----------|------|---------|
-| CloudFront | E3CO1HBNMIUKPB | HTTPS termination, CDN |
+| CloudFront | E1DTSJYZQGK50L | HTTPS termination, CDN |
 | ALB | pharma-test-gen-alb | Load balancing to API |
 | ECS Cluster | pharma-test-gen-cluster | Fargate compute |
 | SQS | pharma-test-gen-worker-jobs | Job queue + DLQ |
 | S3 | pharma-test-gen-chromadb-* | Vector store data |
 | Secrets Manager | pharma-test-gen/* | API keys, DB credentials |
+| Route 53 | Z0170225231EL8Z16R4WJ | DNS management |
+| ACM Certificate | *.csvgeneration.com | SSL/TLS (us-east-1) |
+
+**Custom Domain Configuration:**
+
+The production system uses a custom domain with Route 53 DNS and ACM certificates for professional branding and HTTPS security:
+
+**DNS Architecture:**
+```
+csvgeneration.com (apex)
+├── A Record (Alias) ──► CloudFront Distribution (E1DTSJYZQGK50L)
+├── app.csvgeneration.com ──► CloudFront (Frontend Service)
+├── api.csvgeneration.com ──► CloudFront (API Service)
+└── *.csvgeneration.com ──► ACM Certificate (us-east-1)
+```
+
+**Components:**
+
+1. **Route 53 Hosted Zone:**
+   - Zone ID: `Z0170225231EL8Z16R4WJ`
+   - Domain: `csvgeneration.com`
+   - Records:
+     - A record (alias) pointing apex to CloudFront
+     - CNAME records for app and api subdomains
+     - NS records for domain delegation
+
+2. **ACM Certificate:**
+   - Certificate: `*.csvgeneration.com` (wildcard)
+   - Region: `us-east-1` (required for CloudFront)
+   - Validation: DNS validation via Route 53
+   - Coverage: All subdomains (app, api, www)
+
+3. **CloudFront Aliases:**
+   - Primary: `csvgeneration.com`
+   - App: `app.csvgeneration.com` (Next.js frontend)
+   - API: `api.csvgeneration.com` (FastAPI backend)
+   - All routes terminate at Distribution `E1DTSJYZQGK50L`
+
+4. **Request Routing:**
+   - CloudFront behaviors route requests based on path patterns:
+     - `/api/*` → API service (ALB target group)
+     - `/*` → Frontend service (ALB target group)
+   - HTTPS enforced (HTTP redirects to HTTPS)
+   - Origin protocol: HTTPS only to ALB
+
+**Security Benefits:**
+- Professional domain enhances user trust and regulatory compliance
+- ACM-managed certificates auto-renew (no manual certificate management)
+- CloudFront WAF integration for DDoS protection
+- HTTPS-only access enforces data integrity (ALCOA+ compliant)
 
 **Model Configuration:**
 - Development: `google/gemini-2.5-flash-lite` (fast, cost-effective)

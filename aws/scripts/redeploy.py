@@ -3,34 +3,51 @@
 Simple ECS Redeploy Script
 
 Registers golden task definitions and forces redeployment of ECS services.
-No Terraform, no Docker builds - just task definition updates and service restart.
+With --rebuild flag, also builds fresh Docker images before redeploying.
 
 Use this when:
 - Secrets were lost after Terraform apply
 - Configuration changed in task definition JSON files
 - Need quick recovery without full infrastructure rebuild
+- Code changes need to be deployed (use --rebuild flag)
 
 Usage:
-    python aws/scripts/redeploy.py              # Redeploy all services
-    python aws/scripts/redeploy.py --api        # Redeploy API only
-    python aws/scripts/redeploy.py --worker     # Redeploy Worker only
-    python aws/scripts/redeploy.py --frontend   # Redeploy Frontend only
+    python aws/scripts/redeploy.py                   # Redeploy all (no rebuild)
+    python aws/scripts/redeploy.py --rebuild         # Rebuild & redeploy all
+    python aws/scripts/redeploy.py --rebuild --api   # Rebuild & redeploy API only
+    python aws/scripts/redeploy.py --frontend        # Redeploy Frontend only (no rebuild)
 """
 
 import argparse
 import glob
 import json
+import os
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 
 # Configuration
 REGION = "eu-west-2"
 CLUSTER = "pharma-test-gen-cluster"
-CLOUDFRONT_DISTRIBUTION_ID = "E1SZ3E811RNB22"  # d2bpslte3aitr1.cloudfront.net
+PROJECT_NAME = "pharma-test-gen"
+CLOUDFRONT_DISTRIBUTION_ID = "E1DTSJYZQGK50L"  # d861au413p5o2.cloudfront.net
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+# Dockerfile mapping
+DOCKERFILES = {
+    "api": "Dockerfile.api.pip",
+    "worker": "Dockerfile.worker.pip",
+    "frontend": "Dockerfile.frontend",
+}
+
+# Clerk key for frontend build
+CLERK_PUBLISHABLE_KEY = os.environ.get(
+    "CLERK_PUBLISHABLE_KEY",
+    "pk_test_aGVscGVkLXN0dXJnZW9uLTE5LmNsZXJrLmFjY291bnRzLmRldiQ"
+)
 
 
 def find_latest_task_definition(service: str) -> str | None:
@@ -136,6 +153,154 @@ def invalidate_cloudfront_cache(distribution_id: str = CLOUDFRONT_DISTRIBUTION_I
             pass
 
     return success
+
+
+def get_ecr_url() -> str:
+    """Get the ECR repository URL from AWS account."""
+    result = subprocess.run(
+        ["aws", "sts", "get-caller-identity", "--query", "Account", "--output", "text", "--region", REGION],
+        capture_output=True,
+        text=True
+    )
+    account_id = result.stdout.strip()
+    return f"{account_id}.dkr.ecr.{REGION}.amazonaws.com"
+
+
+def ecr_login() -> bool:
+    """Login to ECR registry."""
+    print("\n" + "="*60)
+    print("  Logging in to ECR")
+    print("="*60)
+
+    ecr_url = get_ecr_url()
+
+    # Get ECR password
+    result = subprocess.run(
+        ["aws", "ecr", "get-login-password", "--region", REGION],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        print(f"FAILED to get ECR password: {result.stderr}")
+        return False
+
+    password = result.stdout.strip()
+
+    # Login to Docker
+    login_result = subprocess.run(
+        ["docker", "login", "--username", "AWS", "--password-stdin", ecr_url],
+        input=password,
+        capture_output=True,
+        text=True
+    )
+
+    if login_result.returncode != 0:
+        print(f"FAILED to login: {login_result.stderr}")
+        return False
+
+    print("SUCCESS - Logged in to ECR")
+    return True
+
+
+def build_and_push_image(service: str, no_cache: bool = False) -> bool:
+    """Build and push Docker image for a service to ECR.
+
+    Builds image with docker buildx, tags as staging-latest, and pushes to ECR.
+
+    Args:
+        service: Service name (api, worker, frontend)
+        no_cache: If True, force full rebuild without Docker cache
+    """
+    dockerfile = DOCKERFILES.get(service)
+    if not dockerfile:
+        print(f"ERROR: No Dockerfile configured for {service}")
+        return False
+
+    dockerfile_path = PROJECT_ROOT / dockerfile
+    if not dockerfile_path.exists():
+        print(f"ERROR: Dockerfile not found: {dockerfile_path}")
+        return False
+
+    ecr_url = get_ecr_url()
+    ecr_repo = f"{ecr_url}/{PROJECT_NAME}-{service}"
+    local_image = f"{PROJECT_NAME}-{service}:rebuild"
+
+    print(f"\n{'='*60}")
+    print(f"  Building {service} image")
+    print(f"{'='*60}")
+    print(f"  Dockerfile: {dockerfile}")
+    print(f"  ECR Repo: {ecr_repo}")
+    if no_cache:
+        print("  Mode: NO CACHE (full rebuild)")
+
+    # Build command - different for frontend vs backend
+    if service == "frontend":
+        build_cmd = [
+            "docker", "buildx", "build",
+            "--platform", "linux/amd64",
+            "--build-arg", "NEXT_PUBLIC_API_BASE_URL=",
+            "--build-arg", f"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY={CLERK_PUBLISHABLE_KEY}",
+            "-t", local_image,
+            "-f", str(dockerfile_path),
+            "--load",
+            str(PROJECT_ROOT)
+        ]
+    else:
+        build_cmd = [
+            "docker", "buildx", "build",
+            "--platform", "linux/amd64",
+            "-t", local_image,
+            "-f", str(dockerfile_path),
+            "--load",
+            str(PROJECT_ROOT)
+        ]
+
+    # Add --no-cache flag if requested
+    if no_cache:
+        build_cmd.insert(3, "--no-cache")
+
+    print(f"$ {' '.join(build_cmd)}")
+
+    # Longer timeout for --no-cache builds (25 min vs 15 min)
+    build_timeout = 1500 if no_cache else 900
+    timeout_mins = build_timeout // 60
+    try:
+        result = subprocess.run(build_cmd, check=True, timeout=build_timeout)
+    except subprocess.TimeoutExpired:
+        print(f"FAILED: Build timed out after {timeout_mins} minutes")
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"FAILED: Build error: {e}")
+        return False
+
+    print("SUCCESS - Image built")
+
+    # Tag and push staging-latest
+    ecr_image = f"{ecr_repo}:staging-latest"
+
+    print(f"\n  Tagging as: {ecr_image}")
+    tag_result = subprocess.run(["docker", "tag", local_image, ecr_image])
+    if tag_result.returncode != 0:
+        print("FAILED: Could not tag image")
+        return False
+
+    print(f"  Pushing to ECR...")
+    try:
+        push_result = subprocess.run(
+            ["docker", "push", ecr_image],
+            check=True,
+            timeout=300
+        )
+    except subprocess.TimeoutExpired:
+        print("FAILED: Push timed out after 5 minutes")
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"FAILED: Push error: {e}")
+        return False
+
+    print(f"SUCCESS - Pushed {service}:staging-latest to ECR")
+    return True
 
 
 def wait_for_services_healthy(services: list[str], timeout: int = 300) -> bool:
@@ -278,6 +443,8 @@ def main():
     parser.add_argument("--wait", action="store_true", help="Wait for services to be healthy after redeployment")
     parser.add_argument("--timeout", type=int, default=300, help="Timeout in seconds for --wait (default: 300)")
     parser.add_argument("--skip-invalidate", action="store_true", help="Skip CloudFront cache invalidation")
+    parser.add_argument("--rebuild", action="store_true", help="Rebuild and push Docker images before redeploying")
+    parser.add_argument("--no-cache", action="store_true", help="Force full rebuild without Docker cache (use with --rebuild)")
 
     args = parser.parse_args()
 
@@ -300,6 +467,11 @@ def main():
     print(f"Region:   {REGION}")
     print(f"Cluster:  {CLUSTER}")
     print(f"Services: {', '.join(services)}")
+    if args.rebuild:
+        if args.no_cache:
+            print("Mode:     REBUILD + NO-CACHE (full rebuild, no Docker cache)")
+        else:
+            print("Mode:     REBUILD (will build and push new Docker images)")
 
     # Status only mode
     if args.status_only:
@@ -309,6 +481,27 @@ def main():
         return
 
     errors = []
+
+    # Rebuild images if requested
+    if args.rebuild:
+        print("\n" + "-"*60)
+        print("  PHASE 0: Rebuild and Push Docker Images")
+        print("-"*60)
+
+        # Login to ECR first
+        if not ecr_login():
+            print("FATAL: Cannot proceed without ECR login")
+            sys.exit(1)
+
+        # Build and push each service
+        for name in services:
+            if not build_and_push_image(name, no_cache=args.no_cache):
+                errors.append(f"Failed to build/push {name} image")
+                # Don't continue if build fails - it's critical
+                print(f"\nFATAL: Build failed for {name}. Stopping.")
+                sys.exit(1)
+
+        print("\n  All images rebuilt and pushed to ECR")
 
     # Register task definitions
     if not args.skip_register:

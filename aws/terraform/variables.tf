@@ -348,3 +348,37 @@ variable "enable_container_insights" {
   type        = bool
   default     = true
 }
+
+# -----------------------------------------------------------------------------
+# Route 53 DNS Configuration
+# -----------------------------------------------------------------------------
+
+variable "domain_name" {
+  description = "Domain name (e.g., csvgeneration.com)"
+  type        = string
+  default     = ""
+}
+
+variable "create_hosted_zone" {
+  description = "Create new Route 53 hosted zone (false = use existing)"
+  type        = bool
+  default     = true
+}
+
+variable "api_subdomain" {
+  description = "API subdomain (e.g., api)"
+  type        = string
+  default     = "api"
+}
+
+variable "frontend_subdomain" {
+  description = "Frontend subdomain (e.g., app or www)"
+  type        = string
+  default     = "app"
+}
+
+variable "create_root_record" {
+  description = "Create root domain record pointing to frontend"
+  type        = bool
+  default     = true
+}

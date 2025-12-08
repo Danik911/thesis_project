@@ -58,6 +58,10 @@
                 {
                     "name": "LLM_MODEL",
                     "value": "google/gemini-2.5-flash-lite"
+                },
+                {
+                    "name": "DAILY_JOB_LIMIT",
+                    "value": "10"
                 }
             ],
             "mountPoints": [],

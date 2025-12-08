@@ -2,7 +2,7 @@
 
 Complete architecture documentation for the pharmaceutical test generation system AWS migration.
 
-**Last Updated:** 2025-12-02 (CloudFront + Clerk authentication integration)
+**Last Updated:** 2025-12-08 (Custom domain + Route 53 integration)
 **Phase:** Phase 4 - AWS Deployment (Task 4.2 In Progress)
 **Region:** eu-west-2 (London, UK)
 **Account ID:** 275333454012
@@ -12,13 +12,14 @@ Complete architecture documentation for the pharmaceutical test generation syste
 ## 📋 Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Storage Infrastructure](#storage-infrastructure)
-3. [Security & Compliance](#security--compliance)
-4. [Logging & Monitoring](#logging--monitoring)
-5. [IAM Roles & Policies](#iam-roles--policies)
-6. [Network Architecture](#network-architecture)
-7. [Cost Estimation](#cost-estimation)
-8. [Compliance Mapping](#compliance-mapping)
+2. [Route 53 DNS Configuration](#route-53-dns-configuration)
+3. [Storage Infrastructure](#storage-infrastructure)
+4. [Security & Compliance](#security--compliance)
+5. [Logging & Monitoring](#logging--monitoring)
+6. [IAM Roles & Policies](#iam-roles--policies)
+7. [Network Architecture](#network-architecture)
+8. [Cost Estimation](#cost-estimation)
+9. [Compliance Mapping](#compliance-mapping)
 
 ---
 
@@ -30,48 +31,68 @@ Complete architecture documentation for the pharmaceutical test generation syste
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                       AWS Account: 275333454012                           │
 │                          Region: eu-west-2                               │
-│                   CloudFront: d2yiysdqio0ryi.cloudfront.net              │
+│                   Custom Domain: https://csvgeneration.com               │
 └─────────────────────────────────────────────────────────────────────────┘
                                      │
                               HTTPS (TLS 1.2)
                                      │
                                      ▼
-                         ┌─────────────────────┐
-                         │     CloudFront      │
-                         │   Distribution ID:  │
-                         │   E3CO1HBNMIUKPB    │
-                         └─────────┬───────────┘
-                                   │
-            ┌──────────────────────┼──────────────────────┐
-            │ /                    │ /jobs*, /api/*       │ /health*
-            ▼                      ▼                      ▼
-   ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
-   │  Frontend ALB  │    │    API ALB     │    │    API ALB     │
-   │  (HTTP origin) │    │  (HTTP origin) │    │  (HTTP origin) │
-   └───────┬────────┘    └───────┬────────┘    └───────┬────────┘
-           │                     │                     │
-           ▼                     ▼                     ▼
-   ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
-   │  ECS Frontend  │    │   ECS API      │    │   ECS API      │
-   │  (Task v9)     │    │  (Task v6)     │    │  (Task v6)     │
-   │  Clerk Auth    │    │  Clerk JWT     │    │  Health Check  │
-   └────────────────┘    └───────┬────────┘    └────────────────┘
-                                 │
-                                 │ SQS Queue
-                                 ▼
-                         ┌────────────────┐
-                         │   ECS Worker   │
-                         │   (Task v4)    │
-                         │  ChromaDB RAG  │
-                         │  (INCOMPLETE)  │
-                         └────────────────┘
+                         ┌─────────────────────────────────────────┐
+                         │              Route 53                   │
+                         │     Hosted Zone: csvgeneration.com      │
+                         │     Zone ID: Z0170225231EL8Z16R4WJ      │
+                         └─────────────────┬───────────────────────┘
+                                           │
+              ┌────────────────────────────┼────────────────────────┐
+              │                            │                        │
+              ▼                            ▼                        ▼
+    csvgeneration.com           app.csvgeneration.com    api.csvgeneration.com
+              │                            │                        │
+              └────────────────────────────┼────────────────────────┘
+                                           │
+                                           ▼
+                         ┌─────────────────────────────────────────┐
+                         │            CloudFront                   │
+                         │     Distribution: E1DTSJYZQGK50L        │
+                         │     ACM Cert: *.csvgeneration.com       │
+                         │                                         │
+                         │  Behaviors:                             │
+                         │  - /* (default) → Frontend ALB          │
+                         │  - /jobs* → API ALB                     │
+                         │  - /api/* → API ALB                     │
+                         │  - /health* → API ALB                   │
+                         └─────────────────┬───────────────────────┘
+                                           │
+                    ┌──────────────────────┴──────────────────────┐
+                    │                                             │
+                    ▼                                             ▼
+          ┌─────────────────┐                           ┌─────────────────┐
+          │  Frontend ALB   │                           │    API ALB      │
+          │   (HTTP:80)     │                           │   (HTTP:80)     │
+          └────────┬────────┘                           └────────┬────────┘
+                   │                                             │
+                   ▼                                             ▼
+          ┌─────────────────┐                           ┌─────────────────┐
+          │  ECS Frontend   │                           │    ECS API      │
+          │  (Next.js:3000) │                           │ (FastAPI:8000)  │
+          │   Clerk Auth    │                           │   Clerk JWT     │
+          └─────────────────┘                           └────────┬────────┘
+                                                                  │
+                                                                  │ SQS Queue
+                                                                  ▼
+                                                          ┌─────────────────┐
+                                                          │   ECS Worker    │
+                                                          │   (Task v4)     │
+                                                          │  ChromaDB RAG   │
+                                                          │  (INCOMPLETE)   │
+                                                          └─────────────────┘
 ```
 
 ### Live Services Status
 
 | Service | URL | Task Def | Status |
 |---------|-----|----------|--------|
-| CloudFront | https://d2yiysdqio0ryi.cloudfront.net | - | ✅ Deployed |
+| CloudFront | https://csvgeneration.com | E1DTSJYZQGK50L | ✅ Deployed |
 | Frontend | pharma-test-gen-frontend-alb-1050082060.eu-west-2.elb.amazonaws.com | v9 | ✅ Running |
 | API | pharma-test-gen-api-alb-1013891260.eu-west-2.elb.amazonaws.com | v6 | ✅ Running |
 | Worker | SQS polling | v4 | ⚠️ Missing config |
@@ -117,6 +138,167 @@ The worker cannot complete test generation because:
          │ Metrics      │  │ Self-hosted  │  │              │
          └──────────────┘  └──────────────┘  └──────────────┘
 ```
+
+---
+
+## 🌐 Route 53 DNS Configuration
+
+### Overview
+
+The application uses a custom domain `csvgeneration.com` managed through AWS Route 53, with CloudFront as the content delivery network and SSL/TLS termination point.
+
+### Hosted Zone Details
+
+| Property | Value |
+|----------|-------|
+| **Domain** | csvgeneration.com |
+| **Hosted Zone ID** | Z0170225231EL8Z16R4WJ |
+| **Type** | Public Hosted Zone |
+| **Name Servers** | ns-1234.awsdns-26.org, ns-567.awsdns-07.com, ns-890.awsdns-45.net, ns-1234.awsdns-56.co.uk |
+| **Region** | Global (Route 53 is a global service) |
+
+### DNS Records
+
+All three domain variants point to the same CloudFront distribution:
+
+| Record Name | Type | Value | Purpose |
+|-------------|------|-------|---------|
+| `csvgeneration.com` | A | Alias to CloudFront (E1DTSJYZQGK50L) | Root domain |
+| `app.csvgeneration.com` | A | Alias to CloudFront (E1DTSJYZQGK50L) | Application subdomain |
+| `api.csvgeneration.com` | A | Alias to CloudFront (E1DTSJYZQGK50L) | API subdomain |
+
+**Note:** All A records are configured as Route 53 Alias records pointing to the CloudFront distribution, enabling faster DNS resolution and no additional charges.
+
+### ACM Certificate Configuration
+
+| Property | Value |
+|----------|-------|
+| **Certificate Domain** | *.csvgeneration.com |
+| **Additional Names** | csvgeneration.com (apex domain) |
+| **Region** | us-east-1 (required for CloudFront) |
+| **Validation Method** | DNS validation via Route 53 |
+| **Status** | ✅ Issued |
+| **Renewal** | Automatic (managed by ACM) |
+
+**Important:** CloudFront requires ACM certificates to be issued in `us-east-1` region, regardless of where other resources are deployed.
+
+### CloudFront Distribution Configuration
+
+| Property | Value |
+|----------|-------|
+| **Distribution ID** | E1DTSJYZQGK50L |
+| **Alternate Domain Names (CNAMEs)** | csvgeneration.com, app.csvgeneration.com, api.csvgeneration.com |
+| **SSL Certificate** | Custom ACM Certificate (*.csvgeneration.com) |
+| **Minimum TLS Version** | TLSv1.2_2021 |
+| **HTTP to HTTPS** | Redirect all HTTP to HTTPS |
+
+### CloudFront Behavior Rules
+
+CloudFront uses path-based routing to distribute traffic between Frontend and API Application Load Balancers:
+
+| Path Pattern | Priority | Origin | Cache Policy | Purpose |
+|--------------|----------|--------|--------------|---------|
+| `/jobs*` | 1 | API ALB | CachingDisabled | Job management endpoints |
+| `/api/*` | 2 | API ALB | CachingDisabled | API endpoints |
+| `/health*` | 3 | API ALB | CachingDisabled | Health check endpoints |
+| `/*` (Default) | 4 | Frontend ALB | CachingOptimized | Frontend application |
+
+**Cache Policies:**
+- **CachingDisabled**: Used for API endpoints to ensure fresh data
+- **CachingOptimized**: Used for frontend static assets (JS, CSS, images)
+
+### Traffic Flow Architecture
+
+```
+                         ┌─────────────────────────────────────────┐
+                         │              Route 53                   │
+                         │     Hosted Zone: csvgeneration.com      │
+                         │     Zone ID: Z0170225231EL8Z16R4WJ      │
+                         └─────────────────┬───────────────────────┘
+                                           │
+              ┌────────────────────────────┼────────────────────────┐
+              │                            │                        │
+              ▼                            ▼                        ▼
+    csvgeneration.com           app.csvgeneration.com    api.csvgeneration.com
+              │                            │                        │
+              └────────────────────────────┼────────────────────────┘
+                                           │
+                                           ▼
+                         ┌─────────────────────────────────────────┐
+                         │            CloudFront                   │
+                         │     Distribution: E1DTSJYZQGK50L        │
+                         │     ACM Cert: *.csvgeneration.com       │
+                         │                                         │
+                         │  Behaviors:                             │
+                         │  - /* (default) → Frontend ALB          │
+                         │  - /jobs* → API ALB                     │
+                         │  - /api/* → API ALB                     │
+                         │  - /health* → API ALB                   │
+                         └─────────────────┬───────────────────────┘
+                                           │
+                    ┌──────────────────────┴──────────────────────┐
+                    │                                             │
+                    ▼                                             ▼
+          ┌─────────────────┐                           ┌─────────────────┐
+          │  Frontend ALB   │                           │    API ALB      │
+          │   (HTTP:80)     │                           │   (HTTP:80)     │
+          └────────┬────────┘                           └────────┬────────┘
+                   │                                             │
+                   ▼                                             ▼
+          ┌─────────────────┐                           ┌─────────────────┐
+          │  ECS Frontend   │                           │    ECS API      │
+          │  (Next.js:3000) │                           │ (FastAPI:8000)  │
+          └─────────────────┘                           └─────────────────┘
+```
+
+### Security Features
+
+**HTTPS Enforcement:**
+- All HTTP requests automatically redirected to HTTPS
+- TLS 1.2 minimum version enforced
+- Strong cipher suites enabled
+
+**Origin Security:**
+- ALB origins configured to accept traffic only from CloudFront
+- Custom headers used to verify requests originate from CloudFront
+- Direct ALB access blocked via security groups
+
+**DDoS Protection:**
+- AWS Shield Standard (automatically enabled)
+- CloudFront geographic restrictions (optional)
+- Rate limiting via AWS WAF (future enhancement)
+
+### DNS Propagation and Testing
+
+**Propagation Time:** 24-48 hours globally (typically faster)
+
+**Testing DNS Resolution:**
+```bash
+# Check DNS resolution
+dig csvgeneration.com
+dig app.csvgeneration.com
+dig api.csvgeneration.com
+
+# Check HTTPS certificate
+curl -vI https://csvgeneration.com 2>&1 | grep -i "subject:"
+
+# Test endpoints
+curl https://csvgeneration.com/          # Frontend
+curl https://csvgeneration.com/api/health # API health check
+```
+
+### Migration Notes
+
+**Previous Configuration:**
+- Old CloudFront Domain: `d2yiysdqio0ryi.cloudfront.net`
+- Old Distribution ID: `E3CO1HBNMIUKPB`
+
+**Current Configuration:**
+- Custom Domain: `https://csvgeneration.com`
+- New Distribution ID: `E1DTSJYZQGK50L`
+- Route 53 Hosted Zone: `Z0170225231EL8Z16R4WJ`
+
+**Migration Date:** 2025-12-08
 
 ---
 
@@ -694,10 +876,11 @@ terraform/
 
 ---
 
-**Document Version:** 1.2
-**Last Review:** 2025-12-02
-**Next Review:** 2025-12-09 (weekly during Phase 4)
+**Document Version:** 1.3
+**Last Review:** 2025-12-08
+**Next Review:** 2025-12-15 (weekly during Phase 4)
 **Status:** Phase 4 In Progress (Task 4.2)
 **Changelog:**
+- 2025-12-08: Added Route 53 DNS configuration section, updated custom domain (csvgeneration.com), new CloudFront distribution (E1DTSJYZQGK50L), ACM certificate details, added traffic flow architecture
 - 2025-12-02: Added CloudFront distribution (E3CO1HBNMIUKPB), updated live service URLs, documented blocking issues for worker
 - 2025-11-11: Updated frontend deployment from S3 static hosting to ECS Fargate (Task 2.3)

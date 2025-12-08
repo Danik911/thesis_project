@@ -37,6 +37,9 @@ CLERK_PUBLISHABLE_KEY = os.environ.get(
 # Estimated hourly cost (without Aurora)
 ESTIMATED_HOURLY_COST = 0.75  # ~$0.50-1.00/hour
 
+# CloudFront distribution ID for cache invalidation (d861au413p5o2.cloudfront.net)
+CLOUDFRONT_DISTRIBUTION_ID = "E1DTSJYZQGK50L"
+
 
 def get_project_root() -> Path:
     """Get the project root directory."""
@@ -170,6 +173,31 @@ def get_ecr_login():
 
     print(f"     Authenticated with ECR: {ecr_url}")
     return account_id, ecr_url
+
+
+def invalidate_cloudfront_cache():
+    """Invalidate CloudFront cache after frontend deployment.
+
+    This prevents 404 errors caused by cached HTML pages referencing old Next.js build IDs.
+    The invalidation propagates within 1-2 minutes.
+    """
+    print("\n   Invalidating CloudFront cache...")
+    print(f"     Distribution: {CLOUDFRONT_DISTRIBUTION_ID}")
+
+    result = run_command([
+        "aws", "cloudfront", "create-invalidation",
+        "--distribution-id", CLOUDFRONT_DISTRIBUTION_ID,
+        "--paths", "/*",
+        "--region", "us-east-1"  # CloudFront is global, but API is in us-east-1
+    ], capture_output=True)
+
+    if result:
+        print("     CloudFront cache invalidated (propagates in 1-2 minutes)")
+        return True
+    else:
+        print("     WARNING: Failed to invalidate CloudFront cache")
+        print("     You may need to manually invalidate: aws cloudfront create-invalidation --distribution-id E1DTSJYZQGK50L --paths '/*'")
+        return False
 
 
 def ensure_chromadb_in_s3(account_id: str):
@@ -398,9 +426,9 @@ def build_frontend_image(ecr_url: str):
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     image_tag = f"staging-{timestamp}"
-    ecr_image = f"{ecr_url}/{PROJECT_NAME}-frontend:{image_tag}"
+    local_image = f"{PROJECT_NAME}-frontend:{image_tag}"
 
-    # Build with buildx and push directly to ECR
+    # Build with buildx and load locally (so we can tag and push both staging-latest and timestamp)
     # NEXT_PUBLIC_API_BASE_URL="" means relative URLs - CloudFront handles routing
     #
     # WARNING: On ARM64 hosts (Snapdragon, Apple Silicon), QEMU emulation for
@@ -417,19 +445,35 @@ def build_frontend_image(ecr_url: str):
         "--platform", "linux/amd64",
         "--build-arg", "NEXT_PUBLIC_API_BASE_URL=",  # Empty = relative URLs
         "--build-arg", f"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY={CLERK_PUBLISHABLE_KEY}",
-        "-t", ecr_image,
+        "-t", local_image,
         "-f", str(dockerfile),
-        "--push",  # Push directly to ECR
+        "--load",  # Load locally so we can push multiple tags
         str(project_root)
     ], timeout=900)
 
-    if result:
-        print(f"     Frontend image built and pushed: {ecr_image}")
-        return image_tag
-    else:
+    if not result:
         print(f"     Frontend build failed")
         print("     If QEMU crashed, run 'wsl --shutdown' and retry")
         return None
+
+    print(f"     Frontend image built: {local_image}")
+
+    # Push both staging-latest AND timestamp tag (staging-latest allows ECS to always pull newest)
+    ecr_repo = f"{ecr_url}/{PROJECT_NAME}-frontend"
+    tags = ["staging-latest", image_tag]
+
+    for tag in tags:
+        ecr_image = f"{ecr_repo}:{tag}"
+        run_command(["docker", "tag", local_image, ecr_image])
+        print(f"     Pushing {PROJECT_NAME}-frontend:{tag}...")
+        push_result = run_command(["docker", "push", ecr_image], timeout=300)
+        if push_result:
+            print(f"     {PROJECT_NAME}-frontend:{tag}: pushed")
+        else:
+            print(f"     {PROJECT_NAME}-frontend:{tag}: push failed")
+            # Continue anyway - staging-latest is the critical one
+
+    return image_tag
 
 
 def update_frontend_service(cluster_name: str, frontend_image_tag: str, ecr_url: str):
@@ -838,6 +882,9 @@ def main():
     print("   POST-DEPLOYMENT HEALTH CHECK")
     print("=" * 70)
     verify_deployment_health(outputs)
+
+    # Invalidate CloudFront cache to prevent 404 errors with stale build IDs
+    invalidate_cloudfront_cache()
 
     print(f"\n   Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("\n" + "=" * 70)

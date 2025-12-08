@@ -13,7 +13,7 @@
     "containerDefinitions": [
         {
             "name": "frontend",
-            "image": "275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-frontend:trace-fix-v3-20251207",
+            "image": "275333454012.dkr.ecr.eu-west-2.amazonaws.com/pharma-test-gen-frontend:staging-latest",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -54,7 +54,7 @@
             "healthCheck": {
                 "command": [
                     "CMD-SHELL",
-                    "curl -f http://localhost:3000/api/health || exit 1"
+                    "curl -f http://localhost:3000/api/health/ || exit 1"
                 ],
                 "interval": 30,
                 "timeout": 5,

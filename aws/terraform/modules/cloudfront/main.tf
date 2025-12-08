@@ -26,6 +26,9 @@ resource "aws_cloudfront_distribution" "this" {
   is_ipv6_enabled     = true
   default_root_object = ""
 
+  # Custom domain aliases (if provided)
+  aliases = var.aliases
+
   # -------------------------------------------------------------------------
   # Origins
   # -------------------------------------------------------------------------
@@ -129,13 +132,14 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   # -------------------------------------------------------------------------
-  # SSL Certificate
+  # SSL Certificate (supports custom domain with ACM certificate)
   # -------------------------------------------------------------------------
 
   viewer_certificate {
-    cloudfront_default_certificate = true
-    ssl_support_method             = "vip"
-    minimum_protocol_version       = "TLSv1"
+    cloudfront_default_certificate = var.acm_certificate_arn == null
+    acm_certificate_arn            = var.acm_certificate_arn
+    ssl_support_method             = var.acm_certificate_arn != null ? "sni-only" : null
+    minimum_protocol_version       = var.acm_certificate_arn != null ? "TLSv1.2_2021" : "TLSv1"
   }
 
   # -------------------------------------------------------------------------

@@ -4,7 +4,7 @@
 **System Phase:** Phase 4 - AWS Staging
 **Architecture:** ECS Fargate 3-service stack (Frontend, API, Worker) + CloudFront CDN
 **Observability:** LangFuse Cloud (EU)
-**AWS URL:** https://d2yiysdqio0ryi.cloudfront.net
+**AWS URL:** https://csvgeneration.com
 **Local Dev:** Docker Compose 5-service stack (postgres, localstack, api, worker, frontend)
 
 ---
@@ -154,9 +154,12 @@ scripts/seed_chroma.py               # ChromaDB document ingestion
 | `main.tf` | Core resources (ECS cluster, S3, IAM, SQS, ALB) |
 | `variables.tf` | Configuration variables |
 | `outputs.tf` | Export endpoints, ARNs |
+| `route53.tf` | Route 53 DNS and ACM certificate configuration |
+| `csvgeneration.tfvars` | Domain-specific Terraform variables |
 | `modules/ecr/` | Container registry for API, Worker, Frontend |
 | `modules/ecs-service/` | ECS service + task definitions |
 | `modules/cloudfront/` | CDN distribution (HTTPS termination) |
+| `modules/route53/` | Route 53 module for DNS records |
 
 ### Golden Task Definitions
 

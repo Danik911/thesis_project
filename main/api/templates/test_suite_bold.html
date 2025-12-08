@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ suite.suite_id }} - Pharmaceutical Test Suite</title>
+    <style>
+        /* ============================================
+           BOLD FRONTEND DESIGN - PHARMA LUXURY
+           Anti-Generic: Space-based fonts, clinical blues, card layouts
+           ============================================ */
+
+        /* CSS Reset + Base */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            /* Pharmaceutical Color System (60-30-10 Rule) */
+            --color-bg-primary: #0f172a;      /* 60% - Deep clinical navy */
+            --color-bg-secondary: #1e293b;    /* Secondary dark */
+            --color-surface: #ffffff;         /* Cards/surfaces */
+            --color-surface-alt: #f8fafc;     /* Alt surfaces */
+
+            --color-accent-primary: #06b6d4;  /* 30% - Medical cyan */
+            --color-accent-secondary: #0891b2;
+            --color-accent-glow: #22d3ee;
+
+            --color-text-primary: #0f172a;    /* 10% - Accents */
+            --color-text-secondary: #475569;
+            --color-text-inverse: #ffffff;
+
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+
+            /* Typography System - NO INTER/ROBOTO */
+            --font-display: 'SF Pro Display', system-ui, -apple-system, sans-serif;
+            --font-body: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+
+            /* Spacing Scale */
+            --space-xs: 0.5rem;
+            --space-sm: 1rem;
+            --space-md: 1.5rem;
+            --space-lg: 2rem;
+            --space-xl: 3rem;
+            --space-2xl: 4rem;
+
+            /* Border Radius */
+            --radius-sm: 0.5rem;
+            --radius-md: 1rem;
+            --radius-lg: 1.5rem;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.3);
+        }
+
+        /* BOLD Typography Hierarchy */
+        body {
+            font-family: var(--font-body);
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--color-text-primary);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            color: var(--color-bg-primary);
+            margin-bottom: var(--space-md);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Container System */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-md);
+        }
+
+        /* HERO HEADER - Asymmetric Layout */
+        .hero-header {
+            background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+            color: var(--color-text-inverse);
+            padding: var(--space-2xl) 0 var(--space-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--space-xl);
+            align-items: start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-content h1 {
+            -webkit-text-fill-color: var(--color-text-inverse);
+            background: none;
+            margin-bottom: var(--space-sm);
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .hero-meta strong {
+            color: var(--color-accent-glow);
+        }
+
+        /* FLOATING COMPLIANCE BADGES */
+        .compliance-badges {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-gamp {
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            color: white;
+        }
+
+        .badge-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            padding: var(--space-xl) 0;
+        }
+
+        /* SUMMARY CARD - Elevated */
+        .summary-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-xl);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(6, 182, 212, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: var(--space-md);
+            background: var(--color-surface-alt);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--color-accent-primary);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-accent-primary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            margin-top: var(--space-xs);
+        }
+
+        /* TEST CASE CARDS - Bold & Interactive */
+        .test-cases-section {
+            margin-top: var(--space-xl);
+        }
+
+        .test-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+
+        .test-card:hover {
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+            border-color: var(--color-accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .test-card-header {
+            background: linear-gradient(135deg, var(--color-surface-alt) 0%, var(--color-surface) 100%);
+            padding: var(--space-lg);
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: var(--space-md);
+            transition: background 0.2s;
+        }
+
+        .test-card-header:hover {
+            background: var(--color-surface-alt);
+        }
+
+        .test-card-title-area {
+            flex: 1;
+        }
+
+        .test-id {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--color-accent-primary);
+            margin-bottom: var(--space-xs);
+            letter-spacing: 0.05em;
+        }
+
+        .test-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        .test-meta {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .badge-risk-high { background: var(--color-danger); color: white; }
+        .badge-risk-medium { background: var(--color-warning); color: white; }
+        .badge-risk-low { background: var(--color-success); color: white; }
+
+        .expand-icon {
+            font-size: 1.5rem;
+            color: var(--color-accent-primary);
+            transition: transform 0.3s;
+        }
+
+        .test-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .test-card-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .test-card.expanded .test-card-body {
+            max-height: 5000px;
+        }
+
+        .test-card-content {
+            padding: var(--space-lg);
+            border-top: 1px solid var(--color-surface-alt);
+        }
+
+        .test-objective {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(8, 145, 178, 0.05) 100%);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--color-accent-primary);
+            margin-bottom: var(--space-md);
+        }
+
+        .test-section {
+            margin-bottom: var(--space-lg);
+        }
+
+        .test-section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .test-section h4::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 1.2rem;
+            background: var(--color-accent-primary);
+            border-radius: 2px;
+        }
+
+        /* TABLE STYLING */
+        .steps-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: var(--space-md) 0;
+            overflow: hidden;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .steps-table thead {
+            background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+            color: white;
+        }
+
+        .steps-table th {
+            padding: var(--space-sm) var(--space-md);
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+
+        .steps-table td {
+            padding: var(--space-sm) var(--space-md);
+            border-bottom: 1px solid var(--color-surface-alt);
+        }
+
+        .steps-table tbody tr:hover {
+            background: var(--color-surface-alt);
+        }
+
+        .steps-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .step-number {
+            font-weight: 700;
+            color: var(--color-accent-primary);
+        }
+
+        /* LISTS */
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            padding-left: var(--space-md);
+            margin-bottom: var(--space-xs);
+            position: relative;
+        }
+
+        ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--color-accent-primary);
+            font-weight: 700;
+        }
+
+        /* FOOTER */
+        .footer {
+            margin-top: var(--space-2xl);
+            padding: var(--space-xl) 0;
+            background: var(--color-bg-primary);
+            color: var(--color-text-inverse);
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        .footer-content {
+            opacity: 0.8;
+        }
+
+        .footer-meta {
+            margin-top: var(--space-sm);
+            font-size: 0.75rem;
+            opacity: 0.6;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .compliance-badges {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .test-card-header {
+                flex-direction: column;
+            }
+
+            .steps-table {
+                font-size: 0.875rem;
+            }
+
+            .steps-table th,
+            .steps-table td {
+                padding: var(--space-xs);
+            }
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .hero-header::before {
+                display: none;
+            }
+
+            .test-card {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #e5e7eb;
+            }
+
+            .test-card-body {
+                max-height: none !important;
+            }
+
+            .expand-icon {
+                display: none;
+            }
+
+            .footer {
+                background: white;
+                color: black;
+                border-top: 2px solid var(--color-accent-primary);
+            }
+        }
+
+        /* DARK MODE SUPPORT */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-surface: #1e293b;
+                --color-surface-alt: #334155;
+                --color-text-primary: #f1f5f9;
+                --color-text-secondary: #cbd5e1;
+            }
+
+            body {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            }
+        }
+
+        /* SMOOTH SCROLL */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* ACCESSIBILITY */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HERO HEADER -->
+    <header class="hero-header">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <h1>{{ suite.suite_id }}</h1>
+                    <div class="hero-meta">
+                        <div><strong>Document:</strong> {{ suite.document_name }}</div>
+                        <div><strong>Generated:</strong> {{ suite.generation_timestamp }}</div>
+                        <div><strong>Method:</strong> {{ suite.generation_method }}</div>
+                    </div>
+                </div>
+
+                <div class="compliance-badges">
+                    <div class="badge badge-gamp">
+                        GAMP Category {{ suite.gamp_category }}
+                    </div>
+                    {% if suite.pharmaceutical_compliance %}
+                    {% if suite.pharmaceutical_compliance.alcoa_plus_compliant %}
+                    <div class="badge badge-success">
+                        ✓ ALCOA+ Compliant
+                    </div>
+                    {% endif %}
+                    {% if suite.pharmaceutical_compliance.gamp5_compliant %}
+                    <div class="badge badge-success">
+                        ✓ GAMP-5 Compliant
+                    </div>
+                    {% endif %}
+                    {% if suite.pharmaceutical_compliance.cfr_part_11_compliant %}
+                    <div class="badge badge-success">
+                        ✓ 21 CFR Part 11
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div class="container">
+
+            <!-- SUMMARY CARD -->
+            <section class="summary-card">
+                <h2>📊 Test Suite Summary</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ suite.total_test_count }}</span>
+                        <span class="stat-label">Total Test Cases</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ suite.estimated_execution_time }}</span>
+                        <span class="stat-label">Minutes (Estimated)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ suite.coverage_percentage|round(1) }}%</span>
+                        <span class="stat-label">Coverage</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ "Yes" if suite.review_required else "No" }}</span>
+                        <span class="stat-label">Review Required</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TEST CASES -->
+            <section class="test-cases-section">
+                <h2>🧪 Test Cases ({{ suite.test_cases|length }})</h2>
+
+                {% for test in suite.test_cases %}
+                <article class="test-card" id="test-{{ loop.index }}">
+                    <div class="test-card-header" onclick="toggleCard({{ loop.index }})">
+                        <div class="test-card-title-area">
+                            <div class="test-id">{{ test.test_id }}</div>
+                            <div class="test-name">{{ test.test_name }}</div>
+                            <div class="test-meta">
+                                <span class="badge badge-risk-{{ test.risk_level }}">
+                                    {{ test.risk_level|upper }} RISK
+                                </span>
+                                <span class="badge" style="background: #6366f1; color: white;">
+                                    {{ test.test_category|upper }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="expand-icon">▼</div>
+                    </div>
+
+                    <div class="test-card-body">
+                        <div class="test-card-content">
+
+                            <!-- OBJECTIVE -->
+                            <div class="test-objective">
+                                <strong>Objective:</strong> {{ test.objective }}
+                            </div>
+
+                            <!-- PREREQUISITES -->
+                            <div class="test-section">
+                                <h4>Prerequisites</h4>
+                                <ul>
+                                    {% for prereq in test.prerequisites %}
+                                    <li>{{ prereq }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+
+                            <!-- TEST STEPS TABLE -->
+                            <div class="test-section">
+                                <h4>Test Steps</h4>
+                                <table class="steps-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 60px;">#</th>
+                                            <th>Action</th>
+                                            <th>Expected Result</th>
+                                            <th style="width: 150px;">Performed By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for step in test.test_steps %}
+                                        <tr>
+                                            <td class="step-number">{{ step.step_number }}</td>
+                                            <td>{{ step.action }}</td>
+                                            <td>{{ step.expected_result }}</td>
+                                            <td>{{ step.performed_by }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- ACCEPTANCE CRITERIA -->
+                            <div class="test-section">
+                                <h4>Acceptance Criteria</h4>
+                                <ul>
+                                    {% for criteria in test.acceptance_criteria %}
+                                    <li>{{ criteria }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+
+                            <!-- METADATA -->
+                            <div class="test-section">
+                                <h4>Regulatory & Traceability</h4>
+                                <p><strong>Regulatory Basis:</strong> {{ test.regulatory_basis|join(", ") }}</p>
+                                <p><strong>URS Requirements:</strong> {{ test.urs_requirements|join(", ") }}</p>
+                                <p><strong>Duration:</strong> ~{{ test.estimated_duration_minutes }} minutes</p>
+                            </div>
+
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <strong>Generated by LLM-Driven Pharmaceutical Test Generation System</strong>
+            </div>
+            <div class="footer-meta">
+                Workflow Session: {{ suite.workflow_session_id }}<br>
+                Timestamp: {{ suite.timestamp }}
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT FOR INTERACTIVITY -->
+    <script>
+        // Toggle test card expand/collapse
+        function toggleCard(index) {
+            const card = document.getElementById(`test-${index}`);
+            card.classList.toggle('expanded');
+        }
+
+        // Expand all cards on print
+        window.addEventListener('beforeprint', function() {
+            document.querySelectorAll('.test-card').forEach(card => {
+                card.classList.add('expanded');
+            });
+        });
+
+        // Smooth scroll to test case from hash
+        if (window.location.hash) {
+            const target = document.querySelector(window.location.hash);
+            if (target) {
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                    target.click(); // Auto-expand
+                }, 100);
+            }
+        }
+    </script>
+</body>
+</html>

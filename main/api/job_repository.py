@@ -357,6 +357,38 @@ class PostgresJobRepository:
 
             return [self._row_to_job_record(row) for row in rows]
 
+    async def count_jobs_today(self) -> int:
+        """
+        Count all jobs created today (globally), excluding failed jobs.
+
+        Used for daily job limit enforcement (cost control).
+        Excludes 'failed' status to avoid penalizing users for system errors.
+        Includes 'rejected' jobs as they still consumed LLM resources.
+
+        GAMP-5 Compliance: Query uses UTC timezone consistently.
+        ALCOA+ Compliance: Returns accurate count from database (no estimates).
+
+        Returns:
+            Number of jobs created today (UTC) with status not 'failed'.
+
+        CRITICAL: NO FALLBACK LOGIC - Database errors propagate explicitly.
+        """
+        query = """
+            SELECT COUNT(*) FROM jobs
+            WHERE created_at >= $1
+            AND status NOT IN ('failed')
+        """
+        # Use UTC for consistent timezone handling
+        today_start = datetime.now(UTC).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+
+        async with self._pool.acquire() as conn:
+            result = await conn.fetchval(query, today_start)
+
+        logger.debug(f"[QUOTA] Jobs today (UTC): {result or 0}")
+        return result or 0
+
     def _row_to_job_record(self, row: asyncpg.Record) -> JobRecord:
         """
         Convert asyncpg row to JobRecord.

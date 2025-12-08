@@ -398,6 +398,47 @@ async def submit_job(
     span = None
 
     try:
+        # =================================================================
+        # DAILY JOB LIMIT CHECK (Task 4.5 - Cost Control)
+        # Check BEFORE creating job to prevent resource waste
+        # =================================================================
+        daily_limit = int(os.getenv("DAILY_JOB_LIMIT", "10"))
+
+        if daily_limit > 0 and db_job_repo is not None:
+            job_count = await db_job_repo.count_jobs_today()
+
+            if job_count >= daily_limit:
+                # Log limit violation for audit trail (ALCOA+ compliance)
+                audit_logger = get_audit_logger()
+                if audit_logger:
+                    audit_logger.log_event(
+                        job_id=str(uuid.uuid4()),  # Unique event ID for this violation
+                        event_type="rate_limit_exceeded",
+                        user_id=user.sub,
+                        status=JobStatus.PENDING,
+                        user_email=user.email,
+                        metadata={
+                            "daily_limit": daily_limit,
+                            "jobs_today": job_count,
+                            "endpoint": "POST /jobs",
+                            "filename": file.filename
+                        }
+                    )
+
+                logger.warning(
+                    f"[QUOTA] Daily job limit exceeded: {job_count}/{daily_limit} "
+                    f"by user {user.sub} ({user.email})"
+                )
+
+                # CRITICAL: NO FALLBACK - Explicit rejection with full context
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=(
+                        f"System daily job limit ({daily_limit}) reached. "
+                        f"Resets at midnight UTC. Current count: {job_count}"
+                    )
+                )
+
         # Generate unique job ID
         job_id = str(uuid.uuid4())
         logger.info(f"Submitting job {job_id} for user {user.sub} ({user.email})")
@@ -677,6 +718,60 @@ async def get_job_result_json(
             raise HTTPException(status_code=500, detail=f"Failed to parse result: {e}")
 
     raise HTTPException(status_code=501, detail="Storage backend not supported")
+
+
+@app.get("/jobs/quota", response_model=dict)
+async def get_job_quota(
+    db_job_repo: DbJobRepositoryDep,
+) -> dict:
+    """
+    Get current job quota status.
+
+    Returns quota information including:
+    - Whether limit is enabled
+    - Daily limit value
+    - Jobs submitted today
+    - Remaining quota
+    - Reset time (midnight UTC)
+
+    This endpoint does NOT require authentication to allow frontend
+    to display quota status before user attempts job submission.
+
+    GAMP-5 Compliance: Returns accurate real-time quota from database.
+    ALCOA+ Compliance: No data modification, read-only query.
+
+    Returns:
+        dict with quota status information
+
+    CRITICAL: NO FALLBACK LOGIC - Returns accurate state or error.
+    """
+    daily_limit = int(os.getenv("DAILY_JOB_LIMIT", "10"))
+
+    # Check if limit is disabled
+    if daily_limit <= 0:
+        return {
+            "limit_enabled": False,
+            "message": "No daily limit configured"
+        }
+
+    # Check if database is available
+    if db_job_repo is None:
+        return {
+            "limit_enabled": False,
+            "message": "Database not available (in-memory mode)"
+        }
+
+    # Query actual job count from database
+    # CRITICAL: No fallback - if query fails, let exception propagate
+    job_count = await db_job_repo.count_jobs_today()
+
+    return {
+        "limit_enabled": True,
+        "daily_limit": daily_limit,
+        "jobs_today": job_count,
+        "remaining": max(0, daily_limit - job_count),
+        "resets_at": "00:00 UTC"
+    }
 
 
 @app.get("/jobs/{job_id}", response_model=JobStatusResponse)

@@ -17,6 +17,7 @@ from pydantic import ValidationError
 
 from src.config.llm_config import LLMConfig
 from src.core.events import GAMPCategory
+from src.security.prompt_architecture import get_secure_prompt_architecture
 
 from .models import OQGenerationConfig, OQTestSuite
 from .templates import GAMPCategoryConfig, OQPromptTemplates
@@ -247,25 +248,46 @@ class OQTestGeneratorV2:
     ) -> OQTestSuite:
         """
         Generate tests using DeepSeek V3 model with custom JSON parsing.
-        
+
+        SECURITY ENHANCEMENT (Task 6.1 extension):
+        Uses ChatMessage role separation to isolate URS content from system instructions.
+        This prevents prompt injection attacks where malicious URS content could
+        manipulate test generation through embedded instructions.
+
         DeepSeek V3 models work well with direct prompting and JSON output.
         """
-        # Build enhanced prompt for DeepSeek V3 model
-        prompt = self._build_deepseek_prompt(
-            gamp_category=gamp_category,
+        # SECURITY: Use structural prompt isolation (Task 6.1 pattern)
+        # URS content is now in separate USER message with boundary markers
+        prompt_architecture = get_secure_prompt_architecture(
+            audit_author=f"oq_generator_{document_name}",
+            enable_audit_logging=True,
+            strict_mode=True
+        )
+
+        # Build context summary from upstream agents
+        context_summary = self._build_context_summary(context_data)
+
+        # Build structurally isolated messages
+        messages = prompt_architecture.build_oq_generation_prompt(
             urs_content=urs_content,
+            gamp_category=gamp_category.value,
             document_name=document_name,
             test_count=test_count,
-            context_data=context_data,
-            model_name=llm.model
+            context_summary=context_summary,
+            batch_context=None
+        )
+
+        self.logger.info(
+            f"[SECURITY] Using ChatMessage isolation for OQ generation: "
+            f"{len(messages)} messages with role separation"
         )
 
         try:
             # Use asyncio timeout for better control
             async with asyncio.timeout(self.timeout_mapping[gamp_category]):
-                # Direct API call for o3 models
-                response = await llm.acomplete(prompt)
-                response_text = response.text
+                # SECURITY: Use chat() with isolated messages instead of complete() with f-string
+                response = await llm.achat(messages)
+                response_text = response.message.content
 
                 # Validate o3 model response (prevent empty responses)
                 if llm.model.startswith("o3"):
@@ -370,14 +392,29 @@ class OQTestGeneratorV2:
         """
         Progressive generation for o3 model to handle response size limitations.
         Generates tests in small batches of 2 for faster response times.
+
+        SECURITY ENHANCEMENT (Task 6.1 extension):
+        Uses ChatMessage role separation to isolate URS content from system instructions
+        for each batch generation. This prevents prompt injection attacks.
         """
         batch_size = 2  # PERFORMANCE FIX: Reduced from 10 to 2 for faster generation
         num_batches = (total_tests + batch_size - 1) // batch_size
 
         all_test_cases = []
 
+        # SECURITY: Use structural prompt isolation (Task 6.1 pattern)
+        prompt_architecture = get_secure_prompt_architecture(
+            audit_author=f"oq_generator_progressive_{document_name}",
+            enable_audit_logging=True,
+            strict_mode=True
+        )
+
+        # Build context summary from upstream agents
+        context_summary = self._build_context_summary(context_data)
+
         self.logger.info(
-            f"Starting progressive generation: {total_tests} tests in {num_batches} batches"
+            f"Starting progressive generation: {total_tests} tests in {num_batches} batches "
+            f"[SECURITY: ChatMessage isolation enabled]"
         )
 
         for batch_num in range(num_batches):
@@ -391,10 +428,10 @@ class OQTestGeneratorV2:
             # Generate batch with context from previous batches
             # CRITICAL FIX: Include test names to prevent semantic duplicates
             previous_tests_summary = [
-                f"{t.get('test_id', 'Unknown')}: {t.get('test_name', 'Unnamed')}" 
+                f"{t.get('test_id', 'Unknown')}: {t.get('test_name', 'Unnamed')}"
                 for t in all_test_cases
             ]
-            
+
             batch_context = {
                 "batch_number": batch_num + 1,
                 "total_batches": num_batches,
@@ -405,13 +442,19 @@ class OQTestGeneratorV2:
             }
 
             try:
-                # Build batch-specific prompt
-                batch_prompt = self._build_progressive_deepseek_prompt(
-                    gamp_category=gamp_category,
+                # SECURITY: Build structurally isolated messages for batch
+                messages = prompt_architecture.build_oq_generation_prompt(
                     urs_content=urs_content,
+                    gamp_category=gamp_category.value,
                     document_name=document_name,
                     test_count=batch_count,
+                    context_summary=context_summary,
                     batch_context=batch_context
+                )
+
+                self.logger.info(
+                    f"[SECURITY] Batch {batch_num + 1}: Using ChatMessage isolation "
+                    f"({len(messages)} messages with role separation)"
                 )
 
                 # Execute batch generation with appropriate timeout
@@ -421,10 +464,12 @@ class OQTestGeneratorV2:
 
                 self.logger.info(f"⏱️  BATCH TIMEOUT: {batch_timeout}s (base: {base_timeout}s, minimum: 120s)")
                 async with asyncio.timeout(batch_timeout):
-                    response = await llm.acomplete(batch_prompt)
+                    # SECURITY: Use chat() with isolated messages instead of complete() with f-string
+                    response = await llm.achat(messages)
+                    response_text = response.message.content
 
                     # Validate o3 model response for batch generation
-                    validated_response = self._validate_o3_response(response.text, llm.model)
+                    validated_response = self._validate_o3_response(response_text, llm.model)
 
                     # Parse batch response - returns list of test cases
                     batch_test_cases = self._parse_o3_batch_response(

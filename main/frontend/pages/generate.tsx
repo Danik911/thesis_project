@@ -1331,20 +1331,74 @@ export default function Generate() {
                                     animate={{ opacity: 1 }}
                                     className="text-center py-12"
                                 >
-                                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 mb-6 border border-red-500/20">
-                                        <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-2xl font-display font-bold text-white mb-2">Generation Failed</h3>
-                                    <p className="text-slate-400 mb-8 max-w-md mx-auto">An error occurred while processing your request. Please check the logs or try again.</p>
-                                    <button onClick={resetDashboard} className="btn-primary">Try Again</button>
+                                    {/* Check if this is a quota limit error */}
+                                    {logs[logs.length - 1]?.toLowerCase().includes('daily job limit') ? (
+                                        <div className="relative max-w-2xl mx-auto">
+                                            {/* Glassmorphism card with animated border */}
+                                            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 backdrop-blur-xl border border-amber-500/30 shadow-2xl">
+                                                {/* Animated glow effect */}
+                                                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-400/20 to-amber-500/0 animate-pulse" />
 
-                                    <div className="mt-8 max-w-2xl mx-auto text-left">
-                                        <div className="bg-slate-900/50 rounded-lg p-6 border border-red-500/20 font-mono text-sm text-red-400 shadow-inner">
-                                            {logs[logs.length - 1]}
+                                                <div className="relative p-12 text-center">
+                                                    {/* Icon with glow */}
+                                                    <div className="relative inline-flex items-center justify-center mb-8">
+                                                        <div className="absolute inset-0 bg-amber-500/30 blur-2xl rounded-full animate-pulse" />
+                                                        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-600/20 border-2 border-amber-400/50 flex items-center justify-center backdrop-blur-sm">
+                                                            <svg className="w-12 h-12 text-amber-400 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Bold typography with gradient */}
+                                                    <h3 className="text-4xl font-display font-black mb-4 bg-gradient-to-r from-amber-200 via-amber-300 to-orange-300 bg-clip-text text-transparent">
+                                                        Daily Limit Reached
+                                                    </h3>
+
+                                                    <div className="space-y-4 mb-8">
+                                                        <p className="text-lg text-slate-300 font-medium max-w-lg mx-auto leading-relaxed">
+                                                            This is a <span className="text-amber-400 font-bold">thesis demonstration project</span> with limited daily usage to manage API costs.
+                                                        </p>
+                                                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30">
+                                                            <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                                            </svg>
+                                                            <span className="text-sm text-amber-300 font-semibold">Resets at midnight UTC</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={resetDashboard}
+                                                        className="relative group px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold shadow-lg hover:shadow-amber-500/50 transition-all duration-300 hover:scale-105"
+                                                    >
+                                                        <span className="relative z-10">Got It</span>
+                                                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </button>
+
+                                                    <p className="text-xs text-slate-500 mt-6">
+                                                        Thank you for understanding! 🙏
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <>
+                                            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 mb-6 border border-red-500/20">
+                                                <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-2xl font-display font-bold text-white mb-2">Generation Failed</h3>
+                                            <p className="text-slate-400 mb-8 max-w-md mx-auto">An error occurred while processing your request. Please check the logs or try again.</p>
+                                            <button onClick={resetDashboard} className="btn-primary">Try Again</button>
+
+                                            <div className="mt-8 max-w-2xl mx-auto text-left">
+                                                <div className="bg-slate-900/50 rounded-lg p-6 border border-red-500/20 font-mono text-sm text-red-400 shadow-inner">
+                                                    {logs[logs.length - 1]}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </motion.div>
                             )}
                         </AnimatePresence>
