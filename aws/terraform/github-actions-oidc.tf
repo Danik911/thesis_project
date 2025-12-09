@@ -91,6 +91,9 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
           "ecr:DescribeRepositories",
           "ecr:GetDownloadUrlForLayer",
           "ecr:GetRepositoryPolicy",
+          "ecr:GetLifecyclePolicy",
+          "ecr:PutLifecyclePolicy",
+          "ecr:DeleteLifecyclePolicy",
           "ecr:InitiateLayerUpload",
           "ecr:ListImages",
           "ecr:ListTagsForResource",
@@ -318,8 +321,11 @@ resource "aws_iam_role_policy" "github_actions_logs" {
           "logs:DeleteLogStream",
           "logs:DescribeLogGroups",
           "logs:DescribeLogStreams",
+          "logs:DescribeQueryDefinitions",
           "logs:PutLogEvents",
           "logs:PutRetentionPolicy",
+          "logs:PutQueryDefinition",
+          "logs:DeleteQueryDefinition",
           "logs:TagLogGroup",
           "logs:UntagLogGroup",
           "logs:ListTagsLogGroup",
@@ -434,12 +440,16 @@ resource "aws_iam_role_policy" "github_actions_s3" {
         Action = [
           "s3:CreateBucket",
           "s3:DeleteBucket",
+          "s3:GetAccelerateConfiguration",
           "s3:GetBucketAcl",
           "s3:GetBucketCORS",
           "s3:GetBucketLocation",
           "s3:GetBucketLogging",
           "s3:GetBucketNotification",
+          "s3:GetBucketObjectLockConfiguration",
+          "s3:GetBucketOwnershipControls",
           "s3:GetBucketPolicy",
+          "s3:GetBucketPolicyStatus",
           "s3:GetBucketPublicAccessBlock",
           "s3:GetBucketRequestPayment",
           "s3:GetBucketTagging",
@@ -449,10 +459,13 @@ resource "aws_iam_role_policy" "github_actions_s3" {
           "s3:GetLifecycleConfiguration",
           "s3:GetReplicationConfiguration",
           "s3:ListBucket",
+          "s3:PutAccelerateConfiguration",
           "s3:PutBucketAcl",
           "s3:PutBucketCORS",
           "s3:PutBucketLogging",
           "s3:PutBucketNotification",
+          "s3:PutBucketObjectLockConfiguration",
+          "s3:PutBucketOwnershipControls",
           "s3:PutBucketPolicy",
           "s3:PutBucketPublicAccessBlock",
           "s3:PutBucketRequestPayment",
@@ -536,7 +549,80 @@ resource "aws_iam_role_policy" "github_actions_xray" {
           "xray:GetSamplingRules",
           "xray:GetSamplingTargets",
           "xray:GetSamplingStatisticSummaries",
-          "xray:GetEncryptionConfig"
+          "xray:GetEncryptionConfig",
+          "xray:ListTagsForResource",
+          "xray:TagResource",
+          "xray:UntagResource",
+          "xray:CreateGroup",
+          "xray:UpdateGroup",
+          "xray:DeleteGroup",
+          "xray:CreateSamplingRule",
+          "xray:UpdateSamplingRule",
+          "xray:DeleteSamplingRule"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Policy for CloudWatch (dashboards and metrics)
+resource "aws_iam_role_policy" "github_actions_cloudwatch" {
+  name = "${var.project_name}-github-actions-cloudwatch"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "CloudWatchDashboards"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:GetDashboard",
+          "cloudwatch:ListDashboards",
+          "cloudwatch:PutDashboard",
+          "cloudwatch:DeleteDashboards",
+          "cloudwatch:GetMetricData",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:ListMetrics",
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource",
+          "cloudwatch:ListTagsForResource"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Policy for Application Auto Scaling (ECS service scaling)
+resource "aws_iam_role_policy" "github_actions_autoscaling" {
+  name = "${var.project_name}-github-actions-autoscaling"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ApplicationAutoScaling"
+        Effect = "Allow"
+        Action = [
+          "application-autoscaling:DescribeScalableTargets",
+          "application-autoscaling:DescribeScalingActivities",
+          "application-autoscaling:DescribeScalingPolicies",
+          "application-autoscaling:DescribeScheduledActions",
+          "application-autoscaling:RegisterScalableTarget",
+          "application-autoscaling:DeregisterScalableTarget",
+          "application-autoscaling:PutScalingPolicy",
+          "application-autoscaling:DeleteScalingPolicy",
+          "application-autoscaling:PutScheduledAction",
+          "application-autoscaling:DeleteScheduledAction",
+          "application-autoscaling:TagResource",
+          "application-autoscaling:UntagResource",
+          "application-autoscaling:ListTagsForResource"
         ]
         Resource = "*"
       }
