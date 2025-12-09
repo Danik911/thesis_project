@@ -629,7 +629,11 @@ module "ecs_api" {
     { name = "AWS_REGION", value = var.aws_region },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
     { name = "DATABASE_NAME", value = var.aurora_database_name },
-    { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn }
+    { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn },
+    # ChromaDB RAG Configuration - API needs this because workflows run IN API container
+    { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
+    { name = "S3_CHROMADB_KEY", value = "chroma_db.tar.gz" },
+    { name = "RAG_VECTOR_STORE_PATH", value = "/app/chroma_db" }
   ]
 
   # Database and authentication secrets from Secrets Manager
