@@ -630,6 +630,27 @@ resource "aws_iam_role_policy" "github_actions_autoscaling" {
   })
 }
 
+# Policy for AWS Config (stop recorder to save costs)
+resource "aws_iam_role_policy" "github_actions_config" {
+  name = "${var.project_name}-github-actions-config"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ConfigRecorder"
+        Effect = "Allow"
+        Action = [
+          "config:StopConfigurationRecorder",
+          "config:DescribeConfigurationRecorderStatus"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # =============================================================================
 # Outputs
 # =============================================================================

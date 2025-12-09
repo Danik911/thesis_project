@@ -1,0 +1,123 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "yes" to confirm destruction'
+        required: true
+        default: 'no'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+  PROJECT_NAME: pharma-test-gen
+  CLUSTER_NAME: pharma-test-gen-cluster
+
+jobs:
+  destroy:
+    name: Destroy Infrastructure
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'yes'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::275333454012:role/pharma-test-gen-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: aws/terraform
+        run: terraform init
+
+      - name: Install boto3
+        run: pip install boto3
+
+      - name: Empty S3 Buckets
+        shell: python
+        env:
+          PROJECT_NAME: ${{ env.PROJECT_NAME }}
+        run: |
+          import boto3
+          import os
+          
+          s3 = boto3.resource('s3')
+          buckets = [
+              f"{os.environ['PROJECT_NAME']}-output-staging",
+              f"{os.environ['PROJECT_NAME']}-vectors-staging"
+          ]
+          
+          for bucket_name in buckets:
+              bucket = s3.Bucket(bucket_name)
+              try:
+                  # Check if bucket exists
+                  s3.meta.client.head_bucket(Bucket=bucket_name)
+                  print(f"Emptying {bucket_name}...")
+                  bucket.object_versions.delete()
+                  print(f"Emptied {bucket_name}")
+              except Exception as e:
+                  print(f"Skipping {bucket_name}: {e}")
+
+      - name: Scale down ECS Services
+        run: |
+          echo "Scaling down ECS services..."
+          for service in api worker frontend; do
+            echo "Scaling down ${{ env.PROJECT_NAME }}-${service}..."
+            aws ecs update-service \
+              --cluster ${{ env.CLUSTER_NAME }} \
+              --service ${{ env.PROJECT_NAME }}-${service} \
+              --desired-count 0 || echo "Service not found or already stopped"
+          done
+          
+          echo "Waiting 30 seconds for tasks to stop..."
+          sleep 30
+
+      - name: Remove ECR from State (Preserve Images)
+        working-directory: aws/terraform
+        run: |
+          echo "Removing ECR repositories from Terraform state..."
+          terraform state rm 'module.ecr.aws_ecr_repository.this["api"]' || true
+          terraform state rm 'module.ecr.aws_ecr_lifecycle_policy.this["api"]' || true
+          terraform state rm 'module.ecr.aws_ecr_repository.this["worker"]' || true
+          terraform state rm 'module.ecr.aws_ecr_lifecycle_policy.this["worker"]' || true
+          terraform state rm 'module.ecr.aws_ecr_repository.this["frontend"]' || true
+          terraform state rm 'module.ecr.aws_ecr_lifecycle_policy.this["frontend"]' || true
+
+      - name: Stop AWS Config Recorder
+        run: |
+          echo "Stopping AWS Config recorder..."
+          aws configservice stop-configuration-recorder --configuration-recorder-name pharma || echo "Config recorder not found or already stopped"
+
+      - name: Terraform Destroy
+        working-directory: aws/terraform
+        run: |
+          echo "Running terraform destroy..."
+          terraform destroy \
+            -var-file=environments/staging.tfvars \
+            -auto-approve
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "  DESTRUCTION COMPLETE"
+          echo "=========================================="
+          echo "  Preserved Resources:"
+          echo "    - S3: pharma-test-gen-terraform-state"
+          echo "    - S3: pharma-test-gen-chromadb-*"
+          echo "    - ECR Repositories (images kept)"
+          echo "    - DynamoDB: pharma-test-gen-terraform-locks"
+          echo ""
+          echo "  To redeploy: Run 'Deploy to AWS ECS' workflow"
+          echo "=========================================="

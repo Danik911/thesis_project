@@ -44,15 +44,27 @@ Destroy the pharma-test-gen AWS ECS/Fargate infrastructure to save costs.
 
 ## Execution
 
-### Step 1: Parse Arguments
+### Option 1: Trigger GitHub Actions (Recommended)
 
-Arguments provided: `$ARGUMENTS`
+```bash
+gh workflow run destroy.yml -f confirm=yes
+```
 
-Build command based on arguments:
-- If `--yes` is present: add `--yes --skip-ecr` flags
-- If `--delete-ecr` is present: remove `--skip-ecr` flag
+This triggers the remote destruction workflow which:
+1. Empties S3 buckets (vectors and output)
+2. Scales down ECS services
+3. Removes ECR repos from Terraform state (preserves images)
+4. Runs `terraform destroy`
+5. Stops AWS Config recorder
 
-### Step 2: Run Destroy Script
+### Option 2: GitHub UI
+
+1. Go to https://github.com/Danik911/thesis_project/actions
+2. Select "Destroy Infrastructure" workflow
+3. Click "Run workflow"
+4. Type "yes" in the confirmation box
+
+### Option 3: Local Script (Legacy)
 
 ```bash
 python aws/scripts/destroy.py $ARGUMENTS --skip-ecr
