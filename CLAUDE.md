@@ -21,9 +21,9 @@ Guidance for Claude Code on the pharmaceutical test generation thesis project.
 ### Issue Management Protocol
 When encountering bugs, errors, or unexpected behavior:
 
-1. **Search First** - Use Explore subagent to check `docs/issues/` for existing solutions
+1. **Search First** - Check `docs/issues/ISSUE-CATALOG.md` for existing solutions
 2. **Create Before Solving** - If no solution exists, create new issue file BEFORE attempting fix:
-   - Format: `ISSUE-###-short-description.md` (increment from highest existing number, currently ISSUE-005)
+   - Format: `ISSUE-###-short-description.md` (see catalog for next number)
    - Include: Date, Symptom, Error messages, Affected files
 3. **Document Solution** - After resolving, update the issue file with:
    - Root Cause analysis
@@ -31,8 +31,10 @@ When encountering bugs, errors, or unexpected behavior:
    - Code changes (Before/After)
    - Prevention guidance
 4. **Cross-Reference** - Link related issues when applicable
+5. **Update Catalog** - Run doc-updater agent OR manually update `docs/issues/ISSUE-CATALOG.md`
 
-**Issue File Template**: See `docs/issues/ISSUE-001-cloudfront-404-errors.md` for format example.
+**Issue Catalog**: `docs/issues/ISSUE-CATALOG.md` - Quick lookup for all issues
+**Issue Template**: See `docs/issues/ISSUE-001-cloudfront-404-errors.md` for format example.
 
 ---
 
@@ -52,6 +54,7 @@ When encountering bugs, errors, or unexpected behavior:
 | PRP Workflow | `.claude/commands/prp.md` |
 | PRP Tasks | `PRPs/tasks/` (0.1-5.3, 23 tasks) |
 | Issues | `docs/issues/` |
+| Issue Catalog | `docs/issues/ISSUE-CATALOG.md` |
 
 ---
 
@@ -63,6 +66,7 @@ Located at `.claude/agents/`. All subagents must fail explicitly (NO FALLBACKS).
 |-------|---------|-------|
 | context-collector | Research GAMP-5, LlamaIndex patterns, pharmaceutical standards | Sonnet |
 | debugger | Fix complex issues with max 5 iterations (Ultrathink methodology) | Opus |
+| doc-updater | Update documentation after code changes, maintain issue catalog | Sonnet |
 | security-auditor | READ-ONLY vulnerability scanning (OWASP, secrets, AWS misconfig) | Sonnet |
 | task-analyzer | Pre-flight checker for manual AWS/infrastructure setup | Sonnet |
 | task-executor | Implement PRP tasks following GAMP-5 patterns | Opus |

@@ -709,8 +709,8 @@ module "ecs_worker" {
     { name = "DATABASE_NAME", value = var.aurora_database_name },
     { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn },
     # ChromaDB RAG Configuration (Task 4.2)
-    # Using existing bucket pharma-test-gen-vectors-staging (manually created during initial deployment)
-    { name = "S3_CHROMADB_BUCKET", value = "pharma-test-gen-vectors-staging" },
+    # Uses Terraform-managed bucket (aws_s3_bucket.chromadb) with IAM permissions
+    { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
     { name = "S3_CHROMADB_KEY", value = "chroma_db.tar.gz" },
     { name = "RAG_VECTOR_STORE_PATH", value = "/app/chroma_db" }
   ]
