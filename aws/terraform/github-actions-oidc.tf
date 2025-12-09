@@ -90,10 +90,14 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
           "ecr:DescribeImages",
           "ecr:DescribeRepositories",
           "ecr:GetDownloadUrlForLayer",
+          "ecr:GetRepositoryPolicy",
           "ecr:InitiateLayerUpload",
           "ecr:ListImages",
+          "ecr:ListTagsForResource",
           "ecr:PutImage",
-          "ecr:UploadLayerPart"
+          "ecr:UploadLayerPart",
+          "ecr:TagResource",
+          "ecr:UntagResource"
         ]
         Resource = [
           "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${var.project_name}-*"
@@ -193,7 +197,10 @@ resource "aws_iam_role_policy" "github_actions_iam" {
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
           "iam:ListPolicyVersions",
-          "iam:ListInstanceProfilesForRole"
+          "iam:ListInstanceProfilesForRole",
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders",
+          "iam:ListOpenIDConnectProviderTags"
         ]
         Resource = "*"
       },
@@ -315,7 +322,10 @@ resource "aws_iam_role_policy" "github_actions_logs" {
           "logs:PutRetentionPolicy",
           "logs:TagLogGroup",
           "logs:UntagLogGroup",
-          "logs:ListTagsLogGroup"
+          "logs:ListTagsLogGroup",
+          "logs:ListTagsForResource",
+          "logs:TagResource",
+          "logs:UntagResource"
         ]
         Resource = "*"
       }
@@ -476,7 +486,9 @@ resource "aws_iam_role_policy" "github_actions_route53" {
           "route53:GetHostedZone",
           "route53:ListHostedZones",
           "route53:ListResourceRecordSets",
-          "route53:GetChange"
+          "route53:GetChange",
+          "route53:ListTagsForResource",
+          "route53:ListTagsForResources"
         ]
         Resource = "*"
       }
@@ -500,6 +512,31 @@ resource "aws_iam_role_policy" "github_actions_acm" {
           "acm:GetCertificate",
           "acm:ListCertificates",
           "acm:ListTagsForCertificate"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Policy for X-Ray (tracing)
+resource "aws_iam_role_policy" "github_actions_xray" {
+  name = "${var.project_name}-github-actions-xray"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "XRayRead"
+        Effect = "Allow"
+        Action = [
+          "xray:GetGroup",
+          "xray:GetGroups",
+          "xray:GetSamplingRules",
+          "xray:GetSamplingTargets",
+          "xray:GetSamplingStatisticSummaries",
+          "xray:GetEncryptionConfig"
         ]
         Resource = "*"
       }
