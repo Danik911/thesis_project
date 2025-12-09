@@ -83,7 +83,7 @@ jobs:
           echo "Waiting 30 seconds for tasks to stop..."
           sleep 30
 
-      - name: Remove ECR from State (Preserve Images)
+      - name: Remove Preserved Resources from State
         working-directory: aws/terraform
         run: |
           echo "Removing ECR repositories from Terraform state..."
@@ -93,6 +93,12 @@ jobs:
           terraform state rm 'module.ecr.aws_ecr_lifecycle_policy.this["worker"]' || true
           terraform state rm 'module.ecr.aws_ecr_repository.this["frontend"]' || true
           terraform state rm 'module.ecr.aws_ecr_lifecycle_policy.this["frontend"]' || true
+
+          echo "Removing ChromaDB bucket from Terraform state..."
+          terraform state rm 'aws_s3_bucket.chromadb' || true
+          terraform state rm 'aws_s3_bucket_versioning.chromadb' || true
+          terraform state rm 'aws_s3_bucket_server_side_encryption_configuration.chromadb' || true
+          terraform state rm 'aws_s3_bucket_public_access_block.chromadb' || true
 
       - name: Stop AWS Config Recorder
         run: |
