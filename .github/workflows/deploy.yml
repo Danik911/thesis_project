@@ -1,0 +1,218 @@
+name: Deploy to AWS ECS
+
+on:
+  push:
+    branches: [deploy]
+  workflow_dispatch:  # Manual trigger from GitHub UI or CLI
+
+permissions:
+  id-token: write   # Required for OIDC authentication
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+  ECR_REGISTRY: 275333454012.dkr.ecr.eu-west-2.amazonaws.com
+  PROJECT_NAME: pharma-test-gen
+  CLUSTER_NAME: pharma-test-gen-cluster
+
+jobs:
+  build-and-push:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api, worker, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::275333454012:role/pharma-test-gen-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE_TAG="staging-latest"
+
+          if [ "${{ matrix.service }}" == "frontend" ]; then
+            echo "Building frontend with CloudFront-relative API URL..."
+            docker build \
+              --build-arg NEXT_PUBLIC_API_BASE_URL="" \
+              --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}" \
+              -t ${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${IMAGE_TAG} \
+              -f Dockerfile.frontend .
+          else
+            echo "Building ${{ matrix.service }}..."
+            docker build \
+              -t ${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${IMAGE_TAG} \
+              -f Dockerfile.${{ matrix.service }}.pip .
+          fi
+
+          echo "Pushing image to ECR..."
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${IMAGE_TAG}
+          echo "Successfully pushed ${{ matrix.service }} image"
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    outputs:
+      api_task_def_arn: ${{ steps.get-task-defs.outputs.api_arn }}
+      worker_task_def_arn: ${{ steps.get-task-defs.outputs.worker_arn }}
+      frontend_task_def_arn: ${{ steps.get-task-defs.outputs.frontend_arn }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::275333454012:role/pharma-test-gen-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: aws/terraform
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: aws/terraform
+        run: |
+          terraform apply \
+            -var-file=environments/staging.tfvars \
+            -auto-approve
+
+      - name: Get latest task definition ARNs
+        id: get-task-defs
+        run: |
+          # Get the latest active task definition for each service
+          API_ARN=$(aws ecs describe-task-definition --task-definition ${{ env.PROJECT_NAME }}-api --query 'taskDefinition.taskDefinitionArn' --output text)
+          WORKER_ARN=$(aws ecs describe-task-definition --task-definition ${{ env.PROJECT_NAME }}-worker --query 'taskDefinition.taskDefinitionArn' --output text)
+          FRONTEND_ARN=$(aws ecs describe-task-definition --task-definition ${{ env.PROJECT_NAME }}-frontend --query 'taskDefinition.taskDefinitionArn' --output text)
+
+          echo "api_arn=${API_ARN}" >> $GITHUB_OUTPUT
+          echo "worker_arn=${WORKER_ARN}" >> $GITHUB_OUTPUT
+          echo "frontend_arn=${FRONTEND_ARN}" >> $GITHUB_OUTPUT
+
+          echo "Task definitions:"
+          echo "  API: ${API_ARN}"
+          echo "  Worker: ${WORKER_ARN}"
+          echo "  Frontend: ${FRONTEND_ARN}"
+
+  update-services:
+    name: Update ECS Services
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::275333454012:role/pharma-test-gen-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Force ECS service updates
+        run: |
+          echo "Forcing new deployment for all services..."
+
+          for service in api worker frontend; do
+            echo "Updating ${{ env.PROJECT_NAME }}-${service}..."
+            aws ecs update-service \
+              --cluster ${{ env.CLUSTER_NAME }} \
+              --service ${{ env.PROJECT_NAME }}-${service} \
+              --force-new-deployment \
+              --query 'service.serviceName' \
+              --output text
+          done
+
+          echo "All services updated. Waiting for stability..."
+
+      - name: Wait for services to stabilize
+        run: |
+          echo "Waiting for ECS services to reach steady state..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.CLUSTER_NAME }} \
+            --services \
+              ${{ env.PROJECT_NAME }}-api \
+              ${{ env.PROJECT_NAME }}-worker \
+              ${{ env.PROJECT_NAME }}-frontend
+          echo "All services are stable!"
+
+  health-check:
+    name: Health Check & Cache Invalidation
+    needs: update-services
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::275333454012:role/pharma-test-gen-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Wait for ALB target registration
+        run: |
+          echo "Waiting 30 seconds for ALB to register new targets..."
+          sleep 30
+
+      - name: Health check - API
+        run: |
+          echo "Checking API health at https://csvgeneration.com/health..."
+          for i in {1..5}; do
+            if curl -sf https://csvgeneration.com/health; then
+              echo "API health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "API health check failed after 5 attempts"
+          exit 1
+
+      - name: Health check - Frontend
+        run: |
+          echo "Checking frontend at https://csvgeneration.com/..."
+          for i in {1..5}; do
+            if curl -sf https://csvgeneration.com/ | grep -q "<!DOCTYPE html>"; then
+              echo "Frontend health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "Frontend health check failed after 5 attempts"
+          exit 1
+
+      - name: Invalidate CloudFront cache
+        run: |
+          echo "Invalidating CloudFront cache..."
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id E1DTSJYZQGK50L \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          echo "Created invalidation: ${INVALIDATION_ID}"
+
+      - name: Deployment summary
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "  DEPLOYMENT COMPLETE!"
+          echo "=========================================="
+          echo ""
+          echo "  URL: https://csvgeneration.com"
+          echo "  API: https://csvgeneration.com/health"
+          echo ""
+          echo "  Services deployed:"
+          echo "    - pharma-test-gen-api"
+          echo "    - pharma-test-gen-worker"
+          echo "    - pharma-test-gen-frontend"
+          echo ""
+          echo "=========================================="

@@ -14,6 +14,10 @@ environment  = "staging"
 project_name = "pharma-test-gen"
 aws_region   = "eu-west-2"
 
+# Domain configuration (required for Route53 module)
+domain_name        = "csvgeneration.com"
+create_hosted_zone = false  # Using existing Route53 hosted zone
+
 # -----------------------------------------------------------------------------
 # Networking (Updated with actual VPC/Subnet IDs)
 # -----------------------------------------------------------------------------
@@ -42,7 +46,6 @@ aurora_database_name = "pharma_test_gen"
 # S3 Buckets (Created with versioning enabled)
 # -----------------------------------------------------------------------------
 
-vector_bucket = "pharma-test-gen-vectors-staging"
 output_bucket = "pharma-test-gen-output-staging"
 
 # -----------------------------------------------------------------------------

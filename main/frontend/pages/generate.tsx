@@ -919,6 +919,54 @@ export default function Generate() {
         }
     };
 
+    const handleExport = async (format: 'html' | 'json') => {
+        if (!jobId) return;
+        const apiUrl = getApiBaseUrl();
+        const url = `${apiUrl}/jobs/${jobId}/export/${format}`;
+        
+        try {
+            const response = await authenticatedFetch(url, getToken);
+            if (!response.ok) throw new Error('Export failed');
+            
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `test_suite_${jobId}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(downloadUrl);
+        } catch (e) {
+            console.error("Export error:", e);
+            alert("Failed to export file");
+        }
+    };
+
+    const handleView = async () => {
+        if (!jobId) return;
+        const apiUrl = getApiBaseUrl();
+        const url = `${apiUrl}/jobs/${jobId}/export/html`;
+        
+        try {
+            const response = await authenticatedFetch(url, getToken);
+            if (!response.ok) throw new Error('View failed');
+            
+            const blob = await response.blob();
+            const viewUrl = window.URL.createObjectURL(blob);
+            window.open(viewUrl, '_blank');
+            
+            // Note: We can't easily revokeObjectURL here because the new window needs it.
+            // Browsers will clean it up when the document is unloaded, but for a new window/tab
+            // it persists until that tab is closed.
+            // A timeout is a reasonable compromise if we want to be cleaner, but 
+            // keeping it alive is safer for the user experience.
+        } catch (e) {
+            console.error("View error:", e);
+            alert("Failed to view file");
+        }
+    };
+
     const handleHistoryDownload = async (job: any) => {
         const apiUrl = getApiBaseUrl();
         const url = `${apiUrl}/jobs/${job.job_id}/download`;
@@ -1320,7 +1368,7 @@ export default function Generate() {
                                         </h2>
                                     </div>
 
-                                    <ComplianceDashboard results={results} onDownload={handleDownload} />
+                                    <ComplianceDashboard results={results} onDownload={handleDownload} onExport={handleExport} onView={handleView} />
                                 </motion.div>
                             )}
 

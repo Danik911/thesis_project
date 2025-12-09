@@ -3,11 +3,11 @@ description: Deploy the pharma-test-gen system to AWS ECS/Fargate. Full 2-phase 
 argument-hint: (no arguments)
 ---
 
-# Deploy to AWS ECS/Fargate
+# Deploy to AWS ECS/Fargate (Fire-and-Forget)
 
-Full deployment of the pharmaceutical test generation system to AWS.
+Full deployment of the pharmaceutical test generation system to AWS using GitHub Actions.
 
-**Estimated time:** 15-25 minutes
+**Estimated time:** 15-20 minutes (fully automated)
 
 **Production URL:** https://csvgeneration.com/
 
@@ -26,55 +26,55 @@ Full deployment of the pharmaceutical test generation system to AWS.
 
 Before running, ensure:
 
-1. **Docker** is running (Docker Desktop or WSL Docker)
-2. **Terraform** is installed (in WSL at ~/bin/terraform)
-3. **AWS CLI** is configured with credentials
-4. **Environment variables** are set:
-   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (for frontend build)
+1. **GitHub CLI** is installed and authenticated (`gh auth login`)
+2. **GitHub Secret** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is configured in repo settings
+3. **OIDC IAM Role** exists in AWS (created via Terraform)
 
 ## Execution
 
-### Step 1: Check Prerequisites
-
-Verify prerequisites are met:
+### Option 1: Trigger GitHub Actions (Recommended)
 
 ```bash
-docker info > /dev/null 2>&1 && echo "Docker: OK" || echo "Docker: NOT RUNNING"
-aws sts get-caller-identity --query Account --output text 2>/dev/null && echo "AWS: OK" || echo "AWS: NOT CONFIGURED"
+gh workflow run deploy.yml
 ```
 
-If Docker is not running or AWS is not configured, STOP and ask the user to fix.
+This triggers the Fire-and-Forget workflow which:
+1. Builds all 3 Docker images in parallel (native AMD64, no QEMU)
+2. Pushes images to ECR
+3. Runs Terraform apply
+4. Forces ECS service updates
+5. Waits for services to stabilize
+6. Runs health checks
+7. Invalidates CloudFront cache
 
-### Step 2: Run Deploy Script
-
-Run the full deployment script:
+### Option 2: Push to Deploy Branch
 
 ```bash
-python aws/scripts/deploy.py
+git push origin deploy
 ```
 
-Use a **20-minute timeout** as this is a long-running operation.
+Any push to the `deploy` branch automatically triggers the workflow.
 
-The script executes in 2 phases:
+### Option 3: GitHub UI
 
-**Phase 1: Backend + Infrastructure** (~10-15 min)
-1. Authenticate with ECR
-2. Build API image (linux/amd64)
-3. Build Worker image (linux/amd64)
-4. Push images to ECR
-5. Run Terraform plan + apply
-6. Wait for ECS services healthy
+1. Go to https://github.com/Danik911/thesis_project/actions
+2. Select "Deploy to AWS ECS" workflow
+3. Click "Run workflow"
 
-**Phase 2: Frontend** (~5-10 min)
-1. Build Frontend image with CloudFront-relative URLs
-2. Push to ECR
-3. Register new task definition
-4. Update ECS service
-5. Invalidate CloudFront cache
+## Monitoring Progress
 
-### Step 3: Verify Deployment
+### Watch GitHub Actions
 
-After script completes, verify services are healthy:
+```bash
+gh run watch
+```
+
+Or view in browser:
+```bash
+gh run list --workflow=deploy.yml
+```
+
+### Check ECS Status
 
 ```bash
 aws ecs describe-services \
@@ -85,161 +85,83 @@ aws ecs describe-services \
   --region eu-west-2
 ```
 
-Expected: All services show `running: 1, desired: 1`
+## Verify Deployment
 
-### Step 4: Verify Task Definition Revisions (ISSUE-006)
-
-**CRITICAL:** After Terraform apply, ECS may use old task definition revisions missing secrets.
+After workflow completes:
 
 ```bash
-# Check which revision each service is using
-aws ecs describe-services \
-  --cluster pharma-test-gen-cluster \
-  --services pharma-test-gen-api pharma-test-gen-worker pharma-test-gen-frontend \
-  --query "services[*].{name:serviceName,taskDef:taskDefinition}" \
-  --output table \
-  --region eu-west-2
+# Health check
+curl -s https://csvgeneration.com/health | jq
 
-# Verify the API task definition has all required secrets
-aws ecs describe-task-definition \
-  --task-definition pharma-test-gen-api \
-  --query "taskDefinition.containerDefinitions[0].secrets[*].name" \
-  --region eu-west-2
+# Frontend check
+curl -sI https://csvgeneration.com/ | head -5
 ```
 
-Expected secrets: `DATABASE_URL`, `CLERK_PEM_PUBLIC_KEY`, `CLERK_ISSUER`, `OPENROUTER_API_KEY`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`
+Expected: `200 OK` responses.
 
-If secrets are missing, register the golden task definition:
-```bash
-aws ecs register-task-definition \
-  --cli-input-json file://aws/terraform/task-definition-api-v20.json \
-  --region eu-west-2
-
-aws ecs update-service --cluster pharma-test-gen-cluster \
-  --service pharma-test-gen-api \
-  --task-definition pharma-test-gen-api \
-  --force-new-deployment --region eu-west-2
-```
-
-### Step 5: Verify IAM Policies (ISSUE-005)
-
-**CRITICAL:** After destroy/deploy cycle, task roles may lose IAM policies.
-
-```bash
-# Check API task role has policies
-aws iam list-attached-role-policies --role-name pharma-test-gen-api-task-role
-aws iam list-role-policies --role-name pharma-test-gen-api-task-role
-```
-
-If empty, IAM policies need to be re-attached. See `main/docs/issues/ISSUE-005-rebuild-uses-wrong-image-tag.md`.
-
-### Step 6: Upload ChromaDB (if fresh deploy)
-
-After a fresh deploy (especially after `/destroy`), ChromaDB data needs to be uploaded:
-
-```bash
-# Check if ChromaDB exists in S3
-aws s3 ls s3://pharma-test-gen-vectors-staging/chroma_db.tar.gz --region eu-west-2
-
-# If missing, upload from local
-tar -czvf /tmp/chroma_db.tar.gz -C main chroma_db
-aws s3 cp /tmp/chroma_db.tar.gz s3://pharma-test-gen-vectors-staging/chroma_db.tar.gz --region eu-west-2
-```
-
-### Step 7: Report Results
-
-Report deployment URLs to user:
+## Deployment URLs
 
 | Service | URL |
 |---------|-----|
-| Production (Route 53) | https://csvgeneration.com |
+| Production | https://csvgeneration.com |
 | API Health | https://csvgeneration.com/health |
-| Frontend | https://csvgeneration.com/generate |
+| Generate Page | https://csvgeneration.com/generate |
 
 ## Troubleshooting
 
-### Docker Build Failures
+### GitHub Actions Workflow Failed
 
-1. **QEMU crash** (ARM64 host building AMD64):
-   ```powershell
-   wsl --shutdown
-   # Wait 10 seconds, retry
-   ```
+```bash
+# View recent runs
+gh run list --workflow=deploy.yml --limit 5
 
-2. **Out of disk space**:
-   ```bash
-   docker system prune -a --volumes
-   ```
+# View specific run logs
+gh run view <RUN_ID> --log-failed
+```
 
-### Terraform Failures
+### OIDC Authentication Error
 
-1. **ECR already exists**:
-   ```bash
-   # Script auto-imports, but if it fails:
-   wsl bash -c 'export PATH=$HOME/bin:$PATH && cd /mnt/c/Users/anteb/Desktop/Courses/Projects/thesis_project/aws/terraform && terraform import -var-file=environments/staging.tfvars "module.ecr.aws_ecr_repository.this[\"api\"]" pharma-test-gen-api'
-   ```
+**Symptom:** `Error: Could not assume role`
 
-2. **State lock**:
-   ```bash
-   wsl bash -c 'export PATH=$HOME/bin:$PATH && cd /mnt/c/Users/anteb/Desktop/Courses/Projects/thesis_project/aws/terraform && terraform force-unlock -force LOCK_ID'
-   ```
+**Cause:** OIDC provider or IAM role not created.
+
+**Fix:**
+```bash
+wsl -e bash -c 'cd /mnt/c/Users/anteb/Desktop/Courses/Projects/thesis_project/aws/terraform && terraform apply -var-file=environments/staging.tfvars -target=aws_iam_openid_connect_provider.github -target=aws_iam_role.github_actions -auto-approve'
+```
+
+### Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY Secret
+
+**Symptom:** Frontend build fails with missing env var.
+
+**Fix:** Add the secret in GitHub repo settings:
+1. Go to Settings > Secrets and variables > Actions
+2. Add `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` with your Clerk publishable key
 
 ### ECS Service Not Starting
 
-Check service events:
-```bash
-aws ecs describe-services \
-  --cluster pharma-test-gen-cluster \
-  --services pharma-test-gen-api \
-  --query 'services[0].events[0:5]' \
-  --region eu-west-2
-```
-
-Check task logs:
+Check CloudWatch logs:
 ```bash
 aws logs tail /ecs/pharma-test-gen/api --follow --region eu-west-2
 ```
 
-### API Returns 500: Missing Secrets (ISSUE-006)
+### Worker Missing ChromaDB
 
-**Symptom:** `{"detail":"CRITICAL: Authentication system not configured"}`
+After fresh deploy, upload ChromaDB:
+```bash
+tar -czvf /tmp/chroma_db.tar.gz -C main chroma_db
+aws s3 cp /tmp/chroma_db.tar.gz s3://pharma-test-gen-vectors-staging/chroma_db.tar.gz --region eu-west-2
+```
 
-**Cause:** Wrong task definition revision running.
+## Local Deployment (Fallback)
 
-**Fix:** See Step 4 above to verify and fix task definition revision.
-
-### API S3 403 Forbidden (ISSUE-005)
-
-**Symptom:** S3 AccessDenied errors in API logs.
-
-**Cause:** Task role missing IAM policies after Terraform destroy/apply.
-
-**Fix:** Re-attach policies. See `main/docs/issues/ISSUE-005-rebuild-uses-wrong-image-tag.md`.
-
-### Worker Not Starting
-
-**Symptom:** Worker shows `desired=1, running=0` indefinitely.
-
-**Cause:** ChromaDB tarball missing in S3.
-
-**Fix:** Upload ChromaDB as shown in Step 6.
-
-For more troubleshooting, invoke the `aws-deployment` skill.
-
-## Post-Deploy: Register Task Definitions
-
-After initial deploy, you may need to register the golden task definitions with all secrets:
+If GitHub Actions fails, use the local script:
 
 ```bash
-aws ecs register-task-definition \
-  --cli-input-json file://aws/terraform/task-definition-api-v20.json \
-  --region eu-west-2
-
-aws ecs update-service --cluster pharma-test-gen-cluster \
-  --service pharma-test-gen-api \
-  --task-definition pharma-test-gen-api \
-  --force-new-deployment --region eu-west-2
+python aws/scripts/deploy.py
 ```
+
+Note: This requires QEMU and takes 40-60 minutes with ~60% reliability.
 
 ## Cost Information
 
@@ -247,3 +169,8 @@ aws ecs update-service --cluster pharma-test-gen-cluster \
 **Estimated monthly cost:** ~$360-720/month (if running 24/7)
 
 Use `/destroy` command at end of day to save costs.
+
+## Related Commands
+
+- `/redeploy` - Quick redeploy without Docker builds
+- `/destroy` - Tear down infrastructure to save costs

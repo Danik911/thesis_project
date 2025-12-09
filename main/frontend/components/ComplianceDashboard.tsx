@@ -4,6 +4,8 @@ import LangfuseTraceDashboard from './LangfuseTraceDashboard';
 interface ComplianceDashboardProps {
   results: any; // Replace with proper type
   onDownload: () => void;
+  onExport?: (format: 'html' | 'json') => void;
+  onView?: () => void;
 }
 
 // Format duration in minutes to human-readable format (e.g., "20h 55m" or "45m")
@@ -16,7 +18,7 @@ function formatDuration(minutes: number): string {
   return `${minutes}m`;
 }
 
-export default function ComplianceDashboard({ results, onDownload }: ComplianceDashboardProps) {
+export default function ComplianceDashboard({ results, onDownload, onExport, onView }: ComplianceDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const [showTracePanel, setShowTracePanel] = useState(false);
 
@@ -52,8 +54,45 @@ export default function ComplianceDashboard({ results, onDownload }: ComplianceD
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Download Test Suite
+            Download YAML
           </button>
+          {onExport && (
+            <>
+              {onView && (
+                <button
+                  onClick={onView}
+                  className="btn-secondary flex items-center gap-2"
+                  title="View HTML Report"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View
+                </button>
+              )}
+              <button
+                onClick={() => onExport('html')}
+                className="btn-secondary flex items-center gap-2"
+                title="Export as HTML"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                HTML
+              </button>
+              <button
+                onClick={() => onExport('json')}
+                className="btn-secondary flex items-center gap-2"
+                title="Export as JSON"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                JSON
+              </button>
+            </>
+          )}
         </div>
       </div>
 

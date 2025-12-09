@@ -1,0 +1,855 @@
+{
+  "suite_id": "OQ-SUITE-1850",
+  "gamp_category": 3,
+  "document_name": "7c0d0f8d-5604-4cd8-9178-01eba56e5423.md",
+  "test_cases": [
+    {
+      "test_id": "OQ-001",
+      "test_name": "Temperature Monitoring System Installation Verification",
+      "test_category": "installation",
+      "gamp_category": 3,
+      "objective": "Verify proper installation and configuration of the temperature monitoring system components",
+      "prerequisites": [
+        "System hardware components available",
+        "Installation manual provided by vendor",
+        "Qualified personnel available for installation"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Verify all hardware components are present as per packing list",
+          "expected_result": "All components accounted for and undamaged",
+          "data_to_capture": [
+            "Component list",
+            "Condition of components"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Install sensors according to vendor's installation manual",
+          "expected_result": "Sensors properly installed in designated locations",
+          "data_to_capture": [
+            "Installation locations",
+            "Sensor IDs"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Connect system to power source and verify startup sequence",
+          "expected_result": "System powers up successfully with no error messages",
+          "data_to_capture": [
+            "Startup messages",
+            "Error codes"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All system components installed correctly",
+        "System powers up without errors",
+        "Sensors properly positioned in designated locations"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "ALCOA+ principles"
+      ],
+      "urs_requirements": [
+        "URS-EMS-003"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System installation",
+        "GxP compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-002",
+      "test_name": "Temperature Monitoring System Functional Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify proper functionality of temperature monitoring and alert system",
+      "prerequisites": [
+        "System installed and powered on",
+        "Test temperature chamber available",
+        "System software configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set temperature chamber to known value within operating range",
+          "expected_result": "System displays temperature within \u00b10.5\u00b0C of set value",
+          "data_to_capture": [
+            "Set temperature",
+            "Displayed temperature"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Induce temperature deviation beyond \u00b12\u00b0C from setpoint",
+          "expected_result": "System generates audible and visual alarm within 30 seconds",
+          "data_to_capture": [
+            "Alarm time",
+            "Temperature deviation"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify temperature data recording interval",
+          "expected_result": "Temperature readings recorded at intervals not exceeding 5 minutes",
+          "data_to_capture": [
+            "Recording timestamps",
+            "Temperature values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Temperature readings accurate within \u00b10.5\u00b0C",
+        "Alarms triggered within 30 seconds of deviation",
+        "Data recorded at intervals \u22645 minutes"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ principles"
+      ],
+      "urs_requirements": [
+        "URS-EMS-001",
+        "URS-EMS-002",
+        "URS-EMS-004",
+        "URS-EMS-005"
+      ],
+      "related_tests": [
+        "OQ-001"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "System operation",
+        "Temperature monitoring",
+        "GxP compliance"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-003",
+      "test_name": "Temperature Monitoring System Data Integrity Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that temperature data is recorded and stored according to ALCOA+ principles and regulatory requirements",
+      "prerequisites": [
+        "System installation completed",
+        "Temperature sensors calibrated",
+        "Database configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate temperature monitoring for 24 hours",
+          "expected_result": "Temperature readings recorded every 5 minutes",
+          "data_to_capture": [
+            "Timestamp of readings",
+            "Temperature values"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify data storage in vendor's standard database format",
+          "expected_result": "All data stored in correct format without corruption",
+          "data_to_capture": [
+            "Database file format",
+            "Data integrity checks"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Check audit trail functionality for temperature data changes",
+          "expected_result": "All changes logged with timestamp and user information",
+          "data_to_capture": [
+            "Audit trail entries",
+            "Change records"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data recorded at intervals not exceeding 5 minutes",
+        "All data stored in vendor's standard database format",
+        "Audit trail maintained per 21 CFR Part 11 requirements"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "ALCOA+ principles"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Attributable",
+        "Legible",
+        "Contemporaneous",
+        "Original",
+        "Accurate"
+      ],
+      "urs_requirements": [
+        "URS-EMS-002",
+        "URS-EMS-006",
+        "URS-EMS-008"
+      ],
+      "related_tests": [
+        "OQ-001",
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "Data integrity",
+        "Regulatory compliance",
+        "Database management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-004",
+      "test_name": "Temperature Alarm System Functional Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that temperature alarm system functions correctly according to specified parameters",
+      "prerequisites": [
+        "System installation completed",
+        "Temperature sensors calibrated",
+        "Alarm thresholds configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set temperature threshold to trigger alarm at \u00b12\u00b0C from setpoint",
+          "expected_result": "Threshold correctly configured in system",
+          "data_to_capture": [
+            "Setpoint value",
+            "Threshold configuration"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Simulate temperature deviation beyond threshold",
+          "expected_result": "Alarm triggered within 30 seconds",
+          "data_to_capture": [
+            "Time of deviation",
+            "Alarm trigger time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify alarm notification integration with site paging system",
+          "expected_result": "Alarm notification received on paging system",
+          "data_to_capture": [
+            "Notification method",
+            "Response time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm triggers within 30 seconds of temperature deviation",
+        "Alarm notifications integrate with site paging system",
+        "System responds to alarm conditions as specified"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GMP requirements"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Accurate",
+        "Consistent"
+      ],
+      "urs_requirements": [
+        "URS-EMS-005",
+        "URS-EMS-011",
+        "URS-EMS-015"
+      ],
+      "related_tests": [
+        "OQ-002"
+      ],
+      "estimated_duration_minutes": 90,
+      "required_expertise": [
+        "System configuration",
+        "Alarm management",
+        "Integration testing"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-005",
+      "test_name": "Temperature Monitoring System Alarm Response Verification",
+      "test_category": "functional",
+      "gamp_category": 3,
+      "objective": "Verify that the system responds to alarm conditions within the specified 30-second timeframe",
+      "prerequisites": [
+        "System installed and configured",
+        "Alarm thresholds set",
+        "Test temperature probe available"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Set temperature probe to exceed alarm threshold",
+          "expected_result": "System detects temperature deviation",
+          "data_to_capture": [
+            "Time of deviation detection"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Start timer when deviation is detected",
+          "expected_result": "Timer starts accurately",
+          "data_to_capture": [
+            "Start time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Monitor system response",
+          "expected_result": "Alarm notification received within 30 seconds",
+          "data_to_capture": [
+            "Alarm notification time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "System detects temperature deviation",
+        "Alarm notification received within 30 seconds",
+        "Response time documented"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GMP Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Complete audit trail of alarm event",
+        "Timestamp accuracy maintained"
+      ],
+      "urs_requirements": [
+        "URS-EMS-011"
+      ],
+      "related_tests": [
+        "OQ-004"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "EMS operation",
+        "Temperature monitoring",
+        "Alarm system verification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-006",
+      "test_name": "System Integration with Facility Management System Verification",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify proper integration between EMS and facility management system using standard protocols",
+      "prerequisites": [
+        "Both systems installed and configured",
+        "Integration protocol documentation available",
+        "Test environment prepared"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Initiate test data transfer from EMS to facility management system",
+          "expected_result": "Data transfer initiated successfully",
+          "data_to_capture": [
+            "Transfer initiation time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor data reception at facility management system",
+          "expected_result": "Data received within expected timeframe",
+          "data_to_capture": [
+            "Data reception time"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify data integrity and completeness",
+          "expected_result": "Transferred data matches source data",
+          "data_to_capture": [
+            "Data verification results"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data transfer initiated successfully",
+        "Data received within expected timeframe",
+        "Transferred data matches source data"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "GMP Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Complete data transfer audit trail",
+        "Data integrity maintained during transfer"
+      ],
+      "urs_requirements": [
+        "URS-EMS-014"
+      ],
+      "related_tests": [],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System integration",
+        "Data transfer protocols",
+        "Facility management systems"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-007",
+      "test_name": "Environmental Monitoring System Audit Trail Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS maintains a complete audit trail per 21 CFR Part 11 requirements",
+      "prerequisites": [
+        "EMS installed and configured",
+        "Audit trail functionality enabled",
+        "Test user accounts created"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Log in to the EMS using a test user account",
+          "expected_result": "Successful login recorded in audit trail",
+          "data_to_capture": [
+            "Timestamp",
+            "User ID",
+            "Action"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Modify a temperature setpoint parameter",
+          "expected_result": "Change recorded in audit trail with before/after values",
+          "data_to_capture": [
+            "Parameter name",
+            "Old value",
+            "New value"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Export audit trail report for verification",
+          "expected_result": "Complete audit trail report generated with all required fields",
+          "data_to_capture": [
+            "Report completeness",
+            "Field accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "All system actions are recorded in the audit trail",
+        "Audit trail entries include timestamp, user ID, and action details",
+        "Audit trail cannot be modified or deleted"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "ALCOA+ principles"
+      ],
+      "urs_requirements": [
+        "URS-EMS-008"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "21 CFR Part 11 compliance",
+        "Audit trail verification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-008",
+      "test_name": "EMS Alarm Notification Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify proper integration of EMS alarm notifications with site paging system",
+      "prerequisites": [
+        "EMS installed and configured",
+        "Site paging system operational",
+        "Integration configured via vendor API"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate a temperature excursion beyond \u00b12\u00b0C setpoint",
+          "expected_result": "EMS generates alarm condition",
+          "data_to_capture": [
+            "Alarm generation timestamp"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Monitor paging system for alarm notification",
+          "expected_result": "Alarm notification received on paging system within 30 seconds",
+          "data_to_capture": [
+            "Notification timestamp",
+            "Message content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Verify alarm details in EMS and paging system match",
+          "expected_result": "Alarm details consistent between systems",
+          "data_to_capture": [
+            "Parameter values",
+            "Timestamp accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm notifications are received on paging system within 30 seconds",
+        "Alarm details are accurately transmitted between systems",
+        "Integration maintains system stability"
+      ],
+      "regulatory_basis": [
+        "GAMP-5"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Data accuracy"
+      ],
+      "urs_requirements": [
+        "URS-EMS-015"
+      ],
+      "related_tests": [
+        "OQ-004",
+        "OQ-006"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System integration",
+        "API verification"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-009",
+      "test_name": "EMS Data Retention and Archival Verification",
+      "test_category": "data_integrity",
+      "gamp_category": 3,
+      "objective": "Verify that the EMS system properly retains and archives data according to regulatory requirements",
+      "prerequisites": [
+        "EMS system installed and configured",
+        "Test data available for archival",
+        "System clock synchronized"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Generate test data entries covering a 7-year period",
+          "expected_result": "System accepts and stores all test data entries",
+          "data_to_capture": [
+            "Timestamp",
+            "Data entry status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Initiate archival process using vendor's archival feature",
+          "expected_result": "Data successfully archived without corruption",
+          "data_to_capture": [
+            "Archival status",
+            "Data integrity check"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Attempt to retrieve archived data from different time periods",
+          "expected_result": "All archived data retrievable and intact",
+          "data_to_capture": [
+            "Retrieval success rate",
+            "Data accuracy"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Data retention period meets 7-year requirement",
+        "Archived data maintains ALCOA+ principles",
+        "Data retrieval process successful for all test cases"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU GMP Annex 11"
+      ],
+      "risk_level": "medium",
+      "data_integrity_requirements": [
+        "Complete",
+        "Consistent",
+        "Enduring"
+      ],
+      "urs_requirements": [
+        "URS-EMS-010"
+      ],
+      "related_tests": [
+        "OQ-003"
+      ],
+      "estimated_duration_minutes": 45,
+      "required_expertise": [
+        "Data integrity",
+        "Regulatory compliance",
+        "System administration"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    },
+    {
+      "test_id": "OQ-010",
+      "test_name": "EMS Alarm Notification Integration Verification",
+      "test_category": "integration",
+      "gamp_category": 3,
+      "objective": "Verify proper integration of EMS alarm notifications with site paging system",
+      "prerequisites": [
+        "EMS system installed and configured",
+        "Site paging system operational",
+        "Integration API configured"
+      ],
+      "test_steps": [
+        {
+          "step_number": 1,
+          "action": "Simulate temperature deviation alarm condition",
+          "expected_result": "EMS system detects alarm condition",
+          "data_to_capture": [
+            "Alarm detection time",
+            "Alarm status"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 2,
+          "action": "Verify alarm notification received by paging system",
+          "expected_result": "Paging system receives notification within 30 seconds",
+          "data_to_capture": [
+            "Notification timestamp",
+            "Message content"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        },
+        {
+          "step_number": 3,
+          "action": "Confirm proper message formatting in paging system",
+          "expected_result": "Message contains correct alarm details and location information",
+          "data_to_capture": [
+            "Message accuracy",
+            "Location information"
+          ],
+          "verification_method": "visual_inspection",
+          "acceptance_criteria": "Result matches expected outcome",
+          "performed_by": "QA Technician",
+          "timestamp_required": true
+        }
+      ],
+      "acceptance_criteria": [
+        "Alarm notifications received within 30 seconds",
+        "Message content accurate and complete",
+        "Integration maintains system stability"
+      ],
+      "regulatory_basis": [
+        "21 CFR Part 11",
+        "EU GMP Annex 11"
+      ],
+      "risk_level": "high",
+      "data_integrity_requirements": [
+        "Accurate",
+        "Timely"
+      ],
+      "urs_requirements": [
+        "URS-EMS-015"
+      ],
+      "related_tests": [
+        "OQ-008"
+      ],
+      "estimated_duration_minutes": 60,
+      "required_expertise": [
+        "System integration",
+        "API configuration",
+        "Alarm management"
+      ],
+      "reviewed_by": "QA Manager",
+      "data_retention_period": "10 years",
+      "execution_timestamp_required": true
+    }
+  ],
+  "metadata": {},
+  "total_test_count": 10,
+  "coverage_percentage": 0.0,
+  "requirements_coverage": {
+    "URS-001": [
+      "OQ-001",
+      "OQ-002",
+      "OQ-003",
+      "OQ-004",
+      "OQ-005"
+    ],
+    "URS-002": [
+      "OQ-006",
+      "OQ-007",
+      "OQ-008",
+      "OQ-009",
+      "OQ-010"
+    ],
+    "URS-003": []
+  },
+  "test_categories": {},
+  "estimated_execution_time": 615,
+  "generation_timestamp": "2025-12-08T18:50:35.805377+00:00",
+  "validation_approach": "",
+  "pharmaceutical_compliance": {
+    "alcoa_plus_compliant": true,
+    "gamp5_compliant": true,
+    "cfr_part_11_compliant": true,
+    "audit_trail_verified": true,
+    "data_integrity_assured": true
+  },
+  "review_required": true,
+  "timestamp": "2025-12-08T18:50:36.467302+00:00",
+  "workflow_session_id": "unified_workflow_2025-12-08T18:46:40.713063+00:00",
+  "generation_method": "LLMTextCompletionProgram_deepseek/deepseek-chat"
+}

@@ -1378,6 +1378,10 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 
 
+# Import and register export router (safe, isolated)
+from .export_formats import router as export_router
+app.include_router(export_router)
+
 if __name__ == "__main__":
     import uvicorn
 
