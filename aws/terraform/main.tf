@@ -624,8 +624,32 @@ module "ecs_api" {
     { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn }
   ]
 
+  # Database and authentication secrets from Secrets Manager
   secrets = [
-    { name = "DATABASE_URL", valueFrom = var.aurora_secret_arn }
+    { name = "DATABASE_URL", valueFrom = var.aurora_secret_arn },
+    # Clerk JWT authentication secrets (required for API token verification)
+    {
+      name      = "CLERK_PEM_PUBLIC_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/clerk:CLERK_PEM_PUBLIC_KEY::"
+    },
+    {
+      name      = "CLERK_ISSUER"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/clerk:CLERK_ISSUER::"
+    },
+    # LangFuse observability secrets (GAMP-5 compliance tracing)
+    {
+      name      = "LANGFUSE_PUBLIC_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/langfuse:LANGFUSE_PUBLIC_KEY::"
+    },
+    {
+      name      = "LANGFUSE_SECRET_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/langfuse:LANGFUSE_SECRET_KEY::"
+    },
+    # OpenRouter API key (for LLM inference)
+    {
+      name      = "OPENROUTER_API_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/openrouter:OPENROUTER_API_KEY::"
+    }
   ]
 
   health_check_command      = ["CMD-SHELL", "curl -f http://localhost:${var.api_port}${var.api_health_check_path} || exit 1"]

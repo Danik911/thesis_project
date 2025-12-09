@@ -21,7 +21,7 @@ Guidance for Claude Code on the pharmaceutical test generation thesis project.
 ### Issue Management Protocol
 When encountering bugs, errors, or unexpected behavior:
 
-1. **Search First** - Use Explore subagent to check `main/docs/issues/` for existing solutions
+1. **Search First** - Use Explore subagent to check `docs/issues/` for existing solutions
 2. **Create Before Solving** - If no solution exists, create new issue file BEFORE attempting fix:
    - Format: `ISSUE-###-short-description.md` (increment from highest existing number, currently ISSUE-005)
    - Include: Date, Symptom, Error messages, Affected files
@@ -32,7 +32,7 @@ When encountering bugs, errors, or unexpected behavior:
    - Prevention guidance
 4. **Cross-Reference** - Link related issues when applicable
 
-**Issue File Template**: See `main/docs/issues/ISSUE-001-cloudfront-404-errors.md` for format example.
+**Issue File Template**: See `docs/issues/ISSUE-001-cloudfront-404-errors.md` for format example.
 
 ---
 
@@ -40,13 +40,18 @@ When encountering bugs, errors, or unexpected behavior:
 
 | Topic | File |
 |-------|------|
-| Architecture & Quick Start | `README.md` |
-| Technical Details | `TECHNICAL_ARCHITECTURE_REPORT.md` |
-| AWS Deployment | `aws/README.md`, `aws/docs/AWS-ARCHITECTURE.md` |
-| File Structure | `main/docs/guides/PROJECT_CORE_FILES_SCHEME.md` |
+| Quick Start | `README.md` |
+| Architecture | `docs/ARCHITECTURE.md` |
+| AWS Deployment | `docs/AWS_DEPLOYMENT.md` |
+| CI/CD Pipeline | `docs/GITHUB_ACTIONS_DEPLOYMENT.md` |
+| Docker Development | `docs/DOCKER.md` |
+| Project Structure | `docs/PROJECT_STRUCTURE.md` |
+| Troubleshooting | `docs/TROUBLESHOOTING.md` |
+| Development Guides | `docs/guides/` (workflow usage, RAG, Clerk, Docker builds) |
+| Regulatory Standards | `docs/regulatory_guides/` (GAMP-5, FDA Part 11, ICH Q9, ALCOA+) |
 | PRP Workflow | `.claude/commands/prp.md` |
 | PRP Tasks | `PRPs/tasks/` (0.1-5.3, 23 tasks) |
-| Issues & Gotchas | `main/docs/issues/` (common deployment pitfalls) |
+| Issues | `docs/issues/` |
 
 ---
 
