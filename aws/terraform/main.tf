@@ -657,6 +657,11 @@ module "ecs_api" {
     {
       name      = "OPENROUTER_API_KEY"
       valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/openrouter:OPENROUTER_API_KEY::"
+    },
+    # OpenAI API key (for embeddings - text-embedding-3-small used by Context Provider/RAG)
+    {
+      name      = "OPENAI_API_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/openai:OPENAI_API_KEY::"
     }
   ]
 
