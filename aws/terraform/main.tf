@@ -661,7 +661,11 @@ module "ecs_api" {
   ]
 
   health_check_command      = ["CMD-SHELL", "curl -f http://localhost:${var.api_port}${var.api_health_check_path} || exit 1"]
-  health_check_grace_period = 60
+  health_check_interval     = 60   # Check every 60s instead of 30s
+  health_check_timeout      = 30   # Wait 30s instead of 5s
+  health_check_retries      = 10   # Allow 10 failures (10 min) instead of 3 (90s)
+  health_check_start_period = 120  # Give workflow 2 min grace period to start
+  health_check_grace_period = 600  # ALB: 10 min grace period during workflow execution
 
   desired_count             = var.api_desired_count
   min_capacity              = var.api_min_capacity
