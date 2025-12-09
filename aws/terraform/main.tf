@@ -244,6 +244,14 @@ resource "aws_iam_role_policy" "api_task" {
           aws_s3_bucket.chromadb.arn,
           "${aws_s3_bucket.chromadb.arn}/*"
         ]
+      },
+      # S3 Output Bucket - Read test suites for export endpoints (HTML/JSON)
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject"
+        ]
+        Resource = "arn:aws:s3:::${var.output_bucket}/*"
       }
     ]
   })
