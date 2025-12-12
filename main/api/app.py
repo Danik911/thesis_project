@@ -475,7 +475,7 @@ async def submit_job(
             "job_id": job_id,
             "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             "created_by": user.sub,  # Clerk user ID
-            "created_by_email": user.email,  # Human-readable attribution
+            "created_by_email": user.email or "unknown",  # Handle None email (Clerk session tokens may lack email claim)
             "artifact_type": "urs"
         }
 
