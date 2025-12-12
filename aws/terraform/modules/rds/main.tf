@@ -127,7 +127,7 @@ resource "aws_db_instance" "main" {
 
   # Engine configuration
   engine               = "postgres"
-  engine_version       = "16.3"
+  engine_version       = "16.6"  # Latest available in eu-west-2
   instance_class       = var.instance_class
   parameter_group_name = aws_db_parameter_group.postgres.name
 
