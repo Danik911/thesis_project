@@ -25,6 +25,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from .audit import get_audit_logger
+from .dependencies import initialize_database_repository, shutdown_database_repository
 from .job_repository import PostgresJobRepository, create_postgres_pool
 from .models import JobRecord, JobStatus, WorkflowStage
 from .worker_executor import (
@@ -965,13 +966,14 @@ if __name__ == "__main__":
     logger.info("Worker ready to process pharmaceutical test generation jobs")
 
     async def standalone_worker() -> None:
-        """Standalone worker for Docker Compose deployment."""
-        # When run as standalone, we need to initialize infrastructure
-        # This is normally done by FastAPI lifespan, but worker runs independently
+        """Standalone worker for ECS/Docker (polls SQS and executes jobs)."""
+        import json
+        import boto3
+        from botocore.exceptions import BotoCoreError, ClientError
+
         logger.info("Initializing worker infrastructure...")
 
-        # Task 4.2: Initialize ChromaDB from S3 in staging/production
-        # Downloads and extracts ChromaDB tarball if not already present
+        # Initialize ChromaDB from S3 in staging/production
         env = os.getenv("ENVIRONMENT", "")
         if env in ("staging", "production") and os.getenv("S3_CHROMADB_BUCKET"):
             try:
@@ -989,24 +991,209 @@ if __name__ == "__main__":
         except Exception as e:
             logger.warning(f"Langfuse initialization failed (traces will be local only): {e}")
 
-        # Create in-memory job queue and repository (shared with API via FastAPI state)
-        # Note: In Docker Compose, worker picks up jobs via SQS, not in-memory queue
-        # This is a placeholder for standalone mode
-        logger.warning(
-            "Worker running in standalone mode. "
-            "In production Docker Compose, worker should poll SQS queue."
-        )
-
-        # Run simple heartbeat for now
-        # TODO: Implement SQS polling for Docker Compose deployment
-        try:
+        database_url = os.getenv("DATABASE_URL")
+        sqs_queue_url = os.getenv("SQS_QUEUE_URL")
+        if not sqs_queue_url:
+            logger.warning("SQS_QUEUE_URL not set - worker will idle")
             iteration = 0
             while True:
                 iteration += 1
-                await asyncio.sleep(60)  # Sleep 1 minute
-                logger.info(
-                    f"Worker heartbeat #{iteration}: Ready to process jobs via SQS"
+                await asyncio.sleep(60)
+                logger.info(f"Worker heartbeat #{iteration}: SQS_QUEUE_URL not configured")
+
+        if not database_url:
+            raise RuntimeError("CRITICAL: DATABASE_URL not set - worker cannot persist job state")
+
+        # Database repository is required for ECS worker mode
+        db_job_repo = await initialize_database_repository(database_url)
+        logger.info("[HIL-DB] PostgreSQL repository initialized")
+
+        # Initialize workflow executor once
+        logger.info("Initializing WorkflowExecutor...")
+        executor = WorkflowExecutor()
+        logger.info("WorkflowExecutor initialized successfully")
+
+        region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "eu-west-2"
+        sqs = boto3.client("sqs", region_name=region)
+
+        audit_logger = get_audit_logger()
+        logger.info("Worker entering SQS polling loop")
+
+        async def process_job_id(job_id: str) -> bool:
+            """Process a single job end-to-end using existing retry logic."""
+            job = await db_job_repo.get(job_id)
+            if job is None:
+                logger.error(f"Job {job_id} not found in database")
+                return False
+
+            # Skip terminal jobs (idempotency)
+            if job.status in {JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.REJECTED}:
+                logger.info(f"Job {job_id} already terminal ({job.status.value}); skipping")
+                return True
+
+            # Local, single-job repository (used by HIL polling helpers)
+            job_repository: dict[str, JobRecord] = {job_id: job}
+            job_lock = asyncio.Lock()
+
+            # Update status to PROCESSING
+            async with job_lock:
+                job.status = JobStatus.PROCESSING
+                job.started_at = datetime.now(UTC)
+                job.updated_at = job.started_at
+                job.current_stage = WorkflowStage.INGESTION
+                job.stage_started_at = job.started_at
+                job.stages_completed = [WorkflowStage.QUEUED.value, WorkflowStage.INGESTION.value]
+
+            await _persist_job_state(job, db_job_repo, "processing_start")
+
+            audit_logger.log_event(
+                job_id=job_id,
+                event_type="start",
+                user_id=job.user_id,
+                status=JobStatus.PROCESSING,
+                metadata={
+                    "urs_filename": job.urs_filename,
+                    "urs_hash": job.urs_hash,
+                },
+            )
+
+            success = await _process_job_with_retries(
+                job=job,
+                job_repository=job_repository,
+                job_lock=job_lock,
+                audit_logger=audit_logger,
+                executor=executor,
+                db_job_repo=db_job_repo,
+            )
+
+            final_context = "complete" if success else "fail"
+            if success:
+                await _update_job_stage(job, WorkflowStage.COMPLETION, job_lock, db_job_repo)
+
+            async with job_lock:
+                if success:
+                    job.status = JobStatus.COMPLETED
+                    job.completed_at = datetime.now(UTC)
+                    audit_logger.log_event(
+                        job_id=job_id,
+                        event_type="complete",
+                        user_id=job.user_id,
+                        status=JobStatus.COMPLETED,
+                        metadata={
+                            "result_uri": job.result_uri,
+                            "gamp_category": job.gamp_category,
+                            "stages_completed": job.stages_completed,
+                        },
+                    )
+                    logger.info(f"Job {job_id} completed successfully")
+                else:
+                    job.status = JobStatus.FAILED
+                    job.completed_at = datetime.now(UTC)
+                    audit_logger.log_event(
+                        job_id=job_id,
+                        event_type="fail",
+                        user_id=job.user_id,
+                        status=JobStatus.FAILED,
+                        metadata={
+                            "error_message": job.error_message,
+                            "error_type": job.error_type,
+                            "retry_count": job.retry_count,
+                        },
+                    )
+                    logger.error(f"Job {job_id} failed after {job.retry_count} retries")
+                job.updated_at = datetime.now(UTC)
+
+            await _persist_job_state(job, db_job_repo, f"job_{final_context}")
+            return success
+
+        async def extend_visibility(
+            *,
+            receipt_handle: str,
+            stop_event: asyncio.Event,
+            visibility_timeout_seconds: int,
+        ) -> None:
+            """Keep SQS message invisible while long-running job executes."""
+            try:
+                # Extend periodically (every 10 minutes)
+                while not stop_event.is_set():
+                    await asyncio.sleep(600)
+                    await asyncio.to_thread(
+                        sqs.change_message_visibility,
+                        QueueUrl=sqs_queue_url,
+                        ReceiptHandle=receipt_handle,
+                        VisibilityTimeout=visibility_timeout_seconds,
+                    )
+            except asyncio.CancelledError:
+                return
+            except Exception as e:
+                logger.warning(f"Failed to extend SQS visibility timeout: {e}")
+
+        try:
+            while True:
+                try:
+                    response = await asyncio.to_thread(
+                        sqs.receive_message,
+                        QueueUrl=sqs_queue_url,
+                        MaxNumberOfMessages=1,
+                        WaitTimeSeconds=20,
+                        VisibilityTimeout=3600,
+                    )
+                except (BotoCoreError, ClientError) as e:
+                    logger.error(f"SQS receive_message failed: {e}")
+                    await asyncio.sleep(2)
+                    continue
+
+                messages = response.get("Messages", [])
+                if not messages:
+                    continue
+
+                msg = messages[0]
+                receipt_handle = msg.get("ReceiptHandle")
+                body = msg.get("Body", "")
+                if not receipt_handle:
+                    logger.error("SQS message missing ReceiptHandle; skipping")
+                    continue
+
+                try:
+                    payload = json.loads(body)
+                    job_id = payload.get("job_id")
+                    if not job_id:
+                        raise ValueError("Missing job_id")
+                except Exception as e:
+                    logger.error(f"Invalid SQS message body; deleting. Error: {e}; Body: {body!r}")
+                    await asyncio.to_thread(
+                        sqs.delete_message,
+                        QueueUrl=sqs_queue_url,
+                        ReceiptHandle=receipt_handle,
+                    )
+                    continue
+
+                logger.info(f"Received job from SQS: {job_id}")
+
+                stop_event = asyncio.Event()
+                visibility_task = asyncio.create_task(
+                    extend_visibility(
+                        receipt_handle=receipt_handle,
+                        stop_event=stop_event,
+                        visibility_timeout_seconds=3600,
+                    )
                 )
+                try:
+                    await process_job_id(job_id)
+                finally:
+                    stop_event.set()
+                    visibility_task.cancel()
+
+                # Delete message after processing to allow redelivery if worker crashes mid-job
+                try:
+                    await asyncio.to_thread(
+                        sqs.delete_message,
+                        QueueUrl=sqs_queue_url,
+                        ReceiptHandle=receipt_handle,
+                    )
+                    logger.info(f"Deleted SQS message for job {job_id}")
+                except (BotoCoreError, ClientError) as e:
+                    logger.error(f"Failed to delete SQS message for job {job_id}: {e}")
 
         except asyncio.CancelledError:
             logger.info("Worker received cancellation signal, shutting down gracefully")
@@ -1016,7 +1203,7 @@ if __name__ == "__main__":
             logger.exception(f"Unexpected error in worker: {e}")
             raise
         finally:
-            # Flush pending Langfuse traces before shutdown
+            await shutdown_database_repository()
             try:
                 shutdown_langfuse()
                 logger.info("Langfuse traces flushed successfully")

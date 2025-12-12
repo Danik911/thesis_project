@@ -114,6 +114,12 @@ variable "bedrock_model_id" {
   default     = "deepseek.deepseek-v3-0324"
 }
 
+variable "llm_model" {
+  description = "LLM model ID for test generation via OpenRouter (e.g., google/gemini-2.5-flash-lite, deepseek/deepseek-chat-v3.1)"
+  type        = string
+  default     = "google/gemini-2.5-flash-lite"
+}
+
 # -----------------------------------------------------------------------------
 # SSL/TLS Configuration
 # -----------------------------------------------------------------------------

@@ -128,7 +128,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize ChromaDB from S3 in staging/production
     # CRITICAL: API container needs ChromaDB for RAG workflow (Context Provider agent)
-    # Worker also initializes this, but API runs the workflow directly
+    # Note: In staging/production, workflow execution should run in the dedicated worker service.
     env = os.getenv("ENVIRONMENT", "")
     if env in ("staging", "production") and os.getenv("S3_CHROMADB_BUCKET"):
         try:
@@ -167,6 +167,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             # CRITICAL: Re-enqueue pending/approved jobs from database
             # This recovers jobs lost from in-memory queue during container restart
             # Also recovers APPROVED jobs that were waiting for HIL resumption
+            # In staging/production, restartable jobs should be re-enqueued to SQS
+            # (dedicated worker service), not the in-process asyncio queue.
+            sqs_queue_url = os.getenv("SQS_QUEUE_URL")
+            sqs = None
+            if env in ("staging", "production") and sqs_queue_url:
+                import boto3
+                region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "eu-west-2"
+                sqs = boto3.client("sqs", region_name=region)
+
             try:
                 restartable_jobs = await db_job_repo.get_pending_jobs()
 
@@ -178,9 +187,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                         for job in restartable_jobs:
                             # 1. Restore to in-memory repository (required for worker)
                             job_repository[job.job_id] = job
-                            # 2. Add to processing queue
-                            await job_queue.put(job.job_id)
-                            logger.debug(f"[RECOVERY] Re-enqueued job {job.job_id} (status={job.status.value})")
+                            # 2. Re-enqueue for processing
+                            if sqs is not None and sqs_queue_url:
+                                import json
+                                await asyncio.to_thread(
+                                    sqs.send_message,
+                                    QueueUrl=sqs_queue_url,
+                                    MessageBody=json.dumps({"job_id": job.job_id}),
+                                )
+                                logger.debug(f"[RECOVERY] Re-enqueued job {job.job_id} to SQS (status={job.status.value})")
+                            else:
+                                await job_queue.put(job.job_id)
+                                logger.debug(f"[RECOVERY] Re-enqueued job {job.job_id} to in-process queue (status={job.status.value})")
                     logger.info(f"[RECOVERY] Successfully re-enqueued {len(restartable_jobs)} jobs")
             except Exception as e:
                 logger.error(f"[RECOVERY] Failed to re-enqueue restartable jobs: {e}")
@@ -201,17 +219,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     approval_repository, approval_lock = initialize_approval_infrastructure()
     logger.info("Approval infrastructure initialized")
 
-    # Start background worker task
-    worker_task = asyncio.create_task(
-        process_job_worker(
-            job_queue=job_queue,
-            job_repository=job_repository,
-            job_lock=job_lock,
-            db_job_repo=db_job_repo  # HIL shared state via PostgreSQL
-        ),
-        name="background_job_worker"
-    )
-    logger.info(f"Background worker started (db_mode={db_job_repo is not None})")
+    # Start background worker task (development/local only)
+    # In staging/production, jobs are executed by the dedicated worker ECS service via SQS.
+    enable_inprocess_worker_env = os.getenv("ENABLE_INPROCESS_WORKER")
+    enable_inprocess_worker = False
+    if enable_inprocess_worker_env is not None:
+        enable_inprocess_worker = enable_inprocess_worker_env.strip().lower() in {"1", "true", "yes"}
+    else:
+        enable_inprocess_worker = env not in ("staging", "production")
+
+    worker_task: asyncio.Task[None] | None = None
+    if enable_inprocess_worker:
+        worker_task = asyncio.create_task(
+            process_job_worker(
+                job_queue=job_queue,
+                job_repository=job_repository,
+                job_lock=job_lock,
+                db_job_repo=db_job_repo  # HIL shared state via PostgreSQL
+            ),
+            name="background_job_worker"
+        )
+        logger.info(f"Background worker started (db_mode={db_job_repo is not None})")
+    else:
+        logger.info("Background worker disabled (using SQS + dedicated worker service)")
 
     logger.info("FastAPI application ready")
 
@@ -220,12 +250,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown
     logger.info("FastAPI application shutting down...")
 
-    # Cancel worker task
-    worker_task.cancel()
-    try:
-        await worker_task
-    except asyncio.CancelledError:
-        logger.info("Background worker stopped")
+    # Cancel worker task (if started)
+    if worker_task is not None:
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            logger.info("Background worker stopped")
 
     # Shutdown database repository
     await shutdown_database_repository()
@@ -513,8 +544,37 @@ async def submit_job(
                 # but HIL workflow resumption may fail
 
         # Enqueue job for background processing
-        await job_queue.put(job_id)
-        logger.info(f"Job {job_id} enqueued for processing")
+        # - staging/production: SQS -> dedicated worker ECS service
+        # - local/dev: in-process asyncio queue
+        sqs_queue_url = os.getenv("SQS_QUEUE_URL")
+        env = os.getenv("ENVIRONMENT", "")
+        if env in ("staging", "production") and sqs_queue_url:
+            import json
+            import boto3
+            from botocore.exceptions import BotoCoreError, ClientError
+
+            region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "eu-west-2"
+            sqs = boto3.client("sqs", region_name=region)
+
+            message_body = json.dumps({"job_id": job_id})
+            try:
+                await asyncio.to_thread(
+                    sqs.send_message,
+                    QueueUrl=sqs_queue_url,
+                    MessageBody=message_body,
+                )
+            except (BotoCoreError, ClientError) as e:
+                # CRITICAL: NO FALLBACK - Explicit error propagation
+                logger.exception(f"CRITICAL: Failed to enqueue job {job_id} to SQS: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="CRITICAL: Failed to enqueue job for processing. Please retry.",
+                )
+
+            logger.info(f"Job {job_id} enqueued to SQS for processing")
+        else:
+            await job_queue.put(job_id)
+            logger.info(f"Job {job_id} enqueued for processing")
 
         # Log to audit trail with Clerk authentication context
         audit_logger = get_audit_logger()

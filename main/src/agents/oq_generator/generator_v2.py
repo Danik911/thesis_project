@@ -8,6 +8,7 @@ with better timeout handling and structured output generation.
 import asyncio
 import json
 import logging
+import os
 from datetime import UTC, datetime
 from typing import Any
 
@@ -458,11 +459,17 @@ class OQTestGeneratorV2:
                 )
 
                 # Execute batch generation with appropriate timeout
-                # Ensure minimum 120s per batch for DeepSeek V3 to generate 2 tests
+                # DeepSeek V3 can be slow/variable; keep a conservative minimum per batch.
+                # Defaults are intentionally higher than previous 120s to reduce false timeouts.
                 base_timeout = self.timeout_mapping[gamp_category] // num_batches
-                batch_timeout = max(120, base_timeout)
+                min_batch_timeout = int(os.getenv("OQ_BATCH_MIN_TIMEOUT_SECONDS", "240"))
+                min_timeout_per_test = int(os.getenv("OQ_BATCH_MIN_TIMEOUT_PER_TEST_SECONDS", "120"))
+                batch_timeout = max(min_batch_timeout, min_timeout_per_test * batch_count, base_timeout)
 
-                self.logger.info(f"⏱️  BATCH TIMEOUT: {batch_timeout}s (base: {base_timeout}s, minimum: 120s)")
+                self.logger.info(
+                    f"⏱️  BATCH TIMEOUT: {batch_timeout}s "
+                    f"(base: {base_timeout}s, min_batch: {min_batch_timeout}s, per_test_min: {min_timeout_per_test}s)"
+                )
                 async with asyncio.timeout(batch_timeout):
                     # SECURITY: Use chat() with isolated messages instead of complete() with f-string
                     response = await llm.achat(messages)
