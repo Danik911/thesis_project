@@ -24,7 +24,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from .audit import get_audit_logger
+from .audit import get_audit_logger, initialize_audit_logger
 from .dependencies import initialize_database_repository, shutdown_database_repository
 from .job_repository import PostgresJobRepository, create_postgres_pool
 from .models import JobRecord, JobStatus, WorkflowStage
@@ -1015,6 +1015,8 @@ if __name__ == "__main__":
 
         region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "eu-west-2"
         sqs = boto3.client("sqs", region_name=region)
+
+        initialize_audit_logger(audit_directory="logs/audit/jobs")
 
         audit_logger = get_audit_logger()
         logger.info("Worker entering SQS polling loop")
