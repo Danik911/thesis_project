@@ -93,9 +93,11 @@ resource "aws_db_parameter_group" "postgres" {
   description = "Parameter group for ${var.project_name} PostgreSQL"
 
   # Enable pg_stat_statements for query performance monitoring
+  # NOTE: shared_preload_libraries is a static parameter - requires DB restart
   parameter {
-    name  = "shared_preload_libraries"
-    value = "pg_stat_statements"
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements"
+    apply_method = "pending-reboot"
   }
 
   # Log slow queries (> 1 second)

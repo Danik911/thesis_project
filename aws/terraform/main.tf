@@ -157,7 +157,7 @@ resource "aws_iam_role_policy" "ecs_task_execution_custom" {
         ]
         Resource = [
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*",
-          var.aurora_secret_arn  # Allow access to the Aurora/placeholder secret
+          module.rds.database_url_secret_arn  # RDS PostgreSQL DATABASE_URL secret
         ]
       },
       # CloudWatch Logs (push container logs)
@@ -213,25 +213,13 @@ resource "aws_iam_role_policy" "api_task" {
         ]
         Resource = module.sqs_worker.queue_arn
       },
-      # Aurora Data API - Job metadata storage
-      {
-        Effect = "Allow"
-        Action = [
-          "rds-data:ExecuteStatement",
-          "rds-data:BatchExecuteStatement",
-          "rds-data:BeginTransaction",
-          "rds-data:CommitTransaction",
-          "rds-data:RollbackTransaction"
-        ]
-        Resource = var.aurora_cluster_arn
-      },
-      # Secrets Manager - Aurora credentials
+      # Secrets Manager - RDS PostgreSQL credentials
       {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = var.aurora_secret_arn
+        Resource = module.rds.database_url_secret_arn
       },
       # S3 ChromaDB - Download RAG database for context agent (Task 4.2)
       {
@@ -332,26 +320,14 @@ resource "aws_iam_role_policy" "worker_task" {
           "arn:aws:bedrock:${var.bedrock_region}:*:inference-profile/*"
         ]
       },
-      # Aurora Data API
-      {
-        Effect = "Allow"
-        Action = [
-          "rds-data:ExecuteStatement",
-          "rds-data:BatchExecuteStatement",
-          "rds-data:BeginTransaction",
-          "rds-data:CommitTransaction",
-          "rds-data:RollbackTransaction"
-        ]
-        Resource = var.aurora_cluster_arn
-      },
-      # Secrets Manager
+      # Secrets Manager - RDS PostgreSQL + API keys
       {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          var.aurora_secret_arn,
+          module.rds.database_url_secret_arn,
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/langfuse-*",
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/openrouter-*"
         ]
@@ -646,8 +622,6 @@ module "ecs_api" {
     { name = "ENVIRONMENT", value = var.environment },
     { name = "AWS_REGION", value = var.aws_region },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
-    { name = "DATABASE_NAME", value = var.aurora_database_name },
-    { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn },
     # ChromaDB RAG Configuration - API needs this because workflows run IN API container
     { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
     { name = "S3_CHROMADB_KEY", value = "chroma_db.tar.gz" },
@@ -737,8 +711,6 @@ module "ecs_worker" {
     { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
     { name = "OUTPUT_BUCKET", value = var.output_bucket },
-    { name = "DATABASE_NAME", value = var.aurora_database_name },
-    { name = "AURORA_CLUSTER_ARN", value = var.aurora_cluster_arn },
     # ChromaDB RAG Configuration (Task 4.2)
     # Uses Terraform-managed bucket (aws_s3_bucket.chromadb) with IAM permissions
     { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
