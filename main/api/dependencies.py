@@ -205,6 +205,10 @@ async def initialize_database_repository(database_url: str) -> PostgresJobReposi
     _db_pool = await create_postgres_pool(database_url)
     _db_job_repository = PostgresJobRepository(_db_pool)
 
+    # Auto-create schema if tables don't exist (idempotent)
+    # This enables fresh RDS instances to be ready without manual SQL execution
+    await _db_job_repository.ensure_schema()
+
     logger.info("[DB] PostgreSQL job repository initialized (HIL shared state enabled)")
     return _db_job_repository
 

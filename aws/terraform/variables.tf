@@ -62,23 +62,25 @@ variable "assign_public_ip" {
 }
 
 # -----------------------------------------------------------------------------
-# Aurora Database (from Task 4.2)
+# Database Configuration (RDS PostgreSQL)
 # -----------------------------------------------------------------------------
+# Note: aurora_* variables are DEPRECATED - RDS PostgreSQL module is now used
+# These remain for backwards compatibility but are no longer required
 
 variable "aurora_cluster_arn" {
-  description = "ARN of Aurora Serverless v2 cluster (REQUIRED for Data API)"
+  description = "DEPRECATED: ARN of Aurora Serverless v2 cluster (no longer used)"
   type        = string
-  # NO DEFAULT - must be explicitly provided
+  default     = ""  # No longer required - RDS module used instead
 }
 
 variable "aurora_secret_arn" {
-  description = "ARN of Secrets Manager secret for Aurora credentials (REQUIRED)"
+  description = "DEPRECATED: ARN of Secrets Manager secret for Aurora (no longer used)"
   type        = string
-  # NO DEFAULT - must be explicitly provided
+  default     = ""  # No longer required - RDS module creates its own secret
 }
 
 variable "aurora_database_name" {
-  description = "Aurora database name"
+  description = "DEPRECATED: Aurora database name (no longer used)"
   type        = string
   default     = "pharma_test_gen"
 }

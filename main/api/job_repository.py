@@ -75,6 +75,65 @@ class PostgresJobRepository:
     def __init__(self, pool: asyncpg.Pool):
         self._pool = pool
 
+    async def ensure_schema(self) -> None:
+        """
+        Create database tables and indexes if they don't exist.
+
+        This method is idempotent - safe to call on every startup.
+        Tables are created with IF NOT EXISTS to avoid errors on existing databases.
+
+        GAMP-5 Compliance: Schema matches postgres-init.sql
+        ALCOA+ Compliance: All timestamp columns use TIMESTAMPTZ for timezone awareness
+        """
+        async with self._pool.acquire() as conn:
+            # Create jobs table (matches scripts/postgres-init.sql)
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS jobs (
+                    job_id UUID PRIMARY KEY,
+                    status VARCHAR(20) NOT NULL
+                        CHECK (status IN ('pending', 'processing', 'awaiting_approval', 'approved', 'rejected', 'completed', 'failed')),
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    started_at TIMESTAMPTZ,
+                    completed_at TIMESTAMPTZ,
+                    updated_at TIMESTAMPTZ,
+                    urs_filename VARCHAR(255) NOT NULL,
+                    urs_storage_key TEXT NOT NULL,
+                    urs_hash VARCHAR(64) NOT NULL,
+                    urs_size_bytes INTEGER NOT NULL CHECK (urs_size_bytes > 0),
+                    user_id VARCHAR(255) NOT NULL,
+                    result_uri TEXT,
+                    gamp_category VARCHAR(1) CHECK (gamp_category IN ('1', '3', '4', '5')),
+                    requires_approval BOOLEAN DEFAULT FALSE,
+                    approval_reason TEXT,
+                    approval_timeout_at TIMESTAMPTZ,
+                    categorization_result JSONB,
+                    human_category VARCHAR(1) CHECK (human_category IN ('1', '3', '4', '5')),
+                    current_stage VARCHAR(50)
+                        CHECK (current_stage IN ('queued', 'ingestion', 'categorization', 'hil_waiting', 'planning', 'agent_execution', 'oq_generation', 'completion')),
+                    stage_started_at TIMESTAMPTZ,
+                    stages_completed TEXT[],
+                    trace_id TEXT,
+                    trace_url TEXT,
+                    error_message TEXT,
+                    error_type VARCHAR(100),
+                    retry_count INTEGER DEFAULT 0 CHECK (retry_count >= 0),
+                    max_retries INTEGER DEFAULT 3 CHECK (max_retries >= 0)
+                )
+            """)
+
+            # Create indexes for performance
+            await conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs(user_id)"
+            )
+            await conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status)"
+            )
+            await conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at DESC)"
+            )
+
+            logger.info("[DB] Schema verified/created successfully")
+
     async def get(self, job_id: str) -> JobRecord | None:
         """
         Get job by ID.

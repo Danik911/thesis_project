@@ -597,6 +597,24 @@ module "cloudfront" {
 }
 
 # -----------------------------------------------------------------------------
+# RDS PostgreSQL (Job Persistence)
+# -----------------------------------------------------------------------------
+# Provides persistent storage for job records - survives container restarts
+# Cost: ~$13/month (db.t3.micro)
+
+module "rds" {
+  source = "./modules/rds"
+
+  project_name           = var.project_name
+  environment            = var.environment
+  vpc_id                 = var.vpc_id
+  subnet_ids             = var.private_subnet_ids
+  ecs_security_group_ids = [aws_security_group.api.id, aws_security_group.worker.id]
+  database_name          = "testgen"
+  database_username      = "postgres"
+}
+
+# -----------------------------------------------------------------------------
 # ECS Services
 # -----------------------------------------------------------------------------
 
@@ -638,7 +656,7 @@ module "ecs_api" {
 
   # Database and authentication secrets from Secrets Manager
   secrets = [
-    { name = "DATABASE_URL", valueFrom = var.aurora_secret_arn },
+    { name = "DATABASE_URL", valueFrom = module.rds.database_url_secret_arn },
     # Clerk JWT authentication secrets (required for API token verification)
     {
       name      = "CLERK_PEM_PUBLIC_KEY"
@@ -729,7 +747,26 @@ module "ecs_worker" {
   ]
 
   secrets = [
-    { name = "DATABASE_URL", valueFrom = var.aurora_secret_arn }
+    { name = "DATABASE_URL", valueFrom = module.rds.database_url_secret_arn },
+    # LangFuse observability secrets (GAMP-5 compliance tracing)
+    {
+      name      = "LANGFUSE_PUBLIC_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/langfuse:LANGFUSE_PUBLIC_KEY::"
+    },
+    {
+      name      = "LANGFUSE_SECRET_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/langfuse:LANGFUSE_SECRET_KEY::"
+    },
+    # OpenRouter API key (for LLM inference)
+    {
+      name      = "OPENROUTER_API_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/openrouter:OPENROUTER_API_KEY::"
+    },
+    # OpenAI API key (for embeddings)
+    {
+      name      = "OPENAI_API_KEY"
+      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/openai:OPENAI_API_KEY::"
+    }
   ]
 
   health_check_command = null  # Worker has no health check endpoint
