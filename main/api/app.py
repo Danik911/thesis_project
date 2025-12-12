@@ -52,7 +52,7 @@ import aiofiles
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from langfuse import observe
 
 # Load environment variables from .env.local (for local development)
@@ -680,6 +680,7 @@ async def download_job_result(
     job_id: str,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep
 ):
     """
@@ -688,8 +689,12 @@ async def download_job_result(
     Note: @observe decorator removed - causes hang by serializing
     non-serializable dependency objects (locks, connection pools).
     """
-    async with job_lock:
-        job = job_repository.get(job_id)
+    # Prefer database repository when available (docker-compose / AWS mode).
+    if db_job_repo is not None:
+        job = await db_job_repo.get_job(job_id)
+    else:
+        async with job_lock:
+            job = job_repository.get(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -725,7 +730,63 @@ async def download_job_result(
             filename=f"test_suite_{job_id}.yaml",
             media_type="application/x-yaml"
         )
-    
+
+    # Handle s3:// URI (AWS deployment)
+    if job.result_uri.startswith("s3://"):
+        from aiobotocore.session import get_session
+        from botocore.exceptions import ClientError
+
+        uri_parts = job.result_uri.replace("s3://", "").split("/", 1)
+        if len(uri_parts) != 2:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "CRITICAL: Invalid S3 URI format\n"
+                    f"URI: {job.result_uri}\n"
+                    "Expected: s3://bucket/key"
+                ),
+            )
+
+        bucket, key = uri_parts[0], uri_parts[1]
+        region = os.getenv("AWS_REGION") or os.getenv("STORAGE_AWS_REGION", "eu-west-2")
+        session = get_session()
+
+        try:
+            async with session.create_client("s3", region_name=region) as client:
+                response = await client.get_object(Bucket=bucket, Key=key)
+                content = await response["Body"].read()
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            error_message = e.response.get("Error", {}).get("Message", str(e))
+
+            if error_code in ["NoSuchKey", "404"]:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "CRITICAL: Result not found in S3\n"
+                        f"Bucket: {bucket}\n"
+                        f"Key: {key}\n"
+                        f"Job ID: {job_id}"
+                    ),
+                ) from e
+
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "CRITICAL: Failed to download result from S3\n"
+                    f"AWS Error Code: {error_code}\n"
+                    f"AWS Error Message: {error_message}\n"
+                    f"Bucket: {bucket}\n"
+                    f"Key: {key}"
+                ),
+            ) from e
+
+        return Response(
+            content=content,
+            media_type="application/x-yaml",
+            headers={"Content-Disposition": f"attachment; filename=test_suite_{job_id}.yaml"},
+        )
+
     raise HTTPException(status_code=501, detail="Storage backend not supported for direct download")
 
 
@@ -734,6 +795,7 @@ async def get_job_result_json(
     job_id: str,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep
 ):
     """
@@ -742,8 +804,12 @@ async def get_job_result_json(
     Note: @observe decorator removed - causes hang by serializing
     non-serializable dependency objects (locks, connection pools).
     """
-    async with job_lock:
-        job = job_repository.get(job_id)
+    # Prefer database repository when available (docker-compose / AWS mode).
+    if db_job_repo is not None:
+        job = await db_job_repo.get_job(job_id)
+    else:
+        async with job_lock:
+            job = job_repository.get(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -776,6 +842,57 @@ async def get_job_result_json(
                 return JSONResponse(content=data)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to parse result: {e}")
+
+    if job.result_uri.startswith("s3://"):
+        from aiobotocore.session import get_session
+        from botocore.exceptions import ClientError
+
+        uri_parts = job.result_uri.replace("s3://", "").split("/", 1)
+        if len(uri_parts) != 2:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "CRITICAL: Invalid S3 URI format\n"
+                    f"URI: {job.result_uri}\n"
+                    "Expected: s3://bucket/key"
+                ),
+            )
+
+        bucket, key = uri_parts[0], uri_parts[1]
+        region = os.getenv("AWS_REGION") or os.getenv("STORAGE_AWS_REGION", "eu-west-2")
+        session = get_session()
+
+        try:
+            async with session.create_client("s3", region_name=region) as client:
+                response = await client.get_object(Bucket=bucket, Key=key)
+                content = await response["Body"].read()
+                data = yaml.safe_load(content.decode("utf-8"))
+                return JSONResponse(content=data)
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            error_message = e.response.get("Error", {}).get("Message", str(e))
+
+            if error_code in ["NoSuchKey", "404"]:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "CRITICAL: Result not found in S3\n"
+                        f"Bucket: {bucket}\n"
+                        f"Key: {key}\n"
+                        f"Job ID: {job_id}"
+                    ),
+                ) from e
+
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "CRITICAL: Failed to retrieve result from S3\n"
+                    f"AWS Error Code: {error_code}\n"
+                    f"AWS Error Message: {error_message}\n"
+                    f"Bucket: {bucket}\n"
+                    f"Key: {key}"
+                ),
+            ) from e
 
     raise HTTPException(status_code=501, detail="Storage backend not supported")
 

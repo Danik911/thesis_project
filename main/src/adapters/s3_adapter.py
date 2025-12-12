@@ -315,10 +315,11 @@ class S3StorageAdapter:
             RuntimeError: If S3 get_object fails
         """
         async with self._semaphore:
-            # Try common artifact types (test_suite most common)
+            # Try common artifact types. We try "urs" first to avoid failing early
+            # on more restrictive prefixes when the caller is fetching URS content.
             attempted_keys = []
 
-            for artifact_type in ["test_suite", "urs", "report"]:
+            for artifact_type in ["urs", "test_suite", "report"]:
                 s3_key = self._build_s3_key(artifact_id, artifact_type)
                 attempted_keys.append(s3_key)
 

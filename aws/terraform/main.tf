@@ -241,6 +241,14 @@ resource "aws_iam_role_policy" "api_task" {
           "s3:GetObject"
         ]
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
+      },
+      # S3 Output Bucket - List objects (required by some SDK calls)
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${var.output_bucket}"
       }
     ]
   })
@@ -296,6 +304,14 @@ resource "aws_iam_role_policy" "worker_task" {
           "s3:GetObject"
         ]
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
+      },
+      # S3 Output Bucket - List objects (required by some SDK calls)
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${var.output_bucket}"
       },
       # S3 ChromaDB - Download RAG database on startup (Task 4.2)
       {

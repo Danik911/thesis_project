@@ -64,16 +64,23 @@ async def _get_job_content(
 
     CRITICAL: NO FALLBACK LOGIC - Errors propagate with full context
     """
-    # First try database repository (docker-compose / AWS mode)
-    job = None
+    # Prefer database repository when available.
+    # CRITICAL: NO FALLBACK LOGIC - if DB mode is enabled but DB access fails,
+    # return an explicit error instead of silently using in-memory state.
+    job: JobRecord | None
     if db_job_repo is not None:
         try:
             job = await db_job_repo.get_job(job_id)
         except Exception as e:
-            logger.warning(f"[DB] Failed to get job {job_id} from database: {e}")
-
-    # Fall back to in-memory repository
-    if job is None:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    f"CRITICAL: Failed to get job from database\n"
+                    f"Job ID: {job_id}\n"
+                    f"Error: {e!s}"
+                ),
+            ) from e
+    else:
         async with job_lock:
             job = job_repository.get(job_id)
 
