@@ -232,10 +232,12 @@ resource "aws_iam_role_policy" "api_task" {
           "${aws_s3_bucket.chromadb.arn}/*"
         ]
       },
-      # S3 Output Bucket - Read test suites for export endpoints (HTML/JSON)
+      # S3 Output Bucket - Store URS documents and read test suites
       {
         Effect = "Allow"
         Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
           "s3:GetObject"
         ]
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
@@ -618,6 +620,9 @@ module "ecs_api" {
     { name = "ENVIRONMENT", value = var.environment },
     { name = "AWS_REGION", value = var.aws_region },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
+    # Storage Configuration - S3 mode for ECS deployment
+    { name = "STORAGE_MODE", value = "s3" },
+    { name = "STORAGE_TEST_OUTPUT_BUCKET", value = var.output_bucket },
     # ChromaDB RAG Configuration - API needs this because workflows run IN API container
     { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
     { name = "S3_CHROMADB_KEY", value = "chroma_db.tar.gz" },
@@ -707,6 +712,9 @@ module "ecs_worker" {
     { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
     { name = "OUTPUT_BUCKET", value = var.output_bucket },
+    # Storage Configuration - S3 mode for ECS deployment
+    { name = "STORAGE_MODE", value = "s3" },
+    { name = "STORAGE_TEST_OUTPUT_BUCKET", value = var.output_bucket },
     # ChromaDB RAG Configuration (Task 4.2)
     # Uses Terraform-managed bucket (aws_s3_bucket.chromadb) with IAM permissions
     { name = "S3_CHROMADB_BUCKET", value = aws_s3_bucket.chromadb.id },
