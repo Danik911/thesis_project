@@ -691,7 +691,7 @@ async def download_job_result(
     """
     # Prefer database repository when available (docker-compose / AWS mode).
     if db_job_repo is not None:
-        job = await db_job_repo.get_job(job_id)
+        job = await db_job_repo.get(job_id)
     else:
         async with job_lock:
             job = job_repository.get(job_id)
@@ -806,7 +806,7 @@ async def get_job_result_json(
     """
     # Prefer database repository when available (docker-compose / AWS mode).
     if db_job_repo is not None:
-        job = await db_job_repo.get_job(job_id)
+        job = await db_job_repo.get(job_id)
     else:
         async with job_lock:
             job = job_repository.get(job_id)

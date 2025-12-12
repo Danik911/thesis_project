@@ -70,7 +70,7 @@ async def _get_job_content(
     job: JobRecord | None
     if db_job_repo is not None:
         try:
-            job = await db_job_repo.get_job(job_id)
+            job = await db_job_repo.get(job_id)
         except Exception as e:
             raise HTTPException(
                 status_code=500,
