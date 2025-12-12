@@ -34,7 +34,8 @@ except ImportError:  # pragma: no cover - older SDKs
     langfuse_context = None
 
 from main.src.adapters.chroma_adapter import ChromaVectorStoreAdapter
-from main.src.adapters.local_adapter import LocalStorageAdapter
+from src.adapters.storage import StorageFactory, StorageProvider
+from src.shared.config import get_config
 from main.src.core.unified_workflow import UnifiedTestGenerationWorkflow
 from main.src.exceptions import HumanApprovalRequired
 
@@ -81,6 +82,25 @@ HIL_CONFIDENCE_THRESHOLD = float(os.getenv("HIL_CONFIDENCE_THRESHOLD", "0.85")) 
 HIL_ENABLED = os.getenv("HIL_ENABLED", "true").lower() == "true"
 
 
+def _create_storage_provider_from_config() -> StorageProvider:
+    """Create the storage provider using shared config.
+
+    This ensures API and worker use the exact same storage backend selection logic.
+    In AWS (ECS), this should typically resolve to S3.
+    """
+    config = get_config()
+    storage_config = config.storage
+    return StorageFactory.create_storage_provider(
+        storage_mode=storage_config.storage_mode,
+        # Local mode
+        base_path=storage_config.local_base_path,
+        # S3 mode
+        bucket=storage_config.test_output_bucket,
+        region=storage_config.aws_region,
+        kms_key_id=storage_config.kms_key_id if storage_config.kms_key_id else "",
+    )
+
+
 class WorkflowExecutor:
     """
     Executes the unified pharmaceutical test generation workflow.
@@ -97,7 +117,7 @@ class WorkflowExecutor:
 
     def __init__(
         self,
-        storage_adapter: LocalStorageAdapter | None = None,
+        storage_adapter: StorageProvider | None = None,
         vector_adapter: ChromaVectorStoreAdapter | None = None
     ):
         """
@@ -107,7 +127,7 @@ class WorkflowExecutor:
             storage_adapter: Storage adapter for artifacts (default: LocalStorageAdapter)
             vector_adapter: Vector store adapter (default: ChromaVectorStoreAdapter)
         """
-        self.storage_adapter = storage_adapter or LocalStorageAdapter(base_path="/app/output")
+        self.storage_adapter = storage_adapter or _create_storage_provider_from_config()
         self.vector_adapter = vector_adapter
 
     @observe(name="execute_workflow", capture_input=True, capture_output=True)
@@ -474,7 +494,7 @@ class WorkflowExecutor:
             ) from e
 
 
-async def read_urs_from_storage(storage_adapter: LocalStorageAdapter, job_id: str) -> str:
+async def read_urs_from_storage(storage_adapter: StorageProvider, job_id: str) -> str:
     """
     Read URS document content from storage.
 
@@ -515,11 +535,23 @@ async def read_urs_from_storage(storage_adapter: LocalStorageAdapter, job_id: st
         return urs_bytes.decode("utf-8")
 
     except FileNotFoundError as e:
+        storage_hint_parts: list[str] = []
+        base_path = getattr(storage_adapter, "base_path", None)
+        if base_path:
+            storage_hint_parts.append(f"Storage base path: {base_path}")
+        bucket = getattr(storage_adapter, "bucket", None)
+        if bucket:
+            storage_hint_parts.append(f"S3 bucket: {bucket}")
+
+        storage_hint = "\n".join(storage_hint_parts)
+        if storage_hint:
+            storage_hint = storage_hint + "\n"
+
         raise FileNotFoundError(
             f"CRITICAL: URS document not found in storage\n"
             f"Job ID: {job_id}\n"
-            f"Expected artifact: {job_id}.json\n"
-            f"Storage base path: {storage_adapter.base_path}\n"
+            f"Expected artifact IDs: {job_id}/urs_document.md (preferred), {job_id} (legacy)\n"
+            f"{storage_hint}"
             "URS must be uploaded before workflow execution"
         ) from e
     except Exception as e:

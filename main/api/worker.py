@@ -717,12 +717,10 @@ async def _execute_workflow(
             f"  Expected duration: 5-6 minutes"
         )
 
-    # Read URS content from storage
-    from main.src.adapters.local_adapter import LocalStorageAdapter
-    storage_adapter = LocalStorageAdapter(base_path="/app/output")
-
+    # Read URS content from the SAME storage backend the API used to persist uploads.
+    # In AWS (ECS), this should be S3 via STORAGE_MODE=s3.
     try:
-        urs_content = await read_urs_from_storage(storage_adapter, job.job_id)
+        urs_content = await read_urs_from_storage(executor.storage_adapter, job.job_id)
     except FileNotFoundError:
         # If not in storage with full path, try reading from job record
         # (API may have stored it differently)
