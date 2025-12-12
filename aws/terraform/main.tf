@@ -150,15 +150,13 @@ resource "aws_iam_role_policy" "ecs_task_execution_custom" {
     Version = "2012-10-17"
     Statement = [
       # Secrets Manager access (inject secrets into containers)
+      # Note: Using wildcard pattern to avoid circular dependency with RDS module
       {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = [
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*",
-          module.rds.database_url_secret_arn  # RDS PostgreSQL DATABASE_URL secret
-        ]
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*"
       },
       # CloudWatch Logs (push container logs)
       {
@@ -214,12 +212,13 @@ resource "aws_iam_role_policy" "api_task" {
         Resource = module.sqs_worker.queue_arn
       },
       # Secrets Manager - RDS PostgreSQL credentials
+      # Note: Using wildcard pattern to avoid circular dependency with RDS module
       {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = module.rds.database_url_secret_arn
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*"
       },
       # S3 ChromaDB - Download RAG database for context agent (Task 4.2)
       {
@@ -321,16 +320,13 @@ resource "aws_iam_role_policy" "worker_task" {
         ]
       },
       # Secrets Manager - RDS PostgreSQL + API keys
+      # Note: Using wildcard pattern to avoid circular dependency with RDS module
       {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = [
-          module.rds.database_url_secret_arn,
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/langfuse-*",
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/openrouter-*"
-        ]
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*"
       }
     ]
   })

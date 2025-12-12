@@ -88,7 +88,7 @@ resource "aws_security_group" "rds" {
 # -----------------------------------------------------------------------------
 
 resource "aws_db_parameter_group" "postgres" {
-  name        = "${var.project_name}-postgres-params"
+  name        = "${var.project_name}-postgres-params-v2"  # Changed name to force recreation
   family      = "postgres16"
   description = "Parameter group for ${var.project_name} PostgreSQL"
 
@@ -102,14 +102,19 @@ resource "aws_db_parameter_group" "postgres" {
 
   # Log slow queries (> 1 second)
   parameter {
-    name  = "log_min_duration_statement"
-    value = "1000"
+    name         = "log_min_duration_statement"
+    value        = "1000"
+    apply_method = "immediate"
   }
 
   tags = {
     Name        = "${var.project_name}-postgres-params"
     Environment = var.environment
     Project     = var.project_name
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
