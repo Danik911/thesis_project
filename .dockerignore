@@ -74,6 +74,7 @@ main/thesis_visualizations/
 main/THESIS_EVIDENCE_PACKAGE/
 main/tests/
 main/**/*.html
+!main/api/templates/**/*.html
 main/**/*.log
 main/**/__pycache__/
 main/**/*.pyc
