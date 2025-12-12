@@ -534,12 +534,12 @@ Current Docker Compose patterns map directly to AWS:
 
 | Docker Compose | AWS Equivalent |
 |----------------|----------------|
-| postgres | Aurora Serverless v2 |
+| postgres | Not used in production (stateless design) |
 | localstack | Amazon SQS |
 | api | ECS Fargate (2 vCPU, 4 GB) |
 | worker | ECS Fargate (4 vCPU, 8 GB) |
-| frontend | CloudFront + S3 |
-| chroma-data | S3 bucket |
+| frontend | ECS Fargate (via CloudFront + ALB) |
+| chroma-data | S3 bucket (downloaded at container startup) |
 | output-data | S3 bucket |
 | pharma-dev network | VPC with private subnets |
 | Health checks | ALB target group health checks |

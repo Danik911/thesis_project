@@ -85,7 +85,7 @@ User → Frontend (Next.js) → API (FastAPI) → Job Queue (SQS)
 | LLM | DeepSeek V3.1 via OpenRouter |
 | Backend | FastAPI + Python 3.12 |
 | Frontend | Next.js 14 (Pages Router) |
-| Database | PostgreSQL + pgvector |
+| Database | PostgreSQL + pgvector (local dev only) |
 | Vector Store | ChromaDB (26 regulatory docs) |
 | Queue | AWS SQS / LocalStack (dev) |
 | Auth | Clerk (EU) |

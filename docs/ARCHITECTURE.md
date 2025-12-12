@@ -226,15 +226,17 @@ def generate_alcoa_audit_trail(job_id: str, workflow_result: dict) -> dict:
 
 ## Docker Stack
 
-5-service Docker Compose architecture:
+5-service Docker Compose architecture (LOCAL DEVELOPMENT):
 
 | Service | Purpose | Technology |
 |---------|---------|------------|
-| **postgres** | Job queue metadata | PostgreSQL 15 + pgvector |
+| **postgres** | Job queue metadata (dev only) | PostgreSQL 15 + pgvector |
 | **localstack** | AWS SQS emulation | LocalStack 3.9.0 |
 | **api** | REST API endpoints | FastAPI + uvicorn |
 | **worker** | Async workflow executor | Python asyncio |
 | **frontend** | Job submission UI | Next.js 14 |
+
+**Note**: Production AWS deployment uses a stateless architecture. PostgreSQL is for local development only; production stores ChromaDB in S3 (downloaded at container startup).
 
 ```yaml
 # docker-compose.dev.yml (key services)
@@ -292,7 +294,7 @@ API → PostgreSQL → SQS → Worker → LangFuse traces
 | Backend | FastAPI |
 | Frontend | Next.js 14 (Pages Router) |
 | Queue | AWS SQS (LocalStack for dev) |
-| Database | PostgreSQL + pgvector |
+| Database | PostgreSQL + pgvector (local dev only) |
 | IaC | Terraform |
 
 ---

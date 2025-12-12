@@ -29,7 +29,7 @@ This Docker Compose stack provides a **production-like development environment**
 
 | Service      | Role                          | Production Equivalent     | Port  |
 |--------------|-------------------------------|---------------------------|-------|
-| `postgres`   | Database                      | Aurora Serverless v2      | 5432  |
+| `postgres`   | Database (dev only)           | Not used (stateless)      | 5432  |
 | `localstack` | AWS SQS Mock                  | Amazon SQS                | 4566  |
 | `api`        | FastAPI Job Submission        | ECS Fargate (API)         | 8080  |
 | `worker`     | Background Job Processor      | ECS Fargate (Worker)      | -     |
@@ -37,7 +37,7 @@ This Docker Compose stack provides a **production-like development environment**
 **Key Benefits:**
 - Test complete workflows locally without AWS credentials
 - Debug job processing with live code reload
-- Validate database schema before Aurora deployment
+- Validate database schema locally (not used in production)
 - Measure performance parity (local vs AWS)
 
 ---
@@ -490,39 +490,33 @@ Understanding these differences is essential for **validation risk assessment** 
 
 | Component       | Local (Docker Compose)                    | AWS Production                              | Impact                                      |
 |-----------------|-------------------------------------------|---------------------------------------------|---------------------------------------------|
-| **Database**    | Postgres 15-alpine + psycopg2/asyncpg     | Aurora Serverless v2 + Data API             | Higher latency in prod (~50-100ms vs ~1-5ms) |
-| **Protocol**    | Binary (Postgres wire protocol)           | HTTP/JSON (Aurora Data API)                 | Different error codes, retry behavior       |
+| **Database**    | Postgres 15-alpine + psycopg2/asyncpg     | Not used (stateless design)                 | Production uses S3 for ChromaDB state       |
 | **Queue**       | LocalStack SQS 3.x                        | Amazon SQS                                  | FIFO guarantees, deduplication may differ   |
 | **Storage**     | Local filesystem (`./output/`)            | S3 + Object Lock                            | No immutability in local mode               |
 | **Auth**        | Clerk dev instance                        | Clerk production + IAM roles                | Different rate limits, user base            |
-| **Observability** | LangFuse Cloud (optional)               | LangFuse self-hosted + CloudWatch           | Different retention, query performance      |
+| **Observability** | LangFuse Cloud (optional)               | LangFuse Cloud (EU)                         | Same service, different retention           |
 | **Networking**  | Bridge network (single host)              | VPC + security groups                       | No network isolation in local               |
 | **Secrets**     | .env file                                 | AWS Secrets Manager                         | No rotation in local mode                   |
 | **Scaling**     | Single container per service              | ECS Fargate autoscaling (2-10 tasks)        | No horizontal scaling in local              |
 
 ### Behavioral Differences
 
-#### 1. Transaction Semantics
-- **Local Postgres:** Full ACID transactions with serializable isolation
-- **Aurora Data API:** Limited transaction isolation, HTTP-based commits
-- **Risk:** Concurrent job updates may behave differently in production
+#### 1. State Management
+- **Local Postgres:** Used for job queue metadata and development testing
+- **AWS Production:** Stateless - ChromaDB stored in S3, downloaded at container startup
+- **Risk:** State persistence patterns differ between environments
 
-#### 2. Connection Pooling
-- **Local Postgres:** Requires connection pooling (asyncpg handles this)
-- **Aurora Data API:** Serverless (no pools needed)
-- **Risk:** Connection pool exhaustion testing not possible locally
-
-#### 3. Queue Delivery Guarantees
+#### 2. Queue Delivery Guarantees
 - **LocalStack SQS:** At-least-once delivery (best effort)
 - **Amazon SQS:** Guaranteed at-least-once delivery, optional exactly-once (FIFO)
 - **Risk:** Duplicate message handling may need additional testing in AWS
 
-#### 4. Performance Characteristics
+#### 3. Performance Characteristics
 - **Local:** Low latency (~1-5ms database, ~10ms queue)
-- **AWS:** Higher latency (~50-100ms Data API, ~20-50ms SQS)
+- **AWS:** Higher latency (~20-50ms SQS, ~100ms S3)
 - **Risk:** Timeout configurations tuned for local may be too aggressive for AWS
 
-#### 5. Error Taxonomy
+#### 4. Error Taxonomy
 - **LocalStack:** May not replicate all AWS error codes
 - **AWS:** Full error taxonomy (ThrottlingException, ServiceUnavailableException, etc.)
 - **Risk:** Error handling code paths not fully exercised locally
@@ -548,7 +542,7 @@ Before deploying to AWS, verify these scenarios work in local stack:
 
 ### Schema Migration Testing
 
-**Goal:** Validate database migrations work before running in Aurora.
+**Goal:** Validate database schema locally (PostgreSQL used for development testing only; not deployed to production).
 
 **Procedure:**
 1. Start with empty database:
@@ -567,21 +561,7 @@ Before deploying to AWS, verify these scenarios work in local stack:
    docker-compose -f docker-compose.dev.yml exec postgres psql -U postgres -d testgen -c '\d jobs'
    ```
 
-4. Compare with production schema (when available):
-   ```bash
-   # Export local schema
-   docker-compose -f docker-compose.dev.yml exec postgres pg_dump -U postgres -d testgen --schema-only > local_schema.sql
-
-   # Export Aurora schema (via AWS CLI)
-   aws rds-data execute-statement \
-     --resource-arn $AURORA_ARN \
-     --secret-arn $SECRET_ARN \
-     --database testgen \
-     --sql "SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema='public'"
-
-   # Diff schemas
-   diff local_schema.sql aurora_schema.sql
-   ```
+**Note:** Production AWS deployment does not use PostgreSQL. This database is for local development workflow testing only.
 
 ### End-to-End Workflow Testing
 
