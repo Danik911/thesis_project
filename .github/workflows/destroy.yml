@@ -100,9 +100,22 @@ jobs:
           terraform state rm 'aws_s3_bucket_server_side_encryption_configuration.chromadb' || true
           terraform state rm 'aws_s3_bucket_public_access_block.chromadb' || true
 
-          # NOTE: GitHub OIDC provider and IAM role are NOT preserved.
-          # They will be destroyed and recreated on next deploy (they're FREE).
-          # The deploy workflow will import them if they already exist.
+          echo "Preserving GitHub Actions OIDC + role (required for future deploy workflows)..."
+          terraform state rm 'aws_iam_openid_connect_provider.github' || true
+          terraform state rm 'aws_iam_role.github_actions' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_ecr' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_ecs' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_terraform_state' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_iam' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_acm' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_route53' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_cloudfront' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_cloudwatch' || true
+
+          # NOTE:
+          # - We DO preserve the GitHub OIDC provider + IAM role because deploy.yml
+          #   assumes this role via OIDC; if it's destroyed, future deploys can't start.
+          # - deploy.yml still imports these if they exist but aren't in state.
 
       - name: Stop AWS Config Recorder
         run: |
@@ -128,11 +141,10 @@ jobs:
           echo "    - S3: pharma-test-gen-chromadb-*"
           echo "    - ECR Repositories (images kept)"
           echo "    - DynamoDB: pharma-test-gen-terraform-locks"
+          echo "    - IAM: GitHub OIDC Provider + pharma-test-gen-github-actions role"
           echo ""
-          echo "  Destroyed (will be recreated on deploy - FREE):"
-          echo "    - GitHub OIDC Provider"
-          echo "    - IAM Role: pharma-test-gen-github-actions"
-          echo "    - All other infrastructure"
+          echo "  Destroyed:"
+          echo "    - All other Terraform-managed infrastructure"
           echo ""
           echo "  To redeploy: Run 'Deploy to AWS ECS' workflow"
           echo "=========================================="

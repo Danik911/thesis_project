@@ -136,6 +136,51 @@ jobs:
             fi
           fi
 
+          # Import ECR repositories if they exist (destroy.yml preserves them but removes from state)
+          for svc in api worker frontend; do
+            REPO_NAME="${{ env.PROJECT_NAME }}-${svc}"
+            if aws ecr describe-repositories --repository-names "$REPO_NAME" >/dev/null 2>&1; then
+              echo "Found existing ECR repo: ${REPO_NAME}"
+              if ! terraform state show "module.ecr.aws_ecr_repository.this[\"${svc}\"]" >/dev/null 2>&1; then
+                echo "Importing ECR repo into Terraform state: ${REPO_NAME}"
+                terraform import -var-file=environments/staging.tfvars \
+                  "module.ecr.aws_ecr_repository.this[\"${svc}\"]" "$REPO_NAME" || true
+              else
+                echo "ECR repo already in Terraform state: ${REPO_NAME}"
+              fi
+
+              # Lifecycle policy import (safe even if policy not present yet)
+              if ! terraform state show "module.ecr.aws_ecr_lifecycle_policy.this[\"${svc}\"]" >/dev/null 2>&1; then
+                echo "Importing ECR lifecycle policy into Terraform state: ${REPO_NAME}"
+                terraform import -var-file=environments/staging.tfvars \
+                  "module.ecr.aws_ecr_lifecycle_policy.this[\"${svc}\"]" "$REPO_NAME" || true
+              else
+                echo "ECR lifecycle policy already in Terraform state: ${REPO_NAME}"
+              fi
+            else
+              echo "ECR repo not found (will be created by Terraform): ${REPO_NAME}"
+            fi
+          done
+
+          # Import ChromaDB bucket if it exists (destroy.yml preserves it but removes from state)
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null || echo "")
+          if [ -n "$ACCOUNT_ID" ] && [ "$ACCOUNT_ID" != "None" ] && [ "$ACCOUNT_ID" != "null" ]; then
+            CHROMA_BUCKET="${{ env.PROJECT_NAME }}-chromadb-${ACCOUNT_ID}"
+            if aws s3api head-bucket --bucket "$CHROMA_BUCKET" >/dev/null 2>&1; then
+              echo "Found existing ChromaDB bucket: ${CHROMA_BUCKET}"
+              if ! terraform state show aws_s3_bucket.chromadb >/dev/null 2>&1; then
+                echo "Importing ChromaDB bucket into Terraform state..."
+                terraform import -var-file=environments/staging.tfvars aws_s3_bucket.chromadb "$CHROMA_BUCKET" || true
+              else
+                echo "ChromaDB bucket already in Terraform state"
+              fi
+            else
+              echo "ChromaDB bucket not found (will be created by Terraform): ${CHROMA_BUCKET}"
+            fi
+          else
+            echo "WARNING: Could not determine AWS account id; skipping ChromaDB bucket import"
+          fi
+
           echo "Import step completed"
 
       - name: Terraform Apply
