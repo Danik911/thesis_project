@@ -33,8 +33,32 @@ from pathlib import Path
 REGION = "eu-west-2"
 CLUSTER = "pharma-test-gen-cluster"
 PROJECT_NAME = "pharma-test-gen"
-CLOUDFRONT_DISTRIBUTION_ID = "E1DTSJYZQGK50L"  # d861au413p5o2.cloudfront.net
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+
+def get_cloudfront_distribution_id() -> str | None:
+    """Get CloudFront distribution ID dynamically from AWS.
+
+    Searches for a distribution with 'pharma-test-gen' in the comment.
+    Returns None if no distribution found.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "aws", "cloudfront", "list-distributions",
+                "--query", f"DistributionList.Items[?contains(Comment, '{PROJECT_NAME}')].Id | [0]",
+                "--output", "text"
+            ],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        dist_id = result.stdout.strip()
+        if dist_id and dist_id != "None" and dist_id != "null":
+            return dist_id
+        return None
+    except subprocess.CalledProcessError:
+        return None
 
 # Dockerfile mapping
 DOCKERFILES = {
@@ -127,12 +151,24 @@ def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
         return False, e.stderr
 
 
-def invalidate_cloudfront_cache(distribution_id: str = CLOUDFRONT_DISTRIBUTION_ID) -> bool:
+def invalidate_cloudfront_cache(distribution_id: str | None = None) -> bool:
     """Invalidate CloudFront cache after deployment.
 
     This ensures users get fresh content after frontend redeployment,
     preventing 404 errors caused by build ID mismatches.
+
+    Args:
+        distribution_id: CloudFront distribution ID. If None, will be looked up dynamically.
     """
+    if distribution_id is None:
+        distribution_id = get_cloudfront_distribution_id()
+
+    if distribution_id is None:
+        print("\n" + "="*60)
+        print("  Skipping CloudFront invalidation - no distribution found")
+        print("="*60)
+        return True  # Not a failure, just no CloudFront to invalidate
+
     cmd = [
         "aws", "cloudfront", "create-invalidation",
         "--distribution-id", distribution_id,

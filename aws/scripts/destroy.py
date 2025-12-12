@@ -464,26 +464,31 @@ def display_summary():
     print(f"""
    All ECS/Fargate infrastructure has been destroyed.
 
-   PRESERVED RESOURCES (for quick re-deployment):
+   PRESERVED RESOURCES (kept in AWS):
      - S3 Bucket: pharma-test-gen-terraform-state
      - S3 Bucket: pharma-test-gen-chromadb-* (RAG vector database)
      - DynamoDB Table: pharma-test-gen-terraform-locks
      - ECR Repositories (removed from Terraform state, kept in AWS)
-     - AWS Config (stopped, restart with: aws configservice start-configuration-recorder --configuration-recorder-name pharma --region eu-west-2)
+     - AWS Config (stopped, restart with: aws configservice start-configuration-recorder ...)
      - CloudTrail (still logging)
+
+   DESTROYED (will be recreated on deploy - FREE):
+     - GitHub OIDC Provider
+     - IAM Role: pharma-test-gen-github-actions
+     - CloudFront Distribution
+     - All other infrastructure
 
    Total monthly cost of preserved resources: ~$0.12
 
-   NOTE: CloudFront distribution was destroyed. On next deploy:
+   NOTE: On next deploy:
+     - GitHub OIDC + IAM role will be recreated (FREE)
      - New ALBs will be created
      - CloudFront will be recreated with correct ALB origins
-     - No manual intervention needed (Terraform manages CloudFront)
+     - No manual intervention needed (deploy workflow handles imports)
 
    TO RE-DEPLOY:
-     python aws/scripts/deploy.py
-
-   Or with uv:
-     uv run aws/scripts/deploy.py
+     - GitHub Actions: Run 'Deploy to AWS ECS' workflow
+     - Or locally: python aws/scripts/deploy.py
     """)
 
     print("=" * 70)

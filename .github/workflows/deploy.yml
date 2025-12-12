@@ -84,6 +84,60 @@ jobs:
         working-directory: aws/terraform
         run: terraform init
 
+      - name: Import existing resources if they exist
+        working-directory: aws/terraform
+        run: |
+          # Import OIDC provider if it exists in AWS but not in Terraform state
+          OIDC_ARN=$(aws iam list-open-id-connect-providers \
+            --query "OpenIDConnectProviderList[?ends_with(Arn, 'token.actions.githubusercontent.com')].Arn | [0]" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$OIDC_ARN" ] && [ "$OIDC_ARN" != "None" ] && [ "$OIDC_ARN" != "null" ]; then
+            echo "Found existing OIDC provider: $OIDC_ARN"
+            # Check if already in state
+            if ! terraform state show aws_iam_openid_connect_provider.github 2>/dev/null; then
+              echo "Importing OIDC provider into Terraform state..."
+              terraform import -var-file=environments/staging.tfvars \
+                aws_iam_openid_connect_provider.github "$OIDC_ARN" || true
+            else
+              echo "OIDC provider already in Terraform state"
+            fi
+          fi
+
+          # Import GitHub Actions role if it exists
+          if aws iam get-role --role-name ${{ env.PROJECT_NAME }}-github-actions 2>/dev/null; then
+            echo "Found existing GitHub Actions IAM role"
+            if ! terraform state show aws_iam_role.github_actions 2>/dev/null; then
+              echo "Importing IAM role into Terraform state..."
+              terraform import -var-file=environments/staging.tfvars \
+                aws_iam_role.github_actions ${{ env.PROJECT_NAME }}-github-actions || true
+            else
+              echo "IAM role already in Terraform state"
+            fi
+          fi
+
+          # Import Route53 cert validation record if it exists
+          HOSTED_ZONE_ID="Z0170225231EL8Z16R4WJ"
+          RECORD_NAME="_a2c8c647a65c218e47e2bc76275fb092.csvgeneration.com."
+          RECORD_EXISTS=$(aws route53 list-resource-record-sets \
+            --hosted-zone-id $HOSTED_ZONE_ID \
+            --query "ResourceRecordSets[?Name=='${RECORD_NAME}'].Name | [0]" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$RECORD_EXISTS" ] && [ "$RECORD_EXISTS" != "None" ] && [ "$RECORD_EXISTS" != "null" ]; then
+            echo "Found existing Route53 cert validation record"
+            if ! terraform state show 'aws_route53_record.cert_validation["csvgeneration.com"]' 2>/dev/null; then
+              echo "Importing Route53 record into Terraform state..."
+              terraform import -var-file=environments/staging.tfvars \
+                'aws_route53_record.cert_validation["csvgeneration.com"]' \
+                "${HOSTED_ZONE_ID}__a2c8c647a65c218e47e2bc76275fb092.csvgeneration.com_CNAME" || true
+            else
+              echo "Route53 record already in Terraform state"
+            fi
+          fi
+
+          echo "Import step completed"
+
       - name: Terraform Apply
         working-directory: aws/terraform
         run: |
@@ -162,11 +216,26 @@ jobs:
           echo "Waiting 30 seconds for ALB to register new targets..."
           sleep 30
 
-      - name: Health check - API
+      - name: Health check - API (via ALB)
         run: |
-          echo "Checking API health at https://csvgeneration.com/health..."
+          # Get API ALB DNS name dynamically
+          API_ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names ${{ env.PROJECT_NAME }}-api-alb \
+            --query "LoadBalancers[0].DNSName" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -z "$API_ALB_DNS" ] || [ "$API_ALB_DNS" == "None" ]; then
+            echo "WARNING: Could not find API ALB, trying CloudFront domain..."
+            API_ALB_DNS="csvgeneration.com"
+            PROTOCOL="https"
+          else
+            PROTOCOL="http"
+          fi
+
+          echo "Checking API health at ${PROTOCOL}://${API_ALB_DNS}/health..."
           for i in {1..5}; do
-            if curl -sf https://csvgeneration.com/health; then
+            if curl -sf "${PROTOCOL}://${API_ALB_DNS}/health"; then
+              echo ""
               echo "API health check passed!"
               exit 0
             fi
@@ -176,11 +245,25 @@ jobs:
           echo "API health check failed after 5 attempts"
           exit 1
 
-      - name: Health check - Frontend
+      - name: Health check - Frontend (via ALB)
         run: |
-          echo "Checking frontend at https://csvgeneration.com/..."
+          # Get Frontend ALB DNS name dynamically
+          FRONTEND_ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names ${{ env.PROJECT_NAME }}-frontend-alb \
+            --query "LoadBalancers[0].DNSName" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -z "$FRONTEND_ALB_DNS" ] || [ "$FRONTEND_ALB_DNS" == "None" ]; then
+            echo "WARNING: Could not find Frontend ALB, trying CloudFront domain..."
+            FRONTEND_ALB_DNS="csvgeneration.com"
+            PROTOCOL="https"
+          else
+            PROTOCOL="http"
+          fi
+
+          echo "Checking frontend at ${PROTOCOL}://${FRONTEND_ALB_DNS}/..."
           for i in {1..5}; do
-            if curl -sf https://csvgeneration.com/ | grep -q "<!DOCTYPE html>"; then
+            if curl -sf "${PROTOCOL}://${FRONTEND_ALB_DNS}/" | grep -q "<!DOCTYPE html>"; then
               echo "Frontend health check passed!"
               exit 0
             fi
@@ -192,9 +275,19 @@ jobs:
 
       - name: Invalidate CloudFront cache
         run: |
-          echo "Invalidating CloudFront cache..."
+          echo "Getting CloudFront distribution ID..."
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?contains(Comment, 'pharma-test-gen')].Id | [0]" \
+            --output text)
+
+          if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" == "None" ]; then
+            echo "No CloudFront distribution found, skipping invalidation"
+            exit 0
+          fi
+
+          echo "Invalidating CloudFront cache for distribution: ${DISTRIBUTION_ID}..."
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
-            --distribution-id E1DTSJYZQGK50L \
+            --distribution-id ${DISTRIBUTION_ID} \
             --paths "/*" \
             --query 'Invalidation.Id' \
             --output text)

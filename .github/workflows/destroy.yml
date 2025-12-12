@@ -100,6 +100,10 @@ jobs:
           terraform state rm 'aws_s3_bucket_server_side_encryption_configuration.chromadb' || true
           terraform state rm 'aws_s3_bucket_public_access_block.chromadb' || true
 
+          # NOTE: GitHub OIDC provider and IAM role are NOT preserved.
+          # They will be destroyed and recreated on next deploy (they're FREE).
+          # The deploy workflow will import them if they already exist.
+
       - name: Stop AWS Config Recorder
         run: |
           echo "Stopping AWS Config recorder..."
@@ -119,11 +123,16 @@ jobs:
           echo "=========================================="
           echo "  DESTRUCTION COMPLETE"
           echo "=========================================="
-          echo "  Preserved Resources:"
+          echo "  Preserved Resources (kept in AWS):"
           echo "    - S3: pharma-test-gen-terraform-state"
           echo "    - S3: pharma-test-gen-chromadb-*"
           echo "    - ECR Repositories (images kept)"
           echo "    - DynamoDB: pharma-test-gen-terraform-locks"
+          echo ""
+          echo "  Destroyed (will be recreated on deploy - FREE):"
+          echo "    - GitHub OIDC Provider"
+          echo "    - IAM Role: pharma-test-gen-github-actions"
+          echo "    - All other infrastructure"
           echo ""
           echo "  To redeploy: Run 'Deploy to AWS ECS' workflow"
           echo "=========================================="
