@@ -35,6 +35,7 @@ except ImportError:  # pragma: no cover - older SDKs
 
 from main.src.adapters.chroma_adapter import ChromaVectorStoreAdapter
 from main.src.adapters.local_adapter import LocalStorageAdapter
+from main.src.adapters.storage import StorageProvider
 from main.src.core.unified_workflow import UnifiedTestGenerationWorkflow
 from main.src.exceptions import HumanApprovalRequired
 
@@ -97,17 +98,26 @@ class WorkflowExecutor:
 
     def __init__(
         self,
-        storage_adapter: LocalStorageAdapter | None = None,
+        storage_adapter: StorageProvider | None = None,
         vector_adapter: ChromaVectorStoreAdapter | None = None
     ):
         """
         Initialize workflow executor with storage adapters.
 
         Args:
-            storage_adapter: Storage adapter for artifacts (default: LocalStorageAdapter)
+            storage_adapter: Storage adapter for artifacts (LocalStorageAdapter or S3StorageAdapter)
+                            CRITICAL: Must be provided - no default fallback
             vector_adapter: Vector store adapter (default: ChromaVectorStoreAdapter)
+
+        Raises:
+            ValueError: If storage_adapter is not provided
         """
-        self.storage_adapter = storage_adapter or LocalStorageAdapter(base_path="/app/output")
+        if storage_adapter is None:
+            raise ValueError(
+                "CRITICAL: storage_adapter is required\n"
+                "Worker must create appropriate adapter based on STORAGE_MODE environment variable"
+            )
+        self.storage_adapter = storage_adapter
         self.vector_adapter = vector_adapter
 
     @observe(name="execute_workflow", capture_input=True, capture_output=True)

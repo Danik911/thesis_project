@@ -35,6 +35,7 @@ from .worker_executor import (
     read_urs_from_storage,
 )
 from main.src.exceptions import HumanApprovalRequired
+from main.src.adapters.storage import StorageFactory
 from .observability import initialize_langfuse, shutdown_langfuse
 
 # Load environment variables from .env.local (for local development)
@@ -140,11 +141,39 @@ async def process_job_worker(
     else:
         logger.warning("[HIL] Worker using in-memory repository (HIL won't work in docker-compose)")
 
+    # Create storage adapter based on STORAGE_MODE environment variable
+    storage_mode = os.getenv("STORAGE_MODE", "local")
+    storage_bucket = os.getenv("STORAGE_TEST_OUTPUT_BUCKET", "")
+    logger.info(f"Storage configuration: mode={storage_mode}, bucket={storage_bucket or 'N/A'}")
+
+    try:
+        if storage_mode == "s3":
+            if not storage_bucket:
+                raise ValueError(
+                    "CRITICAL: S3 storage mode requires STORAGE_TEST_OUTPUT_BUCKET environment variable"
+                )
+            storage_adapter = StorageFactory.create_storage_provider(
+                storage_mode="s3",
+                bucket=storage_bucket,
+                region=os.getenv("AWS_REGION", "eu-west-2")
+            )
+            logger.info(f"Created S3 storage adapter for bucket: {storage_bucket}")
+        else:
+            storage_adapter = StorageFactory.create_storage_provider(
+                storage_mode="local",
+                base_path="/app/output"
+            )
+            logger.info("Created local storage adapter at /app/output")
+    except Exception as e:
+        logger.exception(f"CRITICAL: Failed to create storage adapter: {e}")
+        logger.error("Worker cannot process jobs without storage. Exiting.")
+        return
+
     # Initialize workflow executor (single instance, reused across jobs)
     executor = None
     try:
         logger.info("Initializing WorkflowExecutor...")
-        executor = WorkflowExecutor()
+        executor = WorkflowExecutor(storage_adapter=storage_adapter)
         logger.info("WorkflowExecutor initialized successfully")
     except Exception as e:
         logger.exception(f"CRITICAL: Failed to initialize WorkflowExecutor: {e}")
@@ -717,12 +746,9 @@ async def _execute_workflow(
             f"  Expected duration: 5-6 minutes"
         )
 
-    # Read URS content from storage
-    from main.src.adapters.local_adapter import LocalStorageAdapter
-    storage_adapter = LocalStorageAdapter(base_path="/app/output")
-
+    # Read URS content from storage (use executor's storage adapter for consistency)
     try:
-        urs_content = await read_urs_from_storage(storage_adapter, job.job_id)
+        urs_content = await read_urs_from_storage(executor.storage_adapter, job.job_id)
     except FileNotFoundError:
         # If not in storage with full path, try reading from job record
         # (API may have stored it differently)
