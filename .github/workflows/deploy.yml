@@ -116,24 +116,41 @@ jobs:
             fi
           fi
 
-          # Import Route53 cert validation record if it exists
+          # Import Route53 cert validation records if they exist
+          # Note: Terraform key is now record_name (not domain_name) to avoid duplicates
           HOSTED_ZONE_ID="Z0170225231EL8Z16R4WJ"
-          RECORD_NAME="_a2c8c647a65c218e47e2bc76275fb092.csvgeneration.com."
-          RECORD_EXISTS=$(aws route53 list-resource-record-sets \
+
+          # Remove old state entries with domain name keys (migrating to record name keys)
+          echo "Cleaning up old Route53 state entries (domain name keys -> record name keys)..."
+          terraform state rm 'aws_route53_record.cert_validation["csvgeneration.com"]' 2>/dev/null || true
+          terraform state rm 'aws_route53_record.cert_validation["*.csvgeneration.com"]' 2>/dev/null || true
+
+          # Get all ACM validation CNAME records (they start with underscore)
+          echo "Querying Route53 for ACM validation records..."
+          VALIDATION_RECORDS=$(aws route53 list-resource-record-sets \
             --hosted-zone-id $HOSTED_ZONE_ID \
-            --query "ResourceRecordSets[?Name=='${RECORD_NAME}'].Name | [0]" \
+            --query "ResourceRecordSets[?Type=='CNAME' && starts_with(Name, '_')].Name" \
             --output text 2>/dev/null || echo "")
 
-          if [ -n "$RECORD_EXISTS" ] && [ "$RECORD_EXISTS" != "None" ] && [ "$RECORD_EXISTS" != "null" ]; then
-            echo "Found existing Route53 cert validation record"
-            if ! terraform state show 'aws_route53_record.cert_validation["csvgeneration.com"]' 2>/dev/null; then
-              echo "Importing Route53 record into Terraform state..."
-              terraform import -var-file=environments/staging.tfvars \
-                'aws_route53_record.cert_validation["csvgeneration.com"]' \
-                "${HOSTED_ZONE_ID}__a2c8c647a65c218e47e2bc76275fb092.csvgeneration.com_CNAME" || true
-            else
-              echo "Route53 record already in Terraform state"
-            fi
+          if [ -n "$VALIDATION_RECORDS" ] && [ "$VALIDATION_RECORDS" != "None" ]; then
+            echo "Found ACM validation records: $VALIDATION_RECORDS"
+
+            for RECORD_NAME in $VALIDATION_RECORDS; do
+              # Remove trailing dot for Terraform resource key matching
+              RECORD_NAME_CLEAN="${RECORD_NAME%.}"
+
+              # Import using record name as key (matches new Terraform for_each key)
+              if ! terraform state show "aws_route53_record.cert_validation[\"${RECORD_NAME_CLEAN}\"]" 2>/dev/null; then
+                echo "Importing Route53 record: ${RECORD_NAME_CLEAN}..."
+                terraform import -var-file=environments/staging.tfvars \
+                  "aws_route53_record.cert_validation[\"${RECORD_NAME_CLEAN}\"]" \
+                  "${HOSTED_ZONE_ID}_${RECORD_NAME_CLEAN}_CNAME" 2>/dev/null || echo "  (may already exist or not needed)"
+              else
+                echo "Route53 record already in state: ${RECORD_NAME_CLEAN}"
+              fi
+            done
+          else
+            echo "No ACM validation records found in Route53 (will be created by Terraform)"
           fi
 
           # Import ECR repositories if they exist (destroy.yml preserves them but removes from state)

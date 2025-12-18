@@ -9,11 +9,11 @@ module "route53" {
   environment  = var.environment
 
   # Domain configuration
-  domain_name         = var.domain_name
-  create_hosted_zone  = var.create_hosted_zone
-  api_subdomain       = var.api_subdomain
-  frontend_subdomain  = var.frontend_subdomain
-  create_root_record  = var.create_root_record
+  domain_name        = var.domain_name
+  create_hosted_zone = var.create_hosted_zone
+  api_subdomain      = var.api_subdomain
+  frontend_subdomain = var.frontend_subdomain
+  create_root_record = var.create_root_record
 
   # ALB and CloudFront endpoints
   api_alb_dns_name       = module.alb_api.alb_dns_name
@@ -45,9 +45,10 @@ resource "aws_acm_certificate" "cloudfront" {
 }
 
 # DNS validation records
+# Key by record_name (not domain_name) to avoid duplicates when base + wildcard share same validation record
 resource "aws_route53_record" "cert_validation" {
   for_each = var.domain_name != "" ? {
-    for dvo in aws_acm_certificate.cloudfront[0].domain_validation_options : dvo.domain_name => {
+    for dvo in aws_acm_certificate.cloudfront[0].domain_validation_options : dvo.resource_record_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
