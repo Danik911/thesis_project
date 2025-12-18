@@ -232,7 +232,7 @@ resource "aws_iam_role_policy" "api_task" {
           "${aws_s3_bucket.chromadb.arn}/*"
         ]
       },
-      # S3 Output Bucket - Store URS documents and read test suites
+      # S3 Output Bucket - Store URS documents and read test suites (object operations)
       {
         Effect = "Allow"
         Action = [
@@ -241,6 +241,14 @@ resource "aws_iam_role_policy" "api_task" {
           "s3:GetObject"
         ]
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
+      },
+      # S3 Output Bucket - List bucket contents (required for checking if objects exist)
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${var.output_bucket}"
       }
     ]
   })
@@ -287,7 +295,7 @@ resource "aws_iam_role_policy" "worker_task" {
         ]
         Resource = module.sqs_worker.queue_arn
       },
-      # S3 - Write test suites
+      # S3 - Write test suites (object operations)
       {
         Effect = "Allow"
         Action = [
@@ -296,6 +304,14 @@ resource "aws_iam_role_policy" "worker_task" {
           "s3:GetObject"
         ]
         Resource = "arn:aws:s3:::${var.output_bucket}/*"
+      },
+      # S3 Output Bucket - List bucket contents (required for checking if objects exist)
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${var.output_bucket}"
       },
       # S3 ChromaDB - Download RAG database on startup (Task 4.2)
       {
@@ -352,8 +368,8 @@ resource "aws_iam_role" "frontend_task" {
   })
 
   tags = {
-    Service  = "frontend"
-    GAMP5    = "true"
+    Service = "frontend"
+    GAMP5   = "true"
   }
 }
 
@@ -509,8 +525,8 @@ resource "aws_security_group" "frontend" {
   }
 
   tags = {
-    Service  = "frontend"
-    GAMP5    = "true"
+    Service = "frontend"
+    GAMP5   = "true"
   }
 }
 
@@ -663,11 +679,11 @@ module "ecs_api" {
   ]
 
   health_check_command      = ["CMD-SHELL", "curl -f http://localhost:${var.api_port}${var.api_health_check_path} || exit 1"]
-  health_check_interval     = 60   # Check every 60s instead of 30s
-  health_check_timeout      = 30   # Wait 30s instead of 5s
-  health_check_retries      = 10   # Allow 10 failures (10 min) instead of 3 (90s)
-  health_check_start_period = 120  # Give workflow 2 min grace period to start
-  health_check_grace_period = 600  # ALB: 10 min grace period during workflow execution
+  health_check_interval     = 60  # Check every 60s instead of 30s
+  health_check_timeout      = 30  # Wait 30s instead of 5s
+  health_check_retries      = 10  # Allow 10 failures (10 min) instead of 3 (90s)
+  health_check_start_period = 120 # Give workflow 2 min grace period to start
+  health_check_grace_period = 600 # ALB: 10 min grace period during workflow execution
 
   desired_count             = var.api_desired_count
   min_capacity              = var.api_min_capacity
@@ -702,8 +718,11 @@ module "ecs_worker" {
   subnet_ids         = var.private_subnet_ids
   security_group_ids = [aws_security_group.worker.id]
   assign_public_ip   = var.assign_public_ip
-  target_group_arn   = null  # Worker has no ALB
-  container_port     = null  # Worker has no HTTP endpoint
+  target_group_arn   = null # Worker has no ALB
+  container_port     = null # Worker has no HTTP endpoint
+
+  # Use Fargate Spot for 70% cost savings (worker is fault-tolerant via SQS retry)
+  use_fargate_spot = true
 
   environment_variables = [
     { name = "ENVIRONMENT", value = var.environment },
@@ -745,21 +764,21 @@ module "ecs_worker" {
     }
   ]
 
-  health_check_command = null  # Worker has no health check endpoint
+  health_check_command = null # Worker has no health check endpoint
 
   desired_count             = var.worker_desired_count
   min_capacity              = var.worker_min_capacity
   max_capacity              = var.worker_max_capacity
-  cpu_target_utilization    = null  # Worker scales on SQS, not CPU
-  memory_target_utilization = null  # Worker scales on SQS, not memory
+  cpu_target_utilization    = null # Worker scales on SQS, not CPU
+  memory_target_utilization = null # Worker scales on SQS, not memory
   # SQS scaling disabled for initial deployment (requires queue data)
   # Re-enable after first messages are in queue:
   # sqs_queue_name            = module.sqs_worker.queue_name
-  sqs_queue_name            = null
-  sqs_target_value          = var.worker_target_messages_per_task
-  sqs_scale_in_cooldown     = 600  # 10 minutes to prevent thrashing
-  scale_out_cooldown        = var.scale_out_cooldown
-  log_retention_days        = var.log_retention_days
+  sqs_queue_name        = null
+  sqs_target_value      = var.worker_target_messages_per_task
+  sqs_scale_in_cooldown = 600 # 10 minutes to prevent thrashing
+  scale_out_cooldown    = var.scale_out_cooldown
+  log_retention_days    = var.log_retention_days
 
   # Dependencies are inferred through resource references
 }
@@ -806,7 +825,7 @@ module "ecs_frontend" {
   ]
 
   health_check_command      = ["CMD-SHELL", "curl -f http://localhost:${var.frontend_port}${var.frontend_health_check_path} || exit 1"]
-  health_check_start_period = 15  # Next.js takes longer to start
+  health_check_start_period = 15 # Next.js takes longer to start
   health_check_grace_period = 90
 
   desired_count             = var.frontend_desired_count
