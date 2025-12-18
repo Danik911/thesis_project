@@ -52,7 +52,7 @@ import aiofiles
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from langfuse import observe
 
 # Load environment variables from .env.local (for local development)
@@ -653,12 +653,45 @@ async def download_job_result(
     if not job.result_uri:
         raise HTTPException(status_code=404, detail="Result not found")
 
-    # Handle file:// URI
+    # Handle S3 URI (AWS deployment)
+    if job.result_uri.startswith("s3://"):
+        from aiobotocore.session import get_session
+        from botocore.exceptions import ClientError
+
+        # Parse S3 URI: s3://bucket/path/to/file
+        uri_parts = job.result_uri.replace("s3://", "").split("/", 1)
+        if len(uri_parts) != 2:
+            raise HTTPException(status_code=500, detail=f"Invalid S3 URI format: {job.result_uri}")
+
+        bucket = uri_parts[0]
+        key = uri_parts[1]
+        region = os.getenv("AWS_REGION", "eu-west-2")
+
+        logger.info(f"[DOWNLOAD] Fetching from S3: bucket={bucket}, key={key}")
+
+        session = get_session()
+        try:
+            async with session.create_client("s3", region_name=region) as client:
+                response = await client.get_object(Bucket=bucket, Key=key)
+                content = await response["Body"].read()
+
+                return Response(
+                    content=content,
+                    media_type="application/x-yaml",
+                    headers={"Content-Disposition": f"attachment; filename=test_suite_{job_id}.yaml"}
+                )
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            if error_code in ["NoSuchKey", "404"]:
+                raise HTTPException(status_code=404, detail=f"File not found in S3: {key}")
+            raise HTTPException(status_code=500, detail=f"S3 error: {error_code}")
+
+    # Handle file:// URI (local development)
     if job.result_uri.startswith("file://"):
         file_path = job.result_uri.replace("file://", "")
         # On Windows it might be file:///C:/... -> /C:/...
         # But inside Docker (Linux) it is file:///app/output/... -> /app/output/...
-        
+
         # Handle Windows path if running locally
         if ":" in file_path and not file_path.startswith("/"):
              pass # It's likely absolute windows path
@@ -666,17 +699,17 @@ async def download_job_result(
              file_path = file_path[1:] # C:/...
 
         path_obj = Path(file_path).resolve()
-        
+
         if not path_obj.exists():
              raise HTTPException(status_code=404, detail=f"File not found on server: {path_obj}")
-             
+
         return FileResponse(
-            path=path_obj, 
+            path=path_obj,
             filename=f"test_suite_{job_id}.yaml",
             media_type="application/x-yaml"
         )
-    
-    raise HTTPException(status_code=501, detail="Storage backend not supported for direct download")
+
+    raise HTTPException(status_code=501, detail=f"Unsupported storage URI scheme: {job.result_uri}")
 
 
 @app.get("/jobs/{job_id}/result")
@@ -717,6 +750,33 @@ async def get_job_result_json(
     if not job.result_uri:
         raise HTTPException(status_code=404, detail="Result not found")
 
+    # Handle S3 URI (AWS deployment)
+    if job.result_uri.startswith("s3://"):
+        from aiobotocore.session import get_session
+        from botocore.exceptions import ClientError
+
+        uri_parts = job.result_uri.replace("s3://", "").split("/", 1)
+        if len(uri_parts) != 2:
+            raise HTTPException(status_code=500, detail=f"Invalid S3 URI: {job.result_uri}")
+
+        bucket = uri_parts[0]
+        key = uri_parts[1]
+        region = os.getenv("AWS_REGION", "eu-west-2")
+
+        session = get_session()
+        try:
+            async with session.create_client("s3", region_name=region) as client:
+                response = await client.get_object(Bucket=bucket, Key=key)
+                content = await response["Body"].read()
+                data = yaml.safe_load(content.decode("utf-8"))
+                return JSONResponse(content=data)
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            if error_code in ["NoSuchKey", "404"]:
+                raise HTTPException(status_code=404, detail=f"File not found in S3: {key}")
+            raise HTTPException(status_code=500, detail=f"S3 error: {error_code}")
+
+    # Handle file:// URI (local development)
     if job.result_uri.startswith("file://"):
         file_path = job.result_uri.replace("file://", "")
         # Handle Windows path logic if needed
@@ -724,10 +784,10 @@ async def get_job_result_json(
              file_path = file_path[1:]
 
         path_obj = Path(file_path).resolve()
-        
+
         if not path_obj.exists():
              raise HTTPException(status_code=404, detail="File not found on server")
-             
+
         try:
             async with aiofiles.open(path_obj, "r") as f:
                 content = await f.read()
@@ -737,7 +797,7 @@ async def get_job_result_json(
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to parse result: {e}")
 
-    raise HTTPException(status_code=501, detail="Storage backend not supported")
+    raise HTTPException(status_code=501, detail=f"Unsupported storage URI: {job.result_uri}")
 
 
 @app.get("/jobs/quota", response_model=dict)
