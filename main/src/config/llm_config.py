@@ -47,14 +47,10 @@ class LLMConfig:
 
     # Environment-based model selection (NO FALLBACKS - explicit environment configuration)
     _ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-    _LLM_MODEL = os.getenv("LLM_MODEL")
 
-    # If no explicit model, use environment-appropriate default
-    if not _LLM_MODEL:
-        _LLM_MODEL = (
-            "deepseek/deepseek-chat-v3.1" if _ENVIRONMENT in ("staging", "production")
-            else "google/gemini-2.5-flash-lite"  # Development only
-        )
+    # Always use Gemini unless explicitly overridden via LLM_MODEL env var
+    # Note: DeepSeek was previous default for staging/production but user requested Gemini everywhere
+    _LLM_MODEL = os.getenv("LLM_MODEL", "google/gemini-2.5-flash-lite")
 
     # Model configurations (NO FALLBACKS - single model per provider)
     MODELS = {

@@ -636,6 +636,8 @@ module "ecs_api" {
     { name = "ENVIRONMENT", value = var.environment },
     { name = "AWS_REGION", value = var.aws_region },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
+    # LLM Configuration - Gemini model for all environments
+    { name = "LLM_MODEL", value = "google/gemini-2.5-flash-lite" },
     # Storage Configuration - S3 mode for ECS deployment
     { name = "STORAGE_MODE", value = "s3" },
     { name = "STORAGE_TEST_OUTPUT_BUCKET", value = var.output_bucket },
@@ -731,6 +733,8 @@ module "ecs_worker" {
     { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
     { name = "SQS_QUEUE_URL", value = module.sqs_worker.queue_url },
     { name = "OUTPUT_BUCKET", value = var.output_bucket },
+    # LLM Configuration - Gemini model for all environments
+    { name = "LLM_MODEL", value = "google/gemini-2.5-flash-lite" },
     # Storage Configuration - S3 mode for ECS deployment
     { name = "STORAGE_MODE", value = "s3" },
     { name = "STORAGE_TEST_OUTPUT_BUCKET", value = var.output_bucket },

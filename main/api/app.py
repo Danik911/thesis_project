@@ -620,6 +620,7 @@ async def download_job_result(
     job_id: str,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep
 ):
     """
@@ -628,8 +629,17 @@ async def download_job_result(
     Note: @observe decorator removed - causes hang by serializing
     non-serializable dependency objects (locks, connection pools).
     """
-    async with job_lock:
-        job = job_repository.get(job_id)
+    # Check PostgreSQL first (where jobs are persisted), then fall back to in-memory
+    job = None
+    if db_job_repo is not None:
+        try:
+            job = await db_job_repo.get(job_id)
+        except Exception as e:
+            logger.warning(f"Failed to get job from database: {e}")
+
+    if job is None:
+        async with job_lock:
+            job = job_repository.get(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -674,6 +684,7 @@ async def get_job_result_json(
     job_id: str,
     job_repository: JobRepositoryDep,
     job_lock: JobLockDep,
+    db_job_repo: DbJobRepositoryDep,
     user: CurrentUserDep
 ):
     """
@@ -682,8 +693,17 @@ async def get_job_result_json(
     Note: @observe decorator removed - causes hang by serializing
     non-serializable dependency objects (locks, connection pools).
     """
-    async with job_lock:
-        job = job_repository.get(job_id)
+    # Check PostgreSQL first (where jobs are persisted), then fall back to in-memory
+    job = None
+    if db_job_repo is not None:
+        try:
+            job = await db_job_repo.get(job_id)
+        except Exception as e:
+            logger.warning(f"Failed to get job from database: {e}")
+
+    if job is None:
+        async with job_lock:
+            job = job_repository.get(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
