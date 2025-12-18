@@ -63,7 +63,7 @@ variable "memory" {
 variable "cpu_architecture" {
   description = "CPU architecture (X86_64 or ARM64)"
   type        = string
-  default     = "X86_64"  # AMD64 for ECS Fargate
+  default     = "X86_64" # AMD64 for ECS Fargate
 }
 
 variable "container_port" {
@@ -188,6 +188,12 @@ variable "desired_count" {
   default     = 1
 }
 
+variable "use_fargate_spot" {
+  description = "Use Fargate Spot capacity for cost savings (recommended for fault-tolerant workers)"
+  type        = bool
+  default     = false
+}
+
 # -----------------------------------------------------------------------------
 # Auto Scaling
 # -----------------------------------------------------------------------------
@@ -250,7 +256,7 @@ variable "sqs_target_value" {
 variable "sqs_scale_in_cooldown" {
   description = "Cooldown period for SQS scale in (longer to prevent thrashing)"
   type        = number
-  default     = 600  # 10 minutes
+  default     = 600 # 10 minutes
 }
 
 # -----------------------------------------------------------------------------

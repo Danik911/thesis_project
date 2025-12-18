@@ -83,7 +83,7 @@ resource "aws_ecs_task_definition" "this" {
 
       # Linux parameters for proper signal handling
       linuxParameters = {
-        initProcessEnabled = true  # Use tini for PID 1 (matches Dockerfile)
+        initProcessEnabled = true # Use tini for PID 1 (matches Dockerfile)
       }
 
       # Disable pseudo terminal (not needed for services)
@@ -106,14 +106,45 @@ resource "aws_ecs_service" "this" {
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.this.arn
   desired_count   = var.desired_count
-  launch_type     = "FARGATE"
+  # Using capacity_provider_strategy instead of launch_type for Fargate Spot support
   platform_version = "LATEST"
+
+  # Capacity provider strategy for Fargate/Fargate Spot
+  # When use_fargate_spot = true: 80% Spot (weight 4), 20% On-demand (weight 1, base 1)
+  # When use_fargate_spot = false: 100% On-demand Fargate
+  dynamic "capacity_provider_strategy" {
+    for_each = var.use_fargate_spot ? [1] : []
+    content {
+      capacity_provider = "FARGATE_SPOT"
+      weight            = 4
+      base              = 0
+    }
+  }
+
+  dynamic "capacity_provider_strategy" {
+    for_each = var.use_fargate_spot ? [1] : []
+    content {
+      capacity_provider = "FARGATE"
+      weight            = 1
+      base              = 1 # Always keep at least 1 task on regular Fargate as fallback
+    }
+  }
+
+  # When not using Fargate Spot, use 100% regular Fargate
+  dynamic "capacity_provider_strategy" {
+    for_each = var.use_fargate_spot ? [] : [1]
+    content {
+      capacity_provider = "FARGATE"
+      weight            = 1
+      base              = 0
+    }
+  }
 
   # Network configuration (REQUIRED for Fargate)
   network_configuration {
     subnets          = var.subnet_ids
     security_groups  = var.security_group_ids
-    assign_public_ip = var.assign_public_ip  # True for public subnets without NAT
+    assign_public_ip = var.assign_public_ip # True for public subnets without NAT
   }
 
   # Load balancer integration (only for API and Frontend)
@@ -133,7 +164,7 @@ resource "aws_ecs_service" "this" {
 
   deployment_circuit_breaker {
     enable   = true
-    rollback = true  # Auto rollback on deployment failure
+    rollback = true # Auto rollback on deployment failure
   }
 
   # Health check grace period (only when ALB is attached)
@@ -240,7 +271,7 @@ resource "aws_appautoscaling_policy" "sqs" {
     customized_metric_specification {
       metrics {
         id          = "messages_per_task"
-        expression  = "messages / MAX([tasks, 1])"  # Avoid division by zero
+        expression  = "messages / MAX([tasks, 1])" # Avoid division by zero
         return_data = true
       }
 
