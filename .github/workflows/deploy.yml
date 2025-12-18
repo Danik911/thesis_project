@@ -124,6 +124,8 @@ jobs:
           echo "Cleaning up old Route53 state entries (domain name keys -> record name keys)..."
           terraform state rm 'aws_route53_record.cert_validation["csvgeneration.com"]' 2>/dev/null || true
           terraform state rm 'aws_route53_record.cert_validation["*.csvgeneration.com"]' 2>/dev/null || true
+          # Also try without trailing dot in case of previous import attempt
+          terraform state rm 'aws_route53_record.cert_validation["_a2c8c647a65c218e47e2bc76275fb092.csvgeneration.com"]' 2>/dev/null || true
 
           # Get all ACM validation CNAME records (they start with underscore)
           echo "Querying Route53 for ACM validation records..."
@@ -136,17 +138,19 @@ jobs:
             echo "Found ACM validation records: $VALIDATION_RECORDS"
 
             for RECORD_NAME in $VALIDATION_RECORDS; do
-              # Remove trailing dot for Terraform resource key matching
+              # RECORD_NAME has trailing dot from Route53 (e.g., "_xxx.csvgeneration.com.")
+              # Remove trailing dot for import ID only
               RECORD_NAME_CLEAN="${RECORD_NAME%.}"
 
-              # Import using record name as key (matches new Terraform for_each key)
-              if ! terraform state show "aws_route53_record.cert_validation[\"${RECORD_NAME_CLEAN}\"]" 2>/dev/null; then
-                echo "Importing Route53 record: ${RECORD_NAME_CLEAN}..."
+              # Terraform key includes trailing dot (from dvo.resource_record_name)
+              # Import ID uses name without trailing dot
+              if ! terraform state show "aws_route53_record.cert_validation[\"${RECORD_NAME}\"]" 2>/dev/null; then
+                echo "Importing Route53 record: ${RECORD_NAME}..."
                 terraform import -var-file=environments/staging.tfvars \
-                  "aws_route53_record.cert_validation[\"${RECORD_NAME_CLEAN}\"]" \
-                  "${HOSTED_ZONE_ID}_${RECORD_NAME_CLEAN}_CNAME" 2>/dev/null || echo "  (may already exist or not needed)"
+                  "aws_route53_record.cert_validation[\"${RECORD_NAME}\"]" \
+                  "${HOSTED_ZONE_ID}_${RECORD_NAME_CLEAN}_CNAME" || echo "  (import failed, may need manual intervention)"
               else
-                echo "Route53 record already in state: ${RECORD_NAME_CLEAN}"
+                echo "Route53 record already in state: ${RECORD_NAME}"
               fi
             done
           else
