@@ -45,15 +45,19 @@ resource "aws_acm_certificate" "cloudfront" {
 }
 
 # DNS validation records
-# Key by record_name (not domain_name) to avoid duplicates when base + wildcard share same validation record
-resource "aws_route53_record" "cert_validation" {
-  for_each = var.domain_name != "" ? {
+# Deduplicate validation options since base + wildcard domains share the same validation record
+locals {
+  cert_validation_options = var.domain_name != "" ? {
     for dvo in aws_acm_certificate.cloudfront[0].domain_validation_options : dvo.resource_record_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
-    }
+    }... # Ellipsis groups duplicates - we take first entry below
   } : {}
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = { for k, v in local.cert_validation_options : k => v[0] }
 
   zone_id = module.route53.zone_id
   name    = each.value.name
