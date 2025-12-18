@@ -43,7 +43,7 @@ variable "database_username" {
 variable "instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.t3.micro"  # ~$13/month
+  default     = "db.t3.micro" # ~$13/month
 }
 
 variable "allocated_storage" {
@@ -61,5 +61,5 @@ variable "max_allocated_storage" {
 variable "backup_retention_days" {
   description = "Number of days to retain backups"
   type        = number
-  default     = 1  # Minimal for staging
+  default     = 1 # Minimal for staging
 }

@@ -13,11 +13,11 @@ resource "aws_ecr_repository" "this" {
   for_each = var.repositories
 
   name                 = "${var.project_name}-${each.key}"
-  image_tag_mutability = "MUTABLE"  # Staging: Allow staging-latest overwrites (timestamp tags provide audit trail)
+  image_tag_mutability = "MUTABLE" # Staging: Allow staging-latest overwrites (timestamp tags provide audit trail)
 
   # Encryption configuration
   encryption_configuration {
-    encryption_type = "AES256"  # Use KMS for enhanced security if required
+    encryption_type = "AES256" # Use KMS for enhanced security if required
   }
 
   # Security scanning on push
@@ -78,11 +78,25 @@ resource "aws_ecr_lifecycle_policy" "this" {
         rulePriority = 3
         description  = "Keep staging images for ${var.staging_expiry_days} days"
         selection = {
-          tagStatus     = "tagged"
-          tagPrefixList = ["staging-", "dev-", "test-"]
+          tagStatus = "tagged"
+          # Extended prefixes to catch all dev/diagnostic image types
+          tagPrefixList = ["staging-", "dev-", "test-", "diagnostic-", "langfuse-", "chromadb-", "trace-", "strict-", "debug-"]
           countType     = "sinceImagePushed"
           countUnit     = "days"
           countNumber   = var.staging_expiry_days
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 4
+        description  = "Keep only last ${var.keep_latest_images} latest-tagged images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest"]
+          countType     = "imageCountMoreThan"
+          countNumber   = var.keep_latest_images
         }
         action = {
           type = "expire"
@@ -102,8 +116,8 @@ resource "aws_ecr_repository_policy" "this" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCrossAccountPull"
-        Effect    = "Allow"
+        Sid    = "AllowCrossAccountPull"
+        Effect = "Allow"
         Principal = {
           AWS = var.cross_account_principals
         }

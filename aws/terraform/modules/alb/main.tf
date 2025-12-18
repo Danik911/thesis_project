@@ -44,7 +44,7 @@ resource "aws_lb_target_group" "this" {
   port        = var.target_port
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
-  target_type = "ip"  # REQUIRED for Fargate
+  target_type = "ip" # REQUIRED for Fargate
 
   health_check {
     enabled             = true
@@ -87,7 +87,7 @@ resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"  # TLS 1.3 (GAMP-5 security)
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06" # TLS 1.3 (GAMP-5 security)
   certificate_arn   = var.certificate_arn
 
   default_action {

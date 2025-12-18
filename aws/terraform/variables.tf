@@ -70,13 +70,13 @@ variable "assign_public_ip" {
 variable "aurora_cluster_arn" {
   description = "DEPRECATED: ARN of Aurora Serverless v2 cluster (no longer used)"
   type        = string
-  default     = ""  # No longer required - RDS module used instead
+  default     = "" # No longer required - RDS module used instead
 }
 
 variable "aurora_secret_arn" {
   description = "DEPRECATED: ARN of Secrets Manager secret for Aurora (no longer used)"
   type        = string
-  default     = ""  # No longer required - RDS module creates its own secret
+  default     = "" # No longer required - RDS module creates its own secret
 }
 
 variable "aurora_database_name" {
@@ -105,7 +105,7 @@ variable "output_bucket" {
 variable "bedrock_region" {
   description = "AWS region for Bedrock (may differ from main region)"
   type        = string
-  default     = "us-east-1"  # DeepSeek V3 availability
+  default     = "us-east-1" # DeepSeek V3 availability
 }
 
 variable "bedrock_model_id" {
@@ -121,7 +121,7 @@ variable "bedrock_model_id" {
 variable "acm_certificate_arn" {
   description = "ACM certificate ARN for HTTPS (REQUIRED for production, empty for HTTP-only staging)"
   type        = string
-  default     = ""  # Empty for HTTP-only staging; MUST be set for production
+  default     = "" # Empty for HTTP-only staging; MUST be set for production
 }
 
 # -----------------------------------------------------------------------------
@@ -156,13 +156,13 @@ variable "frontend_image_tag" {
 variable "api_cpu" {
   description = "CPU units for API task (1024 = 1 vCPU)"
   type        = number
-  default     = 2048  # 2 vCPU
+  default     = 2048 # 2 vCPU
 }
 
 variable "api_memory" {
   description = "Memory in MB for API task"
   type        = number
-  default     = 4096  # 4 GB
+  default     = 4096 # 4 GB
 }
 
 variable "api_desired_count" {
@@ -202,13 +202,13 @@ variable "api_health_check_path" {
 variable "worker_cpu" {
   description = "CPU units for Worker task (1024 = 1 vCPU)"
   type        = number
-  default     = 4096  # 4 vCPU (LLM inference needs more compute)
+  default     = 4096 # 4 vCPU (LLM inference needs more compute)
 }
 
 variable "worker_memory" {
   description = "Memory in MB for Worker task"
   type        = number
-  default     = 8192  # 8 GB
+  default     = 8192 # 8 GB
 }
 
 variable "worker_desired_count" {
@@ -232,7 +232,7 @@ variable "worker_max_capacity" {
 variable "worker_visibility_timeout" {
   description = "SQS visibility timeout in seconds (should exceed worker processing time)"
   type        = number
-  default     = 900  # 15 minutes
+  default     = 900 # 15 minutes
 }
 
 variable "worker_target_messages_per_task" {
@@ -248,13 +248,13 @@ variable "worker_target_messages_per_task" {
 variable "frontend_cpu" {
   description = "CPU units for Frontend task (1024 = 1 vCPU)"
   type        = number
-  default     = 512  # 0.5 vCPU
+  default     = 512 # 0.5 vCPU
 }
 
 variable "frontend_memory" {
   description = "Memory in MB for Frontend task"
   type        = number
-  default     = 1024  # 1 GB
+  default     = 1024 # 1 GB
 }
 
 variable "frontend_desired_count" {
@@ -306,13 +306,13 @@ variable "memory_target_utilization" {
 variable "scale_in_cooldown" {
   description = "Cooldown period in seconds before scaling in"
   type        = number
-  default     = 300  # 5 minutes
+  default     = 300 # 5 minutes
 }
 
 variable "scale_out_cooldown" {
   description = "Cooldown period in seconds before scaling out"
   type        = number
-  default     = 60  # 1 minute (fast response)
+  default     = 60 # 1 minute (fast response)
 }
 
 # -----------------------------------------------------------------------------
@@ -322,7 +322,7 @@ variable "scale_out_cooldown" {
 variable "log_retention_days" {
   description = "CloudWatch log retention in days (2555 for 7-year GAMP-5 compliance)"
   type        = number
-  default     = 7  # Use 2555 for production compliance
+  default     = 7 # Use 2555 for production compliance
 }
 
 # -----------------------------------------------------------------------------
@@ -342,7 +342,7 @@ variable "sns_alarm_topic_arn" {
 variable "enable_deletion_protection" {
   description = "Enable deletion protection for ALBs (recommended for production)"
   type        = bool
-  default     = false  # Override to true in production.tfvars
+  default     = false # Override to true in production.tfvars
 }
 
 variable "enable_container_insights" {

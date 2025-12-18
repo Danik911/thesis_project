@@ -11,17 +11,17 @@
 
 locals {
   # Managed cache policies provided by AWS
-  cache_disabled_policy_id         = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"  # CachingDisabled
-  cache_optimized_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"  # CachingOptimized
+  cache_disabled_policy_id  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
+  cache_optimized_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
 
   # Managed origin request policies provided by AWS
-  all_viewer_policy_id             = "216adef6-5c7f-47e4-b989-5492eafa07d3"  # AllViewer
+  all_viewer_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3" # AllViewer
 }
 
 resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   comment             = "${var.project_name} Frontend + API HTTPS - Terraform Managed"
-  price_class         = "PriceClass_100"  # Use only North America and Europe
+  price_class         = "PriceClass_100" # Use only North America and Europe
   http_version        = "http2"
   is_ipv6_enabled     = true
   default_root_object = ""
@@ -59,7 +59,7 @@ resource "aws_cloudfront_distribution" "this" {
       origin_protocol_policy   = "http-only"
       origin_ssl_protocols     = ["TLSv1.2"]
       origin_keepalive_timeout = 5
-      origin_read_timeout      = 60  # Longer timeout for API requests
+      origin_read_timeout      = 60 # Longer timeout for API requests
     }
   }
 
@@ -170,6 +170,6 @@ resource "aws_cloudfront_distribution" "this" {
 
   lifecycle {
     # Prevent accidental destruction of CloudFront distribution
-    prevent_destroy = false  # Set to true in production
+    prevent_destroy = false # Set to true in production
   }
 }

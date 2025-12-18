@@ -90,9 +90,9 @@ resource "aws_cloudwatch_dashboard" "main" {
       {
         type = "log"
         properties = {
-          query   = "SOURCE '${module.ecs_api.log_group_name}' | fields @timestamp, @message | filter @message like /ERROR/ | sort @timestamp desc | limit 20"
-          region  = var.aws_region
-          title   = "Recent API Errors"
+          query  = "SOURCE '${module.ecs_api.log_group_name}' | fields @timestamp, @message | filter @message like /ERROR/ | sort @timestamp desc | limit 20"
+          region = var.aws_region
+          title  = "Recent API Errors"
         }
       }
     ]

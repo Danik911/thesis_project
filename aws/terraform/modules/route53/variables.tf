@@ -48,6 +48,6 @@ variable "cloudfront_domain_name" {
 }
 
 variable "cloudfront_zone_id" {
-  type        = string
-  default     = "Z2FDTNDATAQYW2" # CloudFront zone ID (global)
+  type    = string
+  default = "Z2FDTNDATAQYW2" # CloudFront zone ID (global)
 }

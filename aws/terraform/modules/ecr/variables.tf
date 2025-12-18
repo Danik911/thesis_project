@@ -25,19 +25,25 @@ variable "repositories" {
 variable "keep_tagged_images" {
   description = "Number of tagged images to keep (production)"
   type        = number
-  default     = 30
+  default     = 5 # Reduced from 30 for cost optimization
 }
 
 variable "untagged_expiry_days" {
   description = "Days before untagged images expire"
   type        = number
-  default     = 7
+  default     = 1 # Reduced from 7 - untagged build artifacts should be cleaned quickly
 }
 
 variable "staging_expiry_days" {
   description = "Days before staging/dev images expire"
   type        = number
-  default     = 14
+  default     = 7 # Reduced from 14 for cost optimization
+}
+
+variable "keep_latest_images" {
+  description = "Number of latest-tagged images to keep"
+  type        = number
+  default     = 3
 }
 
 variable "cross_account_principals" {

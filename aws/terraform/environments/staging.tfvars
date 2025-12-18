@@ -16,7 +16,7 @@ aws_region   = "eu-west-2"
 
 # Domain configuration (required for Route53 module)
 domain_name        = "csvgeneration.com"
-create_hosted_zone = false  # Using existing Route53 hosted zone
+create_hosted_zone = false # Using existing Route53 hosted zone
 
 # -----------------------------------------------------------------------------
 # Networking (Updated with actual VPC/Subnet IDs)
@@ -71,9 +71,9 @@ frontend_image_tag = "staging-latest"
 # API Service Configuration (Reduced for staging)
 # -----------------------------------------------------------------------------
 
-api_cpu           = 1024   # 1 vCPU (half of production)
-api_memory        = 2048   # 2 GB
-api_desired_count = 1      # Single instance for staging
+api_cpu           = 1024 # 1 vCPU (half of production)
+api_memory        = 2048 # 2 GB
+api_desired_count = 1    # Single instance for staging
 api_min_capacity  = 1
 api_max_capacity  = 3
 
@@ -81,8 +81,8 @@ api_max_capacity  = 3
 # Worker Service Configuration (Reduced for staging)
 # -----------------------------------------------------------------------------
 
-worker_cpu           = 2048  # 2 vCPU (half of production)
-worker_memory        = 4096  # 4 GB
+worker_cpu           = 2048 # 2 vCPU (half of production)
+worker_memory        = 4096 # 4 GB
 worker_desired_count = 1
 worker_min_capacity  = 1
 worker_max_capacity  = 5
@@ -91,8 +91,8 @@ worker_max_capacity  = 5
 # Frontend Service Configuration (Reduced for staging)
 # -----------------------------------------------------------------------------
 
-frontend_cpu           = 256   # 0.25 vCPU (half of production)
-frontend_memory        = 512   # 0.5 GB
+frontend_cpu           = 256 # 0.25 vCPU (half of production)
+frontend_memory        = 512 # 0.5 GB
 frontend_desired_count = 1
 frontend_min_capacity  = 1
 frontend_max_capacity  = 3
@@ -101,23 +101,23 @@ frontend_max_capacity  = 3
 # Auto Scaling (More aggressive for staging testing)
 # -----------------------------------------------------------------------------
 
-cpu_target_utilization    = 60  # Lower threshold for easier testing
+cpu_target_utilization    = 60 # Lower threshold for easier testing
 memory_target_utilization = 70
-scale_in_cooldown         = 60   # Faster scale-in for testing
-scale_out_cooldown        = 30   # Faster scale-out for testing
+scale_in_cooldown         = 60 # Faster scale-in for testing
+scale_out_cooldown        = 30 # Faster scale-out for testing
 
 # -----------------------------------------------------------------------------
 # CloudWatch Configuration
 # -----------------------------------------------------------------------------
 
-log_retention_days = 7  # Short retention for staging
+log_retention_days = 7 # Short retention for staging
 
 # -----------------------------------------------------------------------------
 # Feature Flags
 # -----------------------------------------------------------------------------
 
-enable_deletion_protection = false  # Allow deletion in staging
-enable_container_insights  = true   # Keep insights for debugging
+enable_deletion_protection = false # Allow deletion in staging
+enable_container_insights  = true  # Keep insights for debugging
 
 # -----------------------------------------------------------------------------
 # Alerting (Optional)

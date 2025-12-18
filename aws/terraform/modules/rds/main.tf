@@ -30,7 +30,7 @@ terraform {
 
 resource "random_password" "db_password" {
   length  = 32
-  special = false  # Avoid special chars that may cause connection string issues
+  special = false # Avoid special chars that may cause connection string issues
 }
 
 # -----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ resource "aws_security_group" "rds" {
 # -----------------------------------------------------------------------------
 
 resource "aws_db_parameter_group" "postgres" {
-  name        = "${var.project_name}-postgres-params-v2"  # Changed name to force recreation
+  name        = "${var.project_name}-postgres-params-v2" # Changed name to force recreation
   family      = "postgres16"
   description = "Parameter group for ${var.project_name} PostgreSQL"
 
@@ -127,7 +127,7 @@ resource "aws_db_instance" "main" {
 
   # Engine configuration
   engine               = "postgres"
-  engine_version       = "16.6"  # Latest available in eu-west-2
+  engine_version       = "16.6" # Latest available in eu-west-2
   instance_class       = var.instance_class
   parameter_group_name = aws_db_parameter_group.postgres.name
 
@@ -146,7 +146,7 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
   publicly_accessible    = false
-  multi_az               = false  # Single-AZ for staging (cost savings)
+  multi_az               = false # Single-AZ for staging (cost savings)
 
   # Backup configuration (minimal for staging)
   backup_retention_period = var.backup_retention_days
@@ -154,10 +154,10 @@ resource "aws_db_instance" "main" {
   maintenance_window      = "Mon:04:00-Mon:05:00"
 
   # Staging-specific settings
-  skip_final_snapshot       = true
-  delete_automated_backups  = true
-  deletion_protection       = false
-  apply_immediately         = true
+  skip_final_snapshot      = true
+  delete_automated_backups = true
+  deletion_protection      = false
+  apply_immediately        = true
 
   # Performance Insights (free tier)
   performance_insights_enabled = false
@@ -176,7 +176,7 @@ resource "aws_db_instance" "main" {
 resource "aws_secretsmanager_secret" "database_url" {
   name                    = "${var.project_name}/database-url-rds"
   description             = "DATABASE_URL for ${var.project_name} RDS PostgreSQL"
-  recovery_window_in_days = 0  # Immediate deletion for staging
+  recovery_window_in_days = 0 # Immediate deletion for staging
 
   tags = {
     Name        = "${var.project_name}-database-url"

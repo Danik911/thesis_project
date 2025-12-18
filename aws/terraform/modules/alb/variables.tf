@@ -109,7 +109,7 @@ variable "enable_stickiness" {
 variable "stickiness_duration" {
   description = "Stickiness duration in seconds"
   type        = number
-  default     = 86400  # 1 day
+  default     = 86400 # 1 day
 }
 
 # Access logging
