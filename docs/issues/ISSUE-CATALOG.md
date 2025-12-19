@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2025-12-12
+**Last Updated:** 2025-12-19
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-013
+4. **Next Issue Number**: ISSUE-014
 
 ---
 
@@ -28,6 +28,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
+| [ISSUE-013](ISSUE-013-route53-trailing-dot-mismatch.md) | Route53 Certificate Validation Import Failure | 2025-12-19 | 2025-12-19 | Deployment |
 | [ISSUE-012](ISSUE-012-documentation-aurora-inconsistency.md) | Documentation Aurora DB Inconsistency | 2025-12-12 | 2025-12-12 | Documentation |
 | [ISSUE-011](ISSUE-011-chromadb-s3-bucket-mismatch.md) | ChromaDB S3 Bucket Mismatch | 2025-12-09 | 2025-12-09 | Deployment |
 | [ISSUE-010](ISSUE-010-html-json-export-fails-aws.md) | HTML/JSON Export Fails in AWS | 2025-12-09 | 2025-12-09 | API |
@@ -73,10 +74,10 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 15
+- **Total Issues:** 16
 - **Open:** 0
-- **Resolved:** 15
-- **Most Common Category:** Deployment (7 issues)
+- **Resolved:** 16
+- **Most Common Category:** Deployment (8 issues)
 
 ---
 

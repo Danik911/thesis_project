@@ -59,11 +59,12 @@ locals {
 resource "aws_route53_record" "cert_validation" {
   for_each = { for k, v in local.cert_validation_options : k => v[0] }
 
-  zone_id = module.route53.zone_id
-  name    = each.value.name
-  type    = each.value.type
-  records = [each.value.record]
-  ttl     = 60
+  allow_overwrite = true  # Handles existing records without complex import logic
+  zone_id         = module.route53.zone_id
+  name            = each.value.name
+  type            = each.value.type
+  records         = [each.value.record]
+  ttl             = 60
 }
 
 # Certificate validation
