@@ -926,7 +926,25 @@ export default function Generate() {
         
         try {
             const response = await authenticatedFetch(url, getToken);
-            if (!response.ok) throw new Error('Export failed');
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type') || '';
+                let bodyText = '';
+
+                try {
+                    if (contentType.includes('application/json')) {
+                        const data = await response.json().catch(() => ({}));
+                        const detail = (data as any)?.detail;
+                        bodyText = typeof detail === 'string' ? detail : JSON.stringify(data);
+                    } else {
+                        bodyText = await response.text();
+                    }
+                } catch {
+                    // Ignore body parsing failures; we still report status.
+                }
+
+                const message = `Export failed: ${response.status} ${response.statusText}${bodyText ? `\n\n${bodyText}` : ''}`;
+                throw new Error(message);
+            }
             
             const blob = await response.blob();
             const downloadUrl = window.URL.createObjectURL(blob);
@@ -939,7 +957,8 @@ export default function Generate() {
             window.URL.revokeObjectURL(downloadUrl);
         } catch (e) {
             console.error("Export error:", e);
-            alert("Failed to export file");
+            const msg = e instanceof Error ? e.message : 'Failed to export file';
+            alert(msg);
         }
     };
 
@@ -950,7 +969,25 @@ export default function Generate() {
         
         try {
             const response = await authenticatedFetch(url, getToken);
-            if (!response.ok) throw new Error('View failed');
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type') || '';
+                let bodyText = '';
+
+                try {
+                    if (contentType.includes('application/json')) {
+                        const data = await response.json().catch(() => ({}));
+                        const detail = (data as any)?.detail;
+                        bodyText = typeof detail === 'string' ? detail : JSON.stringify(data);
+                    } else {
+                        bodyText = await response.text();
+                    }
+                } catch {
+                    // Ignore body parsing failures; we still report status.
+                }
+
+                const message = `View failed: ${response.status} ${response.statusText}${bodyText ? `\n\n${bodyText}` : ''}`;
+                throw new Error(message);
+            }
             
             const blob = await response.blob();
             const viewUrl = window.URL.createObjectURL(blob);
@@ -963,7 +1000,8 @@ export default function Generate() {
             // keeping it alive is safer for the user experience.
         } catch (e) {
             console.error("View error:", e);
-            alert("Failed to view file");
+            const msg = e instanceof Error ? e.message : 'Failed to view file';
+            alert(msg);
         }
     };
 

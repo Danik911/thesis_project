@@ -37,6 +37,91 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 jinja_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
 
+def _as_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+    # Common YAML edge-case: a single string instead of a list
+    return [value]
+
+
+def _normalize_suite_for_template(suite_data: dict[str, Any]) -> dict[str, Any]:
+    """Normalize suite payload to avoid Jinja iteration errors.
+
+    Production YAML may contain optional fields as null/omitted; Jinja for-loops
+    over None raise exceptions which surface as 500s.
+
+    CRITICAL: No "invented" test content; only structural defaults.
+    """
+    suite: dict[str, Any] = dict(suite_data or {})
+
+    # Handle alternate key casing
+    if "test_cases" not in suite and "testCases" in suite:
+        suite["test_cases"] = suite.get("testCases")
+
+    test_cases_raw = suite.get("test_cases")
+    if test_cases_raw is None:
+        test_cases: list[dict[str, Any]] = []
+    elif isinstance(test_cases_raw, list):
+        test_cases = [tc if isinstance(tc, dict) else {"value": tc} for tc in test_cases_raw]
+    elif isinstance(test_cases_raw, dict):
+        # Defensive: sometimes payloads arrive as an object keyed by test_id
+        test_cases = [v if isinstance(v, dict) else {"value": v} for v in test_cases_raw.values()]
+    else:
+        test_cases = [{"value": test_cases_raw}]
+
+    for index, test in enumerate(test_cases, start=1):
+        # Ensure list-like fields exist (template uses for-loops)
+        test["prerequisites"] = _as_list(test.get("prerequisites"))
+        test["acceptance_criteria"] = _as_list(test.get("acceptance_criteria"))
+        test_steps = _as_list(test.get("test_steps"))
+        normalized_steps: list[dict[str, Any]] = []
+        for step_index, step in enumerate(test_steps, start=1):
+            step_dict = step if isinstance(step, dict) else {"value": step}
+            step_dict.setdefault("step_number", step_index)
+            step_dict.setdefault("action", "")
+            step_dict.setdefault("expected_result", "")
+            step_dict.setdefault("performed_by", "")
+            normalized_steps.append(step_dict)
+        test["test_steps"] = normalized_steps
+
+        # Risk/category normalization for CSS classes and labels
+        risk_level = test.get("risk_level")
+        if isinstance(risk_level, str):
+            risk_level_norm = risk_level.strip().lower()
+        else:
+            risk_level_norm = "medium"
+        if risk_level_norm not in {"low", "medium", "high"}:
+            risk_level_norm = "medium"
+        test["risk_level"] = risk_level_norm
+
+        test_category = test.get("test_category")
+        if not isinstance(test_category, str) or not test_category.strip():
+            test["test_category"] = "functional"
+
+        test.setdefault("test_id", f"TC-{index:03d}")
+        test.setdefault("test_name", "")
+        test.setdefault("objective", "")
+
+    suite["test_cases"] = test_cases
+    suite.setdefault("total_test_count", len(test_cases))
+    suite.setdefault("coverage_percentage", 0.0)
+    suite.setdefault("estimated_execution_time", "")
+    suite.setdefault("review_required", False)
+
+    # Convenience fallbacks for header fields (do not fabricate content)
+    suite.setdefault("suite_id", suite.get("id") or "")
+    suite.setdefault("document_name", suite.get("urs_filename") or "")
+    suite.setdefault("generation_timestamp", suite.get("timestamp") or suite.get("generated_at") or "")
+    suite.setdefault("generation_method", suite.get("method") or "")
+    suite.setdefault("gamp_category", suite.get("gamp5_category") or suite.get("gamp") or suite.get("gamp_category") or "")
+
+    return suite
+
+
 async def _get_job_content(
     job_id: str,
     job_repository: dict[str, JobRecord],
@@ -276,6 +361,9 @@ async def export_html(
         db_job_repo=db_job_repo,
         user=user,
     )
+
+    # Normalize to prevent template rendering failures on missing/null list fields
+    suite_data = _normalize_suite_for_template(suite_data)
 
     # Render HTML template
     try:

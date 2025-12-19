@@ -8,11 +8,14 @@ Supports both in-memory (testing) and PostgreSQL (docker-compose) storage.
 """
 
 import asyncio
+import json
 import logging
 import os
+import time
 from typing import Annotated
 
 import asyncpg
+import httpx
 import jwt
 from fastapi import Depends, HTTPException, UploadFile, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -32,6 +35,130 @@ CLERK_JWT_AUDIENCE = os.getenv("CLERK_JWT_AUDIENCE")  # Optional
 
 # HTTPBearer security for token extraction
 security = HTTPBearer()
+
+# JWKS cache for Clerk key rotation resilience
+_jwks_cache: dict[str, tuple[float, list[dict[str, object]]]] = {}
+_jwks_lock: asyncio.Lock | None = None
+
+
+def _get_jwks_lock() -> asyncio.Lock:
+    global _jwks_lock
+    if _jwks_lock is None:
+        _jwks_lock = asyncio.Lock()
+    return _jwks_lock
+
+
+def _jwks_url_for_issuer(issuer: str) -> str:
+    # Clerk exposes JWKS at /.well-known/jwks.json
+    return issuer.rstrip("/") + "/.well-known/jwks.json"
+
+
+async def _fetch_clerk_jwks(issuer: str) -> list[dict[str, object]]:
+    url = _jwks_url_for_issuer(issuer)
+    timeout = httpx.Timeout(5.0, connect=5.0)
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        resp = await client.get(url)
+
+    if resp.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Authentication failed: unable to fetch Clerk JWKS\n"
+                f"Issuer: {issuer}\n"
+                f"JWKS URL: {url}\n"
+                f"HTTP status: {resp.status_code}"
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        payload = resp.json()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Authentication failed: invalid JWKS JSON from Clerk\n"
+                f"Issuer: {issuer}\n"
+                f"JWKS URL: {url}\n"
+                f"Error: {e!s}"
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+
+    keys = payload.get("keys") if isinstance(payload, dict) else None
+    if not isinstance(keys, list) or not keys:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Authentication failed: Clerk JWKS missing 'keys'\n"
+                f"Issuer: {issuer}\n"
+                f"JWKS URL: {url}"
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Keep only dict keys
+    return [k for k in keys if isinstance(k, dict)]
+
+
+async def _get_clerk_jwks_cached(issuer: str, *, force_refresh: bool = False) -> list[dict[str, object]]:
+    # Cache for a short window to avoid per-request network calls.
+    # Clerk keys rotate; we allow refresh on signature failure.
+    ttl_seconds = 15 * 60
+    now = time.time()
+
+    async with _get_jwks_lock():
+        if not force_refresh and issuer in _jwks_cache:
+            cached_at, keys = _jwks_cache[issuer]
+            if (now - cached_at) < ttl_seconds and keys:
+                return keys
+
+        keys = await _fetch_clerk_jwks(issuer)
+        _jwks_cache[issuer] = (now, keys)
+        return keys
+
+
+def _select_rsa_public_key_from_jwks(token: str, jwks_keys: list[dict[str, object]]):
+    try:
+        header = jwt.get_unverified_header(token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token validation failed: invalid JWT header ({e!s})",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+
+    kid = header.get("kid") if isinstance(header, dict) else None
+    if not kid or not isinstance(kid, str):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token validation failed: JWT missing 'kid' header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Find the matching JWK
+    for jwk in jwks_keys:
+        if jwk.get("kid") == kid:
+            try:
+                jwk_json = json.dumps(jwk)
+                return jwt.algorithms.RSAAlgorithm.from_jwk(jwk_json)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Token validation failed: unable to build public key from JWK (kid={kid}): {e!s}",
+                    headers={"WWW-Authenticate": "Bearer"},
+                ) from e
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=(
+            "Token validation failed: unknown signing key\n"
+            f"kid: {kid}\n"
+            f"Issuer: {CLERK_ISSUER or 'MISSING'}"
+        ),
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 # In-memory job storage (replaced by Aurora in production)
 # Protected by asyncio lock for thread-safe access
@@ -308,14 +435,6 @@ async def require_clerk_user(
     token = credentials.credentials
 
     # Validate environment configuration
-    if not CLERK_PEM_PUBLIC_KEY:
-        logger.error("CLERK_PEM_PUBLIC_KEY not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="CRITICAL: Authentication system not configured (missing CLERK_PEM_PUBLIC_KEY)",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-
     if not CLERK_ISSUER:
         logger.error("CLERK_ISSUER not configured")
         raise HTTPException(
@@ -334,13 +453,38 @@ async def require_clerk_user(
             "leeway": 30  # 30 seconds tolerance for async token refresh delays
         }
 
-        payload = jwt.decode(
-            token,
-            CLERK_PEM_PUBLIC_KEY,
-            algorithms=["RS256"],
-            issuer=CLERK_ISSUER,
-            options=verify_options
-        )
+        # Primary: use configured PEM if provided; if signature fails, refresh via JWKS.
+        # This prevents outages when Clerk rotates keys and PEM isn't updated.
+        if CLERK_PEM_PUBLIC_KEY:
+            try:
+                payload = jwt.decode(
+                    token,
+                    CLERK_PEM_PUBLIC_KEY,
+                    algorithms=["RS256"],
+                    issuer=CLERK_ISSUER,
+                    options=verify_options,
+                )
+            except jwt.InvalidSignatureError:
+                logger.warning("JWT signature invalid with configured PEM key; retrying with Clerk JWKS (possible key rotation)")
+                jwks = await _get_clerk_jwks_cached(CLERK_ISSUER, force_refresh=True)
+                key = _select_rsa_public_key_from_jwks(token, jwks)
+                payload = jwt.decode(
+                    token,
+                    key,
+                    algorithms=["RS256"],
+                    issuer=CLERK_ISSUER,
+                    options=verify_options,
+                )
+        else:
+            jwks = await _get_clerk_jwks_cached(CLERK_ISSUER)
+            key = _select_rsa_public_key_from_jwks(token, jwks)
+            payload = jwt.decode(
+                token,
+                key,
+                algorithms=["RS256"],
+                issuer=CLERK_ISSUER,
+                options=verify_options,
+            )
 
         # Validate required claims exist
         if "sub" not in payload:
