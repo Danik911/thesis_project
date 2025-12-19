@@ -103,14 +103,24 @@ jobs:
           echo "Preserving GitHub Actions OIDC + role (required for future deploy workflows)..."
           terraform state rm 'aws_iam_openid_connect_provider.github' || true
           terraform state rm 'aws_iam_role.github_actions' || true
+          # Remove ALL IAM policies attached to the GitHub Actions role
           terraform state rm 'aws_iam_role_policy.github_actions_ecr' || true
           terraform state rm 'aws_iam_role_policy.github_actions_ecs' || true
           terraform state rm 'aws_iam_role_policy.github_actions_terraform_state' || true
           terraform state rm 'aws_iam_role_policy.github_actions_iam' || true
-          terraform state rm 'aws_iam_role_policy.github_actions_acm' || true
-          terraform state rm 'aws_iam_role_policy.github_actions_route53' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_networking' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_logs' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_sqs' || true
           terraform state rm 'aws_iam_role_policy.github_actions_cloudfront' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_secrets' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_s3' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_route53' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_acm' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_rds' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_xray' || true
           terraform state rm 'aws_iam_role_policy.github_actions_cloudwatch' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_autoscaling' || true
+          terraform state rm 'aws_iam_role_policy.github_actions_config' || true
 
           # NOTE:
           # - We DO preserve the GitHub OIDC provider + IAM role because deploy.yml

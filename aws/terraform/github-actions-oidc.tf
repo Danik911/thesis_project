@@ -369,7 +369,7 @@ resource "aws_iam_role_policy" "github_actions_sqs" {
   })
 }
 
-# Policy for CloudFront (cache invalidation)
+# Policy for CloudFront (distribution management and cache invalidation)
 resource "aws_iam_role_policy" "github_actions_cloudfront" {
   name = "${var.project_name}-github-actions-cloudfront"
   role = aws_iam_role.github_actions.id
@@ -389,20 +389,42 @@ resource "aws_iam_role_policy" "github_actions_cloudfront" {
         Resource = "*"
       },
       {
-        Sid    = "CloudFrontInvalidation"
+        Sid    = "CloudFrontManage"
         Effect = "Allow"
         Action = [
+          "cloudfront:CreateDistribution",
+          "cloudfront:UpdateDistribution",
+          "cloudfront:DeleteDistribution",
+          "cloudfront:TagResource",
+          "cloudfront:UntagResource",
+          "cloudfront:CreateOriginAccessControl",
+          "cloudfront:GetOriginAccessControl",
+          "cloudfront:UpdateOriginAccessControl",
+          "cloudfront:DeleteOriginAccessControl",
+          "cloudfront:ListOriginAccessControls",
           "cloudfront:CreateInvalidation",
           "cloudfront:GetInvalidation",
           "cloudfront:ListInvalidations"
         ]
         Resource = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/*"
+      },
+      {
+        Sid    = "CloudFrontOAC"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateOriginAccessControl",
+          "cloudfront:GetOriginAccessControl",
+          "cloudfront:UpdateOriginAccessControl",
+          "cloudfront:DeleteOriginAccessControl",
+          "cloudfront:ListOriginAccessControls"
+        ]
+        Resource = "*"
       }
     ]
   })
 }
 
-# Policy for Secrets Manager (read secrets for ECS tasks)
+# Policy for Secrets Manager (manage secrets for ECS tasks)
 resource "aws_iam_role_policy" "github_actions_secrets" {
   name = "${var.project_name}-github-actions-secrets"
   role = aws_iam_role.github_actions.id
@@ -411,16 +433,33 @@ resource "aws_iam_role_policy" "github_actions_secrets" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "SecretsManagerRead"
+        Sid    = "SecretsManagerReadWrite"
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret",
-          "secretsmanager:ListSecrets"
+          "secretsmanager:ListSecrets",
+          "secretsmanager:CreateSecret",
+          "secretsmanager:DeleteSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:UpdateSecret",
+          "secretsmanager:TagResource",
+          "secretsmanager:UntagResource",
+          "secretsmanager:GetResourcePolicy",
+          "secretsmanager:PutResourcePolicy",
+          "secretsmanager:DeleteResourcePolicy"
         ]
         Resource = [
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/*"
         ]
+      },
+      {
+        Sid    = "SecretsManagerList"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:ListSecrets"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -484,7 +523,7 @@ resource "aws_iam_role_policy" "github_actions_s3" {
   })
 }
 
-# Policy for Route 53 (optional, if managing DNS)
+# Policy for Route 53 (DNS management for ACM validation and CloudFront)
 resource "aws_iam_role_policy" "github_actions_route53" {
   name = "${var.project_name}-github-actions-route53"
   role = aws_iam_role.github_actions.id
@@ -493,7 +532,7 @@ resource "aws_iam_role_policy" "github_actions_route53" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "Route53Read"
+        Sid    = "Route53ReadWrite"
         Effect = "Allow"
         Action = [
           "route53:GetHostedZone",
@@ -501,7 +540,8 @@ resource "aws_iam_role_policy" "github_actions_route53" {
           "route53:ListResourceRecordSets",
           "route53:GetChange",
           "route53:ListTagsForResource",
-          "route53:ListTagsForResources"
+          "route53:ListTagsForResources",
+          "route53:ChangeResourceRecordSets"
         ]
         Resource = "*"
       }
@@ -518,13 +558,57 @@ resource "aws_iam_role_policy" "github_actions_acm" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ACMRead"
+        Sid    = "ACMReadWrite"
         Effect = "Allow"
         Action = [
           "acm:DescribeCertificate",
           "acm:GetCertificate",
           "acm:ListCertificates",
-          "acm:ListTagsForCertificate"
+          "acm:ListTagsForCertificate",
+          "acm:RequestCertificate",
+          "acm:DeleteCertificate",
+          "acm:AddTagsToCertificate",
+          "acm:RemoveTagsFromCertificate"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Policy for RDS (database management)
+resource "aws_iam_role_policy" "github_actions_rds" {
+  name = "${var.project_name}-github-actions-rds"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "RDSManage"
+        Effect = "Allow"
+        Action = [
+          "rds:CreateDBInstance",
+          "rds:DeleteDBInstance",
+          "rds:DescribeDBInstances",
+          "rds:ModifyDBInstance",
+          "rds:RebootDBInstance",
+          "rds:StartDBInstance",
+          "rds:StopDBInstance",
+          "rds:CreateDBSubnetGroup",
+          "rds:DeleteDBSubnetGroup",
+          "rds:DescribeDBSubnetGroups",
+          "rds:ModifyDBSubnetGroup",
+          "rds:CreateDBParameterGroup",
+          "rds:DeleteDBParameterGroup",
+          "rds:DescribeDBParameterGroups",
+          "rds:DescribeDBParameters",
+          "rds:ModifyDBParameterGroup",
+          "rds:AddTagsToResource",
+          "rds:RemoveTagsFromResource",
+          "rds:ListTagsForResource",
+          "rds:DescribeDBEngineVersions",
+          "rds:DescribeOrderableDBInstanceOptions"
         ]
         Resource = "*"
       }

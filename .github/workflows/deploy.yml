@@ -197,6 +197,21 @@ jobs:
               else
                 echo "ChromaDB bucket already in Terraform state"
               fi
+
+              # Import ChromaDB bucket sub-resources (preserved by destroy.yml)
+              echo "Importing ChromaDB bucket sub-resources..."
+              if ! terraform state show aws_s3_bucket_versioning.chromadb >/dev/null 2>&1; then
+                terraform import -var-file=environments/staging.tfvars \
+                  aws_s3_bucket_versioning.chromadb "$CHROMA_BUCKET" || true
+              fi
+              if ! terraform state show aws_s3_bucket_server_side_encryption_configuration.chromadb >/dev/null 2>&1; then
+                terraform import -var-file=environments/staging.tfvars \
+                  aws_s3_bucket_server_side_encryption_configuration.chromadb "$CHROMA_BUCKET" || true
+              fi
+              if ! terraform state show aws_s3_bucket_public_access_block.chromadb >/dev/null 2>&1; then
+                terraform import -var-file=environments/staging.tfvars \
+                  aws_s3_bucket_public_access_block.chromadb "$CHROMA_BUCKET" || true
+              fi
             else
               echo "ChromaDB bucket not found (will be created by Terraform): ${CHROMA_BUCKET}"
             fi
