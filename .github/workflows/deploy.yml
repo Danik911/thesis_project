@@ -119,6 +119,30 @@ jobs:
           # Route53 cert validation records are handled by allow_overwrite=true in route53.tf
           # No import needed - Terraform will create or update existing records idempotently
 
+          # Import existing ACM certificate if it exists (prevents creating duplicate)
+          echo "Checking for existing ACM certificate for csvgeneration.com..."
+          ACM_CERT_ARN=$(aws acm list-certificates --region us-east-1 \
+            --query "CertificateSummaryList[?DomainName=='csvgeneration.com' && Status=='ISSUED'].CertificateArn | [0]" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$ACM_CERT_ARN" ] && [ "$ACM_CERT_ARN" != "None" ] && [ "$ACM_CERT_ARN" != "null" ]; then
+            echo "Found existing ACM certificate: $ACM_CERT_ARN"
+            if ! terraform state show 'aws_acm_certificate.cloudfront[0]' 2>/dev/null; then
+              echo "Importing ACM certificate into Terraform state..."
+              terraform import -var-file=environments/staging.tfvars \
+                'aws_acm_certificate.cloudfront[0]' "$ACM_CERT_ARN" || true
+
+              # Also import the validation resource
+              echo "Importing ACM certificate validation..."
+              terraform import -var-file=environments/staging.tfvars \
+                'aws_acm_certificate_validation.cloudfront[0]' "$ACM_CERT_ARN" || true
+            else
+              echo "ACM certificate already in Terraform state"
+            fi
+          else
+            echo "No existing ACM certificate found (will be created by Terraform)"
+          fi
+
           # Import ECR repositories if they exist (destroy.yml preserves them but removes from state)
           for svc in api worker frontend; do
             REPO_NAME="${{ env.PROJECT_NAME }}-${svc}"

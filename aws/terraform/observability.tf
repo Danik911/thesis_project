@@ -11,6 +11,7 @@ module "xray" {
 }
 
 # CloudWatch Log Insights queries (FREE with existing logs)
+# Note: depends_on ensures ECS modules create log groups first
 resource "aws_cloudwatch_query_definition" "api_errors" {
   name = "${var.project_name}-api-errors"
 
@@ -24,6 +25,8 @@ resource "aws_cloudwatch_query_definition" "api_errors" {
     | sort @timestamp desc
     | limit 100
   QUERY
+
+  depends_on = [module.ecs_api]
 }
 
 resource "aws_cloudwatch_query_definition" "worker_performance" {
@@ -39,6 +42,8 @@ resource "aws_cloudwatch_query_definition" "worker_performance" {
     | parse @message /processing_time=(?<duration>\d+)/
     | stats avg(duration), max(duration), min(duration) by bin(5m)
   QUERY
+
+  depends_on = [module.ecs_worker]
 }
 
 resource "aws_cloudwatch_query_definition" "categorization_accuracy" {
@@ -54,6 +59,8 @@ resource "aws_cloudwatch_query_definition" "categorization_accuracy" {
     | parse @message /category=(?<category>\d+).*confidence=(?<confidence>[\d.]+)/
     | stats count() by category
   QUERY
+
+  depends_on = [module.ecs_worker]
 }
 
 # CloudWatch Dashboard (FREE)
@@ -97,4 +104,6 @@ resource "aws_cloudwatch_dashboard" "main" {
       }
     ]
   })
+
+  depends_on = [module.ecs_api, module.ecs_worker]
 }

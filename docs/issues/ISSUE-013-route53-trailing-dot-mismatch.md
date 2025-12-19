@@ -88,7 +88,22 @@ Use Terraform's `allow_overwrite = true` pattern instead of dynamic shell-based 
 2. **DNS validation records are idempotent** - ACM uses the same validation token for the same domain
 3. **Terraform import blocks are static** - They cannot handle dynamic values like validation record names
 
+## Additional Fixes (2025-12-19 Update)
+
+After the initial fix, additional deployment failures were identified:
+
+### ACM Certificate Import
+Added import logic for existing ACM certificates in `deploy.yml` to prevent Terraform from creating duplicates when an ISSUED certificate already exists.
+
+### CloudWatch Dependencies
+Added explicit `depends_on` to CloudWatch resources in `observability.tf` to ensure ECS modules create log groups before CloudWatch queries reference them:
+- `aws_cloudwatch_query_definition.api_errors`
+- `aws_cloudwatch_query_definition.worker_performance`
+- `aws_cloudwatch_query_definition.categorization_accuracy`
+- `aws_cloudwatch_dashboard.main`
+
 ## Related
 - ACM Certificate: `aws_acm_certificate.cloudfront` (us-east-1)
+- Existing Certificate ARN: `arn:aws:acm:us-east-1:275333454012:certificate/5790dafb-ffc8-4d0b-92cf-f717b7cd83b8`
 - Hosted Zone: `Z0170225231EL8Z16R4WJ` (csvgeneration.com)
 - Terraform docs: [allow_overwrite for Route53](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record#allow_overwrite)
