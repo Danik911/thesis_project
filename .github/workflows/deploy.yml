@@ -87,33 +87,49 @@ jobs:
       - name: Import existing resources if they exist
         working-directory: aws/terraform
         run: |
-          # Import OIDC provider if it exists in AWS but not in Terraform state
+          # Import OIDC provider if it exists in AWS
+          # Force cleanup of potentially stale state first
           OIDC_ARN=$(aws iam list-open-id-connect-providers \
             --query "OpenIDConnectProviderList[?ends_with(Arn, 'token.actions.githubusercontent.com')].Arn | [0]" \
             --output text 2>/dev/null || echo "")
 
           if [ -n "$OIDC_ARN" ] && [ "$OIDC_ARN" != "None" ] && [ "$OIDC_ARN" != "null" ]; then
             echo "Found existing OIDC provider: $OIDC_ARN"
-            # Check if already in state
-            if ! terraform state show aws_iam_openid_connect_provider.github 2>/dev/null; then
-              echo "Importing OIDC provider into Terraform state..."
+
+            # Check current state
+            CURRENT_STATE_ARN=$(terraform state show aws_iam_openid_connect_provider.github 2>/dev/null | grep "^arn" | awk '{print $3}' || echo "")
+
+            if [ -z "$CURRENT_STATE_ARN" ]; then
+              echo "OIDC provider not in Terraform state, importing..."
               terraform import -var-file=environments/staging.tfvars \
-                aws_iam_openid_connect_provider.github "$OIDC_ARN" || true
+                aws_iam_openid_connect_provider.github "$OIDC_ARN"
+            elif [ "$CURRENT_STATE_ARN" != "$OIDC_ARN" ]; then
+              echo "OIDC provider in state has different ARN, re-importing..."
+              terraform state rm aws_iam_openid_connect_provider.github 2>/dev/null || true
+              terraform import -var-file=environments/staging.tfvars \
+                aws_iam_openid_connect_provider.github "$OIDC_ARN"
             else
-              echo "OIDC provider already in Terraform state"
+              echo "OIDC provider already correctly in Terraform state"
             fi
+          else
+            echo "No existing OIDC provider found (will be created by Terraform)"
           fi
 
           # Import GitHub Actions role if it exists
           if aws iam get-role --role-name ${{ env.PROJECT_NAME }}-github-actions 2>/dev/null; then
             echo "Found existing GitHub Actions IAM role"
-            if ! terraform state show aws_iam_role.github_actions 2>/dev/null; then
-              echo "Importing IAM role into Terraform state..."
-              terraform import -var-file=environments/staging.tfvars \
-                aws_iam_role.github_actions ${{ env.PROJECT_NAME }}-github-actions || true
+
+            # Check if correctly in state
+            if terraform state show aws_iam_role.github_actions 2>/dev/null | grep -q "${{ env.PROJECT_NAME }}-github-actions"; then
+              echo "IAM role already correctly in Terraform state"
             else
-              echo "IAM role already in Terraform state"
+              echo "Importing IAM role into Terraform state..."
+              terraform state rm aws_iam_role.github_actions 2>/dev/null || true
+              terraform import -var-file=environments/staging.tfvars \
+                aws_iam_role.github_actions ${{ env.PROJECT_NAME }}-github-actions
             fi
+          else
+            echo "GitHub Actions IAM role not found (will be created by Terraform)"
           fi
 
           # Route53 cert validation records are handled by allow_overwrite=true in route53.tf
