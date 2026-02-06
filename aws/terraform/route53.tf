@@ -44,33 +44,25 @@ resource "aws_acm_certificate" "cloudfront" {
   }
 }
 
-# DNS validation records
-# Deduplicate validation options since base + wildcard domains share the same validation record
-locals {
-  cert_validation_options = var.domain_name != "" ? {
-    for dvo in aws_acm_certificate.cloudfront[0].domain_validation_options : dvo.resource_record_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }... # Ellipsis groups duplicates - we take first entry below
-  } : {}
-}
-
+# DNS validation record
+# Using count instead of for_each because for_each keys must be known at plan time,
+# but domain_validation_options is only known after the certificate is created.
+# Base domain + wildcard share the same validation record, so we only need one.
 resource "aws_route53_record" "cert_validation" {
-  for_each = { for k, v in local.cert_validation_options : k => v[0] }
+  count = var.domain_name != "" ? 1 : 0
 
   allow_overwrite = true  # Handles existing records without complex import logic
   zone_id         = module.route53.zone_id
-  name            = each.value.name
-  type            = each.value.type
-  records         = [each.value.record]
+  name            = tolist(aws_acm_certificate.cloudfront[0].domain_validation_options)[0].resource_record_name
+  type            = tolist(aws_acm_certificate.cloudfront[0].domain_validation_options)[0].resource_record_type
+  records         = [tolist(aws_acm_certificate.cloudfront[0].domain_validation_options)[0].resource_record_value]
   ttl             = 60
 }
 
 # Certificate validation
 resource "aws_acm_certificate_validation" "cloudfront" {
-  count                   = var.domain_name != "" ? 1 : 0
-  provider                = aws.us_east_1
-  certificate_arn         = aws_acm_certificate.cloudfront[0].arn
-  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+  count           = var.domain_name != "" ? 1 : 0
+  provider        = aws.us_east_1
+  certificate_arn = aws_acm_certificate.cloudfront[0].arn
+  validation_record_fqdns = [aws_route53_record.cert_validation[0].fqdn]
 }
