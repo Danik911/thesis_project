@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code on the pharmaceutical test generation thesis project.
+Guidance for Claude Code on the pharmaceutical test generation thesis project and AI4LIMS PoC.
 
 ## Critical Operating Principles
 
@@ -55,6 +55,7 @@ When encountering bugs, errors, or unexpected behavior:
 | PRP Tasks | `PRPs/tasks/` (0.1-5.3, 23 tasks) |
 | Issues | `docs/issues/` |
 | Issue Catalog | `docs/issues/ISSUE-CATALOG.md` |
+| AI4LIMS PoC Plan | `docs/project_p/AI4LIMS_PoC_Plan.md` |
 
 ---
 
@@ -107,11 +108,33 @@ Located at `.claude/skills/`. Invoke via skill name.
 
 ---
 
+## AI4LIMS PoC
+
+**Branch**: `prjoject_p_protatype` | **Routes**: `/lims/*` | **Plan**: `docs/project_p/AI4LIMS_PoC_Plan.md`
+
+| Component | Technology |
+|-----------|-----------|
+| Extraction | LlamaExtract (LlamaIndex Cloud) |
+| Chat LLM | GPT-5 / Claude Opus 4.6 via OpenRouter |
+| RAG | ChromaDB (`mda_templates` collection) |
+| Export | openpyxl (4-sheet XLSX) |
+| Auth | Clerk (feature-flagged off: `NEXT_PUBLIC_AUTH_ENABLED=false`) |
+| Docker | `docker-compose.lims.yml` (minimal: frontend + API) |
+
+**Key files**: `main/src/lims/mda_schema.py`, `main/src/lims/`, `main/api/lims_router.py`, `main/frontend/pages/lims.tsx`
+
+**Strategy**: Additive only — never modify thesis files. Separate router, compose, config, collection.
+
+---
+
 ## Key Commands
 
 ```bash
 # Local Development (Docker Compose)
 docker-compose -f docker-compose.dev.yml up -d
+
+# AI4LIMS PoC (Docker Compose)
+docker-compose -f docker-compose.lims.yml up -d
 
 # AWS Deployment
 python aws/scripts/redeploy.py              # Redeploy services

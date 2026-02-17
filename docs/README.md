@@ -10,12 +10,22 @@
 | [DOCKER.md](DOCKER.md) | Local Docker Compose development |
 | [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | Core files and directory layout |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues and solutions |
+| [AI4LIMS PoC Plan](project_p/AI4LIMS_PoC_Plan.md) | LIMS document extraction prototype (branch: `prjoject_p_protatype`) |
 
 ## Getting Started
 
 1. **Local Development**: See [DOCKER.md](DOCKER.md) for Docker Compose quickstart
 2. **AWS Deployment**: See [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) or use `/deploy` command
 3. **CI/CD**: Push to `deploy` branch triggers [GitHub Actions](GITHUB_ACTIONS_DEPLOYMENT.md)
+
+## AI4LIMS PoC
+
+AI-powered extraction from pharmaceutical test method PDFs into LabWare LIMS MDA templates.
+
+- **Branch**: `prjoject_p_protatype`
+- **Plan**: [AI4LIMS PoC Plan](project_p/AI4LIMS_PoC_Plan.md)
+- **Stack**: LlamaExtract + Next.js + FastAPI + ChromaDB
+- **Routes**: `/lims/*` (separate from thesis `/jobs/*` routes)
 
 ## Live System
 

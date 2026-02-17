@@ -4,6 +4,8 @@
 
 This directory contains Terraform infrastructure and scripts for deploying the pharmaceutical test generation system to AWS.
 
+> **AI4LIMS PoC**: The LIMS document extraction prototype (branch: `prjoject_p_protatype`) uses a minimal local Docker stack for development. Post-PoC, it can reuse this AWS ECS/Fargate infrastructure with additional `/lims/*` API routes.
+
 ## Current Deployment Status (Live)
 
 **Last Updated:** 2025-12-03
@@ -287,6 +289,8 @@ aws ecs update-service \
 | Application Load Balancers (2) | ~$30 |
 | CloudWatch Logs | $5 |
 | **Total** | **~$120/month** |
+
+> **Note**: AI4LIMS PoC runs locally via `docker-compose.lims.yml`. No additional AWS costs during PoC phase.
 
 ## Security
 

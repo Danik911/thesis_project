@@ -4,6 +4,8 @@ Multi-agent LLM system for automated OQ (Operational Qualification) test generat
 
 **Live:** https://csvgeneration.com
 
+> **AI4LIMS PoC** (branch: `prjoject_p_protatype`): AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
+
 ---
 
 ## Overview
@@ -104,6 +106,7 @@ User → Frontend (Next.js) → API (FastAPI) → Job Queue (SQS)
 | [DOCKER](docs/DOCKER.md) | Local development |
 | [PROJECT_STRUCTURE](docs/PROJECT_STRUCTURE.md) | File layout |
 | [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) | Common issues |
+| [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md) | LIMS document extraction prototype |
 
 ---
 
@@ -132,11 +135,12 @@ python aws/scripts/redeploy.py --status-only  # Check status
 thesis_project/
 ├── main/
 │   ├── api/              # FastAPI backend
+│   ├── frontend/         # Next.js dashboard
 │   └── src/
 │       ├── agents/       # Multi-agent system
 │       ├── adapters/     # Storage (local/S3)
-│       └── compliance/   # ALCOA+, 21 CFR Part 11
-├── frontend/             # Next.js dashboard
+│       ├── compliance/   # ALCOA+, 21 CFR Part 11
+│       └── lims/         # AI4LIMS PoC (MDA extraction)
 ├── aws/
 │   ├── terraform/        # Infrastructure as Code
 │   └── scripts/          # Deploy automation

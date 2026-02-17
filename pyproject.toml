@@ -73,6 +73,9 @@ dependencies = [
     "boto3>=1.40.61",
     "aioboto3>=15.5.0",
     "json-repair>=0.54.2",
+    # AI4LIMS PoC - LlamaExtract PDF extraction
+    "llama-cloud-services>=0.1.0",
+    "llama-cloud>=0.1.0",
 ]
 
 [build-system]

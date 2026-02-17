@@ -34,7 +34,7 @@ export default function Layout({ children }: LayoutProps) {
     };
   }, [router.events]);
 
-  const isPublicPage = router.pathname === '/';
+  const isPublicPage = router.pathname === '/' || router.pathname.startsWith('/lims');
 
   const content = (
     <div className="min-h-screen bg-slate-900 flex flex-col text-slate-100">
@@ -86,6 +86,16 @@ export default function Layout({ children }: LayoutProps) {
                       }`}
                   >
                     History
+                  </Link>
+                  <Link
+                    href="/lims"
+                    aria-current={isActive('/lims') ? 'page' : undefined}
+                    className={`text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-lg px-3 py-2 ${isActive('/lims')
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'text-slate-400 hover:text-emerald-300 hover:bg-slate-800'
+                      }`}
+                  >
+                    LIMS
                   </Link>
                 </div>
               </div>

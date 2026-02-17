@@ -1462,6 +1462,10 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 from .export_formats import router as export_router
 app.include_router(export_router)
 
+# AI4LIMS PoC - LIMS router (public, no auth)
+from .lims_router import router as lims_router
+app.include_router(lims_router, prefix="/lims")
+
 if __name__ == "__main__":
     import uvicorn
 
