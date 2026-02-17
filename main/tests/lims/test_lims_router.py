@@ -2,13 +2,22 @@
 
 import os
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from main.api.lims_router import router as lims_router
+from main.src.lims.job_store import _jobs
+
+
+@pytest.fixture(autouse=True)
+def clear_job_store():
+    """Clear the in-memory job store between router tests."""
+    _jobs.clear()
+    yield
+    _jobs.clear()
 
 
 @pytest.fixture
@@ -21,6 +30,20 @@ def client() -> TestClient:
         return {"status": "healthy"}
 
     return TestClient(app)
+
+
+@pytest.fixture
+def mock_lims_config() -> MagicMock:
+    """Mock LIMSConfig with required attributes."""
+    config = MagicMock()
+    config.llamaextract_api_key = "test-key"
+    config.extraction_mode = "balanced"
+    config.openrouter_api_key = ""  # No OpenRouter key -> skip MDA generation
+    config.openrouter_model = "test/model"
+    config.chromadb_path = "./chroma_db_lims"
+    config.upload_dir = "./uploads/lims"
+    config.output_dir = "./output/lims"
+    return config
 
 
 class TestExtractEndpoint:
@@ -60,8 +83,9 @@ class TestExtractEndpoint:
         mock_to_thread: AsyncMock,
         client: TestClient,
         mock_extraction_result,
+        mock_lims_config,
     ):
-        mock_get_config.return_value = object()
+        mock_get_config.return_value = mock_lims_config
         mock_to_thread.return_value = {
             "raw_extraction": mock_extraction_result,
             "validated": False,
@@ -76,6 +100,8 @@ class TestExtractEndpoint:
         assert response.status_code == 200
         payload = response.json()
         assert payload["filename"] == "test.pdf"
+        assert payload["job_id"] is not None
+        assert payload["status"] == "EXTRACTING"  # No OpenRouter key -> stays EXTRACTING
         assert payload["raw_extraction"]["analyses"][0]["name"] == "AND_ACS_DYE"
 
 
