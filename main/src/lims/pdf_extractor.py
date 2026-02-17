@@ -12,6 +12,7 @@ import logging
 import tempfile
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from .config import LIMSConfig
 from .extraction_schema import MDAExtractionSchema
@@ -78,7 +79,7 @@ def extract_mda_from_pdf(
 
         # Step 1: Create extraction agent with simplified schema
         # (LlamaExtract can't handle enums/validators from full MDATemplate)
-        agent_name = f"mda-{Path(filename).stem[:30]}"
+        agent_name = f"mda-{Path(filename).stem[:20]}-{uuid4().hex[:8]}"
         agent = extractor.create_agent(
             name=agent_name,
             data_schema=MDAExtractionSchema,

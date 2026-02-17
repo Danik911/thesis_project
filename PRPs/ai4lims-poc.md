@@ -493,1613 +493,537 @@ This satisfies user-to-LLM refinement needs without introducing durable memory i
 
 ### 9.1 Overview
 
-The PoC is delivered in 6 phases across 2 weeks. Each phase has a concrete, testable gate that must pass before proceeding.
+The PoC follows a **strict test-first, gated pipeline**. Each feature is built backend-first, tested in both local and Docker environments, then gets a UI. Every phase has explicit pass/fail gate criteria that must be met before the next phase begins.
 
-| Phase | Name | Duration | Gate |
-|-------|------|----------|------|
-| Phase 0 | Setup & Validation | Day 0 | Dependencies install clean, Docker runs, LlamaExtract API key verified |
-| Phase 1 | Data Models & Extraction | Day 1-2 | PDF extracts into valid Pydantic MDA models |
-| Phase 2 | MDA Generation & Export | Day 3-4 | Full MDA generated from PDF, XLSX matches format. RAG optional enhancement. |
-| Phase 3 | Frontend | Day 5-6 | Upload PDF in browser -> see MDA tables -> download XLSX |
-| Phase 4 | Chat & Refinement | Day 7-8 | Chat modifies MDA, Pydantic validates, tables update |
-| Phase 5 | Integration & Demo | Day 9-10 | Full demo works, thesis system unaffected |
+| Phase | Name | Gate |
+|-------|------|------|
+| Phase 1 | PDF Extraction Backend | **DONE** — Validated per LIMS-001 |
+| Phase 2 | Extraction Testing (Local + Docker) | Extraction works in both environments, pytest passes |
+| Phase 3 | Extraction UI | User sees extracted MDA in tabbed tables in browser |
+| Phase 4 | MDA Workflow + Mandatory HITL + Export | Full pipeline with mandatory human review, no skip path |
+| Phase 5 | Full Pipeline Testing (Local + Docker) | E2E works in both environments, thesis preserved |
+| Phase 6 | Full HITL UI | Demo-ready: Upload -> Extract -> Review -> Chat -> Approve -> Export |
 
 ### 9.2 Phase Gate Criteria (Pass/Fail)
 
-**Phase 0 Gate: Environment Ready**
-- [ ] `pip install llama-cloud openpyxl PyMuPDF` succeeds without dependency conflicts
-- [ ] `docker-compose -f docker-compose.lims.yml up -d` starts frontend + API containers
-- [ ] `curl http://localhost:8080/lims/health` returns 200
-- [ ] LlamaExtract API key validated: `python -c "from llama_cloud import LlamaExtract; LlamaExtract(api_key='...')"` succeeds
-- [ ] `main/src/lims/` package imports without error
+**Phase 1 Gate: Extraction Works — DONE**
+- [x] `POST /lims/extract` with demo PDF returns structured JSON
+- [x] At least 1 Analysis, 3+ Components extracted
+- [x] Raw extraction results logged
 
-**Phase 1 Gate: Extraction Works (3 Core Sheets)**
-- [ ] **3 core sheet** models (Analysis, Component, Calculation) instantiate with example data (no ValidationError)
-- [ ] 4 core sheet models with enums and validators defined in `mda_schema.py`
-- [ ] `POST /lims/extract` with example PDF returns structured JSON
-- [ ] JSON validates against `MDATemplate` Pydantic model
-- [ ] At least 1 Analysis, 3+ Components, and 1+ Calculation extracted from test PDF
-- [ ] LlamaExtract citations present in response
-- [ ] Raw extraction results logged for schema refinement iteration
-- [ ] **No regression:** `uv run pytest main/tests/ -v` — all existing thesis tests pass
+**Phase 2 Gate: Extraction Verified in Both Environments**
+- [ ] Local: `curl POST /lims/extract` returns valid MDA JSON (1+ analyses, 3+ components)
+- [ ] Docker: same test passes from containerized API via `docker-compose.lims.yml`
+- [ ] `uv run pytest main/tests/lims/ -v` passes (mock + integration tests)
+- [ ] Thesis tests unaffected: `uv run pytest main/tests/ -v` passes
 
-**Phase 2 Gate: Full MDA Pipeline**
-- [ ] LlamaIndex workflow produces complete MDA (all 4 core sheets populated)
-- [ ] `GET /lims/export/{job_id}` returns XLSX file
-- [ ] XLSX opens in Excel with correct 4-sheet structure
-- [ ] Generated XLSX field names match LabWare MDA format
-- [ ] **(Optional)** ChromaDB `mda_templates` collection populated with 2+ example MDAs
-- [ ] **(Optional)** RAG retrieval returns similar templates for a given extraction
-
-> **Note:** RAG (L2.1) is an optional enhancement for Phase 2. The core gate is "extraction + LLM generates valid MDA + XLSX export works". With only 2 example templates, RAG adds minimal value — prove extraction quality first, add RAG if time permits.
-
-- [ ] **No regression:** `uv run pytest main/tests/ -v` — all existing thesis tests pass
-
-**Phase 3 Gate: Frontend Displays MDA**
-- [ ] `pages/lims.tsx` renders without errors
-- [ ] PDF upload triggers extraction (visible progress indicator)
-- [ ] MDA tables display with one tab per core sheet (4 tabs)
-- [ ] Tables show correct column headers and data
-- [ ] XLSX download button works
-- [ ] "LIMS" nav link visible in header
+**Phase 3 Gate: User Can See Extracted Data**
+- [ ] Upload PDF in browser -> see loading spinner -> see MDA in 4 tabbed tables
+- [ ] Each tab (Analysis, Component, CalcVariable, Calculation) shows correct columns and data
+- [ ] Works at `localhost:3000/lims`
 - [ ] Thesis pages (`/generate`, `/history`) still accessible
-- [ ] **No regression:** `uv run pytest main/tests/ -v` — all existing thesis tests pass
 
-**Phase 4 Gate: Chat Modifies MDA**
-- [ ] Chat interface renders with message input
-- [ ] User can send a message and receive a streaming response
-- [ ] Chat can explain extraction decisions with PDF citations
-- [ ] Chat can modify MDA (e.g., "change units for component X to milligrams")
-- [ ] After modification, Pydantic validates the updated MDA (no silent corruption)
-- [ ] Updated MDA tables reflect changes in real-time
-- [ ] Chat memory persists across turns for the same `job_id` during the active session window
-- [ ] **No regression:** `uv run pytest main/tests/ -v` — all existing thesis tests pass
+**Phase 4 Gate: Full Pipeline with Mandatory HITL**
+- [ ] Full pipeline: PDF -> extract -> RAG -> preliminary MDA -> chat review -> approve -> XLSX
+- [ ] Chat can explain extraction decisions
+- [ ] Chat can modify MDA, changes validated by Pydantic
+- [ ] Invalid modifications rejected (MDA unchanged)
+- [ ] XLSX has correct 4-sheet structure
+- [ ] **No path exists to produce XLSX without human approval**
+- [ ] Thesis tests unaffected
 
-**Phase 5 Gate: Demo-Ready**
-- [ ] Full end-to-end: PDF upload -> extraction -> MDA display -> chat refinement -> XLSX download
-- [ ] XLSX export after chat uses latest validated refined MDA state
-- [ ] `docker-compose -f docker-compose.dev.yml up -d` starts thesis system without errors
-- [ ] Thesis job submission (`POST /jobs`) still works
-- [ ] No LIMS code imported by thesis code paths
-- [ ] Demo rehearsal completed successfully
+**Phase 5 Gate: Pipeline Works in Both Environments**
+- [ ] Local: full pipeline succeeds including chat HITL and XLSX export
+- [ ] Docker: full pipeline succeeds
+- [ ] Thesis system: `docker-compose.dev.yml` starts, job submission works
+- [ ] No LIMS imports in thesis code paths
 
-### 9.3 Kill Criteria (Stop/Pivot Triggers)
+**Phase 6 Gate: PoC Demo-Ready**
+- [ ] Full visual flow: Upload -> Extract -> See Table -> Chat -> Modify -> Approve -> Download XLSX
+- [ ] Step indicator shows current pipeline stage
+- [ ] Chat modifications reflect immediately in MDA table
+- [ ] Export only available after human approval
+- [ ] Demo rehearsal completed
+
+### 9.3 Mandatory HITL Design
+
+**Critical difference from thesis system:** The thesis HITL (`main/src/core/human_consultation.py`) uses confidence-threshold triggers — consultation only activates when AI confidence is low. The LIMS PoC uses **always-mandatory HITL** — every MDA must be reviewed by a human before finalization.
+
+```
+PDF → Extract → RAG → Preliminary MDA → [PENDING_REVIEW]
+                                              ↓
+                                    Human reviews MDA tables
+                                    Human chats: asks questions, requests changes
+                                    AI applies structured edits (Pydantic validated)
+                                              ↓
+                                    Human clicks "Approve & Finalize"
+                                              ↓
+                                    Final MDA → XLSX Export
+```
+
+**Rules:**
+- After preliminary MDA generation, job status = `PENDING_REVIEW`
+- No confidence threshold — review is always mandatory
+- No timeout auto-approval — human must explicitly approve
+- Human interacts via chat only (no inline table editing)
+- Each chat modification validated by Pydantic before applying
+- Human must explicitly approve to move job to `APPROVED` status
+- XLSX export endpoint returns 403 for non-`APPROVED` jobs
+
+**Reusable patterns from thesis (adapt, don't import):**
+- Session management from `HumanConsultationManager`
+- Audit trail logging patterns from `GAMP5ComplianceLogger`
+- `HumanApprovalRequired` exception pattern from `ConsultationEventHandler`
+
+### 9.4 Kill Criteria (Stop/Pivot Triggers)
 
 If any of the following are true after the stated deadline, stop the current approach and pivot:
 
 | Criterion | Threshold | Deadline | Pivot Action |
 |-----------|-----------|----------|-------------|
-| **Extraction accuracy** | < 40% of components correctly typed after 3 schema iterations | End of Day 2 | Abandon LlamaExtract. Switch to Vision LLM direct (GPT-5/Claude) with structured output. |
-| **Per-document extraction cost** | > $5 per PDF (balanced mode) | End of Day 1 | Switch to `fast` mode or Vision LLM direct. |
-| **Full pipeline runtime** | > 10 minutes for a single 19-page PDF | End of Day 4 | Profile bottleneck. If LlamaExtract, switch to parallel page-by-page. If LLM generation, reduce context. |
-| **Dependency conflicts** | `llama-cloud` breaks existing thesis tests | End of Day 0 | Isolate LIMS in a separate virtualenv or pin conflicting packages. |
-| **LlamaExtract API access** | Cannot obtain working API key or quota within 4 hours | Day 0 | Switch to AWS Bedrock Data Automation (backup extractor). |
-| **Cross-sheet extraction** | AI cannot identify the 3-analysis pattern (Primary/CTL/META) after 3 attempts | End of Day 2 | Hard-code the analysis structure; let AI fill component details only. |
-
-> **Decision authority:** Engineer makes the pivot call. No stakeholder approval required for PoC-phase pivots — document the decision and rationale in the PR description.
+| **Extraction accuracy** | < 40% of components correctly typed after 3 schema iterations | End of Phase 2 | Switch to Vision LLM direct (GPT-5/Claude) with structured output |
+| **Per-document extraction cost** | > $5 per PDF (balanced mode) | Phase 2 | Switch to `fast` mode or Vision LLM direct |
+| **Full pipeline runtime** | > 10 minutes for a single 19-page PDF | Phase 4 | Profile bottleneck; reduce context if LLM generation |
+| **Cross-sheet extraction** | AI cannot identify the 3-analysis pattern after 3 attempts | Phase 2 | Hard-code analysis structure; let AI fill component details only |
 
 ---
 
-## 10. Task Breakdown (21 Tasks)
+## 10. Task Breakdown (18 Tasks)
 
-### Phase 0: Setup & Validation (4 tasks)
+### Phase 1: PDF Extraction Backend — DONE (0 tasks)
+
+Completed per LIMS-001 documentation. Working files:
+- `main/src/lims/pdf_extractor.py` — LlamaExtract extraction
+- `main/src/lims/extraction_schema.py` — Simplified schema for LlamaExtract
+- `main/src/lims/mda_schema.py` — Full Pydantic MDA schema with validators
+- `main/src/lims/config.py` — LIMS configuration from env vars
+- `main/api/lims_router.py` — `POST /lims/extract` endpoint
+- `main/frontend/pages/lims.tsx` — Basic upload UI + JSON display
 
 ---
 
-### Task L0.1 - Validate Dependencies, API Access & Test Data
+### Phase 2: Extraction Testing — Local + Docker (3 tasks)
 
-**Phase:** 0 (Setup) | **Dependencies:** None
+---
 
-> **WARNING:** `project_docs/parced_example_files/` does not exist in the repository. At least 1 PDF + 1 XLSX pair must be committed before Phase 1 can begin. Tasks L1.1, L1.2, L2.1, and L2.4 all depend on this data existing.
+### Task L2.1 — Local Extraction Test
 
-#### What to Do
-- **Obtain/create example test data:** At least 1 PDF test method + 1 corresponding XLSX MDA template pair must be committed to the repo (e.g., in `project_docs/parced_example_files/`). This is a hard prerequisite for Phase 1.
-- Test installation of `llama-cloud`, `openpyxl`, and `PyMuPDF` alongside existing thesis dependencies.
-- Verify no version conflicts with pinned packages in `pyproject.toml`.
-- After verifying compatibility, also regenerate `requirements-prod.txt` — Docker pip builds use `requirements-prod.txt`, NOT `pyproject.toml`.
-- Sign up for [LlamaIndex Cloud](https://developers.llamaindex.ai/python/cloud/) and obtain API key.
-- Validate LlamaExtract API access with a simple test call.
-- Configure `LIMS_*` environment variables in `.env.local`.
+**Phase:** 2 (Testing) | **Dependencies:** Phase 1 (done)
 
-#### Dependencies
-- None; prerequisite to all other tasks.
+**What to Do:**
+- Start the API server locally using `uvicorn` or `uv run`
+- Test `POST /lims/extract` with the demo PDF (`demo_data/AND_ACS_AQ126-LAB-2349.pdf`)
+- Verify the response contains valid structured MDA data
+- Document the exact commands and expected output
 
-#### Best Practices
-- Test installation in an isolated environment first before adding to `pyproject.toml`.
-- Use `LIMS_` prefix for all new environment variables to avoid conflicts.
-- Store API keys in `.env.local` (gitignored), never in code.
-
-#### Code Example
+**Testing Strategy:**
 ```bash
-# Test dependency compatibility
-uv pip install llama-cloud openpyxl PyMuPDF --dry-run
+# Start local server
+uv run uvicorn main.api.app:app --port 8080
 
-# Validate API access
-python -c "
-from llama_cloud import LlamaExtract
-import os
-client = LlamaExtract(api_key=os.getenv('LIMS_LLAMAEXTRACT_API_KEY'))
-print('LlamaExtract API access verified')
-"
-```
-
-#### Environment Variables
-```bash
-# .env.local additions
-LIMS_LLAMAEXTRACT_API_KEY=llx-...
-LIMS_OPENROUTER_API_KEY=sk-or-...
-LIMS_OPENROUTER_MODEL=openai/gpt-5
-LIMS_CHROMADB_COLLECTION=mda_templates
-LIMS_CHROMADB_PATH=./chroma_db_lims
-LIMS_UPLOAD_DIR=./uploads/lims
-LIMS_OUTPUT_DIR=./output/lims
-```
-
-#### Links
-- [LlamaIndex Cloud Signup](https://developers.llamaindex.ai/python/cloud/)
-- [LlamaExtract Getting Started](https://developers.llamaindex.ai/python/cloud/llamaextract/getting_started/)
-
-#### Testing Strategy
-- Run `uv pip install` and verify no dependency resolution errors.
-- Execute API validation script — must return success, not timeout or 401.
-- Run `uv run pytest main/tests/ -v` to confirm existing thesis tests still pass after adding dependencies.
-
-#### Common Issues to Avoid
-- LlamaExtract requires a separate API key from LlamaParse — don't confuse them.
-- `PyMuPDF` package name is `pymupdf` on PyPI but imports as `fitz` — document this.
-- Don't add dependencies to `pyproject.toml` until compatibility is verified.
-- **Docker pip builds use `requirements-prod.txt`, not `pyproject.toml`.** After adding new deps to `pyproject.toml`, always regenerate `requirements-prod.txt` (e.g., `uv pip compile pyproject.toml -o requirements-prod.txt`).
-- **Test data must exist before Phase 1.** If `project_docs/parced_example_files/` is empty or missing, no extraction or model validation can proceed.
-
----
-
-### Task L0.2 - Create LIMS Package Structure
-
-**Phase:** 0 (Setup) | **Dependencies:** L0.1
-
-#### What to Do
-- Create the `main/src/lims/` package directory with `__init__.py`.
-- Create empty module files with docstrings: `config.py`, `mda_schema.py`, `pdf_extractor.py`, `mda_generator.py`, `chat_agent.py`, `xlsx_exporter.py`.
-- Create `main/src/lims/prompts/` directory with prompt module stubs.
-- Implement `config.py` with `LIMSConfig` class reading all `LIMS_*` environment variables.
-
-#### Dependencies
-- L0.1 (environment variables defined).
-
-#### Best Practices
-- Use a dedicated `LIMSConfig` Pydantic `BaseSettings` class — never read `os.getenv` directly in business logic.
-- All LIMS imports must be self-contained — no circular dependencies with thesis code.
-- Include `__all__` exports in `__init__.py`.
-
-#### Code Example
-```python
-# main/src/lims/config.py
-from pydantic_settings import BaseSettings
-
-class LIMSConfig(BaseSettings):
-    llamaextract_api_key: str
-    openrouter_api_key: str
-    openrouter_model: str = "openai/gpt-5"
-    chromadb_collection: str = "mda_templates"
-    chromadb_path: str = "./chroma_db_lims"
-    upload_dir: str = "./uploads/lims"
-    output_dir: str = "./output/lims"
-
-    class Config:
-        env_prefix = "LIMS_"
-```
-
-#### Links
-- [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
-
-#### Testing Strategy
-- Import `from main.src.lims import LIMSConfig` — must not raise ImportError.
-- Instantiate `LIMSConfig()` with env vars set — must not raise ValidationError.
-- Verify no thesis module imports LIMS modules (grep for `from main.src.lims`).
-
-#### Common Issues to Avoid
-- Don't create `__init__.py` files that eagerly import heavy dependencies (LlamaExtract, ChromaDB) — use lazy imports.
-- Don't put LIMS config in the existing thesis `Settings` class — keep it separate.
-- **Import convention:** Use `main.src.lims.*` pattern (e.g., `from main.src.lims.config import LIMSConfig`). This matches the active codebase convention used in `worker.py` and `worker_executor.py`. Do NOT use `from src.lims...` — that convention is inconsistent with the rest of the project.
-
----
-
-### Task L0.3 - Create Docker Compose for LIMS
-
-**Phase:** 0 (Setup) | **Dependencies:** L0.2
-
-#### What to Do
-- Create `docker-compose.lims.yml` with minimal services: frontend + API only.
-- No worker, no SQS, no Phoenix — just the two containers needed for the PoC.
-- Mount `uploads/lims/` and `output/lims/` as volumes for file persistence.
-- Add health check for the API container.
-- Original `docker-compose.dev.yml` remains untouched.
-
-#### Dependencies
-- L0.2 (package structure exists).
-
-#### Best Practices
-- Keep the compose file minimal — fewer services means faster startup and fewer failure modes.
-- Use the same Dockerfile as the thesis API but with additional LIMS dependencies.
-- Mount `.env.local` for secrets — don't bake API keys into images.
-
-#### Code Example
-```yaml
-# docker-compose.lims.yml
-version: '3.8'
-services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://api:8080
-    depends_on:
-      api:
-        condition: service_healthy
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env.local
-    volumes:
-      - ./uploads/lims:/app/uploads/lims
-      - ./output/lims:/app/output/lims
-      - ./chroma_db_lims:/app/chroma_db_lims
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-```
-
-#### Links
-- [Docker Compose Reference](https://docs.docker.com/compose/compose-file/)
-
-#### Testing Strategy
-- `docker-compose -f docker-compose.lims.yml up -d` starts both containers.
-- `curl http://localhost:8080/health` returns 200.
-- `curl http://localhost:3000` returns HTML.
-- `docker-compose -f docker-compose.dev.yml up -d` still starts the thesis stack (run separately).
-
-#### Common Issues to Avoid
-- Don't modify `docker-compose.dev.yml` — create a new file.
-- Don't include ChromaDB as a separate service — the API container connects to the local directory.
-- Don't forget to add `docker-compose.lims.yml` to `.dockerignore` template list.
-
----
-
-### Task L0.4 - CI Smoke Checks for LIMS PRs
-
-**Phase:** 0 (Setup) | **Dependencies:** L0.2
-
-#### What to Do
-- Add a CI job (GitHub Actions) that runs on every PR touching `main/src/lims/` or `main/api/lims_router.py`.
-- Three checks, all fast (< 30 seconds total):
-  1. **Import check:** `python -c "from main.src.lims.mda_schema import MDATemplate"` — catches broken imports.
-  2. **Mocked extraction test:** Instantiate `MDATemplate` with fixture data, verify serialization roundtrip — catches schema regressions.
-  3. **Router health test:** Start the API with `--no-reload`, hit `GET /lims/health`, assert 200 — catches router mount failures.
-- These run alongside existing thesis tests (`uv run pytest main/tests/ -v`) to enforce the no-regression gate.
-
-#### Dependencies
-- L0.2 (LIMS package structure must exist for import checks).
-
-#### Best Practices
-- Keep CI checks fast — no LlamaExtract API calls, no Docker builds, no LLM calls.
-- Use fixture/mock data only — CI must work without API keys.
-- Run thesis tests in the same CI job so a single PR cannot break either system.
-- Fail the PR if any check fails — no "allowed to fail" exceptions.
-
-#### Code Example
-```yaml
-# .github/workflows/lims-smoke.yml (or add to existing CI)
-- name: LIMS import check
-  run: python -c "from main.src.lims.mda_schema import MDATemplate; print('OK')"
-
-- name: LIMS schema roundtrip
-  run: |
-    python -c "
-    from main.src.lims.mda_schema import MDATemplate, Analysis, Component, Calculation
-    mda = MDATemplate(
-        analyses=[Analysis(name='AND_TEST', reported_name='T', common_name='T', analysis_type='ID')],
-        components=[Component(analysis='AND_TEST', component_name='C1', order_number=1, result_type='T')],
-        calculations=[],
-    )
-    assert MDATemplate.model_validate(mda.model_dump())
-    print('Roundtrip OK')
-    "
-
-- name: Thesis regression check
-  run: uv run pytest main/tests/ -v
-```
-
-#### Testing Strategy
-- CI job triggers on PR — all 3 checks pass.
-- Intentionally break an import — CI fails.
-- Intentionally break a model validator — CI fails.
-- Thesis tests still included and passing.
-
-#### Common Issues to Avoid
-- Don't add API key requirements to CI — use mocks/fixtures only.
-- Don't skip thesis tests in the LIMS CI job — the whole point is catching cross-contamination.
-- Don't make CI checks slow — no Docker builds, no external API calls.
-
----
-
-### Phase 1: Data Models & Extraction (3 tasks)
-
----
-
-### Task L1.1 - Implement MDA Pydantic Schema (4 Core Sheets)
-
-**Phase:** 1 (Data Models) | **Dependencies:** L0.2
-
-#### What to Do
-- Implement 4 core sheet models + 9 enums + cross-sheet validators in `main/src/lims/mda_schema.py`.
-- **Models:** `Analysis` (Sheet 1), `Component` (Sheet 2), `CalcVariable` (Sheet 6), `Calculation` (Sheet 7).
-- **Enums:** `AnalysisType`, `ResultType`, `RoundType`, `UnitCode`, `CalcVariableReferenceType`, `CalcVariableReturnValue`, `CalcVariableScope`, `CalcVariableFunction`, `CalculationType`.
-- Define the `MDATemplate` root model with 4 lists and cross-sheet referential integrity validators.
-- Include JSON schema export method for LlamaExtract schema generation.
-- Parse the example XLSX files (`project_docs/parced_example_files/`) to verify field names and types against ground truth.
-- Use `model_config = ConfigDict(extra="allow", str_strip_whitespace=True, use_enum_values=True)` on all models.
-
-**Domain insights to encode:**
-- **Three-analysis pattern:** Primary (AND_ACS_DYE, type=ID), Control (AND_ACS_DYE_CTL, type=QC_SAMPLES), Metadata (AND_ACS_DYE_META, type=QC_SAMPLES). Total: 25 components across 3 analyses.
-- **Component classification rules:** K requires auto_calc, L requires list_key, N with uses_instrument should have instrument_group. See Section 4.3 for full mapping.
-- **S/R Picker handling:** Reagents and equipment selections are K-type (GOSUB CALC_SR_PICKER / CALC_INST_PICKER), NOT L-type list selections.
-- **Cross-analysis CALC_VARIABLES:** reference_type=A with scope=B for batch-level cross-analysis references.
-- **Site prefix validation:** Analysis names must start with site prefix + underscore (e.g., AND_).
-
-#### Dependencies
-- L0.2 (LIMS package structure).
-
-#### Best Practices
-- Parse the actual example XLSX files to determine field names — don't guess from documentation.
-- Use `Optional` for fields that may be empty in the XLSX.
-- Add `model_config = ConfigDict(extra="allow", str_strip_whitespace=True, use_enum_values=True)` on every model class.
-- Include `to_json_schema()` class method for LlamaExtract integration.
-- **Log raw extraction results** before Pydantic parsing — this enables iterative schema refinement.
-- Reagents use S/R Pickers (GOSUB), NOT measurement decomposition — do not create N-type numeric components for reagent steps.
-
-#### Code Example
-```python
-# main/src/lims/mda_schema.py
-from pydantic import BaseModel, field_validator, model_validator, ConfigDict
-from typing import List, Optional
-from enum import Enum
-
-class ResultType(str, Enum):
-    N = "N"  # Numeric (measurement with instrument)
-    K = "K"  # Calculated (LIMS Basic formula, GOSUB, or conditional)
-    L = "L"  # List selection (YES_NO_2, PASS_FAIL)
-    T = "T"  # Free text
-    D = "D"  # Date picker
-
-class Component(BaseModel):
-    model_config = ConfigDict(extra="allow", str_strip_whitespace=True, use_enum_values=True)
-
-    analysis: str
-    component_name: str
-    version: int = 1
-    order_number: int
-    result_type: ResultType
-    units: Optional[str] = None
-    uses_instrument: bool = False
-    auto_calc: bool = False
-    list_key: Optional[str] = None
-    sr_picker: Optional[str] = None
-
-    @model_validator(mode="after")
-    def validate_result_type_constraints(self) -> "Component":
-        if self.result_type == ResultType.K and not self.auto_calc:
-            raise ValueError(f"Component '{self.component_name}': K requires auto_calc=True")
-        if self.result_type == ResultType.L and not self.list_key:
-            raise ValueError(f"Component '{self.component_name}': L requires a list_key")
-        return self
-```
-
-#### Links
-- [Pydantic v2 Models](https://docs.pydantic.dev/latest/concepts/models/)
-- [LabWare LIMS MDA Format](https://www.labware.com/)
-
-#### Testing Strategy
-- Instantiate each of the 4 models with example data from ground truth — no ValidationError.
-- Instantiate `MDATemplate` with 3 analyses, 25 components — serializes to JSON and back.
-- Test cross-sheet integrity: orphan component referencing non-existent analysis raises ValidationError.
-- Test K-type validation: K-type component without auto_calc raises ValidationError.
-- Test QC_SAMPLES validation: CTL-suffixed analysis with type=ID raises ValidationError.
-- Export JSON schema via `MDATemplate.model_json_schema()` — valid JSON schema output.
-
-#### Common Issues to Avoid
-- Don't hardcode field names — parse them from actual XLSX column headers.
-- Don't make all fields required — many MDA fields are optional/empty in practice.
-- Don't forget `extra="allow"` — LlamaExtract may return fields not in our model.
-- **Known ground truth issues:** typos in some analysis names, `g_na` inconsistency across sheets, Round type "U" (Up) not documented in LabWare manuals, Places: 0 appearing on some components.
-- **Don't decompose reagents into measurement steps** — reagents use S/R Pickers (K-type), not N-type numeric components.
-
----
-
-### Task L1.2 - Implement LlamaExtract PDF Extraction
-
-**Phase:** 1 (Extraction) | **Dependencies:** L0.1, L1.1
-
-#### What to Do
-- Implement `main/src/lims/pdf_extractor.py` with LlamaExtract integration.
-- Build extraction schema from MDA Pydantic model JSON schemas.
-- Handle multi-page PDF extraction (19+ pages).
-- Return structured data as `MDATemplate` Pydantic object.
-- Include extraction metadata: confidence scores, citations, page references.
-- Implement error handling — fail loudly with full diagnostic information on extraction failure.
-
-#### Dependencies
-- L0.1 (LlamaExtract API key, dependencies installed).
-- L1.1 (Pydantic models for schema generation and result parsing).
-
-#### Best Practices
-- Use `mode="balanced"` for initial development, upgrade to `"premium"` for final demo.
-- Log the full extraction schema sent to LlamaExtract for debugging.
-- Store raw extraction results alongside parsed Pydantic models for audit.
-- Never silently drop extraction results that fail Pydantic validation — log the raw data and the validation error.
-- **Iterative schema refinement:** Expect 3-5 iterations of schema tuning. LlamaExtract's output depends heavily on schema quality. After each extraction attempt, compare raw results against expected Pydantic fields and adjust the JSON schema accordingly. Budget at least half a day for this refinement loop.
-
-#### Code Example
-```python
-# main/src/lims/pdf_extractor.py
-from llama_cloud import LlamaExtract
-from main.src.lims.config import LIMSConfig
-from main.src.lims.mda_schema import MDATemplate
-import json
-from pathlib import Path
-
-class PDFExtractor:
-    def __init__(self, config: LIMSConfig):
-        self.client = LlamaExtract(api_key=config.llamaextract_api_key)
-        self.schema = MDATemplate.model_json_schema()
-
-    async def extract(self, pdf_path: Path) -> MDATemplate:
-        """Extract MDA data from pharmaceutical PDF.
-
-        Raises on failure — no fallbacks.
-        """
-        if not pdf_path.exists():
-            raise FileNotFoundError(f"PDF not found: {pdf_path}")
-
-        result = self.client.extract(
-            file=str(pdf_path),
-            schema=self.schema,
-            mode="balanced"
-        )
-
-        if not result.data:
-            raise RuntimeError(
-                f"LlamaExtract returned empty data for {pdf_path}. "
-                f"Status: {result.status}, Errors: {result.errors}"
-            )
-
-        # Parse into Pydantic — will raise ValidationError if data is malformed
-        mda = MDATemplate(**result.data)
-        return mda
-```
-
-#### Links
-- [LlamaExtract API Reference](https://developers.llamaindex.ai/python/cloud/llamaextract/getting_started/)
-- [LlamaExtract Schema Definition](https://developers.llamaindex.ai/python/cloud/llamaextract/)
-
-#### Testing Strategy
-- Unit test with a mock LlamaExtract client returning known JSON — Pydantic parses correctly.
-- Integration test: extract from `project_docs/parced_example_files/` PDF — returns non-empty MDATemplate.
-- Verify at least 1 Analysis, 3+ Components, 1+ Calculation in extraction result.
-- Test error cases: missing file raises FileNotFoundError, empty result raises RuntimeError.
-- Verify raw extraction result is logged/stored for debugging.
-
-#### Common Issues to Avoid
-- Don't catch and swallow LlamaExtract errors — let them propagate with full context.
-- Don't assume all 4 sheets will have data — some may be empty for a given test method.
-- Don't forget to test with the actual 19-page example PDF, not just small test files.
-
----
-
-### Task L1.3 - Create LIMS API Router & Extract Endpoint
-
-**Phase:** 1 (API) | **Dependencies:** L0.3, L1.2
-
-#### What to Do
-- Create `main/api/lims_router.py` with FastAPI router.
-- Implement `POST /lims/extract` endpoint: accepts PDF upload, triggers extraction, returns job ID.
-- Implement `GET /lims/status/{job_id}` endpoint: returns extraction progress.
-- Implement `GET /lims/health` endpoint: returns LIMS subsystem health.
-- Mount router in `main/api/app.py` with `app.include_router(lims_router, prefix="/lims")`.
-- Store extraction jobs in-memory dict (no database for PoC).
-
-#### Dependencies
-- L0.3 (Docker compose for API container).
-- L1.2 (PDF extractor for extraction logic).
-
-#### Best Practices
-- Use `BackgroundTasks` for extraction — don't block the request.
-- Return a job ID immediately; client polls `/lims/status/{job_id}` for progress.
-- Store uploaded PDFs in `LIMS_UPLOAD_DIR`.
-- Include progress tracking: received -> extracting -> generating -> complete.
-- Mount the router as a single line in `app.py` — minimal change to thesis code.
-
-#### Code Example
-```python
-# main/api/lims_router.py
-from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException
-from main.src.lims.config import LIMSConfig
-from main.src.lims.pdf_extractor import PDFExtractor
-import uuid
-from pathlib import Path
-
-router = APIRouter(tags=["lims"])
-jobs: dict = {}  # In-memory job store for PoC
-
-@router.post("/extract")
-async def extract_pdf(
-    file: UploadFile = File(...),
-    background_tasks: BackgroundTasks = BackgroundTasks()
-):
-    job_id = str(uuid.uuid4())
-    config = LIMSConfig()
-
-    # Save uploaded file
-    upload_dir = Path(config.upload_dir)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    pdf_path = upload_dir / f"{job_id}.pdf"
-    content = await file.read()
-    pdf_path.write_bytes(content)
-
-    jobs[job_id] = {"status": "received", "progress": 0}
-    background_tasks.add_task(run_extraction, job_id, pdf_path, config)
-    return {"job_id": job_id, "status": "received"}
-```
-
-#### Links
-- [FastAPI Background Tasks](https://fastapi.tiangolo.com/tutorial/background-tasks/)
-- [FastAPI File Upload](https://fastapi.tiangolo.com/tutorial/request-files/)
-
-#### Testing Strategy
-- `POST /lims/extract` with a PDF file returns `{ job_id, status: "received" }`.
-- `GET /lims/status/{job_id}` returns progress updates.
-- `GET /lims/health` returns 200.
-- Invalid file upload (non-PDF) returns 400.
-- After extraction completes, `GET /lims/status/{job_id}` returns `status: "complete"` with MDA data.
-- Verify `app.py` change is a single `include_router` line — no other modifications.
-
-#### Common Issues to Avoid
-- Don't add authentication to LIMS endpoints for PoC — auth is feature-flagged off.
-- Don't use a database for job storage in PoC — in-memory dict is sufficient.
-- Don't forget to handle file upload size limits.
-
----
-
-### Phase 2: MDA Generation & Export (4 tasks)
-
----
-
-### Task L2.1 - Populate ChromaDB with MDA Templates (OPTIONAL — Parallel Enhancement)
-
-**Phase:** 2 (RAG — Optional) | **Dependencies:** L1.1 | **Priority:** Nice-to-have
-
-> **Note:** With only 2 example templates, RAG adds minimal value. This task can run in parallel with L2.2 but is NOT a hard dependency. Prove extraction quality first without RAG. Add RAG context as an enhancement if time permits.
-
-#### What to Do
-- Create a script to populate ChromaDB `mda_templates` collection with example MDA data.
-- Parse the 2 example XLSX files from `project_docs/parced_example_files/` into `MDATemplate` objects.
-- Chunk and embed the MDA data for RAG retrieval.
-- Store in `chroma_db_lims/` directory (separate from thesis `chroma_db/`).
-- Reuse the existing `chroma_adapter.py` pattern but pointing to the new collection.
-
-#### Dependencies
-- L1.1 (MDA Pydantic models for parsing XLSX into structured data).
-
-#### Best Practices
-- Use the same embedding model as the thesis project for consistency.
-- Store full MDA templates as metadata alongside embeddings for retrieval.
-- Include analysis type, component count, and method name as filterable metadata.
-- Create a separate script `scripts/populate_lims_chroma.py` for reproducibility.
-
-#### Code Example
-```python
-# scripts/populate_lims_chroma.py
-import chromadb
-from pathlib import Path
-import openpyxl
-
-CHROMA_PATH = "./chroma_db_lims"
-COLLECTION_NAME = "mda_templates"
-
-client = chromadb.PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection(name=COLLECTION_NAME)
-
-# Parse example XLSX files
-xlsx_dir = Path("project_docs/parced_example_files")
-for xlsx_file in xlsx_dir.glob("*.xlsx"):
-    wb = openpyxl.load_workbook(xlsx_file)
-    # ... parse sheets into documents and embed
-```
-
-#### Links
-- [ChromaDB Quickstart](https://docs.trychroma.com/getting-started)
-- [openpyxl Reading XLSX](https://openpyxl.readthedocs.io/)
-
-#### Testing Strategy
-- Run population script — completes without errors.
-- Query `mda_templates` collection — returns 2+ documents.
-- Verify `chroma_db_lims/` directory exists and is separate from `chroma_db/`.
-- Verify thesis `pharmaceutical_regulations` collection is untouched.
-- Similarity search for "dye binding identity test" returns relevant MDA template.
-
-#### Common Issues to Avoid
-- Don't write to `chroma_db/` — that's the thesis collection. Use `chroma_db_lims/`.
-- Don't embed entire XLSX files as single documents — chunk by sheet/analysis for better retrieval.
-- Don't forget to add `chroma_db_lims/` to `.gitignore`.
-
----
-
-### Task L2.2 - Build MDA Generation Workflow
-
-**Phase:** 2 (Workflow) | **Dependencies:** L1.2 | **Optional Enhancement:** L2.1
-
-#### What to Do
-- Implement `main/src/lims/mda_generator.py` as a LlamaIndex `Workflow` with `@step` decorators.
-- **Core pipeline (works without RAG):**
-  1. Extract raw data from PDF (LlamaExtract — Task L1.2)
-  2. Generate full MDA using extracted data (LLM via OpenRouter)
-  3. Generate LIMS Basic code for calculation fields
-  4. Validate complete MDA against Pydantic models
-- **Optional RAG enhancement (if L2.1 is completed):**
-  5. Query ChromaDB for similar MDA templates (RAG context)
-  6. Pass RAG results as few-shot examples in the generation prompt
-- **Phase 1 validated 3 core sheets; this task expands to all 4 core sheets** in the generation workflow.
-- Use OpenRouter for LLM calls (GPT-5 or Claude Opus 4.6).
-
-#### Dependencies
-- L1.2 (PDF extractor).
-- L2.1 (ChromaDB populated with examples) — **OPTIONAL.** Workflow must function without RAG. RAG adds quality but is not required for the Phase 2 gate.
-
-#### Best Practices
-- Reuse `Workflow` + `@step` patterns from thesis `unified_workflow.py`.
-- Pass RAG results as few-shot examples in the generation prompt.
-- Validate output at each step — fail early if extraction is incomplete.
-- Log every step with timing for performance analysis.
-- Keep `Workflow` as the top-level orchestrator; do NOT replace the end-to-end pipeline with autonomous agents.
-- If agent-style components are used, limit them to bounded sub-tasks (edit proposal, rationale explanation), with deterministic validation gates between steps.
-
-#### Code Example
-```python
-# main/src/lims/mda_generator.py
-from llama_index.core.workflow import Workflow, step, StartEvent, StopEvent, Event
-from main.src.lims.pdf_extractor import PDFExtractor
-from main.src.lims.mda_schema import MDATemplate
-from main.src.lims.config import LIMSConfig
-
-class ExtractionDone(Event):
-    raw_mda: MDATemplate
-
-class RAGContextReady(Event):
-    raw_mda: MDATemplate
-    similar_templates: list
-
-class MDAGenerationWorkflow(Workflow):
-    def __init__(self, config: LIMSConfig):
-        super().__init__()
-        self.config = config
-        self.extractor = PDFExtractor(config)
-
-    @step
-    async def extract_pdf(self, ev: StartEvent) -> ExtractionDone:
-        raw_mda = await self.extractor.extract(ev.pdf_path)
-        return ExtractionDone(raw_mda=raw_mda)
-
-    @step
-    async def retrieve_rag_context(self, ev: ExtractionDone) -> RAGContextReady:
-        # Query ChromaDB for similar templates
-        similar = await self._query_chroma(ev.raw_mda)
-        return RAGContextReady(raw_mda=ev.raw_mda, similar_templates=similar)
-
-    @step
-    async def generate_full_mda(self, ev: RAGContextReady) -> StopEvent:
-        # LLM generates complete MDA using extraction + RAG
-        full_mda = await self._llm_generate(ev.raw_mda, ev.similar_templates)
-        return StopEvent(result=full_mda)
-```
-
-#### Links
-- [LlamaIndex Workflows](https://docs.llamaindex.ai/en/stable/module_guides/workflow/)
-- [OpenRouter API](https://openrouter.ai/docs)
-
-#### Testing Strategy
-- Unit test each workflow step individually with mocked dependencies.
-- Integration test: run full workflow with example PDF — produces valid `MDATemplate`.
-- Verify RAG retrieval returns relevant templates (not random data).
-- Verify LLM generation fills in fields that extraction missed.
-- Verify LIMS Basic calculation code is syntactically reasonable.
-- Time the full workflow — should complete within 2 minutes for a 19-page PDF.
-
-#### Common Issues to Avoid
-- Don't call LlamaExtract AND the LLM in the same step — keep steps focused.
-- Don't forget to pass RAG context as few-shot examples in the generation prompt.
-- Don't validate only the final output — validate intermediate results too.
-- Don't let agent/tool autonomy mutate MDA state directly without explicit schema-validated transitions.
-
----
-
-### Task L2.3 - Implement XLSX Export
-
-**Phase:** 2 (Export) | **Dependencies:** L1.1
-
-#### What to Do
-- Implement `main/src/lims/xlsx_exporter.py` using openpyxl.
-- Generate 4-sheet XLSX matching LabWare MDA format.
-- Each sheet corresponds to one of the 4 core Pydantic models (Analysis, Component, CalcVariable, Calculation).
-- Include column headers matching LabWare field names.
-- Wire to `GET /lims/export/{job_id}` endpoint.
-
-#### Dependencies
-- L1.1 (MDA Pydantic models define the sheet structure).
-
-#### Best Practices
-- Match column names exactly to LabWare import format — this is critical for real-world usability.
-- Use the example XLSX files as the formatting reference.
-- Include data validation dropdowns for enum fields (e.g., result_type: N/T/L/K/D).
-- Set column widths for readability.
-
-#### Code Example
-```python
-# main/src/lims/xlsx_exporter.py
-from openpyxl import Workbook
-from main.src.lims.mda_schema import MDATemplate
-from pathlib import Path
-
-class XLSXExporter:
-    SHEET_MAP = {
-        "Analysis": "analyses",
-        "Component": "components",
-        "Calc Variable": "calc_variables",
-        "Calculation": "calculations",
-    }
-
-    def export(self, mda: MDATemplate, output_path: Path) -> Path:
-        wb = Workbook()
-        wb.remove(wb.active)  # Remove default sheet
-
-        for sheet_name, attr_name in self.SHEET_MAP.items():
-            ws = wb.create_sheet(title=sheet_name)
-            items = getattr(mda, attr_name)
-            if not items:
-                continue
-            # Write headers from model fields
-            headers = list(items[0].model_fields.keys())
-            ws.append(headers)
-            # Write data rows
-            for item in items:
-                ws.append([getattr(item, h, None) for h in headers])
-
-        wb.save(str(output_path))
-        return output_path
-```
-
-#### Links
-- [openpyxl Documentation](https://openpyxl.readthedocs.io/)
-
-#### Testing Strategy
-- Export a known `MDATemplate` to XLSX — file is created.
-- Open in openpyxl and verify 4 sheets exist with correct names.
-- Verify column headers match Pydantic model field names.
-- Compare generated XLSX structure against example XLSX files from `project_docs/`.
-- Verify the exported file opens in Microsoft Excel without errors.
-
-#### Common Issues to Avoid
-- Sheet names in Excel have a 31-character limit — ensure all names fit.
-- Don't use `None` values in cells that LabWare expects empty strings.
-- Don't forget to handle the case where a sheet has no data (empty list).
-
----
-
-### Task L2.4 - End-to-End Pipeline Test & Contract Tests
-
-**Phase:** 2 (Integration) | **Dependencies:** L1.3, L2.2, L2.3
-
-#### What to Do
-- Create an integration test that runs the complete pipeline: PDF upload -> extraction -> MDA generation -> XLSX export.
-- Use the example PDF from `project_docs/parced_example_files/`.
-- Compare generated MDA against the human-created example XLSX.
-- Document accuracy metrics: how many fields match, what's missing, what's wrong.
-- This is the Phase 2 gate validation.
-- **Add explicit schema contract tests** (use this pattern for all subsequent phases):
-  - API response schema matches TypeScript types (JSON shape consistency)
-  - XLSX sheet names are constant strings (invariant across runs)
-  - Pydantic model serialization roundtrips (`model.model_dump()` -> `Model(**data)` is lossless)
-  - Export field names match LabWare import format exactly
-
-#### Dependencies
-- L1.3 (API endpoint for upload).
-- L2.2 (MDA generation workflow).
-- L2.3 (XLSX export).
-
-#### Best Practices
-- Run the test via API endpoints (not direct function calls) to validate the full stack.
-- Log detailed comparison metrics — don't just pass/fail.
-- Accept that PoC accuracy won't be 100% — document gaps for improvement.
-- Store the test results in `output/lims/test_results/`.
-
-#### Code Example
-```python
-# tests/lims/test_e2e_pipeline.py
-import httpx
-from pathlib import Path
-
-async def test_full_pipeline():
-    pdf_path = Path("project_docs/parced_example_files/ex_2_was_pdf.pdf")
-
-    async with httpx.AsyncClient(base_url="http://localhost:8080") as client:
-        # Upload PDF
-        with open(pdf_path, "rb") as f:
-            resp = await client.post("/lims/extract", files={"file": f})
-        assert resp.status_code == 200
-        job_id = resp.json()["job_id"]
-
-        # Poll until complete
-        for _ in range(60):
-            status = await client.get(f"/lims/status/{job_id}")
-            if status.json()["status"] == "complete":
-                break
-            await asyncio.sleep(2)
-
-        # Export XLSX
-        export = await client.get(f"/lims/export/{job_id}")
-        assert export.status_code == 200
-        assert "spreadsheetml" in export.headers["content-type"]
-```
-
-#### Links
-- [httpx async client](https://www.python-httpx.org/async/)
-- [pytest-asyncio](https://pytest-asyncio.readthedocs.io/)
-
-#### Testing Strategy
-- This task IS the test — it validates Phase 2 gate criteria.
-- PDF extraction returns non-empty `MDATemplate`.
-- Generated XLSX has 4 sheets.
-- At least 70% of Analysis and Component fields match the example XLSX.
-- XLSX downloads successfully via API.
-- **Contract tests pass:**
-  - `MDATemplate.model_validate(MDATemplate(**data).model_dump())` — roundtrip lossless
-  - XLSX sheet names exactly match `XLSXExporter.SHEET_MAP` keys
-  - API `/lims/status/{job_id}` response shape matches expected TypeScript interface
-
-#### Common Issues to Avoid
-- Don't expect 100% accuracy — this is a PoC. Document gaps, don't block on them.
-- Don't forget to start the API server before running the test.
-- Set a reasonable timeout for extraction (2-5 minutes for a 19-page PDF).
-
----
-
-### Phase 3: Frontend (4 tasks)
-
----
-
-### Task L3.1 - Build LIMS Page with PDF Upload
-
-**Phase:** 3 (Frontend) | **Dependencies:** L1.3
-
-#### What to Do
-- Create `main/frontend/pages/lims.tsx` as the main LIMS page.
-- Implement PDF upload zone (drag-and-drop + file picker).
-- Show upload progress and extraction status.
-- Reuse the existing `FileUpload.tsx` pattern but adapt for PDF files.
-- Display extraction progress with step indicators (uploading -> extracting -> generating -> complete).
-
-#### Dependencies
-- L1.3 (API endpoints to upload and poll status).
-
-#### Best Practices
-- Reuse the thesis UI patterns (Framer Motion, styling, layout components).
-- Use SWR or polling for status updates.
-- Show meaningful progress — not just a spinner.
-- Accept only `.pdf` files in the upload component.
-
-#### Code Example
-```tsx
-// main/frontend/pages/lims.tsx
-import { useState } from 'react'
-import Layout from '../components/Layout'
-
-export default function LimsPage() {
-  const [jobId, setJobId] = useState<string | null>(null)
-  const [status, setStatus] = useState<string>('idle')
-
-  const handleUpload = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await fetch('/api/lims/extract', { method: 'POST', body: formData })
-    const data = await res.json()
-    setJobId(data.job_id)
-    setStatus('extracting')
-    // Start polling...
-  }
-
-  return (
-    <Layout>
-      <h1>AI4LIMS - MDA Generator</h1>
-      {/* PDF upload zone */}
-      {/* Status indicator */}
-      {/* MDA viewer (after extraction) */}
-    </Layout>
-  )
-}
-```
-
-#### Links
-- [Next.js Pages Router](https://nextjs.org/docs/pages/building-your-application/routing/pages-and-layouts)
-- [react-dropzone](https://react-dropzone.js.org/)
-
-#### Testing Strategy
-- Page renders at `/lims` without errors.
-- PDF upload triggers API call and shows progress.
-- Invalid file types are rejected client-side.
-- Status polling updates the UI.
-- Page is accessible from the frontend URL.
-
-#### Common Issues to Avoid
-- Don't modify existing pages — create a new one.
-- Don't forget to proxy API calls through Next.js (or configure CORS).
-- Don't use the thesis auth middleware on the LIMS page.
-
----
-
-### Task L3.2 - Build MDA Table Viewer Component
-
-**Phase:** 3 (Frontend) | **Dependencies:** L1.1, L3.1
-
-#### What to Do
-- Create `main/frontend/components/MDAViewer.tsx` — tabbed table viewer for 4 core MDA sheets.
-- Each tab corresponds to one MDA sheet (Analysis, Component, etc.).
-- Tables display field names as column headers and extracted data as rows.
-- Include sorting and filtering capabilities.
-- Highlight fields with low confidence scores (if available from extraction).
-
-#### Dependencies
-- L1.1 (MDA model structure defines the table columns).
-- L3.1 (LIMS page to embed the viewer).
-
-#### Best Practices
-- Use `@tanstack/react-table` for powerful table features.
-- Show tab count badges (e.g., "Components (15)").
-- Handle empty sheets gracefully — show "No data extracted" message.
-- Use Tailwind CSS consistent with thesis styling.
-
-#### Code Example
-```tsx
-// main/frontend/components/MDAViewer.tsx
-import { useState } from 'react'
-
-interface MDAViewerProps {
-  mda: MDATemplate
-}
-
-const SHEET_TABS = [
-  { key: 'analyses', label: 'Analysis' },
-  { key: 'components', label: 'Components' },
-  { key: 'calc_variables', label: 'Calc Variables' },
-  { key: 'calculations', label: 'Calculations' },
-]
-
-export function MDAViewer({ mda }: MDAViewerProps) {
-  const [activeTab, setActiveTab] = useState('analyses')
-
-  return (
-    <div>
-      <div className="tabs">
-        {SHEET_TABS.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={activeTab === tab.key ? 'active' : ''}
-          >
-            {tab.label} ({mda[tab.key]?.length || 0})
-          </button>
-        ))}
-      </div>
-      <table>
-        {/* Render active sheet data */}
-      </table>
-    </div>
-  )
-}
-```
-
-#### Links
-- [TanStack Table](https://tanstack.com/table/latest)
-- [Tailwind CSS Tables](https://tailwindcss.com/docs/table-layout)
-
-#### Testing Strategy
-- MDAViewer renders with all 4 tabs visible.
-- Clicking a tab switches the displayed table.
-- Tables show correct column headers from MDA models.
-- Empty sheets show "No data" message instead of crashing.
-- Tab badges show correct item counts.
-
-#### Common Issues to Avoid
-- Don't render all 4 tables at once — use lazy rendering for performance.
-- Don't assume all sheets have data — handle empty arrays.
-- Don't create a new table component if the thesis already has one — check first.
-
----
-
-### Task L3.3 - Modify Layout & Navigation
-
-**Phase:** 3 (Frontend) | **Dependencies:** L3.1
-
-#### What to Do
-- Add "LIMS" navigation link to `main/frontend/components/Layout.tsx`.
-- Verify `/lims` is NOT in `isProtectedRoute` in `main/frontend/middleware.ts` — the middleware already uses route matching, and `/lims` routes are unprotected by default since they're not listed in `isProtectedRoute`.
-- Do NOT modify `_app.tsx` — the `<ClerkProvider>` wrapper stays unchanged. Auth exclusion is handled entirely via the middleware route matcher.
-- Only 2 thesis files modified: `Layout.tsx` (nav link) and `middleware.ts` (verify route config).
-
-#### Dependencies
-- L3.1 (LIMS page must exist to link to).
-
-#### Best Practices
-- Changes must be minimal and non-destructive.
-- The middleware already uses `isProtectedRoute` to determine which routes need auth. Simply ensure `/lims` is NOT in that list (it isn't by default).
-- Do NOT add a global auth toggle — route-based exclusion is simpler and safer.
-- Test that both thesis and LIMS pages work after modifications.
-
-#### Code Example
-```tsx
-// In Layout.tsx — add alongside existing nav links
-<Link href="/lims">LIMS</Link>
-
-// In middleware.ts — verify /lims is NOT in isProtectedRoute
-// The existing middleware uses createRouteMatcher for protected routes.
-// /lims routes are public by default since they're not listed.
-// If needed, explicitly exclude: "/lims(.*)" from the protected matcher.
-```
-
-#### Links
-- [Clerk Next.js Integration](https://clerk.com/docs/quickstarts/nextjs)
-
-#### Testing Strategy
-- "LIMS" link appears in navigation header.
-- Clicking "LIMS" navigates to `/lims` page.
-- `/lims` page loads without Clerk authentication (public route).
-- Thesis pages (`/generate`, `/history`) still require Clerk auth as before.
-- Thesis pages (`/generate`, `/history`) still function correctly.
-
-#### Common Issues to Avoid
-- Don't modify `_app.tsx` — the `<ClerkProvider>` stays as-is for all pages.
-- Don't add a global `NEXT_PUBLIC_AUTH_ENABLED` toggle — route-based exclusion via `middleware.ts` is simpler and doesn't risk breaking thesis auth.
-- Don't add LIMS-specific imports to Layout.tsx.
-
----
-
-### Task L3.4 - Wire Frontend to API (Full Data Flow)
-
-**Phase:** 3 (Frontend) | **Dependencies:** L3.1, L3.2, L3.3, L2.3
-
-#### What to Do
-- Connect the LIMS page to all API endpoints:
-  - Upload PDF -> `POST /lims/extract`
-  - Poll status -> `GET /lims/status/{job_id}`
-  - Display MDA in viewer (from status response)
-  - Download XLSX -> `GET /lims/export/{job_id}`
-- Add XLSX download button to the MDA viewer.
-- Add error handling for API failures (show error messages, not silent failures).
-
-#### Dependencies
-- L3.1, L3.2, L3.3 (frontend components).
-- L2.3 (XLSX export endpoint).
-
-#### Best Practices
-- Use a state machine for the page: idle -> uploading -> extracting -> viewing -> exporting.
-- Show API error messages directly to the user — no generic "something went wrong".
-- Add a "Try Again" button for failed extractions.
-
-#### Code Example
-```tsx
-// In pages/lims.tsx — download handler
-const handleExport = async () => {
-  const response = await fetch(`/api/lims/export/${jobId}`)
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(`Export failed: ${error.detail}`)
-  }
-  const blob = await response.blob()
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `mda_template_${jobId}.xlsx`
-  a.click()
-}
-```
-
-#### Links
-- [Fetch API Blob](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-- [Next.js API Routes Proxy](https://nextjs.org/docs/pages/building-your-application/routing/api-routes)
-
-#### Testing Strategy
-- Full browser flow: upload PDF -> see progress -> view MDA tables -> download XLSX.
-- API errors display meaningful messages in the UI.
-- Download button produces a valid `.xlsx` file.
-- State transitions are correct (no stuck states).
-- Phase 3 gate criteria met: upload -> see tables -> download.
-
-#### Common Issues to Avoid
-- Don't swallow API errors — surface the actual error message.
-- Don't forget CORS configuration if frontend and API are on different ports.
-- Don't use `window.location` for downloads — use blob URLs for better UX.
-
----
-
-### Phase 4: Chat & Refinement (3 tasks)
-
----
-
-### Task L4.1 - Build Chat Backend
-
-**Phase:** 4 (Chat) | **Dependencies:** L2.2
-
-#### What to Do
-- Implement `main/src/lims/chat_agent.py` with a LlamaIndex chat engine.
-- Chat context includes: full PDF content, current MDA state (all 4 core sheets), extraction citations.
-- Chat can answer questions about extraction decisions.
-- Chat can modify the MDA template when the operator requests changes.
-- After each modification, validate the updated MDA against Pydantic models.
-- Implement short-term chat memory per `job_id` (in-memory): messages, modification log, latest validated MDA state.
-- Add memory guardrails: TTL and max-turn cap to prevent uncontrolled context growth.
-- Ensure final export uses the latest validated refined MDA state (not the initial generation snapshot).
-- Wire to `POST /lims/chat` endpoint.
-
-#### Dependencies
-- L2.2 (MDA generation workflow provides the initial MDA to chat about).
-
-#### Best Practices
-- Use OpenRouter for LLM calls (GPT-5 or Claude Opus 4.6).
-- Include the full MDA as structured context in the system prompt.
-- Use function calling / tool use to structure MDA modifications.
-- Always validate modified MDA with Pydantic before accepting changes.
-- Never apply modifications that fail validation — return error to user.
-
-#### Code Example
-```python
-# main/src/lims/chat_agent.py
-from llama_index.core.chat_engine import SimpleChatEngine
-from main.src.lims.mda_schema import MDATemplate
-
-class MDAEditAction(BaseModel):
-    """Structured MDA modification from chat."""
-    sheet: str           # Which sheet to modify
-    action: str          # "add", "modify", "delete"
-    target: str          # Component name or identifier
-    changes: dict        # Field changes
-
-class MDAChatAgent:
-    def __init__(self, mda: MDATemplate, pdf_text: str, config: LIMSConfig):
-        self.mda = mda
-        self.pdf_text = pdf_text
-        self.config = config
-
-    async def chat(self, message: str) -> dict:
-        """Process chat message, potentially modifying MDA."""
-        response = await self._llm_call(message)
-
-        if response.has_modification:
-            # Apply and validate
-            updated_mda = self._apply_modification(response.modification)
-            # Pydantic validation — raises on invalid state
-            MDATemplate.model_validate(updated_mda.model_dump())
-            self.mda = updated_mda
-            return {"response": response.text, "updated_mda": self.mda}
-
-        return {"response": response.text}
-```
-
-#### Links
-- [LlamaIndex Chat Engines](https://docs.llamaindex.ai/en/stable/module_guides/deploying/chat_engines/)
-- [OpenRouter API](https://openrouter.ai/docs)
-
-#### Testing Strategy
-- Send a question about extraction: "Why did you set result_type to K for component X?" — returns explanation.
-- Send a modification request: "Change units for component X to milligrams" — MDA is updated.
-- Send an invalid modification: "Set result_type to Z" — returns Pydantic validation error, MDA unchanged.
-- Chat maintains conversation context across messages.
-- After modification, `GET /lims/status/{job_id}` returns the updated MDA.
-- Verify chat memory expires after configured TTL and refuses additional writes once expired session state is cleared.
-
-#### Common Issues to Avoid
-- Don't apply modifications without Pydantic validation — this can corrupt the MDA.
-- Don't lose conversation history between messages — maintain chat state per job.
-- Don't use the LLM to validate MDA — use Pydantic (deterministic, not probabilistic).
-
----
-
-### Task L4.2 - Build Chat UI Component
-
-**Phase:** 4 (Frontend) | **Dependencies:** L4.1, L3.1
-
-#### What to Do
-- Create `main/frontend/components/ChatInterface.tsx` — streaming chat UI.
-- Message input with send button.
-- Display chat history with user/AI message bubbles.
-- Support streaming responses (SSE or polling).
-- Show "MDA Updated" indicators when chat modifies the template.
-- Integrate into `pages/lims.tsx` alongside the MDA viewer.
-
-#### Dependencies
-- L4.1 (Chat backend endpoint).
-- L3.1 (LIMS page to embed the chat).
-
-#### Best Practices
-- Use streaming for responsive UX — don't wait for full response.
-- Show markdown rendering in AI responses.
-- Indicate when the AI is modifying the MDA (visual feedback).
-- Auto-scroll to newest messages.
-
-#### Code Example
-```tsx
-// main/frontend/components/ChatInterface.tsx
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-  mdaUpdated?: boolean
-}
-
-export function ChatInterface({ jobId, onMDAUpdate }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [input, setInput] = useState('')
-
-  const sendMessage = async () => {
-    const userMsg = { role: 'user', content: input }
-    setMessages(prev => [...prev, userMsg])
-    setInput('')
-
-    const res = await fetch('/api/lims/chat', {
-      method: 'POST',
-      body: JSON.stringify({ job_id: jobId, message: input }),
-    })
-    const data = await res.json()
-
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      content: data.response,
-      mdaUpdated: !!data.updated_mda,
-    }])
-
-    if (data.updated_mda) onMDAUpdate(data.updated_mda)
-  }
-  // ...
-}
-```
-
-#### Links
-- [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
-
-#### Testing Strategy
-- Chat interface renders with message input.
-- User can type and send a message.
-- AI response appears in chat history.
-- "MDA Updated" indicator shows when modifications occur.
-- MDA viewer updates when chat modifies the template.
-- Multiple messages maintain conversation context.
-
-#### Common Issues to Avoid
-- Don't block the UI while waiting for AI response — show a typing indicator.
-- Don't lose messages on page refresh (consider session storage for PoC).
-- Don't render raw JSON in chat — format AI responses as markdown.
-
----
-
-### Task L4.3 - MDA Modification via Chat Integration
-
-**Phase:** 4 (Integration) | **Dependencies:** L4.1, L4.2, L3.2
-
-#### What to Do
-- Wire the chat modification flow end-to-end:
-  1. User sends modification request in chat
-  2. Backend modifies MDA and validates with Pydantic
-  3. Updated MDA sent back to frontend
-  4. MDA viewer tables update in real-time
-  5. XLSX export reflects the latest modifications
-- Test common modification scenarios:
-  - "Change the units for component X to milligrams"
-  - "Add a new component for temperature measurement"
-  - "The calculation for dye volume is wrong, it should be..."
-  - "Why did you choose result_type K for this component?"
-
-#### Dependencies
-- L4.1 (Chat backend with modification capability).
-- L4.2 (Chat UI).
-- L3.2 (MDA viewer for displaying updates).
-
-#### Best Practices
-- Maintain an edit history — operator should be able to see what changed.
-- Each modification should be atomic — either fully applied or fully rejected.
-- Show a diff-like view of what changed after each modification.
-
-#### Code Example
-```python
-# Modification tracking in chat_agent.py
-class ModificationLog(BaseModel):
-    timestamp: datetime
-    message: str
-    sheet: str
-    changes: dict
-    before: dict
-    after: dict
-
-class MDAChatAgent:
-    def __init__(self, ...):
-        self.modification_log: List[ModificationLog] = []
-
-    async def chat(self, message: str) -> dict:
-        # ... process message ...
-        if response.has_modification:
-            before = self.mda.model_dump()
-            self.mda = self._apply_modification(response.modification)
-            after = self.mda.model_dump()
-            self.modification_log.append(ModificationLog(
-                timestamp=datetime.now(),
-                message=message,
-                sheet=response.modification.sheet,
-                changes=response.modification.changes,
-                before=before,
-                after=after,
-            ))
-```
-
-#### Links
-- [Pydantic Model Validation](https://docs.pydantic.dev/latest/concepts/validators/)
-
-#### Testing Strategy
-- Phase 4 gate validation: complete the following sequence in a browser:
-  1. Extract MDA from PDF
-  2. Open chat and ask: "What analyses were extracted?"
-  3. Request: "Change units for component X to milligrams" — table updates
-  4. Request: "Add a temperature component" — new row appears
-  5. Export XLSX — contains the modifications
-- Invalid modification attempt is rejected with clear error message.
-- Modification log tracks all changes with before/after state.
-
-#### Common Issues to Avoid
-- Don't allow modifications that break cross-sheet references (e.g., deleting an Analysis that has Components).
-- Don't lose modifications if the chat encounters an error mid-conversation.
-- Don't re-extract from PDF after modifications — work with the in-memory MDA state.
-
----
-
-### Phase 5: Integration & Demo (3 tasks)
-
----
-
-### Task L5.1 - End-to-End Integration Test
-
-**Phase:** 5 (Integration) | **Dependencies:** L2.4, L4.3
-
-#### What to Do
-- Run a complete end-to-end test of the full PoC:
-  1. Start system with `docker-compose -f docker-compose.lims.yml up -d`
-  2. Open browser to `http://localhost:3000/lims`
-  3. Upload example PDF
-  4. Wait for extraction to complete
-  5. Review MDA tables (all 4 core sheets)
-  6. Chat with AI: ask questions, make modifications
-  7. Download XLSX
-  8. Verify XLSX contents match expected output
-- Document any issues found and fix them.
-- This is the primary Phase 5 gate validation.
-
-#### Dependencies
-- L2.4 (pipeline test confirms backend works).
-- L4.3 (chat modifications work).
-
-#### Best Practices
-- Run the test in Docker (not direct Python) to validate the deployment configuration.
-- Record the test session (screenshots or video) for demo preparation.
-- Document any manual steps needed to reproduce the test.
-
-#### Code Example
-```bash
-# Integration test script
-docker-compose -f docker-compose.lims.yml up -d
-sleep 10
-
-# Health check
-curl -f http://localhost:8080/lims/health || exit 1
-
-# Upload PDF
+# Test extraction
 curl -X POST http://localhost:8080/lims/extract \
-  -F "file=@project_docs/parced_example_files/ex_2_was_pdf.pdf" \
-  > /tmp/extract_response.json
-
-JOB_ID=$(jq -r .job_id /tmp/extract_response.json)
-
-# Poll until complete
-for i in $(seq 1 60); do
-  STATUS=$(curl -s http://localhost:8080/lims/status/$JOB_ID | jq -r .status)
-  [ "$STATUS" = "complete" ] && break
-  sleep 5
-done
-
-# Export XLSX
-curl -o /tmp/mda_output.xlsx http://localhost:8080/lims/export/$JOB_ID
-echo "XLSX exported to /tmp/mda_output.xlsx"
+  -F "file=@demo_data/AND_ACS_AQ126-LAB-2349.pdf"
 ```
-
-#### Links
-- N/A (integration test of all prior work)
-
-#### Testing Strategy
-- This task IS the test. Pass criteria:
-  - Docker containers start and pass health checks.
-  - PDF extraction completes within 5 minutes.
-  - MDA tables display in browser.
-  - Chat responds to questions.
-  - Chat modifications update tables.
-  - XLSX downloads with correct content.
-
-#### Common Issues to Avoid
-- Don't forget to rebuild Docker images if code has changed since last build.
-- Don't run the integration test against the thesis Docker compose — use the LIMS one.
-- Set adequate timeouts — extraction of a 19-page PDF may take several minutes.
+- Response must contain `raw_extraction` with at least 1 analysis, 3+ components
+- If WSL numpy import error occurs (known issue per LIMS-001), fall back to Docker
 
 ---
 
-### Task L5.2 - Progress & Confidence UI
+### Task L2.2 — Docker Extraction Test
 
-**Phase:** 5 (Polish) | **Dependencies:** L3.4
+**Phase:** 2 (Testing) | **Dependencies:** L2.1
 
-#### What to Do
-- Add detailed progress indicators during extraction:
-  - "Uploading PDF..." (with file size)
-  - "Extracting structured data..." (with page progress if available)
-  - "Querying similar templates..." (RAG step)
-  - "Generating MDA template..." (LLM step)
-  - "Validating output..."
-  - "Complete!"
-- Add confidence indicators on extracted fields (from LlamaExtract citations/confidence scores).
-- Highlight low-confidence fields in the MDA viewer (e.g., yellow background for confidence < 0.7).
+**What to Do:**
+- Ensure `docker-compose.lims.yml` exists and builds correctly
+- Start containers: `docker compose -f docker-compose.lims.yml up -d`
+- Test `POST /lims/extract` from the containerized API
+- Verify same structured output as local test
 
-#### Dependencies
-- L3.4 (frontend wired to API — enhance existing UI).
-
-#### Best Practices
-- Map backend pipeline steps to user-friendly progress messages.
-- Use color coding for confidence: green (> 0.8), yellow (0.5-0.8), red (< 0.5).
-- Don't fabricate confidence scores — only show them if LlamaExtract provides them.
-
-#### Code Example
-```tsx
-// Progress steps mapping
-const PROGRESS_STEPS = [
-  { key: 'uploading', label: 'Uploading PDF', icon: '...' },
-  { key: 'extracting', label: 'Extracting structured data', icon: '...' },
-  { key: 'rag_query', label: 'Finding similar templates', icon: '...' },
-  { key: 'generating', label: 'Generating MDA template', icon: '...' },
-  { key: 'validating', label: 'Validating output', icon: '...' },
-  { key: 'complete', label: 'Complete', icon: '...' },
-]
-```
-
-#### Links
-- [Framer Motion Progress](https://www.framer.com/motion/animate-presence/)
-
-#### Testing Strategy
-- Progress indicator shows all steps during extraction.
-- Steps advance as the backend progresses.
-- Confidence scores display on applicable fields.
-- Low-confidence fields are visually highlighted.
-- No confidence indicators shown when LlamaExtract doesn't provide scores.
-
-#### Common Issues to Avoid
-- Don't show fake progress (incrementing timer) — only advance when the backend reports progress.
-- Don't fabricate confidence scores — this is a PoC, honesty is better than fake metrics.
-- Don't block on this task — it's polish, not core functionality.
-
----
-
-### Task L5.3 - Thesis System Preservation Test
-
-**Phase:** 5 (Validation) | **Dependencies:** L5.1
-
-#### What to Do
-- Verify the existing thesis system is completely unaffected by the LIMS PoC:
-  1. Start thesis stack: `docker-compose -f docker-compose.dev.yml up -d`
-  2. Run existing thesis tests: `uv run pytest main/tests/ -v`
-  3. Submit a test job via `POST /jobs` — verify it completes
-  4. Verify ChromaDB `pharmaceutical_regulations` collection is intact
-  5. Verify all thesis frontend pages render correctly
-- Document results as the final Phase 5 gate evidence.
-- This is the "do no harm" verification.
-
-#### Dependencies
-- L5.1 (LIMS integration test completed — now verify thesis is unaffected).
-
-#### Best Practices
-- Run thesis tests AFTER the LIMS PoC is fully set up — this catches any accidental interference.
-- Compare test results before and after LIMS changes.
-- Check that no LIMS imports leak into thesis code paths.
-
-#### Code Example
+**Testing Strategy:**
 ```bash
-# Thesis preservation test
-docker-compose -f docker-compose.dev.yml up -d
-sleep 15
+docker compose -f docker-compose.lims.yml up -d
+curl -X POST http://localhost:8080/lims/extract \
+  -F "file=@demo_data/AND_ACS_AQ126-LAB-2349.pdf"
+docker compose -f docker-compose.lims.yml down
+```
+- Response must match local test output structure
+- Container must start without errors, health check passes
 
-# Existing tests pass
-uv run pytest main/tests/ -v
+---
 
-# Thesis API works
-curl -f http://localhost:8080/health
+### Task L2.3 — Extraction Pytest Suite
 
-# ChromaDB thesis collection intact
-python -c "
-import chromadb
-client = chromadb.PersistentClient(path='./chroma_db')
-collection = client.get_collection('pharmaceutical_regulations')
-print(f'Thesis collection has {collection.count()} documents')
-assert collection.count() > 0, 'Thesis collection is empty!'
-"
+**Phase:** 2 (Testing) | **Dependencies:** L2.1
 
-# Thesis frontend pages load
-curl -f http://localhost:3000/generate
-curl -f http://localhost:3000/history
+**What to Do:**
+- Create `main/tests/lims/` directory with `conftest.py` and `test_extraction.py`
+- Write unit tests: mock LlamaExtract client, verify Pydantic parsing
+- Write schema roundtrip test: create `MDATemplate`, serialize, deserialize, compare
+- Write integration test (marked `@pytest.mark.integration`): real API call if key available
+- Verify thesis tests still pass
+
+**Testing Strategy:**
+```bash
+uv run pytest main/tests/lims/ -v          # LIMS tests
+uv run pytest main/tests/ -v               # All tests (includes thesis)
 ```
 
-#### Links
-- N/A (validation of existing functionality)
+---
 
-#### Testing Strategy
-- All existing `main/tests/` tests pass without modification.
-- Thesis job submission works.
-- ChromaDB `pharmaceutical_regulations` collection has the same document count as before.
-- Thesis frontend pages render correctly.
-- No LIMS code is imported in thesis code paths (verified by grep).
+### Phase 3: Extraction UI (3 tasks)
 
-#### Common Issues to Avoid
-- Don't run both Docker compose files simultaneously — they may conflict on ports.
-- Don't skip this test — it's the most important validation for the "never modify, always add" principle.
-- If any thesis test fails, investigate immediately — this means the additive strategy has been violated.
+---
+
+### Task L3.1 — MDA Table Viewer Component
+
+**Phase:** 3 (UI) | **Dependencies:** Phase 2 gate passed
+
+**What to Do:**
+- Create `main/frontend/components/MDAViewer.tsx`
+- Tabbed interface with 4 tabs: Analysis, Components, CalcVariables, Calculations
+- Each tab renders a data table with appropriate columns
+- Handle empty sheets gracefully (show "No data" message)
+- Use the emerald color scheme from existing `lims.tsx`
+
+**Testing Strategy:**
+- Component renders without errors with sample MDA data
+- Each tab shows correct columns
+- Empty data shows appropriate message
+
+---
+
+### Task L3.2 — Wire Extraction Result to Table Viewer
+
+**Phase:** 3 (UI) | **Dependencies:** L3.1
+
+**What to Do:**
+- Update `main/frontend/pages/lims.tsx` to replace raw JSON `<pre>` display with `<MDAViewer>`
+- Pass extraction result (either `mda_template` or `raw_extraction`) as props
+- Show validated badge if Pydantic validation passed, warning if raw data only
+
+**Testing Strategy:**
+- Upload PDF -> extraction completes -> tabbed tables appear instead of raw JSON
+- Both validated and raw extraction data render correctly
+
+---
+
+### Task L3.3 — Extraction Progress Indicators
+
+**Phase:** 3 (UI) | **Dependencies:** L3.2
+
+**What to Do:**
+- Improve loading state during extraction (currently just spinner text)
+- Add extraction stage indicators: "Uploading..." -> "Extracting..." -> "Validating..."
+- Improve error display with actionable messages
+
+**Testing Strategy:**
+- Loading state shows progress stages during extraction
+- Error messages are clear and actionable
+
+---
+
+### Phase 4: MDA Generation Workflow + Mandatory HITL + Export (6 tasks)
+
+---
+
+### Task L4.1 — ChromaDB MDA Templates Collection
+
+**Phase:** 4 (Workflow) | **Dependencies:** Phase 3 gate passed
+
+**What to Do:**
+- Create `main/src/lims/rag_loader.py` to seed ChromaDB `mda_templates` collection
+- Parse 2-5 example MDA XLSX files into `MDATemplate` Pydantic objects
+- Embed and store in ChromaDB at `chroma_db_lims/` directory
+- Provide query interface: given extraction result, find similar templates
+
+**Testing Strategy:**
+- Collection has 2+ documents after seeding
+- Query returns relevant results for a test extraction
+
+---
+
+### Task L4.2 — MDA Generation Workflow
+
+**Phase:** 4 (Workflow) | **Dependencies:** L4.1
+
+**What to Do:**
+- Create `main/src/lims/mda_generator.py` with LlamaIndex workflow
+- Pipeline: raw extraction + RAG context -> LLM generates complete preliminary MDA
+- Use OpenRouter (GPT-5 or Claude Opus 4.6) via OpenAI-compatible SDK
+- After generation, set job status to `PENDING_REVIEW` (mandatory HITL)
+- Store preliminary MDA in in-memory job store
+
+**Testing Strategy:**
+- Workflow produces `MDATemplate` with all 4 sheets populated
+- Job status is `PENDING_REVIEW` after workflow completes
+- MDA validates against Pydantic schema
+
+---
+
+### Task L4.3 — Chat Agent for MDA Refinement
+
+**Phase:** 4 (Workflow) | **Dependencies:** L4.2
+
+**What to Do:**
+- Create `main/src/lims/chat_agent.py` with `MDAChatAgent` class
+- LLM context: full PDF content + current MDA state + extraction citations
+- Use OpenRouter via OpenAI-compatible SDK with function calling
+- Structured `MDAEditAction` tool for modifications (sheet, action, target, changes, reason)
+- Pydantic validation after every edit — reject invalid changes
+- Short-term memory per `job_id`: messages, modification log, current MDA state
+- Memory guardrails: TTL (2 hours), max turns (50 messages)
+
+**Testing Strategy:**
+- Chat answers questions about extraction decisions
+- Chat modifies MDA via structured edit actions
+- Invalid modification returns error, MDA unchanged
+- Conversation history maintained across messages
+
+---
+
+### Task L4.4 — Mandatory HITL Integration
+
+**Phase:** 4 (Workflow) | **Dependencies:** L4.3
+
+**What to Do:**
+- Implement job state machine: `EXTRACTING` -> `GENERATING` -> `PENDING_REVIEW` -> `APPROVED` -> `EXPORTED`
+- After preliminary MDA generation, job enters `PENDING_REVIEW` — **no automatic progression**
+- Human must explicitly call `POST /lims/approve/{job_id}` to move to `APPROVED`
+- No confidence threshold check — review is always mandatory
+- No timeout auto-approval — job stays in `PENDING_REVIEW` indefinitely until human acts
+- Adapt session/audit patterns from `main/src/core/human_consultation.py` (but simplified: no timeout monitoring, no escalation — just mandatory approval gate)
+- XLSX export returns 403 for non-`APPROVED` jobs
+
+**Testing Strategy:**
+- Job in `PENDING_REVIEW` cannot produce XLSX (403 error)
+- Job must be explicitly approved via API call
+- After approval, job moves to `APPROVED` and XLSX export works
+- No path exists to bypass approval
+
+---
+
+### Task L4.5 — XLSX Export
+
+**Phase:** 4 (Workflow) | **Dependencies:** L4.2
+
+**What to Do:**
+- Create `main/src/lims/xlsx_exporter.py` using openpyxl
+- Export `MDATemplate` to 4-sheet XLSX matching LabWare format
+- Sheet names: "Analysis", "Component", "Calc Variable", "Calculation"
+- Column headers match LabWare MDA field names
+- Exports the **final** (human-approved) MDA state, not the preliminary version
+
+**Testing Strategy:**
+- Generated XLSX opens in Excel with 4 sheets
+- Column headers match expected LabWare format
+- Data matches the MDA Pydantic model content
+
+---
+
+### Task L4.6 — LIMS Router Endpoints
+
+**Phase:** 4 (Workflow) | **Dependencies:** L4.2, L4.3, L4.4, L4.5
+
+**What to Do:**
+- Add to `main/api/lims_router.py`:
+  - `GET /lims/status/{job_id}` — job status + current MDA state
+  - `POST /lims/chat` — send chat message, receive response + optional MDA updates
+  - `POST /lims/approve/{job_id}` — human approval endpoint (mandatory HITL gate)
+  - `GET /lims/export/{job_id}` — download XLSX (only for `APPROVED` jobs, 403 otherwise)
+- Update `POST /lims/extract` to return `job_id` and trigger async pipeline
+
+**Testing Strategy:**
+- Full API flow: extract -> status (PENDING_REVIEW) -> chat -> approve -> export
+- Export returns 403 before approval
+- Chat returns updated MDA after modification
+
+---
+
+### Phase 5: Full Pipeline Testing — Local + Docker (3 tasks)
+
+---
+
+### Task L5.1 — Local End-to-End Test
+
+**Phase:** 5 (Testing) | **Dependencies:** Phase 4 gate passed
+
+**What to Do:**
+- Run full pipeline locally: PDF upload -> extract -> generate -> chat review -> approve -> XLSX
+- Document exact commands and expected responses at each stage
+- Verify XLSX content matches expected MDA structure
+
+**Testing Strategy:**
+```bash
+# 1. Start server
+uv run uvicorn main.api.app:app --port 8080
+
+# 2. Upload and extract
+curl -X POST http://localhost:8080/lims/extract -F "file=@demo.pdf"
+# Returns: { "job_id": "..." }
+
+# 3. Check status
+curl http://localhost:8080/lims/status/{job_id}
+# Returns: { "status": "PENDING_REVIEW", "mda_template": {...} }
+
+# 4. Chat (ask question)
+curl -X POST http://localhost:8080/lims/chat \
+  -H "Content-Type: application/json" \
+  -d '{"job_id": "...", "message": "Why is DYE_VOLUME result_type K?"}'
+
+# 5. Approve
+curl -X POST http://localhost:8080/lims/approve/{job_id}
+# Returns: { "status": "APPROVED" }
+
+# 6. Export
+curl -O http://localhost:8080/lims/export/{job_id}
+# Downloads XLSX file
+```
+
+---
+
+### Task L5.2 — Docker End-to-End Test
+
+**Phase:** 5 (Testing) | **Dependencies:** L5.1
+
+**What to Do:**
+- Run full pipeline in Docker: `docker compose -f docker-compose.lims.yml up -d`
+- Execute same test sequence as L5.1 against containerized API
+- Verify identical results
+
+**Testing Strategy:**
+- Same curl commands as L5.1 but against Docker container
+- Results must match local test
+
+---
+
+### Task L5.3 — Thesis Preservation Test
+
+**Phase:** 5 (Testing) | **Dependencies:** L5.1
+
+**What to Do:**
+- Start thesis system: `docker compose -f docker-compose.dev.yml up -d`
+- Verify thesis job submission still works
+- Verify no LIMS code is imported by thesis code paths
+- Grep for cross-contamination: `grep -r "from main.src.lims" main/src/core/ main/src/agents/`
+
+**Testing Strategy:**
+- `docker compose -f docker-compose.dev.yml up -d` starts without errors
+- `curl POST /jobs` thesis endpoint works
+- No LIMS imports found in thesis code
+
+---
+
+### Phase 6: Full HITL UI (4 tasks)
+
+---
+
+### Task L6.1 — Chat Interface Component
+
+**Phase:** 6 (UI) | **Dependencies:** Phase 5 gate passed
+
+**What to Do:**
+- Create `main/frontend/components/ChatInterface.tsx`
+- Streaming chat responses with markdown rendering
+- Message history display (user messages + AI responses)
+- Input field with send button
+- Show modification log when AI applies structured edits
+
+**Testing Strategy:**
+- Send message -> see streaming response
+- Message history persists across turns
+- Modification actions highlighted in chat
+
+---
+
+### Task L6.2 — HITL Review Flow UI
+
+**Phase:** 6 (UI) | **Dependencies:** L6.1
+
+**What to Do:**
+- Update `main/frontend/pages/lims.tsx` with multi-step flow
+- Step indicator: Extract -> Review -> Approve -> Export
+- Visual state transitions based on job status
+- "Approve & Finalize" button (calls `POST /lims/approve/{job_id}`)
+- Button disabled until human has reviewed (at minimum viewed the MDA tables)
+
+**Testing Strategy:**
+- Step indicator shows correct current stage
+- Approve button triggers status change
+- UI updates to show approved state
+
+---
+
+### Task L6.3 — Real-Time MDA Table Updates
+
+**Phase:** 6 (UI) | **Dependencies:** L6.1, L3.1
+
+**What to Do:**
+- After each chat edit, re-fetch MDA and update `MDAViewer` component
+- Show modification highlight (changed cells/rows)
+- Show modification history/log sidebar
+
+**Testing Strategy:**
+- Chat modification -> table updates immediately
+- Modified fields visually highlighted
+- Modification log shows edit history
+
+---
+
+### Task L6.4 — Export Download Button
+
+**Phase:** 6 (UI) | **Dependencies:** L6.2
+
+**What to Do:**
+- Add XLSX download button to `lims.tsx`
+- Button only enabled when job status = `APPROVED`
+- Calls `GET /lims/export/{job_id}` and triggers browser download
+- Filename includes timestamp: `MDA_{analysis_name}_{timestamp}.xlsx`
+
+**Testing Strategy:**
+- Button disabled before approval
+- Button enabled after approval
+- Click triggers XLSX download with correct filename
 
 ---
 
 ## 11. Task Dependency Graph
 
 ```
-Phase 0: Setup & Data
-  L0.1 (deps + test data) ──┬──> L0.2 (package) ──> L0.3 (docker)
-                             │                  └──> L0.4 (CI smoke)
-                             │
-Phase 1: Models (3 core)     │
-  L1.1 (models) <────────────┘──> L1.2 (extract) ──> L1.3 (API)
-                             │
-Phase 2: MDA Generation      │
-  L2.1 (chroma) <────────────┘   [OPTIONAL, parallel]
-  L2.2 (workflow) <── L1.2        [L2.1 optional enhancement]
-  L2.3 (xlsx) <── L1.1
-  L2.4 (e2e + contract tests) <── L1.3 + L2.2 + L2.3
+Phase 1: PDF Extraction Backend — DONE
+  (pdf_extractor.py, extraction_schema.py, mda_schema.py, config.py, lims_router.py, lims.tsx)
 
-Phase 3: Frontend
-  L3.1 (lims page) <── L1.3
-  L3.2 (MDA viewer) <── L1.1 + L3.1
-  L3.3 (layout/nav) <── L3.1       [_app.tsx NOT modified]
-  L3.4 (wiring) <── L3.1 + L3.2 + L3.3 + L2.3
-
-Phase 4: Chat
-  L4.1 (chat backend) <── L2.2
-  L4.2 (chat UI) <── L4.1 + L3.1
-  L4.3 (MDA modification) <── L4.1 + L4.2 + L3.2
-
-Phase 5: Integration
-  L5.1 (e2e integration) <── L2.4 + L4.3
-  L5.2 (progress UI) <── L3.4
-  L5.3 (thesis preservation) <── L5.1
+Phase 2: Extraction Testing
+  L2.1 (local test) ──> L2.2 (docker test)
+  L2.1 ──> L2.3 (pytest suite)
+                         │
+  ═══════════════════ GATE 2 ═══════════════════
+                         │
+Phase 3: Extraction UI
+  L3.1 (MDA viewer) ──> L3.2 (wire to lims.tsx) ──> L3.3 (progress indicators)
+                         │
+  ═══════════════════ GATE 3 ═══════════════════
+                         │
+Phase 4: Workflow + HITL + Export
+  L4.1 (ChromaDB RAG) ──> L4.2 (MDA workflow) ──> L4.3 (chat agent)
+                                                        │
+  L4.5 (XLSX export) <── L4.2                    L4.4 (mandatory HITL) <── L4.3
+                    │                                   │
+                    └──────────── L4.6 (router endpoints) <──┘
+                         │
+  ═══════════════════ GATE 4 ═══════════════════
+                         │
+Phase 5: Full Pipeline Testing
+  L5.1 (local e2e) ──> L5.2 (docker e2e)
+  L5.1 ──> L5.3 (thesis preservation)
+                         │
+  ═══════════════════ GATE 5 ═══════════════════
+                         │
+Phase 6: Full HITL UI
+  L6.1 (chat UI) ──> L6.2 (HITL review flow) ──> L6.4 (export button)
+  L6.1 + L3.1 ──> L6.3 (real-time MDA updates)
+                         │
+  ═══════════════════ GATE 6: DEMO-READY ═══════════════════
 ```
 
 ---

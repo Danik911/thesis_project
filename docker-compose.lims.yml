@@ -1,0 +1,80 @@
+# =============================================================================
+# Docker Compose for AI4LIMS PoC (Minimal: API + Frontend only)
+# =============================================================================
+# Usage:
+#   docker compose -f docker-compose.lims.yml up -d
+#   docker compose -f docker-compose.lims.yml logs -f
+#   docker compose -f docker-compose.lims.yml down
+
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      args:
+        BUILDPLATFORM: linux/amd64
+    container_name: lims-api
+    restart: unless-stopped
+    env_file: .env.local
+    environment:
+      ENVIRONMENT: development
+    command:
+      - uvicorn
+      - main.api.app:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./main:/app/main:ro
+      - ./demo_data:/app/demo_data:ro
+      - ./uploads/lims:/app/uploads/lims:rw
+      - ./output/lims:/app/output/lims:rw
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - lims-dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: base
+      args:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_aGVscGVkLXN0dXJnZW9uLTE5LmNsZXJrLmFjY291bnRzLmRldiQ
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+    container_name: lims-frontend
+    restart: unless-stopped
+    env_file: .env.local
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=1536"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./main/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - lims-dev
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+networks:
+  lims-dev:
+    driver: bridge

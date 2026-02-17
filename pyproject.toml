@@ -76,6 +76,9 @@ dependencies = [
     # AI4LIMS PoC - LlamaExtract PDF extraction
     "llama-cloud-services>=0.1.0",
     "llama-cloud>=0.1.0",
+    # AI4LIMS PoC - XLSX export and PDF preview
+    "openpyxl>=3.1.0",
+    "PyMuPDF>=1.24.0",
 ]
 
 [build-system]
@@ -124,3 +127,6 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: marks tests as integration tests",
+]

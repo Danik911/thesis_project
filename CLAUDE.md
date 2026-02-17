@@ -53,9 +53,10 @@ When encountering bugs, errors, or unexpected behavior:
 | Regulatory Standards | `docs/regulatory_guides/` (GAMP-5, FDA Part 11, ICH Q9, ALCOA+) |
 | PRP Workflow | `.claude/commands/prp.md` |
 | PRP Tasks | `PRPs/tasks/` (0.1-5.3, 23 tasks) |
-| Issues | `docs/issues/` |
+| Issues (Thesis) | `docs/issues/` — format: `ISSUE-###-description.md` |
 | Issue Catalog | `docs/issues/ISSUE-CATALOG.md` |
 | AI4LIMS PoC Plan | `docs/project_p/AI4LIMS_PoC_Plan.md` |
+| AI4LIMS Feature/Issue Docs | `docs/project_p/` — format: `LIMS-###-description.md` |
 
 ---
 
@@ -124,6 +125,17 @@ Located at `.claude/skills/`. Invoke via skill name.
 **Key files**: `main/src/lims/mda_schema.py`, `main/src/lims/`, `main/api/lims_router.py`, `main/frontend/pages/lims.tsx`
 
 **Strategy**: Additive only — never modify thesis files. Separate router, compose, config, collection.
+
+**LIMS Documentation Protocol:**
+- After every new feature or issue, create a doc in `docs/project_p/` with prefix `LIMS-###-description.md`
+- Include: summary, files created/modified, issues encountered, useful commands, next steps
+- See `docs/project_p/LIMS-001-pdf-extraction-setup.md` for format example
+
+**Development Preference:**
+- **Local server first** — faster iteration, avoids Docker rebuild wait
+- Fall back to Docker only if local server has issues (e.g., numpy import error on `/mnt/c/`)
+- When using Docker: `docker compose -f docker-compose.dev.yml up -d` (v2 plugin, no hyphen)
+- Env var changes require container recreate (`up -d`), NOT `restart`
 
 ---
 

@@ -1,18 +1,17 @@
 {
-  "timestamp": "2025-12-07T11:33:41.812469",
+  "timestamp": "2026-02-17T09:26:07.822322",
   "document": "URS-001.md",
   "compliance_features": {
     "basic_workflow": {
       "status": "FAILED",
-      "duration": 0.22478532791137695,
+      "duration": 5.7018561363220215,
       "returncode": 1,
       "output_length": 0
     },
     "alcoa_plus": {
-      "status": "SUCCESS",
-      "score": 8.333333333333334,
-      "target": 9.0,
-      "meets_target": false
+      "status": "NOT_IMPLEMENTED",
+      "error": "Module not found",
+      "claimed": "Task 23 claimed 9.48/10 score"
     },
     "cfr_part_11": {
       "status": "NOT_IMPLEMENTED",
@@ -20,8 +19,9 @@
       "claimed": "Task 25 claimed 100% compliance"
     },
     "owasp_security": {
-      "status": "FAILED",
-      "error": "'OWASPTestScenarios' object has no attribute 'get_test_scenarios'"
+      "status": "NOT_IMPLEMENTED",
+      "error": "Modules not found",
+      "claimed": "Task 24 claimed 88-92% effectiveness"
     },
     "audit_trail": {
       "status": "NOT_FOUND",
