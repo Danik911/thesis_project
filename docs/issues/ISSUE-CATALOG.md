@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-027
+4. **Next Issue Number**: ISSUE-028
 
 ---
 
@@ -28,6 +28,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
+| [ISSUE-027](ISSUE-027-lims-openpyxl-missing-in-dev-container.md) | LIMS Extraction Warning in Docker Dev - `ModuleNotFoundError: No module named 'openpyxl'` | 2026-02-17 | 2026-02-17 | Docker/API |
 | [ISSUE-025](ISSUE-025-lims-local-dev-connectivity-runbook.md) | LIMS Local Dev Connectivity & Runtime Runbook (Consolidated) | 2026-02-17 | 2026-02-17 | Frontend/API |
 | [ISSUE-018](ISSUE-018-local-wsl-storage-path-uses-app-output.md) | Local WSL Startup Fails When Storage Path Uses `/app/output` | 2026-02-17 | 2026-02-17 | API |
 | [ISSUE-017](ISSUE-017-wsl-numpy-openblas-import-failure.md) | WSL NumPy/OpenBLAS Import Failure Blocks Local API Startup | 2026-02-17 | 2026-02-17 | API |
