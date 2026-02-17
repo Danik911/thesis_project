@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-016
+4. **Next Issue Number**: ISSUE-026
 
 ---
 
@@ -28,6 +28,10 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
+| [ISSUE-025](ISSUE-025-lims-local-dev-connectivity-runbook.md) | LIMS Local Dev Connectivity & Runtime Runbook (Consolidated) | 2026-02-17 | 2026-02-17 | Frontend/API |
+| [ISSUE-018](ISSUE-018-local-wsl-storage-path-uses-app-output.md) | Local WSL Startup Fails When Storage Path Uses `/app/output` | 2026-02-17 | 2026-02-17 | API |
+| [ISSUE-017](ISSUE-017-wsl-numpy-openblas-import-failure.md) | WSL NumPy/OpenBLAS Import Failure Blocks Local API Startup | 2026-02-17 | 2026-02-17 | API |
+| [ISSUE-016](ISSUE-016-lims-upload-dropzone-a11y-lint-failure.md) | LIMS Upload Dropzone Accessibility Lint Failure | 2026-02-17 | 2026-02-17 | Frontend |
 | [ISSUE-015](ISSUE-015-lims-llamaextract-agent-name-collision.md) | LIMS LlamaExtract Agent Name Collision | 2026-02-17 | 2026-02-17 | API |
 | [ISSUE-014](ISSUE-014-destroy-deploy-cycle-reliability.md) | Destroy/Deploy Cycle Reliability | 2025-12-19 | 2025-12-19 | Deployment |
 | [ISSUE-013](ISSUE-013-route53-trailing-dot-mismatch.md) | Route53 Certificate Validation Import Failure | 2025-12-19 | 2025-12-19 | Deployment |
@@ -76,9 +80,9 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 18
+- **Total Issues:** 22
 - **Open:** 0
-- **Resolved:** 18
+- **Resolved:** 22
 - **Most Common Category:** Deployment (9 issues)
 
 ---

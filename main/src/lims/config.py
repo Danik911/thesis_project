@@ -16,6 +16,13 @@ class LIMSConfig(BaseModel):
     llamaextract_api_key: str
     extraction_mode: str = "balanced"
 
+    # MDA generation via OpenRouter (L4a)
+    openrouter_api_key: str = ""
+    openrouter_model: str = "openai/gpt-5"
+    chromadb_path: str = "./chroma_db_lims"
+    upload_dir: str = "./uploads/lims"
+    output_dir: str = "./output/lims"
+
     @field_validator("llamaextract_api_key")
     @classmethod
     def validate_api_key_not_empty(cls, v: str) -> str:
@@ -53,4 +60,9 @@ def get_lims_config() -> LIMSConfig:
     return LIMSConfig(
         llamaextract_api_key=api_key,
         extraction_mode=os.getenv("LIMS_EXTRACTION_MODE", "balanced"),
+        openrouter_api_key=os.getenv("LIMS_OPENROUTER_API_KEY", ""),
+        openrouter_model=os.getenv("LIMS_OPENROUTER_MODEL", "openai/gpt-5"),
+        chromadb_path=os.getenv("LIMS_CHROMADB_PATH", "./chroma_db_lims"),
+        upload_dir=os.getenv("LIMS_UPLOAD_DIR", "./uploads/lims"),
+        output_dir=os.getenv("LIMS_OUTPUT_DIR", "./output/lims"),
     )

@@ -159,11 +159,12 @@ async def process_job_worker(
             )
             logger.info(f"Created S3 storage adapter for bucket: {storage_bucket}")
         else:
+            local_base_path = os.getenv("STORAGE_LOCAL_BASE_PATH", "output")
             storage_adapter = StorageFactory.create_storage_provider(
                 storage_mode="local",
-                base_path="/app/output"
+                base_path=local_base_path
             )
-            logger.info("Created local storage adapter at /app/output")
+            logger.info(f"Created local storage adapter at {local_base_path}")
     except Exception as e:
         logger.exception(f"CRITICAL: Failed to create storage adapter: {e}")
         logger.error("Worker cannot process jobs without storage. Exiting.")

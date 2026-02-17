@@ -1,6 +1,7 @@
 import Head from 'next/head';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getApiBaseUrl } from '@/lib/authenticatedFetch';
+import MDAViewer from '@/components/MDAViewer';
 
 interface ExtractionResult {
   filename: string;
@@ -11,13 +12,34 @@ interface ExtractionResult {
   mda_template: Record<string, unknown> | null;
 }
 
+const EXTRACTION_STAGES = [
+  'Uploading PDF...',
+  'Extracting with LlamaExtract...',
+  'Validating schema...',
+] as const;
+
 export default function LimsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [extractionStage, setExtractionStage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ExtractionResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!loading) {
+      setExtractionStage(0);
+      return;
+    }
+
+    const timers = [
+      setTimeout(() => setExtractionStage(1), 2000),
+      setTimeout(() => setExtractionStage(2), 30000),
+    ];
+
+    return () => timers.forEach(clearTimeout);
+  }, [loading]);
 
   const handleFile = useCallback((f: File) => {
     if (!f.name.toLowerCase().endsWith('.pdf')) {
@@ -47,6 +69,13 @@ export default function LimsPage() {
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
+  }, []);
+
+  const handleDropzoneKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
   }, []);
 
   const handleFileInput = useCallback(
@@ -130,6 +159,9 @@ export default function LimsPage() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onClick={() => fileInputRef.current?.click()}
+          onKeyDown={handleDropzoneKeyDown}
+          role="button"
+          tabIndex={0}
           className={`relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all ${
             dragOver
               ? 'border-emerald-400 bg-emerald-500/10'
@@ -182,7 +214,7 @@ export default function LimsPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Extracting... (15-60s)
+                {EXTRACTION_STAGES[extractionStage]}
               </span>
             ) : (
               'Extract MDA Data'
@@ -205,6 +237,10 @@ export default function LimsPage() {
           <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
             <p className="text-red-400 text-sm font-medium">Extraction Error</p>
             <p className="text-red-300 text-sm mt-1 font-mono whitespace-pre-wrap">{error}</p>
+            <p className="text-red-200/80 text-xs mt-2">
+              Confirm the API is reachable at port 8080 and that your LIMS extraction keys are present in
+              <span className="font-mono"> .env.local</span>.
+            </p>
           </div>
         )}
 
@@ -246,23 +282,14 @@ export default function LimsPage() {
               </div>
             )}
 
-            {/* Raw extraction data */}
-            <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
-              <div className="px-4 py-3 bg-slate-800/80 border-b border-slate-700/50">
-                <h3 className="text-sm font-medium text-slate-300">
-                  {result.validated ? 'Validated MDA Template' : 'Raw Extraction Data'}
-                </h3>
-              </div>
-              <pre className="p-4 text-xs text-slate-300 font-mono overflow-x-auto max-h-[600px] overflow-y-auto">
-                {JSON.stringify(
-                  result.validated && result.mda_template
-                    ? result.mda_template
-                    : result.raw_extraction,
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
+            <MDAViewer
+              data={
+                result.validated && result.mda_template
+                  ? result.mda_template
+                  : result.raw_extraction
+              }
+              validated={result.validated}
+            />
           </div>
         )}
       </div>
