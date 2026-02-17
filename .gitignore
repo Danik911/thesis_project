@@ -228,7 +228,7 @@ secrets.yaml
 # Screenshots folder
 screenshots/
 
-# Examples folder
+# Examples / reference code (not part of project)
 examples/
 
 # Project specific
@@ -280,10 +280,19 @@ dev-debug.log
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
 main/nul
 nul
 
+# Root-level junk (historical, no longer needed in tracking)
+job_logs.json
+optimized_category5_prompt.txt
+install_phoenix_deps.sh
+requirements_compatible.txt
+requirements-prod.txt
+Dockerfile.api.pip
+Dockerfile.worker.pip
+event_retrospective_images/
 
 # Thesis documents (Chapter 4)
 THESIS_EVIDENCE_PACKAGE/05_THESIS_DOCUMENTS/chapter_4/
@@ -291,9 +300,6 @@ THESIS_EVIDENCE_PACKAGE/05_THESIS_DOCUMENTS/chapter_4/
 
 # Ruff cache
 .ruff_cache/
-
-# Examples folder
-examples/
 
 # AWS Infrastructure - Selective Tracking for GAMP-5 Compliance
 # TRACK: Policy files, documentation, scripts (audit trail required)
