@@ -27,6 +27,36 @@ AI-powered extraction from pharmaceutical test method PDFs into LabWare LIMS MDA
 - **Stack**: LlamaExtract + Next.js + FastAPI + ChromaDB
 - **Routes**: `/lims/*` (separate from thesis `/jobs/*` routes)
 
+### Implementation Status
+
+Full HITL workflow complete (Tasks L1-L6):
+
+| Phase | Status | Documentation |
+|-------|--------|---------------|
+| L1: PDF Extraction | Complete | [LIMS-001](project_p/LIMS-001-pdf-extraction-setup.md) |
+| L2: MDA Generation + RAG | Complete | [LIMS-002](project_p/LIMS-002-mda-generation-rag-xlsx.md) |
+| L3: Chat Agent + HITL Router | Complete | [LIMS-003](project_p/LIMS-003-chat-agent-hitl-router.md) |
+| L4: Multi-Step Frontend UI | Complete | [LIMS-004](project_p/LIMS-004-full-hitl-ui.md) |
+
+**Current Workflow**: Upload PDF -> AI Extraction -> MDA Table Review -> Chat Refinement -> Human Approval -> XLSX Export
+
+**Key Components**:
+- `LIMSStepIndicator.tsx` — 5-stage pipeline progress (EXTRACTING -> GENERATING -> PENDING_REVIEW -> APPROVED -> EXPORTED)
+- `ChatInterface.tsx` — Interactive chat for MDA refinement with edit badges and suggestion chips
+- `MDAViewer.tsx` — Tabbed table viewer for 4 MDA sheets (Analysis, Components, Calc Variables, Calculations) with cell-level highlighting
+- `lims.tsx` — Main page with conditional views for each workflow stage
+
+**Local Testing**:
+```bash
+# Backend
+uv run uvicorn main.api.app:app --port 8080
+
+# Frontend
+cd main/frontend && npm run dev
+
+# Access at http://localhost:3000/lims
+```
+
 ## Live System
 
 | Environment | URL |

@@ -3,6 +3,9 @@
 **Phase:** 4 (Workflow + HITL + Export) | **PRP Tasks Merged:** L4.3, L4.4, L4.6
 **Dependencies:** Task L4a (MDA Generation Backend)
 **Branch:** `prjoject_p_protatype`
+**Status:** COMPLETE (2026-02-17)
+**Implemented by:** task-executor agent (Claude Opus 4.6)
+**Verified by:** tester-agent (84/86 passed, 2 skipped) + manual curl testing
 
 ---
 
@@ -543,13 +546,103 @@ curl -O http://localhost:8080/lims/export/{job_id}
 
 ## Gate Criteria (Pass/Fail)
 
-- [ ] Job state machine: PENDING_REVIEW cannot transition to EXPORTED directly
-- [ ] `GET /lims/export/{job_id}` returns 403 when status is PENDING_REVIEW
-- [ ] `POST /lims/approve/{job_id}` is the ONLY way to reach APPROVED
-- [ ] Chat modifies MDA via structured edits, invalid edits rejected with error
-- [ ] Chat maintains history across messages within a session
-- [ ] TTL (2h) and turn limit (50) enforced
-- [ ] `uv run pytest main/tests/lims/ -v` passes
+- [x] Job state machine: PENDING_REVIEW cannot transition to EXPORTED directly -- **Enforced in VALID_TRANSITIONS + tested**
+- [x] `GET /lims/export/{job_id}` returns 403 when status is PENDING_REVIEW -- **Confirmed via curl**
+- [x] `POST /lims/approve/{job_id}` is the ONLY way to reach APPROVED -- **update_status() blocks APPROVED, must use approve_job()**
+- [x] Chat modifies MDA via structured edits, invalid edits rejected with error -- **Tested: MDAEditAction + Pydantic re-validation + rollback**
+- [x] Chat maintains history across messages within a session -- **get_or_create_session() persists ChatSession per job_id**
+- [x] TTL (2h) and turn limit (50) enforced -- **Tested: TimeoutError + ValueError raised**
+- [x] `uv run pytest main/tests/lims/ -v` passes -- **84 passed, 2 skipped (integration markers)**
+
+---
+
+## Implementation Results (2026-02-17)
+
+### Actual Files Created
+
+| File | Lines | Notes |
+|------|-------|-------|
+| `main/src/lims/chat_agent.py` | 471 | ChatSession with MDAEditAction, OpenAI function calling, TTL/turn limits, rollback on validation failure |
+| `main/src/lims/job_store.py` | 238 | LIMSJobStatus enum, LIMSJob Pydantic model, in-memory _jobs dict, VALID_TRANSITIONS, approve_job() as sole APPROVED path |
+| `main/src/lims/prompts/chat_system_prompt.py` | ~80 | Chat prompt with {mda_state} and {pdf_context} placeholders |
+| `main/src/lims/prompts/edit_contract_prompt.py` | ~60 | MDAEditAction JSON schema documentation for LLM tool description |
+| `main/tests/lims/test_job_store.py` | ~150 | 32 state machine tests (valid/invalid transitions, HITL enforcement) |
+| `main/tests/lims/test_chat_agent.py` | ~200 | 37 chat agent tests with mocked LLM (edit apply/reject, TTL, turn limits) |
+
+### Actual Files Modified
+
+| File | Change |
+|------|--------|
+| `main/api/lims_router.py` | Major update: added ChatRequest model, 4 new endpoints (GET /status, POST /chat, POST /approve, GET /export). Updated POST /extract to create jobs and optionally trigger MDA generation. 460 lines total. |
+| `main/tests/lims/test_lims_router.py` | Fixed mock config to include new L4a fields, added autouse fixture to clear _jobs store between tests |
+
+### Key Design Decisions
+
+1. **update_status() explicitly blocks APPROVED** -- raises ValueError if called with LIMSJobStatus.APPROVED, directing to approve_job() instead. This is a defense-in-depth measure ensuring no code path can bypass HITL.
+
+2. **ChatSession takes LIMSConfig** -- config is passed per chat() call (not stored), so sessions work even if env vars change. This matches mda_generator.py pattern.
+
+3. **OpenAI function calling** -- uses `tools=[{...}]` parameter with `tool_choice="auto"`. The LLM decides when to call modify_mda based on user intent. Non-edit questions get text-only responses.
+
+4. **Rollback-on-failure** -- _apply_edit() takes a deep copy snapshot before modifying, then runs MDATemplate.model_validate() on the result. If validation fails, snapshot is restored.
+
+5. **Chat session management** -- get_or_create_session() is the public API. Sessions are per-job, in-memory, lost on restart (acceptable for PoC).
+
+### Verification Results
+
+```
+tester-agent:  84 passed, 2 skipped (integration markers)
+              All gate criteria met
+              No no-fallback violations found
+```
+
+### Manual E2E Test (curl)
+
+Full pipeline tested:
+
+```bash
+# 1. Extract (creates job, runs extraction + MDA generation)
+curl -X POST http://localhost:8080/lims/extract -F "file=@demo_data/AND_ACS_DYE-LAB-2499.pdf"
+# -> job_id returned, status: PENDING_REVIEW
+
+# 2. Status check
+curl http://localhost:8080/lims/status/{job_id}
+# -> status: PENDING_REVIEW, mda_template populated
+
+# 3. Export before approval (blocked)
+curl http://localhost:8080/lims/export/{job_id}
+# -> HTTP 403: "Export requires APPROVED status"
+
+# 4. Approve (HITL gate)
+curl -X POST http://localhost:8080/lims/approve/{job_id}
+# -> status: APPROVED
+
+# 5. Export XLSX
+curl -O http://localhost:8080/lims/export/{job_id}
+# -> Downloads MDA_*.xlsx with 4 sheets
+```
+
+---
+
+## Issues Encountered
+
+### Issue 1: Router test mock config missing L4a fields (FIXED)
+
+**Symptom:** Router tests failed because mock LIMSConfig lacked the new openrouter_api_key, openrouter_model, chromadb_path fields.
+
+**Fix:** Updated test_lims_router.py mock config to include all LIMSConfig fields with test values.
+
+### Issue 2: Job store pollution between tests (FIXED)
+
+**Symptom:** Tests were non-deterministic because the in-memory `_jobs` dict persisted between test functions.
+
+**Fix:** Added `@pytest.fixture(autouse=True)` that clears `_jobs` before and after each test in both test_job_store.py and test_lims_router.py.
+
+### Issue 3: chat_agent.py chat() signature difference from spec
+
+**Symptom:** Spec showed `chat(user_message)` but implementation uses `chat(user_message, config)`.
+
+**Reason:** The config parameter was added intentionally so the ChatSession doesn't store API keys as instance state. This matches the mda_generator.py pattern where config is passed per invocation. The router handles loading config and passing it through.
 
 ---
 

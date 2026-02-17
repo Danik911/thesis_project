@@ -130,7 +130,9 @@ docker ps
 
 ## Next Steps
 
-- Chat-based MDA refinement (map natural language values to LabWare codes)
-- ChromaDB RAG for MDA templates
-- XLSX export (4-sheet format)
-- Frontend result viewer improvements
+- ~~Chat-based MDA refinement (map natural language values to LabWare codes)~~ -- Done: LIMS-003
+- ~~ChromaDB RAG for MDA templates~~ -- Done: LIMS-002
+- ~~XLSX export (4-sheet format)~~ -- Done: LIMS-002
+- ~~Frontend result viewer improvements~~ -- Done: L3 (MDAViewer.tsx)
+- L5: Backend E2E testing
+- L6: Full HITL UI (chat interface, step indicator, approve/export buttons)

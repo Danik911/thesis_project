@@ -8,6 +8,8 @@ interface MDAViewerProps {
     calculations?: Array<Record<string, unknown>>;
   };
   validated: boolean;
+  highlightedCells?: Set<string>;
+  title?: string;
 }
 
 const TABS = [
@@ -42,7 +44,7 @@ const COLUMN_DEFS: Record<string, string[]> = {
   calculations: ['analysis', 'component', 'calculation_type', 'description', 'source_code'],
 };
 
-export default function MDAViewer({ data, validated }: MDAViewerProps) {
+export default function MDAViewer({ data, validated, highlightedCells, title }: MDAViewerProps) {
   const [activeTab, setActiveTab] = useState<string>('analyses');
 
   const rows = (data as Record<string, unknown[]>)[activeTab] ?? [];
@@ -52,7 +54,7 @@ export default function MDAViewer({ data, validated }: MDAViewerProps) {
     <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
       <div className="px-4 py-3 bg-slate-800/80 border-b border-slate-700/50">
         <h3 className="text-sm font-medium text-slate-300">
-          {validated ? 'Validated MDA Template' : 'Raw Extraction Data'}
+          {title ?? (validated ? 'Validated MDA Template' : 'Raw Extraction Data')}
         </h3>
       </div>
 
@@ -97,11 +99,22 @@ export default function MDAViewer({ data, validated }: MDAViewerProps) {
             <tbody className="divide-y divide-slate-700/50">
               {rows.map((row, idx) => (
                 <tr key={idx} className="hover:bg-slate-700/30 transition-colors">
-                  {columns.map((col) => (
-                    <td key={col} className="px-3 py-2 text-slate-300 font-mono text-xs whitespace-nowrap">
-                      {formatCell((row as Record<string, unknown>)[col])}
-                    </td>
-                  ))}
+                  {columns.map((col) => {
+                    const cellKey = `${activeTab}.${idx}.${col}`;
+                    const isHighlighted = highlightedCells?.has(cellKey);
+                    return (
+                      <td
+                        key={col}
+                        className={`px-3 py-2 font-mono text-xs whitespace-nowrap ${
+                          isHighlighted
+                            ? 'text-emerald-300 bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/30'
+                            : 'text-slate-300'
+                        }`}
+                      >
+                        {formatCell((row as Record<string, unknown>)[col])}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

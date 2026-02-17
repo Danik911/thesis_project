@@ -4,7 +4,7 @@ Multi-agent LLM system for automated OQ (Operational Qualification) test generat
 
 **Live:** https://csvgeneration.com
 
-> **AI4LIMS PoC** (branch: `prjoject_p_protatype`): AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
+> **AI4LIMS PoC** (branch: `prjoject_p_protatype`): **Demo-ready** AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates with full HITL (Human-in-the-Loop) workflow. Phase 6 complete: PDF Upload → AI Extraction → MDA Review → Chat Refinement → Human Approval → XLSX Export. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
 
 ---
 
@@ -46,6 +46,10 @@ curl http://localhost:8080/health
 # Access
 # Frontend: http://localhost:3000
 # API: http://localhost:8080
+
+# AI4LIMS PoC (minimal setup)
+docker-compose -f docker-compose.lims.yml up -d
+# Frontend: http://localhost:3000/lims
 ```
 
 ### AWS Deployment
@@ -77,6 +81,42 @@ User → Frontend (Next.js) → API (FastAPI) → Job Queue (SQS)
     GAMP-5 Categorization           Context Provider            OQ Test Generator
          Agent                      (ChromaDB RAG)              (DeepSeek V3)
 ```
+
+---
+
+## AI4LIMS PoC Workflow
+
+**Status**: Phase 6 Complete (Demo-Ready) | **Branch**: `prjoject_p_protatype`
+
+```
+User Uploads PDF → LlamaExtract (LlamaIndex Cloud)
+                           │
+                           ▼
+                    MDA Schema Extraction
+                           │
+                           ▼
+              ┌────────────┴────────────┐
+              ▼                         ▼
+    Interactive MDA Table         Chat Refinement
+    (Cell-level editing)         (GPT-5/Claude Opus 4.6)
+              │                         │
+              └────────────┬────────────┘
+                           ▼
+                   Human Approval
+                           │
+                           ▼
+                 XLSX Export (4 sheets)
+```
+
+**Key Features**:
+- PDF extraction via LlamaExtract API
+- RAG-enhanced MDA generation (ChromaDB: `mda_templates` collection)
+- Real-time chat interface for data refinement
+- Cell-level highlighting for AI-suggested changes
+- HITL approval workflow with state machine
+- Multi-sheet XLSX export (openpyxl)
+
+**Components**: `LIMSStepIndicator`, `ChatInterface`, `MDAViewer` | **Route**: `/lims` | **Docs**: `docs/project_p/`
 
 ---
 
@@ -113,9 +153,13 @@ User → Frontend (Next.js) → API (FastAPI) → Job Queue (SQS)
 ## Commands
 
 ```bash
-# Local development
+# Local development (Thesis system)
 docker-compose -f docker-compose.dev.yml up -d
 docker-compose -f docker-compose.dev.yml logs -f
+
+# AI4LIMS PoC development
+docker-compose -f docker-compose.lims.yml up -d
+docker-compose -f docker-compose.lims.yml logs -f
 
 # Testing
 uv run pytest main/tests/ -v

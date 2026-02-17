@@ -431,11 +431,94 @@ uv run pytest main/tests/lims/test_mda_generator.py -v -m integration
 
 ## Gate Criteria (Pass/Fail)
 
-- [ ] `python scripts/populate_lims_chroma.py` seeds 5+ documents from demo_data/
-- [ ] MDA generation workflow produces valid MDATemplate with all 4 sheets
-- [ ] XLSX export opens in Excel with 4 named sheets
-- [ ] Column headers match LabWare MDA import format
-- [ ] `uv run pytest main/tests/lims/ -v` passes
+- [x] `python scripts/populate_lims_chroma.py` seeds 5+ documents from demo_data/ -- **25 documents seeded (AND=8, FRE=9, TUA=8)**
+- [x] MDA generation workflow produces valid MDATemplate with all 4 sheets -- **Verified: 3 analyses, 10 components, calc_variables, calculations**
+- [x] XLSX export opens in Excel with 4 named sheets -- **Roundtrip test: write + re-read confirmed 4 sheets with correct headers**
+- [x] Column headers match LabWare MDA import format -- **Verified in xlsx_exporter.py _SHEET_DEFINITIONS**
+- [x] `uv run pytest main/tests/lims/ -v` passes -- **84 passed, 2 skipped**
+
+---
+
+## Implementation Results (2026-02-17)
+
+### Actual Files Created
+
+| File | Lines | Notes |
+|------|-------|-------|
+| `main/src/lims/rag_loader.py` | 242 | 3 functions: parse_xlsx_to_text, seed_mda_templates, query_similar_templates. Uses chromadb.PersistentClient. |
+| `main/src/lims/mda_generator.py` | 154 | MDAGenerationWorkflow(Workflow) with single @step. Takes config from StartEvent. |
+| `main/src/lims/xlsx_exporter.py` | 298 | export_mda_to_xlsx() with helper functions. Dark green headers, thin borders, auto-width. |
+| `main/src/lims/prompts/__init__.py` | 1 | Package init |
+| `main/src/lims/prompts/mda_generation_prompt.py` | ~200 | 12-section system prompt with MDA domain knowledge and classification rules |
+| `scripts/populate_lims_chroma.py` | 15 | CLI script, adds project root to sys.path |
+
+### Actual Files Modified
+
+| File | Change |
+|------|--------|
+| `main/src/lims/config.py` | Added 5 fields: openrouter_api_key, openrouter_model, chromadb_path, upload_dir, output_dir. Updated get_lims_config() to load from LIMS_* env vars with defaults. |
+
+### Key Deviations from Spec
+
+1. **mda_generator.py** uses `config` object passed via `ev.get("config")` instead of raw `os.getenv()` calls (cleaner, testable)
+2. **rag_loader.py** query_similar_templates raises `RuntimeError` on empty collection (not generic Exception) for explicit failure
+3. **xlsx_exporter.py** uses `Sequence` from `collections.abc` (not `typing`) per linter
+
+### Verification Results
+
+```
+ChromaDB seeding:  25 documents seeded into mda_templates collection
+XLSX roundtrip:    4 sheets (Analysis, Component, Calc Variable, Calculation) - headers match
+Import checks:     All 4 modules import successfully
+pytest:            84 passed, 2 skipped
+```
+
+### Manual E2E Test (curl)
+
+```bash
+curl -X POST http://localhost:8080/lims/extract -F "file=@demo_data/AND_ACS_DYE-LAB-2499.pdf"
+```
+
+Returned status `PENDING_REVIEW` with:
+- 3 analyses (AND_ACS_DYE, AND_ACS_DYE_CTL, AND_ACS_DYE_META)
+- 10 components with correct result types (N, K, L, T)
+- calc_variables and calculations populated
+- Model used: `google/gemini-3-flash-preview` via OpenRouter
+
+---
+
+## Issues Encountered
+
+### Issue 1: No-Fallback Violation in mda_generator.py (FIXED)
+
+**Symptom:** Tester-agent flagged broad `except Exception` around RAG query that silently caught all failures.
+
+**Root Cause:** Original implementation used `except Exception` which could mask database errors, network errors, etc. — violating CLAUDE.md "Zero Tolerance for Fallback Logic" principle.
+
+**Fix:** Changed to `except RuntimeError` (specific to empty collection) and added `rag_failure` field to StopEvent result for transparency:
+```python
+except RuntimeError as e:
+    rag_failure = f"RAG unavailable: {e}"
+    logger.warning(rag_failure)
+```
+
+**Impact:** RAG query failures other than RuntimeError (e.g., ChromaDB connection errors) now propagate as unhandled exceptions, which is the correct behavior.
+
+### Issue 2: typing.Sequence vs collections.abc.Sequence (FIXED)
+
+**Symptom:** Linter flagged `from typing import Sequence` as deprecated in Python 3.9+.
+
+**Fix:** Changed to `from collections.abc import Sequence` in xlsx_exporter.py.
+
+---
+
+## Environment Variables Added to .env.local
+
+```bash
+LIMS_OPENROUTER_API_KEY=sk-or-v1-...  # Same as thesis OPENROUTER_API_KEY
+LIMS_OPENROUTER_MODEL=google/gemini-3-flash-preview
+LIMS_LLAMAEXTRACT_API_KEY=llx-4IdOkM7WRNYGQgx4suNRlQ0QNsGrpZdHv3Hq8Uw1xN4CZddD
+```
 
 ---
 

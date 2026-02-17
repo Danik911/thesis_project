@@ -419,16 +419,32 @@ cd main/frontend && npm run dev
 
 ## Gate Criteria (Pass/Fail) — PoC DEMO-READY
 
-- [ ] Full visual flow: Upload -> Extract -> See Table -> Chat -> Modify -> Approve -> Download XLSX
-- [ ] Step indicator shows correct current pipeline stage at each step
-- [ ] Chat modifications reflect immediately in MDA table
-- [ ] Approve button triggers status change; export button appears after approval
-- [ ] Export button downloads XLSX with correct 4-sheet structure
-- [ ] Export button disabled/hidden before approval (no bypass path)
-- [ ] Chat suggestion chips help user get started
-- [ ] Error states handled gracefully (network errors, API errors)
-- [ ] Thesis pages (`/generate`, `/history`) still accessible
-- [ ] Complete flow demo in under 5 minutes
+- [x] Full visual flow: Upload -> Extract -> See Table -> Chat -> Modify -> Approve -> Download XLSX
+- [x] Step indicator shows correct current pipeline stage at each step
+- [x] Chat modifications reflect immediately in MDA table
+- [x] Approve button triggers status change; export button appears after approval
+- [x] Export button downloads XLSX with correct 4-sheet structure
+- [x] Export button disabled/hidden before approval (no bypass path)
+- [x] Chat suggestion chips help user get started
+- [x] Error states handled gracefully (network errors, API errors)
+- [x] Thesis pages (`/generate`, `/history`) still accessible
+- [x] Complete flow demo in under 5 minutes
+
+## Completion Notes
+
+**Status:** DONE — User manually verified 2026-02-17
+**Build:** `next build` passes with 0 new errors/warnings, `/lims` = 8.98 kB
+**No issues encountered** during implementation.
+
+### Files Delivered
+
+| Action | File | Lines |
+|--------|------|-------|
+| CREATE | `main/frontend/components/LIMSStepIndicator.tsx` | ~120 |
+| CREATE | `main/frontend/components/ChatInterface.tsx` | ~260 |
+| MODIFY | `main/frontend/components/MDAViewer.tsx` | ~15 lines changed (added `highlightedCells`, `title` props) |
+| REWRITE | `main/frontend/pages/lims.tsx` | 641 (from 297) |
+| CREATE | `docs/project_p/LIMS-004-full-hitl-ui.md` | Documentation |
 
 ---
 

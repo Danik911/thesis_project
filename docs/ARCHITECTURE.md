@@ -224,7 +224,565 @@ def generate_alcoa_audit_trail(job_id: str, workflow_result: dict) -> dict:
 
 ---
 
+## AI4LIMS PoC Architecture
+
+**Branch**: `prjoject_p_protatype` | **Routes**: `/lims/*` | **Collection**: `mda_templates`
+
+AI4LIMS is a proof-of-concept LIMS integration that demonstrates automated Master Data Assurance (MDA) generation from PDF equipment documentation. The system implements a human-in-the-loop (HITL) workflow with mandatory approval before export.
+
+### State Machine
+
+The AI4LIMS workflow follows a strict linear state progression:
+
+```
+IDLE → EXTRACTING → GENERATING → PENDING_REVIEW → APPROVED → EXPORTED
+           ↓             ↓              ↓            ↓
+         FAILED       FAILED         FAILED       FAILED
+```
+
+**State Definitions:**
+
+| State | Description | Next States |
+|-------|-------------|-------------|
+| `IDLE` | Initial state, no job active | `EXTRACTING` |
+| `EXTRACTING` | LlamaExtract processing PDF | `GENERATING`, `FAILED` |
+| `GENERATING` | RAG-enhanced MDA generation | `PENDING_REVIEW`, `FAILED` |
+| `PENDING_REVIEW` | Human review required (HITL gate) | `APPROVED`, `FAILED` |
+| `APPROVED` | Human approved MDA | `EXPORTED` |
+| `EXPORTED` | XLSX file downloaded | `IDLE` |
+| `FAILED` | Error occurred at any stage | `IDLE` |
+
+**No bypass path exists** — human approval via `PENDING_REVIEW` is mandatory before export.
+
+### Backend Components
+
+#### 1. PDF Extraction (LlamaExtract)
+
+```python
+# main/src/lims/extractor.py
+class LlamaExtractClient:
+    def __init__(self):
+        self.client = LlamaExtract(api_key=os.getenv("LLAMA_CLOUD_API_KEY"))
+        self.schema = MDAExtractionSchema()  # 28 fields
+
+    @observe(name="llamaextract_pdf_extraction")
+    async def extract_from_pdf(self, pdf_path: str, job_id: str) -> ExtractedData:
+        extraction_schema = self.schema.to_llamaextract_schema()
+        result = await self.client.aextract(
+            schema=extraction_schema,
+            files=[pdf_path]
+        )
+        # NO FALLBACKS - fail if extraction confidence < 0.7
+        if result.confidence < 0.7:
+            raise ExtractionConfidenceError(
+                f"Low extraction confidence: {result.confidence}"
+            )
+        return ExtractedData(
+            equipment_name=result.equipment_name,
+            manufacturer=result.manufacturer,
+            model_number=result.model_number,
+            # ... 25 more fields
+        )
+```
+
+#### 2. RAG-Enhanced MDA Generation
+
+```python
+# main/src/lims/mda_generator.py
+class MDAGenerator:
+    def __init__(self):
+        self.llm = ChatOpenAI(
+            model="openai/gpt-5",  # via OpenRouter
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            temperature=0.1
+        )
+        self.rag_engine = self._init_chromadb_rag()
+
+    def _init_chromadb_rag(self):
+        chroma_client = chromadb.PersistentClient(path="./chroma_db")
+        collection = chroma_client.get_collection("mda_templates")
+        return ChromaVectorStore(chroma_collection=collection)
+
+    @observe(name="lims_mda_generation")
+    async def generate_mda(
+        self, extracted_data: ExtractedData, job_id: str
+    ) -> MDARecord:
+        # RAG: Retrieve top 5 similar templates
+        query_embedding = self._embed(extracted_data.equipment_name)
+        template_docs = self.rag_engine.query(
+            query_embeddings=[query_embedding],
+            n_results=5
+        )
+
+        # Generate MDA using GPT-5 with RAG context
+        prompt = self._build_mda_prompt(extracted_data, template_docs)
+        response = await self.llm.agenerate(prompt)
+
+        return MDARecord(
+            equipment_id=self._generate_equipment_id(),
+            equipment_name=extracted_data.equipment_name,
+            test_cases=self._parse_test_cases(response.text),
+            # ... 90 total fields across 4 sheets
+        )
+```
+
+#### 3. Chat Agent for HITL Refinement
+
+```python
+# main/src/lims/chat_agent.py
+class LIMSChatAgent:
+    def __init__(self):
+        self.llm = ChatOpenAI(
+            model="anthropic/claude-opus-4.6",  # via OpenRouter
+            temperature=0.2
+        )
+        self.job_store = JobStore()
+
+    @observe(name="lims_chat_interaction")
+    async def handle_chat_message(
+        self, job_id: str, user_message: str
+    ) -> ChatResponse:
+        job = self.job_store.get_job(job_id)
+        if job.state != JobState.PENDING_REVIEW:
+            raise InvalidStateError("Chat only available during review")
+
+        mda_context = job.result.get("mda_record")
+        prompt = self._build_chat_prompt(user_message, mda_context)
+        response = await self.llm.agenerate(prompt)
+
+        # Parse response for edits
+        edits = self._extract_cell_edits(response.text)
+        if edits:
+            # Store suggested edits in job metadata
+            job.metadata["suggested_edits"] = edits
+
+        return ChatResponse(
+            message=response.text,
+            suggested_edits=edits
+        )
+
+    def apply_chat_edit(
+        self, job_id: str, edit_id: str, action: Literal["apply", "reject"]
+    ):
+        job = self.job_store.get_job(job_id)
+        if action == "apply":
+            # Apply edit to MDA record
+            self._update_mda_cell(job, edit_id)
+        # Track edit decision in audit trail
+        job.metadata["edit_history"].append({
+            "edit_id": edit_id,
+            "action": action,
+            "timestamp": datetime.now().isoformat()
+        })
+```
+
+#### 4. XLSX Export (4-Sheet Format)
+
+```python
+# main/src/lims/xlsx_exporter.py
+class XLSXExporter:
+    SHEETS = ["Equipment Info", "Test Cases", "Validation Matrix", "Audit Trail"]
+
+    @observe(name="lims_xlsx_export")
+    def export_mda_to_xlsx(self, mda_record: MDARecord, job_id: str) -> BytesIO:
+        wb = openpyxl.Workbook()
+
+        # Sheet 1: Equipment Info (28 fields)
+        self._write_equipment_info(wb, mda_record)
+
+        # Sheet 2: Test Cases (62 fields)
+        self._write_test_cases(wb, mda_record.test_cases)
+
+        # Sheet 3: Validation Matrix (traceability)
+        self._write_validation_matrix(wb, mda_record)
+
+        # Sheet 4: Audit Trail (ALCOA+ compliance)
+        self._write_audit_trail(wb, job_id)
+
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        return buffer
+```
+
+#### 5. Job State Management
+
+```python
+# main/src/lims/job_store.py
+class JobStore:
+    def __init__(self):
+        self.jobs: Dict[str, LIMSJob] = {}
+
+    def create_job(self, file_path: str) -> str:
+        job_id = str(uuid.uuid4())
+        self.jobs[job_id] = LIMSJob(
+            id=job_id,
+            state=JobState.IDLE,
+            file_path=file_path,
+            created_at=datetime.now()
+        )
+        return job_id
+
+    def transition_state(self, job_id: str, new_state: JobState):
+        job = self.jobs[job_id]
+        # Validate state transition
+        if not self._is_valid_transition(job.state, new_state):
+            raise InvalidStateTransitionError(
+                f"Cannot transition from {job.state} to {new_state}"
+            )
+        job.state = new_state
+        job.updated_at = datetime.now()
+
+    def get_job(self, job_id: str) -> LIMSJob:
+        if job_id not in self.jobs:
+            raise JobNotFoundError(f"Job {job_id} not found")
+        return self.jobs[job_id]
+```
+
+### Frontend Components
+
+#### 1. LIMSStepIndicator
+
+Visual pipeline stage indicator component:
+
+```tsx
+// main/frontend/components/lims/LIMSStepIndicator.tsx
+const STEPS = [
+  { key: "EXTRACTING", label: "Extracting" },
+  { key: "GENERATING", label: "Generating" },
+  { key: "PENDING_REVIEW", label: "Review" },
+  { key: "APPROVED", label: "Approved" },
+  { key: "EXPORTED", label: "Exported" }
+];
+
+export default function LIMSStepIndicator({ currentState }) {
+  const currentIndex = STEPS.findIndex(s => s.key === currentState);
+
+  return (
+    <div className="flex items-center gap-2">
+      {STEPS.map((step, idx) => (
+        <div key={step.key} className="flex items-center">
+          <div className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center",
+            idx <= currentIndex ? "bg-blue-500 text-white" : "bg-gray-300"
+          )}>
+            {idx < currentIndex ? "✓" : idx + 1}
+          </div>
+          {idx < STEPS.length - 1 && (
+            <div className={cn(
+              "w-12 h-1",
+              idx < currentIndex ? "bg-blue-500" : "bg-gray-300"
+            )} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+#### 2. ChatInterface
+
+HITL chat panel for MDA refinement:
+
+```tsx
+// main/frontend/components/lims/ChatInterface.tsx
+export default function ChatInterface({ jobId, onEditAction }) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+
+  const sendMessage = async () => {
+    const response = await fetch("/lims/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ job_id: jobId, message: input })
+    });
+    const data = await response.json();
+
+    setMessages([
+      ...messages,
+      { role: "user", content: input },
+      {
+        role: "assistant",
+        content: data.message,
+        suggested_edits: data.suggested_edits  // Cell-level edit proposals
+      }
+    ]);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Message history */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={msg.role === "user" ? "text-right" : ""}>
+            <div className="inline-block bg-gray-100 p-2 rounded">
+              {msg.content}
+            </div>
+            {/* Edit badges */}
+            {msg.suggested_edits?.map(edit => (
+              <div key={edit.id} className="mt-2 flex gap-2">
+                <span className="text-sm">
+                  Edit: {edit.sheet}.{edit.cell} → {edit.new_value}
+                </span>
+                <button onClick={() => onEditAction(edit.id, "apply")}>
+                  Apply
+                </button>
+                <button onClick={() => onEditAction(edit.id, "reject")}>
+                  Reject
+                </button>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {/* Input */}
+      <div className="border-t p-4">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyPress={e => e.key === "Enter" && sendMessage()}
+          placeholder="Ask for changes to MDA..."
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+#### 3. MDAViewer (Enhanced)
+
+Table viewer with cell-level edit highlighting:
+
+```tsx
+// main/frontend/components/lims/MDAViewer.tsx
+export default function MDAViewer({ mdaRecord, appliedEdits }) {
+  const isCellEdited = (sheet: string, cell: string) => {
+    return appliedEdits.some(
+      e => e.sheet === sheet && e.cell === cell && e.status === "applied"
+    );
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(mdaRecord).map(([key, value]) => (
+            <tr key={key}>
+              <td className="border p-2">{key}</td>
+              <td
+                className={cn(
+                  "border p-2",
+                  isCellEdited("Equipment Info", key) && "bg-green-100"
+                )}
+              >
+                {value}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+```
+
+#### 4. LIMS Page (lims.tsx)
+
+Full state machine orchestration with Framer Motion transitions:
+
+```tsx
+// main/frontend/pages/lims.tsx
+export default function LIMSPage() {
+  const [state, setState] = useState<JobState>("IDLE");
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [mdaRecord, setMdaRecord] = useState(null);
+
+  // Upload and start pipeline
+  const handleUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/lims/upload", {
+      method: "POST",
+      body: formData
+    });
+    const { job_id } = await res.json();
+    setJobId(job_id);
+    setState("EXTRACTING");
+    pollJobStatus(job_id);
+  };
+
+  // Status polling (defensive, 3s interval)
+  const pollJobStatus = async (jobId: string) => {
+    const interval = setInterval(async () => {
+      const res = await fetch(`/lims/status/${jobId}`);
+      const data = await res.json();
+      setState(data.state);
+
+      if (data.state === "PENDING_REVIEW") {
+        setMdaRecord(data.result.mda_record);
+        clearInterval(interval);
+      } else if (data.state === "FAILED") {
+        clearInterval(interval);
+      }
+    }, 3000);
+  };
+
+  // Human approval
+  const handleApprove = async () => {
+    await fetch(`/lims/approve/${jobId}`, { method: "POST" });
+    setState("APPROVED");
+  };
+
+  // Export (triggers browser download)
+  const handleExport = () => {
+    window.open(`/lims/export/${jobId}`, "_blank");
+    setState("EXPORTED");
+  };
+
+  // Chat edit actions
+  const handleEditAction = async (editId: string, action: "apply" | "reject") => {
+    await fetch(`/lims/edit/${jobId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ edit_id: editId, action })
+    });
+    // Refresh MDA record
+    const res = await fetch(`/lims/status/${jobId}`);
+    const data = await res.json();
+    setMdaRecord(data.result.mda_record);
+  };
+
+  return (
+    <div className="p-8">
+      {/* Step indicator */}
+      <LIMSStepIndicator currentState={state} />
+
+      {/* View transitions (Framer Motion) */}
+      <AnimatePresence mode="wait">
+        {state === "IDLE" && (
+          <motion.div key="upload" {...fadeTransition}>
+            <FileUpload onUpload={handleUpload} />
+          </motion.div>
+        )}
+
+        {state === "EXTRACTING" && (
+          <motion.div key="extracting" {...fadeTransition}>
+            <Spinner /> Extracting PDF data...
+          </motion.div>
+        )}
+
+        {state === "GENERATING" && (
+          <motion.div key="generating" {...fadeTransition}>
+            <Spinner /> Generating MDA...
+          </motion.div>
+        )}
+
+        {state === "PENDING_REVIEW" && (
+          <motion.div key="review" {...fadeTransition}>
+            {/* Two-column layout: MDA table (3/5) + Chat (2/5) */}
+            <div className="grid grid-cols-5 gap-4">
+              <div className="col-span-3">
+                <MDAViewer
+                  mdaRecord={mdaRecord}
+                  appliedEdits={/* track from chat */}
+                />
+                <button onClick={handleApprove}>Approve MDA</button>
+              </div>
+              <div className="col-span-2">
+                <ChatInterface
+                  jobId={jobId}
+                  onEditAction={handleEditAction}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {state === "APPROVED" && (
+          <motion.div key="approved" {...fadeTransition}>
+            <button onClick={handleExport}>Download XLSX</button>
+          </motion.div>
+        )}
+
+        {state === "EXPORTED" && (
+          <motion.div key="exported" {...fadeTransition}>
+            Export complete! <button onClick={() => setState("IDLE")}>
+              Upload another
+            </button>
+          </motion.div>
+        )}
+
+        {state === "FAILED" && (
+          <motion.div key="failed" {...fadeTransition}>
+            <ErrorDisplay />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+```
+
+### API Endpoints
+
+| Endpoint | Method | Purpose | State Transition |
+|----------|--------|---------|------------------|
+| `/lims/upload` | POST | Upload PDF, create job | `IDLE` → `EXTRACTING` |
+| `/lims/status/:job_id` | GET | Poll job state | N/A (read-only) |
+| `/lims/chat` | POST | Send chat message | N/A (metadata update) |
+| `/lims/edit/:job_id` | POST | Apply/reject chat edit | N/A (MDA update) |
+| `/lims/approve/:job_id` | POST | Human approval | `PENDING_REVIEW` → `APPROVED` |
+| `/lims/export/:job_id` | GET | Download XLSX | `APPROVED` → `EXPORTED` |
+
+**Authentication**: None (feature-flagged off via `NEXT_PUBLIC_AUTH_ENABLED=false`)
+
+### Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **PDF Extraction** | LlamaExtract (LlamaIndex Cloud) | Structured 28-field data extraction |
+| **Chat LLM** | GPT-5 / Claude Opus 4.6 via OpenRouter | HITL refinement |
+| **RAG Vector Store** | ChromaDB (`mda_templates` collection) | Template retrieval |
+| **Export Format** | openpyxl | 4-sheet XLSX generation |
+| **Frontend Transitions** | Framer Motion | AnimatePresence view transitions |
+| **State Polling** | 3-second interval fetch | Defensive status updates |
+
+### Key Design Decisions
+
+1. **No Auth Required**: Clerk authentication disabled (`NEXT_PUBLIC_AUTH_ENABLED=false`) to simplify PoC testing. Uses plain `fetch`, not `authenticatedFetch`.
+
+2. **Mandatory HITL Gate**: No bypass path exists. Export is blocked until human approval via `PENDING_REVIEW → APPROVED` transition.
+
+3. **Cell-Level Edit Tracking**: Chat edits are tracked with audit trail:
+   ```json
+   {
+     "edit_id": "edit_001",
+     "sheet": "Equipment Info",
+     "cell": "B5",
+     "old_value": "Manual Inspection",
+     "new_value": "Automated Optical Inspection",
+     "action": "applied",
+     "timestamp": "2026-02-17T10:30:00Z"
+   }
+   ```
+
+4. **Defensive Status Polling**: Frontend polls `/lims/status/:job_id` every 3 seconds to avoid stale state issues during long-running extraction/generation.
+
+5. **Browser-Native Export**: Uses `window.open()` to trigger XLSX download via browser's native download mechanism (no custom download handler).
+
+---
+
 ## Docker Stack
+
+### Thesis Project Stack (docker-compose.dev.yml)
 
 5-service Docker Compose architecture (LOCAL DEVELOPMENT):
 
@@ -237,6 +795,17 @@ def generate_alcoa_audit_trail(job_id: str, workflow_result: dict) -> dict:
 | **frontend** | Job submission UI | Next.js 14 |
 
 **Note**: Production AWS deployment uses a stateless architecture. PostgreSQL is for local development only; production stores ChromaDB in S3 (downloaded at container startup).
+
+### AI4LIMS PoC Stack (docker-compose.lims.yml)
+
+Minimal 2-service architecture for LIMS PoC:
+
+| Service | Purpose | Technology |
+|---------|---------|------------|
+| **api** | LIMS API endpoints (`/lims/*`) | FastAPI + uvicorn |
+| **frontend** | LIMS HITL interface (`/lims.tsx`) | Next.js 14 |
+
+**Note**: No PostgreSQL, LocalStack, or worker service. AI4LIMS uses in-memory job store for simplicity. ChromaDB `mda_templates` collection is locally persisted.
 
 ```yaml
 # docker-compose.dev.yml (key services)
@@ -284,18 +853,34 @@ API → PostgreSQL → SQS → Worker → LangFuse traces
 
 ## Technology Stack
 
+### Thesis Project (Main)
+
 | Component | Technology |
 |-----------|------------|
 | LLM (Production) | DeepSeek V3.1 via OpenRouter |
 | LLM (Development) | Gemini 2.5 Flash Lite |
 | Observability | LangFuse Cloud (EU) |
-| Vector Store | ChromaDB |
+| Vector Store | ChromaDB (`pharmaceutical_regulations` collection) |
 | Authentication | Clerk |
 | Backend | FastAPI |
 | Frontend | Next.js 14 (Pages Router) |
 | Queue | AWS SQS (LocalStack for dev) |
 | Database | PostgreSQL + pgvector (local dev only) |
 | IaC | Terraform |
+
+### AI4LIMS PoC (Branch: prjoject_p_protatype)
+
+| Component | Technology |
+|-----------|------------|
+| PDF Extraction | LlamaExtract via LlamaIndex Cloud |
+| Chat LLM | GPT-5 / Claude Opus 4.6 via OpenRouter |
+| RAG Vector Store | ChromaDB (`mda_templates` collection) |
+| Export Format | openpyxl (4-sheet XLSX) |
+| UI Transitions | Framer Motion |
+| Authentication | Clerk (disabled via `NEXT_PUBLIC_AUTH_ENABLED=false`) |
+| Backend | FastAPI (`/lims/*` routes) |
+| Frontend | Next.js 14 (Pages Router, `/lims.tsx`) |
+| Docker Compose | `docker-compose.lims.yml` (minimal: frontend + API only) |
 
 ---
 
@@ -330,6 +915,8 @@ RAG_COLLECTION_NAME=pharmaceutical_regulations
 
 ## Code Structure
 
+### Thesis Project (Main)
+
 ```
 thesis_project/
 ├── main/
@@ -350,4 +937,40 @@ thesis_project/
 ├── frontend/                             # Next.js dashboard
 ├── aws/terraform/                        # AWS infrastructure
 └── docker-compose.dev.yml
+```
+
+### AI4LIMS PoC (Branch: prjoject_p_protatype)
+
+```
+thesis_project/
+├── main/
+│   ├── src/
+│   │   └── lims/
+│   │       ├── mda_schema.py             # 28-field extraction schema
+│   │       ├── extractor.py              # LlamaExtract client
+│   │       ├── mda_generator.py          # RAG-enhanced MDA generation
+│   │       ├── chat_agent.py             # HITL chat for refinement
+│   │       ├── xlsx_exporter.py          # 4-sheet XLSX export
+│   │       └── job_store.py              # In-memory state management
+│   ├── api/
+│   │   └── lims_router.py                # LIMS API endpoints (/lims/*)
+│   └── tests/
+│       └── lims/
+├── frontend/
+│   ├── pages/
+│   │   └── lims.tsx                      # LIMS HITL page
+│   └── components/
+│       └── lims/
+│           ├── LIMSStepIndicator.tsx     # Pipeline stage indicator
+│           ├── ChatInterface.tsx         # Chat panel with edit badges
+│           └── MDAViewer.tsx             # Enhanced table with highlights
+├── docs/
+│   └── project_p/
+│       ├── AI4LIMS_PoC_Plan.md           # PoC overview
+│       ├── LIMS-001-pdf-extraction-setup.md
+│       ├── LIMS-002-mda-generation-rag-xlsx.md
+│       └── LIMS-003-chat-agent-hitl-router.md
+├── chroma_db/
+│   └── mda_templates/                    # RAG collection
+└── docker-compose.lims.yml               # LIMS PoC compose file
 ```
