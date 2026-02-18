@@ -72,6 +72,7 @@ class LIMSJob(BaseModel):
     updated_at: datetime
     pdf_filename: str
     raw_extraction: Optional[dict[str, Any]] = None
+    extraction_trace: Optional[dict[str, Any]] = None
     mda_template: Optional[dict[str, Any]] = None
     chat_history: list[dict[str, Any]] = Field(default_factory=list)
     edit_log: list[dict[str, Any]] = Field(default_factory=list)

@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-032
+4. **Next Issue Number**: ISSUE-033
 
 ---
 
@@ -20,7 +20,6 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Category | Priority |
 |----|-------|--------------|----------|----------|
-| [ISSUE-031](ISSUE-031-lims-llamaextract-semantic-enum-mismatch.md) | LIMS LlamaExtract Semantic Enum Mismatch on Demo PDF | 2026-02-18 | API/Data Quality | High |
 | [ISSUE-026](ISSUE-026-full-suite-collection-systemexit.md) | Full `main/tests` Collection Fails from Archived Test `sys.exit(1)` | 2026-02-17 | Testing | Medium |
 
 ---
@@ -29,9 +28,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
-| [ISSUE-030](ISSUE-030-lims-sdk-pin-conflict-llama-cloud-version.md) | LIMS SDK Pin Conflict (`llama-cloud-services==0.6.93` vs `llama-cloud>=1.4.0`) | 2026-02-18 | 2026-02-18 | Dependencies/API |
-| [ISSUE-029](ISSUE-029-lims-llama-cloud-services-deprecation-migration-risk.md) | LIMS `llama-cloud-services` Deprecation Migration Risk | 2026-02-18 | 2026-02-18 | Dependencies/API |
-| [ISSUE-028](ISSUE-028-lims-extraction-missing-normalization-layer.md) | LIMS Extraction Missing Post-Processing Normalization Layer | 2026-02-18 | 2026-02-18 | API/Data Quality |
+| [ISSUE-032](ISSUE-032-l7-extraction-quality-consolidated.md) | L7 Extraction Quality — Consolidated Resolution Record | 2026-02-18 | 2026-02-18 | API/Data Quality |
 | [ISSUE-027](ISSUE-027-lims-openpyxl-missing-in-dev-container.md) | LIMS Extraction Warning in Docker Dev - `ModuleNotFoundError: No module named 'openpyxl'` | 2026-02-17 | 2026-02-17 | Docker/API |
 | [ISSUE-025](ISSUE-025-lims-local-dev-connectivity-runbook.md) | LIMS Local Dev Connectivity & Runtime Runbook (Consolidated) | 2026-02-17 | 2026-02-17 | Frontend/API |
 | [ISSUE-018](ISSUE-018-local-wsl-storage-path-uses-app-output.md) | Local WSL Startup Fails When Storage Path Uses `/app/output` | 2026-02-17 | 2026-02-17 | API |
@@ -52,6 +49,15 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 | [ISSUE-003](ISSUE-003-langfuse-trace-unknown.md) | LangFuse Trace Unknown | 2025-12-06 | 2025-12-06 | Observability |
 | [ISSUE-002](ISSUE-002-403-auth-error.md) | 403 Auth Error | 2025-12-06 | 2025-12-06 | Auth |
 | [ISSUE-001](ISSUE-001-cloudfront-404-errors.md) | CloudFront 404 Errors | 2025-12-06 | 2025-12-06 | Deployment |
+
+### Consolidated into ISSUE-032
+
+The following detailed L7 records are preserved for audit traceability and merged under the consolidated closure entry above:
+
+- [ISSUE-028](ISSUE-028-lims-extraction-missing-normalization-layer.md)
+- [ISSUE-029](ISSUE-029-lims-llama-cloud-services-deprecation-migration-risk.md)
+- [ISSUE-030](ISSUE-030-lims-sdk-pin-conflict-llama-cloud-version.md)
+- [ISSUE-031](ISSUE-031-lims-llamaextract-semantic-enum-mismatch.md)
 
 ---
 
@@ -85,9 +91,9 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 25
-- **Open:** 2
-- **Resolved:** 23
+- **Total Issues:** 26
+- **Open:** 1
+- **Resolved:** 25
 - **Most Common Category:** Deployment (9 issues)
 
 ---

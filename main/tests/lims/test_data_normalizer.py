@@ -13,6 +13,7 @@ from main.src.lims.data_normalizer import (
     normalize_extraction,
     normalize_symbols,
 )
+from main.src.lims.mda_schema import MDATemplate
 
 
 def test_normalize_symbols_replaces_unicode_variants() -> None:
@@ -101,3 +102,95 @@ def test_normalize_extraction_does_not_mutate_input() -> None:
 def test_normalize_extraction_rejects_non_dict() -> None:
     with pytest.raises(TypeError):
         normalize_extraction(["not", "a", "dict"])  # type: ignore[arg-type]
+
+
+def test_normalize_semantic_aliases_make_payload_valid() -> None:
+    raw = {
+        "analyses": [
+            {
+                "name": "Dye-Binding Identity Test for Absorbable Collagen Sponge (ACS)",
+                "version": 12,
+                "group_name": "Quality Control Analytical",
+                "active": None,
+                "reported_name": None,
+                "common_name": None,
+                "analysis_type": "identity test",
+                "description": "Example",
+            }
+        ],
+        "components": [
+            {
+                "analysis": "Dye-Binding Identity Test for Absorbable Collagen Sponge (ACS)",
+                "component_name": "Package and Label",
+                "order_number": None,
+                "result_type": "visual inspection",
+                "units": None,
+                "auto_calc": False,
+                "uses_instrument": False,
+                "reportable": True,
+                "optional": False,
+                "allow_out_of_range": False,
+            },
+            {
+                "analysis": "Dye-Binding Identity Test for Absorbable Collagen Sponge (ACS)",
+                "component_name": "Absorbance at 540 nm",
+                "order_number": None,
+                "result_type": "measurement",
+                "units": "AU",
+                "auto_calc": False,
+                "uses_instrument": True,
+                "instrument_group": "UV_VIS_SPEC",
+                "reportable": True,
+                "optional": False,
+                "allow_out_of_range": False,
+            },
+            {
+                "analysis": "Dye-Binding Identity Test for Absorbable Collagen Sponge (ACS)",
+                "component_name": "Dye Concentration (mM)",
+                "order_number": None,
+                "result_type": "calculated",
+                "units": "NONE",
+                "auto_calc": False,
+                "uses_instrument": False,
+                "reportable": True,
+                "optional": False,
+                "allow_out_of_range": False,
+            },
+        ],
+        "calc_variables": [
+            {
+                "analysis": "Dye-Binding Identity Test for Absorbable Collagen Sponge (ACS)",
+                "component": "Dye Concentration (mM)",
+                "name": "V_ABS",
+                "reference_type": None,
+                "return_value": "concentration (mM)",
+                "scope": "per reagent preparation",
+                "function": "Calculate using absorbance",
+                "reference_component": "Absorbance at 540 nm",
+            }
+        ],
+        "calculations": [
+            {
+                "analysis": "Dye-Binding Identity Test for Absorbable Collagen Sponge (ACS)",
+                "component": "Dye Concentration (mM)",
+                "description": "Calculate concentration",
+                "source_code": "RESULT = (V_ABS / 37600) × 1000 × 100",
+                "calculation_type": "concentration calculation",
+                "variables_used": ["V_ABS"],
+            }
+        ],
+    }
+
+    normalized = normalize_extraction(raw)
+    validated = MDATemplate.model_validate(normalized)
+
+    assert validated.analyses[0].analysis_type == "ID"
+    assert validated.components[0].result_type == "L"
+    assert validated.components[0].list_key in {"YES_NO_2", "CONFORM"}
+    assert validated.components[1].result_type == "N"
+    assert validated.components[2].result_type == "K"
+    assert validated.calc_variables[0].reference_type == "C"
+    assert validated.calc_variables[0].return_value == "S"
+    assert validated.calc_variables[0].scope == "CR"
+    assert validated.calc_variables[0].function == "ENTRY"
+    assert validated.calculations[0].calculation_type == "FORMULA"

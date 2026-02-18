@@ -340,10 +340,12 @@ All LIMS endpoints are mounted under `/lims/*` via a separate `lims_router.py`. 
 
 | Endpoint | Method | Purpose | Request | Response |
 |----------|--------|---------|---------|----------|
-| `/lims/extract` | POST | Upload PDF, trigger extraction pipeline | `multipart/form-data` (PDF file) | `{ job_id, status }` |
-| `/lims/status/{job_id}` | GET | Poll extraction progress | - | `{ status, progress_pct, current_step, mda_template? }` |
+| `/lims/extract` | POST | Upload PDF, trigger extraction pipeline | `multipart/form-data` (PDF file) | `{ job_id, status, extraction_trace? }` |
+| `/lims/status/{job_id}` | GET | Poll extraction progress | - | `{ status, progress_pct, current_step, extraction_trace?, mda_template? }` |
 | `/lims/chat` | POST | Send chat message, receive MDA modifications | `{ job_id, message }` | `{ response, updated_mda?, citations? }` |
 | `/lims/export/{job_id}` | GET | Download MDA as XLSX | - | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
+
+`extraction_trace` includes monitoring/audit metadata (provider, agent name, run ID/status, duration, file hash prefix).
 
 ---
 
@@ -995,6 +997,23 @@ curl -O http://localhost:8080/lims/export/{job_id}
 
 **Phase:** 7 (Optimization) | **Dependencies:** Phase 6 gate passed
 **PRP Task File:** `PRPs/tasks/L7-extraction-normalization-sdk-migration.md`
+**Status:** ✅ Done (2026-02-18)
+
+**Completion Snapshot:**
+- Added normalization layer in `main/src/lims/data_normalizer.py` and integrated it in `main/src/lims/pdf_extractor.py` before strict Pydantic validation.
+- Added semantic enum/value normalization and cross-sheet reference normalization for extraction outputs.
+- Added extraction API switch in `main/src/lims/config.py` (`llamaextract|llamaparse_v2`) with fail-loud handling for unimplemented runtime path.
+- Resolved SDK compatibility with deterministic pins in `pyproject.toml`: `llama-cloud-services==0.6.93`, `llama-cloud==0.1.46`.
+- Added regression coverage in `main/tests/lims/test_data_normalizer.py` and extractor assertions in `main/tests/lims/test_extraction.py`.
+- Added extraction traceability/monitoring metadata (`agent_name`, `run_id`, `run_status`, `duration_ms`, `pdf_sha256`) persisted on job state and exposed via `/lims/extract` and `/lims/status/{job_id}`.
+
+**Verification Results:**
+- `uv run pytest main/tests/lims/test_data_normalizer.py main/tests/lims/test_extraction.py -v` → `11 passed, 1 skipped`
+- `uv run pytest main/tests/lims/ -v` → `96 passed, 4 skipped`
+
+**Issue Tracking:**
+- Detailed records: `ISSUE-028`, `ISSUE-029`, `ISSUE-030`, `ISSUE-031`
+- Consolidated rollup: `docs/issues/ISSUE-032-l7-extraction-quality-consolidated.md`
 
 **What to Do:**
 - Create `main/src/lims/data_normalizer.py` for post-extraction normalization (symbol cleanup, type coercion, naming conventions, LIMS defaults)
@@ -1316,7 +1335,7 @@ LIMS_OUTPUT_DIR=./output/lims
 ---
 
 **Document Version:** 1.2
-**Last Updated:** 2026-02-16
+**Last Updated:** 2026-02-18
 **Next Review:** After Phase 0 completion
 **Approved By:** [Pending stakeholder review]
 

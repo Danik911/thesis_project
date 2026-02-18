@@ -18,6 +18,8 @@ def _install_fake_llama_modules(monkeypatch: pytest.MonkeyPatch, payload: dict) 
     class FakeRun:
         def __init__(self, data: dict) -> None:
             self.data = data
+            self.id = "run_test_123"
+            self.status = "completed"
 
     class FakeAgent:
         def __init__(self, data: dict) -> None:
@@ -68,6 +70,10 @@ class TestExtractionWrapper:
         assert result["validation_error"] is None
         assert result["mda_template"] is not None
         assert result["normalized_extraction"] is not None
+        assert result["extraction_trace"]["provider"] == "llama_cloud_services"
+        assert result["extraction_trace"]["run_id"] == "run_test_123"
+        assert result["extraction_trace"]["run_status"] == "completed"
+        assert result["extraction_trace"]["pdf_size_bytes"] == len(b"%PDF-1.4 fake")
         assert result["raw_extraction"]["analyses"][0]["name"] == "AND_ACS_DYE"
 
     def test_extract_preserves_raw_on_validation_failure(
@@ -99,6 +105,8 @@ class TestExtractionWrapper:
         assert result["validation_error"] is not None
         assert result["mda_template"] is None
         assert result["normalized_extraction"] is not None
+        assert result["extraction_trace"]["client"] == "LlamaExtract"
+        assert result["extraction_trace"]["agent_name"].startswith("mda-")
         assert result["raw_extraction"]["components"][0]["component_name"] == "BAD_REF"
 
     def test_extract_rejects_unimplemented_extraction_api(self) -> None:

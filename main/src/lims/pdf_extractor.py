@@ -8,8 +8,11 @@ SDK v0.6+ uses a 2-step API: create_agent(schema) -> agent.extract(file).
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import tempfile
+import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -70,6 +73,24 @@ def extract_mda_from_pdf(
     extractor = LlamaExtract(api_key=config.llamaextract_api_key)
     extract_config = _get_extract_config()
 
+    request_started = datetime.now(UTC)
+    started_perf = time.perf_counter()
+    content_sha256 = hashlib.sha256(pdf_content).hexdigest()
+    trace: dict[str, Any] = {
+        "provider": "llama_cloud_services",
+        "client": "LlamaExtract",
+        "extraction_api": config.extraction_api,
+        "extraction_mode": config.extraction_mode,
+        "filename": filename,
+        "pdf_size_bytes": len(pdf_content),
+        "pdf_sha256": content_sha256,
+        "request_started_at": request_started.isoformat(),
+        "agent_name": None,
+        "run_id": None,
+        "run_status": None,
+        "duration_ms": None,
+    }
+
     # SDK needs a file path — write to temp file
     tmp_path: str | None = None
     try:
@@ -93,10 +114,13 @@ def extract_mda_from_pdf(
             data_schema=MDAExtractionSchema,
             config=extract_config,
         )
+        trace["agent_name"] = agent_name
         logger.info(f"Created extraction agent '{agent_name}'")
 
         # Step 2: Extract data from the PDF file
         run = agent.extract(tmp_path)
+        trace["run_id"] = getattr(run, "id", None) or getattr(run, "run_id", None)
+        trace["run_status"] = getattr(run, "status", None)
 
         # Step 3: Parse the result
         raw_data = run.data if hasattr(run, "data") else run
@@ -109,7 +133,21 @@ def extract_mda_from_pdf(
         else:
             raw_dict = {"raw": str(raw_data)}
 
-        logger.info(f"Extraction complete for '{filename}': {list(raw_dict.keys())}")
+        duration_ms = int((time.perf_counter() - started_perf) * 1000)
+        trace["duration_ms"] = duration_ms
+
+        logger.info(
+            "Extraction complete for '%s': keys=%s trace=%s",
+            filename,
+            list(raw_dict.keys()),
+            {
+                "agent_name": trace["agent_name"],
+                "run_id": trace["run_id"],
+                "run_status": trace["run_status"],
+                "duration_ms": trace["duration_ms"],
+                "pdf_sha256_prefix": content_sha256[:12],
+            },
+        )
 
     finally:
         # Clean up temp file (Windows-compatible: delete=False + manual removal)
@@ -147,4 +185,5 @@ def extract_mda_from_pdf(
         "validated": validated,
         "validation_error": validation_error,
         "mda_template": mda_template_dict,
+        "extraction_trace": trace,
     }

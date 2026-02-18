@@ -2,6 +2,7 @@
 
 **Date:** 2026-02-18  
 **Status:** Resolved  
+**Consolidated Into:** `ISSUE-032`  
 **Category:** API/Data Quality  
 **Priority:** High
 

@@ -57,6 +57,107 @@ BOOLEAN_FIELDS = [
 ]
 
 
+ANALYSIS_TYPE_MAP: dict[str, str] = {
+    "id": "ID",
+    "identity": "ID",
+    "identity_test": "ID",
+    "identity test": "ID",
+    "asy": "ASY",
+    "assay": "ASY",
+    "imp": "IMP",
+    "impurity": "IMP",
+    "impurities": "IMP",
+    "phys": "PHYS",
+    "physical": "PHYS",
+    "physical_test": "PHYS",
+    "qc_samples": "QC_SAMPLES",
+    "qc samples": "QC_SAMPLES",
+    "qc": "QC_SAMPLES",
+    "control": "QC_SAMPLES",
+    "metadata": "QC_SAMPLES",
+}
+
+
+RESULT_TYPE_MAP: dict[str, str] = {
+    "n": "N",
+    "numeric": "N",
+    "number": "N",
+    "quantitative": "N",
+    "measurement": "N",
+    "k": "K",
+    "calculated": "K",
+    "calculation": "K",
+    "computed": "K",
+    "derived": "K",
+    "l": "L",
+    "list": "L",
+    "qualitative": "L",
+    "visual": "L",
+    "visual inspection": "L",
+    "color comparison": "L",
+    "pass_fail": "L",
+    "pass fail": "L",
+    "t": "T",
+    "text": "T",
+    "free text": "T",
+    "comment": "T",
+    "d": "D",
+    "date": "D",
+}
+
+
+CALCULATION_TYPE_MAP: dict[str, str] = {
+    "formula": "FORMULA",
+    "concentration calculation": "FORMULA",
+    "volumetric calculation": "FORMULA",
+    "calculation": "FORMULA",
+    "conditional": "CONDITIONAL",
+    "if": "CONDITIONAL",
+    "inst_picker": "INST_PICKER",
+    "instrument picker": "INST_PICKER",
+    "sr_picker": "SR_PICKER",
+    "reagent picker": "SR_PICKER",
+    "gosub": "GOSUB",
+}
+
+
+CALC_VARIABLE_RETURN_VALUE_MAP: dict[str, str] = {
+    "s": "S",
+    "single": "S",
+    "concentration": "S",
+    "volume": "S",
+    "value": "S",
+    "p": "P",
+    "population": "P",
+    "a": "A",
+    "all": "A",
+}
+
+
+CALC_VARIABLE_SCOPE_MAP: dict[str, str] = {
+    "cr": "CR",
+    "currentresult": "CR",
+    "current result": "CR",
+    "per sample": "CR",
+    "per test run": "CR",
+    "per reagent preparation": "CR",
+    "ct": "CT",
+    "currenttest": "CT",
+    "current test": "CT",
+    "b": "B",
+    "batch": "B",
+}
+
+
+CALC_VARIABLE_FUNCTION_MAP: dict[str, str] = {
+    "entry": "ENTRY",
+    "ave": "AVE",
+    "average": "AVE",
+    "mean": "AVE",
+    "rsd": "RSD",
+}
+
+
 def normalize_extraction(raw_dict: dict[str, Any]) -> dict[str, Any]:
     """Apply normalization rules to extraction output.
 
@@ -77,21 +178,34 @@ def normalize_extraction(raw_dict: dict[str, Any]) -> dict[str, Any]:
     data = copy.deepcopy(raw_dict)
     logger.info("Starting extraction normalization (%d top-level keys)", len(data))
 
+    analysis_name_map: dict[str, str] = {}
+    component_name_map: dict[str, str] = {}
+
     if "analyses" in data and isinstance(data["analyses"], list):
         data["analyses"] = normalize_analysis_names(data["analyses"])
+        analysis_name_map = _build_analysis_name_map(data["analyses"])
 
     if "components" in data and isinstance(data["components"], list):
-        data["components"] = [_normalize_component(comp) for comp in data["components"]]
+        data["components"] = [
+            _normalize_component(comp, index=index)
+            for index, comp in enumerate(data["components"], start=1)
+        ]
+        _normalize_analysis_refs(data["components"], analysis_name_map)
+        component_name_map = _build_component_name_map(data["components"])
 
     if "calc_variables" in data and isinstance(data["calc_variables"], list):
         data["calc_variables"] = [
-            _normalize_record(record) for record in data["calc_variables"]
+            _normalize_calc_variable(record) for record in data["calc_variables"]
         ]
+        _normalize_analysis_refs(data["calc_variables"], analysis_name_map)
+        _normalize_component_refs(data["calc_variables"], component_name_map)
 
     if "calculations" in data and isinstance(data["calculations"], list):
         data["calculations"] = [
-            _normalize_record(record) for record in data["calculations"]
+            _normalize_calculation(record) for record in data["calculations"]
         ]
+        _normalize_analysis_refs(data["calculations"], analysis_name_map)
+        _normalize_component_refs(data["calculations"], component_name_map)
 
     data = apply_lims_defaults(data)
 
@@ -132,12 +246,25 @@ def normalize_analysis_names(analyses: list[dict[str, Any]]) -> list[dict[str, A
         normalized_analysis = dict(analysis)
         name = normalized_analysis.get("name")
         if name:
+            original_name = str(name).strip()
             normalized_name = str(name).strip()
             normalized_name = re.sub(r"[\s-]+", "_", normalized_name)
             normalized_name = normalized_name.upper()
             normalized_name = re.sub(r"_+", "_", normalized_name)
             normalized_name = normalized_name.strip("_")
             normalized_analysis["name"] = normalized_name
+            if not normalized_analysis.get("reported_name"):
+                normalized_analysis["reported_name"] = original_name
+            if not normalized_analysis.get("common_name"):
+                normalized_analysis["common_name"] = original_name
+
+        if normalized_analysis.get("active") is None:
+            normalized_analysis["active"] = True
+
+        normalized_analysis["analysis_type"] = _normalize_analysis_type(
+            normalized_analysis.get("analysis_type"),
+            normalized_analysis.get("name"),
+        )
 
         normalized_analyses.append(_normalize_record(normalized_analysis))
     return normalized_analyses
@@ -196,10 +323,11 @@ def apply_lims_defaults(data: dict[str, Any]) -> dict[str, Any]:
 
         result_type = component.get("result_type", "")
 
-        if result_type == "K" and "auto_calc" not in component:
+        if result_type == "K" and not component.get("auto_calc"):
             component["auto_calc"] = True
 
         if result_type == "L" and not component.get("list_key"):
+            component["list_key"] = _infer_list_key(component)
             logger.warning(
                 "L-type component '%s' missing list_key (analysis: %s)",
                 component.get("component_name", "?"),
@@ -212,7 +340,7 @@ def apply_lims_defaults(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def _normalize_component(component: dict[str, Any]) -> dict[str, Any]:
+def _normalize_component(component: dict[str, Any], *, index: int) -> dict[str, Any]:
     """Normalize a single component record."""
     normalized_component = dict(component)
 
@@ -221,6 +349,14 @@ def _normalize_component(component: dict[str, Any]) -> dict[str, Any]:
         normalized_component["component_name"] = normalize_component_name(
             str(component_name)
         )
+
+    if normalized_component.get("order_number") is None:
+        normalized_component["order_number"] = index
+
+    normalized_component["result_type"] = _normalize_result_type(
+        normalized_component.get("result_type"),
+        uses_instrument=bool(normalized_component.get("uses_instrument")),
+    )
 
     normalized_component = _normalize_record(normalized_component)
     normalized_component = coerce_numeric_strings(normalized_component)
@@ -238,3 +374,207 @@ def _normalize_record(record: dict[str, Any]) -> dict[str, Any]:
         else:
             normalized_record[key] = value
     return normalized_record
+
+
+def _build_analysis_name_map(analyses: list[dict[str, Any]]) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for analysis in analyses:
+        if not isinstance(analysis, dict):
+            continue
+        normalized_name = analysis.get("name")
+        if not normalized_name:
+            continue
+        normalized_name_str = str(normalized_name)
+        mapping[_normalize_lookup_key(normalized_name_str)] = normalized_name_str
+        for alias_field in ("reported_name", "common_name"):
+            alias = analysis.get(alias_field)
+            if alias:
+                mapping[_normalize_lookup_key(str(alias))] = normalized_name_str
+    return mapping
+
+
+def _normalize_analysis_refs(
+    records: list[dict[str, Any]],
+    analysis_name_map: dict[str, str],
+) -> None:
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        analysis_name = record.get("analysis")
+        if not analysis_name:
+            continue
+        mapped_name = analysis_name_map.get(_normalize_lookup_key(str(analysis_name)))
+        if mapped_name:
+            record["analysis"] = mapped_name
+        reference_analysis = record.get("reference_analysis")
+        if reference_analysis:
+            mapped_reference = analysis_name_map.get(
+                _normalize_lookup_key(str(reference_analysis))
+            )
+            if mapped_reference:
+                record["reference_analysis"] = mapped_reference
+
+
+def _build_component_name_map(components: list[dict[str, Any]]) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for component in components:
+        if not isinstance(component, dict):
+            continue
+        component_name = component.get("component_name")
+        if not component_name:
+            continue
+        canonical_name = str(component_name)
+        mapping[_normalize_lookup_key(canonical_name)] = canonical_name
+    return mapping
+
+
+def _normalize_component_refs(
+    records: list[dict[str, Any]],
+    component_name_map: dict[str, str],
+) -> None:
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        component_name = record.get("component")
+        if component_name:
+            mapped_component = component_name_map.get(
+                _normalize_lookup_key(str(component_name))
+            )
+            if mapped_component:
+                record["component"] = mapped_component
+        reference_component = record.get("reference_component")
+        if reference_component:
+            mapped_reference = component_name_map.get(
+                _normalize_lookup_key(str(reference_component))
+            )
+            if mapped_reference:
+                record["reference_component"] = mapped_reference
+
+
+def _normalize_lookup_key(value: str) -> str:
+    key = normalize_component_name(value)
+    return key
+
+
+def _normalize_analysis_type(value: Any, analysis_name: Any) -> Any:
+    if value is None:
+        return value
+    normalized_key = str(value).strip().lower()
+    mapped = ANALYSIS_TYPE_MAP.get(normalized_key)
+    if mapped:
+        return mapped
+    normalized_comp_key = normalize_component_name(str(value)).lower()
+    mapped = ANALYSIS_TYPE_MAP.get(normalized_comp_key)
+    if mapped:
+        return mapped
+    if isinstance(analysis_name, str) and analysis_name.endswith(("_CTL", "_META")):
+        return "QC_SAMPLES"
+    return str(value).upper()
+
+
+def _normalize_result_type(value: Any, *, uses_instrument: bool) -> Any:
+    if value is None:
+        return value
+    normalized_key = str(value).strip().lower()
+    mapped = RESULT_TYPE_MAP.get(normalized_key)
+    if mapped:
+        return mapped
+    normalized_comp_key = normalize_component_name(str(value)).lower()
+    mapped = RESULT_TYPE_MAP.get(normalized_comp_key)
+    if mapped:
+        return mapped
+    if uses_instrument:
+        return "N"
+    return str(value).upper()
+
+
+def _infer_list_key(component: dict[str, Any]) -> str:
+    component_name = str(component.get("component_name", "")).lower()
+    if any(keyword in component_name for keyword in ("result", "pass", "fail")):
+        return "PASS_FAIL"
+    if any(keyword in component_name for keyword in ("inspect", "appearance", "visual")):
+        return "CONFORM"
+    return "YES_NO_2"
+
+
+def _normalize_calc_variable(record: dict[str, Any]) -> dict[str, Any]:
+    normalized_record = _normalize_record(dict(record))
+    normalized_record = coerce_numeric_strings(normalized_record)
+    normalized_record = coerce_boolean_strings(normalized_record)
+
+    reference_type = normalized_record.get("reference_type")
+    if reference_type is None or reference_type == "":
+        normalized_record["reference_type"] = "C"
+    else:
+        normalized_record["reference_type"] = str(reference_type).strip().upper()
+
+    return_value = normalized_record.get("return_value")
+    normalized_record["return_value"] = _map_enum_alias(
+        value=return_value,
+        mapping=CALC_VARIABLE_RETURN_VALUE_MAP,
+        default="S",
+    )
+
+    scope = normalized_record.get("scope")
+    normalized_record["scope"] = _map_enum_alias(
+        value=scope,
+        mapping=CALC_VARIABLE_SCOPE_MAP,
+        default="CR",
+    )
+
+    function = normalized_record.get("function")
+    normalized_record["function"] = _map_enum_alias(
+        value=function,
+        mapping=CALC_VARIABLE_FUNCTION_MAP,
+        default="ENTRY",
+    )
+
+    return normalized_record
+
+
+def _normalize_calculation(record: dict[str, Any]) -> dict[str, Any]:
+    normalized_record = _normalize_record(dict(record))
+    normalized_record = coerce_numeric_strings(normalized_record)
+    normalized_record = coerce_boolean_strings(normalized_record)
+
+    calculation_type = normalized_record.get("calculation_type")
+    source_code = str(normalized_record.get("source_code", "")).upper()
+    if "CALC_INST_PICKER" in source_code:
+        normalized_record["calculation_type"] = "INST_PICKER"
+    elif "CALC_SR_PICKER" in source_code:
+        normalized_record["calculation_type"] = "SR_PICKER"
+    elif "GOSUB" in source_code:
+        normalized_record["calculation_type"] = "GOSUB"
+    elif "IF" in source_code and "THEN" in source_code:
+        normalized_record["calculation_type"] = "CONDITIONAL"
+    else:
+        normalized_record["calculation_type"] = _map_enum_alias(
+            value=calculation_type,
+            mapping=CALCULATION_TYPE_MAP,
+            default="FORMULA",
+        )
+
+    return normalized_record
+
+
+def _map_enum_alias(
+    *,
+    value: Any,
+    mapping: dict[str, str],
+    default: str,
+) -> str:
+    if value is None:
+        return default
+    raw = str(value).strip()
+    if not raw:
+        return default
+    by_text = mapping.get(raw.lower())
+    if by_text:
+        return by_text
+    by_key = mapping.get(normalize_component_name(raw).lower())
+    if by_key:
+        return by_key
+    upper = raw.upper()
+    if upper in set(mapping.values()):
+        return upper
+    return default

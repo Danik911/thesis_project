@@ -142,6 +142,7 @@ async def extract_pdf(file: UploadFile) -> dict:
     # Store extraction result on the job
     job = get_job(job_id)
     job.raw_extraction = result.get("raw_extraction")
+    job.extraction_trace = result.get("extraction_trace")
 
     # Optionally trigger MDA generation if OpenRouter key is available
     mda_result: dict[str, Any] | None = None
@@ -224,6 +225,7 @@ async def get_status(job_id: str) -> dict:
         "created_at": job.created_at.isoformat(),
         "updated_at": job.updated_at.isoformat(),
         "pdf_filename": job.pdf_filename,
+        "extraction_trace": job.extraction_trace,
         "mda_template": job.mda_template,
         "error": job.error,
         "chat_history_length": len(job.chat_history),

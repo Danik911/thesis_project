@@ -1,7 +1,8 @@
 # ISSUE-031: LIMS LlamaExtract Semantic Enum Mismatch on Demo PDF
 
 **Date:** 2026-02-18  
-**Status:** Open  
+**Status:** Resolved  
+**Consolidated Into:** `ISSUE-032`  
 **Category:** API/Data Quality  
 **Priority:** High
 
@@ -31,11 +32,40 @@ Representative failures:
 
 ---
 
-## Affected Files
+## Root Cause
 
-- `main/src/lims/pdf_extractor.py`
-- `main/src/lims/data_normalizer.py`
-- `main/src/lims/extraction_schema.py`
+LlamaExtract returned human-language semantic labels and nullable fields where strict `MDATemplate` expects controlled enums and required typed fields. Existing normalization handled symbols/type coercion but not semantic alias mapping or cross-sheet reference alignment after name normalization.
+
+---
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `main/src/lims/data_normalizer.py` | Added semantic enum mapping for analysis/result/calc types, required-field coercion, and cross-sheet analysis/component reference normalization. |
+| `main/tests/lims/test_data_normalizer.py` | Added regression test for semantic alias payload validating against `MDATemplate`. |
+
+---
+
+## Resolution
+
+Implemented deterministic semantic normalization layer to convert extraction aliases into strict LabWare enum values and normalize cross-sheet identifiers before validation.
+
+Fixed classes of failures:
+
+- `analysis_type` aliases (e.g., `identity test` -> `ID`)
+- `result_type` aliases (e.g., `visual inspection`, `color comparison` -> `L`)
+- `calculation_type` aliases (e.g., `concentration calculation` -> `FORMULA`)
+- `calc_variables` enum defaults/mapping (`reference_type`, `return_value`, `scope`, `function`)
+- Missing required fields (`active`, `reported_name`, `common_name`, `order_number`) via deterministic normalization rules
+- Cross-sheet `analysis` / `component` reference mismatches after name normalization
+
+---
+
+## Verification
+
+- `uv run pytest main/tests/lims/test_data_normalizer.py main/tests/lims/test_extraction.py -v`
+- `uv run pytest main/tests/lims/ -v`
 
 ---
 
