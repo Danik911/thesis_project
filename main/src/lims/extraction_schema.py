@@ -1,8 +1,12 @@
-"""Simplified extraction schema for LlamaExtract.
+"""Simplified extraction schema for LIMS extraction APIs.
 
 LlamaExtract Cloud API requires simple JSON-compatible schemas — no enums,
 no custom validators, no model validators. This module provides a flat
 extraction schema that maps to the full MDATemplate after extraction.
+
+For L7 migration work, this schema remains the canonical extraction contract for
+the current `llamaextract` runtime path and can be reused by future
+`llamaparse_v2` structuring orchestration.
 
 The fields mirror MDATemplate but use plain str/int/float/bool/Optional types.
 """

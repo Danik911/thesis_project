@@ -987,6 +987,66 @@ curl -O http://localhost:8080/lims/export/{job_id}
 
 ---
 
+### Phase 7: Optimization — Data Quality, RAG & Evaluation (3 tasks)
+
+---
+
+### Task L7 — Extraction Data Quality: Post-Processing, Normalization & SDK Migration
+
+**Phase:** 7 (Optimization) | **Dependencies:** Phase 6 gate passed
+**PRP Task File:** `PRPs/tasks/L7-extraction-normalization-sdk-migration.md`
+
+**What to Do:**
+- Create `main/src/lims/data_normalizer.py` for post-extraction normalization (symbol cleanup, type coercion, naming conventions, LIMS defaults)
+- Integrate normalization into `pdf_extractor.py` between raw extraction and Pydantic validation
+- Research and document SDK migration path: `llama-cloud-services` (deprecated EOL May 2026) vs `llama-cloud` v1.4.0 vs LlamaParse v2
+- Add `extraction_api` config field for A/B testing extraction approaches
+
+**Testing Strategy:**
+- Unit tests for all normalization functions
+- Integration test: extract + normalize + validate on 3+ demo PDFs
+- Existing LIMS tests still pass
+
+---
+
+### Task L8 — RAG Optimization: Hybrid Search, Smart Chunking & Reranking
+
+**Phase:** 7 (Optimization) | **Dependencies:** Phase 6 gate passed
+**PRP Task File:** `PRPs/tasks/L8-rag-hybrid-chunking-reranking.md`
+
+**What to Do:**
+- Create `main/src/lims/chunking.py` for sheet-level markdown table chunks + workbook summary (~5 chunks per XLSX vs 1)
+- Replace whole-workbook chunking in `rag_loader.py` with hybrid chunking
+- Add BM25 keyword scoring + Reciprocal Rank Fusion for hybrid semantic+keyword search
+- Add Cohere Rerank v3 post-retrieval reranking (`llama-index-postprocessor-cohere-rerank`)
+- Update `scripts/populate_lims_chroma.py` for new chunking (~125 chunks total)
+
+**Testing Strategy:**
+- ChromaDB re-seeded with hybrid chunks
+- Hybrid search returns more relevant results than embedding-only
+- Cohere reranking improves precision
+- Full pipeline test: extract -> RAG -> generate with improved context
+
+---
+
+### Task L9 — Ground Truth Evaluation: Accuracy Scoring
+
+**Phase:** 7 (Optimization) | **Dependencies:** L7, L8
+**PRP Task File:** `PRPs/tasks/L9-ground-truth-evaluation.md`
+
+**What to Do:**
+- Create `main/src/lims/evaluator.py` to parse 16 ground truth XLSX files and compare against AI-generated MDA templates
+- Create `scripts/run_evaluation.py` for batch evaluation with score table output
+- Per-sheet accuracy metrics: Analysis (10%), Component (40%), CalcVariable (25%), Calculation (25%)
+- Establish baseline accuracy scores before/after L7+L8 optimizations
+
+**Testing Strategy:**
+- Ground truth parser reads all 16 LabWare XLSX files
+- Batch evaluation completes for 5+ PDF+XLSX pairs
+- Baseline vs optimized scores documented for thesis
+
+---
+
 ## 11. Task Dependency Graph
 
 ```
@@ -1024,6 +1084,14 @@ Phase 6: Full HITL UI
   L6.1 + L3.1 ──> L6.3 (real-time MDA updates)
                          │
   ═══════════════════ GATE 6: DEMO-READY ═══════════════════
+                         │
+Phase 7: Optimization (Quality & RAG)
+  L7 (extraction normalization + SDK) ──────────────┐
+  L8 (RAG: chunking + hybrid + reranking) ──────────┤
+                                                     │
+                                           L9 (ground truth evaluation) <── L7, L8
+                                                     │
+  ═══════════════════ GATE 7: QUALITY MEASURED ═══════════════════
 ```
 
 ---

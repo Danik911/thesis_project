@@ -74,8 +74,8 @@ dependencies = [
     "aioboto3>=15.5.0",
     "json-repair>=0.54.2",
     # AI4LIMS PoC - LlamaExtract PDF extraction
-    "llama-cloud-services>=0.1.0",
-    "llama-cloud>=0.1.0",
+    "llama-cloud-services==0.6.93",
+    "llama-cloud==0.1.46",
     # AI4LIMS PoC - XLSX export and PDF preview
     "openpyxl>=3.1.0",
     "PyMuPDF>=1.24.0",

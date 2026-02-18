@@ -67,6 +67,7 @@ class TestExtractionWrapper:
         assert result["validated"] is True
         assert result["validation_error"] is None
         assert result["mda_template"] is not None
+        assert result["normalized_extraction"] is not None
         assert result["raw_extraction"]["analyses"][0]["name"] == "AND_ACS_DYE"
 
     def test_extract_preserves_raw_on_validation_failure(
@@ -97,7 +98,20 @@ class TestExtractionWrapper:
         assert result["validated"] is False
         assert result["validation_error"] is not None
         assert result["mda_template"] is None
+        assert result["normalized_extraction"] is not None
         assert result["raw_extraction"]["components"][0]["component_name"] == "BAD_REF"
+
+    def test_extract_rejects_unimplemented_extraction_api(self) -> None:
+        with pytest.raises(NotImplementedError):
+            extract_mda_from_pdf(
+                pdf_content=b"%PDF-1.4 fake",
+                filename="AND_ACS_DYE-LAB-2499.pdf",
+                config=LIMSConfig(
+                    llamaextract_api_key="test-key",
+                    extraction_mode="balanced",
+                    extraction_api="llamaparse_v2",
+                ),
+            )
 
 
 @pytest.mark.integration

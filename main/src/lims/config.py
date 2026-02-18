@@ -15,6 +15,7 @@ class LIMSConfig(BaseModel):
 
     llamaextract_api_key: str
     extraction_mode: str = "balanced"
+    extraction_api: str = "llamaextract"
 
     # MDA generation via OpenRouter (L4a)
     openrouter_api_key: str = ""
@@ -43,6 +44,17 @@ class LIMSConfig(BaseModel):
             )
         return v.lower()
 
+    @field_validator("extraction_api")
+    @classmethod
+    def validate_extraction_api(cls, v: str) -> str:
+        allowed = {"llamaextract", "llamaparse_v2"}
+        normalized = v.strip().lower()
+        if normalized not in allowed:
+            raise ValueError(
+                f"LIMS_EXTRACTION_API must be one of {allowed}, got '{v}'"
+            )
+        return normalized
+
 
 def get_lims_config() -> LIMSConfig:
     """Load LIMS config from LIMS_* environment variables.
@@ -60,6 +72,7 @@ def get_lims_config() -> LIMSConfig:
     return LIMSConfig(
         llamaextract_api_key=api_key,
         extraction_mode=os.getenv("LIMS_EXTRACTION_MODE", "balanced"),
+        extraction_api=os.getenv("LIMS_EXTRACTION_API", "llamaextract"),
         openrouter_api_key=os.getenv("LIMS_OPENROUTER_API_KEY", ""),
         openrouter_model=os.getenv("LIMS_OPENROUTER_MODEL", "openai/gpt-5"),
         chromadb_path=os.getenv("LIMS_CHROMADB_PATH", "./chroma_db_lims"),

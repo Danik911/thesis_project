@@ -15,6 +15,7 @@ from typing import Any
 from uuid import uuid4
 
 from .config import LIMSConfig
+from .data_normalizer import normalize_extraction
 from .extraction_schema import MDAExtractionSchema
 from .mda_schema import MDATemplate
 
@@ -57,6 +58,13 @@ def extract_mda_from_pdf(
     Raises:
         Exception: If LlamaExtract API call fails (no fallback).
     """
+    if config.extraction_api != "llamaextract":
+        raise NotImplementedError(
+            "LIMS extraction API 'llamaparse_v2' is configured but not implemented in "
+            "runtime path yet. Set LIMS_EXTRACTION_API=llamaextract or implement the "
+            "llamaparse_v2 client path first."
+        )
+
     from llama_cloud_services import LlamaExtract
 
     extractor = LlamaExtract(api_key=config.llamaextract_api_key)
@@ -111,13 +119,16 @@ def extract_mda_from_pdf(
             except OSError as e:
                 logger.warning(f"Failed to clean up temp file {tmp_path}: {e}")
 
+    # Normalize extraction output before strict Pydantic validation
+    normalized_dict = normalize_extraction(raw_dict)
+
     # Attempt Pydantic validation against MDATemplate
     validated = False
     validation_error: str | None = None
     mda_template_dict: dict[str, Any] | None = None
 
     try:
-        mda = MDATemplate.model_validate(raw_dict)
+        mda = MDATemplate.model_validate(normalized_dict)
         mda_template_dict = mda.model_dump()
         validated = True
         logger.info(
@@ -132,6 +143,7 @@ def extract_mda_from_pdf(
 
     return {
         "raw_extraction": raw_dict,
+        "normalized_extraction": normalized_dict,
         "validated": validated,
         "validation_error": validation_error,
         "mda_template": mda_template_dict,
