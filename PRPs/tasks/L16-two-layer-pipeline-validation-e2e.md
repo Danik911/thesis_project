@@ -3,7 +3,20 @@
 **Phase:** 8g (Two-Layer Pipeline — Validation) | **Dependencies:** L14, L15
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 2 days
-**Status:** NOT STARTED
+**Status:** NOT STARTED (DATA READY, CODE DEPENDENCIES PENDING — handoff updated 2026-02-19)
+
+## Handoff Update (2026-02-19)
+
+- **Validation dataset readiness:** Ready. Canonical corpus and prepared artifacts are available for tests.
+- **Use these sources only:**
+    - `output/sop_parsed/manifest.json`
+    - `output/prepared_l10l15/manifest.json`
+    - `output/prepared_l10l15/per_document/*`
+- **Quality hotspots to include in tests:**
+    - `glims-code-stnd-sop-00597` has high low-confidence OCR lines.
+    - Training slides doc uses `document_id: UNKNOWN` and slide-mode sectioning.
+- **Known caveat:** Legacy `output/prepared/` includes duplicate ingestion and should not be used as test baseline.
+- **Next agent action:** After L14/L15 land, build deterministic regression tests against the canonical prepared dataset.
 
 ---
 

@@ -3,7 +3,18 @@
 **Phase:** 8d (Two-Layer Pipeline — Standards RAG) | **Dependencies:** L10 (Foundation Models)
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 2 days
-**Status:** NOT STARTED
+**Status:** NOT STARTED (READY AFTER L10 — handoff updated 2026-02-19)
+
+## Handoff Update (2026-02-19)
+
+- **Implementation readiness:** Source standards/test-method PDFs are parsed and organized.
+- **Canonical source artifacts:** `output/sop_parsed/manifest.json` and `output/prepared_l10l15/per_document/*/sections.json`.
+- **Current output state:** `output/prepared_l10l15/L13_rag/` exists but is empty (chunks not built yet).
+- **Collection mapping agreed in prep notes:**
+    - `lims_standards`: SOP/governance standards docs
+    - `calculation_patterns`: training material + calculation-heavy docs
+- **Known data caveat:** Training slides document uses `document_id: UNKNOWN`; rely on slug/path metadata rather than ID-only matching.
+- **Next agent action:** Implement loader/chunking, generate chunk artifacts into `output/prepared_l10l15/L13_rag/`, then seed ChromaDB collections.
 
 ---
 

@@ -3,7 +3,16 @@
 **Phase:** 8c (Two-Layer Pipeline — Classification) | **Dependencies:** L10 (Foundation Models)
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 2 days
-**Status:** NOT STARTED
+**Status:** NOT STARTED (READY AFTER L10 — handoff updated 2026-02-19)
+
+## Handoff Update (2026-02-19)
+
+- **Implementation readiness:** Ready after L10 types/models exist.
+- **Prepared input corpus:** `output/prepared_l10l15/per_document/` (4 docs, canonical).
+- **Current output state:** `output/prepared_l10l15/L12_classifier/` exists but is empty (not generated yet).
+- **High-value quality note:** `glims-code-stnd-sop-00597` has elevated low-confidence OCR lines (see its `quality_report.json`), so classifier rules should combine filename + multiple content signals.
+- **Known data caveat:** Legacy `output/prepared/manifest.json` has duplicate ingestion; do not use for classifier evaluation.
+- **Next agent action:** Implement classifier and emit deterministic evaluation artifacts to `output/prepared_l10l15/L12_classifier/`.
 
 ---
 

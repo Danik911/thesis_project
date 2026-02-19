@@ -55,6 +55,7 @@ class ParseConfig:
     output_root: Path
     dpi: int
     lang: str
+    force_reextract: bool
 
 
 def _run_extractor(
@@ -183,16 +184,18 @@ def parse_all(config: ParseConfig) -> None:
         doc_slug = _safe_slug(pdf_path.stem)
         doc_output_dir = documents_dir / doc_slug
         doc_output_dir.mkdir(parents=True, exist_ok=True)
+        summary_path = doc_output_dir / "summary.json"
 
-        _run_extractor(
-            extractor_script=extractor_script,
-            pdf_path=pdf_path,
-            output_dir=doc_output_dir,
-            dpi=config.dpi,
-            lang=config.lang,
-        )
+        if config.force_reextract or not summary_path.exists():
+            _run_extractor(
+                extractor_script=extractor_script,
+                pdf_path=pdf_path,
+                output_dir=doc_output_dir,
+                dpi=config.dpi,
+                lang=config.lang,
+            )
 
-        summary = _read_summary(doc_output_dir / "summary.json")
+        summary = _read_summary(summary_path)
         metadata = _build_doc_metadata(
             pdf_path=pdf_path,
             source_dir=config.source_dir,
@@ -251,6 +254,11 @@ def parse_args() -> ParseConfig:
     )
     parser.add_argument("--dpi", type=int, default=220, help="PDF rasterization DPI")
     parser.add_argument("--lang", default="en", help="OCR language")
+    parser.add_argument(
+        "--force-reextract",
+        action="store_true",
+        help="Re-run OCR extraction even when summary.json already exists",
+    )
     args = parser.parse_args()
 
     if args.dpi < 100 or args.dpi > 600:
@@ -261,6 +269,7 @@ def parse_args() -> ParseConfig:
         output_root=Path(args.output_root).expanduser().resolve(),
         dpi=args.dpi,
         lang=args.lang,
+        force_reextract=bool(args.force_reextract),
     )
 
 

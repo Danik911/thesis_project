@@ -3,7 +3,16 @@
 **Phase:** 8b (Two-Layer Pipeline — Templates) | **Dependencies:** L10 (Foundation Models)
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 3 days
-**Status:** NOT STARTED
+**Status:** NOT STARTED (READY AFTER L10 — handoff updated 2026-02-19)
+
+## Handoff Update (2026-02-19)
+
+- **Implementation readiness:** Data is prepared and usable after L10 foundation models are merged.
+- **Use this corpus only:** `output/prepared_l10l15/per_document/` (4 documents).
+- **Useful inputs for template calibration:** `cleaned_text.md`, `sections.json`, `tables_cleaned.json` in each per-document folder.
+- **Ground truth baseline remains:** `demo_data/*.xlsx` as stated in task objective.
+- **Known data caveat:** Ignore `output/prepared/` (legacy duplicate run); use `output/prepared_l10l15/`.
+- **Next agent action:** Build template skeletons first from XLSX truth, then sanity-check against extracted SOP conventions in prepared corpus.
 
 ---
 

@@ -3,7 +3,15 @@
 **Phase:** 8a (Two-Layer Pipeline — Foundation) | **Dependencies:** L7 (done)
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 2 days
-**Status:** NOT STARTED
+**Status:** NOT STARTED (READY TO START — handoff updated 2026-02-19)
+
+## Handoff Update (2026-02-19)
+
+- **Implementation readiness:** Ready now. L10 is code-only and does not require additional data prep.
+- **Canonical prepared corpus for downstream tasks:** `output/prepared_l10l15/`.
+- **Reference manifests:** `output/sop_parsed/manifest.json`, `output/prepared_l10l15/manifest.json`.
+- **Known data caveat (downstream):** `output/prepared/manifest.json` is legacy and includes duplicate ingestion; do **not** use it for L10-L16 execution.
+- **Next agent action:** Implement files in this task exactly as specified, then run LIMS unit tests before moving to L11.
 
 ---
 

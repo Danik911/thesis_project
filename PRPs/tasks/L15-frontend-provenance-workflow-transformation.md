@@ -3,7 +3,15 @@
 **Phase:** 8f (Two-Layer Pipeline — Frontend) | **Dependencies:** L14 (Pipeline Core)
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 4 days
-**Status:** NOT STARTED
+**Status:** NOT STARTED (WAITING ON L14 API CONTRACTS — handoff updated 2026-02-19)
+
+## Handoff Update (2026-02-19)
+
+- **Implementation readiness:** Frontend can start component scaffolding, but full workflow integration depends on L14 endpoints and payloads.
+- **Reference data for UI mocks:** `output/prepared_l10l15/per_document/` plus quality/provenance expectations from task specs.
+- **Backend contract prerequisite:** `/lims/classify`, template preview payload, merge conflict payload, and stage detail payload from L14.
+- **Known caveat:** Do not wire UI against legacy prepared artifacts from `output/prepared/`; use canonical `output/prepared_l10l15/`.
+- **Next agent action:** Define strict TypeScript interfaces from L14 response models before implementing workflow rewrites.
 
 ---
 

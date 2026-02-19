@@ -3,7 +3,17 @@
 **Phase:** 8e (Two-Layer Pipeline — Core) | **Dependencies:** L10, L11, L12, L13
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 3 days
-**Status:** NOT STARTED
+**Status:** NOT STARTED (WAITING ON L10-L13 CODE — handoff updated 2026-02-19)
+
+## Handoff Update (2026-02-19)
+
+- **Implementation readiness:** Data prerequisites are ready; code dependencies (L10-L13 modules) are not implemented yet.
+- **Canonical test data for integration:** `output/prepared_l10l15/manifest.json` and `output/prepared_l10l15/per_document/`.
+- **Current upstream state:**
+    - L12 artifacts directory exists but empty: `output/prepared_l10l15/L12_classifier/`
+    - L13 artifacts directory exists but empty: `output/prepared_l10l15/L13_rag/`
+- **Known caveat for orchestration:** Keep all references on canonical prepared set (`prepared_l10l15`) to avoid duplicate-ingestion regressions from legacy `output/prepared/`.
+- **Next agent action:** Start L14 only after L10-L13 classes and artifacts are in place and validated.
 
 ---
 
