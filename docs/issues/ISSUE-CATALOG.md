@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-02-18
+**Last Updated:** 2026-02-19
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-033
+4. **Next Issue Number**: ISSUE-035
 
 ---
 
@@ -20,6 +20,8 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Category | Priority |
 |----|-------|--------------|----------|----------|
+| [ISSUE-034](ISSUE-034-l13-standards-seeding-latency.md) | L13 Standards RAG Seeding Latency on First Ingestion | 2026-02-19 | Database | Medium |
+| [ISSUE-033](ISSUE-033-windows-uv-invalid-project-venv.md) | Windows `uv run` Fails Due to Invalid Project `.venv` | 2026-02-19 | Testing | Medium |
 | [ISSUE-026](ISSUE-026-full-suite-collection-systemexit.md) | Full `main/tests` Collection Fails from Archived Test `sys.exit(1)` | 2026-02-17 | Testing | Medium |
 
 ---
@@ -91,8 +93,8 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 26
-- **Open:** 1
+- **Total Issues:** 28
+- **Open:** 3
 - **Resolved:** 25
 - **Most Common Category:** Deployment (9 issues)
 

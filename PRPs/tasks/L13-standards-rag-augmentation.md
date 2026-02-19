@@ -3,7 +3,41 @@
 **Phase:** 8d (Two-Layer Pipeline — Standards RAG) | **Dependencies:** L10 (Foundation Models)
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 2 days
-**Status:** NOT STARTED (READY AFTER L10 — handoff updated 2026-02-19)
+**Status:** DONE (completed 2026-02-19)
+
+## Completion Summary (2026-02-19)
+
+L13 standards RAG is implemented and validated using prepared artifacts.
+
+### Implemented scope
+
+- `main/src/lims/standards_loader.py` added and refactored to ingest from `output/prepared_l10l15/manifest.json` + `per_document/*/sections.json` and `tables_cleaned.json`.
+- `main/src/lims/prompts/augmentation_prompt.py` added with structured SME gap-fill instruction contract and citation requirement.
+- `main/src/lims/rag_loader.py` updated to support configurable `collection_name` for `seed_mda_templates()` and `query_similar_templates()`.
+- `main/tests/lims/test_standards_loader.py` added/updated for prepared-artifact ingestion, trace artifact generation, standards querying, and custom collection regression coverage.
+
+### Validation evidence
+
+- Targeted tests: `uv run --with pytest pytest main/tests/lims/test_standards_loader.py -v` -> 6 passed
+- LIMS suite: `uv run --with pytest pytest main/tests/lims -v` -> 247 passed, 4 skipped
+- Real ingestion run against prepared artifacts:
+    - `lims_standards`: 154 chunks
+    - `calculation_patterns`: 401 chunks
+    - Query smoke test returned 3 results
+
+### Traceability and monitoring outputs
+
+Generated under `output/prepared_l10l15/L13_rag/`:
+
+- `lims_standards_seed_trace.json`
+- `lims_standards_chunks.jsonl`
+- `calculation_patterns_seed_trace.json`
+- `calculation_patterns_chunks.jsonl`
+
+### Known issue (tracked)
+
+- First-time seeding latency can be high due to embedding/indexing volume.
+- Tracked in `docs/issues/ISSUE-034-l13-standards-seeding-latency.md`.
 
 ## Handoff Update (2026-02-19)
 

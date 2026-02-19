@@ -98,16 +98,18 @@ def parse_xlsx_to_text(xlsx_path: Path) -> str:
 
 def seed_mda_templates(
     demo_data_dir: str = "./demo_data",
+    collection_name: str = COLLECTION_NAME,
     chroma_path: str = CHROMA_PATH,
 ) -> int:
-    """Seed the ``mda_templates`` ChromaDB collection from demo XLSX files.
+    """Seed a ChromaDB collection from demo XLSX files.
 
     Iterates over all ``*.xlsx`` files in *demo_data_dir*, parses each with
     :func:`parse_xlsx_to_text`, and upserts the resulting text documents into
-    the ``mda_templates`` collection.
+    the target collection.
 
     Args:
         demo_data_dir: Directory containing demo ``*.xlsx`` files.
+        collection_name: ChromaDB collection name (defaults to ``mda_templates``).
         chroma_path: Path to the ChromaDB persistent storage directory.
 
     Returns:
@@ -135,7 +137,7 @@ def seed_mda_templates(
     )
 
     client = chromadb.PersistentClient(path=chroma_path)
-    collection = client.get_or_create_collection(COLLECTION_NAME)
+    collection = client.get_or_create_collection(collection_name)
 
     documents: list[str] = []
     metadatas: list[dict[str, str]] = []
@@ -165,7 +167,7 @@ def seed_mda_templates(
     logger.info(
         "Seeded %d documents into '%s' collection (total in collection: %d)",
         len(documents),
-        COLLECTION_NAME,
+        collection_name,
         final_count,
     )
 
@@ -180,6 +182,7 @@ def seed_mda_templates(
 def query_similar_templates(
     extraction_text: str,
     top_k: int = 3,
+    collection_name: str = COLLECTION_NAME,
     chroma_path: str = CHROMA_PATH,
 ) -> list[str]:
     """Query ChromaDB for MDA templates similar to the given extraction text.
@@ -188,6 +191,7 @@ def query_similar_templates(
         extraction_text: Text from a PDF extraction or user query to find
             similar templates for.
         top_k: Maximum number of similar documents to return.
+        collection_name: ChromaDB collection name (defaults to ``mda_templates``).
         chroma_path: Path to the ChromaDB persistent storage directory.
 
     Returns:
@@ -205,12 +209,12 @@ def query_similar_templates(
         raise ValueError(msg)
 
     client = chromadb.PersistentClient(path=chroma_path)
-    collection = client.get_or_create_collection(COLLECTION_NAME)
+    collection = client.get_or_create_collection(collection_name)
 
     doc_count = collection.count()
     if doc_count == 0:
         msg = (
-            f"ChromaDB collection '{COLLECTION_NAME}' is empty. "
+            f"ChromaDB collection '{collection_name}' is empty. "
             f"Run seed_mda_templates() first to populate the collection "
             f"from demo_data/*.xlsx files."
         )
@@ -221,7 +225,7 @@ def query_similar_templates(
 
     logger.info(
         "Querying '%s' collection (top_k=%d, docs_available=%d)",
-        COLLECTION_NAME,
+        collection_name,
         effective_k,
         doc_count,
     )
