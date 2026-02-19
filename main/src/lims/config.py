@@ -21,6 +21,10 @@ class LIMSConfig(BaseModel):
     openrouter_api_key: str = ""
     openrouter_model: str = "openai/gpt-5"
     chromadb_path: str = "./chroma_db_lims"
+    standards_collection: str = "lims_standards"
+    calculations_collection: str = "calculation_patterns"
+    classification_mode: str = "hybrid"
+    classification_confidence_threshold: float = 0.8
     upload_dir: str = "./uploads/lims"
     output_dir: str = "./output/lims"
 
@@ -55,6 +59,26 @@ class LIMSConfig(BaseModel):
             )
         return normalized
 
+    @field_validator("classification_mode")
+    @classmethod
+    def validate_classification_mode(cls, v: str) -> str:
+        allowed = {"rules", "llm", "hybrid"}
+        normalized = v.strip().lower()
+        if normalized not in allowed:
+            raise ValueError(
+                f"LIMS_CLASSIFICATION_MODE must be one of {allowed}, got '{v}'"
+            )
+        return normalized
+
+    @field_validator("classification_confidence_threshold")
+    @classmethod
+    def validate_classification_confidence_threshold(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError(
+                "LIMS_CLASSIFICATION_CONFIDENCE_THRESHOLD must be between 0.0 and 1.0"
+            )
+        return v
+
 
 def get_lims_config() -> LIMSConfig:
     """Load LIMS config from LIMS_* environment variables.
@@ -76,6 +100,15 @@ def get_lims_config() -> LIMSConfig:
         openrouter_api_key=os.getenv("LIMS_OPENROUTER_API_KEY", ""),
         openrouter_model=os.getenv("LIMS_OPENROUTER_MODEL", "openai/gpt-5"),
         chromadb_path=os.getenv("LIMS_CHROMADB_PATH", "./chroma_db_lims"),
+        standards_collection=os.getenv("LIMS_STANDARDS_COLLECTION", "lims_standards"),
+        calculations_collection=os.getenv(
+            "LIMS_CALCULATIONS_COLLECTION",
+            "calculation_patterns",
+        ),
+        classification_mode=os.getenv("LIMS_CLASSIFICATION_MODE", "hybrid"),
+        classification_confidence_threshold=float(
+            os.getenv("LIMS_CLASSIFICATION_CONFIDENCE_THRESHOLD", "0.8")
+        ),
         upload_dir=os.getenv("LIMS_UPLOAD_DIR", "./uploads/lims"),
         output_dir=os.getenv("LIMS_OUTPUT_DIR", "./output/lims"),
     )

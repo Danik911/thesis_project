@@ -289,3 +289,63 @@ class TestValidTransitionsDict:
         assert VALID_TRANSITIONS[LIMSJobStatus.PENDING_REVIEW] == {
             LIMSJobStatus.APPROVED
         }
+
+    def test_job_status_has_ten_states(self):
+        assert len(LIMSJobStatus) == 10
+
+    def test_extracting_allows_classifying_path(self):
+        assert LIMSJobStatus.CLASSIFYING in VALID_TRANSITIONS[LIMSJobStatus.EXTRACTING]
+
+    def test_classifying_to_loading_template(self):
+        assert VALID_TRANSITIONS[LIMSJobStatus.CLASSIFYING] == {
+            LIMSJobStatus.LOADING_TEMPLATE,
+            LIMSJobStatus.FAILED,
+        }
+
+    def test_loading_template_to_extracting(self):
+        assert VALID_TRANSITIONS[LIMSJobStatus.LOADING_TEMPLATE] == {
+            LIMSJobStatus.EXTRACTING,
+            LIMSJobStatus.FAILED,
+        }
+
+    def test_augmenting_to_merging(self):
+        assert VALID_TRANSITIONS[LIMSJobStatus.AUGMENTING] == {
+            LIMSJobStatus.MERGING,
+            LIMSJobStatus.FAILED,
+        }
+
+    def test_merging_to_pending_review(self):
+        assert VALID_TRANSITIONS[LIMSJobStatus.MERGING] == {
+            LIMSJobStatus.PENDING_REVIEW,
+            LIMSJobStatus.FAILED,
+        }
+
+
+class TestL10ExtendedFields:
+    """Verify new optional fields and list defaults on LIMSJob."""
+
+    def test_job_serializes_with_l10_fields(self):
+        job_id = create_job("extended_fields.pdf")
+        job = get_job(job_id)
+
+        job.classification = {"test_type": "HPLC", "confidence": 0.95}
+        job.provenance = {"fields": {"analyses[0].name": {"source": "TEMPLATE"}}}
+        job.conflicts.append({"path": "components[0].units", "type": "VALUE_MISMATCH"})
+        job.stage_details.append({"stage": "CLASSIFYING", "reasoning": "rule match"})
+
+        dumped = job.model_dump()
+        restored = LIMSJob.model_validate(dumped)
+
+        assert restored.classification == job.classification
+        assert restored.provenance == job.provenance
+        assert restored.conflicts == job.conflicts
+        assert restored.stage_details == job.stage_details
+
+    def test_job_defaults_for_l10_fields(self):
+        job_id = create_job("defaults.pdf")
+        job = get_job(job_id)
+
+        assert job.classification is None
+        assert job.provenance is None
+        assert job.conflicts == []
+        assert job.stage_details == []

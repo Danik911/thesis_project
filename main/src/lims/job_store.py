@@ -32,7 +32,11 @@ class LIMSJobStatus(str, Enum):
     """Job status values for the LIMS state machine."""
 
     EXTRACTING = "EXTRACTING"
+    CLASSIFYING = "CLASSIFYING"
+    LOADING_TEMPLATE = "LOADING_TEMPLATE"
     GENERATING = "GENERATING"
+    AUGMENTING = "AUGMENTING"
+    MERGING = "MERGING"
     PENDING_REVIEW = "PENDING_REVIEW"
     APPROVED = "APPROVED"
     EXPORTED = "EXPORTED"
@@ -44,8 +48,22 @@ class LIMSJobStatus(str, Enum):
 # ---------------------------------------------------------------------------
 
 VALID_TRANSITIONS: dict[LIMSJobStatus, set[LIMSJobStatus]] = {
-    LIMSJobStatus.EXTRACTING: {LIMSJobStatus.GENERATING, LIMSJobStatus.FAILED},
+    LIMSJobStatus.EXTRACTING: {
+        LIMSJobStatus.CLASSIFYING,
+        LIMSJobStatus.GENERATING,
+        LIMSJobStatus.FAILED,
+    },
+    LIMSJobStatus.CLASSIFYING: {
+        LIMSJobStatus.LOADING_TEMPLATE,
+        LIMSJobStatus.FAILED,
+    },
+    LIMSJobStatus.LOADING_TEMPLATE: {
+        LIMSJobStatus.EXTRACTING,
+        LIMSJobStatus.FAILED,
+    },
     LIMSJobStatus.GENERATING: {LIMSJobStatus.PENDING_REVIEW, LIMSJobStatus.FAILED},
+    LIMSJobStatus.AUGMENTING: {LIMSJobStatus.MERGING, LIMSJobStatus.FAILED},
+    LIMSJobStatus.MERGING: {LIMSJobStatus.PENDING_REVIEW, LIMSJobStatus.FAILED},
     LIMSJobStatus.PENDING_REVIEW: {LIMSJobStatus.APPROVED},
     LIMSJobStatus.APPROVED: {LIMSJobStatus.EXPORTED},
     LIMSJobStatus.EXPORTED: set(),  # terminal
@@ -74,6 +92,10 @@ class LIMSJob(BaseModel):
     raw_extraction: Optional[dict[str, Any]] = None
     extraction_trace: Optional[dict[str, Any]] = None
     mda_template: Optional[dict[str, Any]] = None
+    classification: Optional[dict[str, Any]] = None
+    provenance: Optional[dict[str, Any]] = None
+    conflicts: list[dict[str, Any]] = Field(default_factory=list)
+    stage_details: list[dict[str, Any]] = Field(default_factory=list)
     chat_history: list[dict[str, Any]] = Field(default_factory=list)
     edit_log: list[dict[str, Any]] = Field(default_factory=list)
     error: Optional[str] = None
