@@ -1,8 +1,8 @@
 # AI4LIMS Proof of Concept - Production Readiness Plan (PRP)
 
 **Owner:** Platform Engineering (AI Systems)
-**Date:** 2026-02-16
-**Version:** 1.2
+**Date:** 2026-02-18
+**Version:** 1.3
 **Scope:** 2-week Proof of Concept — AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA (Method Definition and Analysis) templates, with interactive chat refinement.
 **Branch:** `prjoject_p_protatype`
 **Source Plan:** `docs/project_p/AI4LIMS_PoC_Plan.md`
@@ -71,6 +71,8 @@ This PRP outlines a 2-week Proof of Concept that demonstrates AI-powered extract
 
 ### 1.2 Processing Pipeline
 
+#### Single-Layer Pipeline (Phase 1-7, TestType.OTHER)
+
 ```
 PDF Upload
     |
@@ -91,6 +93,33 @@ PDF Upload
     |
     v
 [6. XLSX Export: openpyxl -> 4-sheet LabWare format]
+```
+
+#### Two-Layer Pipeline (Phase 8+, HPLC/LOD/Titration/Identity)
+
+```
+PDF Upload
+    |
+    v
+[1. CLASSIFY] -- Detect test type (HPLC/LOD/Titration/Identity) via hybrid rules+LLM
+    |
+    v
+[2. TEMPLATE] -- Load curated skeleton for that test type (~46% of components)
+    |
+    v
+[3. EXTRACT] -- Focused extraction from PDF (only variable fields)
+    |
+    v
+[4. AUGMENT] -- AI fills template gaps via standards RAG (CD-026972, SOP-00597)
+    |
+    v
+[5. MERGE] -- Combine Template + Variable + Augmented, detect conflicts
+    |          Every component tagged with source (Template/Extracted/Inferred/SME Required)
+    v
+[6. SME REVIEW] -- Step-by-step visual workflow with provenance badges
+    |               Conflict resolution panel, chat refinement
+    v
+[7. EXPORT] -- XLSX with optional provenance sheet
 ```
 
 ### 1.3 Refinement Workflow (Initial vs Final)
@@ -505,6 +534,7 @@ The PoC follows a **strict test-first, gated pipeline**. Each feature is built b
 | Phase 4 | MDA Workflow + Mandatory HITL + Export | Full pipeline with mandatory human review, no skip path |
 | Phase 5 | Full Pipeline Testing (Local + Docker) | E2E works in both environments, thesis preserved |
 | Phase 6 | Full HITL UI | Demo-ready: Upload -> Extract -> Review -> Chat -> Approve -> Export |
+| Phase 8 | Two-Layer Pipeline Architecture | Full pipeline: Classify -> Template -> Extract -> Augment -> Merge -> Review with provenance |
 
 ### 9.2 Phase Gate Criteria (Pass/Fail)
 
@@ -1028,7 +1058,114 @@ curl -O http://localhost:8080/lims/export/{job_id}
 
 ---
 
-### Task L8 — RAG Optimization: Hybrid Search, Smart Chunking & Reranking
+### Phase 8: Two-Layer Pipeline Architecture (7 tasks)
+
+The AI4LIMS pilot revealed only ~54% of MDA components exist in the test method PDF (range: 21-96% across 18 test methods). Phase 8 implements a test-method agnostic two-layer architecture: curated templates (~46%) + focused PDF extraction + standards RAG augmentation, with full provenance tracking.
+
+---
+
+### Task L10 — Foundation Models: Provenance, TestType & Template Base Classes
+
+**Phase:** 8a (Foundation) | **Dependencies:** L7 (done)
+**PRP Task File:** `PRPs/tasks/L10-foundation-provenance-testtype-templates-base.md`
+**Status:** NOT STARTED
+
+**What to Do:**
+- Create `provenance.py`: ComponentSource enum, FieldProvenance, ProvenanceMap
+- Create `test_type.py`: TestType enum (HPLC, LOD, Titration, Identity, Other), ClassificationResult
+- Create `templates/base.py`: TestTypeTemplate base class, TemplateComponent dataclass
+- Create `templates/__init__.py`: TemplateLibrary registry
+- Extend `job_store.py`: Add CLASSIFYING, LOADING_TEMPLATE, AUGMENTING, MERGING states
+- Extend `config.py`: Add classification_mode, confidence_threshold, standards/calculations collections
+
+---
+
+### Task L11 — Template Library: HPLC, LOD, Titration & Identity Skeletons
+
+**Phase:** 8b (Templates) | **Dependencies:** L10
+**PRP Task File:** `PRPs/tasks/L11-template-library-hplc-lod-titration-identity.md`
+**Status:** NOT STARTED
+
+**What to Do:**
+- Curate HPLC template from AND_BCMA_CEX, FRE_BOSU ground truth XLSX
+- Curate LOD template from AND_USP_LOD XLSX
+- Curate Titration template from FRE_KF_USP XLSX
+- Curate Identity template from AND_ACS_DYE ground truth (25 components, 3 analyses)
+- Register all 4 templates in TemplateLibrary
+
+---
+
+### Task L12 — Hybrid Test Type Classifier
+
+**Phase:** 8c (Classification) | **Dependencies:** L10
+**PRP Task File:** `PRPs/tasks/L12-classifier-hybrid-test-type-detection.md`
+**Status:** NOT STARTED
+
+**What to Do:**
+- Build hybrid classifier: filename rules -> keyword matching -> LLM fallback
+- Create classification system prompt for LLM fallback
+- Target >90% accuracy on 18+ demo PDFs
+
+---
+
+### Task L13 — Standards RAG & Augmentation Prompt
+
+**Phase:** 8d (Standards RAG) | **Dependencies:** L10
+**PRP Task File:** `PRPs/tasks/L13-standards-rag-augmentation.md`
+**Status:** NOT STARTED
+
+**What to Do:**
+- Create standards_loader.py for CD-026972, SOP-00597, gLIMS training PDF ingestion
+- Create `lims_standards` and `calculation_patterns` ChromaDB collections
+- Build augmentation prompt for gap-filling with citations
+- Extend rag_loader.py to support configurable collection names
+
+---
+
+### Task L14 — Pipeline Core: Focused Extractor, Merger & Orchestrator
+
+**Phase:** 8e (Pipeline Core) | **Dependencies:** L10, L11, L12, L13
+**PRP Task File:** `PRPs/tasks/L14-pipeline-core-extractor-merger-orchestrator.md`
+**Status:** NOT STARTED
+
+**What to Do:**
+- Create focused_extractor.py: builds reduced schema per test type
+- Create merger.py: merges Template + Variable + Augmented layers with provenance
+- Create pipeline.py: TwoLayerPipeline orchestrator
+- Rewrite lims_router.py extract endpoint; add /classify and /template/{type} endpoints
+
+---
+
+### Task L15 — Frontend: Provenance Badges, Classification & Pipeline Workflow UI
+
+**Phase:** 8f (Frontend) | **Dependencies:** L14
+**PRP Task File:** `PRPs/tasks/L15-frontend-provenance-workflow-transformation.md`
+**Status:** NOT STARTED
+
+**What to Do:**
+- Create ProvenanceBadge, ClassificationPanel, TemplatePreview, MergeConflictPanel, PipelineStageDetail components
+- Update LIMSStepIndicator to 6 stages
+- Update MDAViewer with provenance badges
+- Rewrite lims.tsx for 8-state workflow
+
+---
+
+### Task L16 — Validation: E2E Tests & Backward Compatibility
+
+**Phase:** 8g (Validation) | **Dependencies:** L14, L15
+**PRP Task File:** `PRPs/tasks/L16-two-layer-pipeline-validation-e2e.md`
+**Status:** NOT STARTED
+
+**What to Do:**
+- Create test_provenance.py, test_templates.py, test_classifier.py, test_merger.py, test_pipeline.py, test_standards_loader.py
+- Verify AND_ACS_DYE backward compatibility
+- Classification accuracy >90% on demo PDFs
+- Template coverage comparison against ground truth XLSX
+- Full E2E per test type
+
+---
+
+### Task L8 — RAG Optimization: Hybrid Search, Smart Chunking & Reranking (DEPRIORITIZED — after Phase 8)
 
 **Phase:** 7 (Optimization) | **Dependencies:** Phase 6 gate passed
 **PRP Task File:** `PRPs/tasks/L8-rag-hybrid-chunking-reranking.md`
@@ -1048,7 +1185,7 @@ curl -O http://localhost:8080/lims/export/{job_id}
 
 ---
 
-### Task L9 — Ground Truth Evaluation: Accuracy Scoring
+### Task L9 — Ground Truth Evaluation: Accuracy Scoring (DEPRIORITIZED — after Phase 8)
 
 **Phase:** 7 (Optimization) | **Dependencies:** L7, L8
 **PRP Task File:** `PRPs/tasks/L9-ground-truth-evaluation.md`
@@ -1105,12 +1242,23 @@ Phase 6: Full HITL UI
   ═══════════════════ GATE 6: DEMO-READY ═══════════════════
                          │
 Phase 7: Optimization (Quality & RAG)
-  L7 (extraction normalization + SDK) ──────────────┐
-  L8 (RAG: chunking + hybrid + reranking) ──────────┤
-                                                     │
-                                           L9 (ground truth evaluation) <── L7, L8
-                                                     │
-  ═══════════════════ GATE 7: QUALITY MEASURED ═══════════════════
+  L7 (extraction normalization + SDK)
+                         │
+  ═══════════════════ GATE 7: DATA QUALITY IMPROVED ═══════════════════
+                         │
+Phase 8: Two-Layer Pipeline Architecture
+  L10 (foundation models) ──> L11 (template library)
+  L10 ──> L12 (classifier)
+  L10 ──> L13 (standards RAG)
+  L11 + L12 + L13 ──> L14 (pipeline core)
+  L14 ──> L15 (frontend transformation)
+  L14 + L15 ──> L16 (validation & E2E)
+                         │
+  ═══════════════════ GATE 8: TWO-LAYER PIPELINE COMPLETE ═══════════════════
+                         │
+Phase 9: Optimization (DEPRIORITIZED)
+  L8 (RAG: chunking + hybrid + reranking)
+  L9 (ground truth evaluation) <── L7, L8
 ```
 
 ---
@@ -1334,9 +1482,9 @@ LIMS_OUTPUT_DIR=./output/lims
 
 ---
 
-**Document Version:** 1.2
+**Document Version:** 1.3
 **Last Updated:** 2026-02-18
-**Next Review:** After Phase 0 completion
+**Next Review:** After Phase 8 completion
 **Approved By:** [Pending stakeholder review]
 
 ---

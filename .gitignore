@@ -36,6 +36,7 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+.venv_ppocr/
 
 # Unit test / coverage reports
 htmlcov/
@@ -361,3 +362,4 @@ aws/**/Thumbs.db
 
 # Production ChromaDB tarball (kept locally for S3 upload)
 chroma_db.tar.gz
+output/
