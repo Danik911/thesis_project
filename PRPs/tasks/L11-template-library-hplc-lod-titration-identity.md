@@ -11,6 +11,9 @@
 - **Use this corpus only:** `output/prepared_l10l15/per_document/` (4 documents).
 - **Useful inputs for template calibration:** `cleaned_text.md`, `sections.json`, `tables_cleaned.json` in each per-document folder.
 - **Ground truth baseline remains:** `demo_data/*.xlsx` as stated in task objective.
+- **Parsed Excel quick-reference (secondary, not canonical):** `demo_data/parced/*_xlsx.md` and `demo_data/parced/*_Config_w_Calcs.md` are helpful for rapid component/calc pattern review; always verify final skeleton values against original `demo_data/*.xlsx`.
+- **Coverage note for 4 target types:** parsed files currently provide strong exemplars for Identity (`AND_ACS_DYE`), HPLC (`AND_BCMA_CEX`), and LOD (`AND_USP_LOD`); for Titration use `demo_data/FRE_KF_Config_w_Calcs.xlsx` as primary truth even if parsed markdown is not present.
+- **Parsed SOP linkage available:** source standards are parsed in `output/sop_parsed/` and transformed in `output/prepared_l10l15/` for convention sanity-checks during template design.
 - **Known data caveat:** Ignore `output/prepared/` (legacy duplicate run); use `output/prepared_l10l15/`.
 - **Next agent action:** Build template skeletons first from XLSX truth, then sanity-check against extracted SOP conventions in prepared corpus.
 

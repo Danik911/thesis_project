@@ -10,9 +10,12 @@
 - **Implementation readiness:** Source standards/test-method PDFs are parsed and organized.
 - **Canonical source artifacts:** `output/sop_parsed/manifest.json` and `output/prepared_l10l15/per_document/*/sections.json`.
 - **Current output state:** `output/prepared_l10l15/L13_rag/` exists but is empty (chunks not built yet).
+- **Parsed SOP inventory (ready):** `output/sop_parsed/manifest.json` reports 4 documents / 856 pages / 346 tables and maps each doc to `output/sop_parsed/documents/<slug>/` artifacts (`text_extracted.txt`, `tables_extracted.json`, `summary.json`).
+- **Canonical prepared derivatives:** `output/prepared_l10l15/manifest.json` provides normalized per-document outputs (`cleaned_text.md`, `sections.json`, `tables_cleaned.json`) for chunking.
 - **Collection mapping agreed in prep notes:**
     - `lims_standards`: SOP/governance standards docs
     - `calculation_patterns`: training material + calculation-heavy docs
+- **Parsed Excel note (secondary only):** `demo_data/parced/*_Config_w_Calcs.md` can be mined for additional calculation phrase patterns, but standards collections must be sourced from SOP artifacts above, not Excel exports.
 - **Known data caveat:** Training slides document uses `document_id: UNKNOWN`; rely on slug/path metadata rather than ID-only matching.
 - **Next agent action:** Implement loader/chunking, generate chunk artifacts into `output/prepared_l10l15/L13_rag/`, then seed ChromaDB collections.
 

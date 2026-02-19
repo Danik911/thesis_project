@@ -37,6 +37,9 @@ class AnalysisType(str, Enum):
     IMP = "IMP"
     PHYS = "PHYS"
     QC_SAMPLES = "QC_SAMPLES"
+    HPLC = "HPLC"
+    RM = "RM"
+    KF = "KF"
 
 
 class ResultType(str, Enum):
@@ -263,15 +266,14 @@ class Component(BaseModel):
     def validate_result_type_constraints(self) -> "Component":
         """Enforce result type constraints from ground truth.
 
-        K-type requires auto_calc=True.
         L-type requires a list_key.
         N-type with uses_instrument should have an instrument_group.
+
+        Note: K-type does NOT require auto_calc=True. Many K-type components
+        use GOSUB triggers (INST_PICKER, SR_PICKER, CALC_COMPONENTS_OPTIONAL)
+        rather than auto-calc. The cross-sheet integrity check in MDATemplate
+        ensures every K-type component has at least one Calculation entry.
         """
-        if self.result_type == ResultType.K and not self.auto_calc:
-            raise ValueError(
-                f"Component '{self.component_name}': result_type=K requires "
-                f"auto_calc=True"
-            )
         if self.result_type == ResultType.L and not self.list_key:
             raise ValueError(
                 f"Component '{self.component_name}': result_type=L requires "

@@ -25,15 +25,17 @@ class TestMDATemplateRoundtrip:
 
 
 class TestComponentValidators:
-    def test_k_type_requires_auto_calc(self):
-        with pytest.raises(ValidationError, match="auto_calc"):
-            Component(
-                analysis="AND_ACS_DYE",
-                component_name="BAD_K",
-                order_number=1,
-                result_type=ResultType.K,
-                auto_calc=False,
-            )
+    def test_k_type_allows_auto_calc_false(self):
+        """K-type with auto_calc=False is valid (GOSUB triggers, pickers)."""
+        comp = Component(
+            analysis="AND_ACS_DYE",
+            component_name="GOSUB_K",
+            order_number=1,
+            result_type=ResultType.K,
+            auto_calc=False,
+        )
+        assert comp.result_type == ResultType.K
+        assert comp.auto_calc is False
 
     def test_l_type_requires_list_key(self):
         with pytest.raises(ValidationError, match="list_key"):

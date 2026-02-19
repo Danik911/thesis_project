@@ -12,6 +12,8 @@
     - `output/sop_parsed/manifest.json`
     - `output/prepared_l10l15/manifest.json`
     - `output/prepared_l10l15/per_document/*`
+- **Parsed SOP detail for deterministic tests:** `output/sop_parsed/manifest.json` currently tracks 4 standards docs with artifact paths under `output/sop_parsed/documents/*`; use these paths for reproducible fixture generation.
+- **Ground truth comparison baseline:** use `demo_data/*.xlsx` as canonical expected structures/counts; `demo_data/parced/*.md` can accelerate test-case authoring but must not replace XLSX truth in assertions.
 - **Quality hotspots to include in tests:**
     - `glims-code-stnd-sop-00597` has high low-confidence OCR lines.
     - Training slides doc uses `document_id: UNKNOWN` and slide-mode sectioning.

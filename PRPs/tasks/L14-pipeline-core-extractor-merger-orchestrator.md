@@ -9,6 +9,8 @@
 
 - **Implementation readiness:** Data prerequisites are ready; code dependencies (L10-L13 modules) are not implemented yet.
 - **Canonical test data for integration:** `output/prepared_l10l15/manifest.json` and `output/prepared_l10l15/per_document/`.
+- **Parsed SOP source-of-truth path:** upstream OCR artifacts live in `output/sop_parsed/manifest.json` and `output/sop_parsed/documents/*`; use prepared derivatives (`prepared_l10l15`) during pipeline integration.
+- **Parsed Excel support for expected structures (secondary):** `demo_data/parced/*_xlsx.md` and `*_Config_w_Calcs.md` are useful to draft merge/conflict test cases, but integration assertions should validate against canonical `demo_data/*.xlsx` and prepared corpus outputs.
 - **Current upstream state:**
     - L12 artifacts directory exists but empty: `output/prepared_l10l15/L12_classifier/`
     - L13 artifacts directory exists but empty: `output/prepared_l10l15/L13_rag/`

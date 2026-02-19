@@ -11,6 +11,8 @@
 - **Prepared input corpus:** `output/prepared_l10l15/per_document/` (4 docs, canonical).
 - **Current output state:** `output/prepared_l10l15/L12_classifier/` exists but is empty (not generated yet).
 - **High-value quality note:** `glims-code-stnd-sop-00597` has elevated low-confidence OCR lines (see its `quality_report.json`), so classifier rules should combine filename + multiple content signals.
+- **Parsed Excel label support (secondary):** `demo_data/parced/*.md` provides fast filename/test-type mapping and terminology examples; use original `demo_data/*.pdf` + `demo_data/*.xlsx` as authoritative for measured accuracy.
+- **Canonical parsed SOP inputs (for keyword hardening):** use `output/prepared_l10l15/per_document/*/cleaned_text.md` and `sections.json` (derived from `output/sop_parsed/documents/*`) to tune robust rules for noisy OCR.
 - **Known data caveat:** Legacy `output/prepared/manifest.json` has duplicate ingestion; do not use for classifier evaluation.
 - **Next agent action:** Implement classifier and emit deterministic evaluation artifacts to `output/prepared_l10l15/L12_classifier/`.
 

@@ -31,3 +31,10 @@ class TemplateLibrary:
     @classmethod
     def available_types(cls) -> list[TestType]:
         return sorted(cls._registry.keys(), key=lambda test_type: test_type.value)
+
+
+# Import template modules to trigger @TemplateLibrary.register decorators
+from main.src.lims.templates import hplc  # noqa: E402, F401
+from main.src.lims.templates import identity  # noqa: E402, F401
+from main.src.lims.templates import lod  # noqa: E402, F401
+from main.src.lims.templates import titration  # noqa: E402, F401

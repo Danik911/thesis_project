@@ -9,6 +9,8 @@
 
 - **Implementation readiness:** Frontend can start component scaffolding, but full workflow integration depends on L14 endpoints and payloads.
 - **Reference data for UI mocks:** `output/prepared_l10l15/per_document/` plus quality/provenance expectations from task specs.
+- **Parsed SOP availability:** upstream parsed standards exist in `output/sop_parsed/documents/*`; frontend mock payloads should use normalized outputs from `output/prepared_l10l15/per_document/*`.
+- **Parsed Excel markdown usage (optional for mock realism):** `demo_data/parced/*.md` can be used to craft realistic component labels/conflict examples for Storybook/local mocks, but API contract validation must follow L14 payloads.
 - **Backend contract prerequisite:** `/lims/classify`, template preview payload, merge conflict payload, and stage detail payload from L14.
 - **Known caveat:** Do not wire UI against legacy prepared artifacts from `output/prepared/`; use canonical `output/prepared_l10l15/`.
 - **Next agent action:** Define strict TypeScript interfaces from L14 response models before implementing workflow rewrites.
