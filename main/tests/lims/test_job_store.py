@@ -296,9 +296,11 @@ class TestValidTransitionsDict:
     def test_extracting_allows_classifying_path(self):
         assert LIMSJobStatus.CLASSIFYING in VALID_TRANSITIONS[LIMSJobStatus.EXTRACTING]
 
-    def test_classifying_to_loading_template(self):
+    def test_classifying_transitions(self):
+        """CLASSIFYING allows LOADING_TEMPLATE (two-layer), EXTRACTING (single-layer fallback), FAILED."""
         assert VALID_TRANSITIONS[LIMSJobStatus.CLASSIFYING] == {
             LIMSJobStatus.LOADING_TEMPLATE,
+            LIMSJobStatus.EXTRACTING,  # single-layer fallback re-enters extraction
             LIMSJobStatus.FAILED,
         }
 

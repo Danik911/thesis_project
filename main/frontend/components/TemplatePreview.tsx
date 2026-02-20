@@ -24,6 +24,10 @@ export default function TemplatePreview({ fields, onContinue }: TemplatePreviewP
         <p className="text-sm text-slate-300">{fixedCount} template + {variableCount} variable</p>
       </div>
 
+      <p className="text-xs text-slate-500">
+        This workflow adapts to multiple method types via template + extraction contracts. Fields marked as variable will be populated from your PDF.
+      </p>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {fields.map((field) => (
           <div

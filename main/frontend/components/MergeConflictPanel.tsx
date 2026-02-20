@@ -54,6 +54,15 @@ export default function MergeConflictPanel({ conflicts, onResolve }: MergeConfli
         </div>
       </div>
 
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/5 border border-blue-500/15">
+        <svg className="w-4 h-4 text-blue-400/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <p className="text-xs text-blue-400/70">
+          You decide. AI proposes merge resolutions — final authority is yours.
+        </p>
+      </div>
+
       {conflicts.length === 0 ? (
         <p className="text-sm text-slate-400">No merge conflicts available from backend payload.</p>
       ) : (

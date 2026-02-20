@@ -6,6 +6,9 @@
 ## Status
 RESOLVED (2026-02-19)
 
+## Consolidation
+Consolidated into `ISSUE-037-l15-frontend-delivery-and-local-e2e-consolidated.md`.
+
 ## Symptom
 `POST /lims/extract` returned:
 

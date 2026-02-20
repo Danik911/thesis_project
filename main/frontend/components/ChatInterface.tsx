@@ -105,7 +105,7 @@ export default function ChatInterface({ jobId, onMDAUpdate, disabled }: ChatInte
             d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
           />
         </svg>
-        <h3 className="text-sm font-medium text-slate-300">MDA Refinement Chat</h3>
+        <h3 className="text-sm font-medium text-slate-300">LabAI Copilot</h3>
         {turnCount > 0 && (
           <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
             {turnCount} {turnCount === 1 ? 'turn' : 'turns'}
@@ -117,7 +117,7 @@ export default function ChatInterface({ jobId, onMDAUpdate, disabled }: ChatInte
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
-            <p className="text-slate-500 text-sm">Ask questions or request edits to the extracted MDA template.</p>
+            <p className="text-slate-500 text-sm">Your AI copilot for MDA refinement. Ask questions or request changes — you remain in control.</p>
             <div className="flex flex-wrap justify-center gap-2 max-w-md">
               {SUGGESTIONS.map((suggestion) => (
                 <button

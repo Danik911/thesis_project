@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-02-19 (L14 complete + L15 contract integration)
+**Last Updated:** 2026-02-20 (L15 marked done + issue consolidation)
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-037
+4. **Next Issue Number**: ISSUE-038
 
 ---
 
@@ -30,8 +30,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
-| [ISSUE-036](ISSUE-036-lims-duplicate-llamaextract-key-env-precedence.md) | LIMS Extract 401 from Duplicate `LIMS_LLAMAEXTRACT_API_KEY` in `.env.local` | 2026-02-19 | 2026-02-19 | API/Config |
-| [ISSUE-035](ISSUE-035-l15-frontend-blocked-by-l14-contract-gaps.md) | L15 Frontend Workflow Blocked by Incomplete L14 API Contracts | 2026-02-19 | 2026-02-19 | Frontend/API |
+| [ISSUE-037](ISSUE-037-l15-frontend-delivery-and-local-e2e-consolidated.md) | L15 Frontend Delivery + Local E2E Validation (Consolidated) | 2026-02-20 | 2026-02-20 | Frontend/API/Config |
 | [ISSUE-032](ISSUE-032-l7-extraction-quality-consolidated.md) | L7 Extraction Quality — Consolidated Resolution Record | 2026-02-18 | 2026-02-18 | API/Data Quality |
 | [ISSUE-027](ISSUE-027-lims-openpyxl-missing-in-dev-container.md) | LIMS Extraction Warning in Docker Dev - `ModuleNotFoundError: No module named 'openpyxl'` | 2026-02-17 | 2026-02-17 | Docker/API |
 | [ISSUE-025](ISSUE-025-lims-local-dev-connectivity-runbook.md) | LIMS Local Dev Connectivity & Runtime Runbook (Consolidated) | 2026-02-17 | 2026-02-17 | Frontend/API |
@@ -62,6 +61,13 @@ The following detailed L7 records are preserved for audit traceability and merge
 - [ISSUE-029](ISSUE-029-lims-llama-cloud-services-deprecation-migration-risk.md)
 - [ISSUE-030](ISSUE-030-lims-sdk-pin-conflict-llama-cloud-version.md)
 - [ISSUE-031](ISSUE-031-lims-llamaextract-semantic-enum-mismatch.md)
+
+### Consolidated into ISSUE-037
+
+The following detailed L15 records are preserved for audit traceability and merged under the consolidated closure entry above:
+
+- [ISSUE-035](ISSUE-035-l15-frontend-blocked-by-l14-contract-gaps.md)
+- [ISSUE-036](ISSUE-036-lims-duplicate-llamaextract-key-env-precedence.md)
 
 ---
 
@@ -95,9 +101,9 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 30
+- **Total Issues:** 31
 - **Open:** 3
-- **Resolved:** 27
+- **Resolved:** 28
 - **Most Common Category:** Deployment (9 issues)
 
 ---

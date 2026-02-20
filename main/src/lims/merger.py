@@ -126,6 +126,125 @@ def _set_provenance_for_list(
                 )
 
 
+
+# Mapping for coercing unknown analysis_type values to valid AnalysisType enums
+_ANALYSIS_TYPE_COERCION: dict[str, str] = {
+    "IDENTITY": "ID",
+    "ASSAY": "ASY",
+    "IMPURITY": "IMP",
+    "IMPURITIES": "IMP",
+    "PHYSICAL": "PHYS",
+    "DISSOLUTION": "PHYS",
+    "KARL FISCHER": "KF",
+    "MOISTURE": "KF",
+    "LOD": "PHYS",
+    "TITRATION": "KF",
+    "TEST METHOD": "PHYS",
+    "QC": "QC_SAMPLES",
+    "RAW MATERIAL": "RM",
+    "RAW_MATERIAL": "RM",
+}
+
+# Valid analysis_type values (from AnalysisType enum)
+_VALID_ANALYSIS_TYPES = {"ID", "ASY", "IMP", "PHYS", "QC_SAMPLES", "HPLC", "RM", "KF"}
+
+
+def _sanitize_new_analysis(
+    item: dict[str, Any],
+) -> dict[str, Any]:
+    """Ensure a new extracted analysis has all required fields.
+
+    Called when an extracted analysis does not match any template analysis.
+    Fills missing required fields with sensible defaults derived from
+    available data.
+
+    Args:
+        item: Raw extracted analysis dict.
+
+    Returns:
+        Sanitized analysis dict with all required fields present.
+    """
+    name = str(item.get("name", "UNKNOWN"))
+
+    if "reported_name" not in item or not item["reported_name"]:
+        item["reported_name"] = name
+
+    if "common_name" not in item or not item["common_name"]:
+        item["common_name"] = name
+
+    # Coerce analysis_type to valid enum value
+    raw_type = str(item.get("analysis_type", "")).upper().strip()
+    if raw_type not in _VALID_ANALYSIS_TYPES:
+        coerced = _ANALYSIS_TYPE_COERCION.get(raw_type, "PHYS")
+        logger.info(
+            "Coercing analysis_type '%s' -> '%s' for extracted analysis '%s'",
+            raw_type,
+            coerced,
+            name,
+        )
+        item["analysis_type"] = coerced
+
+    # Ensure name has site prefix (required by Analysis validator)
+    if "_" not in name:
+        item["name"] = f"EXT_{name}"
+        logger.info(
+            "Added site prefix to analysis name: '%s' -> '%s'",
+            name,
+            item["name"],
+        )
+
+    return item
+
+
+def _sanitize_new_component(
+    item: dict[str, Any],
+    existing_components: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Ensure a new extracted component has all required fields.
+
+    Called when an extracted component does not match any template component.
+    Assigns sequential order_number and defaults result_type to 'T' (text).
+
+    Args:
+        item: Raw extracted component dict.
+        existing_components: Current merged component list (for order numbering).
+
+    Returns:
+        Sanitized component dict with all required fields present.
+    """
+    if "order_number" not in item or item["order_number"] is None:
+        max_order = max(
+            (c.get("order_number", 0) for c in existing_components if c.get("order_number") is not None),
+            default=0,
+        )
+        item["order_number"] = max_order + 10
+        logger.info(
+            "Auto-assigned order_number=%d for new component '%s'",
+            item["order_number"],
+            item.get("component_name", "UNKNOWN"),
+        )
+
+    if "result_type" not in item or not item["result_type"]:
+        item["result_type"] = "T"
+        logger.info(
+            "Defaulted result_type='T' for new component '%s'",
+            item.get("component_name", "UNKNOWN"),
+        )
+
+    # Validate result_type is valid
+    valid_result_types = {"N", "K", "L", "T", "D"}
+    raw_rt = str(item.get("result_type", "")).upper().strip()
+    if raw_rt not in valid_result_types:
+        logger.info(
+            "Coercing result_type '%s' -> 'T' for component '%s'",
+            raw_rt,
+            item.get("component_name", "UNKNOWN"),
+        )
+        item["result_type"] = "T"
+
+    return item
+
+
 def _overlay_extracted_items(
     template_items: list[dict[str, Any]],
     extracted_items: list[dict[str, Any]],
@@ -134,6 +253,7 @@ def _overlay_extracted_items(
     prefix: str,
     conflicts: list[MergeConflict],
     conflict_fields: set[str] | None = None,
+    sanitize_fn=None,
 ) -> list[dict[str, Any]]:
     """Overlay extracted items onto template items.
 
@@ -146,6 +266,9 @@ def _overlay_extracted_items(
         conflicts: List to append MergeConflict objects to.
         conflict_fields: Set of field names that trigger conflict detection
             when template and extraction disagree. If None, all fields checked.
+        sanitize_fn: Optional function to sanitize new (unmatched) items
+            before appending. Called as sanitize_fn(item) for analyses or
+            sanitize_fn(item, merged) for components.
 
     Returns:
         Merged list of item dicts.
@@ -181,6 +304,17 @@ def _overlay_extracted_items(
                             )
                         )
 
+                # Coerce analysis_type to valid enum if needed
+                if prefix == "analyses" and key == "analysis_type":
+                    raw_at = str(ext_value).upper().strip()
+                    if raw_at not in _VALID_ANALYSIS_TYPES:
+                        ext_value = _ANALYSIS_TYPE_COERCION.get(raw_at, "PHYS")
+                        logger.info(
+                            "Coerced matched analysis_type '%s' -> '%s'",
+                            raw_at,
+                            ext_value,
+                        )
+
                 tpl_item[key] = ext_value
                 provenance.set_provenance(
                     path,
@@ -189,10 +323,17 @@ def _overlay_extracted_items(
                     detail="Overridden by PDF extraction",
                 )
         else:
+            new_item = copy.deepcopy(ext_item)
+            # Sanitize new items to ensure required fields are present
+            if sanitize_fn is not None:
+                try:
+                    new_item = sanitize_fn(new_item, merged)
+                except TypeError:
+                    new_item = sanitize_fn(new_item)
             new_idx = len(merged)
-            merged.append(copy.deepcopy(ext_item))
+            merged.append(new_item)
             item_prefix = f"{prefix}[{new_idx}]"
-            for key, value in ext_item.items():
+            for key, value in new_item.items():
                 if value is not None and value != "":
                     provenance.set_provenance(
                         f"{item_prefix}.{key}",
@@ -275,6 +416,7 @@ def merge_layers(
             "analyses",
             conflicts,
             conflict_fields={"analysis_type", "name"},
+            sanitize_fn=_sanitize_new_analysis,
         )
 
     if ext_components:
@@ -286,6 +428,7 @@ def merge_layers(
             "components",
             conflicts,
             conflict_fields={"result_type", "units", "list_key"},
+            sanitize_fn=_sanitize_new_component,
         )
 
     if ext_calc_vars:

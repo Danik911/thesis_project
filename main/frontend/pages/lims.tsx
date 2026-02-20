@@ -10,6 +10,8 @@ import TemplatePreview from '@/components/TemplatePreview';
 import MergeConflictPanel from '@/components/MergeConflictPanel';
 import PipelineStageDetail from '@/components/PipelineStageDetail';
 import type { StageDetail } from '@/components/PipelineStageDetail';
+import PlatformPillars from '@/components/PlatformPillars';
+import TrustBanner from '@/components/TrustBanner';
 import type { TemplateField } from '@/components/TemplatePreview';
 import type { MergeConflict } from '@/components/MergeConflictPanel';
 import type { ProvenanceBadgeProps } from '@/components/ProvenanceBadge';
@@ -536,7 +538,7 @@ export default function LimsPage() {
   return (
     <>
       <Head>
-        <title>LIMS - Pipeline Workflow | AI4LIMS</title>
+        <title>LabAI Method Copilot | AI4LIMS</title>
       </Head>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -549,15 +551,17 @@ export default function LimsPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-300">
-                  MDA Pipeline Workflow
+                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-300" style={{ fontFamily: 'var(--font-display)' }}>
+                  LabAI Method Copilot
                 </h1>
-                <p className="text-sm text-slate-400">AI4LIMS PoC · L15</p>
+                <p className="text-sm text-slate-400">Deterministic Intelligence for Method Lifecycle</p>
               </div>
             </div>
-            <p className="text-slate-400 text-sm max-w-2xl">
-              Upload a pharmaceutical method PDF and progress through classify, template, extract, merge, review, and export with provenance tracking.
-            </p>
+            {workflowView === 'idle' && (
+              <p className="text-slate-400 text-sm max-w-2xl">
+                Upload a pharmaceutical method PDF. AI classifies, extracts, and structures your data — you review, approve, and export. Every decision is yours.
+              </p>
+            )}
           </div>
 
           {workflowView !== 'idle' && !loading && (
@@ -574,14 +578,32 @@ export default function LimsPage() {
         </div>
 
         {workflowView !== 'idle' && (
-          <div className="mb-8">
-            <LIMSStepIndicator currentStatus={indicatorStatus} />
-          </div>
+          <>
+            <div className="mb-4 flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-800/30 border border-slate-700/30">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-emerald-400" style={{ fontFamily: 'var(--font-display)' }}>LabAI</span>
+                <span className="text-slate-600 text-xs">|</span>
+                <span className="text-xs text-slate-400">{STAGE_LABELS[backendStatus] ?? backendStatus}</span>
+              </div>
+              <PlatformPillars variant="compact" />
+            </div>
+            <div className="mb-8">
+              <LIMSStepIndicator currentStatus={indicatorStatus} />
+            </div>
+          </>
         )}
 
         <AnimatePresence mode="wait">
           {workflowView === 'idle' && !loading && (
             <motion.div key="upload" {...FADE}>
+              <div className="mb-8">
+                <PlatformPillars variant="full" />
+              </div>
+
+              <div className="mb-6">
+                <TrustBanner />
+              </div>
+
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -740,6 +762,15 @@ export default function LimsPage() {
                   <p className="text-amber-300/80 text-xs font-mono whitespace-pre-wrap">{validationError}</p>
                 </div>
               )}
+
+              <div className="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
+                <svg className="w-4 h-4 text-emerald-400/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <p className="text-xs text-emerald-400/70">
+                  AI structured this data from your PDF. Review each field, then approve or request changes. Final authority is yours.
+                </p>
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div className="lg:col-span-3 space-y-4">

@@ -18,16 +18,17 @@ type HeroIcon = ComponentType<SVGProps<SVGSVGElement>>;
 interface Stage {
   key: string;
   label: string;
+  subtitle: string;
   icon: HeroIcon;
 }
 
 const STAGES: Stage[] = [
-  { key: 'CLASSIFY', label: 'Classify', icon: DocumentTextIcon },
-  { key: 'TEMPLATE', label: 'Template', icon: CpuChipIcon },
-  { key: 'EXTRACT', label: 'Extract', icon: CpuChipIcon },
-  { key: 'MERGE', label: 'Merge', icon: ChatBubbleLeftRightIcon },
-  { key: 'REVIEW', label: 'Review', icon: CheckCircleIcon },
-  { key: 'EXPORT', label: 'Export', icon: ArrowDownTrayIcon },
+  { key: 'CLASSIFY', label: 'Classify', subtitle: 'Deterministic ML', icon: DocumentTextIcon },
+  { key: 'TEMPLATE', label: 'Template', subtitle: 'Method Contract', icon: CpuChipIcon },
+  { key: 'EXTRACT', label: 'Extract', subtitle: 'Focused AI', icon: CpuChipIcon },
+  { key: 'MERGE', label: 'Merge', subtitle: 'Provenance Track', icon: ChatBubbleLeftRightIcon },
+  { key: 'REVIEW', label: 'Review', subtitle: 'Human Authority', icon: CheckCircleIcon },
+  { key: 'EXPORT', label: 'Export', subtitle: 'Audit-Ready', icon: ArrowDownTrayIcon },
 ];
 
 const STATUS_ORDER: Record<string, number> = {
@@ -58,8 +59,6 @@ export default function LIMSStepIndicator({ currentStatus }: LIMSStepIndicatorPr
 
   function getStageState(index: number): 'completed' | 'active' | 'failed' | 'pending' {
     if (isFailed) {
-      // FAILED: all stages render as pending except none is active;
-      // the first stage shows as the failure point
       return index === 0 ? 'failed' : 'pending';
     }
     if (index < activeIndex) return 'completed';
@@ -67,63 +66,90 @@ export default function LIMSStepIndicator({ currentStatus }: LIMSStepIndicatorPr
     return 'pending';
   }
 
-  const shouldPulse = ['UPLOADING', 'CLASSIFYING', 'EXTRACTING', 'MERGING', 'EXPORTING'].includes(currentStatus);
+  const isProcessing = ['UPLOADING', 'CLASSIFYING', 'EXTRACTING', 'MERGING', 'EXPORTING'].includes(currentStatus);
 
   return (
-    <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 py-4 px-4">
+    <div className="glass-panel py-5 px-6">
       <div className="flex items-center justify-between">
         {STAGES.map((stage, index) => {
           const state = getStageState(index);
+          const isPending = state === 'pending';
+          const isActive = state === 'active';
+          const isCompleted = state === 'completed';
 
-          const circleClasses: Record<string, string> = {
+          const iconBubbleClasses: Record<string, string> = {
             completed:
-              'bg-emerald-500/15 border-emerald-500/25 text-emerald-400',
+              'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]',
             active:
-              'bg-blue-500/15 border-blue-500/40 text-blue-400 shadow-lg shadow-blue-500/10',
+              'bg-blue-500/10 border-blue-400/50 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-110',
             failed:
-              'bg-red-500/15 border-red-500/25 text-red-400',
+              'bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.4)]',
             pending:
-              'bg-slate-800 border-slate-700 text-slate-500',
+              'bg-slate-900 border-slate-700/60 text-slate-600',
           };
 
           const labelClasses: Record<string, string> = {
             completed: 'text-emerald-400',
-            active: 'text-blue-400',
+            active: 'text-white',
             failed: 'text-red-400',
-            pending: 'text-slate-500',
+            pending: 'text-slate-600',
           };
 
-          const IconComponent = state === 'completed'
+          const subtitleClasses: Record<string, string> = {
+            completed: 'text-emerald-400/50',
+            active: 'text-blue-400/70',
+            failed: 'text-red-400/50',
+            pending: 'text-slate-700',
+          };
+
+          const IconComponent = isCompleted
             ? CheckIcon
             : state === 'failed'
               ? XCircleIcon
               : stage.icon;
 
-          const pulse = state === 'active' && shouldPulse;
-
           return (
-            <div key={stage.key} className="flex items-center flex-1 last:flex-none">
-              {/* Stage circle + label */}
+            <div
+              key={stage.key}
+              className={`flex items-center flex-1 last:flex-none transition-all duration-500 ${
+                isPending ? 'opacity-40 blur-[0.3px]' : 'opacity-100'
+              }`}
+            >
+              {/* Stage icon + labels */}
               <div className="flex flex-col items-center gap-1.5">
                 <div
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${circleClasses[state]} ${pulse ? 'animate-pulse' : ''}`}
+                  className={`relative w-11 h-11 rounded-xl border flex items-center justify-center transition-all duration-500 ${iconBubbleClasses[state]}`}
                 >
-                  <IconComponent className="w-5 h-5" />
+                  {/* Ping dot for active processing */}
+                  {isActive && isProcessing && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
+                    </span>
+                  )}
+                  <IconComponent className={`w-5 h-5 ${isActive && isProcessing ? 'animate-pulse' : ''}`} />
                 </div>
-                <span className={`text-xs font-medium whitespace-nowrap ${labelClasses[state]}`}>
+                <span className={`text-[11px] font-display font-semibold whitespace-nowrap tracking-wide ${labelClasses[state]}`}>
                   {stage.label}
+                </span>
+                <span className={`text-[9px] whitespace-nowrap ${subtitleClasses[state]}`}>
+                  {stage.subtitle}
                 </span>
               </div>
 
-              {/* Connector line (not after last stage) */}
+              {/* Connector line */}
               {index < STAGES.length - 1 && (
-                <div
-                  className={`flex-1 h-px mx-3 mb-6 ${
-                    index < activeIndex
-                      ? 'bg-emerald-500/40'
-                      : 'bg-slate-700'
-                  }`}
-                />
+                <div className="flex-1 mx-3 mb-7">
+                  <div
+                    className={`h-px transition-all duration-500 ${
+                      index < activeIndex
+                        ? 'bg-gradient-to-r from-emerald-500/50 to-emerald-500/20'
+                        : index === activeIndex
+                          ? 'bg-gradient-to-r from-blue-500/40 to-slate-700/50'
+                          : 'bg-slate-800'
+                    }`}
+                  />
+                </div>
               )}
             </div>
           );

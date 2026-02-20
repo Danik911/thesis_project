@@ -6,6 +6,9 @@
 ## Status
 RESOLVED (2026-02-19)
 
+## Consolidation
+Consolidated into `ISSUE-037-l15-frontend-delivery-and-local-e2e-consolidated.md`.
+
 ## Symptom
 Task L15 frontend implementation required stable L14 payload contracts for pipeline stages, but backend contracts were initially in-progress. This blocked strict integration for:
 

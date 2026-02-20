@@ -40,12 +40,15 @@ export default function ClassificationPanel({
     <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-5 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-500">Classification</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Deterministic Classification</p>
           <h3 className="text-lg font-semibold text-slate-100 mt-1 flex items-center gap-2">
             <span>{typeIcon}</span>
             <span>{detectedType}</span>
           </h3>
           <p className="text-sm text-slate-400 mt-1">Method: {method}</p>
+          <p className="text-xs text-slate-500 mt-2">
+            Hybrid rules + ML classifier detects your test type with transparent evidence.
+          </p>
         </div>
         <span className="px-2.5 py-1 rounded-full text-xs font-medium border bg-blue-500/15 border-blue-500/25 text-blue-400">
           {confidenceLabel}
