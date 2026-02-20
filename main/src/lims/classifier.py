@@ -238,11 +238,16 @@ class TestTypeClassifier:
         for test_type, patterns in FILENAME_PATTERNS.items():
             for pattern in patterns:
                 if re.search(pattern, name_part):
+                    # Extract human-readable keyword from regex
+                    keyword = re.sub(r"[\\()?:^|$_\[\]{}+*]", "", pattern).strip()
                     return ClassificationResult(
                         test_type=test_type,
                         confidence=0.95,
                         method="filename",
-                        evidence=[f"Filename '{filename}' matches pattern '{pattern}'"],
+                        evidence=[
+                            f"Filename '{filename}' contains "
+                            f"'{keyword}' keyword for {test_type.value}"
+                        ],
                         pdf_filename=filename,
                     )
         return None

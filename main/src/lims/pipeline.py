@@ -295,7 +295,10 @@ class TwoLayerPipeline:
             )
             return None
 
+        from main.src.lims.langfuse_tracing import get_lims_langfuse
         from main.src.lims.standards_loader import query_standards
+
+        langfuse = get_lims_langfuse()
 
         test_type = classification.test_type.value
         query_text = (
@@ -304,12 +307,29 @@ class TwoLayerPipeline:
             f"equipment groups, reagent lists"
         )
 
+        # --- RAG span ---
+        rag_span = None
+        if langfuse:
+            rag_span = langfuse.start_span(
+                name="pipeline-augment-rag",
+                input={"query_text": query_text, "test_type": test_type},
+            )
+
         standards_results = query_standards(
             query_text=query_text,
             collection_name=self.config.standards_collection,
-            top_k=5,
+            top_k=self.config.rag_standards_top_k,
             chroma_path=self.config.chromadb_path,
         )
+
+        if rag_span:
+            rag_span.update(
+                output={
+                    "result_count": len(standards_results),
+                    "distances": [r.get("distance", "N/A") for r in standards_results],
+                },
+            )
+            rag_span.end()
 
         standards_context = "\n\n".join(
             f"--- {r.get('title', 'Untitled')} ---\n{r.get('content', '')}"
@@ -341,6 +361,14 @@ class TwoLayerPipeline:
             base_url="https://openrouter.ai/api/v1",
         )
 
+        # --- LLM span ---
+        llm_span = None
+        if langfuse:
+            llm_span = langfuse.start_span(
+                name="pipeline-augment-llm",
+                input={"model": self.config.openrouter_model, "test_type": test_type},
+            )
+
         response = client.chat.completions.create(
             model=self.config.openrouter_model,
             messages=[
@@ -357,9 +385,20 @@ class TwoLayerPipeline:
         if "suggestions" not in augmented:
             augmented = {"suggestions": []}
 
+        suggestion_count = len(augmented.get("suggestions", []))
+
+        if llm_span:
+            llm_span.update(
+                output={
+                    "response_length": len(response_text),
+                    "suggestion_count": suggestion_count,
+                },
+            )
+            llm_span.end()
+
         logger.info(
             "Augmentation LLM returned %d suggestions",
-            len(augmented.get("suggestions", [])),
+            suggestion_count,
         )
         return augmented
 

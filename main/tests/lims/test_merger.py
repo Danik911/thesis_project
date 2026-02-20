@@ -333,8 +333,10 @@ class TestSMERequired:
             for path, prov in prov_fields.items()
             if prov["source"] == "SME_REQUIRED"
         ]
-        # Identity template has null/empty variable fields -> SME_REQUIRED
-        assert len(sme_required_paths) > 0
+        # A complete template skeleton has no true SME_REQUIRED gaps —
+        # Optional[...] fields (list_key, units, etc.) that are None by
+        # design are correctly excluded from SME_REQUIRED marking.
+        assert len(sme_required_paths) == 0
 
     def test_every_field_has_provenance(self, identity_template):
         """After merge, every non-null field in analyses/components has provenance."""

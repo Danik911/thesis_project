@@ -28,6 +28,12 @@ class LIMSConfig(BaseModel):
     upload_dir: str = "./uploads/lims"
     output_dir: str = "./output/lims"
 
+    # RAG tuning parameters
+    rag_mda_top_k: int = 3                 # LIMS_RAG_MDA_TOP_K
+    rag_standards_top_k: int = 5           # LIMS_RAG_STANDARDS_TOP_K
+    rag_chunk_max_size: int = 2000         # LIMS_RAG_CHUNK_MAX_SIZE
+    rag_similarity_threshold: float = 0.0  # LIMS_RAG_SIMILARITY_THRESHOLD (0=no filter)
+
     @field_validator("llamaextract_api_key")
     @classmethod
     def validate_api_key_not_empty(cls, v: str) -> str:
@@ -79,6 +85,16 @@ class LIMSConfig(BaseModel):
             )
         return v
 
+    @field_validator("rag_similarity_threshold")
+    @classmethod
+    def validate_rag_similarity_threshold(cls, v: float) -> float:
+        if not 0.0 <= v <= 2.0:
+            raise ValueError(
+                "LIMS_RAG_SIMILARITY_THRESHOLD must be between 0.0 and 2.0 "
+                "(ChromaDB L2 distance range)"
+            )
+        return v
+
 
 def get_lims_config() -> LIMSConfig:
     """Load LIMS config from LIMS_* environment variables.
@@ -111,4 +127,10 @@ def get_lims_config() -> LIMSConfig:
         ),
         upload_dir=os.getenv("LIMS_UPLOAD_DIR", "./uploads/lims"),
         output_dir=os.getenv("LIMS_OUTPUT_DIR", "./output/lims"),
+        rag_mda_top_k=int(os.getenv("LIMS_RAG_MDA_TOP_K", "3")),
+        rag_standards_top_k=int(os.getenv("LIMS_RAG_STANDARDS_TOP_K", "5")),
+        rag_chunk_max_size=int(os.getenv("LIMS_RAG_CHUNK_MAX_SIZE", "2000")),
+        rag_similarity_threshold=float(
+            os.getenv("LIMS_RAG_SIMILARITY_THRESHOLD", "0.0")
+        ),
     )

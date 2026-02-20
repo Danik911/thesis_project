@@ -24,6 +24,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import chromadb
+from langfuse import observe
 
 logger = logging.getLogger(__name__)
 
@@ -463,6 +464,7 @@ def seed_standards_collection(
     return len(collection_documents)
 
 
+@observe(name="rag-standards-query")
 def query_standards(
     query_text: str,
     collection_name: str = "lims_standards",
@@ -472,7 +474,7 @@ def query_standards(
     """Query standards collection for relevant sections.
 
     Returns:
-        List of dicts with 'content', 'title', 'source_file' keys.
+        List of dicts with 'content', 'title', 'source_file', 'distance' keys.
     """
     if not query_text.strip():
         raise ValueError("query_text must not be empty")
@@ -497,24 +499,31 @@ def query_standards(
         effective_k,
         doc_count,
     )
-    results = collection.query(query_texts=[query_text], n_results=effective_k)
+    results = collection.query(
+        query_texts=[query_text],
+        n_results=effective_k,
+        include=["documents", "metadatas", "distances"],
+    )
 
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
 
     output: list[dict[str, str]] = []
-    for content, metadata in zip(documents, metadatas, strict=False):
+    for content, metadata, distance in zip(documents, metadatas, distances, strict=False):
         safe_metadata = metadata or {}
         output.append({
             "content": str(content),
             "title": str(safe_metadata.get("title", "Untitled Section")),
             "source_file": str(safe_metadata.get("source_file", "UNKNOWN")),
+            "distance": str(round(float(distance), 4)),
         })
 
     logger.info(
-        "Query standards complete: collection=%s returned=%d",
+        "Query standards complete: collection=%s returned=%d distances=%s",
         collection_name,
         len(output),
+        [r["distance"] for r in output[:5]],
     )
 
     return output

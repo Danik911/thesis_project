@@ -15,9 +15,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import chromadb
 import openpyxl
+from langfuse import observe
+
+from main.src.lims.chunking import parse_xlsx_to_chunks
 
 logger = logging.getLogger(__name__)
 
@@ -101,11 +105,11 @@ def seed_mda_templates(
     collection_name: str = COLLECTION_NAME,
     chroma_path: str = CHROMA_PATH,
 ) -> int:
-    """Seed a ChromaDB collection from demo XLSX files.
+    """Seed a ChromaDB collection from demo XLSX files using sheet-level chunks.
 
-    Iterates over all ``*.xlsx`` files in *demo_data_dir*, parses each with
-    :func:`parse_xlsx_to_text`, and upserts the resulting text documents into
-    the target collection.
+    Iterates over all ``*.xlsx`` files in *demo_data_dir*, chunks each into
+    per-sheet markdown tables via :func:`parse_xlsx_to_chunks`, and upserts
+    the resulting chunks into the target collection.
 
     Args:
         demo_data_dir: Directory containing demo ``*.xlsx`` files.
@@ -113,7 +117,7 @@ def seed_mda_templates(
         chroma_path: Path to the ChromaDB persistent storage directory.
 
     Returns:
-        Number of documents added to the collection.
+        Number of chunks added to the collection.
 
     Raises:
         FileNotFoundError: If *demo_data_dir* does not exist or contains
@@ -137,36 +141,42 @@ def seed_mda_templates(
     )
 
     client = chromadb.PersistentClient(path=chroma_path)
+    # Delete existing collection to re-seed cleanly
+    try:
+        client.delete_collection(collection_name)
+        logger.info("Deleted existing collection '%s' for re-seeding", collection_name)
+    except ValueError:
+        pass  # Collection doesn't exist yet
     collection = client.get_or_create_collection(collection_name)
 
     documents: list[str] = []
-    metadatas: list[dict[str, str]] = []
+    metadatas: list[dict[str, Any]] = []
     ids: list[str] = []
 
     for xlsx_path in xlsx_files:
-        text = parse_xlsx_to_text(xlsx_path)
-        doc_id = xlsx_path.stem  # e.g. "AND_ACS_AQ126-AQ126"
-
-        # Derive site prefix from filename (AND, FRE, TUA, etc.)
-        prefix = xlsx_path.stem.split("_")[0] if "_" in xlsx_path.stem else "UNKNOWN"
-
-        documents.append(text)
-        metadatas.append({
-            "filename": xlsx_path.name,
-            "prefix": prefix,
-            "source_dir": str(demo_dir.resolve()),
-        })
-        ids.append(doc_id)
-
-        logger.info("Prepared document: %s (prefix=%s)", doc_id, prefix)
+        chunks = parse_xlsx_to_chunks(xlsx_path)
+        for chunk in chunks:
+            documents.append(chunk["text"])
+            # ChromaDB metadata values must be str, int, float, or bool
+            meta = {
+                "source_file": chunk["metadata"]["source_file"],
+                "sheet_name": chunk["metadata"]["sheet_name"],
+                "is_priority": chunk["metadata"]["is_priority"],
+                "is_summary": chunk["metadata"]["is_summary"],
+                "row_count": chunk["metadata"]["row_count"],
+                "prefix": chunk["metadata"]["prefix"],
+            }
+            metadatas.append(meta)
+            ids.append(chunk["id"])
 
     # Bulk add to ChromaDB
     collection.add(documents=documents, metadatas=metadatas, ids=ids)
 
     final_count = collection.count()
     logger.info(
-        "Seeded %d documents into '%s' collection (total in collection: %d)",
+        "Seeded %d chunks from %d XLSX files into '%s' (total: %d)",
         len(documents),
+        len(xlsx_files),
         collection_name,
         final_count,
     )
@@ -179,6 +189,7 @@ def seed_mda_templates(
 # ---------------------------------------------------------------------------
 
 
+@observe(name="rag-mda-templates-query")
 def query_similar_templates(
     extraction_text: str,
     top_k: int = 3,
@@ -233,13 +244,84 @@ def query_similar_templates(
     results = collection.query(
         query_texts=[extraction_text],
         n_results=effective_k,
+        include=["documents", "metadatas", "distances"],
     )
 
     # results["documents"] is a list of lists -- one per query text
     matched_docs: list[str] = results["documents"][0]  # type: ignore[index]
+    distances: list[float] = results.get("distances", [[]])[0]  # type: ignore[union-attr]
 
     logger.info(
-        "Query returned %d similar templates", len(matched_docs)
+        "Query returned %d similar templates (distances: %s)",
+        len(matched_docs),
+        [round(d, 4) for d in distances[:5]],
     )
 
     return matched_docs
+
+
+@observe(name="rag-mda-templates-query-scored")
+def query_similar_templates_with_scores(
+    extraction_text: str,
+    top_k: int = 3,
+    collection_name: str = COLLECTION_NAME,
+    chroma_path: str = CHROMA_PATH,
+) -> list[dict[str, Any]]:
+    """Query ChromaDB and return documents with distance scores and metadata.
+
+    Same as :func:`query_similar_templates` but returns full result dicts
+    needed by the RAG evaluator.
+
+    Args:
+        extraction_text: Text from a PDF extraction or user query.
+        top_k: Maximum number of similar documents to return.
+        collection_name: ChromaDB collection name.
+        chroma_path: Path to the ChromaDB persistent storage directory.
+
+    Returns:
+        List of dicts with keys: ``content``, ``distance``, ``metadata``.
+
+    Raises:
+        ValueError: If *extraction_text* is empty.
+        RuntimeError: If the collection is empty.
+    """
+    if not extraction_text.strip():
+        raise ValueError("extraction_text must not be empty.")
+
+    client = chromadb.PersistentClient(path=chroma_path)
+    collection = client.get_or_create_collection(collection_name)
+
+    doc_count = collection.count()
+    if doc_count == 0:
+        raise RuntimeError(
+            f"ChromaDB collection '{collection_name}' is empty. "
+            f"Run seed_mda_templates() first."
+        )
+
+    effective_k = min(top_k, doc_count)
+
+    results = collection.query(
+        query_texts=[extraction_text],
+        n_results=effective_k,
+        include=["documents", "metadatas", "distances"],
+    )
+
+    documents = results.get("documents", [[]])[0]
+    metadatas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
+
+    output: list[dict[str, Any]] = []
+    for doc, meta, dist in zip(documents, metadatas, distances, strict=False):
+        output.append({
+            "content": str(doc),
+            "distance": float(dist),
+            "metadata": dict(meta) if meta else {},
+        })
+
+    logger.info(
+        "Scored query returned %d results (top distance: %.4f)",
+        len(output),
+        output[0]["distance"] if output else float("inf"),
+    )
+
+    return output

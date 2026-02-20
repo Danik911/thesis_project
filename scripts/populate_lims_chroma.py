@@ -28,4 +28,4 @@ logging.basicConfig(
 if __name__ == "__main__":
     demo_dir = sys.argv[1] if len(sys.argv) > 1 else "./demo_data"
     count = seed_mda_templates(demo_dir)
-    print(f"Seeded {count} MDA templates into ChromaDB mda_templates collection")  # noqa: T201
+    print(f"Seeded {count} chunks into ChromaDB mda_templates collection")  # noqa: T201

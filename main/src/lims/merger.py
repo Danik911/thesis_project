@@ -245,6 +245,60 @@ def _sanitize_new_component(
     return item
 
 
+def _sanitize_new_calc_variable(
+    item: dict[str, Any],
+) -> dict[str, Any]:
+    """Ensure a new extracted calc_variable has all required fields.
+
+    Args:
+        item: Raw extracted calc_variable dict.
+
+    Returns:
+        Sanitized calc_variable dict with required fields present.
+    """
+    if "reference_type" not in item or not item["reference_type"]:
+        item["reference_type"] = "C"
+        logger.info(
+            "Defaulted reference_type='C' for new calc_variable '%s'",
+            item.get("name", "UNKNOWN"),
+        )
+
+    # Validate reference_type is valid
+    valid_ref_types = {"C", "A"}
+    raw_rt = str(item.get("reference_type", "")).upper().strip()
+    if raw_rt not in valid_ref_types:
+        logger.info(
+            "Coercing reference_type '%s' -> 'C' for calc_variable '%s'",
+            raw_rt,
+            item.get("name", "UNKNOWN"),
+        )
+        item["reference_type"] = "C"
+
+    return item
+
+
+def _sanitize_new_calculation(
+    item: dict[str, Any],
+) -> dict[str, Any]:
+    """Ensure a new extracted calculation has all required fields.
+
+    Args:
+        item: Raw extracted calculation dict.
+
+    Returns:
+        Sanitized calculation dict with required fields present.
+    """
+    if "source_code" not in item or not item.get("source_code", "").strip():
+        component = item.get("component", "UNKNOWN")
+        item["source_code"] = f"REM SME_REQUIRED: source_code for {component}"
+        logger.info(
+            "Defaulted source_code placeholder for new calculation on '%s'",
+            component,
+        )
+
+    return item
+
+
 def _overlay_extracted_items(
     template_items: list[dict[str, Any]],
     extracted_items: list[dict[str, Any]],
@@ -439,6 +493,7 @@ def merge_layers(
             provenance,
             "calc_variables",
             conflicts,
+            sanitize_fn=_sanitize_new_calc_variable,
         )
 
     if ext_calculations:
@@ -449,6 +504,7 @@ def merge_layers(
             provenance,
             "calculations",
             conflicts,
+            sanitize_fn=_sanitize_new_calculation,
         )
 
     logger.info(
@@ -620,13 +676,35 @@ def _apply_suggestion_to_dict(
 def _mark_sme_required_gaps(
     base: dict[str, Any], provenance: ProvenanceMap
 ) -> None:
-    """Mark fields that are still null/empty as SME_REQUIRED."""
+    """Mark fields that are still null/empty as SME_REQUIRED.
+
+    Skips fields that are legitimately Optional in the Pydantic schema —
+    these are None by design (e.g., list_key is only needed for L-type
+    components, instrument_group only for N-type with instruments).
+    """
+    # Fields that are Optional in the schema and legitimately None
+    optional_fields: dict[str, set[str]] = {
+        "analyses": {"worklist_link", "description"},
+        "components": {
+            "units", "minimum", "maximum",
+            "instrument_group", "list_key", "sr_picker",
+            "round_type", "places",
+        },
+        "calc_variables": {
+            "reference_analysis", "reference_component", "attribute_1",
+        },
+        "calculations": {"description"},
+    }
+
     for sheet_key in ("analyses", "components", "calc_variables", "calculations"):
         items = base.get(sheet_key, [])
+        skip_fields = optional_fields.get(sheet_key, set())
         for i, item in enumerate(items):
             if not isinstance(item, dict):
                 continue
             for key, value in item.items():
+                if key in skip_fields:
+                    continue
                 path = f"{sheet_key}[{i}].{key}"
                 existing = provenance.get_provenance(path)
                 if existing is not None:

@@ -24,11 +24,15 @@ class _FakeCollection:
     def count(self) -> int:
         return len(self._documents)
 
-    def query(self, query_texts: list[str], n_results: int) -> dict:
+    def query(self, query_texts: list[str], n_results: int, **kwargs) -> dict:
         _ = query_texts
+        docs = self._documents[:n_results]
+        metas = self._metadatas[:n_results]
+        distances = [0.1 * (i + 1) for i in range(len(docs))]
         return {
-            "documents": [self._documents[:n_results]],
-            "metadatas": [self._metadatas[:n_results]],
+            "documents": [docs],
+            "metadatas": [metas],
+            "distances": [distances],
         }
 
 
@@ -40,6 +44,10 @@ class _FakeClient:
         if name not in self.collections:
             self.collections[name] = _FakeCollection()
         return self.collections[name]
+
+    def delete_collection(self, name: str) -> None:
+        if name in self.collections:
+            del self.collections[name]
 
 
 def _write_prepared_fixture(root: Path, *, with_calc_content: bool = True) -> None:
@@ -173,7 +181,7 @@ def test_query_standards_returns_structured_results(
     )
 
     assert len(results) == 2
-    assert set(results[0].keys()) == {"content", "title", "source_file"}
+    assert set(results[0].keys()) == {"content", "title", "source_file", "distance"}
 
 
 def test_rag_loader_supports_custom_collection_names(
@@ -188,8 +196,19 @@ def test_rag_loader_supports_custom_collection_names(
     monkeypatch.setattr(rag_loader.chromadb, "PersistentClient", lambda path: fake_client)
     monkeypatch.setattr(
         rag_loader,
-        "parse_xlsx_to_text",
-        lambda xlsx_path: f"Parsed {Path(xlsx_path).name}",
+        "parse_xlsx_to_chunks",
+        lambda xlsx_path: [{
+            "id": "AND_SAMPLE__analysis",
+            "text": f"Parsed {Path(xlsx_path).name}",
+            "metadata": {
+                "source_file": Path(xlsx_path).name,
+                "sheet_name": "Analysis",
+                "is_priority": True,
+                "is_summary": False,
+                "row_count": 1,
+                "prefix": "AND",
+            },
+        }],
     )
 
     added = rag_loader.seed_mda_templates(

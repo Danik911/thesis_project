@@ -53,6 +53,10 @@ class MDAGenerationWorkflow(Workflow):
                 "Add it to .env.local to enable MDA generation."
             )
 
+        from main.src.lims.langfuse_tracing import get_lims_langfuse
+
+        langfuse = get_lims_langfuse()
+
         # Serialize extraction for prompt (truncate to 3000 chars for token budget)
         extraction_summary = json.dumps(raw_extraction, indent=2, default=str)[:3000]
 
@@ -65,17 +69,35 @@ class MDAGenerationWorkflow(Workflow):
         # 1. Query ChromaDB for similar MDA templates
         rag_failure: str | None = None
         rag_examples: list[str] = []
+
+        # --- RAG span ---
+        rag_span = None
+        if langfuse:
+            rag_span = langfuse.start_span(
+                name="mda-gen-rag-query",
+                input={"extraction_length": len(extraction_summary)},
+            )
+
         try:
             rag_examples = query_similar_templates(
                 extraction_text=extraction_summary,
-                top_k=2,
+                top_k=config.rag_mda_top_k,
                 chroma_path=config.chromadb_path,
             )
             logger.info("RAG returned %d similar templates", len(rag_examples))
         except RuntimeError as e:
-            # RuntimeError = collection not seeded yet — transparent degradation
+            # RuntimeError = collection not seeded yet -- transparent degradation
             rag_failure = f"RAG unavailable: {e}"
             logger.warning(rag_failure)
+
+        if rag_span:
+            rag_span.update(
+                output={
+                    "examples_found": len(rag_examples),
+                    "rag_failure": rag_failure,
+                },
+            )
+            rag_span.end()
 
         rag_context = (
             "\n---\n".join(rag_examples)
@@ -100,6 +122,14 @@ class MDAGenerationWorkflow(Workflow):
 
         logger.info("Calling OpenRouter model: %s", config.openrouter_model)
 
+        # --- LLM span ---
+        llm_span = None
+        if langfuse:
+            llm_span = langfuse.start_span(
+                name="mda-gen-llm-call",
+                input={"model": config.openrouter_model},
+            )
+
         response = client.chat.completions.create(
             model=config.openrouter_model,
             messages=[
@@ -122,6 +152,15 @@ class MDAGenerationWorkflow(Workflow):
             len(raw_content),
             response.choices[0].finish_reason,
         )
+
+        if llm_span:
+            llm_span.update(
+                output={
+                    "response_length": len(raw_content),
+                    "finish_reason": response.choices[0].finish_reason,
+                },
+            )
+            llm_span.end()
 
         # 4. Parse JSON response
         try:
