@@ -29,7 +29,7 @@ AI-powered extraction from pharmaceutical test method PDFs into LabWare LIMS MDA
 
 ### Implementation Status
 
-Full HITL workflow complete (Tasks L1-L6):
+Full HITL workflow complete (Tasks L1-L6). Phase 8 (Two-Layer Pipeline Architecture) in progress (L10-L14 complete):
 
 | Phase | Status | Documentation |
 |-------|--------|---------------|
@@ -37,14 +37,29 @@ Full HITL workflow complete (Tasks L1-L6):
 | L2: MDA Generation + RAG | Complete | [LIMS-002](project_p/LIMS-002-mda-generation-rag-xlsx.md) |
 | L3: Chat Agent + HITL Router | Complete | [LIMS-003](project_p/LIMS-003-chat-agent-hitl-router.md) |
 | L4: Multi-Step Frontend UI | Complete | [LIMS-004](project_p/LIMS-004-full-hitl-ui.md) |
+| L7: Extraction Quality | Complete | — |
+| L10: Foundation Models | Complete | — |
+| L11: Template Library | Complete | — |
+| L12: Hybrid Classifier | Complete | — |
+| L13: Standards RAG | Complete | — |
+| L14: Pipeline Core | Complete | [LIMS-014](project_p/LIMS-014-pipeline-core-extractor-merger-orchestrator.md) |
+| L15: Frontend Provenance UI | In Progress | — |
+| L16: E2E Validation | Not Started | — |
 
-**Current Workflow**: Upload PDF -> AI Extraction -> MDA Table Review -> Chat Refinement -> Human Approval -> XLSX Export
+**Current Workflow**: Upload PDF -> Classify Test Type -> Load Template -> Focused Extract -> Augment from Standards -> Merge with Provenance -> SME Review -> Chat Refinement -> Human Approval -> XLSX Export
 
 **Key Components**:
-- `LIMSStepIndicator.tsx` — 5-stage pipeline progress (EXTRACTING -> GENERATING -> PENDING_REVIEW -> APPROVED -> EXPORTED)
+- `LIMSStepIndicator.tsx` — 8-stage pipeline progress (EXTRACTING -> GENERATING -> PENDING_REVIEW -> APPROVED -> EXPORTED, extended for two-layer pipeline)
 - `ChatInterface.tsx` — Interactive chat for MDA refinement with edit badges and suggestion chips
 - `MDAViewer.tsx` — Tabbed table viewer for 4 MDA sheets (Analysis, Components, Calc Variables, Calculations) with cell-level highlighting
 - `lims.tsx` — Main page with conditional views for each workflow stage
+- `pipeline.py` — TwoLayerPipeline orchestrator (Classify -> Template -> Extract -> Augment -> Merge -> Review)
+- `focused_extractor.py` — Focused extraction with schema narrowing
+- `merger.py` — Three-layer merge with provenance tracking
+- `classifier.py` — Hybrid test type classifier
+- `templates/` — Curated template library (HPLC, LOD, Titration, Identity)
+- `standards_loader.py` — Standards RAG for augmentation
+- `ProvenanceBadge.tsx`, `ClassificationPanel.tsx`, `MergeConflictPanel.tsx`, `PipelineStageDetail.tsx`, `TemplatePreview.tsx` — New frontend components (L15, in progress)
 
 **Local Testing**:
 ```bash

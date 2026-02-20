@@ -4,7 +4,7 @@ Multi-agent LLM system for automated OQ (Operational Qualification) test generat
 
 **Live:** https://csvgeneration.com
 
-> **AI4LIMS PoC** (branch: `prjoject_p_protatype`): **Demo-ready** AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates with full HITL (Human-in-the-Loop) workflow. Phase 6 complete: PDF Upload → AI Extraction → MDA Review → Chat Refinement → Human Approval → XLSX Export. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
+> **AI4LIMS PoC** (branch: `prjoject_p_protatype`): **Demo-ready** AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates with full HITL workflow and two-layer pipeline architecture. Phase 8 in progress (L10-L14 complete): Classify Test Type -> Load Template -> Focused Extract -> Augment from Standards -> Merge with Provenance -> SME Review. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
 
 ---
 
@@ -86,37 +86,56 @@ User → Frontend (Next.js) → API (FastAPI) → Job Queue (SQS)
 
 ## AI4LIMS PoC Workflow
 
-**Status**: Phase 6 Complete (Demo-Ready) | **Branch**: `prjoject_p_protatype`
+**Status**: Phase 8 In Progress (L10-L14 Complete) | **Branch**: `prjoject_p_protatype`
 
 ```
-User Uploads PDF → LlamaExtract (LlamaIndex Cloud)
-                           │
-                           ▼
-                    MDA Schema Extraction
-                           │
-                           ▼
-              ┌────────────┴────────────┐
-              ▼                         ▼
-    Interactive MDA Table         Chat Refinement
-    (Cell-level editing)         (GPT-5/Claude Opus 4.6)
-              │                         │
-              └────────────┬────────────┘
-                           ▼
+User Uploads PDF -> Classify Test Type (Hybrid: filename + keywords)
+                           |
+              +------------+------------+
+              |                         |
+     Known Test Type               TestType.OTHER
+     (HPLC/LOD/Titration/ID)      (Single-layer fallback)
+              |                         |
+              v                         v
+     Load Curated Template     LlamaExtract (full)
+              |                         |
+              v                         v
+     Focused Extract            MDA Generation
+     (variable fields only)     (OpenRouter LLM)
+              |                         |
+              v                         |
+     Augment from Standards             |
+     (ChromaDB RAG + LLM)              |
+              |                         |
+              v                         |
+     Merge with Provenance              |
+     (Template + Extracted + Inferred)  |
+              |                         |
+              +------------+------------+
+                           |
+                           v
+                   SME Review (HITL)
+                           |
+                           v
                    Human Approval
-                           │
-                           ▼
+                           |
+                           v
                  XLSX Export (4 sheets)
 ```
 
 **Key Features**:
 - PDF extraction via LlamaExtract API
 - RAG-enhanced MDA generation (ChromaDB: `mda_templates` collection)
+- Two-layer pipeline: curated templates (~46%) + focused PDF extraction
+- Hybrid test type classifier (HPLC, LOD, Titration, Identity, Other)
+- Full provenance tracking (Template/Extracted/Inferred/SME_REQUIRED)
+- Merge conflict detection and resolution
 - Real-time chat interface for data refinement
 - Cell-level highlighting for AI-suggested changes
 - HITL approval workflow with state machine
 - Multi-sheet XLSX export (openpyxl)
 
-**Components**: `LIMSStepIndicator`, `ChatInterface`, `MDAViewer` | **Route**: `/lims` | **Docs**: `docs/project_p/`
+**Components**: `TwoLayerPipeline`, `FocusedExtractor`, `Merger`, `Classifier`, `TemplateLibrary`, `LIMSStepIndicator`, `ChatInterface`, `MDAViewer` | **Route**: `/lims` | **Docs**: `docs/project_p/`
 
 ---
 

@@ -1,66 +1,223 @@
 import Head from 'next/head';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { getApiBaseUrl } from '@/lib/authenticatedFetch';
 import MDAViewer from '@/components/MDAViewer';
 import LIMSStepIndicator from '@/components/LIMSStepIndicator';
 import ChatInterface from '@/components/ChatInterface';
+import ClassificationPanel from '@/components/ClassificationPanel';
+import TemplatePreview from '@/components/TemplatePreview';
+import MergeConflictPanel from '@/components/MergeConflictPanel';
+import PipelineStageDetail from '@/components/PipelineStageDetail';
+import type { StageDetail } from '@/components/PipelineStageDetail';
+import type { TemplateField } from '@/components/TemplatePreview';
+import type { MergeConflict } from '@/components/MergeConflictPanel';
+import type { ProvenanceBadgeProps } from '@/components/ProvenanceBadge';
+import type {
+  ClassificationResult,
+  ExtractResponse,
+  MergeConflictResponse,
+  PipelineStageDetailResponse,
+  ProvenancePayload,
+  StatusResponse,
+  TemplateResponse,
+} from '@/types/lims';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+type WorkflowView =
+  | 'idle'
+  | 'uploading'
+  | 'classifying'
+  | 'template_preview'
+  | 'extracting'
+  | 'merging'
+  | 'review'
+  | 'exporting'
+  | 'done'
+  | 'failed';
 
-interface ExtractResponse {
-  job_id: string;
-  status: string;
-  filename: string;
-  size_bytes: number;
-  raw_extraction: Record<string, unknown>;
-  validated: boolean;
-  validation_error?: string | null;
-  mda_template: Record<string, unknown> | null;
-  mda_generation: Record<string, unknown> | null;
+interface ClassificationViewModel {
+  detectedType: string;
+  confidence: number;
+  method: string;
+  evidence: string[];
+  options: string[];
 }
 
-type LIMSStatus =
-  | 'IDLE'
-  | 'EXTRACTING'
-  | 'GENERATING'
-  | 'PENDING_REVIEW'
-  | 'APPROVED'
-  | 'EXPORTED'
-  | 'FAILED';
+type ProvenanceCellMap = Record<string, { source: ProvenanceBadgeProps['source']; confidence?: number; detail?: string }>;
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+const CLASSIFICATION_OPTIONS: ClassificationResult['test_type'][] = ['HPLC', 'LOD', 'TITRATION', 'IDENTITY', 'OTHER'];
+
+const STAGE_LABELS: Record<string, string> = {
+  CLASSIFY: 'Classify',
+  TEMPLATE: 'Template',
+  EXTRACT: 'Extract',
+  AUGMENT: 'Augment',
+  MERGE: 'Merge',
+  REVIEW: 'Review',
+};
 
 const EXTRACTION_STAGES = [
   'Uploading PDF...',
-  'Extracting with LlamaExtract...',
-  'Validating schema...',
-  'Generating MDA template...',
+  'Classifying test type...',
+  'Running pipeline extraction...',
+  'Preparing merge review...',
 ] as const;
 
 const FADE = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 } };
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+const DEFAULT_STAGE_DETAILS: StageDetail[] = [
+  { key: 'classify', title: 'Classify', summary: 'Awaiting stage details.', bullets: [] },
+  { key: 'template', title: 'Template', summary: 'Awaiting stage details.', bullets: [] },
+  { key: 'extract', title: 'Extract', summary: 'Awaiting stage details.', bullets: [] },
+  { key: 'augment', title: 'Augment', summary: 'Awaiting stage details.', bullets: [] },
+  { key: 'merge', title: 'Merge', summary: 'Awaiting stage details.', bullets: [] },
+  { key: 'review', title: 'Review', summary: 'Awaiting stage details.', bullets: [] },
+];
+
+function mapBackendStatusToWorkflow(status: string): WorkflowView {
+  switch (status) {
+    case 'FAILED':
+      return 'failed';
+    case 'EXPORTED':
+      return 'done';
+    case 'APPROVED':
+    case 'PENDING_REVIEW':
+      return 'review';
+    case 'MERGING':
+      return 'merging';
+    case 'CLASSIFYING':
+      return 'classifying';
+    case 'LOADING_TEMPLATE':
+      return 'template_preview';
+    case 'EXTRACTING':
+    case 'GENERATING':
+    case 'AUGMENTING':
+      return 'extracting';
+    default:
+      return 'idle';
+  }
+}
+
+function toIndicatorStatus(workflowView: WorkflowView, backendStatus: string): string {
+  if (workflowView === 'review' && backendStatus === 'PENDING_REVIEW') return 'PENDING_REVIEW';
+  if (workflowView === 'review' && backendStatus === 'APPROVED') return 'APPROVED';
+  if (workflowView === 'done') return 'DONE';
+  if (workflowView === 'failed') return 'FAILED';
+  if (workflowView === 'template_preview') return 'TEMPLATE_PREVIEW';
+  if (workflowView === 'exporting') return 'EXPORTING';
+  if (workflowView === 'uploading') return 'UPLOADING';
+  return backendStatus || 'CLASSIFYING';
+}
+
+function normalizePath(path: string): string {
+  return path.replace(/\[(\d+)\]/g, '.$1');
+}
+
+function toCellProvenanceMap(provenance?: ProvenancePayload): ProvenanceCellMap {
+  const mapped: ProvenanceCellMap = {};
+  if (!provenance?.fields) return mapped;
+
+  for (const [rawPath, entry] of Object.entries(provenance.fields)) {
+    const key = normalizePath(rawPath);
+    mapped[key] = {
+      source: entry.source,
+      confidence: entry.confidence,
+      detail: entry.source_detail,
+    };
+  }
+
+  return mapped;
+}
+
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined) return '--';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function toMergeConflicts(conflicts?: MergeConflictResponse[]): MergeConflict[] {
+  if (!conflicts) return [];
+  return conflicts.map((conflict, index) => ({
+    id: `${conflict.field_path}-${index}`,
+    field: conflict.field_path,
+    templateValue: formatValue(conflict.template_value),
+    extractedValue: formatValue(conflict.extracted_value),
+  }));
+}
+
+function toStageDetails(stageDetails?: PipelineStageDetailResponse[]): StageDetail[] {
+  if (!stageDetails || stageDetails.length === 0) {
+    return DEFAULT_STAGE_DETAILS;
+  }
+
+  return stageDetails.map((item) => {
+    const key = item.stage.toLowerCase();
+    const detailsEntries = Object.entries(item.details || {}).map(([detailKey, value]) => `${detailKey}: ${formatValue(value)}`);
+    return {
+      key,
+      title: STAGE_LABELS[item.stage] ?? item.stage,
+      summary: item.summary,
+      bullets: [`duration_ms: ${item.duration_ms}`, ...detailsEntries],
+    };
+  });
+}
+
+function toClassificationViewModel(classification: ClassificationResult): ClassificationViewModel {
+  return {
+    detectedType: classification.test_type,
+    confidence: classification.confidence,
+    method: classification.method,
+    evidence: classification.evidence,
+    options: CLASSIFICATION_OPTIONS,
+  };
+}
+
+function toTemplateFields(template: TemplateResponse): TemplateField[] {
+  const fixed = template.fixed_fields.map((path) => ({
+    key: `fixed.${path}`,
+    label: path,
+    kind: 'fixed' as const,
+    value: 'Template fixed value',
+  }));
+
+  const variable = template.variable_fields.map((path) => ({
+    key: `variable.${path}`,
+    label: path,
+    kind: 'variable' as const,
+  }));
+
+  return [...fixed, ...variable];
+}
 
 export default function LimsPage() {
-  // Job tracking
   const [jobId, setJobId] = useState<string | null>(null);
-  const [jobStatus, setJobStatus] = useState<LIMSStatus>('IDLE');
+  const [backendStatus, setBackendStatus] = useState<string>('IDLE');
+  const [workflowView, setWorkflowView] = useState<WorkflowView>('idle');
   const [pdfFilename, setPdfFilename] = useState<string | null>(null);
   const [sizeBytes, setSizeBytes] = useState<number>(0);
 
-  // MDA data
   const [mdaData, setMdaData] = useState<Record<string, unknown> | null>(null);
   const [validated, setValidated] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [provenanceMap, setProvenanceMap] = useState<ProvenanceCellMap>({});
 
-  // UI state
+  const [classification, setClassification] = useState<ClassificationViewModel>({
+    detectedType: 'OTHER',
+    confidence: 0,
+    method: 'unclassified',
+    evidence: [],
+    options: CLASSIFICATION_OPTIONS,
+  });
+
+  const [templateFields, setTemplateFields] = useState<TemplateField[]>([]);
+  const [mergeConflicts, setMergeConflicts] = useState<MergeConflict[]>([]);
+  const [stageDetails, setStageDetails] = useState<StageDetail[]>(DEFAULT_STAGE_DETAILS);
+
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -68,13 +225,13 @@ export default function LimsPage() {
   const [error, setError] = useState<string | null>(null);
   const [approveLoading, setApproveLoading] = useState(false);
 
-  // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ---------------------------------------------------------------------------
-  // Animated extraction stages (during synchronous POST)
-  // ---------------------------------------------------------------------------
+  const indicatorStatus = useMemo(
+    () => toIndicatorStatus(workflowView, backendStatus),
+    [workflowView, backendStatus]
+  );
 
   useEffect(() => {
     if (!loading) {
@@ -82,19 +239,16 @@ export default function LimsPage() {
       return;
     }
     const timers = [
-      setTimeout(() => setExtractionStage(1), 2000),
-      setTimeout(() => setExtractionStage(2), 30000),
-      setTimeout(() => setExtractionStage(3), 45000),
+      setTimeout(() => setExtractionStage(1), 1200),
+      setTimeout(() => setExtractionStage(2), 4200),
+      setTimeout(() => setExtractionStage(3), 8200),
     ];
     return () => timers.forEach(clearTimeout);
   }, [loading]);
 
-  // ---------------------------------------------------------------------------
-  // Defensive status polling (for EXTRACTING/GENERATING robustness)
-  // ---------------------------------------------------------------------------
-
   useEffect(() => {
-    if (!jobId || !['EXTRACTING', 'GENERATING'].includes(jobStatus)) {
+    const inProgressStatuses = ['EXTRACTING', 'CLASSIFYING', 'LOADING_TEMPLATE', 'GENERATING', 'AUGMENTING', 'MERGING'];
+    if (!jobId || !inProgressStatuses.includes(backendStatus)) {
       if (pollRef.current) {
         clearInterval(pollRef.current);
         pollRef.current = null;
@@ -107,30 +261,46 @@ export default function LimsPage() {
         const baseUrl = getApiBaseUrl();
         const res = await fetch(`${baseUrl}/lims/status/${jobId}`);
         if (!res.ok) return;
-        const data = await res.json();
-        setJobStatus(data.status as LIMSStatus);
-        if (data.mda_template) setMdaData(data.mda_template);
-        if (data.error) setError(data.error);
+
+        const data: StatusResponse = await res.json();
+        setBackendStatus(data.status);
+
+        if (data.status === 'FAILED') {
+          setError(data.error ?? 'Pipeline failed.');
+          setWorkflowView('failed');
+          return;
+        }
+
+        if (data.classification) {
+          setClassification(toClassificationViewModel(data.classification));
+        }
+
+        if (data.mda_template) {
+          setMdaData(data.mda_template);
+        }
+
+        setProvenanceMap(toCellProvenanceMap(data.provenance));
+        setMergeConflicts(toMergeConflicts(data.conflicts));
+        setStageDetails(toStageDetails(data.stage_details));
+
+        const view = mapBackendStatusToWorkflow(data.status);
+        setWorkflowView(view);
       } catch {
-        // Silent for polling
+        // Polling intentionally silent.
       }
     }, 3000);
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [jobId, jobStatus]);
+  }, [jobId, backendStatus]);
 
-  // ---------------------------------------------------------------------------
-  // File handlers (preserved from original)
-  // ---------------------------------------------------------------------------
-
-  const handleFile = useCallback((f: File) => {
-    if (!f.name.toLowerCase().endsWith('.pdf')) {
+  const handleFile = useCallback((selectedFile: File) => {
+    if (!selectedFile.name.toLowerCase().endsWith('.pdf')) {
       setError('Only PDF files are accepted.');
       return;
     }
-    setFile(f);
+    setFile(selectedFile);
     setError(null);
   }, []);
 
@@ -169,18 +339,12 @@ export default function LimsPage() {
     [handleFile]
   );
 
-  // ---------------------------------------------------------------------------
-  // Extract handler
-  // ---------------------------------------------------------------------------
-
-  const handleExtract = useCallback(async () => {
+  const runExtractPipeline = useCallback(async () => {
     if (!file) return;
 
+    setWorkflowView('extracting');
     setLoading(true);
     setError(null);
-    setJobId(null);
-    setMdaData(null);
-    setJobStatus('EXTRACTING');
 
     const formData = new FormData();
     formData.append('file', file);
@@ -202,30 +366,110 @@ export default function LimsPage() {
       setJobId(data.job_id);
       setPdfFilename(data.filename);
       setSizeBytes(data.size_bytes);
+      setBackendStatus(data.status);
       setValidated(data.validated);
       setValidationError(data.validation_error ?? null);
+      setClassification(toClassificationViewModel(data.classification));
 
-      // Use validated MDA if available, otherwise raw extraction
-      const mda = data.mda_template ?? data.raw_extraction;
-      setMdaData(mda as Record<string, unknown>);
-      setJobStatus(data.status as LIMSStatus);
+      const mda = data.mda_template ?? data.raw_extraction ?? null;
+      setMdaData(mda);
+      setProvenanceMap(toCellProvenanceMap(data.provenance));
+      const mappedConflicts = toMergeConflicts(data.conflicts);
+      setMergeConflicts(mappedConflicts);
+      setStageDetails(toStageDetails(data.stage_details));
 
-      // Warn if generation failed but extraction succeeded
+      if (data.status === 'FAILED') {
+        setWorkflowView('failed');
+      } else if (mappedConflicts.length > 0) {
+        setWorkflowView('merging');
+      } else {
+        setWorkflowView('review');
+      }
+
       if (data.mda_generation && 'generation_error' in data.mda_generation) {
-        setError(`MDA generation warning: ${(data.mda_generation as Record<string, string>).generation_error}`);
+        const generationError = String((data.mda_generation as Record<string, unknown>).generation_error ?? 'Unknown generation error');
+        setError(`MDA generation warning: ${generationError}`);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
-      setJobStatus('FAILED');
+      setWorkflowView('failed');
+      setBackendStatus('FAILED');
     } finally {
       setLoading(false);
     }
   }, [file]);
 
-  // ---------------------------------------------------------------------------
-  // Approve handler
-  // ---------------------------------------------------------------------------
+  const handleStartPipeline = useCallback(async () => {
+    if (!file) return;
+
+    setLoading(true);
+    setError(null);
+    setWorkflowView('uploading');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/lims/classify`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ detail: response.statusText }));
+        throw new Error(body.detail || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: ClassificationResult = await response.json();
+      setClassification(toClassificationViewModel(data));
+      setWorkflowView('classifying');
+      setBackendStatus('CLASSIFYING');
+      setPdfFilename(file.name);
+      setSizeBytes(file.size);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      setWorkflowView('failed');
+      setBackendStatus('FAILED');
+    } finally {
+      setLoading(false);
+    }
+  }, [file]);
+
+  const moveToTemplatePreview = useCallback(async (selectedType: string) => {
+    setClassification((previous) => ({ ...previous, detectedType: selectedType }));
+
+    if (selectedType === 'OTHER') {
+      setTemplateFields([]);
+      await runExtractPipeline();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setBackendStatus('LOADING_TEMPLATE');
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/lims/template/${selectedType}`);
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ detail: response.statusText }));
+        throw new Error(body.detail || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const template: TemplateResponse = await response.json();
+      setTemplateFields(toTemplateFields(template));
+      setWorkflowView('template_preview');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      setWorkflowView('failed');
+      setBackendStatus('FAILED');
+    } finally {
+      setLoading(false);
+    }
+  }, [runExtractPipeline]);
 
   const handleApprove = useCallback(async () => {
     if (!jobId) return;
@@ -242,8 +486,10 @@ export default function LimsPage() {
         throw new Error(body.detail || `HTTP ${response.status}`);
       }
 
-      const data = await response.json();
-      setJobStatus(data.status as LIMSStatus);
+      const data = (await response.json()) as { status?: string };
+      if (data.status) {
+        setBackendStatus(data.status);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -252,33 +498,25 @@ export default function LimsPage() {
     }
   }, [jobId]);
 
-  // ---------------------------------------------------------------------------
-  // Export handler
-  // ---------------------------------------------------------------------------
-
   const handleExport = useCallback(() => {
     if (!jobId) return;
+
+    setWorkflowView('exporting');
     const baseUrl = getApiBaseUrl();
     window.open(`${baseUrl}/lims/export/${jobId}`, '_blank');
-    setJobStatus('EXPORTED');
+    setBackendStatus('EXPORTED');
+    setWorkflowView('done');
   }, [jobId]);
-
-  // ---------------------------------------------------------------------------
-  // MDA update handler (from ChatInterface edits)
-  // ---------------------------------------------------------------------------
 
   const handleMDAUpdate = useCallback((updatedMDA: Record<string, unknown>) => {
     setMdaData(updatedMDA);
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Start over
-  // ---------------------------------------------------------------------------
-
   const handleStartOver = useCallback(() => {
     setFile(null);
     setJobId(null);
-    setJobStatus('IDLE');
+    setBackendStatus('IDLE');
+    setWorkflowView('idle');
     setMdaData(null);
     setValidated(false);
     setValidationError(null);
@@ -286,22 +524,22 @@ export default function LimsPage() {
     setPdfFilename(null);
     setSizeBytes(0);
     setApproveLoading(false);
+    setTemplateFields([]);
+    setMergeConflicts([]);
+    setProvenanceMap({});
+    setStageDetails(DEFAULT_STAGE_DETAILS);
+
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (pollRef.current) clearInterval(pollRef.current);
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
-
   return (
     <>
       <Head>
-        <title>LIMS - MDA Extraction | AI4LIMS</title>
+        <title>LIMS - Pipeline Workflow | AI4LIMS</title>
       </Head>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -312,17 +550,17 @@ export default function LimsPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-300">
-                  MDA Extraction
+                  MDA Pipeline Workflow
                 </h1>
-                <p className="text-sm text-slate-400">AI4LIMS PoC</p>
+                <p className="text-sm text-slate-400">AI4LIMS PoC · L15</p>
               </div>
             </div>
             <p className="text-slate-400 text-sm max-w-2xl">
-              Upload a pharmaceutical test method PDF to extract structured MDA data, review with AI chat, approve, and export as XLSX.
+              Upload a pharmaceutical method PDF and progress through classify, template, extract, merge, review, and export with provenance tracking.
             </p>
           </div>
 
-          {jobStatus !== 'IDLE' && !loading && (
+          {workflowView !== 'idle' && !loading && (
             <button
               onClick={handleStartOver}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 transition-all"
@@ -335,18 +573,14 @@ export default function LimsPage() {
           )}
         </div>
 
-        {/* Step indicator (visible when job exists) */}
-        {jobStatus !== 'IDLE' && (
+        {workflowView !== 'idle' && (
           <div className="mb-8">
-            <LIMSStepIndicator currentStatus={loading ? (extractionStage >= 3 ? 'GENERATING' : 'EXTRACTING') : jobStatus} />
+            <LIMSStepIndicator currentStatus={indicatorStatus} />
           </div>
         )}
 
         <AnimatePresence mode="wait">
-          {/* ================================================================
-              VIEW 1: Upload area (IDLE)
-              ================================================================ */}
-          {jobStatus === 'IDLE' && !loading && (
+          {workflowView === 'idle' && !loading && (
             <motion.div key="upload" {...FADE}>
               <div
                 onDrop={handleDrop}
@@ -364,13 +598,7 @@ export default function LimsPage() {
                     : 'border-slate-600 hover:border-emerald-500/50 hover:bg-slate-800/50'
                 }`}
               >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileInput}
-                  className="hidden"
-                />
+                <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileInput} className="hidden" />
 
                 {file ? (
                   <div className="space-y-2">
@@ -391,10 +619,9 @@ export default function LimsPage() {
                 )}
               </div>
 
-              {/* Action buttons */}
               <div className="flex gap-3 mt-6">
                 <button
-                  onClick={handleExtract}
+                  onClick={handleStartPipeline}
                   disabled={!file || loading}
                   className={`px-6 py-3 rounded-xl font-medium text-sm transition-all ${
                     !file || loading
@@ -402,12 +629,16 @@ export default function LimsPage() {
                       : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'
                   }`}
                 >
-                  Extract MDA Data
+                  Start Pipeline
                 </button>
 
                 {file && (
                   <button
-                    onClick={() => { setFile(null); setError(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                    onClick={() => {
+                      setFile(null);
+                      setError(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
                     className="px-6 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-600 transition-all"
                   >
                     Clear
@@ -417,9 +648,6 @@ export default function LimsPage() {
             </motion.div>
           )}
 
-          {/* ================================================================
-              VIEW 2: Loading animation (during extract POST)
-              ================================================================ */}
           {loading && (
             <motion.div key="loading" {...FADE}>
               <div className="max-w-lg mx-auto text-center p-12 rounded-2xl bg-slate-800/50 border border-slate-700/50">
@@ -429,12 +657,8 @@ export default function LimsPage() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 </div>
-                <p className="text-emerald-300 text-lg font-medium">
-                  {EXTRACTION_STAGES[extractionStage]}
-                </p>
-                <p className="text-slate-500 text-sm mt-2">
-                  This may take 30-60 seconds...
-                </p>
+                <p className="text-emerald-300 text-lg font-medium">{EXTRACTION_STAGES[extractionStage]}</p>
+                <p className="text-slate-500 text-sm mt-2">This may take 30-60 seconds...</p>
                 <div className="mt-6 w-full h-1 bg-slate-700 rounded-full overflow-hidden">
                   <div className="h-full w-1/3 bg-emerald-400 rounded-full animate-pulse" />
                 </div>
@@ -442,12 +666,54 @@ export default function LimsPage() {
             </motion.div>
           )}
 
-          {/* ================================================================
-              VIEW 3: Review & Chat (PENDING_REVIEW)
-              ================================================================ */}
-          {jobStatus === 'PENDING_REVIEW' && !loading && mdaData && (
+          {workflowView === 'classifying' && !loading && (
+            <motion.div key="classifying" {...FADE}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <ClassificationPanel
+                    detectedType={classification.detectedType}
+                    confidence={classification.confidence}
+                    method={classification.method}
+                    evidence={classification.evidence}
+                    options={classification.options}
+                    onConfirm={moveToTemplatePreview}
+                    onOverride={moveToTemplatePreview}
+                  />
+                </div>
+                <PipelineStageDetail stages={stageDetails} />
+              </div>
+            </motion.div>
+          )}
+
+          {workflowView === 'template_preview' && !loading && (
+            <motion.div key="template_preview" {...FADE}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <TemplatePreview fields={templateFields} onContinue={runExtractPipeline} />
+                </div>
+                <PipelineStageDetail stages={stageDetails} />
+              </div>
+            </motion.div>
+          )}
+
+          {workflowView === 'merging' && !loading && (
+            <motion.div key="merging" {...FADE}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <MergeConflictPanel
+                    conflicts={mergeConflicts}
+                    onResolve={() => {
+                      setWorkflowView('review');
+                    }}
+                  />
+                </div>
+                <PipelineStageDetail stages={stageDetails} />
+              </div>
+            </motion.div>
+          )}
+
+          {workflowView === 'review' && !loading && mdaData && (
             <motion.div key="review" {...FADE}>
-              {/* Summary bar */}
               <div className="flex flex-wrap items-center gap-4 p-4 mb-6 rounded-xl bg-slate-800/50 border border-slate-700/50">
                 <span className="text-slate-300 text-sm">
                   <span className="text-slate-500">File:</span> {pdfFilename}
@@ -459,16 +725,10 @@ export default function LimsPage() {
                 <span className="text-slate-600">|</span>
                 {validated ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
                     Schema Validated
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/25">
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
                     Validation Warning
                   </span>
                 )}
@@ -481,96 +741,38 @@ export default function LimsPage() {
                 </div>
               )}
 
-              {/* Two-column layout: MDA viewer (left) + Chat (right) */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                {/* Left column: MDA Table + Approve */}
                 <div className="lg:col-span-3 space-y-4">
-                  <MDAViewer
-                    data={mdaData}
-                    validated={validated}
-                    title="MDA Template (Review Mode)"
-                  />
+                  <MDAViewer data={mdaData} validated={validated} title="MDA Template (Review Mode)" provenanceMap={provenanceMap} />
 
-                  <button
-                    onClick={handleApprove}
-                    disabled={approveLoading}
-                    className="w-full px-6 py-3 rounded-xl font-medium text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {approveLoading ? (
-                      <>
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        Approving...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Approve MDA Template
-                      </>
-                    )}
-                  </button>
-
-                  <p className="text-xs text-slate-500 text-center">
-                    Review the MDA table and chat with AI before approving. This action cannot be undone.
-                  </p>
+                  {backendStatus !== 'APPROVED' ? (
+                    <button
+                      onClick={handleApprove}
+                      disabled={approveLoading}
+                      className="w-full px-6 py-3 rounded-xl font-medium text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
+                    >
+                      {approveLoading ? 'Approving...' : 'Approve MDA Template'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleExport}
+                      className="w-full px-6 py-3 rounded-xl font-medium text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all"
+                    >
+                      Export XLSX
+                    </button>
+                  )}
                 </div>
 
-                {/* Right column: Chat Interface */}
-                <div className="lg:col-span-2">
-                  <ChatInterface
-                    jobId={jobId!}
-                    onMDAUpdate={handleMDAUpdate}
-                    disabled={false}
-                  />
+                <div className="lg:col-span-2 space-y-4">
+                  <PipelineStageDetail stages={stageDetails} />
+                  {jobId && <ChatInterface jobId={jobId} onMDAUpdate={handleMDAUpdate} disabled={false} />}
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* ================================================================
-              VIEW 4: Approved (APPROVED)
-              ================================================================ */}
-          {jobStatus === 'APPROVED' && !loading && (
-            <motion.div key="approved" {...FADE}>
-              <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4">
-                <div className="p-2 bg-emerald-500/20 rounded-lg">
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="text-emerald-400 font-medium">MDA Template Approved</h4>
-                  <p className="text-emerald-400/70 text-sm">Human review completed. Ready for XLSX export.</p>
-                </div>
-              </div>
-
-              {mdaData && (
-                <MDAViewer data={mdaData} validated={validated} title="Approved MDA Template" />
-              )}
-
-              <div className="mt-6 flex justify-center">
-                <button
-                  onClick={handleExport}
-                  className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Download XLSX
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ================================================================
-              VIEW 5: Exported (EXPORTED)
-              ================================================================ */}
-          {jobStatus === 'EXPORTED' && !loading && (
-            <motion.div key="exported" {...FADE}>
+          {workflowView === 'done' && !loading && (
+            <motion.div key="done" {...FADE}>
               <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4">
                 <div className="p-2 bg-emerald-500/20 rounded-lg">
                   <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -578,58 +780,33 @@ export default function LimsPage() {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-emerald-400 font-medium">XLSX Exported Successfully</h4>
-                  <p className="text-emerald-400/70 text-sm">
-                    {pdfFilename?.replace('.pdf', '_MDA.xlsx')} has been downloaded.
-                  </p>
+                  <h4 className="text-emerald-400 font-medium">Pipeline Export Complete</h4>
+                  <p className="text-emerald-400/70 text-sm">{pdfFilename?.replace('.pdf', '_MDA.xlsx')} downloaded.</p>
                 </div>
               </div>
 
-              {mdaData && (
-                <MDAViewer data={mdaData} validated={validated} title="Exported MDA Template" />
-              )}
-
-              <div className="mt-6 flex justify-center gap-3">
-                <button
-                  onClick={handleExport}
-                  className="px-6 py-3 rounded-xl font-medium text-sm text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 transition-all flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download Again
-                </button>
-              </div>
+              {mdaData && <MDAViewer data={mdaData} validated={validated} title="Exported MDA Template" provenanceMap={provenanceMap} />}
             </motion.div>
           )}
 
-          {/* ================================================================
-              VIEW 6: Failed (FAILED)
-              ================================================================ */}
-          {jobStatus === 'FAILED' && !loading && (
+          {workflowView === 'failed' && !loading && (
             <motion.div key="failed" {...FADE}>
               <div className="p-6 rounded-xl bg-red-500/10 border border-red-500/30">
-                <p className="text-red-400 text-sm font-medium">Extraction Error</p>
+                <p className="text-red-400 text-sm font-medium">Pipeline Error</p>
                 <p className="text-red-300 text-sm mt-1 font-mono whitespace-pre-wrap">{error}</p>
-                <p className="text-red-200/80 text-xs mt-2">
-                  Confirm the API is reachable at port 8080 and that your LIMS extraction keys are present in
-                  <span className="font-mono"> .env.local</span>.
-                </p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Non-fatal error/warning display (visible in any non-FAILED state) */}
-        {error && jobStatus !== 'FAILED' && jobStatus !== 'IDLE' && !loading && (
+        {error && workflowView !== 'failed' && workflowView !== 'idle' && !loading && (
           <div className="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
             <p className="text-amber-400 text-sm font-medium">Warning</p>
             <p className="text-amber-300 text-sm mt-1">{error}</p>
           </div>
         )}
 
-        {/* IDLE error display */}
-        {error && jobStatus === 'IDLE' && (
+        {error && workflowView === 'idle' && (
           <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
             <p className="text-red-400 text-sm font-medium">Error</p>
             <p className="text-red-300 text-sm mt-1">{error}</p>

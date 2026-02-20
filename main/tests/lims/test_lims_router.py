@@ -43,7 +43,41 @@ def mock_lims_config() -> MagicMock:
     config.chromadb_path = "./chroma_db_lims"
     config.upload_dir = "./uploads/lims"
     config.output_dir = "./output/lims"
+    config.standards_collection = "lims_standards"
+    config.calculations_collection = "calculation_patterns"
+    config.classification_mode = "hybrid"
+    config.classification_confidence_threshold = 0.6
     return config
+
+
+@pytest.fixture
+def mock_pipeline_result():
+    """Mock result from TwoLayerPipeline.run()."""
+    return {
+        "classification": {
+            "test_type": "IDENTITY",
+            "confidence": 0.95,
+            "method": "filename_pattern",
+            "matched_keywords": [],
+        },
+        "mda_template": {
+            "analyses": [{"name": "SITE_IDENTITY", "analysis_type": "ID"}],
+            "components": [],
+            "calc_variables": [],
+            "calculations": [],
+        },
+        "provenance": {"fields": {}},
+        "conflicts": [],
+        "stage_details": [
+            {"stage": "CLASSIFY", "duration_ms": 10, "summary": "test", "details": {}},
+        ],
+        "pipeline_type": "two_layer",
+        "test_type": "IDENTITY",
+        "extraction_trace": {"model": "test"},
+        "raw_extraction": {},
+        "validated": True,
+        "validation_error": None,
+    }
 
 
 class TestExtractEndpoint:
@@ -72,37 +106,148 @@ class TestExtractEndpoint:
         assert response.status_code == 400
         assert "large" in response.json()["detail"].lower()
 
-    @patch(
-        "main.api.lims_router.asyncio.to_thread",
-        new_callable=AsyncMock,
-    )
+    @patch("main.src.lims.pipeline.TwoLayerPipeline.run", new_callable=AsyncMock)
     @patch("main.src.lims.config.get_lims_config")
-    def test_extract_returns_result(
+    def test_extract_uses_pipeline(
         self,
         mock_get_config,
-        mock_to_thread: AsyncMock,
+        mock_pipeline_run: AsyncMock,
         client: TestClient,
-        mock_extraction_result,
+        mock_lims_config,
+        mock_pipeline_result,
+    ):
+        """POST /extract now uses TwoLayerPipeline instead of direct extraction."""
+        mock_get_config.return_value = mock_lims_config
+        mock_pipeline_run.return_value = mock_pipeline_result
+
+        response = client.post(
+            "/lims/extract",
+            files={"file": ("AND_ACS_DYE.pdf", b"%PDF-1.4 fake", "application/pdf")},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["filename"] == "AND_ACS_DYE.pdf"
+        assert payload["job_id"] is not None
+        assert payload["pipeline_type"] == "two_layer"
+        assert payload["test_type"] == "IDENTITY"
+        assert payload["classification"]["test_type"] == "IDENTITY"
+        assert "provenance" in payload
+
+    @patch("main.src.lims.pipeline.TwoLayerPipeline.run", new_callable=AsyncMock)
+    @patch("main.src.lims.config.get_lims_config")
+    def test_extract_pipeline_error(
+        self,
+        mock_get_config,
+        mock_pipeline_run: AsyncMock,
+        client: TestClient,
         mock_lims_config,
     ):
+        """Pipeline error returns 500 with diagnostic detail."""
         mock_get_config.return_value = mock_lims_config
-        mock_to_thread.return_value = {
-            "raw_extraction": mock_extraction_result,
-            "validated": False,
-            "validation_error": "test",
-            "mda_template": None,
-        }
+        mock_pipeline_run.side_effect = ValueError("LlamaExtract API unavailable")
 
         response = client.post(
             "/lims/extract",
             files={"file": ("test.pdf", b"%PDF-1.4 fake", "application/pdf")},
         )
+        assert response.status_code == 500
+        assert "Pipeline failed" in response.json()["detail"]
+        assert "LlamaExtract API unavailable" in response.json()["detail"]
+
+
+class TestClassifyEndpoint:
+    def test_rejects_non_pdf(self, client: TestClient):
+        response = client.post(
+            "/lims/classify",
+            files={"file": ("test.txt", b"not a pdf", "text/plain")},
+        )
+        assert response.status_code == 400
+        assert "PDF" in response.json()["detail"]
+
+    def test_rejects_empty_file(self, client: TestClient):
+        response = client.post(
+            "/lims/classify",
+            files={"file": ("test.pdf", b"", "application/pdf")},
+        )
+        assert response.status_code == 400
+        assert "empty" in response.json()["detail"].lower()
+
+    @patch("main.src.lims.focused_extractor.extract_text_from_pdf")
+    def test_classify_returns_result(
+        self,
+        mock_extract_text,
+        client: TestClient,
+    ):
+        """POST /classify returns classification result."""
+        mock_extract_text.return_value = (
+            "ACS Dye-Binding Identity Test Method\n"
+            "Visual Inspection procedures\n"
+        )
+
+        response = client.post(
+            "/lims/classify",
+            files={
+                "file": (
+                    "AND_ACS_DYE.pdf",
+                    b"%PDF-1.4 fake",
+                    "application/pdf",
+                )
+            },
+        )
         assert response.status_code == 200
         payload = response.json()
-        assert payload["filename"] == "test.pdf"
-        assert payload["job_id"] is not None
-        assert payload["status"] == "EXTRACTING"  # No OpenRouter key -> stays EXTRACTING
-        assert payload["raw_extraction"]["analyses"][0]["name"] == "AND_ACS_DYE"
+        assert "test_type" in payload
+        assert "confidence" in payload
+        assert "method" in payload
+        assert payload["test_type"] == "IDENTITY"
+
+    @patch("main.src.lims.focused_extractor.extract_text_from_pdf")
+    def test_classify_text_extraction_failure(
+        self,
+        mock_extract_text,
+        client: TestClient,
+    ):
+        """PDF text extraction failure -> 400."""
+        mock_extract_text.side_effect = ValueError("No extractable text")
+
+        response = client.post(
+            "/lims/classify",
+            files={"file": ("bad.pdf", b"%PDF corrupt", "application/pdf")},
+        )
+        assert response.status_code == 400
+        assert "text extraction failed" in response.json()["detail"].lower()
+
+
+class TestTemplateEndpoint:
+    def test_get_identity_template(self, client: TestClient):
+        """GET /template/IDENTITY returns template skeleton."""
+        response = client.get("/lims/template/IDENTITY")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["test_type"] == "IDENTITY"
+        assert "mda_template" in payload
+        assert "variable_fields" in payload
+        assert "fixed_fields" in payload
+        assert payload["analysis_count"] == 3
+        assert payload["component_count"] == 25
+
+    def test_get_template_case_insensitive(self, client: TestClient):
+        """Test type is case-insensitive."""
+        response = client.get("/lims/template/identity")
+        assert response.status_code == 200
+        assert response.json()["test_type"] == "IDENTITY"
+
+    def test_get_template_invalid_type(self, client: TestClient):
+        """Invalid test type returns 400."""
+        response = client.get("/lims/template/INVALID")
+        assert response.status_code == 400
+        assert "Invalid test type" in response.json()["detail"]
+
+    def test_get_template_other_rejected(self, client: TestClient):
+        """TestType.OTHER has no template -> 400."""
+        response = client.get("/lims/template/OTHER")
+        assert response.status_code == 400
+        assert "no curated template" in response.json()["detail"].lower()
 
 
 class TestHealthEndpoint:
@@ -130,4 +275,4 @@ class TestExtractIntegration:
 
         assert response.status_code == 200
         data = response.json()
-        assert "raw_extraction" in data
+        assert "pipeline_type" in data

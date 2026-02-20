@@ -1,8 +1,8 @@
 # AI4LIMS Proof of Concept - Production Readiness Plan (PRP)
 
 **Owner:** Platform Engineering (AI Systems)
-**Date:** 2026-02-18
-**Version:** 1.3
+**Date:** 2026-02-19
+**Version:** 1.4
 **Scope:** 2-week Proof of Concept — AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA (Method Definition and Analysis) templates, with interactive chat refinement.
 **Branch:** `prjoject_p_protatype`
 **Source Plan:** `docs/project_p/AI4LIMS_PoC_Plan.md`
@@ -1068,7 +1068,7 @@ The AI4LIMS pilot revealed only ~54% of MDA components exist in the test method 
 
 **Phase:** 8a (Foundation) | **Dependencies:** L7 (done)
 **PRP Task File:** `PRPs/tasks/L10-foundation-provenance-testtype-templates-base.md`
-**Status:** NOT STARTED
+**Status:** ✅ Done (2026-02-19)
 
 **What to Do:**
 - Create `provenance.py`: ComponentSource enum, FieldProvenance, ProvenanceMap
@@ -1084,7 +1084,7 @@ The AI4LIMS pilot revealed only ~54% of MDA components exist in the test method 
 
 **Phase:** 8b (Templates) | **Dependencies:** L10
 **PRP Task File:** `PRPs/tasks/L11-template-library-hplc-lod-titration-identity.md`
-**Status:** NOT STARTED
+**Status:** ✅ Done (2026-02-19)
 
 **What to Do:**
 - Curate HPLC template from AND_BCMA_CEX, FRE_BOSU ground truth XLSX
@@ -1099,7 +1099,7 @@ The AI4LIMS pilot revealed only ~54% of MDA components exist in the test method 
 
 **Phase:** 8c (Classification) | **Dependencies:** L10
 **PRP Task File:** `PRPs/tasks/L12-classifier-hybrid-test-type-detection.md`
-**Status:** NOT STARTED
+**Status:** ✅ Done (2026-02-19)
 
 **What to Do:**
 - Build hybrid classifier: filename rules -> keyword matching -> LLM fallback
@@ -1112,7 +1112,7 @@ The AI4LIMS pilot revealed only ~54% of MDA components exist in the test method 
 
 **Phase:** 8d (Standards RAG) | **Dependencies:** L10
 **PRP Task File:** `PRPs/tasks/L13-standards-rag-augmentation.md`
-**Status:** NOT STARTED
+**Status:** ✅ Done (2026-02-19)
 
 **What to Do:**
 - Create standards_loader.py for CD-026972, SOP-00597, gLIMS training PDF ingestion
@@ -1126,13 +1126,38 @@ The AI4LIMS pilot revealed only ~54% of MDA components exist in the test method 
 
 **Phase:** 8e (Pipeline Core) | **Dependencies:** L10, L11, L12, L13
 **PRP Task File:** `PRPs/tasks/L14-pipeline-core-extractor-merger-orchestrator.md`
-**Status:** NOT STARTED
+**Status:** ✅ Done (2026-02-19)
 
-**What to Do:**
-- Create focused_extractor.py: builds reduced schema per test type
-- Create merger.py: merges Template + Variable + Augmented layers with provenance
-- Create pipeline.py: TwoLayerPipeline orchestrator
-- Rewrite lims_router.py extract endpoint; add /classify and /template/{type} endpoints
+**Completion Snapshot:**
+- Created `focused_extractor.py`: text extraction (PyMuPDF), focused schema narrowing (`build_focused_schema()`, `_filter_to_variable_fields()`), full LlamaExtract extraction with output narrowed to variable + identity fields only.
+- Created `merger.py`: three-layer merge (Template → Extracted → Augmented → SME_REQUIRED), conflict detection, full provenance tracking via `ProvenanceMap`, cross-sheet Pydantic validation.
+- Created `pipeline.py`: `TwoLayerPipeline` orchestrator with 6 stages (CLASSIFY → TEMPLATE → EXTRACT → AUGMENT → MERGE → REVIEW), single-layer fallback for `TestType.OTHER`, job state machine transitions.
+- Rewrote `lims_router.py` extract endpoint to use `TwoLayerPipeline`; added `POST /lims/classify` and `GET /lims/template/{type}` endpoints.
+- Fixed state machine transitions: added `CLASSIFYING→EXTRACTING` and `EXTRACTING→PENDING_REVIEW` in `job_store.py` for single-layer fallback path.
+- Removed all no-fallback violations: `_augment_gaps` (removed try/except), `_transition_job` (removed try/except), `_apply_suggestion_to_dict` (raise ValueError instead of silent return).
+- Implemented focused schema narrowing: `build_focused_schema()` analyzes template variable fields, `_filter_to_variable_fields()` strips non-variable fields from extraction data.
+
+**Verification Results:**
+- `conda run -n base python -m pytest main/tests/lims/test_merger.py main/tests/lims/test_pipeline.py main/tests/lims/test_lims_router.py -v` → `51 passed, 1 skipped`
+
+**Files Created:**
+- `main/src/lims/focused_extractor.py` — Text extraction + focused schema narrowing + LlamaExtract
+- `main/src/lims/merger.py` — Three-layer merge with provenance tracking
+- `main/src/lims/pipeline.py` — TwoLayerPipeline orchestrator
+- `main/src/lims/prompts/augmentation_prompt.py` — Standards RAG augmentation prompt
+- `main/tests/lims/test_merger.py` — 24 tests (normalization, matching, merge, conflicts, augmentation, SME_REQUIRED, stats, E2E, error handling)
+- `main/tests/lims/test_pipeline.py` — 13 tests (classification, single-layer fallback, two-layer pipeline, state transitions, augmentation error propagation, backward compat)
+
+**Files Modified:**
+- `main/api/lims_router.py` — Rewrote extract endpoint, added classify/template endpoints
+- `main/src/lims/job_store.py` — Added CLASSIFYING→EXTRACTING and EXTRACTING→PENDING_REVIEW transitions
+- `main/tests/lims/test_lims_router.py` — Updated tests for new pipeline-based endpoints
+
+**What was Done:**
+- Created focused_extractor.py: builds reduced schema per test type
+- Created merger.py: merges Template + Variable + Augmented layers with provenance
+- Created pipeline.py: TwoLayerPipeline orchestrator
+- Rewrote lims_router.py extract endpoint; added /classify and /template/{type} endpoints
 
 ---
 
@@ -1482,8 +1507,8 @@ LIMS_OUTPUT_DIR=./output/lims
 
 ---
 
-**Document Version:** 1.3
-**Last Updated:** 2026-02-18
+**Document Version:** 1.4
+**Last Updated:** 2026-02-19
 **Next Review:** After Phase 8 completion
 **Approved By:** [Pending stakeholder review]
 

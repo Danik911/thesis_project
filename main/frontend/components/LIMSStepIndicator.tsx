@@ -22,19 +22,34 @@ interface Stage {
 }
 
 const STAGES: Stage[] = [
-  { key: 'EXTRACTING', label: 'Extracting', icon: DocumentTextIcon },
-  { key: 'GENERATING', label: 'Generating MDA', icon: CpuChipIcon },
-  { key: 'PENDING_REVIEW', label: 'Review & Chat', icon: ChatBubbleLeftRightIcon },
-  { key: 'APPROVED', label: 'Approved', icon: CheckCircleIcon },
-  { key: 'EXPORTED', label: 'Exported', icon: ArrowDownTrayIcon },
+  { key: 'CLASSIFY', label: 'Classify', icon: DocumentTextIcon },
+  { key: 'TEMPLATE', label: 'Template', icon: CpuChipIcon },
+  { key: 'EXTRACT', label: 'Extract', icon: CpuChipIcon },
+  { key: 'MERGE', label: 'Merge', icon: ChatBubbleLeftRightIcon },
+  { key: 'REVIEW', label: 'Review', icon: CheckCircleIcon },
+  { key: 'EXPORT', label: 'Export', icon: ArrowDownTrayIcon },
 ];
 
 const STATUS_ORDER: Record<string, number> = {
-  EXTRACTING: 0,
-  GENERATING: 1,
-  PENDING_REVIEW: 2,
-  APPROVED: 3,
-  EXPORTED: 4,
+  UPLOADING: 0,
+  CLASSIFYING: 0,
+  LOADING_TEMPLATE: 1,
+  TEMPLATE_PREVIEW: 1,
+  EXTRACTING: 2,
+  GENERATING: 2,
+  AUGMENTING: 2,
+  MERGING: 3,
+  PENDING_REVIEW: 4,
+  REVIEW: 4,
+  APPROVED: 4,
+  EXPORTING: 5,
+  DONE: 5,
+  EXPORTED: 5,
+  CLASSIFY: 0,
+  TEMPLATE: 1,
+  EXTRACT: 2,
+  MERGE: 3,
+  EXPORT: 5,
 };
 
 export default function LIMSStepIndicator({ currentStatus }: LIMSStepIndicatorProps) {
@@ -52,7 +67,7 @@ export default function LIMSStepIndicator({ currentStatus }: LIMSStepIndicatorPr
     return 'pending';
   }
 
-  const shouldPulse = currentStatus === 'EXTRACTING' || currentStatus === 'GENERATING';
+  const shouldPulse = ['UPLOADING', 'CLASSIFYING', 'EXTRACTING', 'MERGING', 'EXPORTING'].includes(currentStatus);
 
   return (
     <div className="rounded-xl bg-slate-800/50 border border-slate-700/50 py-4 px-4">

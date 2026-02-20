@@ -51,10 +51,13 @@ VALID_TRANSITIONS: dict[LIMSJobStatus, set[LIMSJobStatus]] = {
     LIMSJobStatus.EXTRACTING: {
         LIMSJobStatus.CLASSIFYING,
         LIMSJobStatus.GENERATING,
+        LIMSJobStatus.AUGMENTING,
+        LIMSJobStatus.PENDING_REVIEW,   # no-OpenRouter path skips generation
         LIMSJobStatus.FAILED,
     },
     LIMSJobStatus.CLASSIFYING: {
         LIMSJobStatus.LOADING_TEMPLATE,
+        LIMSJobStatus.EXTRACTING,      # single-layer fallback re-enters extraction
         LIMSJobStatus.FAILED,
     },
     LIMSJobStatus.LOADING_TEMPLATE: {

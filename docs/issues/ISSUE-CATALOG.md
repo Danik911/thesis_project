@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-02-19
+**Last Updated:** 2026-02-19 (L14 complete + L15 contract integration)
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-035
+4. **Next Issue Number**: ISSUE-037
 
 ---
 
@@ -30,6 +30,8 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
+| [ISSUE-036](ISSUE-036-lims-duplicate-llamaextract-key-env-precedence.md) | LIMS Extract 401 from Duplicate `LIMS_LLAMAEXTRACT_API_KEY` in `.env.local` | 2026-02-19 | 2026-02-19 | API/Config |
+| [ISSUE-035](ISSUE-035-l15-frontend-blocked-by-l14-contract-gaps.md) | L15 Frontend Workflow Blocked by Incomplete L14 API Contracts | 2026-02-19 | 2026-02-19 | Frontend/API |
 | [ISSUE-032](ISSUE-032-l7-extraction-quality-consolidated.md) | L7 Extraction Quality — Consolidated Resolution Record | 2026-02-18 | 2026-02-18 | API/Data Quality |
 | [ISSUE-027](ISSUE-027-lims-openpyxl-missing-in-dev-container.md) | LIMS Extraction Warning in Docker Dev - `ModuleNotFoundError: No module named 'openpyxl'` | 2026-02-17 | 2026-02-17 | Docker/API |
 | [ISSUE-025](ISSUE-025-lims-local-dev-connectivity-runbook.md) | LIMS Local Dev Connectivity & Runtime Runbook (Consolidated) | 2026-02-17 | 2026-02-17 | Frontend/API |
@@ -93,9 +95,9 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 28
+- **Total Issues:** 30
 - **Open:** 3
-- **Resolved:** 25
+- **Resolved:** 27
 - **Most Common Category:** Deployment (9 issues)
 
 ---

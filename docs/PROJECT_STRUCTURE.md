@@ -119,9 +119,14 @@ frontend/
 │   ├── JobList.tsx          # Job table
 │   ├── FileUpload.tsx       # URS upload
 │   ├── Layout.tsx           # Page wrapper
-│   ├── LIMSStepIndicator.tsx # AI4LIMS: 5-stage pipeline indicator
+│   ├── LIMSStepIndicator.tsx # AI4LIMS: 8-stage pipeline progress bar
 │   ├── ChatInterface.tsx    # AI4LIMS: MDA refinement chat panel
-│   └── MDAViewer.tsx        # AI4LIMS: MDA display with highlighting
+│   ├── MDAViewer.tsx        # AI4LIMS: MDA display with provenance badges
+│   ├── ClassificationPanel.tsx # AI4LIMS: test type classification display
+│   ├── ProvenanceBadge.tsx  # AI4LIMS: source provenance indicators
+│   ├── MergeConflictPanel.tsx # AI4LIMS: conflict resolution panel
+│   ├── PipelineStageDetail.tsx # AI4LIMS: pipeline stage detail view
+│   └── TemplatePreview.tsx  # AI4LIMS: template skeleton preview
 ├── utils/
 │   └── api.ts               # API client
 ├── middleware.ts            # Route protection
@@ -138,28 +143,49 @@ frontend/
 
 | File | Purpose |
 |------|---------|
-| `mda_schema.py` | Pydantic schema for MDA extraction |
-| `extractor.py` | LlamaExtract integration |
-| `chat_service.py` | GPT-5/Opus chat for refinement |
-| `rag_service.py` | ChromaDB RAG (`mda_templates` collection) |
+| `mda_schema.py` | Pydantic schema for MDA extraction (4 core sheets, 9 enums) |
+| `pdf_extractor.py` | LlamaExtract integration |
+| `focused_extractor.py` | Text extraction (PyMuPDF) + focused schema narrowing |
+| `pipeline.py` | TwoLayerPipeline orchestrator (6 stages) |
+| `merger.py` | Three-layer merge with provenance tracking |
+| `classifier.py` | Hybrid test type classifier (filename + keyword + LLM) |
+| `test_type.py` | TestType enum and ClassificationResult |
+| `provenance.py` | ComponentSource, FieldProvenance, ProvenanceMap |
+| `job_store.py` | In-memory job store with state machine |
+| `config.py` | LIMS configuration (LIMS_* env vars) |
+| `data_normalizer.py` | Post-extraction normalization |
+| `mda_generator.py` | MDA generation workflow |
+| `chat_agent.py` | Chat engine for MDA refinement |
 | `xlsx_exporter.py` | 4-sheet XLSX generation (openpyxl) |
+| `standards_loader.py` | Standards RAG (ChromaDB) |
+| `templates/` | Curated template library (base, identity, hplc, lod, titration) |
+| `prompts/` | LLM prompts (extraction, generation, chat, augmentation) |
 
 ### API Routes (`main/api/lims_router.py`)
 
 | Endpoint | Purpose |
 |----------|---------|
-| `/lims/extract-mda` | PDF extraction via LlamaExtract |
-| `/lims/chat` | HITL refinement chat |
-| `/lims/export` | XLSX export (4 sheets) |
+| `POST /lims/extract` | PDF upload + two-layer pipeline extraction |
+| `POST /lims/classify` | Test type classification only |
+| `GET /lims/template/{type}` | Get curated template skeleton |
+| `GET /lims/status/{job_id}` | Job status + current MDA state |
+| `POST /lims/chat` | HITL refinement chat |
+| `POST /lims/approve/{job_id}` | Human approval endpoint |
+| `GET /lims/export/{job_id}` | XLSX export (APPROVED jobs only) |
 
 ### Frontend Components
 
 | Component | Purpose |
 |-----------|---------|
-| `pages/lims.tsx` | Multi-step HITL workflow (5 stages) |
-| `LIMSStepIndicator.tsx` | Horizontal pipeline progress bar |
+| `pages/lims.tsx` | Multi-step HITL workflow (8 stages) |
+| `LIMSStepIndicator.tsx` | 8-stage pipeline progress bar |
 | `ChatInterface.tsx` | Chat panel for MDA refinement |
-| `MDAViewer.tsx` | MDA display with field highlighting |
+| `MDAViewer.tsx` | MDA display with provenance badges |
+| `ClassificationPanel.tsx` | Test type classification display (L15) |
+| `ProvenanceBadge.tsx` | Source provenance indicators (L15) |
+| `MergeConflictPanel.tsx` | Conflict resolution panel (L15) |
+| `PipelineStageDetail.tsx` | Pipeline stage detail view (L15) |
+| `TemplatePreview.tsx` | Template skeleton preview (L15) |
 
 ### Documentation (`docs/project_p/`)
 
@@ -170,6 +196,7 @@ frontend/
 | `LIMS-002-mda-generation-rag-xlsx.md` | Task L4a: MDA generation with RAG |
 | `LIMS-003-chat-agent-hitl-router.md` | Task L4b: Chat agent HITL router |
 | `LIMS-004-full-hitl-ui.md` | Task L6: Full HITL UI implementation |
+| `LIMS-014-pipeline-core-extractor-merger-orchestrator.md` | Task L14: Pipeline core implementation |
 
 ---
 

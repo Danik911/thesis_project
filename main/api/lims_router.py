@@ -1,11 +1,14 @@
 """LIMS API router for AI4LIMS PoC.
 
-Public endpoints (no authentication) for PDF extraction, MDA chat
-refinement, human approval, and XLSX export.
+Public endpoints (no authentication) for PDF extraction, classification,
+template retrieval, MDA chat refinement, human approval, and XLSX export.
 
 Job lifecycle enforces mandatory HITL:
-    POST /extract   -> EXTRACTING -> GENERATING -> PENDING_REVIEW
-    POST /chat      -> refine MDA (only in PENDING_REVIEW)
+    POST /extract   -> Two-layer pipeline (Classify->Template->Extract->Augment->Merge->Review)
+                    -> Single-layer fallback for TestType.OTHER
+    POST /classify  -> Classify PDF without full extraction
+    GET  /template  -> Retrieve template skeleton for a test type
+    POST /chat      -> Refine MDA (only in PENDING_REVIEW)
     POST /approve   -> APPROVED (mandatory human gate)
     GET  /export    -> EXPORTED (XLSX download)
 
@@ -15,7 +18,6 @@ No fallback logic -- all errors propagate with full diagnostics.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from typing import Any
@@ -50,24 +52,24 @@ class ChatRequest(BaseModel):
 
 @router.post("/extract")
 async def extract_pdf(file: UploadFile) -> dict:
-    """Extract MDA data from an uploaded PDF using LlamaExtract.
+    """Extract MDA data from an uploaded PDF via the two-layer pipeline.
 
-    Creates a LIMS job, runs extraction, optionally generates an MDA
-    template via LLM, and transitions the job through states:
-        EXTRACTING -> GENERATING -> PENDING_REVIEW
+    For known test types (HPLC, LOD, Titration, Identity):
+        Classify -> Template -> Extract -> Augment -> Merge -> Review
 
-    If LIMS_OPENROUTER_API_KEY is not set, the job stays in EXTRACTING
-    and only returns raw extraction data (no MDA generation).
+    For TestType.OTHER:
+        Single-layer fallback (existing LlamaExtract + MDA generation).
 
     Args:
         file: Uploaded PDF file.
 
     Returns:
-        JSON with job_id, status, and extraction/generation results.
+        JSON with job_id, status, pipeline results including provenance,
+        conflicts, stage_details, and classification.
 
     Raises:
         HTTPException 400: Non-PDF, empty, or oversized file.
-        HTTPException 500: Config or extraction failure.
+        HTTPException 500: Config or pipeline failure.
     """
     # Validate file extension
     if not file.filename or not file.filename.lower().endswith(".pdf"):
@@ -116,69 +118,28 @@ async def extract_pdf(file: UploadFile) -> dict:
 
     job_id = create_job(file.filename or "upload.pdf")
 
-    # Run extraction (synchronous SDK call wrapped in thread)
+    # Run the two-layer pipeline
     try:
-        from main.src.lims.pdf_extractor import extract_mda_from_pdf
+        from main.src.lims.pipeline import TwoLayerPipeline
 
-        result = await asyncio.to_thread(
-            extract_mda_from_pdf,
+        pipeline = TwoLayerPipeline(config)
+        result = await pipeline.run(
             pdf_content=content,
             filename=file.filename or "upload.pdf",
-            config=config,
+            job_id=job_id,
         )
     except Exception as e:
-        logger.exception("PDF extraction failed for '%s': %s", file.filename, e)
+        logger.exception("Pipeline failed for '%s': %s", file.filename, e)
         try:
             update_status(job_id, LIMSJobStatus.FAILED)
             job = get_job(job_id)
-            job.error = f"Extraction failed: {type(e).__name__}: {e}"
+            job.error = f"Pipeline failed: {type(e).__name__}: {e}"
         except Exception:
             pass
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"PDF extraction failed: {type(e).__name__}: {e}",
+            detail=f"Pipeline failed: {type(e).__name__}: {e}",
         ) from e
-
-    # Store extraction result on the job
-    job = get_job(job_id)
-    job.raw_extraction = result.get("raw_extraction")
-    job.extraction_trace = result.get("extraction_trace")
-
-    # Optionally trigger MDA generation if OpenRouter key is available
-    mda_result: dict[str, Any] | None = None
-    if config.openrouter_api_key:
-        try:
-            update_status(job_id, LIMSJobStatus.GENERATING)
-
-            from main.src.lims.mda_generator import MDAGenerationWorkflow
-
-            workflow = MDAGenerationWorkflow()
-            from llama_index.core.workflow import StartEvent
-
-            gen_result = await workflow.run(
-                raw_extraction=result.get("raw_extraction", {}),
-                config=config,
-            )
-            mda_result = gen_result
-
-            # Store MDA template on the job
-            if isinstance(gen_result, dict) and "mda_template" in gen_result:
-                job.mda_template = gen_result["mda_template"]
-
-            update_status(job_id, LIMSJobStatus.PENDING_REVIEW)
-
-        except Exception as e:
-            logger.exception(
-                "MDA generation failed for job %s: %s", job_id, e
-            )
-            try:
-                update_status(job_id, LIMSJobStatus.FAILED)
-                job.error = f"MDA generation failed: {type(e).__name__}: {e}"
-            except Exception:
-                pass
-            # Do not raise -- extraction succeeded, generation failed
-            # Return partial result with error info
-            mda_result = {"generation_error": f"{type(e).__name__}: {e}"}
 
     current_job = get_job(job_id)
     return {
@@ -187,7 +148,150 @@ async def extract_pdf(file: UploadFile) -> dict:
         "filename": file.filename,
         "size_bytes": len(content),
         **result,
-        "mda_generation": mda_result,
+    }
+
+
+# ---------------------------------------------------------------------------
+# POST /classify
+# ---------------------------------------------------------------------------
+
+
+@router.post("/classify")
+async def classify_pdf(file: UploadFile) -> dict:
+    """Classify an uploaded PDF to determine test type.
+
+    Runs the hybrid classifier (filename rules -> keyword matching ->
+    exclusion) without full extraction. Useful for pre-screening PDFs.
+
+    Args:
+        file: Uploaded PDF file.
+
+    Returns:
+        JSON with classification result (test_type, confidence, method,
+        matched_keywords).
+
+    Raises:
+        HTTPException 400: Non-PDF, empty, or oversized file.
+        HTTPException 500: Text extraction or classification failure.
+    """
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Only PDF files are accepted. Got: '{file.filename}'",
+        )
+
+    content = await file.read()
+
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty.",
+        )
+
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"File too large ({len(content)} bytes). "
+                f"Maximum: {MAX_FILE_SIZE} bytes (50 MB)."
+            ),
+        )
+
+    try:
+        from main.src.lims.classifier import TestTypeClassifier
+        from main.src.lims.focused_extractor import extract_text_from_pdf
+
+        pdf_text = extract_text_from_pdf(content)
+        classifier = TestTypeClassifier()
+        classification = classifier.classify(pdf_text, file.filename or "upload.pdf")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"PDF text extraction failed: {e}",
+        ) from e
+    except Exception as e:
+        logger.exception("Classification failed for '%s': %s", file.filename, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Classification failed: {type(e).__name__}: {e}",
+        ) from e
+
+    return classification.model_dump()
+
+
+# ---------------------------------------------------------------------------
+# GET /template/{test_type}
+# ---------------------------------------------------------------------------
+
+
+@router.get("/template/{test_type}")
+async def get_template(test_type: str) -> dict:
+    """Retrieve the MDA template skeleton for a test type.
+
+    Returns the curated template with analyses, components, calc_variables,
+    and calculations pre-populated with fixed values. Variable fields are
+    left empty for extraction.
+
+    Args:
+        test_type: Test type string (HPLC, LOD, TITRATION, IDENTITY).
+            Case-insensitive.
+
+    Returns:
+        JSON with MDA template, variable_fields, fixed_fields, and counts.
+
+    Raises:
+        HTTPException 400: Invalid test type or OTHER (no template).
+        HTTPException 500: Template loading failure.
+    """
+    from main.src.lims.test_type import TestType
+
+    try:
+        tt = TestType(test_type.upper())
+    except ValueError:
+        valid_types = [t.value for t in TestType if t != TestType.OTHER]
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Invalid test type: '{test_type}'. "
+                f"Valid types: {valid_types}"
+            ),
+        )
+
+    if tt == TestType.OTHER:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "TestType.OTHER has no curated template. "
+                "Use POST /extract for single-layer extraction."
+            ),
+        )
+
+    try:
+        from main.src.lims.templates import TemplateLibrary
+
+        template = TemplateLibrary.get_template_for_type(tt)
+        mda = template.to_mda_template()
+    except KeyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No template registered for {tt.value}: {e}",
+        ) from e
+    except Exception as e:
+        logger.exception("Template loading failed for %s: %s", test_type, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Template loading failed: {type(e).__name__}: {e}",
+        ) from e
+
+    return {
+        "test_type": tt.value,
+        "mda_template": mda.model_dump(),
+        "variable_fields": template.get_variable_fields(),
+        "fixed_fields": template.get_fixed_fields(),
+        "analysis_count": len(mda.analyses),
+        "component_count": len(mda.components),
+        "calc_variable_count": len(mda.calc_variables),
+        "calculation_count": len(mda.calculations),
     }
 
 
@@ -227,6 +331,10 @@ async def get_status(job_id: str) -> dict:
         "pdf_filename": job.pdf_filename,
         "extraction_trace": job.extraction_trace,
         "mda_template": job.mda_template,
+        "classification": job.classification,
+        "provenance": job.provenance,
+        "conflicts": job.conflicts,
+        "stage_details": job.stage_details,
         "error": job.error,
         "chat_history_length": len(job.chat_history),
         "edit_log_length": len(job.edit_log),

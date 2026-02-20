@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import ProvenanceBadge from '@/components/ProvenanceBadge';
+import type { ProvenanceBadgeProps } from '@/components/ProvenanceBadge';
 
 interface MDAViewerProps {
   data: {
@@ -10,6 +12,7 @@ interface MDAViewerProps {
   validated: boolean;
   highlightedCells?: Set<string>;
   title?: string;
+  provenanceMap?: Record<string, { source: ProvenanceBadgeProps['source']; confidence?: number; detail?: string }>;
 }
 
 const TABS = [
@@ -44,7 +47,7 @@ const COLUMN_DEFS: Record<string, string[]> = {
   calculations: ['analysis', 'component', 'calculation_type', 'description', 'source_code'],
 };
 
-export default function MDAViewer({ data, validated, highlightedCells, title }: MDAViewerProps) {
+export default function MDAViewer({ data, validated, highlightedCells, title, provenanceMap }: MDAViewerProps) {
   const [activeTab, setActiveTab] = useState<string>('analyses');
 
   const rows = (data as Record<string, unknown[]>)[activeTab] ?? [];
@@ -111,7 +114,16 @@ export default function MDAViewer({ data, validated, highlightedCells, title }: 
                             : 'text-slate-300'
                         }`}
                       >
-                        {formatCell((row as Record<string, unknown>)[col])}
+                        <div className="flex items-center gap-2">
+                          <span>{formatCell((row as Record<string, unknown>)[col])}</span>
+                          {provenanceMap?.[cellKey] && (
+                            <ProvenanceBadge
+                              source={provenanceMap[cellKey].source}
+                              confidence={provenanceMap[cellKey].confidence}
+                              detail={provenanceMap[cellKey].detail}
+                            />
+                          )}
+                        </div>
                       </td>
                     );
                   })}

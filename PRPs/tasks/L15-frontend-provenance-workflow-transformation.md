@@ -3,7 +3,26 @@
 **Phase:** 8f (Two-Layer Pipeline — Frontend) | **Dependencies:** L14 (Pipeline Core)
 **Branch:** `prjoject_p_protatype`
 **Estimated effort:** 4 days
-**Status:** NOT STARTED (WAITING ON L14 API CONTRACTS — handoff updated 2026-02-19)
+**Status:** DONE (2026-02-20)
+
+## Completion Update (2026-02-20)
+
+- Implemented all planned L15 frontend components:
+  - `main/frontend/components/ProvenanceBadge.tsx`
+  - `main/frontend/components/ClassificationPanel.tsx`
+  - `main/frontend/components/TemplatePreview.tsx`
+  - `main/frontend/components/MergeConflictPanel.tsx`
+  - `main/frontend/components/PipelineStageDetail.tsx`
+- Updated core integration files:
+  - `main/frontend/components/LIMSStepIndicator.tsx` (6-stage pipeline + L14 runtime statuses)
+  - `main/frontend/components/MDAViewer.tsx` (provenance badge rendering per cell)
+  - `main/frontend/pages/lims.tsx` (full 8-state workflow + strict L14 contract wiring)
+  - `main/frontend/types/lims.ts` (typed classify/template/extract/status payload contracts)
+- End-to-end UX verified locally:
+  - Upload and classify works
+  - Template preview and merge/review views render as expected
+  - Chat panel remains integrated in review state
+  - LlamaExtract 401 blocker resolved by env key deduplication (`.env.local`)
 
 ## Handoff Update (2026-02-19)
 
@@ -128,12 +147,12 @@ New states: idle -> uploading -> classifying -> template_preview -> extracting -
 
 ## Gate Criteria
 
-- [ ] ProvenanceBadge renders 5 distinct colors for 5 source types
-- [ ] ClassificationPanel shows test type with confirm/override
-- [ ] TemplatePreview differentiates fixed vs variable fields
-- [ ] MergeConflictPanel allows individual and batch conflict resolution
-- [ ] PipelineStageDetail shows reasoning for each pipeline stage
-- [ ] LIMSStepIndicator shows 6 stages
-- [ ] MDAViewer renders provenance badges per cell when provenanceMap provided
-- [ ] Full 8-state workflow navigates correctly
-- [ ] Existing chat functionality preserved
+- [x] ProvenanceBadge renders 5 distinct colors for 5 source types
+- [x] ClassificationPanel shows test type with confirm/override
+- [x] TemplatePreview differentiates fixed vs variable fields
+- [x] MergeConflictPanel allows individual and batch conflict resolution
+- [x] PipelineStageDetail shows reasoning for each pipeline stage
+- [x] LIMSStepIndicator shows 6 stages
+- [x] MDAViewer renders provenance badges per cell when provenanceMap provided
+- [x] Full 8-state workflow navigates correctly
+- [x] Existing chat functionality preserved
