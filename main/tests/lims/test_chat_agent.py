@@ -246,7 +246,7 @@ class TestApplyEdit:
             reason="This should fail validation (no matching Calculation)",
         )
 
-        with pytest.raises(ValidationError, match="without calculations"):
+        with pytest.raises(ValueError, match="introduces new validation errors"):
             session._apply_edit(edit)
 
         # MDA should be rolled back to snapshot
@@ -267,6 +267,63 @@ class TestApplyEdit:
 
         with pytest.raises(KeyError, match="Cannot find item"):
             session._apply_edit(edit)
+
+    def test_incremental_fix_allowed_when_template_already_invalid(self, valid_mda_dict):
+        """Edits should be allowed if they don't introduce new validation paths.
+
+        This enables reviewers to repair invalid templates incrementally via chat.
+        """
+        invalid_mda = copy.deepcopy(valid_mda_dict)
+
+        # Seed two known validation errors on different component minimum fields
+        assert len(invalid_mda["components"]) >= 2
+        idx_a = len(invalid_mda["components"]) - 2
+        idx_b = len(invalid_mda["components"]) - 1
+        invalid_mda["components"][idx_a]["minimum"] = "Pass"
+        invalid_mda["components"][idx_b]["minimum"] = "Pass"
+
+        session = ChatSession(
+            job_id="test-incremental-fix",
+            mda_template=invalid_mda,
+            chat_context={},
+        )
+
+        # Fix only one of the two errors; template remains invalid overall.
+        edit = MDAEditAction(
+            sheet="components",
+            action="modify",
+            target={
+                "analysis": "AND_ACS_DYE",
+                "component_name": invalid_mda["components"][idx_a]["component_name"],
+            },
+            changes={"minimum": None},
+            reason="Fix first minimum parse error",
+        )
+
+        session._apply_edit(edit)
+
+        # Edit is accepted and persisted even though one error remains.
+        assert len(session.edits) == 1
+        assert session.mda_template["components"][idx_a]["minimum"] is None
+
+    def test_chat_edit_normalizes_identity_alias(self, valid_mda_dict):
+        """analysis_type alias values should be normalized before validation."""
+        session = ChatSession(
+            job_id="test-normalize-analysis-type",
+            mda_template=copy.deepcopy(valid_mda_dict),
+            chat_context={},
+        )
+
+        edit = MDAEditAction(
+            sheet="analyses",
+            action="modify",
+            target={"name": session.mda_template["analyses"][0]["name"]},
+            changes={"analysis_type": "IDENTITY"},
+            reason="Use semantic label",
+        )
+
+        session._apply_edit(edit)
+        assert session.mda_template["analyses"][0]["analysis_type"] == "ID"
 
     def test_delete_nonexistent_item_raises(self, session):
         """Deleting a non-existent item raises KeyError."""

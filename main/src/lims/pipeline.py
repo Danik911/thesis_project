@@ -530,5 +530,7 @@ class TwoLayerPipeline:
             job.stage_details = [s.model_dump() for s in stages]
             job.raw_extraction = extraction_result.get("raw_extraction")
             job.extraction_trace = extraction_result.get("extraction_trace")
+            job.validated = merge_result.validation_passed
+            job.validation_error = merge_result.validation_error
         except KeyError:
             logger.warning("Could not store results: job %s not found", job_id)

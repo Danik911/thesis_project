@@ -59,18 +59,25 @@ def _normalize_for_match(name: str) -> str:
 def _match_analysis(
     extracted_analysis: dict[str, Any],
     template_analyses: list[dict[str, Any]],
+    exclude_indices: set[int] | None = None,
 ) -> int | None:
     """Find the matching template analysis index for an extracted analysis.
 
-    Matches by normalized name or analysis_type.
+    Matches by normalized name or analysis_type. Indices in
+    ``exclude_indices`` are skipped so that a second extracted analysis
+    with the same type matches the next available template entry (e.g.
+    two QC_SAMPLES analyses match distinct template QC rows).
 
     Returns:
         Index into template_analyses, or None if no match.
     """
     ext_name = _normalize_for_match(str(extracted_analysis.get("name", "")))
     ext_type = str(extracted_analysis.get("analysis_type", "")).upper()
+    _exclude = exclude_indices or set()
 
     for i, tpl_analysis in enumerate(template_analyses):
+        if i in _exclude:
+            continue
         tpl_name = _normalize_for_match(str(tpl_analysis.get("name", "")))
         tpl_type = str(tpl_analysis.get("analysis_type", "")).upper()
 
@@ -152,19 +159,30 @@ _VALID_ANALYSIS_TYPES = {"ID", "ASY", "IMP", "PHYS", "QC_SAMPLES", "HPLC", "RM",
 
 def _sanitize_new_analysis(
     item: dict[str, Any],
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     """Ensure a new extracted analysis has all required fields.
 
     Called when an extracted analysis does not match any template analysis.
     Fills missing required fields with sensible defaults derived from
-    available data.
+    available data. Returns None for phantom rows (revision history,
+    page headers) that should be rejected.
 
     Args:
         item: Raw extracted analysis dict.
 
     Returns:
-        Sanitized analysis dict with all required fields present.
+        Sanitized analysis dict with all required fields present,
+        or None if the item is a phantom row that should be rejected.
     """
+    raw_name = item.get("name")
+    # Reject phantom rows: None, empty, "None", "unknown" names
+    if raw_name is None or str(raw_name).strip().lower() in ("", "none", "unknown"):
+        logger.info(
+            "Rejecting phantom analysis row with name=%r (likely revision history or page header)",
+            raw_name,
+        )
+        return None
+
     name = str(item.get("name", "UNKNOWN"))
 
     if "reported_name" not in item or not item["reported_name"]:
@@ -300,6 +318,46 @@ def _sanitize_new_calculation(
     return item
 
 
+def _propagate_analysis_renames(
+    base: dict[str, Any],
+    rename_map: dict[str, str],
+) -> None:
+    """Propagate analysis renames to dependent sheets.
+
+    When extraction overrides an analysis name (e.g. SITE_IDENTITY ->
+    AND_ACS_DYE), components, calc_variables, and calculations still
+    reference the old template name. This function updates those
+    references to preserve cross-sheet integrity.
+
+    Mutates ``base`` in place.
+
+    Args:
+        base: The merged MDA dict.
+        rename_map: Mapping of old_name -> new_name for renamed analyses.
+    """
+    if not rename_map:
+        return
+
+    for sheet_key in ("components", "calc_variables", "calculations"):
+        items = base.get(sheet_key, [])
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for field in ("analysis", "reference_analysis"):
+                old_ref = item.get(field)
+                if old_ref and str(old_ref) in rename_map:
+                    new_ref = rename_map[str(old_ref)]
+                    logger.info(
+                        "Propagating analysis rename in %s: %s.%s '%s' -> '%s'",
+                        sheet_key,
+                        item.get("component_name") or item.get("name") or item.get("component", "?"),
+                        field,
+                        old_ref,
+                        new_ref,
+                    )
+                    item[field] = new_ref
+
+
 def _overlay_extracted_items(
     template_items: list[dict[str, Any]],
     extracted_items: list[dict[str, Any]],
@@ -385,6 +443,9 @@ def _overlay_extracted_items(
                     new_item = sanitize_fn(new_item, merged)
                 except TypeError:
                     new_item = sanitize_fn(new_item)
+            # Sanitize returned None -> reject this item (phantom row)
+            if new_item is None:
+                continue
             new_idx = len(merged)
             merged.append(new_item)
             item_prefix = f"{prefix}[{new_idx}]"
@@ -463,17 +524,52 @@ def merge_layers(
     ext_calc_vars = extracted_data.get("calc_variables", [])
     ext_calculations = extracted_data.get("calculations", [])
 
+    # Track original template analysis names before overlay (for rename detection)
+    original_analysis_names = [
+        str(a.get("name", "")) for a in base.get("analyses", [])
+    ]
+
     if ext_analyses:
+        # Wrap _match_analysis with exclusive index tracking so that
+        # duplicate analysis_types (e.g. two QC_SAMPLES) match distinct
+        # template entries instead of both matching the first one.
+        _matched_analysis_indices: set[int] = set()
+
+        def _exclusive_match_analysis(
+            ext_item: dict[str, Any],
+            tpl_items: list[dict[str, Any]],
+        ) -> int | None:
+            idx = _match_analysis(ext_item, tpl_items, exclude_indices=_matched_analysis_indices)
+            if idx is not None:
+                _matched_analysis_indices.add(idx)
+            return idx
+
         base["analyses"] = _overlay_extracted_items(
             base.get("analyses", []),
             ext_analyses,
-            _match_analysis,
+            _exclusive_match_analysis,
             provenance,
             "analyses",
             conflicts,
             conflict_fields={"analysis_type", "name"},
             sanitize_fn=_sanitize_new_analysis,
         )
+
+    # Build analysis rename map: detect where extraction changed analysis names
+    analysis_rename_map: dict[str, str] = {}
+    for i, orig_name in enumerate(original_analysis_names):
+        if i < len(base.get("analyses", [])):
+            new_name = str(base["analyses"][i].get("name", ""))
+            if orig_name and new_name and orig_name != new_name:
+                analysis_rename_map[orig_name] = new_name
+                logger.info(
+                    "Analysis rename detected: '%s' -> '%s'",
+                    orig_name,
+                    new_name,
+                )
+
+    # Propagate renames to dependent sheets before component overlay
+    _propagate_analysis_renames(base, analysis_rename_map)
 
     if ext_components:
         base["components"] = _overlay_extracted_items(
@@ -545,6 +641,36 @@ def merge_layers(
 
     # 4. Mark remaining gaps as SME_REQUIRED
     _mark_sme_required_gaps(base, provenance)
+
+    # 4b. Normalize analysis refs and forward-fill BEFORE validation
+    # This ensures the reviewer sees the final normalized form (not deferred
+    # to export time, which would violate the HITL contract).
+    from main.src.lims.data_normalizer import (
+        _build_analysis_name_map,
+        _forward_fill_field,
+        _normalize_analysis_refs,
+        sanitize_component_numeric_bounds,
+    )
+
+    known_analyses = [
+        str(a["name"]) for a in base.get("analyses", [])
+        if isinstance(a, dict) and a.get("name")
+    ]
+    analysis_name_map_norm = _build_analysis_name_map(base.get("analyses", []))
+    for sheet_key in ("components", "calc_variables", "calculations"):
+        if sheet_key in base and isinstance(base[sheet_key], list):
+            _normalize_analysis_refs(base[sheet_key], analysis_name_map_norm)
+            _forward_fill_field(
+                base[sheet_key], "analysis",
+                available_values=known_analyses,
+            )
+            if sheet_key in ("calc_variables", "calculations"):
+                _forward_fill_field(base[sheet_key], "component")
+
+    if "components" in base and isinstance(base["components"], list):
+        sanitize_component_numeric_bounds(base["components"])
+
+    logger.info("Pre-review normalization applied (analysis refs + forward-fill)")
 
     # 5. Validate cross-sheet integrity
     validation_passed = False

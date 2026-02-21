@@ -348,6 +348,8 @@ async def get_status(job_id: str) -> dict:
         "provenance": job.provenance,
         "conflicts": job.conflicts,
         "stage_details": job.stage_details,
+        "validated": job.validated,
+        "validation_error": job.validation_error,
         "error": job.error,
         "chat_history_length": len(job.chat_history),
         "edit_log_length": len(job.edit_log),
@@ -451,6 +453,17 @@ async def chat(request: ChatRequest) -> dict:
     # Sync MDA template back to job store
     job.mda_template = session.mda_template
 
+    # Re-validate after chat edits and update job state
+    from main.src.lims.mda_schema import MDATemplate
+
+    try:
+        MDATemplate.model_validate(job.mda_template)
+        job.validated = True
+        job.validation_error = None
+    except Exception as e:
+        job.validated = False
+        job.validation_error = str(e)
+
     # Log chat to job's history and edit log
     job.chat_history.append({
         "user_message": request.message,
@@ -459,6 +472,10 @@ async def chat(request: ChatRequest) -> dict:
     })
     for edit in result["edits_applied"]:
         job.edit_log.append(edit)
+
+    # Include validation state in response so frontend can update
+    result["validated"] = job.validated
+    result["validation_error"] = job.validation_error
 
     return result
 
@@ -486,6 +503,7 @@ async def approve(job_id: str) -> dict:
         HTTPException 409: If job is not in PENDING_REVIEW state.
     """
     from main.src.lims.job_store import approve_job, get_job
+    from main.src.lims.mda_schema import MDATemplate
 
     try:
         job = get_job(job_id)
@@ -493,6 +511,27 @@ async def approve(job_id: str) -> dict:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
+        ) from e
+
+    # Hard validation gate: block approval if MDA is missing or invalid
+    if not job.mda_template:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Approval blocked: job '{job_id}' has no MDA template. "
+                f"The pipeline must produce a valid MDA before approval."
+            ),
+        )
+
+    try:
+        MDATemplate.model_validate(job.mda_template)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Approval blocked: MDA template fails validation. "
+                f"Fix errors via chat before approving.\n{e}"
+            ),
         ) from e
 
     try:
@@ -565,40 +604,14 @@ async def export(job_id: str) -> Response:
             ),
         )
 
-    # Export MDA to XLSX
+    # Export MDA to XLSX -- pure validation + serialization.
+    # Normalization now runs pre-review (in merger.py), so the approved
+    # data is already in its final form. No post-approval mutation.
     try:
-        from main.src.lims.data_normalizer import (
-            _build_analysis_name_map,
-            _forward_fill_field,
-            _normalize_analysis_refs,
-        )
         from main.src.lims.mda_schema import MDATemplate
         from main.src.lims.xlsx_exporter import export_mda_to_xlsx
 
-        # Sanitize stored data: resolve truncated/abbreviated analysis refs
-        # and forward-fill analysis/component fields that LlamaExtract may
-        # have left as None in continuation table rows.
-        mda_data = job.mda_template
-        known_analyses = [
-            str(a["name"]) for a in mda_data.get("analyses", [])
-            if isinstance(a, dict) and a.get("name")
-        ]
-        analysis_name_map = _build_analysis_name_map(
-            mda_data.get("analyses", [])
-        )
-        for sheet_key in ("components", "calc_variables", "calculations"):
-            if sheet_key in mda_data and isinstance(mda_data[sheet_key], list):
-                _normalize_analysis_refs(
-                    mda_data[sheet_key], analysis_name_map,
-                )
-                _forward_fill_field(
-                    mda_data[sheet_key], "analysis",
-                    available_values=known_analyses,
-                )
-                if sheet_key in ("calc_variables", "calculations"):
-                    _forward_fill_field(mda_data[sheet_key], "component")
-
-        mda = MDATemplate.model_validate(mda_data)
+        mda = MDATemplate.model_validate(job.mda_template)
         xlsx_bytes = export_mda_to_xlsx(mda)
     except Exception as e:
         logger.exception("XLSX export failed for job %s: %s", job_id, e)

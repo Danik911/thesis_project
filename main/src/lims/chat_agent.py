@@ -20,7 +20,7 @@ from typing import Any, Literal
 
 from langfuse import observe
 from openai import OpenAI
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 
 from .config import LIMSConfig
 from .mda_schema import MDATemplate
@@ -280,8 +280,10 @@ class ChatSession:
         """Apply a structured edit to the MDA template with rollback on failure.
 
         Takes a snapshot of the current template before applying the edit.
-        If the modified template fails MDATemplate.model_validate(), the
-        snapshot is restored and a ValueError is raised.
+        For invalid-in-progress templates, incremental edits are allowed as
+        long as they do not introduce NEW validation error locations.
+        If the edit introduces new error locations, the snapshot is restored
+        and a ValueError is raised.
 
         Args:
             edit: The edit action to apply.
@@ -292,6 +294,7 @@ class ChatSession:
         """
         # Snapshot for rollback
         snapshot = copy.deepcopy(self.mda_template)
+        baseline_errors = self._validation_error_paths(self.mda_template)
 
         try:
             sheet_data: list[dict[str, Any]] = self.mda_template.get(edit.sheet, [])
@@ -339,17 +342,50 @@ class ChatSession:
                     edit.target,
                 )
 
-            # Re-validate entire MDA after edit
-            MDATemplate.model_validate(self.mda_template)
+            # Conservative normalization before validation:
+            # - analysis_type aliases (e.g., IDENTITY -> ID)
+            # - qualitative tokens in numeric bounds for L/T/D components
+            from .data_normalizer import (
+                _normalize_analysis_type,
+                sanitize_component_numeric_bounds,
+            )
+
+            analyses = self.mda_template.get("analyses", [])
+            if isinstance(analyses, list):
+                for analysis in analyses:
+                    if not isinstance(analysis, dict):
+                        continue
+                    analysis["analysis_type"] = _normalize_analysis_type(
+                        analysis.get("analysis_type"),
+                        analysis.get("name"),
+                    )
+
+            components = self.mda_template.get("components", [])
+            if isinstance(components, list):
+                sanitize_component_numeric_bounds(components)
+
+            # Re-validate entire MDA after edit.
+            # Allow incremental repair: the model may still be invalid, but
+            # must not introduce NEW error locations compared to baseline.
+            post_errors = self._validation_error_paths(self.mda_template)
+            new_errors = sorted(post_errors - baseline_errors)
+            if new_errors:
+                raise ValueError(
+                    "Edit introduces new validation errors: "
+                    f"{', '.join(new_errors[:10])}"
+                    + (" ..." if len(new_errors) > 10 else "")
+                )
 
             # Log successful edit
             self.edits.append(edit)
             logger.info(
-                "Job %s: edit applied and validated (sheet=%s, action=%s, reason=%s)",
+                "Job %s: edit applied (sheet=%s, action=%s, reason=%s, baseline_errors=%d, post_errors=%d)",
                 self.job_id,
                 edit.sheet,
                 edit.action,
                 edit.reason,
+                len(baseline_errors),
+                len(post_errors),
             )
 
         except Exception:
@@ -363,6 +399,27 @@ class ChatSession:
                 edit.action,
             )
             raise
+
+    @staticmethod
+    def _validation_error_paths(mda_template: dict[str, Any]) -> set[str]:
+        """Return validation error paths for the current MDA template.
+
+        Returns an empty set when validation passes.
+        """
+        try:
+            MDATemplate.model_validate(mda_template)
+            return set()
+        except ValidationError as e:
+            paths: set[str] = set()
+            for err in e.errors():
+                loc = err.get("loc", ())
+                if isinstance(loc, tuple):
+                    paths.add(".".join(str(part) for part in loc))
+                elif isinstance(loc, list):
+                    paths.add(".".join(str(part) for part in loc))
+                else:
+                    paths.add(str(loc))
+            return paths
 
     @staticmethod
     def _find_item(

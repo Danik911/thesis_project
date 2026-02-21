@@ -15,6 +15,7 @@ from main.src.lims.data_normalizer import (
     normalize_component_name,
     normalize_extraction,
     normalize_symbols,
+    sanitize_component_numeric_bounds,
 )
 from main.src.lims.mda_schema import MDATemplate
 
@@ -105,6 +106,32 @@ def test_normalize_extraction_does_not_mutate_input() -> None:
 def test_normalize_extraction_rejects_non_dict() -> None:
     with pytest.raises(TypeError):
         normalize_extraction(["not", "a", "dict"])  # type: ignore[arg-type]
+
+
+def test_sanitize_component_numeric_bounds_clears_pass_for_qualitative_types() -> None:
+    components = [
+        {"component_name": "VISUAL_CHECK", "result_type": "L", "minimum": "Pass", "maximum": "N/A"},
+        {"component_name": "COMMENT", "result_type": "T", "minimum": "--", "maximum": ""},
+        {"component_name": "DATE_FIELD", "result_type": "D", "minimum": "Pass", "maximum": "Fail"},
+    ]
+
+    sanitize_component_numeric_bounds(components)
+
+    for component in components:
+        assert component["minimum"] is None
+        assert component["maximum"] is None
+
+
+def test_sanitize_component_numeric_bounds_does_not_mask_numeric_types() -> None:
+    components = [
+        {"component_name": "ABSORBANCE", "result_type": "N", "minimum": "Pass", "maximum": "2.0"},
+        {"component_name": "CALC_VALUE", "result_type": "K", "minimum": "N/A", "maximum": "Fail"},
+    ]
+
+    sanitize_component_numeric_bounds(components)
+
+    assert components[0]["minimum"] == "Pass"
+    assert components[1]["minimum"] == "N/A"
 
 
 def test_normalize_semantic_aliases_make_payload_valid() -> None:
@@ -200,11 +227,11 @@ def test_normalize_semantic_aliases_make_payload_valid() -> None:
 
 
 # ---------------------------------------------------------------------------
-# _resolve_analysis_name: prefix and fuzzy matching tests
+# _resolve_analysis_name: deterministic exact-match tests
 # ---------------------------------------------------------------------------
 
 class TestResolveAnalysisName:
-    """Tests for analysis name resolution with prefix/substring matching."""
+    """Tests for deterministic exact-match analysis name resolution."""
 
     def _make_map(self, names: list[str]) -> dict[str, str]:
         """Build analysis_name_map from a list of canonical names."""
@@ -215,38 +242,37 @@ class TestResolveAnalysisName:
         name_map = self._make_map(["SITE_IDENTITY_CTL", "SITE_IDENTITY_META"])
         assert _resolve_analysis_name("SITE_IDENTITY_CTL", name_map) == "SITE_IDENTITY_CTL"
 
-    def test_prefix_single_match(self) -> None:
+    def test_prefix_single_match_returns_none(self) -> None:
         name_map = self._make_map(["DYE_BINDING_TEST", "SOMETHING_ELSE"])
-        assert _resolve_analysis_name("DYE_BINDING", name_map) == "DYE_BINDING_TEST"
+        assert _resolve_analysis_name("DYE_BINDING", name_map) is None
 
-    def test_prefix_multiple_matches_picks_shortest(self) -> None:
-        """SITE_IDENTITY should match SITE_IDENTITY_CTL (shorter) over SITE_IDENTITY_META."""
+    def test_prefix_multiple_matches_returns_none(self) -> None:
         name_map = self._make_map(["SITE_IDENTITY_CTL", "SITE_IDENTITY_META"])
         result = _resolve_analysis_name("SITE_IDENTITY", name_map)
-        assert result == "SITE_IDENTITY_CTL"
+        assert result is None
 
-    def test_substring_single_match(self) -> None:
+    def test_substring_single_match_returns_none(self) -> None:
         name_map = self._make_map([
             "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)"
         ])
         result = _resolve_analysis_name("IDENTITY_TEST_FOR_ABSORBABLE", name_map)
-        assert result == "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)"
+        assert result is None
 
     def test_no_match_returns_none(self) -> None:
         name_map = self._make_map(["SITE_IDENTITY_CTL", "SITE_IDENTITY_META"])
         assert _resolve_analysis_name("COMPLETELY_DIFFERENT", name_map) is None
 
-    def test_case_insensitive_prefix_match(self) -> None:
+    def test_case_insensitive_exact_match_via_alias_map(self) -> None:
         name_map = self._make_map(["SITE_IDENTITY_CTL"])
-        result = _resolve_analysis_name("site identity", name_map)
+        result = _resolve_analysis_name("site_identity_ctl", name_map)
         assert result == "SITE_IDENTITY_CTL"
 
 
-class TestNormalizeAnalysisRefsWithPrefixMatching:
-    """Integration test: truncated analysis refs are resolved before validation."""
+class TestNormalizeAnalysisRefsDeterministic:
+    """Integration tests for deterministic exact-match normalization."""
 
-    def test_truncated_site_identity_resolves_for_export(self) -> None:
-        """Reproduce the exact bug: SITE_IDENTITY -> one of the valid analyses."""
+    def test_truncated_site_identity_is_not_resolved(self) -> None:
+        """Truncated refs remain unchanged under exact-match-only policy."""
         analyses = [
             {
                 "name": "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)",
@@ -287,15 +313,15 @@ class TestNormalizeAnalysisRefsWithPrefixMatching:
         analysis_name_map = _build_analysis_name_map(analyses)
         _normalize_analysis_refs(components, analysis_name_map)
 
-        # The truncated ref should now resolve to a valid analysis
-        assert components[0]["analysis"] in {"SITE_IDENTITY_CTL", "SITE_IDENTITY_META"}
+        # The truncated ref should remain unchanged (deterministic exact-match only)
+        assert components[0]["analysis"] == "SITE_IDENTITY"
         # The already-valid ref should remain unchanged
         assert components[1]["analysis"] == (
             "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)"
         )
 
-    def test_full_pipeline_with_truncated_ref_passes_validation(self) -> None:
-        """End-to-end: normalize_extraction -> MDATemplate validation succeeds."""
+    def test_full_pipeline_with_truncated_ref_fails_validation(self) -> None:
+        """End-to-end: unresolved truncated ref should fail validation loudly."""
         raw = {
             "analyses": [
                 {
@@ -326,11 +352,5 @@ class TestNormalizeAnalysisRefsWithPrefixMatching:
 
         normalized = normalize_extraction(raw)
 
-        # This should NOT raise -- the truncated ref is resolved
-        validated = MDATemplate.model_validate(normalized)
-
-        # Verify the component's analysis was resolved to a valid name
-        assert validated.components[0].analysis in {
-            "SITE_IDENTITY_CTL",
-            "SITE_IDENTITY_META",
-        }
+        with pytest.raises(Exception):
+            MDATemplate.model_validate(normalized)

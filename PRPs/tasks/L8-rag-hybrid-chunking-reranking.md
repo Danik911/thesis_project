@@ -22,6 +22,29 @@ Current RAG implementation (`rag_loader.py`) has three weaknesses:
 
 ---
 
+## Findings from L18 + Langfuse (Feb 2026)
+
+Observed in `demo_data/langfuse/trace-c9141e0515e5ddf477d34d67b3d8b880.json`:
+
+- **Template is currently carrying output quality**
+    - Merge stats: `TEMPLATE=496`, `EXTRACTED=24` (template dominates final output).
+    - `validation_passed=true` only after merge.
+- **Extraction alone is structurally invalid**
+    - Focused extract stage reports `validated=false` with many schema errors.
+- **RAG path is invoked but contributes zero effective augmentation**
+    - `lims-augment` runs, but returns `{"suggestions": []}`.
+    - `augmented_data.suggestions` is empty at merge input.
+- **Retrieved context appears noisy / weakly relevant**
+    - `rag-standards-query` returns generic content; distance values are not compelling for the target method.
+- **Classification is not the current bottleneck**
+    - Method classifies as `IDENTITY` with high confidence (filename evidence), so retrieval quality is the primary optimization target.
+
+### Implication
+
+L8 should prioritize **retrieval precision and rerank quality**, not classification changes. The goal is to make augmentation produce non-empty, relevant, merge-usable suggestions without relaxing validation gates.
+
+---
+
 ## Demo Data Structure
 
 Location: `c:\Users\anteb\Desktop\Courses\Projects\thesis_project\demo_data`
@@ -30,6 +53,8 @@ Three types of files (ALL indexed for RAG):
 - **PDF+XLSX pairs** (16 pairs): Input PDFs -> human-created MDA XLSX outputs (gold standard)
 - **Config_w_Calcs.xlsx** (8 files): Configuration worksheets with calculation examples
 - **gLIMS_Build.xls** (8 files): gLIMS build exports (legacy format, .xls not .xlsx)
+
+**Important ingestion note:** current chunking proposal is XLSX-only. L8 implementation must explicitly handle `.xls` sources (conversion or dedicated parser) so these files are not silently excluded from the index.
 
 Key sheets in MDA XLSX outputs: Sheet 1 (Analysis), Sheet 2 (Component), Sheet 6 (Calc Variables), Sheet 7 (Calculation). Only these sheets matter for RAG context.
 
@@ -55,6 +80,17 @@ Parsed markdown versions exist at: `demo_data/parced/AND_ACS_DYE-LAB-2499_pdf.md
 ---
 
 ## Implementation Details
+
+### 0. Guardrails from current findings
+
+- Keep hard validation gate behavior unchanged (no fallback auto-pass).
+- Add retrieval diagnostics in traces for every query:
+    - `retrieved_docs_count`
+    - `candidate_docs_before_rerank`
+    - `reranked_docs_count`
+    - `suggestions_generated_count`
+    - `suggestions_applied_count` (if available at merge stage)
+- Fail loudly on indexing/parsing errors (aligned with project policy).
 
 ### 1. chunking.py -- Hybrid Sheet-Level + Summary Chunks
 
@@ -445,6 +481,12 @@ if site_prefix:
     )
 ```
 
+Add metadata-aware filtering before final candidate set:
+
+- Prefer chunks whose metadata matches extracted method/site tokens (e.g., `AND`, `ACS`, method identifier).
+- Prefer priority sheets (`Analysis`, `Component`, `Calc Variable`, `Calculation`) during candidate expansion.
+- Keep this as ranking bias, not hard exclusion, to avoid dropping true positives.
+
 ### 3. Cohere Rerank v3 Post-Retrieval
 
 Add Cohere Rerank as the final quality gate after hybrid retrieval:
@@ -532,9 +574,10 @@ def seed_mda_templates(demo_data_dir: str, chroma_path: str = CHROMA_PATH) -> in
 
     demo_path = Path(demo_data_dir)
     xlsx_files = sorted(demo_path.glob("*.xlsx"))
+    xls_files = sorted(demo_path.glob("*.xls"))
 
-    if not xlsx_files:
-        logger.warning("No XLSX files found in %s", demo_data_dir)
+    if not xlsx_files and not xls_files:
+        logger.warning("No Excel files found in %s", demo_data_dir)
         return 0
 
     client = chromadb.PersistentClient(path=chroma_path)
@@ -549,7 +592,12 @@ def seed_mda_templates(demo_data_dir: str, chroma_path: str = CHROMA_PATH) -> in
     all_documents: list[str] = []
     all_metadatas: list[dict] = []
 
-    for xlsx_path in xlsx_files:
+    # NOTE: .xls handling required for full demo_data coverage
+    # Option A (recommended): convert .xls -> .xlsx in a preprocessing step
+    # Option B: parse .xls directly with a dedicated reader
+    excel_files = list(xlsx_files)  # extend with converted/directly parsed .xls artifacts
+
+    for xlsx_path in excel_files:
         try:
             chunks = parse_xlsx_to_chunks(xlsx_path)
             for chunk in chunks:
@@ -574,7 +622,7 @@ def seed_mda_templates(demo_data_dir: str, chroma_path: str = CHROMA_PATH) -> in
     logger.info(
         "Seeded ChromaDB with %d chunks from %d XLSX files",
         len(all_ids),
-        len(xlsx_files),
+        len(excel_files),
     )
 
     return len(all_ids)
@@ -655,9 +703,16 @@ uv run pytest main/tests/lims/test_rag_hybrid.py -v
 # 4. Test reranking
 uv run pytest main/tests/lims/test_rag_reranking.py -v -m integration
 
+# 4b. Trace-level assertions (new)
+# Validate retrieval diagnostics and non-empty candidate pipeline
+uv run pytest main/tests/lims/test_rag_observability.py -v
+
 # 5. Full pipeline test: extract -> RAG -> generate
 curl -X POST http://localhost:8080/lims/extract -F "file=@demo_data/AND_ACS_DYE-LAB-2499.pdf"
 # Verify RAG context in generation is more relevant
+
+# 5b. A/B check vs current baseline on 3 known queries
+# Record top-3 relevance before/after hybrid+rerank in test artifact markdown
 
 # 6. Existing tests still pass
 uv run pytest main/tests/lims/ -v
@@ -667,12 +722,30 @@ uv run pytest main/tests/lims/ -v
 
 ## Gate Criteria
 
-- [ ] ChromaDB seeded with hybrid chunks (~5 per XLSX, ~125 total)
-- [ ] Hybrid search returns more relevant results than embedding-only (manual comparison on 3 queries)
-- [ ] Cohere reranking improves top-3 precision (measured on 3 test queries)
+- [ ] ChromaDB seeded with hybrid chunks (~5 per workbook, includes `.xlsx` and `.xls` corpus)
+- [ ] Hybrid search returns more relevant results than embedding-only (documented A/B on 3 fixed queries)
+- [ ] Cohere reranking improves top-3 precision (measured and logged on same 3 queries)
 - [ ] `query_similar_templates()` supports both modes (hybrid on/off, reranking on/off)
-- [ ] MDA generation quality improves with better RAG context (subjective but documented)
+- [ ] RAG augmentation is no longer consistently empty for relevant queries (track `suggestions_generated_count`)
+- [ ] MDA generation quality improves with better RAG context (documented with before/after examples)
 - [ ] All existing LIMS tests pass, ChromaDB re-seeding doesn't break pipeline
+
+---
+
+## Suggested Query Set for L8 Evaluation
+
+Use fixed queries tied to known templates to avoid subjective drift:
+
+1. `ACS_DYE spectrophotometry assay with Bradford method`
+2. `AQ126 suitability for use ACS loading capacity and physical integrity`
+3. `identity control meta components direct red solution`
+
+For each query, capture:
+
+- Top-3 before (semantic-only)
+- Top-3 after (hybrid + rerank)
+- Whether returned chunks are method/site-correct
+- Whether augmentation produced actionable suggestions
 
 ---
 

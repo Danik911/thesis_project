@@ -48,13 +48,13 @@ export default function PipelineStageDetail({ stages }: PipelineStageDetailProps
               <span className="text-slate-400 text-xs">{isOpen ? 'Hide' : 'Show'}</span>
             </button>
             {isOpen && (
-              <div className="px-3 py-3 bg-slate-900/40">
+              <div className="px-3 py-3 bg-slate-900/40 max-h-60 overflow-y-auto">
                 {stage.bullets.length === 0 ? (
                   <p className="text-sm text-slate-400">No stage details provided yet.</p>
                 ) : (
                   <ul className="space-y-1.5">
                     {stage.bullets.map((bullet, index) => (
-                      <li key={`${stage.key}-${index}`} className="text-sm text-slate-300">
+                      <li key={`${stage.key}-${index}`} className="text-sm text-slate-300 break-words">
                         • {bullet}
                       </li>
                     ))}

@@ -101,6 +101,8 @@ class LIMSJob(BaseModel):
     stage_details: list[dict[str, Any]] = Field(default_factory=list)
     chat_history: list[dict[str, Any]] = Field(default_factory=list)
     edit_log: list[dict[str, Any]] = Field(default_factory=list)
+    validated: bool = False
+    validation_error: Optional[str] = None
     error: Optional[str] = None
 
 

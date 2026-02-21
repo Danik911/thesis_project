@@ -20,6 +20,7 @@ interface ChatMessage {
 interface ChatInterfaceProps {
   jobId: string;
   onMDAUpdate: (updatedMda: Record<string, unknown>) => void;
+  onValidationUpdate?: (validated: boolean, validationError: string | null) => void;
   disabled?: boolean;
 }
 
@@ -29,7 +30,7 @@ const SUGGESTIONS = [
   'Why is DYE_VOLUME result type K?',
 ];
 
-export default function ChatInterface({ jobId, onMDAUpdate, disabled }: ChatInterfaceProps) {
+export default function ChatInterface({ jobId, onMDAUpdate, onValidationUpdate, disabled }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -75,6 +76,11 @@ export default function ChatInterface({ jobId, onMDAUpdate, disabled }: ChatInte
 
       if (data.mda_template) {
         onMDAUpdate(data.mda_template);
+      }
+
+      // Update validation state from chat response
+      if (onValidationUpdate && data.validated !== undefined) {
+        onValidationUpdate(data.validated, data.validation_error ?? null);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

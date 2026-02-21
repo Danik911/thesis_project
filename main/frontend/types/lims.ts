@@ -81,6 +81,8 @@ export interface StatusResponse {
   provenance?: ProvenancePayload;
   conflicts?: MergeConflictResponse[];
   stage_details?: PipelineStageDetailResponse[];
+  validated?: boolean;
+  validation_error?: string | null;
   error?: string | null;
   chat_history_length: number;
   edit_log_length: number;

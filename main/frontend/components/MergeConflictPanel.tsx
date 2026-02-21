@@ -73,13 +73,13 @@ export default function MergeConflictPanel({ conflicts, onResolve }: MergeConfli
               <div key={conflict.id} className="rounded-lg border border-slate-700 p-3 space-y-3">
                 <p className="text-sm text-slate-200 font-medium">{conflict.field}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-slate-900 border border-slate-700 p-2">
+                  <div className="rounded-lg bg-slate-900 border border-slate-700 p-2 max-h-24 overflow-y-auto">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">Template</p>
-                    <p className="text-sm text-slate-200 mt-1">{conflict.templateValue}</p>
+                    <p className="text-sm text-slate-200 mt-1 break-words">{conflict.templateValue}</p>
                   </div>
-                  <div className="rounded-lg bg-slate-900 border border-slate-700 p-2">
+                  <div className="rounded-lg bg-slate-900 border border-slate-700 p-2 max-h-24 overflow-y-auto">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">Extracted</p>
-                    <p className="text-sm text-slate-200 mt-1">{conflict.extractedValue}</p>
+                    <p className="text-sm text-slate-200 mt-1 break-words">{conflict.extractedValue}</p>
                   </div>
                 </div>
 

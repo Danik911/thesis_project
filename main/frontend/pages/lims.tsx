@@ -142,6 +142,41 @@ function formatValue(value: unknown): string {
   }
 }
 
+function summarizeValidationError(value: unknown): string {
+  const raw = formatValue(value);
+  if (!raw || raw === '--') return raw;
+
+  const firstLine = raw.split('\n')[0] ?? raw;
+  const match = firstLine.match(/(\d+)\s+validation\s+errors?/i);
+  if (match) {
+    return `${match[1]} validation errors (details available in review Validation Details panel)`;
+  }
+
+  if (firstLine.length > 160) {
+    return `${firstLine.slice(0, 160)}...`;
+  }
+
+  return firstLine;
+}
+
+function summarizeExtractionTrace(value: unknown): string {
+  if (!value || typeof value !== 'object') {
+    return formatValue(value);
+  }
+
+  const trace = value as Record<string, unknown>;
+  const summary = {
+    provider: trace.provider,
+    run_id: trace.run_id,
+    run_status: trace.run_status,
+    duration_ms: trace.duration_ms,
+    extraction_mode: trace.extraction_mode,
+    extraction_target: trace.extraction_target,
+  };
+
+  return formatValue(summary);
+}
+
 function toMergeConflicts(conflicts?: MergeConflictResponse[]): MergeConflict[] {
   if (!conflicts) return [];
   return conflicts.map((conflict, index) => ({
@@ -159,12 +194,29 @@ function toStageDetails(stageDetails?: PipelineStageDetailResponse[]): StageDeta
 
   return stageDetails.map((item) => {
     const key = item.stage.toLowerCase();
-    const detailsEntries = Object.entries(item.details || {}).map(([detailKey, value]) => `${detailKey}: ${formatValue(value)}`);
+
+    const detailsEntries = Object.entries(item.details || {}).map(([detailKey, value]) => {
+      if (item.stage === 'EXTRACT' && detailKey === 'validation_error') {
+        return `${detailKey}: ${summarizeValidationError(value)}`;
+      }
+
+      if (item.stage === 'EXTRACT' && detailKey === 'extraction_trace') {
+        return `${detailKey}: ${summarizeExtractionTrace(value)}`;
+      }
+
+      return `${detailKey}: ${formatValue(value)}`;
+    });
+
+    const extractNote =
+      item.stage === 'EXTRACT'
+        ? ['note: Extract validation is pre-merge and informational; approval is gated by review validation.']
+        : [];
+
     return {
       key,
       title: STAGE_LABELS[item.stage] ?? item.stage,
       summary: item.summary,
-      bullets: [`duration_ms: ${item.duration_ms}`, ...detailsEntries],
+      bullets: [`duration_ms: ${item.duration_ms}`, ...extractNote, ...detailsEntries],
     };
   });
 }
@@ -284,6 +336,13 @@ export default function LimsPage() {
         setProvenanceMap(toCellProvenanceMap(data.provenance));
         setMergeConflicts(toMergeConflicts(data.conflicts));
         setStageDetails(toStageDetails(data.stage_details));
+
+        if (data.validated !== undefined) {
+          setValidated(data.validated);
+        }
+        if (data.validation_error !== undefined) {
+          setValidationError(data.validation_error ?? null);
+        }
 
         const view = mapBackendStatusToWorkflow(data.status);
         setWorkflowView(view);
@@ -512,6 +571,11 @@ export default function LimsPage() {
 
   const handleMDAUpdate = useCallback((updatedMDA: Record<string, unknown>) => {
     setMdaData(updatedMDA);
+  }, []);
+
+  const handleValidationUpdate = useCallback((isValid: boolean, valError: string | null) => {
+    setValidated(isValid);
+    setValidationError(valError);
   }, []);
 
   const handleStartOver = useCallback(() => {
@@ -759,7 +823,9 @@ export default function LimsPage() {
               {validationError && (
                 <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
                   <p className="text-amber-400 text-sm font-medium mb-1">Validation Details</p>
-                  <p className="text-amber-300/80 text-xs font-mono whitespace-pre-wrap">{validationError}</p>
+                  <div className="max-h-48 overflow-y-auto">
+                    <p className="text-amber-300/80 text-xs font-mono whitespace-pre-wrap">{validationError}</p>
+                  </div>
                 </div>
               )}
 
@@ -777,13 +843,22 @@ export default function LimsPage() {
                   <MDAViewer data={mdaData} validated={validated} title="MDA Template (Review Mode)" provenanceMap={provenanceMap} />
 
                   {backendStatus !== 'APPROVED' ? (
-                    <button
-                      onClick={handleApprove}
-                      disabled={approveLoading}
-                      className="w-full px-6 py-3 rounded-xl font-medium text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
-                    >
-                      {approveLoading ? 'Approving...' : 'Approve MDA Template'}
-                    </button>
+                    <>
+                      {!validated && (
+                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/25">
+                          <p className="text-red-400 text-sm font-medium">
+                            Approval blocked: fix validation errors via chat before approving.
+                          </p>
+                        </div>
+                      )}
+                      <button
+                        onClick={handleApprove}
+                        disabled={approveLoading || !validated}
+                        className="w-full px-6 py-3 rounded-xl font-medium text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed"
+                      >
+                        {approveLoading ? 'Approving...' : 'Approve MDA Template'}
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={handleExport}
@@ -796,7 +871,7 @@ export default function LimsPage() {
 
                 <div className="lg:col-span-2 space-y-4">
                   <PipelineStageDetail stages={stageDetails} />
-                  {jobId && <ChatInterface jobId={jobId} onMDAUpdate={handleMDAUpdate} disabled={false} />}
+                  {jobId && <ChatInterface jobId={jobId} onMDAUpdate={handleMDAUpdate} onValidationUpdate={handleValidationUpdate} disabled={false} />}
                 </div>
               </div>
             </motion.div>

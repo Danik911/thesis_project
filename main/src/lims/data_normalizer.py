@@ -105,6 +105,22 @@ RESULT_TYPE_MAP: dict[str, str] = {
     "date": "D",
 }
 
+# Tokens that indicate qualitative pass/fail style entries and should not be
+# treated as numeric bounds for qualitative result types.
+QUALITATIVE_BOUND_TOKENS = {
+    "pass",
+    "fail",
+    "pass/fail",
+    "pass fail",
+    "n/a",
+    "na",
+    "none",
+    "null",
+    "-",
+    "--",
+    "",
+}
+
 
 CALCULATION_TYPE_MAP: dict[str, str] = {
     "formula": "FORMULA",
@@ -347,6 +363,8 @@ def apply_lims_defaults(data: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(component, dict):
             continue
 
+        _sanitize_component_numeric_bounds(component)
+
         result_type = component.get("result_type", "")
 
         if result_type == "K" and not component.get("auto_calc"):
@@ -387,8 +405,44 @@ def _normalize_component(component: dict[str, Any], *, index: int) -> dict[str, 
     normalized_component = _normalize_record(normalized_component)
     normalized_component = coerce_numeric_strings(normalized_component)
     normalized_component = coerce_boolean_strings(normalized_component)
+    _sanitize_component_numeric_bounds(normalized_component)
 
     return normalized_component
+
+
+def sanitize_component_numeric_bounds(
+    components: list[dict[str, Any]],
+) -> None:
+    """Sanitize qualitative tokens in component numeric bounds in place.
+
+    This is intentionally conservative: only clear minimum/maximum when
+    result_type is qualitative (L/T/D) and the bound value is a known
+    qualitative token (e.g., Pass, N/A).
+    """
+    for component in components:
+        if not isinstance(component, dict):
+            continue
+        _sanitize_component_numeric_bounds(component)
+
+
+def _sanitize_component_numeric_bounds(component: dict[str, Any]) -> None:
+    result_type = str(component.get("result_type", "")).upper().strip()
+    if result_type not in {"L", "T", "D"}:
+        return
+
+    for field in ("minimum", "maximum"):
+        value = component.get(field)
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in QUALITATIVE_BOUND_TOKENS:
+                logger.info(
+                    "Clearing qualitative token '%s' from %s for component '%s' (result_type=%s)",
+                    value,
+                    field,
+                    component.get("component_name", "?"),
+                    result_type,
+                )
+                component[field] = None
 
 
 def _normalize_record(record: dict[str, Any]) -> dict[str, Any]:
@@ -509,68 +563,29 @@ def _resolve_analysis_name(
 ) -> str | None:
     """Resolve a raw analysis reference to a canonical analysis name.
 
-    Tries in order:
-    1. Exact match via the analysis_name_map (aliases, reported_name, etc.)
-    2. Prefix match: if the normalized reference is a prefix of exactly one
-       canonical analysis name, use that name.
-    3. Multi-prefix match: if the reference prefixes multiple names (e.g.
-       SITE_IDENTITY matches SITE_IDENTITY_CTL and SITE_IDENTITY_META),
-       pick the shortest canonical name (closest match).
-    4. Substring containment: if a canonical name contains the reference
-       as a substring, use it (single match only).
+    Uses deterministic exact-match only via the alias map (which includes
+    the canonical name, reported_name, and common_name). Prefix and
+    substring matching tiers have been removed because they produce
+    ambiguous matches for names sharing common prefixes (e.g.
+    SITE_IDENTITY matching SITE_IDENTITY_CTL).
+
+    Unresolved references return None and will fail loudly at validation.
 
     Returns the resolved canonical name, or None if no match found.
     """
     lookup_key = _normalize_lookup_key(raw_ref)
 
-    # 1. Exact match (covers aliases, reported_name, common_name)
+    # Exact match only (covers aliases, reported_name, common_name)
     exact = analysis_name_map.get(lookup_key)
     if exact:
         return exact
 
-    # Build set of unique canonical analysis names (the map values)
-    canonical_names = sorted(set(analysis_name_map.values()))
-
-    # 2. Prefix match: lookup_key is a prefix of a canonical name
-    prefix_matches = [
-        name for name in canonical_names
-        if _normalize_lookup_key(name).startswith(lookup_key)
-        and _normalize_lookup_key(name) != lookup_key
-    ]
-    if len(prefix_matches) == 1:
-        logger.info(
-            "Prefix-matched analysis ref '%s' -> '%s'",
-            raw_ref,
-            prefix_matches[0],
-        )
-        return prefix_matches[0]
-    if len(prefix_matches) > 1:
-        # Multiple prefix matches: pick shortest (closest to original ref)
-        best = min(prefix_matches, key=len)
-        logger.warning(
-            "Analysis ref '%s' prefix-matched %d analyses %s; "
-            "using shortest: '%s'",
-            raw_ref,
-            len(prefix_matches),
-            sorted(prefix_matches),
-            best,
-        )
-        return best
-
-    # 3. Substring containment: canonical name contains the lookup_key
-    substring_matches = [
-        name for name in canonical_names
-        if lookup_key in _normalize_lookup_key(name)
-    ]
-    if len(substring_matches) == 1:
-        logger.info(
-            "Substring-matched analysis ref '%s' -> '%s'",
-            raw_ref,
-            substring_matches[0],
-        )
-        return substring_matches[0]
-
-    # No match found
+    # No match found -- will be caught by validation
+    logger.warning(
+        "Analysis ref '%s' (normalized: '%s') has no exact match in alias map",
+        raw_ref,
+        lookup_key,
+    )
     return None
 
 
