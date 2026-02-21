@@ -5,6 +5,9 @@ import copy
 import pytest
 
 from main.src.lims.data_normalizer import (
+    _build_analysis_name_map,
+    _normalize_analysis_refs,
+    _resolve_analysis_name,
     apply_lims_defaults,
     coerce_boolean_strings,
     coerce_numeric_strings,
@@ -194,3 +197,140 @@ def test_normalize_semantic_aliases_make_payload_valid() -> None:
     assert validated.calc_variables[0].scope == "CR"
     assert validated.calc_variables[0].function == "ENTRY"
     assert validated.calculations[0].calculation_type == "FORMULA"
+
+
+# ---------------------------------------------------------------------------
+# _resolve_analysis_name: prefix and fuzzy matching tests
+# ---------------------------------------------------------------------------
+
+class TestResolveAnalysisName:
+    """Tests for analysis name resolution with prefix/substring matching."""
+
+    def _make_map(self, names: list[str]) -> dict[str, str]:
+        """Build analysis_name_map from a list of canonical names."""
+        analyses = [{"name": n} for n in names]
+        return _build_analysis_name_map(analyses)
+
+    def test_exact_match(self) -> None:
+        name_map = self._make_map(["SITE_IDENTITY_CTL", "SITE_IDENTITY_META"])
+        assert _resolve_analysis_name("SITE_IDENTITY_CTL", name_map) == "SITE_IDENTITY_CTL"
+
+    def test_prefix_single_match(self) -> None:
+        name_map = self._make_map(["DYE_BINDING_TEST", "SOMETHING_ELSE"])
+        assert _resolve_analysis_name("DYE_BINDING", name_map) == "DYE_BINDING_TEST"
+
+    def test_prefix_multiple_matches_picks_shortest(self) -> None:
+        """SITE_IDENTITY should match SITE_IDENTITY_CTL (shorter) over SITE_IDENTITY_META."""
+        name_map = self._make_map(["SITE_IDENTITY_CTL", "SITE_IDENTITY_META"])
+        result = _resolve_analysis_name("SITE_IDENTITY", name_map)
+        assert result == "SITE_IDENTITY_CTL"
+
+    def test_substring_single_match(self) -> None:
+        name_map = self._make_map([
+            "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)"
+        ])
+        result = _resolve_analysis_name("IDENTITY_TEST_FOR_ABSORBABLE", name_map)
+        assert result == "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)"
+
+    def test_no_match_returns_none(self) -> None:
+        name_map = self._make_map(["SITE_IDENTITY_CTL", "SITE_IDENTITY_META"])
+        assert _resolve_analysis_name("COMPLETELY_DIFFERENT", name_map) is None
+
+    def test_case_insensitive_prefix_match(self) -> None:
+        name_map = self._make_map(["SITE_IDENTITY_CTL"])
+        result = _resolve_analysis_name("site identity", name_map)
+        assert result == "SITE_IDENTITY_CTL"
+
+
+class TestNormalizeAnalysisRefsWithPrefixMatching:
+    """Integration test: truncated analysis refs are resolved before validation."""
+
+    def test_truncated_site_identity_resolves_for_export(self) -> None:
+        """Reproduce the exact bug: SITE_IDENTITY -> one of the valid analyses."""
+        analyses = [
+            {
+                "name": "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)",
+                "version": 12,
+                "analysis_type": "ID",
+                "active": True,
+            },
+            {
+                "name": "SITE_IDENTITY_CTL",
+                "version": 1,
+                "analysis_type": "QC_SAMPLES",
+                "active": True,
+            },
+            {
+                "name": "SITE_IDENTITY_META",
+                "version": 1,
+                "analysis_type": "QC_SAMPLES",
+                "active": True,
+            },
+        ]
+        components = [
+            {
+                "analysis": "SITE_IDENTITY",
+                "component_name": "PACKAGE_DOUBLE_LAYERED_AND_SEALED",
+                "order_number": 1,
+                "result_type": "L",
+                "reportable": True,
+            },
+            {
+                "analysis": "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)",
+                "component_name": "ABSORBANCE_540",
+                "order_number": 2,
+                "result_type": "N",
+                "reportable": True,
+            },
+        ]
+
+        analysis_name_map = _build_analysis_name_map(analyses)
+        _normalize_analysis_refs(components, analysis_name_map)
+
+        # The truncated ref should now resolve to a valid analysis
+        assert components[0]["analysis"] in {"SITE_IDENTITY_CTL", "SITE_IDENTITY_META"}
+        # The already-valid ref should remain unchanged
+        assert components[1]["analysis"] == (
+            "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)"
+        )
+
+    def test_full_pipeline_with_truncated_ref_passes_validation(self) -> None:
+        """End-to-end: normalize_extraction -> MDATemplate validation succeeds."""
+        raw = {
+            "analyses": [
+                {
+                    "name": "Site Identity CTL",
+                    "version": 1,
+                    "analysis_type": "control",
+                    "active": True,
+                },
+                {
+                    "name": "Site Identity META",
+                    "version": 1,
+                    "analysis_type": "metadata",
+                    "active": True,
+                },
+            ],
+            "components": [
+                {
+                    "analysis": "Site Identity",
+                    "component_name": "Package: Double layered and sealed?",
+                    "order_number": 1,
+                    "result_type": "list",
+                    "reportable": True,
+                },
+            ],
+            "calc_variables": [],
+            "calculations": [],
+        }
+
+        normalized = normalize_extraction(raw)
+
+        # This should NOT raise -- the truncated ref is resolved
+        validated = MDATemplate.model_validate(normalized)
+
+        # Verify the component's analysis was resolved to a valid name
+        assert validated.components[0].analysis in {
+            "SITE_IDENTITY_CTL",
+            "SITE_IDENTITY_META",
+        }

@@ -1,6 +1,6 @@
 # RAG System Guide - Pharmaceutical Test Generation
 
-**Last Updated:** 2025-11-29
+**Last Updated:** 2026-02-20
 **Status:** Production Ready
 **Observability:** LangFuse Cloud (Phoenix deprecated)
 
@@ -402,6 +402,183 @@ All RAG operations are traced in LangFuse with:
 
 ---
 
+---
+
+## AI4LIMS RAG System
+
+The AI4LIMS PoC has its own independent RAG system using ChromaDB. It is entirely separate from the thesis RAG system above (different collections, different embeddings, different seeding pipeline).
+
+---
+
+### Collections
+
+| Collection | Size | Source | Description |
+|------------|------|--------|-------------|
+| `mda_templates` | 325 chunks | 25 XLSX files (MDA templates) | Sheet-level markdown table chunks, 13 per XLSX |
+| `lims_standards` | 154 chunks | SOPs / standards documents | Regulatory standards for MDA generation |
+| `calculation_patterns` | (varies) | Calculation pattern docs | Reusable calculation templates |
+
+**Embedding model:** ChromaDB default (sentence-transformers, local — no OpenAI key required).
+
+---
+
+### Sheet-Level Chunking Architecture
+
+**File:** `main/src/lims/chunking.py`
+
+Before this change, each XLSX file was ingested as a single monolithic text blob (25 blobs total). The new chunker splits each XLSX into one chunk per sheet plus a summary chunk, producing 13 chunks per file (12 sheets + 1 summary = 325 chunks total for 25 files).
+
+Each chunk is stored with metadata:
+- `file_name` — source XLSX filename
+- `sheet_name` — worksheet name within the file
+- `is_priority` — `True` for high-signal sheets (Analysis, Component, Calc Variable, Calculation)
+- `chunk_type` — `"sheet"` or `"summary"`
+
+Priority sheets are flagged so downstream queries can weight them higher.
+
+**Configuration** (`main/src/lims/config.py`):
+```bash
+LIMS_RAG_CHUNK_MAX_SIZE=2000    # Max characters per chunk (default: 2000)
+```
+
+---
+
+### Langfuse Tracing
+
+All LIMS pipeline stages are traced end-to-end in Langfuse Cloud using `@observe` decorators from Langfuse v3 (`from langfuse import get_client, observe`).
+
+**File:** `main/src/lims/langfuse_tracing.py` — LIMS-specific Langfuse client init, get, and flush helpers.
+
+**Full trace tree:**
+
+```
+lims-two-layer-pipeline (parent trace)
+├── lims-classify
+├── lims-focused-extract
+├── lims-augment
+│   └── rag-standards-query (auto-nested)
+├── lims-merge
+└── lims-chat (when user interacts)
+    └── rag-mda-templates-query (auto-nested)
+```
+
+**Tracing integration:**
+
+| Location | Decorator | Span Name |
+|----------|-----------|-----------|
+| `pipeline.py` — `TwoLayerPipeline.run()` | `@observe` | `lims-two-layer-pipeline` (parent trace) |
+| `classifier.py` — `TestTypeClassifier.classify()` | `@observe` | `lims-classify` |
+| `focused_extractor.py` — `focused_extract()` | `@observe` | `lims-focused-extract` |
+| `pipeline.py` — `_augment_gaps()` | `@observe` | `lims-augment` |
+| `merger.py` — `merge_layers()` | `@observe` | `lims-merge` |
+| `chat_agent.py` — `ChatSession.chat()` | `@observe` | `lims-chat` |
+| `mda_generator.py` — `generate_mda()` | `@observe` | `lims-mda-generate` |
+| `rag_loader.py` — `query_similar_templates()` | `@observe` | `rag-mda-templates-query` |
+| `rag_loader.py` — `query_similar_templates_with_scores()` | `@observe` | `rag-mda-templates-query-scored` |
+| `standards_loader.py` — `query_standards()` | `@observe` | `rag-standards-query` |
+
+Child `@observe` decorators auto-nest under the parent `TwoLayerPipeline.run()` trace. The parent trace uses `capture_input=False, capture_output=False` to avoid serializing PDF bytes.
+
+The API (`lims_router.py`) captures `trace_id` and `trace_url` after the pipeline completes and returns them in the `/lims/extract` response. Langfuse is flushed after each pipeline run.
+
+Distance values (ChromaDB L2) are logged as span attributes and are visible in the Langfuse Cloud dashboard.
+
+---
+
+### RAG Evaluation Framework
+
+**Files:**
+- `main/src/lims/rag_evaluator.py` — Core evaluation logic (Hit Rate@k, MRR, Precision@k)
+- `scripts/evaluate_rag.py` — CLI runner with parameter sweep support
+
+**Metrics computed:**
+
+| Metric | Description |
+|--------|-------------|
+| Hit Rate@k | Fraction of queries where the relevant document appears in top-k results |
+| MRR | Mean Reciprocal Rank — rewards higher-ranked relevant results |
+| Precision@k | Fraction of top-k results that are relevant |
+| Mean Distance | Average ChromaDB L2 distance (lower = more similar) |
+
+**Parameter sweep results** (collection: `mda_templates`, 11 evaluation queries):
+
+| top_k | Hit Rate | MRR   | Precision@k | Mean Distance |
+|-------|----------|-------|-------------|---------------|
+| 1     | 0.909    | 0.909 | 0.909       | 1.2842        |
+| 3     | 1.000    | 0.955 | 0.727       | 1.3426        |
+| 5     | 1.000    | 0.955 | 0.527       | 1.3792        |
+| 10    | 1.000    | 0.955 | 0.318       | 1.4259        |
+
+**Selected default:** `top_k=3` — 100% Hit Rate with acceptable Precision.
+
+---
+
+### Configuration Parameters
+
+Four new environment variables added to `main/src/lims/config.py`:
+
+```bash
+# LIMS RAG tuning
+LIMS_RAG_MDA_TOP_K=3                  # top-k for mda_templates queries (default: 3)
+LIMS_RAG_STANDARDS_TOP_K=5            # top-k for lims_standards queries (default: 5)
+LIMS_RAG_CHUNK_MAX_SIZE=2000          # Max chars per chunk during seeding (default: 2000)
+LIMS_RAG_SIMILARITY_THRESHOLD=0.0     # Min similarity threshold; 0.0 = no filter (range: 0.0–2.0 L2)
+```
+
+Note: ChromaDB uses L2 distance (lower = more similar, range ~0.0–2.0). A threshold of `0.0` disables filtering.
+
+---
+
+### Key Commands
+
+**Seed collections from XLSX files:**
+```bash
+# Seeds mda_templates collection with sheet-level chunks
+uv run python scripts/populate_lims_chroma.py
+```
+
+**Run RAG evaluation (single top_k):**
+```bash
+uv run python scripts/evaluate_rag.py --collection mda_templates --top-k 3
+```
+
+**Run parameter sweep (all top_k values):**
+```bash
+uv run python scripts/evaluate_rag.py --collection mda_templates --sweep
+```
+
+**Run with Langfuse tracing enabled:**
+```bash
+uv run python scripts/evaluate_rag.py --collection mda_templates --sweep --langfuse
+```
+
+**Run E2E pipeline test:**
+```bash
+uv run python scripts/test_e2e_pipeline.py
+```
+
+---
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `main/src/lims/chunking.py` | Sheet-level XLSX chunker; produces markdown table chunks per sheet |
+| `main/src/lims/rag_evaluator.py` | Hit Rate@k, MRR, Precision@k evaluation metrics |
+| `main/src/lims/langfuse_tracing.py` | LIMS Langfuse client init, get, flush |
+| `main/src/lims/rag_loader.py` | `mda_templates` collection queries; `@observe` tracing; returns distances |
+| `main/src/lims/standards_loader.py` | `lims_standards` collection queries; `@observe` tracing; returns distances |
+| `main/src/lims/pipeline.py` | `_augment_gaps()` RAG + LLM with Langfuse spans |
+| `main/src/lims/mda_generator.py` | `generate_mda()` RAG + LLM with Langfuse spans |
+| `main/src/lims/config.py` | `LIMS_RAG_*` config fields |
+| `scripts/evaluate_rag.py` | CLI evaluation runner with `--sweep`, `--langfuse` flags |
+| `scripts/populate_lims_chroma.py` | Seeds ChromaDB from XLSX files using sheet-level chunks |
+| `scripts/test_e2e_pipeline.py` | Standalone E2E pipeline test |
+| `main/tests/lims/test_chunking.py` | 12 unit tests for chunking.py |
+| `main/tests/lims/test_rag_evaluator.py` | 11 unit tests for rag_evaluator.py |
+
+---
+
 ## Related Documentation
 
 - [PRPs/tasks/3.7-fix-rag-context-agent.md](../../../PRPs/tasks/3.7-fix-rag-context-agent.md) - RAG fix task
@@ -414,6 +591,7 @@ All RAG operations are traced in LangFuse with:
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-02-20 | Added AI4LIMS RAG System section: sheet-level chunking (325 chunks), Langfuse tracing, RAG evaluation framework, parameter sweep results, config parameters | Claude |
 | 2025-11-29 | Added Docker volume permission fix, tenant error solution | Claude |
 | 2025-11-19 | Task 3.7 RAG fix (commit 10485cb) | Daniil |
 | 2025-07-30 | Phoenix observability validation | Daniil |

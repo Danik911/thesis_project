@@ -735,12 +735,13 @@ export default function LIMSPage() {
 
 | Endpoint | Method | Purpose | State Transition |
 |----------|--------|---------|------------------|
-| `/lims/upload` | POST | Upload PDF, create job | `IDLE` → `EXTRACTING` |
-| `/lims/status/:job_id` | GET | Poll job state | N/A (read-only) |
-| `/lims/chat` | POST | Send chat message | N/A (metadata update) |
-| `/lims/edit/:job_id` | POST | Apply/reject chat edit | N/A (MDA update) |
-| `/lims/approve/:job_id` | POST | Human approval | `PENDING_REVIEW` → `APPROVED` |
-| `/lims/export/:job_id` | GET | Download XLSX | `APPROVED` → `EXPORTED` |
+| `/lims/extract` | POST | Upload PDF, trigger two-layer pipeline | `IDLE` → `EXTRACTING` |
+| `/lims/classify` | POST | Test type classification only | N/A (read-only) |
+| `/lims/template/{type}` | GET | Get curated template skeleton | N/A (read-only) |
+| `/lims/status/{job_id}` | GET | Job status + current MDA state | N/A (read-only) |
+| `/lims/chat` | POST | HITL refinement chat | N/A (metadata update) |
+| `/lims/approve/{job_id}` | POST | Human approval | `PENDING_REVIEW` → `APPROVED` |
+| `/lims/export/{job_id}` | GET | XLSX export (APPROVED only) | `APPROVED` → `EXPORTED` |
 
 **Authentication**: None (feature-flagged off via `NEXT_PUBLIC_AUTH_ENABLED=false`)
 
@@ -777,6 +778,44 @@ export default function LIMSPage() {
 4. **Defensive Status Polling**: Frontend polls `/lims/status/:job_id` every 3 seconds to avoid stale state issues during long-running extraction/generation.
 
 5. **Browser-Native Export**: Uses `window.open()` to trigger XLSX download via browser's native download mechanism (no custom download handler).
+
+### Langfuse End-to-End Tracing
+
+All LIMS pipeline stages are instrumented with `@observe` decorators (Langfuse v3 API: `from langfuse import get_client, observe`). A single parent trace on `TwoLayerPipeline.run()` wraps the entire pipeline; all child `@observe` decorators auto-nest beneath it.
+
+**Full trace tree:**
+
+```
+lims-two-layer-pipeline (parent trace)
+├── lims-classify
+├── lims-focused-extract
+├── lims-augment
+│   └── rag-standards-query (auto-nested)
+├── lims-merge
+└── lims-chat (when user interacts)
+    └── rag-mda-templates-query (auto-nested)
+```
+
+**Traced functions:**
+
+| File | Function | Span Name |
+|------|----------|-----------|
+| `pipeline.py` | `TwoLayerPipeline.run()` | `lims-two-layer-pipeline` (parent) |
+| `classifier.py` | `TestTypeClassifier.classify()` | `lims-classify` |
+| `focused_extractor.py` | `focused_extract()` | `lims-focused-extract` |
+| `pipeline.py` | `_augment_gaps()` | `lims-augment` |
+| `merger.py` | `merge_layers()` | `lims-merge` |
+| `chat_agent.py` | `ChatSession.chat()` | `lims-chat` |
+| `mda_generator.py` | `generate_mda()` | `lims-mda-generate` |
+| `rag_loader.py` | `query_similar_templates()` | `rag-mda-templates-query` |
+| `standards_loader.py` | `query_standards()` | `rag-standards-query` |
+
+**API response**: `lims_router.py` captures `trace_id` and `trace_url` after the pipeline completes and includes them in the `/lims/extract` JSON response. Langfuse is flushed after each pipeline run to ensure trace delivery.
+
+**Key implementation details:**
+- Parent trace uses `capture_input=False, capture_output=False` to avoid serializing PDF bytes
+- `get_client().get_current_trace_id()` retrieves the active trace ID for API responses
+- Pre-existing `@observe` decorators on `query_standards()` and `query_similar_templates()` auto-nest under the parent without modification
 
 ---
 

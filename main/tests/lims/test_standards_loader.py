@@ -21,6 +21,17 @@ class _FakeCollection:
         self._metadatas.extend(metadatas)
         self._ids.extend(ids)
 
+    def upsert(self, documents: list[str], metadatas: list[dict[str, str]], ids: list[str]) -> None:
+        for i, doc_id in enumerate(ids):
+            if doc_id in self._ids:
+                idx = self._ids.index(doc_id)
+                self._documents[idx] = documents[i]
+                self._metadatas[idx] = metadatas[i]
+            else:
+                self._ids.append(doc_id)
+                self._documents.append(documents[i])
+                self._metadatas.append(metadatas[i])
+
     def count(self) -> int:
         return len(self._documents)
 

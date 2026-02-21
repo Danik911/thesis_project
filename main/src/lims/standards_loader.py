@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import json
+import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,7 +29,7 @@ from langfuse import observe
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CHROMA_PATH = "./chroma_db_lims"
+DEFAULT_CHROMA_PATH = os.getenv("LIMS_CHROMADB_PATH", "./chroma_db_lims")
 CALCULATION_COLLECTION = "calculation_patterns"
 DEFAULT_PREPARED_ROOT = "./output/prepared_l10l15"
 DEFAULT_TRACE_DIRNAME = "L13_rag"
@@ -439,7 +440,7 @@ def seed_standards_collection(
             f"No chunks available to seed collection '{collection_name}' from {prepared_path.resolve()}"
         )
 
-    collection.add(documents=collection_documents, metadatas=metadatas, ids=ids)
+    collection.upsert(documents=collection_documents, metadatas=metadatas, ids=ids)
 
     trace_dir = (
         Path(trace_output_dir)
@@ -527,3 +528,119 @@ def query_standards(
     )
 
     return output
+
+
+def seed_from_jsonl(
+    jsonl_path: str | Path,
+    collection_name: str,
+    chroma_path: str = DEFAULT_CHROMA_PATH,
+) -> int:
+    """Seed a ChromaDB collection from a pre-built JSONL artifact.
+
+    Each JSONL line must be a JSON object with at least ``id``, ``content``,
+    and any additional keys treated as metadata.
+
+    Uses ``collection.upsert()`` so re-running is a safe no-op when data
+    hasn't changed.
+
+    Args:
+        jsonl_path: Path to a ``.jsonl`` file of chunks.
+        collection_name: Target ChromaDB collection name.
+        chroma_path: Path to ChromaDB persistent storage.
+
+    Returns:
+        Number of chunks upserted.
+
+    Raises:
+        FileNotFoundError: If *jsonl_path* does not exist.
+        ValueError: If any line is missing ``id`` or ``content``.
+    """
+    jsonl_path = Path(jsonl_path)
+    if not jsonl_path.exists():
+        raise FileNotFoundError(f"JSONL seed file not found: {jsonl_path.resolve()}")
+
+    ids: list[str] = []
+    documents: list[str] = []
+    metadatas: list[dict[str, str]] = []
+
+    with open(jsonl_path, encoding="utf-8") as fh:
+        for line_num, raw_line in enumerate(fh, start=1):
+            raw_line = raw_line.strip()
+            if not raw_line:
+                continue
+            record = json.loads(raw_line)
+            chunk_id = record.get("id")
+            content = record.get("content")
+            if not chunk_id or not content:
+                raise ValueError(
+                    f"Line {line_num} in {jsonl_path.name} missing 'id' or 'content'"
+                )
+            ids.append(str(chunk_id))
+            documents.append(str(content))
+            meta = {
+                k: str(v)
+                for k, v in record.items()
+                if k not in ("id", "content") and v is not None
+            }
+            meta["collection"] = collection_name
+            metadatas.append(meta)
+
+    if not ids:
+        raise ValueError(f"No chunks found in {jsonl_path.resolve()}")
+
+    client = chromadb.PersistentClient(path=chroma_path)
+    collection = client.get_or_create_collection(collection_name)
+    collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
+
+    logger.info(
+        "Seeded %d chunks from JSONL '%s' into collection '%s'",
+        len(ids),
+        jsonl_path.name,
+        collection_name,
+    )
+    return len(ids)
+
+
+def seed_all_from_bundled(
+    chroma_path: str = DEFAULT_CHROMA_PATH,
+) -> dict[str, int]:
+    """Seed all bundled JSONL files into their respective ChromaDB collections.
+
+    Looks for seed files at ``main/src/lims/data/seeds/`` (relative to this
+    module) and upserts each into the matching collection.
+
+    Bundled files:
+    - ``lims_standards_chunks.jsonl`` -> ``lims_standards``
+    - ``calculation_patterns_chunks.jsonl`` -> ``calculation_patterns``
+
+    Args:
+        chroma_path: Path to ChromaDB persistent storage.
+
+    Returns:
+        Dict mapping collection name -> number of chunks upserted.
+    """
+    seeds_dir = Path(__file__).parent / "data" / "seeds"
+    seed_map = {
+        "lims_standards": "lims_standards_chunks.jsonl",
+        "calculation_patterns": "calculation_patterns_chunks.jsonl",
+    }
+
+    results: dict[str, int] = {}
+    for collection_name, filename in seed_map.items():
+        seed_file = seeds_dir / filename
+        if not seed_file.exists():
+            logger.warning(
+                "Bundled seed file not found: %s (skipping %s)",
+                seed_file,
+                collection_name,
+            )
+            continue
+        count = seed_from_jsonl(
+            jsonl_path=seed_file,
+            collection_name=collection_name,
+            chroma_path=chroma_path,
+        )
+        results[collection_name] = count
+
+    logger.info("Bundled seed results: %s", results)
+    return results

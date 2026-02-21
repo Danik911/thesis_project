@@ -20,6 +20,7 @@ services:
     env_file: .env.local
     environment:
       ENVIRONMENT: development
+      LIMS_CHROMADB_PATH: /app/chroma_db_lims
     command:
       - uvicorn
       - main.api.app:app
@@ -34,6 +35,7 @@ services:
       - ./demo_data:/app/demo_data:ro
       - ./uploads/lims:/app/uploads/lims:rw
       - ./output/lims:/app/output/lims:rw
+      - ./chroma_db_lims:/app/chroma_db_lims:rw
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s

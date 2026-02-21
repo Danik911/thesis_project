@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-02-20 (L15 marked done + issue consolidation)
+**Last Updated:** 2026-02-21 (ISSUE-039 resolved: LIMS XLSX export null/truncated analysis refs)
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-038
+4. **Next Issue Number**: ISSUE-040
 
 ---
 
@@ -30,6 +30,8 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
+| [ISSUE-039](ISSUE-039-lims-xlsx-export-null-and-truncated-analysis-refs.md) | LIMS XLSX Export Fails — Null and Truncated Analysis References | 2026-02-21 | 2026-02-21 | API/Data Quality |
+| [ISSUE-038](ISSUE-038-lims-chat-missing-grounded-context-and-provenance.md) | LIMS Chat Missing Grounded Context and Provenance Attribution | 2026-02-21 | 2026-02-21 | API/Workflow |
 | [ISSUE-037](ISSUE-037-l15-frontend-delivery-and-local-e2e-consolidated.md) | L15 Frontend Delivery + Local E2E Validation (Consolidated) | 2026-02-20 | 2026-02-20 | Frontend/API/Config |
 | [ISSUE-032](ISSUE-032-l7-extraction-quality-consolidated.md) | L7 Extraction Quality — Consolidated Resolution Record | 2026-02-18 | 2026-02-18 | API/Data Quality |
 | [ISSUE-027](ISSUE-027-lims-openpyxl-missing-in-dev-container.md) | LIMS Extraction Warning in Docker Dev - `ModuleNotFoundError: No module named 'openpyxl'` | 2026-02-17 | 2026-02-17 | Docker/API |

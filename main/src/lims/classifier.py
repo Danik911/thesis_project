@@ -16,6 +16,8 @@ import logging
 import re
 from typing import Optional
 
+from langfuse import observe
+
 from main.src.lims.test_type import ClassificationResult, TestType
 
 logger = logging.getLogger(__name__)
@@ -164,6 +166,7 @@ class TestTypeClassifier:
     def __init__(self, confidence_threshold: float = 0.8) -> None:
         self.confidence_threshold = confidence_threshold
 
+    @observe(name="lims-classify")
     def classify(
         self, pdf_text: str, filename: str = ""
     ) -> ClassificationResult:

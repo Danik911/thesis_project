@@ -44,6 +44,8 @@ def mock_config():
     config.calculations_collection = "calculation_patterns"
     config.classification_mode = "hybrid"
     config.classification_confidence_threshold = 0.6
+    config.rag_standards_top_k = 5
+    config.rag_mda_top_k = 3
     return config
 
 

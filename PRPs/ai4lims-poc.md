@@ -369,12 +369,15 @@ All LIMS endpoints are mounted under `/lims/*` via a separate `lims_router.py`. 
 
 | Endpoint | Method | Purpose | Request | Response |
 |----------|--------|---------|---------|----------|
-| `/lims/extract` | POST | Upload PDF, trigger extraction pipeline | `multipart/form-data` (PDF file) | `{ job_id, status, extraction_trace? }` |
-| `/lims/status/{job_id}` | GET | Poll extraction progress | - | `{ status, progress_pct, current_step, extraction_trace?, mda_template? }` |
-| `/lims/chat` | POST | Send chat message, receive MDA modifications | `{ job_id, message }` | `{ response, updated_mda?, citations? }` |
-| `/lims/export/{job_id}` | GET | Download MDA as XLSX | - | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
+| `/lims/extract` | POST | Upload PDF, trigger two-layer pipeline | `multipart/form-data` (PDF file) | `{ job_id, status, trace_id, trace_url }` |
+| `/lims/classify` | POST | Test type classification only | `multipart/form-data` (PDF file) | `{ test_type, confidence, method }` |
+| `/lims/template/{type}` | GET | Get curated template skeleton | - | `{ template }` |
+| `/lims/status/{job_id}` | GET | Poll extraction progress | - | `{ status, progress_pct, current_step, mda_template? }` |
+| `/lims/chat` | POST | HITL refinement chat | `{ job_id, message }` | `{ response, updated_mda?, citations? }` |
+| `/lims/approve/{job_id}` | POST | Human approval | - | `{ status }` |
+| `/lims/export/{job_id}` | GET | Download MDA as XLSX (APPROVED only) | - | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
 
-`extraction_trace` includes monitoring/audit metadata (provider, agent name, run ID/status, duration, file hash prefix).
+The `/lims/extract` response includes `trace_id` and `trace_url` — direct links to the Langfuse Cloud trace for the pipeline run. All pipeline stages (classify, extract, augment, merge) are auto-nested under the parent trace.
 
 ---
 

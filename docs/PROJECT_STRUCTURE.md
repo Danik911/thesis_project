@@ -158,6 +158,7 @@ frontend/
 | `chat_agent.py` | Chat engine for MDA refinement |
 | `xlsx_exporter.py` | 4-sheet XLSX generation (openpyxl) |
 | `standards_loader.py` | Standards RAG (ChromaDB) |
+| `langfuse_tracing.py` | LIMS Langfuse client init, get, flush |
 | `templates/` | Curated template library (base, identity, hplc, lod, titration) |
 | `prompts/` | LLM prompts (extraction, generation, chat, augmentation) |
 

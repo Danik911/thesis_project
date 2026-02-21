@@ -14,6 +14,8 @@ import asyncio
 import logging
 from typing import Any
 
+from langfuse import observe
+
 from main.src.lims.config import LIMSConfig
 from main.src.lims.templates.base import TestTypeTemplate
 
@@ -181,6 +183,7 @@ def _filter_to_variable_fields(
     return narrowed
 
 
+@observe(name="lims-focused-extract")
 async def focused_extract(
     pdf_content: bytes,
     filename: str,

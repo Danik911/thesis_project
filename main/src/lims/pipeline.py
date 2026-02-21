@@ -22,6 +22,7 @@ import logging
 import time
 from typing import Any, Optional
 
+from langfuse import get_client, observe
 from pydantic import BaseModel, Field
 
 from main.src.lims.classifier import TestTypeClassifier
@@ -58,6 +59,7 @@ class TwoLayerPipeline:
             confidence_threshold=config.classification_confidence_threshold
         )
 
+    @observe(name="lims-two-layer-pipeline", capture_input=False, capture_output=False)
     async def run(
         self,
         pdf_content: bytes,
@@ -73,12 +75,19 @@ class TwoLayerPipeline:
 
         Returns:
             Dict with: classification, mda_template, provenance,
-            conflicts, stage_details, pipeline_type.
+            conflicts, stage_details, pipeline_type, trace_id.
 
         Raises:
             ValueError: If classification or extraction fails.
             Exception: All errors propagate with full diagnostics.
         """
+        # Log metadata manually (capture_input=False to avoid serializing PDF bytes)
+        _lf = get_client()
+        if _lf:
+            _lf.update_current_span(
+                input={"filename": filename, "job_id": job_id, "file_size": len(pdf_content)},
+            )
+
         stages: list[PipelineStageDetail] = []
 
         # Stage 1: CLASSIFY
@@ -261,6 +270,10 @@ class TwoLayerPipeline:
             summary="MDA ready for SME review",
         ))
 
+        # Capture Langfuse trace ID for frontend visibility
+        _lf = get_client()
+        trace_id = _lf.get_current_trace_id() if _lf else None
+
         return {
             "classification": classification.model_dump(),
             "mda_template": merge_result.mda_template,
@@ -273,8 +286,10 @@ class TwoLayerPipeline:
             "raw_extraction": extraction_result.get("raw_extraction"),
             "validated": merge_result.validation_passed,
             "validation_error": merge_result.validation_error,
+            "trace_id": trace_id,
         }
 
+    @observe(name="lims-augment")
     async def _augment_gaps(
         self,
         template_mda: "MDATemplate",
@@ -295,10 +310,7 @@ class TwoLayerPipeline:
             )
             return None
 
-        from main.src.lims.langfuse_tracing import get_lims_langfuse
         from main.src.lims.standards_loader import query_standards
-
-        langfuse = get_lims_langfuse()
 
         test_type = classification.test_type.value
         query_text = (
@@ -307,29 +319,13 @@ class TwoLayerPipeline:
             f"equipment groups, reagent lists"
         )
 
-        # --- RAG span ---
-        rag_span = None
-        if langfuse:
-            rag_span = langfuse.start_span(
-                name="pipeline-augment-rag",
-                input={"query_text": query_text, "test_type": test_type},
-            )
-
+        # query_standards has its own @observe("rag-standards-query") — auto-nests here
         standards_results = query_standards(
             query_text=query_text,
             collection_name=self.config.standards_collection,
             top_k=self.config.rag_standards_top_k,
             chroma_path=self.config.chromadb_path,
         )
-
-        if rag_span:
-            rag_span.update(
-                output={
-                    "result_count": len(standards_results),
-                    "distances": [r.get("distance", "N/A") for r in standards_results],
-                },
-            )
-            rag_span.end()
 
         standards_context = "\n\n".join(
             f"--- {r.get('title', 'Untitled')} ---\n{r.get('content', '')}"
@@ -361,14 +357,6 @@ class TwoLayerPipeline:
             base_url="https://openrouter.ai/api/v1",
         )
 
-        # --- LLM span ---
-        llm_span = None
-        if langfuse:
-            llm_span = langfuse.start_span(
-                name="pipeline-augment-llm",
-                input={"model": self.config.openrouter_model, "test_type": test_type},
-            )
-
         response = client.chat.completions.create(
             model=self.config.openrouter_model,
             messages=[
@@ -387,14 +375,17 @@ class TwoLayerPipeline:
 
         suggestion_count = len(augmented.get("suggestions", []))
 
-        if llm_span:
-            llm_span.update(
+        # Log LLM call metadata on this observation
+        _lf = get_client()
+        if _lf:
+            _lf.update_current_span(
+                input={"test_type": test_type, "model": self.config.openrouter_model},
                 output={
-                    "response_length": len(response_text),
                     "suggestion_count": suggestion_count,
+                    "rag_results_count": len(standards_results),
+                    "response_length": len(response_text),
                 },
             )
-            llm_span.end()
 
         logger.info(
             "Augmentation LLM returned %d suggestions",

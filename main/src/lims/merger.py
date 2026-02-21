@@ -16,6 +16,7 @@ import copy
 import logging
 from typing import Any, Optional
 
+from langfuse import observe
 from pydantic import BaseModel, Field
 
 from main.src.lims.mda_schema import MDATemplate
@@ -399,6 +400,7 @@ def _overlay_extracted_items(
     return merged
 
 
+@observe(name="lims-merge")
 def merge_layers(
     template_mda: MDATemplate,
     extracted_data: dict[str, Any],

@@ -18,6 +18,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Literal
 
+from langfuse import observe
 from openai import OpenAI
 from pydantic import BaseModel, field_validator
 
@@ -144,11 +145,11 @@ class ChatSession:
         self,
         job_id: str,
         mda_template: dict[str, Any],
-        pdf_text: str = "",
+        chat_context: dict[str, Any] | None = None,
     ) -> None:
         self.job_id = job_id
         self.mda_template = mda_template
-        self.pdf_text = pdf_text
+        self.chat_context = chat_context or {}
         self.messages: list[dict[str, Any]] = []
         self.edits: list[MDAEditAction] = []
         self.turn_count: int = 0
@@ -188,13 +189,91 @@ class ChatSession:
                 f"Approve the template or create a new session."
             )
 
+    def _build_workflow_context(self) -> dict[str, Any]:
+        """Build compact workflow context for grounding and traceability."""
+        raw_extraction = self.chat_context.get("raw_extraction")
+        provenance = self.chat_context.get("provenance") or {}
+        classification = self.chat_context.get("classification") or {}
+        conflicts = self.chat_context.get("conflicts") or []
+        stage_details = self.chat_context.get("stage_details") or []
+        extraction_trace = self.chat_context.get("extraction_trace") or {}
+
+        provenance_fields = provenance.get("fields", {}) if isinstance(provenance, dict) else {}
+
+        top_provenance: list[dict[str, Any]] = []
+        for path, entry in list(provenance_fields.items())[:40]:
+            if not isinstance(entry, dict):
+                continue
+            top_provenance.append({
+                "path": path,
+                "source": entry.get("source"),
+                "confidence": entry.get("confidence"),
+                "source_detail": entry.get("source_detail"),
+            })
+
+        conflict_sample = []
+        for item in conflicts[:20]:
+            if isinstance(item, dict):
+                conflict_sample.append({
+                    "field_path": item.get("field_path"),
+                    "template_value": item.get("template_value"),
+                    "extracted_value": item.get("extracted_value"),
+                })
+
+        stage_sample = []
+        for stage in stage_details[:10]:
+            if isinstance(stage, dict):
+                stage_sample.append({
+                    "stage": stage.get("stage"),
+                    "summary": stage.get("summary"),
+                })
+
+        raw_sample = ""
+        if raw_extraction:
+            raw_sample = json.dumps(raw_extraction, default=str)[:5000]
+
+        return {
+            "pdf_filename": self.chat_context.get("pdf_filename"),
+            "classification": classification,
+            "extraction_trace": extraction_trace,
+            "stage_details": stage_sample,
+            "conflicts": conflict_sample,
+            "provenance_summary": {
+                "total_fields": len(provenance_fields),
+                "sample": top_provenance,
+            },
+            "raw_extraction_sample": raw_sample,
+        }
+
+    def _extract_evidence_refs(
+        self,
+        max_refs: int = 20,
+    ) -> list[dict[str, Any]]:
+        """Return a compact evidence reference list for parameter source attribution."""
+        provenance = self.chat_context.get("provenance") or {}
+        provenance_fields = provenance.get("fields", {}) if isinstance(provenance, dict) else {}
+        refs: list[dict[str, Any]] = []
+
+        for path, entry in list(provenance_fields.items())[:max_refs]:
+            if not isinstance(entry, dict):
+                continue
+            refs.append({
+                "path": path,
+                "source": entry.get("source"),
+                "confidence": entry.get("confidence"),
+                "source_detail": entry.get("source_detail", ""),
+            })
+        return refs
+
     def _build_system_prompt(self) -> str:
-        """Build the system prompt with current MDA state and PDF context."""
+        """Build the system prompt with current MDA state and full workflow context."""
         mda_json = json.dumps(self.mda_template, indent=2, default=str)
-        pdf_context = self.pdf_text[:3000] if self.pdf_text else "(no PDF text available)"
+        workflow_context = json.dumps(self._build_workflow_context(), indent=2, default=str)
+        evidence_refs = json.dumps(self._extract_evidence_refs(), indent=2, default=str)
         return CHAT_SYSTEM_PROMPT.format(
             mda_state=mda_json,
-            pdf_context=pdf_context,
+            workflow_context=workflow_context,
+            evidence_refs=evidence_refs,
         )
 
     def _apply_edit(self, edit: MDAEditAction) -> None:
@@ -304,6 +383,7 @@ class ChatSession:
                 return item
         return None
 
+    @observe(name="lims-chat")
     def chat(self, user_message: str, config: LIMSConfig) -> dict[str, Any]:
         """Process a user message and return the LLM response with any edits.
 
@@ -423,6 +503,7 @@ class ChatSession:
             "edits_rejected": edits_rejected,
             "mda_template": self.mda_template,
             "turn_count": self.turn_count,
+            "evidence_refs": self._extract_evidence_refs(),
         }
 
 
@@ -436,14 +517,14 @@ _sessions: dict[str, ChatSession] = {}
 def get_or_create_session(
     job_id: str,
     mda_template: dict[str, Any],
-    pdf_text: str = "",
+    chat_context: dict[str, Any] | None = None,
 ) -> ChatSession:
     """Get an existing chat session or create a new one.
 
     Args:
         job_id: The LIMS job ID.
         mda_template: Current MDA template dict.
-        pdf_text: Original PDF extraction text.
+        chat_context: Full pipeline context for grounded chat responses.
 
     Returns:
         The ChatSession for this job.
@@ -452,9 +533,14 @@ def get_or_create_session(
         _sessions[job_id] = ChatSession(
             job_id=job_id,
             mda_template=mda_template,
-            pdf_text=pdf_text,
+            chat_context=chat_context,
         )
         logger.info("Created new chat session for job %s", job_id)
+    else:
+        # Keep session context and MDA synchronized with latest job state
+        session = _sessions[job_id]
+        session.chat_context = chat_context or {}
+        session.mda_template = mda_template
     return _sessions[job_id]
 
 

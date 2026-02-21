@@ -57,7 +57,11 @@ def session(valid_mda_dict) -> ChatSession:
     return ChatSession(
         job_id="test-job-001",
         mda_template=valid_mda_dict,
-        pdf_text="Sample PDF extraction text for testing.",
+        chat_context={
+            "pdf_filename": "test.pdf",
+            "raw_extraction": {"sample": "extraction data"},
+            "classification": {"test_type": "IDENTITY", "confidence": 0.95},
+        },
     )
 
 
@@ -68,8 +72,8 @@ class TestChatSessionInit:
     def test_init_stores_mda_template(self, session, valid_mda_dict):
         assert session.mda_template == valid_mda_dict
 
-    def test_init_stores_pdf_text(self, session):
-        assert session.pdf_text == "Sample PDF extraction text for testing."
+    def test_init_stores_chat_context(self, session):
+        assert session.chat_context["pdf_filename"] == "test.pdf"
 
     def test_init_empty_messages(self, session):
         assert session.messages == []
@@ -501,15 +505,16 @@ class TestBuildSystemPrompt:
         # Should contain the MDA template JSON
         assert "AND_ACS_DYE" in prompt
 
-    def test_system_prompt_contains_pdf_context(self, session):
+    def test_system_prompt_contains_workflow_context(self, session):
         prompt = session._build_system_prompt()
-        assert "Sample PDF extraction text" in prompt
+        # Should contain classification info from chat_context
+        assert "IDENTITY" in prompt
 
-    def test_system_prompt_without_pdf_text(self, valid_mda_dict):
+    def test_system_prompt_without_context(self, valid_mda_dict):
         session = ChatSession(
-            job_id="test-no-pdf",
+            job_id="test-no-context",
             mda_template=valid_mda_dict,
-            pdf_text="",
         )
         prompt = session._build_system_prompt()
-        assert "no PDF text available" in prompt
+        # Should still generate a valid prompt with empty context
+        assert "AND_ACS_DYE" in prompt

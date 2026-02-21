@@ -185,13 +185,29 @@ def normalize_extraction(raw_dict: dict[str, Any]) -> dict[str, Any]:
         data["analyses"] = normalize_analysis_names(data["analyses"])
         analysis_name_map = _build_analysis_name_map(data["analyses"])
 
+    # Collect known analysis names for inference when all records have None
+    known_analysis_names = [
+        str(a["name"]) for a in data.get("analyses", [])
+        if isinstance(a, dict) and a.get("name")
+    ]
+
     if "components" in data and isinstance(data["components"], list):
         data["components"] = [
             _normalize_component(comp, index=index)
             for index, comp in enumerate(data["components"], start=1)
         ]
         _normalize_analysis_refs(data["components"], analysis_name_map)
+        _forward_fill_field(
+            data["components"], "analysis",
+            available_values=known_analysis_names,
+        )
         component_name_map = _build_component_name_map(data["components"])
+
+    # Collect known component names for inference
+    known_component_names = [
+        str(c["component_name"]) for c in data.get("components", [])
+        if isinstance(c, dict) and c.get("component_name")
+    ]
 
     if "calc_variables" in data and isinstance(data["calc_variables"], list):
         data["calc_variables"] = [
@@ -199,6 +215,11 @@ def normalize_extraction(raw_dict: dict[str, Any]) -> dict[str, Any]:
         ]
         _normalize_analysis_refs(data["calc_variables"], analysis_name_map)
         _normalize_component_refs(data["calc_variables"], component_name_map)
+        _forward_fill_field(
+            data["calc_variables"], "analysis",
+            available_values=known_analysis_names,
+        )
+        _forward_fill_field(data["calc_variables"], "component")
 
     if "calculations" in data and isinstance(data["calculations"], list):
         data["calculations"] = [
@@ -206,6 +227,11 @@ def normalize_extraction(raw_dict: dict[str, Any]) -> dict[str, Any]:
         ]
         _normalize_analysis_refs(data["calculations"], analysis_name_map)
         _normalize_component_refs(data["calculations"], component_name_map)
+        _forward_fill_field(
+            data["calculations"], "analysis",
+            available_values=known_analysis_names,
+        )
+        _forward_fill_field(data["calculations"], "component")
 
     data = apply_lims_defaults(data)
 
@@ -393,6 +419,161 @@ def _build_analysis_name_map(analyses: list[dict[str, Any]]) -> dict[str, str]:
     return mapping
 
 
+def _forward_fill_field(
+    records: list[dict[str, Any]],
+    field: str,
+    *,
+    available_values: list[str] | None = None,
+) -> None:
+    """Fill missing field values using forward-fill, backward-fill, and inference.
+
+    Extracted tables often omit repeated values (e.g., the analysis name
+    is only shown on the first row of a group). This handles three cases:
+
+    1. **Forward-fill**: propagate the last non-None value to subsequent
+       records (handles mid-table gaps).
+    2. **Backward-fill**: if leading records have None, fill them from
+       the first non-None value found later (handles PDFs where the
+       analysis name appears after the first few rows).
+    3. **Single-value inference**: if ALL records have None but
+       ``available_values`` has exactly one entry, assign it to all
+       records (handles single-analysis PDFs where the analysis name
+       appears only in the Analysis sheet, not in the Component table).
+
+    Mutates records in place.
+
+    Args:
+        records: List of record dicts.
+        field: The field name to fill.
+        available_values: Known valid values for this field (e.g.,
+            extracted analysis names). Used for single-value inference.
+    """
+    if not records:
+        return
+
+    # Pass 1: forward-fill (covers mid-table gaps)
+    last_value: Any = None
+    filled_count = 0
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        value = record.get(field)
+        if value is not None and value != "":
+            last_value = value
+        elif last_value is not None:
+            record[field] = last_value
+            filled_count += 1
+
+    # Pass 2: backward-fill leading Nones from the first non-None value
+    first_value: Any = None
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        value = record.get(field)
+        if value is not None and value != "":
+            first_value = value
+            break
+
+    if first_value is not None:
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            value = record.get(field)
+            if value is not None and value != "":
+                break
+            record[field] = first_value
+            filled_count += 1
+
+    # Pass 3: single-value inference — if ALL records still have None
+    # and there's exactly one known value, assign it to all
+    if available_values and len(available_values) == 1:
+        sole_value = available_values[0]
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            if record.get(field) is None or record.get(field) == "":
+                record[field] = sole_value
+                filled_count += 1
+
+    if filled_count > 0:
+        logger.info(
+            "Filled '%s' on %d records (forward/backward/infer)",
+            field,
+            filled_count,
+        )
+
+
+def _resolve_analysis_name(
+    raw_ref: str,
+    analysis_name_map: dict[str, str],
+) -> str | None:
+    """Resolve a raw analysis reference to a canonical analysis name.
+
+    Tries in order:
+    1. Exact match via the analysis_name_map (aliases, reported_name, etc.)
+    2. Prefix match: if the normalized reference is a prefix of exactly one
+       canonical analysis name, use that name.
+    3. Multi-prefix match: if the reference prefixes multiple names (e.g.
+       SITE_IDENTITY matches SITE_IDENTITY_CTL and SITE_IDENTITY_META),
+       pick the shortest canonical name (closest match).
+    4. Substring containment: if a canonical name contains the reference
+       as a substring, use it (single match only).
+
+    Returns the resolved canonical name, or None if no match found.
+    """
+    lookup_key = _normalize_lookup_key(raw_ref)
+
+    # 1. Exact match (covers aliases, reported_name, common_name)
+    exact = analysis_name_map.get(lookup_key)
+    if exact:
+        return exact
+
+    # Build set of unique canonical analysis names (the map values)
+    canonical_names = sorted(set(analysis_name_map.values()))
+
+    # 2. Prefix match: lookup_key is a prefix of a canonical name
+    prefix_matches = [
+        name for name in canonical_names
+        if _normalize_lookup_key(name).startswith(lookup_key)
+        and _normalize_lookup_key(name) != lookup_key
+    ]
+    if len(prefix_matches) == 1:
+        logger.info(
+            "Prefix-matched analysis ref '%s' -> '%s'",
+            raw_ref,
+            prefix_matches[0],
+        )
+        return prefix_matches[0]
+    if len(prefix_matches) > 1:
+        # Multiple prefix matches: pick shortest (closest to original ref)
+        best = min(prefix_matches, key=len)
+        logger.warning(
+            "Analysis ref '%s' prefix-matched %d analyses %s; "
+            "using shortest: '%s'",
+            raw_ref,
+            len(prefix_matches),
+            sorted(prefix_matches),
+            best,
+        )
+        return best
+
+    # 3. Substring containment: canonical name contains the lookup_key
+    substring_matches = [
+        name for name in canonical_names
+        if lookup_key in _normalize_lookup_key(name)
+    ]
+    if len(substring_matches) == 1:
+        logger.info(
+            "Substring-matched analysis ref '%s' -> '%s'",
+            raw_ref,
+            substring_matches[0],
+        )
+        return substring_matches[0]
+
+    # No match found
+    return None
+
+
 def _normalize_analysis_refs(
     records: list[dict[str, Any]],
     analysis_name_map: dict[str, str],
@@ -403,16 +584,16 @@ def _normalize_analysis_refs(
         analysis_name = record.get("analysis")
         if not analysis_name:
             continue
-        mapped_name = analysis_name_map.get(_normalize_lookup_key(str(analysis_name)))
-        if mapped_name:
-            record["analysis"] = mapped_name
+        resolved = _resolve_analysis_name(str(analysis_name), analysis_name_map)
+        if resolved:
+            record["analysis"] = resolved
         reference_analysis = record.get("reference_analysis")
         if reference_analysis:
-            mapped_reference = analysis_name_map.get(
-                _normalize_lookup_key(str(reference_analysis))
+            resolved_ref = _resolve_analysis_name(
+                str(reference_analysis), analysis_name_map
             )
-            if mapped_reference:
-                record["reference_analysis"] = mapped_reference
+            if resolved_ref:
+                record["reference_analysis"] = resolved_ref
 
 
 def _build_component_name_map(components: list[dict[str, Any]]) -> dict[str, str]:

@@ -213,6 +213,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     logger.info(f"Background worker started (db_mode={db_job_repo is not None})")
 
+    # Auto-seed LIMS ChromaDB collections from bundled JSONL if empty
+    try:
+        lims_chroma_path = os.getenv("LIMS_CHROMADB_PATH", "./chroma_db_lims")
+        import chromadb as _chromadb
+
+        _lims_client = _chromadb.PersistentClient(path=lims_chroma_path)
+        _lims_standards = _lims_client.get_or_create_collection("lims_standards")
+        if _lims_standards.count() == 0:
+            logger.info("[LIMS] lims_standards collection empty -- auto-seeding from bundled JSONL")
+            from main.src.lims.standards_loader import seed_all_from_bundled
+
+            seed_results = seed_all_from_bundled(chroma_path=lims_chroma_path)
+            logger.info("[LIMS] Auto-seed complete: %s", seed_results)
+        else:
+            logger.info(
+                "[LIMS] ChromaDB collections already populated (lims_standards=%d chunks)",
+                _lims_standards.count(),
+            )
+    except Exception as e:
+        logger.warning("[LIMS] ChromaDB auto-seed skipped: %s", e)
+
     logger.info("FastAPI application ready")
 
     yield  # Application running

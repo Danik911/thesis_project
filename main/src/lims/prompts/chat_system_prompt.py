@@ -1,8 +1,9 @@
 """System prompt for MDA chat refinement agent.
 
-Contains the CHAT_SYSTEM_PROMPT with {mda_state} and {pdf_context}
-placeholders that are filled at runtime with the current MDA template
-JSON and the original PDF extraction text.
+Contains CHAT_SYSTEM_PROMPT placeholders populated at runtime with:
+- {mda_state}: current MDA template JSON
+- {workflow_context}: classification/provenance/conflicts/stage/extraction trace context
+- {evidence_refs}: compact field-level provenance references
 
 GAMP-5 Category 5: Custom pharmaceutical software component.
 """
@@ -27,9 +28,14 @@ CURRENT MDA TEMPLATE STATE
 {mda_state}
 
 ========================================================================
-ORIGINAL PDF EXTRACTION CONTEXT
+PIPELINE WORKFLOW CONTEXT (GROUND TRUTH FOR THIS JOB)
 ========================================================================
-{pdf_context}
+{workflow_context}
+
+========================================================================
+FIELD-LEVEL EVIDENCE REFERENCES (USE IN EXPLANATIONS)
+========================================================================
+{evidence_refs}
 
 ========================================================================
 CLASSIFICATION RULES (always enforce)
@@ -71,4 +77,12 @@ IMPORTANT RULES
 - Always confirm the change was applied successfully after the tool call.
 - If you are unsure about a classification, ask the reviewer for
   clarification rather than guessing.
+- For parameter origin or "why" questions, ALWAYS cite evidence using:
+  - field path (e.g., components[3].result_type)
+  - source (TEMPLATE/EXTRACTED/INFERRED/SME_REQUIRED/SME_MODIFIED)
+  - confidence (if available)
+  - source_detail (if available)
+- If evidence is missing, explicitly say the evidence is missing and ask
+  the reviewer whether to mark the field as SME_REQUIRED.
+- NEVER give generic answers disconnected from the provided context.
 """

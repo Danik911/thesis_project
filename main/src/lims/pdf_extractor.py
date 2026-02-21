@@ -25,11 +25,66 @@ from .mda_schema import MDATemplate
 logger = logging.getLogger(__name__)
 
 
-def _get_extract_config() -> Any:
-    """Create default ExtractConfig."""
+def _get_extract_config(config: LIMSConfig) -> Any:
+    """Create tuned ExtractConfig from LIMS settings."""
     from llama_cloud import ExtractConfig
 
-    return ExtractConfig()
+    extraction_mode = config.extraction_mode.upper()
+    extraction_target = config.extraction_target.upper()
+    chunk_mode = config.extract_chunk_mode.upper()
+
+    kwargs: dict[str, Any] = {
+        "extraction_mode": extraction_mode,
+        "extraction_target": extraction_target,
+        "chunk_mode": chunk_mode,
+        "cite_sources": config.extract_cite_sources,
+        "use_reasoning": config.extract_use_reasoning,
+        "confidence_scores": config.extract_confidence_scores,
+        "num_pages_context": config.extract_num_pages_context,
+        "high_resolution_mode": config.extract_high_resolution_mode,
+        "invalidate_cache": config.extract_invalidate_cache,
+    }
+
+    if config.extract_page_range:
+        kwargs["page_range"] = config.extract_page_range
+
+    # Model overrides are applied only when configured.
+    if config.extract_parse_model:
+        kwargs["parse_model"] = config.extract_parse_model
+    if config.extract_model:
+        kwargs["extract_model"] = config.extract_model
+
+    # cite_sources requires MULTIMODAL or PREMIUM mode (LlamaExtract API constraint)
+    if kwargs["cite_sources"] and extraction_mode not in {"MULTIMODAL", "PREMIUM"}:
+        msg = (
+            "Invalid LlamaExtract config: cite_sources is only supported with "
+            f"MULTIMODAL or PREMIUM extraction modes (current: {extraction_mode}). "
+            "Set LIMS_EXTRACT_CITE_SOURCES=false or set LIMS_EXTRACTION_MODE=multimodal."
+        )
+        raise ValueError(msg)
+
+    configured_extract_model = (config.extract_model or "").strip().lower()
+    if kwargs["confidence_scores"] and configured_extract_model in {
+        "openai-gpt-5",
+        "openai-gpt-5-mini",
+    }:
+        msg = (
+            "Invalid LlamaExtract config: confidence scores are not supported with "
+            f"extract_model='{config.extract_model}'. "
+            "Set LIMS_EXTRACT_CONFIDENCE_SCORES=false or use a different extract model."
+        )
+        raise ValueError(msg)
+
+    # confidence_scores also requires MULTIMODAL or PREMIUM mode
+    if kwargs["confidence_scores"] and extraction_mode not in {"MULTIMODAL", "PREMIUM"}:
+        msg = (
+            "Invalid LlamaExtract config: confidence_scores is only supported with "
+            f"MULTIMODAL or PREMIUM extraction modes (current: {extraction_mode}). "
+            "Set LIMS_EXTRACT_CONFIDENCE_SCORES=false or set LIMS_EXTRACTION_MODE=multimodal."
+        )
+        raise ValueError(msg)
+
+    return ExtractConfig(**kwargs)
 
 
 def extract_mda_from_pdf(
@@ -71,7 +126,7 @@ def extract_mda_from_pdf(
     from llama_cloud_services import LlamaExtract
 
     extractor = LlamaExtract(api_key=config.llamaextract_api_key)
-    extract_config = _get_extract_config()
+    extract_config = _get_extract_config(config)
 
     request_started = datetime.now(UTC)
     started_perf = time.perf_counter()
@@ -89,6 +144,20 @@ def extract_mda_from_pdf(
         "run_id": None,
         "run_status": None,
         "duration_ms": None,
+        "extract_config": {
+            "extraction_mode": config.extraction_mode,
+            "extraction_target": config.extraction_target,
+            "parse_model": config.extract_parse_model or None,
+            "extract_model": config.extract_model or None,
+            "cite_sources": config.extract_cite_sources,
+            "use_reasoning": config.extract_use_reasoning,
+            "confidence_scores": config.extract_confidence_scores,
+            "num_pages_context": config.extract_num_pages_context,
+            "chunk_mode": config.extract_chunk_mode,
+            "page_range": config.extract_page_range or None,
+            "high_resolution_mode": config.extract_high_resolution_mode,
+            "invalidate_cache": config.extract_invalidate_cache,
+        },
     }
 
     # SDK needs a file path — write to temp file

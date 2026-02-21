@@ -13,43 +13,47 @@ The fields mirror MDATemplate but use plain str/int/float/bool/Optional types.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ExtractedAnalysis(BaseModel):
     """Simplified Analysis for extraction (no enums/validators)."""
 
-    name: str = ""
+    name: str = Field(default="", description="LabWare analysis name, e.g. AND_ACS_DYE, AND_ACS_DYE_CTL, AND_ACS_DYE_META")
     version: int = 1
     group_name: str = ""
     active: bool = True
     reported_name: str = ""
     common_name: str = ""
-    analysis_type: str = ""  # Was AnalysisType enum
+    analysis_type: str = Field(
+        default="",
+        description="One of: ID, ASY, IMP, PHYS, QC_SAMPLES, HPLC, RM, KF",
+    )
     description: str = ""
-    worklist_link: Optional[str] = None
+    worklist_link: str | None = None
 
 
 class ExtractedComponent(BaseModel):
     """Simplified Component for extraction (no enums/validators)."""
 
-    analysis: str = ""
-    component_name: str = ""
+    analysis: str = Field(default="", description="Parent analysis name; must match one analysis.name")
+    component_name: str = Field(default="", description="Component label used in LabWare result entry")
     version: int = 1
     order_number: int = 0
-    result_type: str = ""  # Was ResultType enum
-    units: Optional[str] = None
-    minimum: Optional[float] = None
-    maximum: Optional[float] = None
-    uses_instrument: bool = False
-    instrument_group: Optional[str] = None
-    auto_calc: bool = False
-    list_key: Optional[str] = None
-    sr_picker: Optional[str] = None
-    round_type: Optional[str] = None  # Was RoundType enum
-    places: Optional[int] = None
+    result_type: str = Field(
+        default="",
+        description="Result type code: N numeric, K calculated/auto-populated, L list, T text, D date",
+    )
+    units: str | None = None
+    minimum: float | None = None
+    maximum: float | None = None
+    uses_instrument: bool = Field(default=False, description="True when value is measured by instrument")
+    instrument_group: str | None = None
+    auto_calc: bool = Field(default=False, description="True for K/calculated components")
+    list_key: str | None = Field(default=None, description="List dictionary key for L components, e.g. YES_NO_2, PASS_FAIL")
+    sr_picker: str | None = None
+    round_type: str | None = None  # Was RoundType enum
+    places: int | None = None
     reportable: bool = True
     optional: bool = False
     allow_out_of_range: bool = False
@@ -58,29 +62,35 @@ class ExtractedComponent(BaseModel):
 class ExtractedCalcVariable(BaseModel):
     """Simplified CalcVariable for extraction (no enums/validators)."""
 
-    analysis: str = ""
-    component: str = ""
+    analysis: str = Field(default="", description="Analysis owning this calculation variable")
+    component: str = Field(default="", description="Component using this variable")
     name: str = ""
     version: int = 1
-    reference_type: str = ""  # Was CalcVariableReferenceType enum
-    reference_analysis: Optional[str] = None
-    reference_component: Optional[str] = None
-    attribute_1: Optional[str] = None
-    return_value: str = "S"  # Was CalcVariableReturnValue enum
-    scope: str = "CR"  # Was CalcVariableScope enum
-    function: str = "ENTRY"  # Was CalcVariableFunction enum
+    reference_type: str = Field(
+        default="",
+        description="C for within-analysis reference, A for cross-analysis reference",
+    )
+    reference_analysis: str | None = None
+    reference_component: str | None = None
+    attribute_1: str | None = None
+    return_value: str = Field(default="S", description="Return value mode, typically S")
+    scope: str = Field(default="CR", description="Scope code, typically CR or B")
+    function: str = Field(default="ENTRY", description="Function code, e.g. ENTRY, AVE, RSD")
 
 
 class ExtractedCalculation(BaseModel):
     """Simplified Calculation for extraction (no enums/validators)."""
 
-    analysis: str = ""
-    component: str = ""
+    analysis: str = Field(default="", description="Analysis owning this calculation")
+    component: str = Field(default="", description="Component calculated by this formula")
     version: int = 1
     description: str = ""
-    source_code: str = ""
-    calculation_type: str = "FORMULA"  # Was CalculationType enum
-    variables_used: List[str] = []
+    source_code: str = Field(default="", description="LIMS Basic source code or formula text")
+    calculation_type: str = Field(
+        default="FORMULA",
+        description="FORMULA, CONDITIONAL, INST_PICKER, SR_PICKER, or GOSUB",
+    )
+    variables_used: list[str] = []
 
 
 class MDAExtractionSchema(BaseModel):
@@ -90,7 +100,7 @@ class MDAExtractionSchema(BaseModel):
     MDATemplate from mda_schema.py for strict compliance checking.
     """
 
-    analyses: List[ExtractedAnalysis] = []
-    components: List[ExtractedComponent] = []
-    calc_variables: List[ExtractedCalcVariable] = []
-    calculations: List[ExtractedCalculation] = []
+    analyses: list[ExtractedAnalysis] = []
+    components: list[ExtractedComponent] = []
+    calc_variables: list[ExtractedCalcVariable] = []
+    calculations: list[ExtractedCalculation] = []

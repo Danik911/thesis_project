@@ -2,7 +2,7 @@
 
 **Project**: GAMP-5 Pharmaceutical Test Generation System  
 **Version**: 1.2 - MVP Implementation  
-**Last Updated**: August 5, 2025  
+**Last Updated**: February 20, 2026  
 **Status**: ✅ **Fully Operational** (100% functional with custom span exporter)
 
 ## 🏥 **CRITICAL** Documentation Overview
@@ -82,14 +82,53 @@ All system components follow **ZERO TOLERANCE FOR FALLBACK LOGIC**:
 ---
 
 ### **4. Phoenix Observability Guide** 🔍 **MONITORING**
-**File**: `PHOENIX_OBSERVABILITY_GUIDE.md`  
-**Purpose**: Monitoring and trace analysis for compliance  
-**Use When**: Setting up monitoring, validating system behavior, audit preparation  
+**File**: `PHOENIX_OBSERVABILITY_GUIDE.md`
+**Purpose**: Monitoring and trace analysis for compliance
+**Use When**: Setting up monitoring, validating system behavior, audit preparation
 
 **Key Sections**:
 - Phoenix setup and configuration
 - Trace analysis patterns
 - Compliance monitoring requirements
+
+---
+
+### **5. RAG System Guide** 📊 **RAG & RETRIEVAL**
+**File**: [`RAG_SYSTEM_GUIDE.md`](./RAG_SYSTEM_GUIDE.md)
+**Purpose**: ChromaDB RAG system documentation for both the thesis pipeline and the AI4LIMS PoC
+**Use When**: Troubleshooting RAG retrieval, seeding collections, running evaluations, configuring Langfuse tracing
+
+**Key Sections**:
+- Thesis RAG system (regulatory_documents collection, OpenAI embeddings, Docker volume)
+- Common issues and solutions (tenant errors, dimension mismatches, empty collections)
+- **AI4LIMS RAG System** (new — see below)
+
+#### LIMS RAG Evaluation & Tracing Guide
+
+The AI4LIMS PoC RAG system is documented in `RAG_SYSTEM_GUIDE.md` under the **"AI4LIMS RAG System"** section. Key topics covered:
+
+| Topic | Detail |
+|-------|--------|
+| Collections | `mda_templates` (325 chunks), `lims_standards` (154 chunks), `calculation_patterns` |
+| Chunking | Sheet-level XLSX chunks via `chunking.py` — 13 chunks per XLSX (12 sheets + 1 summary) |
+| Langfuse tracing | `@observe` on query functions; `start_span()`/`end()` in pipeline and generator |
+| Evaluation metrics | Hit Rate@k, MRR, Precision@k via `rag_evaluator.py` |
+| CLI runner | `scripts/evaluate_rag.py` — supports `--sweep`, `--langfuse`, `--collection`, `--top-k` |
+| Config | `LIMS_RAG_MDA_TOP_K`, `LIMS_RAG_STANDARDS_TOP_K`, `LIMS_RAG_CHUNK_MAX_SIZE`, `LIMS_RAG_SIMILARITY_THRESHOLD` |
+
+**Key evaluation result** (parameter sweep on `mda_templates`):
+`top_k=3` achieves 100% Hit Rate, MRR=0.955 across 11 evaluation queries.
+
+**Quick commands:**
+```bash
+# Seed mda_templates with sheet-level chunks
+uv run python scripts/populate_lims_chroma.py
+
+# Run parameter sweep evaluation
+uv run python scripts/evaluate_rag.py --collection mda_templates --sweep --langfuse
+```
+
+See `RAG_SYSTEM_GUIDE.md` for the full evaluation results table, all config parameters, and key file inventory.
 
 ---
 
@@ -212,6 +251,9 @@ CLAUDE.md                         # Core system instructions
   - Custom span exporter captures ChromaDB traces
   - FDA API integration successful
   - System 100% functional
+- **v1.3** (February 20, 2026): Added AI4LIMS RAG documentation
+  - New section 5: RAG System Guide covering LIMS RAG evaluation & tracing
+  - Sheet-level chunking (325 chunks from 25 XLSX), Langfuse tracing, RAG evaluation framework
 
 ### **Recent Fixes** (August 5, 2025):
 1. Custom span exporter for ChromaDB visibility

@@ -14,6 +14,7 @@ NO FALLBACK LOGIC: all errors raise with full diagnostics.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +26,7 @@ from main.src.lims.chunking import parse_xlsx_to_chunks
 
 logger = logging.getLogger(__name__)
 
-CHROMA_PATH = "./chroma_db_lims"
+CHROMA_PATH = os.getenv("LIMS_CHROMADB_PATH", "./chroma_db_lims")
 COLLECTION_NAME = "mda_templates"
 
 
@@ -141,12 +142,6 @@ def seed_mda_templates(
     )
 
     client = chromadb.PersistentClient(path=chroma_path)
-    # Delete existing collection to re-seed cleanly
-    try:
-        client.delete_collection(collection_name)
-        logger.info("Deleted existing collection '%s' for re-seeding", collection_name)
-    except ValueError:
-        pass  # Collection doesn't exist yet
     collection = client.get_or_create_collection(collection_name)
 
     documents: list[str] = []
@@ -169,8 +164,8 @@ def seed_mda_templates(
             metadatas.append(meta)
             ids.append(chunk["id"])
 
-    # Bulk add to ChromaDB
-    collection.add(documents=documents, metadatas=metadatas, ids=ids)
+    # Bulk upsert to ChromaDB (idempotent -- safe to re-run)
+    collection.upsert(documents=documents, metadatas=metadatas, ids=ids)
 
     final_count = collection.count()
     logger.info(

@@ -18,9 +18,8 @@ No fallback logic -- all errors propagate with full diagnostics.
 
 from __future__ import annotations
 
-import json
 import logging
-from typing import Any
+import os
 
 from fastapi import APIRouter, HTTPException, UploadFile, status
 from fastapi.responses import Response
@@ -141,13 +140,27 @@ async def extract_pdf(file: UploadFile) -> dict:
             detail=f"Pipeline failed: {type(e).__name__}: {e}",
         ) from e
 
+    # Flush Langfuse traces before returning
+    from main.src.lims.langfuse_tracing import flush_lims_langfuse
+
+    flush_lims_langfuse()
+
+    # Build trace URL from trace_id
+    trace_id = result.get("trace_id")
+    trace_url = None
+    if trace_id:
+        langfuse_base = os.getenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
+        trace_url = f"{langfuse_base}/trace/{trace_id}"
+
     current_job = get_job(job_id)
     return {
         "job_id": job_id,
         "status": current_job.status.value,
         "filename": file.filename,
         "size_bytes": len(content),
-        **result,
+        "trace_id": trace_id,
+        "trace_url": trace_url,
+        **{k: v for k, v in result.items() if k != "trace_id"},
     }
 
 
@@ -397,12 +410,20 @@ async def chat(request: ChatRequest) -> dict:
             detail=f"LIMS configuration error: {e}",
         ) from e
 
-    # Get or create chat session
-    pdf_text = json.dumps(job.raw_extraction, default=str) if job.raw_extraction else ""
+    # Get or create chat session with full grounded context
+    chat_context = {
+        "pdf_filename": job.pdf_filename,
+        "raw_extraction": job.raw_extraction,
+        "classification": job.classification,
+        "provenance": job.provenance,
+        "conflicts": job.conflicts,
+        "stage_details": job.stage_details,
+        "extraction_trace": job.extraction_trace,
+    }
     session = get_or_create_session(
         job_id=request.job_id,
         mda_template=job.mda_template or {},
-        pdf_text=pdf_text,
+        chat_context=chat_context,
     )
 
     # Process chat message
@@ -421,6 +442,11 @@ async def chat(request: ChatRequest) -> dict:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Chat processing failed: {type(e).__name__}: {e}",
         ) from e
+
+    # Flush Langfuse traces
+    from main.src.lims.langfuse_tracing import flush_lims_langfuse
+
+    flush_lims_langfuse()
 
     # Sync MDA template back to job store
     job.mda_template = session.mda_template
@@ -541,10 +567,38 @@ async def export(job_id: str) -> Response:
 
     # Export MDA to XLSX
     try:
+        from main.src.lims.data_normalizer import (
+            _build_analysis_name_map,
+            _forward_fill_field,
+            _normalize_analysis_refs,
+        )
         from main.src.lims.mda_schema import MDATemplate
         from main.src.lims.xlsx_exporter import export_mda_to_xlsx
 
-        mda = MDATemplate.model_validate(job.mda_template)
+        # Sanitize stored data: resolve truncated/abbreviated analysis refs
+        # and forward-fill analysis/component fields that LlamaExtract may
+        # have left as None in continuation table rows.
+        mda_data = job.mda_template
+        known_analyses = [
+            str(a["name"]) for a in mda_data.get("analyses", [])
+            if isinstance(a, dict) and a.get("name")
+        ]
+        analysis_name_map = _build_analysis_name_map(
+            mda_data.get("analyses", [])
+        )
+        for sheet_key in ("components", "calc_variables", "calculations"):
+            if sheet_key in mda_data and isinstance(mda_data[sheet_key], list):
+                _normalize_analysis_refs(
+                    mda_data[sheet_key], analysis_name_map,
+                )
+                _forward_fill_field(
+                    mda_data[sheet_key], "analysis",
+                    available_values=known_analyses,
+                )
+                if sheet_key in ("calc_variables", "calculations"):
+                    _forward_fill_field(mda_data[sheet_key], "component")
+
+        mda = MDATemplate.model_validate(mda_data)
         xlsx_bytes = export_mda_to_xlsx(mda)
     except Exception as e:
         logger.exception("XLSX export failed for job %s: %s", job_id, e)
