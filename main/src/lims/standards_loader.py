@@ -35,6 +35,31 @@ DEFAULT_PREPARED_ROOT = "./output/prepared_l10l15"
 DEFAULT_TRACE_DIRNAME = "L13_rag"
 
 
+def _normalize_token_set(text: str) -> set[str]:
+    return {
+        token.lower()
+        for token in re.findall(r"[A-Za-z0-9_]+", text)
+        if len(token) >= 3
+    }
+
+
+def _extract_method_family(query_text: str) -> str | None:
+    match = re.search(r"\b[A-Z]{3}_[A-Z0-9]+(?:_[A-Z0-9]+){1,3}\b", query_text.upper())
+    if match:
+        return match.group(0)
+    return None
+
+
+def _method_family_tokens(method_family: str | None) -> set[str]:
+    if not method_family:
+        return set()
+    return {
+        token.lower()
+        for token in method_family.split("_")
+        if len(token) >= 3
+    }
+
+
 def _looks_like_header(line: str) -> bool:
     stripped = line.strip()
     if not stripped:
@@ -482,6 +507,29 @@ def query_standards(
     if top_k <= 0:
         raise ValueError(f"top_k must be > 0, got {top_k}")
 
+    payload = query_standards_with_metrics(
+        query_text=query_text,
+        collection_name=collection_name,
+        top_k=top_k,
+        chroma_path=chroma_path,
+    )
+    return payload["results"]
+
+
+@observe(name="rag-standards-query-metrics")
+def query_standards_with_metrics(
+    query_text: str,
+    collection_name: str = "lims_standards",
+    top_k: int = 5,
+    chroma_path: str = DEFAULT_CHROMA_PATH,
+    method_family: str | None = None,
+) -> dict[str, object]:
+    """Query standards and return retrieval metrics for quality gating."""
+    if not query_text.strip():
+        raise ValueError("query_text must not be empty")
+    if top_k <= 0:
+        raise ValueError(f"top_k must be > 0, got {top_k}")
+
     client = chromadb.PersistentClient(path=chroma_path)
     collection = client.get_or_create_collection(collection_name)
 
@@ -493,16 +541,19 @@ def query_standards(
         )
 
     effective_k = min(top_k, doc_count)
+    candidate_k = min(max(effective_k * 3, effective_k), doc_count)
+
     logger.info(
-        "Query standards: collection=%s top_k=%d effective_k=%d docs_available=%d",
+        "Query standards (metrics): collection=%s top_k=%d candidate_k=%d docs_available=%d",
         collection_name,
         top_k,
-        effective_k,
+        candidate_k,
         doc_count,
     )
+
     results = collection.query(
         query_texts=[query_text],
-        n_results=effective_k,
+        n_results=candidate_k,
         include=["documents", "metadatas", "distances"],
     )
 
@@ -510,24 +561,89 @@ def query_standards(
     metadatas = results.get("metadatas", [[]])[0]
     distances = results.get("distances", [[]])[0]
 
-    output: list[dict[str, str]] = []
+    query_tokens = _normalize_token_set(query_text)
+    resolved_method_family = method_family or _extract_method_family(query_text)
+    family_tokens = _method_family_tokens(resolved_method_family)
+
+    scored_candidates: list[tuple[float, dict[str, str]]] = []
     for content, metadata, distance in zip(documents, metadatas, distances, strict=False):
         safe_metadata = metadata or {}
-        output.append({
-            "content": str(content),
-            "title": str(safe_metadata.get("title", "Untitled Section")),
-            "source_file": str(safe_metadata.get("source_file", "UNKNOWN")),
-            "distance": str(round(float(distance), 4)),
-        })
+        content_text = str(content)
+        title = str(safe_metadata.get("title", "Untitled Section"))
+        source_file = str(safe_metadata.get("source_file", "UNKNOWN"))
+        distance_float = float(distance)
 
-    logger.info(
-        "Query standards complete: collection=%s returned=%d distances=%s",
-        collection_name,
-        len(output),
-        [r["distance"] for r in output[:5]],
+        candidate_tokens = _normalize_token_set(f"{title} {source_file} {content_text}")
+        token_overlap = len(query_tokens.intersection(candidate_tokens))
+        method_family_match = (
+            bool(family_tokens)
+            and family_tokens.issubset(candidate_tokens)
+        )
+
+        relevance_score = (1.0 / (1.0 + distance_float)) + (0.05 * token_overlap)
+        if method_family_match:
+            relevance_score += 0.25
+
+        scored_candidates.append((
+            relevance_score,
+            {
+                "content": content_text,
+                "title": title,
+                "source_file": source_file,
+                "distance": str(round(distance_float, 4)),
+                "token_overlap": str(token_overlap),
+                "method_family_match": "true" if method_family_match else "false",
+                "relevance_score": str(round(relevance_score, 4)),
+            },
+        ))
+
+    if family_tokens:
+        method_filtered = [item for item in scored_candidates if item[1]["method_family_match"] == "true"]
+        candidates = method_filtered if method_filtered else scored_candidates
+    else:
+        candidates = scored_candidates
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    output = [item[1] for item in candidates[:effective_k]]
+
+    avg_distance = (
+        sum(float(row["distance"]) for row in output) / len(output)
+        if output else 0.0
+    )
+    avg_token_overlap = (
+        sum(int(row["token_overlap"]) for row in output) / len(output)
+        if output else 0.0
+    )
+    method_match_ratio = (
+        sum(1 for row in output if row["method_family_match"] == "true") / len(output)
+        if output else 0.0
     )
 
-    return output
+    metrics: dict[str, object] = {
+        "query_text": query_text,
+        "collection_name": collection_name,
+        "documents_available": doc_count,
+        "semantic_candidates_count": len(documents),
+        "returned_count": len(output),
+        "method_family": resolved_method_family,
+        "avg_distance": round(avg_distance, 4),
+        "avg_token_overlap": round(avg_token_overlap, 4),
+        "method_match_ratio": round(method_match_ratio, 4),
+    }
+
+    logger.info(
+        "Query standards complete: collection=%s returned=%d avg_distance=%.4f avg_overlap=%.2f method_match_ratio=%.2f",
+        collection_name,
+        len(output),
+        avg_distance,
+        avg_token_overlap,
+        method_match_ratio,
+    )
+
+    return {
+        "results": output,
+        "metrics": metrics,
+    }
 
 
 def seed_from_jsonl(

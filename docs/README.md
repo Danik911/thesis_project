@@ -45,6 +45,8 @@ Full HITL workflow complete (Tasks L1-L6). Phase 8 (Two-Layer Pipeline Architect
 | L14: Pipeline Core | Complete | [LIMS-014](project_p/LIMS-014-pipeline-core-extractor-merger-orchestrator.md) |
 | L15: Frontend Provenance UI | In Progress | — |
 | L16: E2E Validation | Not Started | — |
+| L18: Run Validation Remediation | Complete | [LIMS-017](project_p/LIMS-017-l18-run-validation-remediation-task.md) |
+| L18+: Merger Analysis Matching Fixes | Complete | [LIMS-018](project_p/LIMS-018-mda-merger-validation-analysis-matching-fixes.md) |
 
 **Current Workflow**: Upload PDF -> Classify Test Type -> Load Template -> Focused Extract -> Augment from Standards -> Merge with Provenance -> SME Review -> Chat Refinement -> Human Approval -> XLSX Export
 

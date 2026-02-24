@@ -147,13 +147,13 @@ frontend/
 | `pdf_extractor.py` | LlamaExtract integration |
 | `focused_extractor.py` | Text extraction (PyMuPDF) + focused schema narrowing |
 | `pipeline.py` | TwoLayerPipeline orchestrator (6 stages) |
-| `merger.py` | Three-layer merge with provenance tracking |
+| `merger.py` | Three-layer merge with provenance tracking; protects template analysis names during overlay; rewrites extraction refs to template names via exact + word-subset matching; template-locked mode rejects unmatched extracted entities for known test types (TestType != OTHER) |
 | `classifier.py` | Hybrid test type classifier (filename + keyword + LLM) |
 | `test_type.py` | TestType enum and ClassificationResult |
 | `provenance.py` | ComponentSource, FieldProvenance, ProvenanceMap |
 | `job_store.py` | In-memory job store with state machine |
 | `config.py` | LIMS configuration (LIMS_* env vars) |
-| `data_normalizer.py` | Post-extraction normalization |
+| `data_normalizer.py` | Post-extraction normalization; infers analysis type from name keywords when extraction returns NULL type |
 | `mda_generator.py` | MDA generation workflow |
 | `chat_agent.py` | Chat engine for MDA refinement |
 | `xlsx_exporter.py` | 4-sheet XLSX generation (openpyxl) |
@@ -198,6 +198,10 @@ frontend/
 | `LIMS-003-chat-agent-hitl-router.md` | Task L4b: Chat agent HITL router |
 | `LIMS-004-full-hitl-ui.md` | Task L6: Full HITL UI implementation |
 | `LIMS-014-pipeline-core-extractor-merger-orchestrator.md` | Task L14: Pipeline core implementation |
+| `LIMS-017-l18-run-validation-remediation-task.md` | L18 run validation remediation (7 phases) |
+| `LIMS-020-template-locked-merge-quality-fix.md` | Template-locked merge mode: rejects unmatched extracted entities for known test types; consolidates LIMS-018 and LIMS-019 |
+| `archived/LIMS-018-mda-merger-validation-analysis-matching-fixes.md` | Archived — superseded by LIMS-020; merger analysis matching, name protection, ref rewriting fixes |
+| `archived/LIMS-019-l18-rerun-checklist-and-audit-protocol.md` | Archived — superseded by LIMS-020; L18 strict rerun checklist and audit protocol |
 
 ---
 

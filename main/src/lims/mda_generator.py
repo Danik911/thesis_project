@@ -55,8 +55,8 @@ class MDAGenerationWorkflow(Workflow):
                 "Add it to .env.local to enable MDA generation."
             )
 
-        # Serialize extraction for prompt (truncate to 3000 chars for token budget)
-        extraction_summary = json.dumps(raw_extraction, indent=2, default=str)[:3000]
+        # Serialize extraction for prompt (truncate to 30000 chars for token budget)
+        extraction_summary = json.dumps(raw_extraction, indent=2, default=str)[:30000]
 
         logger.info(
             "Starting MDA generation (extraction: %d chars, model: %s)",
@@ -74,6 +74,13 @@ class MDAGenerationWorkflow(Workflow):
                 extraction_text=extraction_summary,
                 top_k=config.rag_mda_top_k,
                 chroma_path=config.chromadb_path,
+                use_query_augmentation=config.query_augmentation_enabled,
+                query_augmentation_max_queries=config.query_augmentation_max_queries,
+                use_metadata_boost=config.metadata_boost_enabled,
+                semantic_weight=config.semantic_weight,
+                bm25_weight=config.bm25_weight,
+                priority_sheet_boost=config.priority_sheet_boost,
+                token_match_boost=config.token_match_boost,
             )
             logger.info("RAG returned %d similar templates", len(rag_examples))
         except RuntimeError as e:

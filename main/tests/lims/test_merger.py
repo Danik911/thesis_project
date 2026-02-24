@@ -12,9 +12,11 @@ from main.src.lims.merger import (
     MergeConflict,
     MergeResult,
     _apply_suggestion_to_dict,
+    _build_extraction_to_template_map,
     _match_analysis,
     _match_component,
     _normalize_for_match,
+    _rewrite_extraction_refs,
     merge_layers,
 )
 from main.src.lims.provenance import ComponentSource
@@ -426,3 +428,589 @@ class TestApplySuggestionErrors:
         base = {"analyses": [{"name": "A", "nested": {"x": 1}}]}
         with pytest.raises(ValueError, match="segment 'missing' not found"):
             _apply_suggestion_to_dict(base, "analyses[0].missing.field", "value")
+
+
+# ---------------------------------------------------------------------------
+# Protected keys tests (Fix B)
+# ---------------------------------------------------------------------------
+
+
+class TestProtectedKeys:
+    """Template analysis names are preserved when protected_keys={"name"}."""
+
+    def test_protected_name_not_overwritten(self, identity_template):
+        """Extraction analysis name should NOT overwrite template name."""
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)",
+                    "analysis_type": "ID",
+                    "description": "Extracted dye-binding test",
+                },
+            ],
+            "components": [],
+            "calc_variables": [],
+            "calculations": [],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Template name should be preserved
+        analysis_0 = result.mda_template["analyses"][0]
+        assert analysis_0["name"] == "SITE_IDENTITY"
+
+        # But description should be overridden (not protected)
+        assert analysis_0["description"] == "Extracted dye-binding test"
+
+        # A conflict should be recorded for the name difference
+        name_conflicts = [
+            c for c in result.conflicts
+            if "name" in c.field_path and c.resolved_by == "SYSTEM"
+        ]
+        assert len(name_conflicts) >= 1
+        assert name_conflicts[0].template_value == "SITE_IDENTITY"
+
+    def test_still_3_analyses_after_type_match(self, identity_template):
+        """Extraction matched by type should not add a 4th analysis."""
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ACS",
+                    "analysis_type": "ID",
+                },
+            ],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+        )
+
+        # Should still be 3 analyses (not 4)
+        assert len(result.mda_template["analyses"]) == 3
+
+
+# ---------------------------------------------------------------------------
+# Extraction ref rewriting tests (Fix C)
+# ---------------------------------------------------------------------------
+
+
+class TestExtractionRefRewriting:
+    """Extraction component refs are rewritten to template analysis names."""
+
+    def test_build_extraction_to_template_map(self):
+        ext_analyses = [
+            {"name": "DYE_BINDING_IDENTITY_TEST_FOR_ACS"},
+        ]
+        merged_analyses = [
+            {"name": "SITE_IDENTITY"},
+        ]
+        match_map = {0: 0}
+
+        result = _build_extraction_to_template_map(
+            ext_analyses, merged_analyses, match_map,
+        )
+
+        norm_key = _normalize_for_match("DYE_BINDING_IDENTITY_TEST_FOR_ACS")
+        assert norm_key in result
+        assert result[norm_key] == "SITE_IDENTITY"
+
+    def test_build_map_empty_when_names_match(self):
+        ext_analyses = [{"name": "SITE_IDENTITY"}]
+        merged_analyses = [{"name": "SITE_IDENTITY"}]
+        match_map = {0: 0}
+
+        result = _build_extraction_to_template_map(
+            ext_analyses, merged_analyses, match_map,
+        )
+        assert len(result) == 0
+
+    def test_rewrite_exact_match(self):
+        ext_to_tpl = {
+            _normalize_for_match("DYE_BINDING_IDENTITY_TEST_FOR_ACS"): "SITE_IDENTITY",
+        }
+        extracted_data = {
+            "components": [
+                {
+                    "analysis": "DYE_BINDING_IDENTITY_TEST_FOR_ACS",
+                    "component_name": "ABSORBANCE_540",
+                },
+            ],
+        }
+
+        _rewrite_extraction_refs(extracted_data, ext_to_tpl)
+        assert extracted_data["components"][0]["analysis"] == "SITE_IDENTITY"
+
+    def test_rewrite_word_subset_match(self):
+        """Truncated ref 'Dye-Binding Test' matches via word-subset."""
+        ext_to_tpl = {
+            _normalize_for_match("DYE_BINDING_IDENTITY_TEST_FOR_ACS"): "SITE_IDENTITY",
+        }
+        extracted_data = {
+            "components": [
+                {
+                    "analysis": "Dye-Binding Test",
+                    "component_name": "ABSORBANCE_540",
+                },
+            ],
+        }
+
+        _rewrite_extraction_refs(extracted_data, ext_to_tpl)
+        assert extracted_data["components"][0]["analysis"] == "SITE_IDENTITY"
+
+    def test_rewrite_ambiguous_subset_not_rewritten(self):
+        """Ambiguous word-subset match (>1 candidate) leaves ref unchanged."""
+        ext_to_tpl = {
+            _normalize_for_match("DYE_BINDING_TEST_A"): "SITE_A",
+            _normalize_for_match("DYE_BINDING_TEST_B"): "SITE_B",
+        }
+        extracted_data = {
+            "components": [
+                {
+                    "analysis": "Dye Binding Test",
+                    "component_name": "X",
+                },
+            ],
+        }
+
+        _rewrite_extraction_refs(extracted_data, ext_to_tpl)
+        # Should remain unchanged (ambiguous -- 2 candidates)
+        assert extracted_data["components"][0]["analysis"] == "Dye Binding Test"
+
+    def test_rewrite_too_few_tokens_not_rewritten(self):
+        """Refs with < 3 tokens are not rewritten via word-subset."""
+        ext_to_tpl = {
+            _normalize_for_match("DYE_BINDING_IDENTITY_TEST"): "SITE_IDENTITY",
+        }
+        extracted_data = {
+            "components": [
+                {
+                    "analysis": "Dye Test",
+                    "component_name": "X",
+                },
+            ],
+        }
+
+        _rewrite_extraction_refs(extracted_data, ext_to_tpl)
+        # 2-token ref -> skipped by min-3-token guard
+        assert extracted_data["components"][0]["analysis"] == "Dye Test"
+
+    def test_rewrite_covers_calc_variables_and_calculations(self):
+        ext_to_tpl = {
+            _normalize_for_match("DYE_BINDING_IDENTITY_TEST"): "SITE_IDENTITY",
+        }
+        extracted_data = {
+            "components": [],
+            "calc_variables": [
+                {"analysis": "DYE_BINDING_IDENTITY_TEST", "name": "V_ABS"},
+            ],
+            "calculations": [
+                {"analysis": "DYE_BINDING_IDENTITY_TEST", "component": "X"},
+            ],
+        }
+
+        _rewrite_extraction_refs(extracted_data, ext_to_tpl)
+        assert extracted_data["calc_variables"][0]["analysis"] == "SITE_IDENTITY"
+        assert extracted_data["calculations"][0]["analysis"] == "SITE_IDENTITY"
+
+
+# ---------------------------------------------------------------------------
+# E2E merge with mismatched names (all fixes together)
+# ---------------------------------------------------------------------------
+
+
+class TestMergeMismatchedNamesE2E:
+    """End-to-end: extraction with different analysis names merges correctly."""
+
+    def test_dye_binding_extraction_merges_into_identity_template(
+        self, identity_template,
+    ):
+        """Simulates the AND_ACS_DYE-LAB-2499.pdf scenario.
+
+        Extraction has 'DYE_BINDING_IDENTITY_TEST_FOR_ACS' as analysis name
+        and components reference 'Dye-Binding Test' (truncated). Template
+        uses SITE_IDENTITY / SITE_IDENTITY_CTL / SITE_IDENTITY_META.
+
+        After merge:
+        - 3 analyses (not 4) -- extraction matched by type
+        - Template names preserved (SITE_IDENTITY, not DYE_BINDING_...)
+        - Component refs resolved to template names
+        """
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)",
+                    "analysis_type": "ID",
+                    "description": "Dye-Binding Identity Test",
+                },
+            ],
+            "components": [
+                {
+                    "analysis": "Dye-Binding Test",
+                    "component_name": "Package: Double layered and sealed?",
+                    "result_type": "L",
+                },
+            ],
+            "calc_variables": [],
+            "calculations": [],
+        }
+
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Should be 3 analyses (not 4)
+        assert len(result.mda_template["analyses"]) == 3
+
+        # Template names preserved
+        analysis_names = [a["name"] for a in result.mda_template["analyses"]]
+        assert "SITE_IDENTITY" in analysis_names
+        assert "SITE_IDENTITY_CTL" in analysis_names
+        assert "SITE_IDENTITY_META" in analysis_names
+
+        # No extraction analysis name leaked
+        for name in analysis_names:
+            assert "DYE_BINDING" not in name
+
+        # Validation should pass (all refs resolved)
+        assert result.validation_passed is True
+
+    def test_merge_does_not_mutate_caller_input(self, identity_template):
+        """merge_layers must not mutate the caller's extracted_data dict."""
+        import copy
+
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ACS",
+                    "analysis_type": "ID",
+                },
+            ],
+            "components": [
+                {
+                    "analysis": "Dye-Binding Test",
+                    "component_name": "SOME_COMPONENT",
+                    "result_type": "N",
+                },
+            ],
+            "calc_variables": [],
+            "calculations": [],
+        }
+        original = copy.deepcopy(extracted_data)
+
+        merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Caller's input must not have been mutated
+        assert extracted_data == original
+
+    def test_fix_d_resolves_truncated_ref_in_normalization_stage(
+        self, identity_template,
+    ):
+        """Fix D must resolve a truncated ref that Fix C cannot rewrite.
+
+        Scenario: extraction analysis matched to template by type, but
+        a component in the TEMPLATE (not extraction) references a truncated
+        extraction name. Fix C only rewrites extraction data refs, so this
+        truncated ref in the merged base must be resolved by Fix D's alias
+        injection into the normalization map at step 4b.
+
+        We use TestType.OTHER here because template-locked mode (active for
+        known types like IDENTITY) correctly rejects unmatched components.
+        Fix D's ref resolution is still relevant for unlocked mode.
+        """
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ACS",
+                    "analysis_type": "ID",
+                },
+            ],
+            # This component uses a truncated ref that does NOT exactly match
+            # any extraction or template analysis name. Fix C's word-subset
+            # rewrites it in the deep copy. But let's verify the final merged
+            # result resolves it correctly via the full pipeline.
+            "components": [
+                {
+                    "analysis": "Dye Binding Identity",
+                    "component_name": "NEW_EXTRACTED_RESULT?",
+                    "result_type": "N",
+                    "order_number": 99,
+                },
+            ],
+            "calc_variables": [],
+            "calculations": [],
+        }
+
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.OTHER,
+        )
+
+        # The truncated ref must have been resolved to a template name
+        new_comp = next(
+            (c for c in result.mda_template["components"]
+             if c.get("component_name") == "NEW_EXTRACTED_RESULT?"),
+            None,
+        )
+        assert new_comp is not None, "New extracted component not found in merged output"
+        # The analysis ref must point to a valid template analysis
+        valid_analysis_names = {
+            a["name"] for a in result.mda_template["analyses"]
+        }
+        assert new_comp["analysis"] in valid_analysis_names, (
+            f"Truncated ref '{new_comp['analysis']}' was not resolved to a "
+            f"valid template name. Valid: {valid_analysis_names}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Template-locked mode tests
+# ---------------------------------------------------------------------------
+
+
+class TestTemplateLocked:
+    """Template-locked mode rejects unmatched extracted items for known test types."""
+
+    def test_rejects_unmatched_analysis(self, identity_template):
+        """Unmatched analyses are rejected when test_type=IDENTITY."""
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ACS",
+                    "analysis_type": "ID",
+                    "description": "This matches template by type",
+                },
+                {
+                    "name": "COMPLETELY_UNKNOWN_ANALYSIS",
+                    "analysis_type": "PHYS",
+                    "description": "This should be rejected",
+                },
+            ],
+            "components": [],
+            "calc_variables": [],
+            "calculations": [],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Should still be exactly 3 analyses (template count)
+        assert len(result.mda_template["analyses"]) == 3
+
+        # No unknown analysis in output
+        analysis_names = [a["name"] for a in result.mda_template["analyses"]]
+        assert "COMPLETELY_UNKNOWN_ANALYSIS" not in analysis_names
+        assert "EXT_COMPLETELY_UNKNOWN_ANALYSIS" not in analysis_names
+
+        # Rejected count tracked in stats
+        assert result.stats.get("TEMPLATE_LOCKED_REJECTED", 0) >= 1
+
+    def test_rejects_unmatched_component(self, identity_template):
+        """Unmatched components are rejected when test_type=IDENTITY."""
+        extracted_data = {
+            "components": [
+                {
+                    "analysis": "SITE_IDENTITY",
+                    "component_name": "SOME_FAKE_EXTRACTED_COMPONENT?",
+                    "result_type": "N",
+                    "order_number": 99,
+                },
+            ],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Should still be exactly 25 components (template count)
+        assert len(result.mda_template["components"]) == 25
+
+        # Fake component not in output
+        comp_names = [c["component_name"] for c in result.mda_template["components"]]
+        assert "SOME_FAKE_EXTRACTED_COMPONENT?" not in comp_names
+
+    def test_rejects_unmatched_calculation(self, identity_template):
+        """Unmatched calculations are rejected when test_type=IDENTITY."""
+        extracted_data = {
+            "calculations": [
+                {
+                    "analysis": "FAKE_ANALYSIS",
+                    "component": "FAKE_COMPONENT",
+                    "source_code": "RETURN 42",
+                },
+            ],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Template has 11 calculations; no extra should be added
+        assert len(result.mda_template["calculations"]) == 11
+        for calc in result.mda_template["calculations"]:
+            assert calc.get("analysis") != "FAKE_ANALYSIS"
+
+    def test_still_overlays_matched_items(self, identity_template):
+        """Matched items still get their variable fields overlaid."""
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ACS",
+                    "analysis_type": "ID",
+                    "description": "Extracted description from PDF",
+                },
+            ],
+            "components": [
+                {
+                    "analysis": "SITE_IDENTITY",
+                    "component_name": "Weight of Sponge(s)",
+                    "minimum": 50.0,
+                    "maximum": 200.0,
+                },
+            ],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Template structure preserved
+        assert len(result.mda_template["analyses"]) == 3
+
+        # Variable fields overlaid from extraction
+        analysis_0 = result.mda_template["analyses"][0]
+        assert analysis_0["description"] == "Extracted description from PDF"
+
+        # Component match still works
+        weight_comp = next(
+            c for c in result.mda_template["components"]
+            if c.get("component_name") == "Weight of Sponge(s)"
+        )
+        assert weight_comp["minimum"] == 50.0
+        assert weight_comp["maximum"] == 200.0
+
+    def test_unlocked_for_other_type(self, identity_template):
+        """TestType.OTHER should NOT enable template-locked mode."""
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "COMPLETELY_UNKNOWN_ANALYSIS",
+                    "analysis_type": "PHYS",
+                    "description": "This should be admitted for OTHER",
+                },
+            ],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.OTHER,
+        )
+
+        # For OTHER, unmatched items SHOULD be admitted
+        assert len(result.mda_template["analyses"]) > 3
+        assert "TEMPLATE_LOCKED_REJECTED" not in result.stats
+
+    def test_unlocked_when_no_test_type(self, identity_template):
+        """No test_type (None) should NOT enable template-locked mode."""
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "COMPLETELY_UNKNOWN_ANALYSIS",
+                    "analysis_type": "PHYS",
+                },
+            ],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=None,
+        )
+
+        # For None, unmatched items SHOULD be admitted
+        assert len(result.mda_template["analyses"]) > 3
+
+    def test_real_scenario_4th_analysis_blocked(self, identity_template):
+        """Reproduces the AND_ACS_DYE-LAB-2499 scenario: 4th analysis blocked.
+
+        Extraction produces analyses that match template by type + 1 spurious
+        analysis from PDF description text. The spurious 4th analysis and its
+        associated components/calculations should be rejected.
+        """
+        extracted_data = {
+            "analyses": [
+                {
+                    "name": "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)",
+                    "analysis_type": "ID",
+                    "description": "Dye-Binding Identity Test",
+                },
+                {
+                    "name": "CONTROL_ANALYSIS",
+                    "analysis_type": "QC_SAMPLES",
+                },
+                {
+                    "name": "META_DATA_ANALYSIS",
+                    "analysis_type": "QC_SAMPLES",
+                },
+                {
+                    "name": "SPURIOUS_EXTRA_FROM_PDF_DESCRIPTION",
+                    "analysis_type": "PHYS",
+                    "description": "Should be rejected in template-locked mode",
+                },
+            ],
+            "components": [
+                {
+                    "analysis": "SPURIOUS_EXTRA_FROM_PDF_DESCRIPTION",
+                    "component_name": "4_MM_DIRECT_RED_80_STOCK_SOLUTION?",
+                    "result_type": "N",
+                },
+            ],
+            "calculations": [
+                {
+                    "analysis": "SPURIOUS_EXTRA_FROM_PDF_DESCRIPTION",
+                    "component": "4_MM_DIRECT_RED_80_STOCK_SOLUTION",
+                    "source_code": "REM SME_REQUIRED: source_code for 4_MM_DIRECT_RED_80_STOCK_SOLUTION",
+                },
+            ],
+        }
+        result = merge_layers(
+            template_mda=identity_template,
+            extracted_data=extracted_data,
+            test_type=TestType.IDENTITY,
+        )
+
+        # Exactly 3 analyses: the spurious 4th is rejected
+        assert len(result.mda_template["analyses"]) == 3
+
+        # Template names preserved
+        analysis_names = [a["name"] for a in result.mda_template["analyses"]]
+        assert "SITE_IDENTITY" in analysis_names
+        assert "SITE_IDENTITY_CTL" in analysis_names
+        assert "SITE_IDENTITY_META" in analysis_names
+        assert "SPURIOUS_EXTRA_FROM_PDF_DESCRIPTION" not in analysis_names
+
+        # No spurious components admitted
+        assert len(result.mda_template["components"]) == 25
+
+        # No SME_REQUIRED placeholder calculations from spurious analysis
+        for calc in result.mda_template["calculations"]:
+            assert "SME_REQUIRED" not in calc.get("source_code", "")
+
+        # Rejected count tracked
+        assert result.stats.get("TEMPLATE_LOCKED_REJECTED", 0) >= 1
+
+        # Validation should still pass
+        assert result.validation_passed is True

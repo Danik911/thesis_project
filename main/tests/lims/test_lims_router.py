@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from main.api.lims_router import router as lims_router
 from main.src.lims.job_store import _jobs
+from main.tests.lims.path_helpers import resolve_demo_pdf
 
 
 @pytest.fixture(autouse=True)
@@ -263,9 +264,9 @@ class TestExtractIntegration:
         if not os.getenv("LIMS_LLAMAEXTRACT_API_KEY"):
             pytest.skip("LIMS_LLAMAEXTRACT_API_KEY not set")
 
-        pdf_path = Path("demo_data/AND_ACS_AQ126-LAB-2349.pdf")
-        if not pdf_path.exists():
-            pytest.skip("demo PDF not found")
+        pdf_path = resolve_demo_pdf("AND_ACS_AQ126-LAB-2349.pdf")
+        if pdf_path is None:
+            pytest.skip("demo PDF not found in demo_data/testing_data_ground_truth or demo_data/data")
 
         with pdf_path.open("rb") as f:
             response = client.post(

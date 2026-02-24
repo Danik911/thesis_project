@@ -156,6 +156,41 @@ _ANALYSIS_TYPE_COERCION: dict[str, str] = {
 # Valid analysis_type values (from AnalysisType enum)
 _VALID_ANALYSIS_TYPES = {"ID", "ASY", "IMP", "PHYS", "QC_SAMPLES", "HPLC", "RM", "KF"}
 
+_NON_COMPONENT_NAME_HINTS = {
+    "ORBITAL SHAKER",
+    "CALIBRATED TIMER",
+    "FILTER UNIT",
+    "GLACIAL ACETIC ACID",
+    "PURIFIED WATER",
+    "DIRECT RED 80",
+    "ABSORBABLE COLLAGEN SPONGE",
+    "TYPE I COLLAGEN",
+    "PETRI DISH",
+    "WEIGH BOAT",
+}
+
+
+def _looks_like_non_component_row(component_name: str) -> bool:
+    """Heuristic classifier for extracted rows that are not true LIMS components.
+
+    These rows are typically equipment/material/procedure entities and should
+    not be auto-admitted as result-entry components.
+    """
+    normalized = _normalize_for_match(component_name)
+    if not normalized:
+        return True
+
+    for hint in _NON_COMPONENT_NAME_HINTS:
+        if hint.lower() in normalized:
+            return True
+
+    # Most true result-entry prompts are question-style or explicitly outcome-like.
+    if "?" not in component_name and "result" not in normalized:
+        # Keep conservative: if no explicit result semantics, require manual review.
+        return True
+
+    return False
+
 
 def _sanitize_new_analysis(
     item: dict[str, Any],
@@ -218,19 +253,50 @@ def _sanitize_new_analysis(
 def _sanitize_new_component(
     item: dict[str, Any],
     existing_components: list[dict[str, Any]],
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     """Ensure a new extracted component has all required fields.
 
     Called when an extracted component does not match any template component.
-    Assigns sequential order_number and defaults result_type to 'T' (text).
+    Rejects rows that cannot be deterministically classified as true components.
 
     Args:
         item: Raw extracted component dict.
         existing_components: Current merged component list (for order numbering).
 
     Returns:
-        Sanitized component dict with all required fields present.
+        Sanitized component dict with required fields present,
+        or None if the row is rejected.
     """
+    component_name = str(item.get("component_name") or "").strip()
+    if not component_name:
+        logger.info("Rejecting new component row with empty component_name")
+        return None
+
+    if _looks_like_non_component_row(component_name):
+        logger.info(
+            "Rejecting non-component extracted row '%s' (routed to manual review)",
+            component_name,
+        )
+        return None
+
+    valid_result_types = {"N", "K", "L", "T", "D"}
+    raw_rt = str(item.get("result_type", "")).upper().strip()
+    if not raw_rt:
+        logger.info(
+            "Rejecting new component '%s': missing result_type (no default fallback)",
+            component_name,
+        )
+        return None
+    if raw_rt not in valid_result_types:
+        logger.info(
+            "Rejecting new component '%s': invalid result_type '%s'",
+            component_name,
+            raw_rt,
+        )
+        return None
+
+    item["result_type"] = raw_rt
+
     if "order_number" not in item or item["order_number"] is None:
         max_order = max(
             (c.get("order_number", 0) for c in existing_components if c.get("order_number") is not None),
@@ -242,24 +308,6 @@ def _sanitize_new_component(
             item["order_number"],
             item.get("component_name", "UNKNOWN"),
         )
-
-    if "result_type" not in item or not item["result_type"]:
-        item["result_type"] = "T"
-        logger.info(
-            "Defaulted result_type='T' for new component '%s'",
-            item.get("component_name", "UNKNOWN"),
-        )
-
-    # Validate result_type is valid
-    valid_result_types = {"N", "K", "L", "T", "D"}
-    raw_rt = str(item.get("result_type", "")).upper().strip()
-    if raw_rt not in valid_result_types:
-        logger.info(
-            "Coercing result_type '%s' -> 'T' for component '%s'",
-            raw_rt,
-            item.get("component_name", "UNKNOWN"),
-        )
-        item["result_type"] = "T"
 
     return item
 
@@ -367,7 +415,10 @@ def _overlay_extracted_items(
     conflicts: list[MergeConflict],
     conflict_fields: set[str] | None = None,
     sanitize_fn=None,
-) -> list[dict[str, Any]]:
+    protected_keys: set[str] | None = None,
+    match_map_out: dict[int, int] | None = None,
+    template_locked: bool = False,
+) -> tuple[list[dict[str, Any]], int]:
     """Overlay extracted items onto template items.
 
     Args:
@@ -382,18 +433,28 @@ def _overlay_extracted_items(
         sanitize_fn: Optional function to sanitize new (unmatched) items
             before appending. Called as sanitize_fn(item) for analyses or
             sanitize_fn(item, merged) for components.
+        protected_keys: Set of field names where template values are preserved
+            during overlay. Conflicts are recorded for SME review.
+        match_map_out: If provided, populated with ext_idx -> tpl_idx mapping
+            for matched items.
+        template_locked: When True, unmatched extracted items are rejected
+            (logged at WARNING level) instead of being sanitized and appended.
+            Use for known test types where the template defines exact structure.
 
     Returns:
-        Merged list of item dicts.
+        Tuple of (merged item list, count of rejected unmatched items).
     """
     merged = copy.deepcopy(template_items)
     matched_indices: set[int] = set()
+    rejected_count = 0
 
-    for ext_item in extracted_items:
+    for ext_idx, ext_item in enumerate(extracted_items):
         match_idx = match_fn(ext_item, merged)
 
         if match_idx is not None:
             matched_indices.add(match_idx)
+            if match_map_out is not None:
+                match_map_out[ext_idx] = match_idx
             tpl_item = merged[match_idx]
 
             for key, ext_value in ext_item.items():
@@ -402,6 +463,31 @@ def _overlay_extracted_items(
 
                 tpl_value = tpl_item.get(key)
                 path = f"{prefix}[{match_idx}].{key}"
+
+                # Protected keys: preserve template value, record conflict
+                if (
+                    protected_keys
+                    and key in protected_keys
+                    and tpl_value is not None
+                    and tpl_value != ""
+                ):
+                    if tpl_value != ext_value:
+                        conflicts.append(
+                            MergeConflict(
+                                field_path=path,
+                                template_value=tpl_value,
+                                extracted_value=ext_value,
+                                resolution="Template value preserved (protected key)",
+                                resolved_by="SYSTEM",
+                            )
+                        )
+                        logger.info(
+                            "Protected key '%s' preserved: template='%s', extraction='%s'",
+                            key,
+                            tpl_value,
+                            ext_value,
+                        )
+                    continue
 
                 if (
                     tpl_value is not None
@@ -436,6 +522,23 @@ def _overlay_extracted_items(
                     detail="Overridden by PDF extraction",
                 )
         else:
+            # Unmatched extracted item — not in template
+            if template_locked:
+                item_id = (
+                    ext_item.get("name")
+                    or ext_item.get("component_name")
+                    or ext_item.get("component")
+                    or f"index-{ext_idx}"
+                )
+                logger.warning(
+                    "Template-locked: rejecting unmatched %s item '%s' "
+                    "(not in template, would have been appended in unlocked mode)",
+                    prefix,
+                    item_id,
+                )
+                rejected_count += 1
+                continue
+
             new_item = copy.deepcopy(ext_item)
             # Sanitize new items to ensure required fields are present
             if sanitize_fn is not None:
@@ -458,7 +561,102 @@ def _overlay_extracted_items(
                         detail="New item from PDF extraction (not in template)",
                     )
 
-    return merged
+    return merged, rejected_count
+
+
+def _build_extraction_to_template_map(
+    ext_analyses: list[dict[str, Any]],
+    merged_analyses: list[dict[str, Any]],
+    match_map: dict[int, int],
+) -> dict[str, str]:
+    """Build mapping from extraction analysis names to template analysis names.
+
+    When protected_keys prevents name overwrite, the merged analyses still have
+    template names. This map lets us rewrite extraction refs to use those names.
+
+    Args:
+        ext_analyses: Original extracted analyses list.
+        merged_analyses: Analyses list after overlay (template names preserved).
+        match_map: ext_idx -> tpl_idx mapping from overlay.
+
+    Returns:
+        Mapping of normalized extraction name -> template name.
+    """
+    name_map: dict[str, str] = {}
+    for ext_idx, tpl_idx in match_map.items():
+        ext_name = str(ext_analyses[ext_idx].get("name", ""))
+        tpl_name = str(merged_analyses[tpl_idx].get("name", ""))
+        if ext_name and tpl_name and ext_name != tpl_name:
+            norm_ext = _normalize_for_match(ext_name)
+            name_map[norm_ext] = tpl_name
+            logger.info(
+                "Extraction->template analysis map: '%s' -> '%s'",
+                ext_name,
+                tpl_name,
+            )
+    return name_map
+
+
+def _rewrite_extraction_refs(
+    extracted_data: dict[str, Any],
+    ext_to_tpl_map: dict[str, str],
+) -> None:
+    """Rewrite analysis refs in extraction data to use template names.
+
+    Uses exact match on normalized name, then unambiguous word-subset match.
+    Word-subset is safe because extraction names are unique descriptive names
+    (not template-pattern names sharing prefixes like SITE_IDENTITY_*).
+
+    Mutates extracted_data in place.
+
+    Args:
+        extracted_data: The extraction result dict with components, etc.
+        ext_to_tpl_map: Mapping of normalized extraction name -> template name.
+    """
+    for sheet_key in ("components", "calc_variables", "calculations"):
+        items = extracted_data.get(sheet_key) or []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for field in ("analysis", "reference_analysis"):
+                raw_ref = item.get(field)
+                if not raw_ref:
+                    continue
+                norm_ref = _normalize_for_match(str(raw_ref))
+
+                # Exact match
+                if norm_ref in ext_to_tpl_map:
+                    old_ref = item[field]
+                    item[field] = ext_to_tpl_map[norm_ref]
+                    logger.info(
+                        "Rewrote extraction ref: '%s' -> '%s' (exact)",
+                        old_ref,
+                        item[field],
+                    )
+                    continue
+
+                # Word-subset match: all words in ref appear in an
+                # extraction name. Guarded by:
+                #   1. Minimum 3 tokens (blocks generic refs like "Test")
+                #   2. Exactly 1 unambiguous match
+                ref_words = set(norm_ref.split())
+                if len(ref_words) < 3:
+                    # Too few tokens — not specific enough for subset match
+                    continue
+                subset_matches = [
+                    tpl_name
+                    for ext_norm, tpl_name in ext_to_tpl_map.items()
+                    if ref_words.issubset(set(ext_norm.split()))
+                ]
+                if len(subset_matches) == 1:
+                    old_ref = item[field]
+                    item[field] = subset_matches[0]
+                    logger.info(
+                        "Rewrote extraction ref: '%s' -> '%s' (word-subset, %d ref tokens)",
+                        old_ref,
+                        item[field],
+                        len(ref_words),
+                    )
 
 
 @observe(name="lims-merge")
@@ -487,6 +685,10 @@ def merge_layers(
     """
     provenance = ProvenanceMap()
     conflicts: list[MergeConflict] = []
+
+    # Deep-copy extracted_data to avoid mutating the caller's input
+    # (_rewrite_extraction_refs modifies refs in place for the overlay step)
+    extracted_data = copy.deepcopy(extracted_data)
 
     # 1. Initialize base from template
     base = template_mda.model_dump()
@@ -518,16 +720,38 @@ def merge_layers(
         len(base.get("calculations", [])),
     )
 
+    # Determine template-locked mode based on test_type.
+    # Known test types with registered templates define exact structure;
+    # unmatched extraction items should be rejected (not appended).
+    template_locked = test_type is not None and test_type != TestType.OTHER
+    if template_locked:
+        logger.info(
+            "Template-locked mode ENABLED for test_type=%s — "
+            "unmatched extracted items will be rejected",
+            test_type.value,
+        )
+
+    # Rejection counters for template-locked mode
+    rejected_analyses = 0
+    rejected_components = 0
+    rejected_calc_vars = 0
+    rejected_calculations = 0
+
     # 2. Overlay extracted data
-    ext_analyses = extracted_data.get("analyses", [])
-    ext_components = extracted_data.get("components", [])
-    ext_calc_vars = extracted_data.get("calc_variables", [])
-    ext_calculations = extracted_data.get("calculations", [])
+    # Use `or []` instead of `.get(key, [])` because the key may exist with
+    # value None (e.g. when Pydantic validation fails on raw extraction).
+    ext_analyses = extracted_data.get("analyses") or []
+    ext_components = extracted_data.get("components") or []
+    ext_calc_vars = extracted_data.get("calc_variables") or []
+    ext_calculations = extracted_data.get("calculations") or []
 
     # Track original template analysis names before overlay (for rename detection)
     original_analysis_names = [
         str(a.get("name", "")) for a in base.get("analyses", [])
     ]
+
+    # Track extraction->template analysis name mapping for ref rewriting
+    ext_to_tpl_name_map: dict[str, str] = {}
 
     if ext_analyses:
         # Wrap _match_analysis with exclusive index tracking so that
@@ -544,18 +768,28 @@ def merge_layers(
                 _matched_analysis_indices.add(idx)
             return idx
 
-        base["analyses"] = _overlay_extracted_items(
+        analysis_match_map: dict[int, int] = {}
+        base["analyses"], rejected_analyses = _overlay_extracted_items(
             base.get("analyses", []),
             ext_analyses,
             _exclusive_match_analysis,
             provenance,
             "analyses",
             conflicts,
-            conflict_fields={"analysis_type", "name"},
+            conflict_fields={"analysis_type"},
             sanitize_fn=_sanitize_new_analysis,
+            protected_keys={"name"},
+            match_map_out=analysis_match_map,
+            template_locked=template_locked,
+        )
+
+        # Build extraction->template name map for ref rewriting
+        ext_to_tpl_name_map = _build_extraction_to_template_map(
+            ext_analyses, base.get("analyses", []), analysis_match_map,
         )
 
     # Build analysis rename map: detect where extraction changed analysis names
+    # (with protected_keys={"name"}, renames should not occur, but kept as safety)
     analysis_rename_map: dict[str, str] = {}
     for i, orig_name in enumerate(original_analysis_names):
         if i < len(base.get("analyses", [])):
@@ -571,8 +805,12 @@ def merge_layers(
     # Propagate renames to dependent sheets before component overlay
     _propagate_analysis_renames(base, analysis_rename_map)
 
+    # Rewrite extraction refs to use template analysis names before overlay
+    if ext_to_tpl_name_map:
+        _rewrite_extraction_refs(extracted_data, ext_to_tpl_name_map)
+
     if ext_components:
-        base["components"] = _overlay_extracted_items(
+        base["components"], rejected_components = _overlay_extracted_items(
             base.get("components", []),
             ext_components,
             _match_component,
@@ -581,10 +819,11 @@ def merge_layers(
             conflicts,
             conflict_fields={"result_type", "units", "list_key"},
             sanitize_fn=_sanitize_new_component,
+            template_locked=template_locked,
         )
 
     if ext_calc_vars:
-        base["calc_variables"] = _overlay_extracted_items(
+        base["calc_variables"], rejected_calc_vars = _overlay_extracted_items(
             base.get("calc_variables", []),
             ext_calc_vars,
             lambda ext, tpl: _match_calc_var(ext, tpl),
@@ -592,10 +831,11 @@ def merge_layers(
             "calc_variables",
             conflicts,
             sanitize_fn=_sanitize_new_calc_variable,
+            template_locked=template_locked,
         )
 
     if ext_calculations:
-        base["calculations"] = _overlay_extracted_items(
+        base["calculations"], rejected_calculations = _overlay_extracted_items(
             base.get("calculations", []),
             ext_calculations,
             lambda ext, tpl: _match_calculation(ext, tpl),
@@ -603,6 +843,22 @@ def merge_layers(
             "calculations",
             conflicts,
             sanitize_fn=_sanitize_new_calculation,
+            template_locked=template_locked,
+        )
+
+    total_rejected = (
+        rejected_analyses + rejected_components
+        + rejected_calc_vars + rejected_calculations
+    )
+    if total_rejected > 0:
+        logger.warning(
+            "Template-locked merge rejected %d unmatched items: "
+            "%d analyses, %d components, %d calc_variables, %d calculations",
+            total_rejected,
+            rejected_analyses,
+            rejected_components,
+            rejected_calc_vars,
+            rejected_calculations,
         )
 
     logger.info(
@@ -649,6 +905,7 @@ def merge_layers(
         _build_analysis_name_map,
         _forward_fill_field,
         _normalize_analysis_refs,
+        _normalize_lookup_key,
         sanitize_component_numeric_bounds,
     )
 
@@ -657,6 +914,64 @@ def merge_layers(
         if isinstance(a, dict) and a.get("name")
     ]
     analysis_name_map_norm = _build_analysis_name_map(base.get("analyses", []))
+
+    # Fix D: Inject extraction->template aliases into normalization map
+    # Covers full extraction names AND truncated refs from components/etc.
+    # that may not have been rewritten by Fix C (belt-and-suspenders).
+    if ext_to_tpl_name_map:
+        # Inject full extraction analysis names
+        for ext_analysis in ext_analyses:
+            ext_name = str(ext_analysis.get("name", ""))
+            ext_norm = _normalize_for_match(ext_name)
+            if ext_norm in ext_to_tpl_name_map:
+                tpl_name = ext_to_tpl_name_map[ext_norm]
+                lookup_key = _normalize_lookup_key(ext_name)
+                if lookup_key not in analysis_name_map_norm:
+                    analysis_name_map_norm[lookup_key] = tpl_name
+                    logger.info(
+                        "Injected extraction alias into normalization map: '%s' -> '%s'",
+                        lookup_key,
+                        tpl_name,
+                    )
+
+        # Also scan for truncated refs in dependent sheets and inject those
+        for sheet_key in ("components", "calc_variables", "calculations"):
+            for item in (base.get(sheet_key) or []):
+                if not isinstance(item, dict):
+                    continue
+                for field in ("analysis", "reference_analysis"):
+                    ref = item.get(field)
+                    if not ref or not isinstance(ref, str):
+                        continue
+                    ref_lookup = _normalize_lookup_key(ref)
+                    if ref_lookup in analysis_name_map_norm:
+                        continue  # already resolvable
+                    # Check if this ref matches a known extraction name
+                    # via exact match or word-subset (same guards as Fix C)
+                    ref_norm = _normalize_for_match(ref)
+                    ref_words = set(ref_norm.split())
+                    matched_tpl_name: str | None = None
+
+                    # Exact match
+                    if ref_norm in ext_to_tpl_name_map:
+                        matched_tpl_name = ext_to_tpl_name_map[ref_norm]
+                    # Word-subset match (min 3 tokens, unambiguous)
+                    elif len(ref_words) >= 3:
+                        subset_hits = [
+                            tpl_name
+                            for ext_norm, tpl_name in ext_to_tpl_name_map.items()
+                            if ref_words.issubset(set(ext_norm.split()))
+                        ]
+                        if len(subset_hits) == 1:
+                            matched_tpl_name = subset_hits[0]
+
+                    if matched_tpl_name:
+                        analysis_name_map_norm[ref_lookup] = matched_tpl_name
+                        logger.info(
+                            "Injected truncated alias into normalization map: '%s' -> '%s'",
+                            ref_lookup,
+                            matched_tpl_name,
+                        )
     for sheet_key in ("components", "calc_variables", "calculations"):
         if sheet_key in base and isinstance(base[sheet_key], list):
             _normalize_analysis_refs(base[sheet_key], analysis_name_map_norm)
@@ -687,6 +1002,8 @@ def merge_layers(
 
     # 6. Build stats
     stats = provenance.summary()
+    if template_locked and total_rejected > 0:
+        stats["TEMPLATE_LOCKED_REJECTED"] = total_rejected
 
     logger.info(
         "Merge complete: test_type=%s stats=%s conflicts=%d validation=%s",

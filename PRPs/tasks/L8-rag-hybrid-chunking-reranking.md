@@ -760,12 +760,14 @@ For each query, capture:
 ## New Environment Variables
 
 ```bash
-# .env.local additions
-LIMS_COHERE_API_KEY=your-cohere-key    # Cohere Rerank API key
-LIMS_BM25_WEIGHT=0.4                   # BM25 contribution to hybrid search
-LIMS_SEMANTIC_WEIGHT=0.6               # Semantic contribution to hybrid search
-LIMS_RERANKER_TOP_N=3                  # Results after reranking
-LIMS_RERANKER_MODEL=rerank-english-v3.0  # Cohere reranker model
+# .env.local additions (current state)
+LIMS_BM25_WEIGHT=0.4                        # BM25 contribution to hybrid search
+LIMS_SEMANTIC_WEIGHT=0.6                    # Semantic contribution to hybrid search
+LIMS_QUERY_AUGMENTATION_ENABLED=true        # deterministic query expansion on/off
+LIMS_QUERY_AUGMENTATION_MAX_QUERIES=4       # max query variants per request
+LIMS_METADATA_BOOST_ENABLED=true            # metadata-aware reranking bias on/off
+LIMS_PRIORITY_SHEET_BOOST=0.15              # additive boost for priority sheets
+LIMS_TOKEN_MATCH_BOOST=0.2                  # additive boost for source/sheet token matches
 ```
 
 ---
@@ -779,3 +781,70 @@ LIMS_RERANKER_MODEL=rerank-english-v3.0  # Cohere reranker model
 - llama-index-postprocessor-cohere-rerank PyPI: https://pypi.org/project/llama-index-postprocessor-cohere-rerank/
 - Reciprocal Rank Fusion Explained: https://superlinked.com/vectorhub/articles/optimizing-rag-with-hybrid-search-reranking
 - Cohere Rerank v3 API: https://docs.cohere.com/reference/rerank
+
+---
+
+## Status & Results (February 21, 2026)
+
+**Status:** Completed (with modifications)
+
+### What was done:
+1. **Hybrid Chunking Implemented**: Replaced the monolithic `parse_xlsx_to_text` approach with `parse_xlsx_to_chunks` in `main/src/lims/chunking.py`. The new approach creates per-sheet markdown table chunks and a natural-language summary chunk for each workbook.
+2. **Hybrid Search Implemented**: Added BM25 keyword search alongside ChromaDB semantic search in `main/src/lims/rag_loader.py`.
+3. **Reciprocal Rank Fusion (RRF)**: Implemented RRF to combine semantic and BM25 rankings using configurable weights (`semantic_weight=0.6`, `bm25_weight=0.4`).
+4. **Dependencies Updated**: Added `rank-bm25>=0.2.2` to `pyproject.toml`.
+5. **Configuration Updated**: Added `bm25_weight` and `semantic_weight` to `LIMSConfig` in `main/src/lims/config.py`.
+
+### Deviations from Original Plan:
+- **Cohere Reranker Omitted**: Based on the decision that "we don't extract so many chunks", the Cohere Reranker step was intentionally removed. The RAG pipeline now relies solely on the hybrid search (Semantic + BM25) combined with Reciprocal Rank Fusion (RRF).
+- Removed `cohere_api_key`, `reranker_model`, and `reranker_top_n` from the configuration.
+- Removed `llama-index-postprocessor-cohere-rerank` and `cohere` from the project dependencies.
+
+### Results:
+- The RAG retrieval now successfully uses a combination of semantic similarity and exact keyword matching (BM25) to find the most relevant sheet-level chunks.
+- The system is more precise as it can retrieve specific sheets (e.g., `Component` or `Calculation`) rather than entire workbooks, reducing noise in the LLM context window.
+- Tests were run via `uv run pytest main/tests/lims/ -v` to ensure the pipeline remains functional with the new chunking and retrieval logic.
+
+### Additional Update (February 21, 2026, latest)
+
+#### Current State Snapshot
+- Hybrid retrieval is active and stable: semantic + BM25 with RRF in `main/src/lims/rag_loader.py`.
+- Cohere reranking remains intentionally omitted (cost/latency not justified for current candidate set size).
+- Retrieval now includes two new quality layers:
+  1. **Metadata-aware scoring bias** (priority sheets + source/sheet token matches)
+  2. **Deterministic query augmentation** (domain synonym expansion + method-ID-focused variants)
+
+#### What was newly added
+1. **Metadata integration in retrieval ranking**
+    - Adds additive score bias for `is_priority` chunks.
+    - Adds token-match bias when query tokens match `source_file` and `sheet_name` metadata.
+    - Keeps bias as soft ranking, not hard exclusion (reduces false negatives).
+
+2. **Prompt/query augmentation (deterministic, non-LLM)**
+    - Expands domain terms (e.g., `identity -> id/identification`, `control -> ctl`, `meta -> metadata`).
+    - Detects method identifiers (e.g., `AND_ACS_DYE`) and adds targeted retrieval variants.
+    - Caps fan-out (`LIMS_QUERY_AUGMENTATION_MAX_QUERIES`) to control latency.
+
+3. **Config integration**
+    - Added new `LIMSConfig` knobs for augmentation + metadata boost.
+    - Wired `MDAGenerationWorkflow` to pass these retrieval settings directly to `query_similar_templates()`.
+
+4. **Test coverage updates**
+    - Added focused enhancement tests in `main/tests/lims/test_rag_loader_enhancements.py`.
+    - Extended config env-var coverage in `main/tests/lims/test_config.py`.
+
+#### Validation notes from latest run
+- LIMS suite remains mostly green; known non-L8 extraction test failures remain unrelated.
+- A prior mock compatibility issue in `test_rag_loader_supports_custom_collection_names` is addressed by BM25 index build support for fake collections exposing `_documents/_ids`.
+
+#### Feb 2026-relevant recommendations (next best steps)
+1. **Keep reranking optional via feature flag**, and enable only for ambiguous query cohorts (measured by low top-1 margin / low agreement between semantic and BM25 lists).
+2. **Add retrieval observability counters per query**:
+    - `query_variants_count`
+    - `semantic_candidates_count`
+    - `bm25_candidates_count`
+    - `metadata_boost_applied_count`
+    - `pre_boost_vs_post_boost_rank_delta`
+3. **Run fixed-query A/B harness weekly** (3 canonical L8 queries + regression set) and track Precision@3 / Hit@3.
+4. **Complete .xls coverage** (currently not fully indexed) to satisfy full corpus requirement.
+5. **Migrate to native sparse/hybrid retrieval primitives when feasible** (Chroma Search API trajectory in 2026) to reduce custom fusion surface area while preserving traceability.

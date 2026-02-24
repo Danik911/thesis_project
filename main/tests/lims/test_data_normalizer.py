@@ -6,6 +6,7 @@ import pytest
 
 from main.src.lims.data_normalizer import (
     _build_analysis_name_map,
+    _infer_analysis_type_from_name,
     _normalize_analysis_refs,
     _resolve_analysis_name,
     apply_lims_defaults,
@@ -354,3 +355,64 @@ class TestNormalizeAnalysisRefsDeterministic:
 
         with pytest.raises(Exception):
             MDATemplate.model_validate(normalized)
+
+
+# ---------------------------------------------------------------------------
+# _infer_analysis_type_from_name: type inference from analysis name
+# ---------------------------------------------------------------------------
+
+
+class TestInferAnalysisTypeFromName:
+    """Tests for inferring analysis_type from keywords in the analysis name."""
+
+    def test_identity_keyword(self) -> None:
+        assert _infer_analysis_type_from_name("SITE_IDENTITY") == "ID"
+
+    def test_dye_binding_keyword(self) -> None:
+        result = _infer_analysis_type_from_name(
+            "DYE_BINDING_IDENTITY_TEST_FOR_ABSORBABLE_COLLAGEN_SPONGE_(ACS)"
+        )
+        assert result == "ID"
+
+    def test_ctl_suffix(self) -> None:
+        assert _infer_analysis_type_from_name("SITE_IDENTITY_CTL") == "QC_SAMPLES"
+
+    def test_meta_suffix(self) -> None:
+        assert _infer_analysis_type_from_name("SITE_IDENTITY_META") == "QC_SAMPLES"
+
+    def test_assay_keyword(self) -> None:
+        assert _infer_analysis_type_from_name("POTENCY_ASSAY") == "ASY"
+
+    def test_impurity_keyword(self) -> None:
+        assert _infer_analysis_type_from_name("RELATED_IMPURITIES") == "IMP"
+
+    def test_physical_keyword(self) -> None:
+        assert _infer_analysis_type_from_name("PHYSICAL_APPEARANCE") == "PHYS"
+
+    def test_no_keyword_returns_none(self) -> None:
+        assert _infer_analysis_type_from_name("RANDOM_TEST_XYZ") is None
+
+    def test_empty_string_returns_none(self) -> None:
+        assert _infer_analysis_type_from_name("") is None
+
+    def test_normalize_analysis_type_uses_inference_when_none(self) -> None:
+        """When analysis_type is None but name contains keywords, type is inferred."""
+        analyses = [
+            {
+                "name": "Dye-Binding Identity Test for ACS",
+                "analysis_type": None,
+            }
+        ]
+        normalized = normalize_analysis_names(analyses)
+        assert normalized[0]["analysis_type"] == "ID"
+
+    def test_normalize_analysis_type_none_no_keyword_stays_none(self) -> None:
+        """When analysis_type is None and no keywords match, stays None."""
+        analyses = [
+            {
+                "name": "RANDOM_TEST_XYZ",
+                "analysis_type": None,
+            }
+        ]
+        normalized = normalize_analysis_names(analyses)
+        assert normalized[0]["analysis_type"] is None

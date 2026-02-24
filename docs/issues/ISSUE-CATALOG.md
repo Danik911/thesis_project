@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-02-21 (ISSUE-039 resolved: LIMS XLSX export null/truncated analysis refs)
+**Last Updated:** 2026-02-24 (ISSUE-040 updated: template-locked merge mode implemented for merge admission control part)
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-040
+4. **Next Issue Number**: ISSUE-041
 
 ---
 
@@ -20,6 +20,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Category | Priority |
 |----|-------|--------------|----------|----------|
+| [ISSUE-040](ISSUE-040-l18-extraction-quality-gate-and-merge-admission-control.md) | L18 Extraction Quality Gate and Merge Admission Control (merge admission control part implemented via template-locked mode; pending E2E validation) | 2026-02-23 | API/Data Quality | High |
 | [ISSUE-034](ISSUE-034-l13-standards-seeding-latency.md) | L13 Standards RAG Seeding Latency on First Ingestion | 2026-02-19 | Database | Medium |
 | [ISSUE-033](ISSUE-033-windows-uv-invalid-project-venv.md) | Windows `uv run` Fails Due to Invalid Project `.venv` | 2026-02-19 | Testing | Medium |
 | [ISSUE-026](ISSUE-026-full-suite-collection-systemexit.md) | Full `main/tests` Collection Fails from Archived Test `sys.exit(1)` | 2026-02-17 | Testing | Medium |
@@ -103,8 +104,8 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 31
-- **Open:** 3
+- **Total Issues:** 32
+- **Open:** 4
 - **Resolved:** 28
 - **Most Common Category:** Deployment (9 issues)
 

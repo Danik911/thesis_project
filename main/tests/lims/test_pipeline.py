@@ -46,6 +46,15 @@ def mock_config():
     config.classification_confidence_threshold = 0.6
     config.rag_standards_top_k = 5
     config.rag_mda_top_k = 3
+    config.extraction_quality_gate_enabled = False
+    config.require_validated_extraction = True
+    config.extraction_max_null_ratio = 0.55
+    config.retrieval_quality_gate_enabled = True
+    config.retrieval_min_results = 1
+    config.retrieval_max_distance = 1.5
+    config.retrieval_min_avg_token_overlap = 0.0
+    config.retrieval_min_method_match_ratio = 0.0
+    config.low_confidence_review_threshold = 0.75
     return config
 
 
@@ -194,6 +203,51 @@ class TestSingleLayerFallback:
 
 
 class TestTwoLayerPipeline:
+    @patch("main.src.lims.pipeline.focused_extract", new_callable=AsyncMock)
+    @patch("main.src.lims.pipeline.extract_text_from_pdf")
+    def test_two_layer_allows_partial_extraction_when_quality_passes(
+        self,
+        mock_extract_text,
+        mock_focused_extract,
+        mock_config,
+        mock_pdf_text,
+    ):
+        """Two-layer path should not require strict MDATemplate validation.
+
+        Extraction payload can be partially-structured (validated=False) but still
+        acceptable if critical quality metrics pass; template merge should proceed.
+        """
+        mock_extract_text.return_value = mock_pdf_text
+        mock_focused_extract.return_value = {
+            "raw_extraction": {},
+            "normalized_extraction": {
+                "analyses": [],
+                "components": [],
+                "calc_variables": [],
+                "calculations": [],
+            },
+            "mda_template": None,
+            "validated": False,
+            "validation_error": "partial extraction",
+            "quality_metrics": {
+                "critical_null_ratio": 0.15,
+                "null_ratio": 0.40,
+            },
+            "extraction_trace": {"model": "test"},
+        }
+
+        mock_config.extraction_quality_gate_enabled = True
+        mock_config.require_validated_extraction = True
+        mock_config.extraction_max_null_ratio = 0.55
+
+        pipeline = TwoLayerPipeline(mock_config)
+        result = asyncio.get_event_loop().run_until_complete(
+            pipeline.run(b"%PDF-1.4 fake", "AND_ACS_DYE_LAB-2499.pdf")
+        )
+
+        assert result["pipeline_type"] == "two_layer"
+        assert "mda_template" in result
+
     @patch("main.src.lims.pipeline.focused_extract", new_callable=AsyncMock)
     @patch("main.src.lims.pipeline.extract_text_from_pdf")
     def test_full_run_produces_mda_with_provenance(

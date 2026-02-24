@@ -8,7 +8,8 @@ from types import SimpleNamespace
 import pytest
 
 from main.src.lims.config import LIMSConfig
-from main.src.lims.pdf_extractor import extract_mda_from_pdf
+from main.src.lims.pdf_extractor import _build_staging_payload, _compute_extraction_quality_metrics, extract_mda_from_pdf
+from main.tests.lims.path_helpers import resolve_demo_pdf
 
 
 def _install_fake_llama_modules(monkeypatch: pytest.MonkeyPatch, payload: dict) -> None:
@@ -52,6 +53,44 @@ def _install_fake_llama_modules(monkeypatch: pytest.MonkeyPatch, payload: dict) 
 
 
 class TestExtractionWrapper:
+    def test_staging_payload_fills_defaults_for_null_fields(self) -> None:
+        raw_payload = {
+            "analyses": [
+                {
+                    "name": "AND_ACS_DYE",
+                    "analysis_type": "ID",
+                    "group_name": None,
+                }
+            ],
+            "components": [
+                {
+                    "analysis": "AND_ACS_DYE",
+                    "component_name": "TEST_COMPONENT",
+                    "order_number": 1,
+                    "result_type": None,
+                    "uses_instrument": None,
+                    "auto_calc": None,
+                    "reportable": None,
+                    "optional": None,
+                    "allow_out_of_range": None,
+                }
+            ],
+            "calc_variables": None,
+            "calculations": None,
+        }
+
+        staged = _build_staging_payload(raw_payload)
+        metrics = _compute_extraction_quality_metrics(staged)
+
+        assert staged["analyses"][0]["group_name"] == ""
+        assert staged["components"][0]["uses_instrument"] is False
+        assert staged["components"][0]["auto_calc"] is False
+        assert staged["components"][0]["reportable"] is True
+        assert staged["calc_variables"] == []
+        assert staged["calculations"] == []
+        assert metrics["critical_fields_scanned"] > 0
+        assert metrics["critical_null_ratio"] < 1.0
+
     def test_extract_returns_validated_template(
         self,
         monkeypatch: pytest.MonkeyPatch,
@@ -129,9 +168,9 @@ def test_extract_real_pdf_integration() -> None:
     if not api_key:
         pytest.skip("LIMS_LLAMAEXTRACT_API_KEY not set")
 
-    pdf_path = Path("demo_data/AND_ACS_AQ126-LAB-2349.pdf")
-    if not pdf_path.exists():
-        pytest.skip("demo PDF not found")
+    pdf_path = resolve_demo_pdf("AND_ACS_AQ126-LAB-2349.pdf")
+    if pdf_path is None:
+        pytest.skip("demo PDF not found in demo_data/testing_data_ground_truth or demo_data/data")
 
     result = extract_mda_from_pdf(
         pdf_content=pdf_path.read_bytes(),

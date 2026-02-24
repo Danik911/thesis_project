@@ -21,12 +21,17 @@ Run a controlled end-to-end validation for AI4LIMS using real method artifacts a
 ## Ground Truth Sources (Authoritative)
 
 ### Input Ground Truth (PDF content parse)
-- `demo_data/parced/AND_ACS_DYE-LAB-2499_pdf.md`
+- `demo_data/testing_data_ground_truth/AND_ACS_DYE-LAB-2499_pdf.md`
 
 ### Output Ground Truth (Expected MDA from LabWare)
-- `demo_data/parced/AND_ACS_DYE-LAB-2499_xlsx.md`
+- `demo_data/testing_data_ground_truth/AND_ACS_DYE-LAB-2499_xlsx.md`
 
 These are the canonical references for this task.
+
+### Trace / Output Directories (current structure)
+- Langfuse trace exports: `demo_data/langfuse/`
+- LlamaCloud UI export results: `demo_data/llama_cloud_results/`
+- App run outputs for E2E: `demo_data/e2e_outputs/`
 
 ---
 
@@ -133,11 +138,11 @@ These are the canonical references for this task.
 ## Deliverables
 
 - Run folder with:
-  - direct extraction result JSON
-  - app extraction result JSON
+   - direct extraction result JSON (also copied to `demo_data/llama_cloud_results/`)
+   - app extraction result JSON
   - comparison JSON/markdown report
   - mismatch tables (input + output)
-  - trace references (Langfuse URLs)
+   - trace references (Langfuse URLs, copied to `demo_data/langfuse/`)
 - Final summary with:
   - pass/fail status by category
   - highest-impact mismatch root causes

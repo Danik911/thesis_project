@@ -779,6 +779,10 @@ export default function LIMSPage() {
 
 5. **Browser-Native Export**: Uses `window.open()` to trigger XLSX download via browser's native download mechanism (no custom download handler).
 
+6. **Merger Analysis Name Protection**: Template LIMS identifiers (e.g., `SITE_IDENTITY`) are never overwritten by extraction names during overlay. The merger uses `protected_keys={"name"}` so canonical names are preserved; conflicts are recorded for SME review. Extraction `analysis` refs in components, calc_variables, and calculations are rewritten to template names before overlay using exact match + word-subset matching (minimum 3 tokens, unambiguous). This prevents dangling cross-sheet references caused by truncated or alternate names returned by LlamaExtract. Analysis type inference from name keywords is applied when the extracted type is `NULL`, enabling analysis matching even when the extraction omits the type field.
+
+7. **Template-Locked Merge Mode**: When the test type is known (i.e., classified as any `TestType` value other than `TestType.OTHER`), the merger operates in template-locked mode. In this mode, `_overlay_extracted_items()` is called with `template_locked=True`, which causes unmatched extracted entities to be logged at WARNING level and rejected rather than appended to the template. The template defines the exact structure; unmatched items from extraction are treated as noise. `merge_layers()` computes `template_locked = test_type is not None and test_type != TestType.OTHER`. Rejection counts are tracked in `MergeResult.stats["TEMPLATE_LOCKED_REJECTED"]`. When `test_type` is `None` or `TestType.OTHER`, the merger falls back to the original unlocked behavior (backward compatible).
+
 ### Langfuse End-to-End Tracing
 
 All LIMS pipeline stages are instrumented with `@observe` decorators (Langfuse v3 API: `from langfuse import get_client, observe`). A single parent trace on `TwoLayerPipeline.run()` wraps the entire pipeline; all child `@observe` decorators auto-nest beneath it.

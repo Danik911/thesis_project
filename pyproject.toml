@@ -79,6 +79,7 @@ dependencies = [
     # AI4LIMS PoC - XLSX export and PDF preview
     "openpyxl>=3.1.0",
     "PyMuPDF>=1.24.0",
+    "rank-bm25>=0.2.2",
 ]
 
 [build-system]

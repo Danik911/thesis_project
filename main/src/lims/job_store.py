@@ -103,6 +103,7 @@ class LIMSJob(BaseModel):
     edit_log: list[dict[str, Any]] = Field(default_factory=list)
     validated: bool = False
     validation_error: Optional[str] = None
+    review_routing: Optional[dict[str, Any]] = None
     error: Optional[str] = None
 
 

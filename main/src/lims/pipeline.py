@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
 from typing import Any, Optional
 
@@ -29,9 +30,19 @@ from main.src.lims.classifier import TestTypeClassifier
 from main.src.lims.config import LIMSConfig
 from main.src.lims.focused_extractor import extract_text_from_pdf, focused_extract
 from main.src.lims.merger import MergeResult, merge_layers
+from main.src.lims.provenance import ComponentSource
 from main.src.lims.test_type import ClassificationResult, TestType
 
 logger = logging.getLogger(__name__)
+
+
+_HIGH_RISK_PATH_PATTERNS = (
+    r"components\[\d+\]\.result_type$",
+    r"components\[\d+\]\.analysis$",
+    r"calc_variables\[\d+\]\.analysis$",
+    r"calculations\[\d+\]\.analysis$",
+    r"calculations\[\d+\]\.source_code$",
+)
 
 
 class PipelineStageDetail(BaseModel):
@@ -58,6 +69,137 @@ class TwoLayerPipeline:
         self.classifier = TestTypeClassifier(
             confidence_threshold=config.classification_confidence_threshold
         )
+
+    def _enforce_extraction_quality_gate(
+        self,
+        extraction_result: dict[str, Any],
+        filename: str,
+        *,
+        require_validated_override: bool | None = None,
+    ) -> None:
+        """Fail loudly when extraction quality does not meet gate criteria."""
+        if not self.config.extraction_quality_gate_enabled:
+            return
+
+        quality_metrics = extraction_result.get("quality_metrics") or {}
+        null_ratio = float(
+            quality_metrics.get(
+                "critical_null_ratio",
+                quality_metrics.get("null_ratio", 1.0),
+            )
+        )
+        validated = bool(extraction_result.get("validated"))
+        validation_error = extraction_result.get("validation_error")
+
+        reasons: list[str] = []
+        require_validated = (
+            self.config.require_validated_extraction
+            if require_validated_override is None
+            else require_validated_override
+        )
+
+        if require_validated and not validated:
+            reasons.append("validated=false")
+
+        if null_ratio > self.config.extraction_max_null_ratio:
+            reasons.append(
+                "null_ratio="
+                f"{null_ratio:.3f} exceeds max={self.config.extraction_max_null_ratio:.3f}"
+            )
+
+        if reasons:
+            trace = extraction_result.get("extraction_trace") or {}
+            diag = {
+                "filename": filename,
+                "quality_gate_enabled": self.config.extraction_quality_gate_enabled,
+                "require_validated_extraction": require_validated,
+                "configured_max_null_ratio": self.config.extraction_max_null_ratio,
+                "validated": validated,
+                "quality_metrics": quality_metrics,
+                "validation_error": validation_error,
+                "extraction_trace": {
+                    "run_id": trace.get("run_id"),
+                    "run_status": trace.get("run_status"),
+                    "agent_name": trace.get("agent_name"),
+                },
+            }
+            msg = (
+                "Extraction quality gate failed: "
+                + "; ".join(reasons)
+                + f" | diagnostics={diag}"
+            )
+            raise ValueError(msg)
+
+    def _evaluate_retrieval_quality(
+        self,
+        retrieval_metrics: dict[str, Any],
+    ) -> tuple[bool, list[str]]:
+        """Evaluate retrieval quality against configured P1 thresholds."""
+        if not self.config.retrieval_quality_gate_enabled:
+            return True, []
+
+        returned_count = int(retrieval_metrics.get("returned_count", 0))
+        avg_distance = float(retrieval_metrics.get("avg_distance", 2.0))
+        avg_token_overlap = float(retrieval_metrics.get("avg_token_overlap", 0.0))
+        method_match_ratio = float(retrieval_metrics.get("method_match_ratio", 0.0))
+
+        reasons: list[str] = []
+        if returned_count < self.config.retrieval_min_results:
+            reasons.append(
+                "returned_count="
+                f"{returned_count} < min_results={self.config.retrieval_min_results}"
+            )
+        if avg_distance > self.config.retrieval_max_distance:
+            reasons.append(
+                "avg_distance="
+                f"{avg_distance:.3f} > max_distance={self.config.retrieval_max_distance:.3f}"
+            )
+        if avg_token_overlap < self.config.retrieval_min_avg_token_overlap:
+            reasons.append(
+                "avg_token_overlap="
+                f"{avg_token_overlap:.3f} < min_overlap={self.config.retrieval_min_avg_token_overlap:.3f}"
+            )
+
+        method_family = retrieval_metrics.get("method_family")
+        if method_family and method_match_ratio < self.config.retrieval_min_method_match_ratio:
+            reasons.append(
+                "method_match_ratio="
+                f"{method_match_ratio:.3f} < min_method_match={self.config.retrieval_min_method_match_ratio:.3f}"
+            )
+
+        return len(reasons) == 0, reasons
+
+    def _collect_low_confidence_high_risk_fields(
+        self,
+        provenance: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Collect low-confidence edits on high-risk fields for HITL routing."""
+        fields = provenance.get("fields") if isinstance(provenance, dict) else None
+        if not isinstance(fields, dict):
+            return []
+
+        flagged: list[dict[str, Any]] = []
+        for path, prov in fields.items():
+            if not isinstance(prov, dict):
+                continue
+
+            if not any(re.search(pattern, path) for pattern in _HIGH_RISK_PATH_PATTERNS):
+                continue
+
+            source = str(prov.get("source", ""))
+            if source not in {ComponentSource.EXTRACTED.value, ComponentSource.INFERRED.value}:
+                continue
+
+            confidence = float(prov.get("confidence", 0.0))
+            if confidence < self.config.low_confidence_review_threshold:
+                flagged.append({
+                    "field_path": path,
+                    "source": source,
+                    "confidence": confidence,
+                    "threshold": self.config.low_confidence_review_threshold,
+                })
+
+        return flagged
 
     @observe(name="lims-two-layer-pipeline", capture_input=False, capture_output=False)
     async def run(
@@ -169,6 +311,18 @@ class TwoLayerPipeline:
             pdf_content, filename, template, self.config
         )
 
+        try:
+            # Two-layer extraction is intentionally partial and template-guided.
+            # Full strict MDATemplate validation at this stage is advisory only.
+            self._enforce_extraction_quality_gate(
+                extraction_result,
+                filename,
+                require_validated_override=False,
+            )
+        except Exception:
+            await self._transition_job(job_id, "FAILED")
+            raise
+
         duration_ms = int((time.perf_counter() - start) * 1000)
         stages.append(PipelineStageDetail(
             stage="EXTRACT",
@@ -179,6 +333,7 @@ class TwoLayerPipeline:
             details={
                 "validated": extraction_result.get("validated"),
                 "validation_error": extraction_result.get("validation_error"),
+                "quality_metrics": extraction_result.get("quality_metrics"),
                 "extraction_trace": extraction_result.get("extraction_trace"),
             },
         ))
@@ -194,7 +349,7 @@ class TwoLayerPipeline:
         await self._transition_job(job_id, "AUGMENTING")
 
         augmented = await self._augment_gaps(
-            template_mda, extraction_result, classification
+            template_mda, extraction_result, classification, filename
         )
 
         duration_ms = int((time.perf_counter() - start) * 1000)
@@ -207,7 +362,12 @@ class TwoLayerPipeline:
             stage="AUGMENT",
             duration_ms=duration_ms,
             summary=f"Augmentation: {suggestion_count} suggestions generated",
-            details={"suggestion_count": suggestion_count},
+            details={
+                "suggestion_count": suggestion_count,
+                "retrieval_metrics": augmented.get("retrieval_metrics") if augmented else None,
+                "retrieval_quality_passed": augmented.get("retrieval_quality_passed") if augmented else None,
+                "retrieval_quality_reasons": augmented.get("retrieval_quality_reasons") if augmented else None,
+            },
         ))
 
         logger.info(
@@ -231,6 +391,19 @@ class TwoLayerPipeline:
             test_type=classification.test_type,
         )
 
+        review_routing = {
+            "requires_human_review": False,
+            "low_confidence_high_risk_fields": [],
+        }
+        low_confidence_fields = self._collect_low_confidence_high_risk_fields(
+            merge_result.provenance
+        )
+        if low_confidence_fields:
+            review_routing = {
+                "requires_human_review": True,
+                "low_confidence_high_risk_fields": low_confidence_fields,
+            }
+
         duration_ms = int((time.perf_counter() - start) * 1000)
         stages.append(PipelineStageDetail(
             stage="MERGE",
@@ -245,6 +418,7 @@ class TwoLayerPipeline:
                 "validation_passed": merge_result.validation_passed,
                 "validation_error": merge_result.validation_error,
                 "stats": merge_result.stats,
+                "review_routing": review_routing,
             },
         ))
 
@@ -261,7 +435,12 @@ class TwoLayerPipeline:
         # Store results on job if available
         if job_id:
             self._store_results_on_job(
-                job_id, classification, merge_result, stages, extraction_result
+                job_id,
+                classification,
+                merge_result,
+                stages,
+                extraction_result,
+                review_routing,
             )
 
         stages.append(PipelineStageDetail(
@@ -287,6 +466,8 @@ class TwoLayerPipeline:
             "validated": merge_result.validation_passed,
             "validation_error": merge_result.validation_error,
             "trace_id": trace_id,
+            "review_routing": review_routing,
+            "retrieval_metrics": augmented.get("retrieval_metrics") if augmented else None,
         }
 
     @observe(name="lims-augment")
@@ -295,6 +476,7 @@ class TwoLayerPipeline:
         template_mda: "MDATemplate",
         extraction_result: dict[str, Any],
         classification: ClassificationResult,
+        filename: str,
     ) -> dict[str, Any] | None:
         """Fill gaps from standards RAG + LLM.
 
@@ -310,7 +492,7 @@ class TwoLayerPipeline:
             )
             return None
 
-        from main.src.lims.standards_loader import query_standards
+        from main.src.lims.standards_loader import query_standards_with_metrics
 
         test_type = classification.test_type.value
         query_text = (
@@ -320,12 +502,38 @@ class TwoLayerPipeline:
         )
 
         # query_standards has its own @observe("rag-standards-query") — auto-nests here
-        standards_results = query_standards(
+        method_family = None
+        method_match = re.search(
+            r"\b[A-Z]{3}_[A-Z0-9]+(?:_[A-Z0-9]+){1,3}\b",
+            filename.upper(),
+        )
+        if method_match:
+            method_family = method_match.group(0)
+
+        retrieval_payload = query_standards_with_metrics(
             query_text=query_text,
             collection_name=self.config.standards_collection,
             top_k=self.config.rag_standards_top_k,
             chroma_path=self.config.chromadb_path,
+            method_family=method_family,
         )
+        standards_results = retrieval_payload["results"]
+        retrieval_metrics = retrieval_payload["metrics"]
+
+        retrieval_quality_passed, retrieval_quality_reasons = self._evaluate_retrieval_quality(
+            retrieval_metrics
+        )
+        if not retrieval_quality_passed:
+            logger.warning(
+                "Augmentation skipped due to retrieval quality gate: %s",
+                retrieval_quality_reasons,
+            )
+            return {
+                "suggestions": [],
+                "retrieval_metrics": retrieval_metrics,
+                "retrieval_quality_passed": False,
+                "retrieval_quality_reasons": retrieval_quality_reasons,
+            }
 
         standards_context = "\n\n".join(
             f"--- {r.get('title', 'Untitled')} ---\n{r.get('content', '')}"
@@ -373,6 +581,10 @@ class TwoLayerPipeline:
         if "suggestions" not in augmented:
             augmented = {"suggestions": []}
 
+        augmented["retrieval_metrics"] = retrieval_metrics
+        augmented["retrieval_quality_passed"] = True
+        augmented["retrieval_quality_reasons"] = []
+
         suggestion_count = len(augmented.get("suggestions", []))
 
         # Log LLM call metadata on this observation
@@ -384,6 +596,7 @@ class TwoLayerPipeline:
                     "suggestion_count": suggestion_count,
                     "rag_results_count": len(standards_results),
                     "response_length": len(response_text),
+                    "retrieval_metrics": retrieval_metrics,
                 },
             )
 
@@ -434,6 +647,19 @@ class TwoLayerPipeline:
             config=self.config,
         )
 
+        try:
+            # Single-layer path relies directly on extracted structure,
+            # so strict validation requirement remains configurable.
+            self._enforce_extraction_quality_gate(
+                result,
+                filename,
+                require_validated_override=self.config.require_validated_extraction,
+            )
+        except Exception:
+            if job_id:
+                await self._transition_job(job_id, "FAILED")
+            raise
+
         duration_ms = int((time.perf_counter() - start) * 1000)
         stages.append(PipelineStageDetail(
             stage="EXTRACT_SINGLE_LAYER",
@@ -441,6 +667,7 @@ class TwoLayerPipeline:
             summary=f"Single-layer extraction: validated={result.get('validated')}",
             details={
                 "validated": result.get("validated"),
+                "quality_metrics": result.get("quality_metrics"),
                 "extraction_trace": result.get("extraction_trace"),
             },
         ))
@@ -517,6 +744,7 @@ class TwoLayerPipeline:
         merge_result: MergeResult,
         stages: list[PipelineStageDetail],
         extraction_result: dict[str, Any],
+        review_routing: dict[str, Any],
     ) -> None:
         """Store pipeline results on the job record."""
         from main.src.lims.job_store import get_job
@@ -532,5 +760,6 @@ class TwoLayerPipeline:
             job.extraction_trace = extraction_result.get("extraction_trace")
             job.validated = merge_result.validation_passed
             job.validation_error = merge_result.validation_error
+            job.review_routing = review_routing
         except KeyError:
             logger.warning("Could not store results: job %s not found", job_id)

@@ -25,6 +25,98 @@ from .mda_schema import MDATemplate
 logger = logging.getLogger(__name__)
 
 
+_CRITICAL_FIELDS: dict[str, tuple[str, ...]] = {
+    "analyses": ("name", "analysis_type"),
+    "components": ("analysis", "component_name", "result_type"),
+    "calc_variables": ("analysis", "component", "name"),
+    "calculations": ("analysis", "component", "source_code"),
+}
+
+
+def _drop_none_fields(value: Any) -> Any:
+    """Recursively remove None values so schema defaults can be applied.
+
+    This preserves raw extraction separately while producing a deterministic
+    staging payload for typed validation.
+    """
+    if isinstance(value, dict):
+        return {
+            key: _drop_none_fields(val)
+            for key, val in value.items()
+            if val is not None
+        }
+    if isinstance(value, list):
+        return [_drop_none_fields(item) for item in value]
+    return value
+
+
+def _build_staging_payload(raw_data: dict[str, Any]) -> dict[str, Any]:
+    """Phase-1 validation: coerce extraction into permissive staging schema."""
+    cleaned = _drop_none_fields(raw_data)
+    staged = MDAExtractionSchema.model_validate(cleaned)
+    return staged.model_dump()
+
+
+def _compute_extraction_quality_metrics(data: dict[str, Any]) -> dict[str, Any]:
+    """Compute quality diagnostics for extraction payloads.
+
+    Metrics are intentionally simple and deterministic so they can be used
+    in hard pipeline gates.
+    """
+    fields_scanned = 0
+    null_like_fields = 0
+
+    for sheet_key in ("analyses", "components", "calc_variables", "calculations"):
+        items = data.get(sheet_key)
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for _, value in item.items():
+                if isinstance(value, (dict, list)):
+                    continue
+                fields_scanned += 1
+                if value is None or value == "":
+                    null_like_fields += 1
+
+    null_ratio = (
+        (null_like_fields / fields_scanned)
+        if fields_scanned > 0
+        else 1.0
+    )
+
+    critical_fields_scanned = 0
+    critical_null_like_fields = 0
+    for sheet_key, required_fields in _CRITICAL_FIELDS.items():
+        items = data.get(sheet_key)
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for field_name in required_fields:
+                critical_fields_scanned += 1
+                value = item.get(field_name)
+                if value is None or value == "":
+                    critical_null_like_fields += 1
+
+    critical_null_ratio = (
+        (critical_null_like_fields / critical_fields_scanned)
+        if critical_fields_scanned > 0
+        else 1.0
+    )
+
+    return {
+        "fields_scanned": fields_scanned,
+        "null_like_fields": null_like_fields,
+        "null_ratio": round(null_ratio, 6),
+        "critical_fields_scanned": critical_fields_scanned,
+        "critical_null_like_fields": critical_null_like_fields,
+        "critical_null_ratio": round(critical_null_ratio, 6),
+    }
+
+
 def _get_extract_config(config: LIMSConfig) -> Any:
     """Create tuned ExtractConfig from LIMS settings."""
     from llama_cloud import ExtractConfig
@@ -226,8 +318,12 @@ def extract_mda_from_pdf(
             except OSError as e:
                 logger.warning(f"Failed to clean up temp file {tmp_path}: {e}")
 
-    # Normalize extraction output before strict Pydantic validation
-    normalized_dict = normalize_extraction(raw_dict)
+    # Phase 1: permissive staging validation + default filling
+    staged_dict = _build_staging_payload(raw_dict)
+
+    # Phase 2: normalization before strict MDATemplate validation
+    normalized_dict = normalize_extraction(staged_dict)
+    quality_metrics = _compute_extraction_quality_metrics(normalized_dict)
 
     # Attempt Pydantic validation against MDATemplate
     validated = False
@@ -251,6 +347,7 @@ def extract_mda_from_pdf(
     return {
         "raw_extraction": raw_dict,
         "normalized_extraction": normalized_dict,
+        "quality_metrics": quality_metrics,
         "validated": validated,
         "validation_error": validation_error,
         "mda_template": mda_template_dict,

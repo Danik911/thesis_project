@@ -652,8 +652,64 @@ def _normalize_lookup_key(value: str) -> str:
     return key
 
 
+def _infer_analysis_type_from_name(analysis_name: str) -> str | None:
+    """Infer analysis_type from keywords in the analysis name.
+
+    This is data normalization, not fallback logic -- the type information
+    IS present in the name, just not in the analysis_type field.
+
+    Returns:
+        Inferred type code, or None if no keywords match.
+    """
+    if not analysis_name:
+        return None
+
+    # Check suffix patterns first (most specific)
+    if analysis_name.endswith(("_CTL", "_META")):
+        logger.info(
+            "Inferred analysis_type='QC_SAMPLES' from suffix in '%s'",
+            analysis_name,
+        )
+        return "QC_SAMPLES"
+
+    name_lower = analysis_name.lower().replace("_", " ").replace("-", " ")
+
+    # Keyword to type mapping, ordered by specificity
+    _KEYWORD_TYPE_MAP: list[tuple[str, str]] = [
+        ("control", "QC_SAMPLES"),
+        ("meta data", "QC_SAMPLES"),
+        ("identity", "ID"),
+        ("dye binding", "ID"),
+        ("assay", "ASY"),
+        ("potency", "ASY"),
+        ("impurity", "IMP"),
+        ("impurities", "IMP"),
+        ("physical", "PHYS"),
+        ("dissolution", "PHYS"),
+        ("karl fischer", "KF"),
+        ("moisture", "KF"),
+    ]
+
+    for keyword, type_code in _KEYWORD_TYPE_MAP:
+        if keyword in name_lower:
+            logger.info(
+                "Inferred analysis_type='%s' from keyword '%s' in '%s'",
+                type_code,
+                keyword,
+                analysis_name,
+            )
+            return type_code
+
+    return None
+
+
 def _normalize_analysis_type(value: Any, analysis_name: Any) -> Any:
     if value is None:
+        # Try to infer from analysis name when type is missing
+        if isinstance(analysis_name, str) and analysis_name:
+            inferred = _infer_analysis_type_from_name(analysis_name)
+            if inferred:
+                return inferred
         return value
     normalized_key = str(value).strip().lower()
     mapped = ANALYSIS_TYPE_MAP.get(normalized_key)

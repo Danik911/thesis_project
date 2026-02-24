@@ -192,7 +192,36 @@ def test_query_standards_returns_structured_results(
     )
 
     assert len(results) == 2
-    assert set(results[0].keys()) == {"content", "title", "source_file", "distance"}
+    assert {"content", "title", "source_file", "distance"}.issubset(results[0].keys())
+
+
+def test_query_standards_with_metrics_returns_gate_inputs(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    prepared = tmp_path / "prepared"
+    _write_prepared_fixture(prepared)
+
+    fake_client = _FakeClient()
+    monkeypatch.setattr(standards_loader.chromadb, "PersistentClient", lambda path: fake_client)
+
+    standards_loader.seed_standards_collection(
+        prepared_root=str(prepared),
+        collection_name="lims_standards",
+    )
+    payload = standards_loader.query_standards_with_metrics(
+        query_text="AND_ACS_DYE identity variable naming",
+        collection_name="lims_standards",
+        top_k=2,
+        method_family="AND_ACS_DYE",
+    )
+
+    assert "results" in payload
+    assert "metrics" in payload
+    assert isinstance(payload["results"], list)
+    assert payload["metrics"]["returned_count"] >= 0
+    assert "avg_distance" in payload["metrics"]
+    assert "method_match_ratio" in payload["metrics"]
 
 
 def test_rag_loader_supports_custom_collection_names(

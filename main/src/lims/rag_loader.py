@@ -15,12 +15,14 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Any
 
 import chromadb
 import openpyxl
 from langfuse import observe
+from rank_bm25 import BM25Okapi
 
 from main.src.lims.chunking import parse_xlsx_to_chunks
 
@@ -183,6 +185,205 @@ def seed_mda_templates(
 # 3. Query similar templates
 # ---------------------------------------------------------------------------
 
+_bm25_index: BM25Okapi | None = None
+_bm25_documents: list[str] = []
+_bm25_doc_ids: list[str] = []
+
+_RAG_QUERY_SYNONYMS: dict[str, list[str]] = {
+    "identity": ["id", "identification"],
+    "control": ["ctl"],
+    "meta": ["metadata"],
+    "calculation": ["calc"],
+    "component": ["components"],
+    "suitability": ["sfu", "suitability_for_use"],
+}
+
+_SHEET_INTENT_TERMS: dict[str, set[str]] = {
+    "analysis": {"analysis", "identity", "id", "method"},
+    "component": {"component", "components", "control", "ctl", "meta"},
+    "calc variable": {"variable", "variables", "calc", "calculation"},
+    "calculation": {"calc", "calculation", "formula", "equation"},
+    "summary": {"overview", "summary"},
+}
+
+
+def _build_bm25_index(collection: chromadb.Collection) -> None:
+    """Build BM25 index from all documents in the ChromaDB collection."""
+    global _bm25_index, _bm25_documents, _bm25_doc_ids
+    if _bm25_index is not None:
+        return
+
+    results = _collection_get(collection, include=["documents"])
+
+    _bm25_documents = results.get("documents", [])
+    _bm25_doc_ids = results.get("ids", [])
+
+    tokenized_corpus = [_tokenize(doc) for doc in _bm25_documents]
+    _bm25_index = BM25Okapi(tokenized_corpus)
+    logger.info("BM25 index built with %d documents", len(_bm25_documents))
+
+
+def _tokenize(text: str) -> list[str]:
+    """Simple tokenizer: lowercase, split on non-alphanumeric."""
+    return re.findall(r"\w+", text.lower())
+
+
+def _reciprocal_rank_fusion(
+    semantic_ids: list[str],
+    bm25_ids: list[str],
+    semantic_weight: float = 0.6,
+    bm25_weight: float = 0.4,
+    k: int = 60,
+) -> list[str]:
+    """Combine semantic and BM25 rankings using Reciprocal Rank Fusion."""
+    scores: dict[str, float] = {}
+
+    for rank, doc_id in enumerate(semantic_ids):
+        scores[doc_id] = scores.get(doc_id, 0.0) + semantic_weight * (1.0 / (k + rank))
+
+    for rank, doc_id in enumerate(bm25_ids):
+        scores[doc_id] = scores.get(doc_id, 0.0) + bm25_weight * (1.0 / (k + rank))
+
+    sorted_ids = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)
+    return sorted_ids
+
+
+def _extract_site_prefix(text: str) -> str | None:
+    """Extract site prefix from extraction text for pre-filtering."""
+    match = re.search(r"\b(AND|FRE|TUA)\b", text, re.IGNORECASE)
+    if match:
+        return match.group(1).upper()
+    return None
+
+
+def _extract_method_identifiers(text: str) -> list[str]:
+    """Extract likely method identifiers such as AND_ACS_DYE from query text."""
+    matches = re.findall(r"\b[A-Z]{3}_[A-Z0-9]+(?:_[A-Z0-9]+){1,3}\b", text.upper())
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for item in matches:
+        if item not in seen:
+            seen.add(item)
+            deduped.append(item)
+    return deduped
+
+
+def _collection_get(
+    collection: chromadb.Collection,
+    *,
+    include: list[str],
+    ids: list[str] | None = None,
+) -> dict[str, Any]:
+    """Retrieve collection payload with compatibility for test fakes."""
+    if hasattr(collection, "get"):
+        return collection.get(ids=ids, include=include)
+
+    if not (hasattr(collection, "_documents") and hasattr(collection, "_ids")):
+        raise AttributeError(
+            "Collection object does not support 'get()' and does not expose "
+            "test fixture fields _documents/_ids."
+        )
+
+    doc_ids = list(collection._ids)
+    docs = list(collection._documents)
+    metas = list(getattr(collection, "_metadatas", [{} for _ in doc_ids]))
+
+    index_by_id = {doc_id: idx for idx, doc_id in enumerate(doc_ids)}
+    selected_ids = ids if ids is not None else doc_ids
+
+    out_ids: list[str] = []
+    out_docs: list[str] = []
+    out_metas: list[dict[str, Any]] = []
+    for doc_id in selected_ids:
+        idx = index_by_id.get(doc_id)
+        if idx is None:
+            continue
+        out_ids.append(doc_id)
+        out_docs.append(docs[idx])
+        out_metas.append(metas[idx] if idx < len(metas) else {})
+
+    payload: dict[str, Any] = {"ids": out_ids}
+    if "documents" in include:
+        payload["documents"] = out_docs
+    if "metadatas" in include:
+        payload["metadatas"] = out_metas
+    return payload
+
+
+def _build_augmented_queries(
+    query: str,
+    max_queries: int,
+) -> list[str]:
+    """Build deterministic query variants for higher recall with bounded fan-out."""
+    normalized = " ".join(query.split())
+    variants: list[str] = [normalized]
+
+    lower = normalized.lower()
+    expanded_terms: list[str] = []
+    for term, synonyms in _RAG_QUERY_SYNONYMS.items():
+        if re.search(rf"\b{re.escape(term)}\b", lower):
+            expanded_terms.extend(synonyms)
+
+    if expanded_terms:
+        variants.append(f"{normalized} {' '.join(expanded_terms)}")
+
+    method_ids = _extract_method_identifiers(normalized)
+    for method_id in method_ids:
+        variants.append(f"{method_id} component calculation")
+        variants.append(f"{method_id} analysis summary")
+
+    if re.search(r"\b(control|ctl|meta|identity)\b", lower):
+        variants.append(f"{normalized} component analysis")
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for variant in variants:
+        compact = " ".join(variant.split())
+        key = compact.lower()
+        if compact and key not in seen:
+            seen.add(key)
+            deduped.append(compact)
+        if len(deduped) >= max_queries:
+            break
+
+    return deduped
+
+
+def _tokens_for_matching(text: str) -> set[str]:
+    """Extract uppercase tokens useful for metadata match boosting."""
+    tokens = {t.upper() for t in re.findall(r"[A-Za-z0-9_]+", text) if len(t) >= 3}
+    return tokens
+
+
+def _metadata_boost(
+    metadata: dict[str, Any],
+    query_tokens: set[str],
+    *,
+    priority_sheet_boost: float,
+    token_match_boost: float,
+) -> float:
+    """Compute additive score boost based on metadata and query-token matches."""
+    boost = 0.0
+
+    if metadata.get("is_priority"):
+        boost += priority_sheet_boost
+
+    sheet_name = str(metadata.get("sheet_name", "")).lower()
+    matched_intent = any(
+        token.lower() in _SHEET_INTENT_TERMS.get(sheet_name, set())
+        for token in query_tokens
+    )
+    if matched_intent:
+        boost += token_match_boost / 2.0
+
+    source_file = str(metadata.get("source_file", "")).upper()
+    if source_file:
+        file_tokens = _tokens_for_matching(source_file)
+        if file_tokens.intersection(query_tokens):
+            boost += token_match_boost
+
+    return boost
+
 
 @observe(name="rag-mda-templates-query")
 def query_similar_templates(
@@ -190,6 +391,13 @@ def query_similar_templates(
     top_k: int = 3,
     collection_name: str = COLLECTION_NAME,
     chroma_path: str = CHROMA_PATH,
+    use_query_augmentation: bool = True,
+    query_augmentation_max_queries: int = 4,
+    use_metadata_boost: bool = True,
+    semantic_weight: float = 0.6,
+    bm25_weight: float = 0.4,
+    priority_sheet_boost: float = 0.15,
+    token_match_boost: float = 0.2,
 ) -> list[str]:
     """Query ChromaDB for MDA templates similar to the given extraction text.
 
@@ -214,42 +422,24 @@ def query_similar_templates(
         )
         raise ValueError(msg)
 
-    client = chromadb.PersistentClient(path=chroma_path)
-    collection = client.get_or_create_collection(collection_name)
-
-    doc_count = collection.count()
-    if doc_count == 0:
-        msg = (
-            f"ChromaDB collection '{collection_name}' is empty. "
-            f"Run seed_mda_templates() first to populate the collection "
-            f"from demo_data/*.xlsx files."
-        )
-        raise RuntimeError(msg)
-
-    # Clamp top_k to available document count
-    effective_k = min(top_k, doc_count)
+    scored = query_similar_templates_with_scores(
+        extraction_text=extraction_text,
+        top_k=top_k,
+        collection_name=collection_name,
+        chroma_path=chroma_path,
+        use_query_augmentation=use_query_augmentation,
+        query_augmentation_max_queries=query_augmentation_max_queries,
+        use_metadata_boost=use_metadata_boost,
+        semantic_weight=semantic_weight,
+        bm25_weight=bm25_weight,
+        priority_sheet_boost=priority_sheet_boost,
+        token_match_boost=token_match_boost,
+    )
+    matched_docs = [item["content"] for item in scored]
 
     logger.info(
-        "Querying '%s' collection (top_k=%d, docs_available=%d)",
-        collection_name,
-        effective_k,
-        doc_count,
-    )
-
-    results = collection.query(
-        query_texts=[extraction_text],
-        n_results=effective_k,
-        include=["documents", "metadatas", "distances"],
-    )
-
-    # results["documents"] is a list of lists -- one per query text
-    matched_docs: list[str] = results["documents"][0]  # type: ignore[index]
-    distances: list[float] = results.get("distances", [[]])[0]  # type: ignore[union-attr]
-
-    logger.info(
-        "Query returned %d similar templates (distances: %s)",
+        "Query returned %d similar templates",
         len(matched_docs),
-        [round(d, 4) for d in distances[:5]],
     )
 
     return matched_docs
@@ -261,6 +451,13 @@ def query_similar_templates_with_scores(
     top_k: int = 3,
     collection_name: str = COLLECTION_NAME,
     chroma_path: str = CHROMA_PATH,
+    use_query_augmentation: bool = True,
+    query_augmentation_max_queries: int = 4,
+    use_metadata_boost: bool = True,
+    semantic_weight: float = 0.6,
+    bm25_weight: float = 0.4,
+    priority_sheet_boost: float = 0.15,
+    token_match_boost: float = 0.2,
 ) -> list[dict[str, Any]]:
     """Query ChromaDB and return documents with distance scores and metadata.
 
@@ -294,29 +491,117 @@ def query_similar_templates_with_scores(
         )
 
     effective_k = min(top_k, doc_count)
+    candidate_k = min(max(effective_k * 3, effective_k), doc_count)
 
-    results = collection.query(
-        query_texts=[extraction_text],
-        n_results=effective_k,
-        include=["documents", "metadatas", "distances"],
-    )
-
-    documents = results.get("documents", [[]])[0]
-    metadatas = results.get("metadatas", [[]])[0]
-    distances = results.get("distances", [[]])[0]
-
-    output: list[dict[str, Any]] = []
-    for doc, meta, dist in zip(documents, metadatas, distances, strict=False):
-        output.append({
-            "content": str(doc),
-            "distance": float(dist),
-            "metadata": dict(meta) if meta else {},
-        })
+    query_variants = [extraction_text]
+    if use_query_augmentation:
+        query_variants = _build_augmented_queries(
+            extraction_text,
+            max_queries=query_augmentation_max_queries,
+        )
 
     logger.info(
-        "Scored query returned %d results (top distance: %.4f)",
+        "Querying '%s' collection (top_k=%d, docs_available=%d, query_variants=%d)",
+        collection_name,
+        effective_k,
+        doc_count,
+        len(query_variants),
+    )
+
+    site_prefix = _extract_site_prefix(extraction_text)
+    where_clause = {"prefix": site_prefix} if site_prefix else None
+    semantic_rank_lists: list[list[str]] = []
+
+    for query_variant in query_variants:
+        semantic_results = collection.query(
+            query_texts=[query_variant],
+            n_results=candidate_k,
+            where=where_clause,
+            include=["metadatas", "distances"],
+        )
+        semantic_ids = semantic_results.get("ids", [[]])[0]
+        semantic_rank_lists.append(semantic_ids)
+
+    semantic_ids_fused = _reciprocal_rank_fusion(
+        semantic_ids=[doc_id for rank_list in semantic_rank_lists for doc_id in rank_list],
+        bm25_ids=[],
+        semantic_weight=semantic_weight,
+        bm25_weight=0.0,
+    )
+
+    _build_bm25_index(collection)
+    bm25_ids: list[str] = []
+    if _bm25_index is not None:
+        bm25_rank_scores: dict[str, float] = {}
+        for query_variant in query_variants:
+            tokenized_query = _tokenize(query_variant)
+            bm25_scores = _bm25_index.get_scores(tokenized_query)
+            ranked_indices = sorted(
+                range(len(bm25_scores)),
+                key=lambda i: bm25_scores[i],
+                reverse=True,
+            )[:candidate_k]
+            for rank, idx in enumerate(ranked_indices):
+                doc_id = _bm25_doc_ids[idx]
+                bm25_rank_scores[doc_id] = bm25_rank_scores.get(doc_id, 0.0) + (1.0 / (60 + rank + 1))
+
+        bm25_ids = sorted(
+            bm25_rank_scores.keys(),
+            key=lambda doc_id: bm25_rank_scores[doc_id],
+            reverse=True,
+        )[:candidate_k]
+
+    fused_ids = _reciprocal_rank_fusion(
+        semantic_ids=semantic_ids_fused,
+        bm25_ids=bm25_ids,
+        semantic_weight=semantic_weight,
+        bm25_weight=bm25_weight,
+    )
+
+    if not fused_ids:
+        return []
+
+    candidate_payload = _collection_get(
+        collection,
+        ids=fused_ids[:candidate_k],
+        include=["documents", "metadatas"],
+    )
+    candidate_docs = candidate_payload.get("documents", [])
+    candidate_metas = candidate_payload.get("metadatas", [])
+
+    query_tokens = _tokens_for_matching(extraction_text)
+    scored_candidates: list[tuple[float, dict[str, Any]]] = []
+    for rank, (doc, meta) in enumerate(zip(candidate_docs, candidate_metas), start=1):
+        metadata = dict(meta) if meta else {}
+        base_score = 1.0 / (60 + rank)
+        metadata_bonus = 0.0
+        if use_metadata_boost:
+            metadata_bonus = _metadata_boost(
+                metadata,
+                query_tokens,
+                priority_sheet_boost=priority_sheet_boost,
+                token_match_boost=token_match_boost,
+            )
+        total_score = base_score + metadata_bonus
+        scored_candidates.append((
+            total_score,
+            {
+                "content": doc,
+                "distance": 0.0,
+                "metadata": metadata,
+                "score": total_score,
+                "base_score": base_score,
+                "metadata_bonus": metadata_bonus,
+            },
+        ))
+
+    scored_candidates.sort(key=lambda item: item[0], reverse=True)
+    output = [item[1] for item in scored_candidates[:effective_k]]
+
+    logger.info(
+        "Scored query returned %d results (query_variants=%d)",
         len(output),
-        output[0]["distance"] if output else float("inf"),
+        len(query_variants),
     )
 
     return output

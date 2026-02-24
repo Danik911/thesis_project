@@ -230,7 +230,7 @@ class ChatSession:
 
         raw_sample = ""
         if raw_extraction:
-            raw_sample = json.dumps(raw_extraction, default=str)[:5000]
+            raw_sample = json.dumps(raw_extraction, default=str)[:30000]
 
         return {
             "pdf_filename": self.chat_context.get("pdf_filename"),

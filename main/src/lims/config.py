@@ -29,6 +29,9 @@ class LIMSConfig(BaseModel):
     extract_page_range: str = ""
     extract_high_resolution_mode: bool = True
     extract_invalidate_cache: bool = False
+    extraction_quality_gate_enabled: bool = True
+    require_validated_extraction: bool = True
+    extraction_max_null_ratio: float = 0.55
 
     # MDA generation via OpenRouter (L4a)
     openrouter_api_key: str = ""
@@ -46,6 +49,21 @@ class LIMSConfig(BaseModel):
     rag_standards_top_k: int = 5           # LIMS_RAG_STANDARDS_TOP_K
     rag_chunk_max_size: int = 2000         # LIMS_RAG_CHUNK_MAX_SIZE
     rag_similarity_threshold: float = 0.0  # LIMS_RAG_SIMILARITY_THRESHOLD (0=no filter)
+    bm25_weight: float = 0.4              # LIMS_BM25_WEIGHT
+    semantic_weight: float = 0.6          # LIMS_SEMANTIC_WEIGHT
+    query_augmentation_enabled: bool = True  # LIMS_QUERY_AUGMENTATION_ENABLED
+    query_augmentation_max_queries: int = 4  # LIMS_QUERY_AUGMENTATION_MAX_QUERIES
+    metadata_boost_enabled: bool = True      # LIMS_METADATA_BOOST_ENABLED
+    priority_sheet_boost: float = 0.15       # LIMS_PRIORITY_SHEET_BOOST
+    token_match_boost: float = 0.2           # LIMS_TOKEN_MATCH_BOOST
+
+    # P1 retrieval quality + review routing controls
+    retrieval_quality_gate_enabled: bool = True
+    retrieval_min_results: int = 2
+    retrieval_max_distance: float = 1.2
+    retrieval_min_avg_token_overlap: float = 1.0
+    retrieval_min_method_match_ratio: float = 0.5
+    low_confidence_review_threshold: float = 0.75
 
     @field_validator("llamaextract_api_key")
     @classmethod
@@ -134,6 +152,64 @@ class LIMSConfig(BaseModel):
             raise ValueError(msg)
         return v
 
+    @field_validator("query_augmentation_max_queries")
+    @classmethod
+    def validate_query_augmentation_max_queries(cls, v: int) -> int:
+        if v < 1:
+            msg = "LIMS_QUERY_AUGMENTATION_MAX_QUERIES must be >= 1"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("retrieval_min_results")
+    @classmethod
+    def validate_retrieval_min_results(cls, v: int) -> int:
+        if v < 1:
+            msg = "LIMS_RETRIEVAL_MIN_RESULTS must be >= 1"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("extraction_max_null_ratio")
+    @classmethod
+    def validate_extraction_max_null_ratio(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            msg = "LIMS_EXTRACTION_MAX_NULL_RATIO must be between 0.0 and 1.0"
+            raise ValueError(msg)
+        return v
+
+    @field_validator(
+        "retrieval_max_distance",
+        "retrieval_min_avg_token_overlap",
+        "retrieval_min_method_match_ratio",
+        "low_confidence_review_threshold",
+    )
+    @classmethod
+    def validate_unit_interval_or_positive(cls, v: float, info) -> float:
+        field_name = info.field_name
+        if field_name == "retrieval_min_avg_token_overlap":
+            if v < 0.0:
+                msg = "LIMS_RETRIEVAL_MIN_AVG_TOKEN_OVERLAP must be >= 0.0"
+                raise ValueError(msg)
+            return v
+
+        if field_name == "retrieval_max_distance":
+            if not 0.0 <= v <= MAX_CHROMA_L2_DISTANCE:
+                msg = "LIMS_RETRIEVAL_MAX_DISTANCE must be between 0.0 and 2.0"
+                raise ValueError(msg)
+            return v
+
+        if not 0.0 <= v <= 1.0:
+            msg = f"{field_name} must be between 0.0 and 1.0"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("priority_sheet_boost", "token_match_boost")
+    @classmethod
+    def validate_non_negative_boost(cls, v: float) -> float:
+        if v < 0.0:
+            msg = "RAG boost values must be >= 0.0"
+            raise ValueError(msg)
+        return v
+
 
 def _parse_bool_env(var_name: str, *, default: bool) -> bool:
     value = os.getenv(var_name)
@@ -186,6 +262,17 @@ def get_lims_config() -> LIMSConfig:
             "LIMS_EXTRACT_HIGH_RESOLUTION_MODE", default=True
         ),
         extract_invalidate_cache=_parse_bool_env("LIMS_EXTRACT_INVALIDATE_CACHE", default=False),
+        extraction_quality_gate_enabled=_parse_bool_env(
+            "LIMS_EXTRACTION_QUALITY_GATE_ENABLED",
+            default=True,
+        ),
+        require_validated_extraction=_parse_bool_env(
+            "LIMS_REQUIRE_VALIDATED_EXTRACTION",
+            default=True,
+        ),
+        extraction_max_null_ratio=float(
+            os.getenv("LIMS_EXTRACTION_MAX_NULL_RATIO", "0.55")
+        ),
         openrouter_api_key=os.getenv("LIMS_OPENROUTER_API_KEY", ""),
         openrouter_model=os.getenv("LIMS_OPENROUTER_MODEL", "openai/gpt-5"),
         chromadb_path=os.getenv("LIMS_CHROMADB_PATH", "./chroma_db_lims"),
@@ -205,5 +292,35 @@ def get_lims_config() -> LIMSConfig:
         rag_chunk_max_size=int(os.getenv("LIMS_RAG_CHUNK_MAX_SIZE", "2000")),
         rag_similarity_threshold=float(
             os.getenv("LIMS_RAG_SIMILARITY_THRESHOLD", "0.0")
+        ),
+        bm25_weight=float(os.getenv("LIMS_BM25_WEIGHT", "0.4")),
+        semantic_weight=float(os.getenv("LIMS_SEMANTIC_WEIGHT", "0.6")),
+        query_augmentation_enabled=_parse_bool_env(
+            "LIMS_QUERY_AUGMENTATION_ENABLED",
+            default=True,
+        ),
+        query_augmentation_max_queries=int(
+            os.getenv("LIMS_QUERY_AUGMENTATION_MAX_QUERIES", "4")
+        ),
+        metadata_boost_enabled=_parse_bool_env(
+            "LIMS_METADATA_BOOST_ENABLED",
+            default=True,
+        ),
+        priority_sheet_boost=float(os.getenv("LIMS_PRIORITY_SHEET_BOOST", "0.15")),
+        token_match_boost=float(os.getenv("LIMS_TOKEN_MATCH_BOOST", "0.2")),
+        retrieval_quality_gate_enabled=_parse_bool_env(
+            "LIMS_RETRIEVAL_QUALITY_GATE_ENABLED",
+            default=True,
+        ),
+        retrieval_min_results=int(os.getenv("LIMS_RETRIEVAL_MIN_RESULTS", "2")),
+        retrieval_max_distance=float(os.getenv("LIMS_RETRIEVAL_MAX_DISTANCE", "1.2")),
+        retrieval_min_avg_token_overlap=float(
+            os.getenv("LIMS_RETRIEVAL_MIN_AVG_TOKEN_OVERLAP", "1.0")
+        ),
+        retrieval_min_method_match_ratio=float(
+            os.getenv("LIMS_RETRIEVAL_MIN_METHOD_MATCH_RATIO", "0.5")
+        ),
+        low_confidence_review_threshold=float(
+            os.getenv("LIMS_LOW_CONFIDENCE_REVIEW_THRESHOLD", "0.75")
         ),
     )

@@ -350,6 +350,7 @@ async def get_status(job_id: str) -> dict:
         "stage_details": job.stage_details,
         "validated": job.validated,
         "validation_error": job.validation_error,
+        "review_routing": job.review_routing,
         "error": job.error,
         "chat_history_length": len(job.chat_history),
         "edit_log_length": len(job.edit_log),
