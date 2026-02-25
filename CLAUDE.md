@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code on the pharmaceutical test generation thesis project and AI4LIMS PoC.
+Guidance for Claude Code on the pharmaceutical test generation thesis project, AI4LIMS PoC, and MES Agentic BI.
 
 ## Critical Operating Principles
 
@@ -57,6 +57,7 @@ When encountering bugs, errors, or unexpected behavior:
 | Issue Catalog | `docs/issues/ISSUE-CATALOG.md` |
 | AI4LIMS PoC Plan | `docs/project_p/AI4LIMS_PoC_Plan.md` |
 | AI4LIMS Feature/Issue Docs | `docs/project_p/` — format: `LIMS-###-description.md` |
+| MES Agentic BI PRP | `PRPs/data-copilot-poc.md` |
 
 ---
 
@@ -139,6 +140,28 @@ Located at `.claude/skills/`. Invoke via skill name.
 
 ---
 
+## MES Agentic BI
+
+**Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **PRP**: `PRPs/data-copilot-poc.md`
+
+| Component | Technology |
+|-----------|-----------|
+| Data Grid | TanStack Table v8 + @tanstack/react-virtual |
+| Copilot LLM | AWS Bedrock Converse API (Claude 3.5 Sonnet v2, us-east-1) |
+| Data Processing | pandas DataFrame (in-memory sessions) |
+| PDF Export | fpdf2 |
+| Excel Export | openpyxl |
+| Auth | None (PoC: `NEXT_PUBLIC_AUTH_ENABLED=false`) |
+| Docker | `docker-compose.bi.yml` (minimal: frontend + API) |
+
+**Key files**: `main/src/bi/`, `main/api/bi_router.py`, `main/frontend/pages/agentic-bi.tsx`
+
+**Strategy**: Additive only — never modify thesis or LIMS files. Separate router, compose, config. `BI_*` prefixed env vars.
+
+**Color accent**: `cyan-*` / `teal-*` (distinct from thesis `blue` and LIMS `emerald`).
+
+---
+
 ## Key Commands
 
 ```bash
@@ -147,6 +170,9 @@ docker-compose -f docker-compose.dev.yml up -d
 
 # AI4LIMS PoC (Docker Compose)
 docker-compose -f docker-compose.lims.yml up -d
+
+# MES Agentic BI (Docker Compose)
+docker-compose -f docker-compose.bi.yml up -d
 
 # AWS Deployment
 python aws/scripts/redeploy.py              # Redeploy services

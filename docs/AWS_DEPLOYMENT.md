@@ -163,6 +163,7 @@ curl https://csvgeneration.com/health
 |------|--------|-------|
 | `/jobs*` | API ALB | Disabled |
 | `/api/*` | API ALB | Disabled |
+| `/bi/*` | API ALB | Disabled |
 | `/health*` | API ALB | Disabled |
 | `/*` (default) | Frontend ALB | Optimized |
 
@@ -181,6 +182,8 @@ Set via Secrets Manager and task definitions:
 | `CLERK_PEM_PUBLIC_KEY` | API | JWT validation |
 | `SQS_QUEUE_URL` | API, Worker | Job queue |
 | `S3_CHROMADB_BUCKET` | Worker | RAG database |
+| `BI_BEDROCK_REGION` | API | Bedrock region for BI copilot (us-east-1) |
+| `BI_BEDROCK_MODEL_ID` | API | Bedrock model ID for BI copilot |
 
 ---
 
@@ -200,6 +203,59 @@ aws/terraform/task-definition-worker-v21.json
 # Redeploy
 python aws/scripts/redeploy.py --api --worker
 ```
+
+---
+
+## MES Agentic BI Copilot (AWS Bedrock)
+
+The BI data copilot PoC uses AWS Bedrock Converse API for natural language data filtering. It runs on the existing API service — no new ECS infrastructure is required.
+
+### Model
+
+| Setting | Value |
+|---------|-------|
+| Model ID | `us.anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| Inference type | US cross-region inference profile |
+| Bedrock region | `us-east-1` (different from main app region `eu-west-2`) |
+| Routes | `/bi/*` |
+| Local compose file | `docker-compose.bi.yml` |
+
+### IAM Permissions
+
+The ECS task role for the API service must include the following Bedrock actions:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "bedrock:InvokeModel",
+    "bedrock:InvokeModelWithResponseStream"
+  ],
+  "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+}
+```
+
+### Model Access
+
+Before the copilot can invoke the model, access must be enabled in the AWS Console:
+
+1. Open **AWS Console** -> **Amazon Bedrock** -> **Model access** (ensure region is `us-east-1`)
+2. Request access for **Claude 3.5 Sonnet v2** (`anthropic.claude-3-5-sonnet-20241022-v2:0`)
+3. Wait for status to change to **Access granted**
+
+### Credentials
+
+| Environment | Auth method |
+|-------------|-------------|
+| Local dev | `~/.aws/credentials` (default profile, region `us-east-1`) |
+| Production (ECS) | ECS task IAM role (no static credentials needed) |
+
+### Environment Variables
+
+| Variable | Example value | Description |
+|----------|--------------|-------------|
+| `BI_BEDROCK_REGION` | `us-east-1` | AWS region where Bedrock is called |
+| `BI_BEDROCK_MODEL_ID` | `us.anthropic.claude-3-5-sonnet-20241022-v2:0` | Cross-region inference profile ID |
 
 ---
 

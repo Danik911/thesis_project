@@ -6,6 +6,8 @@ Multi-agent LLM system for automated OQ (Operational Qualification) test generat
 
 > **AI4LIMS PoC** (branch: `prjoject_p_protatype`): **Demo-ready** AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates with full HITL workflow and two-layer pipeline architecture. Phase 8 in progress (L10-L14 complete): Classify Test Type -> Load Template -> Focused Extract -> Augment from Standards -> Merge with Provenance -> SME Review. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
 
+> **MES Agentic BI for PPRS** (branch: `feature/mes-agentic-bi`): Data copilot PoC for Plant Performance Reporting System. Upload XLSX/CSV (~15K rows), explore via virtual-scrolling grid with sidebar filters, and chat with an AWS Bedrock copilot (Claude 3.5 Sonnet) that applies filters and answers analytical questions via tool use. Export filtered data as PDF/Excel. See [PRP](PRPs/data-copilot-poc.md).
+
 ---
 
 ## Overview
@@ -50,6 +52,10 @@ curl http://localhost:8080/health
 # AI4LIMS PoC (minimal setup)
 docker-compose -f docker-compose.lims.yml up -d
 # Frontend: http://localhost:3000/lims
+
+# MES Agentic BI PoC (minimal setup)
+docker-compose -f docker-compose.bi.yml up -d
+# Frontend: http://localhost:3000/agentic-bi
 ```
 
 ### AWS Deployment
@@ -166,6 +172,7 @@ User Uploads PDF -> Classify Test Type (Hybrid: filename + keywords)
 | [PROJECT_STRUCTURE](docs/PROJECT_STRUCTURE.md) | File layout |
 | [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) | Common issues |
 | [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md) | LIMS document extraction prototype |
+| [MES Agentic BI PRP](PRPs/data-copilot-poc.md) | PPRS data copilot PoC plan |
 
 ---
 
@@ -179,6 +186,10 @@ docker-compose -f docker-compose.dev.yml logs -f
 # AI4LIMS PoC development
 docker-compose -f docker-compose.lims.yml up -d
 docker-compose -f docker-compose.lims.yml logs -f
+
+# MES Agentic BI development
+docker-compose -f docker-compose.bi.yml up -d
+docker-compose -f docker-compose.bi.yml logs -f
 
 # Testing
 uv run pytest main/tests/ -v
@@ -203,7 +214,8 @@ thesis_project/
 │       ├── agents/       # Multi-agent system
 │       ├── adapters/     # Storage (local/S3)
 │       ├── compliance/   # ALCOA+, 21 CFR Part 11
-│       └── lims/         # AI4LIMS PoC (MDA extraction)
+│       ├── lims/         # AI4LIMS PoC (MDA extraction)
+│       └── bi/           # MES Agentic BI (data copilot)
 ├── aws/
 │   ├── terraform/        # Infrastructure as Code
 │   └── scripts/          # Deploy automation

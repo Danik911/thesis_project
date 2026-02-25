@@ -823,6 +823,99 @@ lims-two-layer-pipeline (parent trace)
 
 ---
 
+## MES Agentic BI Architecture
+
+**Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **PRP**: `PRPs/data-copilot-poc.md`
+
+MES Agentic BI is a proof-of-concept data copilot for the Plant Performance Reporting System (PPRS). Users upload XLSX/CSV files (~15K rows), explore data via a virtual-scrolling grid with sidebar filters, and interact with an AWS Bedrock copilot (Claude 3.5 Sonnet via tool use) that can apply filters, search columns, and answer analytical questions. Filtered data can be exported as PDF or Excel.
+
+### Data Flow
+
+```
+User Uploads XLSX/CSV
+        |
+        v
+   data_parser.py (pandas)
+        |
+        v
+   session_store.py (in-memory)
+        |
+        +------------------+------------------+
+        |                  |                  |
+        v                  v                  v
+  filter_engine.py    copilot.py         exporters.py
+  (column filters,    (AWS Bedrock        (fpdf2 PDF,
+   search, sort)      Claude 3.5 Sonnet   openpyxl Excel)
+                      tool use)
+        |                  |
+        v                  v
+  DataGrid (TanStack)  ChatDrawer
+  virtual scroll       (tool results
+  + Sidebar filters    applied live)
+```
+
+### Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Data Ingestion** | pandas | XLSX/CSV parsing (~15K rows) |
+| **Copilot LLM** | AWS Bedrock (Claude 3.5 Sonnet) | Tool use: filter, search, answer |
+| **Data Grid** | TanStack Table v8 | Virtual-scrolling, column sort/filter |
+| **PDF Export** | fpdf2 | Filtered data PDF generation |
+| **Excel Export** | openpyxl | Filtered data XLSX generation |
+| **Backend** | FastAPI (`/bi/*` routes) | Session, data, copilot endpoints |
+| **Frontend** | Next.js 14 (Pages Router, `agentic-bi.tsx`) | Upload, grid, chat, export |
+| **Docker Compose** | `docker-compose.bi.yml` (minimal: frontend + API only) | Local PoC development |
+| **Authentication** | None (PoC) | No auth required |
+| **Color Accent** | Cyan/Teal | UI theme (vs blue for thesis, emerald for LIMS) |
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/bi/upload` | POST | XLSX/CSV upload + parse into session |
+| `/bi/data` | GET | Paginated rows with active filters applied |
+| `/bi/chat` | POST | Copilot message (Bedrock tool use response) |
+| `/bi/export/pdf` | GET | Filtered data PDF export (fpdf2) |
+| `/bi/export/excel` | GET | Filtered data Excel export (openpyxl) |
+
+### Copilot Tool Use Pattern
+
+The copilot uses AWS Bedrock's native tool use (function calling) with Claude 3.5 Sonnet. Tools are defined server-side and called transparently:
+
+```
+User: "Show me only rows where Line = L3 and Yield > 90%"
+        |
+        v
+Bedrock (Claude 3.5 Sonnet) selects tool: apply_filter
+        |
+        v
+copilot.py calls filter_engine.apply_filter(column="Line", value="L3")
+                                 apply_filter(column="Yield", op=">", value=90)
+        |
+        v
+API returns updated filtered dataset + copilot explanation
+        |
+        v
+DataGrid re-renders with new filter state reflected in Sidebar
+```
+
+**Defined tools:** `apply_filter`, `clear_filters`, `search_column`, `get_summary_stats`, `answer_question`
+
+### Key Design Decisions
+
+1. **No Auth Required**: PoC only — no Clerk integration. Uses plain `fetch`.
+
+2. **In-Memory Session Store**: Uploaded data held in `session_store.py` (keyed by `session_id`). No database needed for PoC scale.
+
+3. **Tool Use for Copilot Actions**: Copilot doesn't return free-form SQL or filter strings. It invokes typed tools, keeping filter logic server-side in `filter_engine.py` for correctness and safety.
+
+4. **Virtual Scrolling**: TanStack Table v8 with virtual rows handles ~15K rows without pagination overhead.
+
+5. **Additive Architecture**: `bi_router.py` is mounted separately from thesis routes and LIMS routes. Zero impact on existing code.
+
+---
+
 ## Docker Stack
 
 ### Thesis Project Stack (docker-compose.dev.yml)

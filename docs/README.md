@@ -81,6 +81,23 @@ cd main/frontend && npm run dev
 | Production | https://csvgeneration.com |
 | API Health | https://csvgeneration.com/health |
 
+## MES Agentic BI for PPRS
+
+Data copilot PoC for Plant Performance Reporting System (PPRS).
+
+- **Branch**: `feature/mes-agentic-bi`
+- **PRP**: `PRPs/data-copilot-poc.md`
+- **Stack**: TanStack Table v8 + AWS Bedrock (Claude 3.5 Sonnet) + pandas + fpdf2 + openpyxl
+- **Routes**: `/bi/*` (separate from thesis `/jobs/*` and LIMS `/lims/*` routes)
+
+**Features**: Upload XLSX/CSV (~15K rows), explore via virtual-scrolling grid with sidebar filters, chat with Bedrock copilot (tool use: apply filters, search, answer questions), export filtered data as PDF/Excel.
+
+**Local Testing**:
+```bash
+docker-compose -f docker-compose.bi.yml up -d
+# Access at http://localhost:3000/agentic-bi
+```
+
 ## Issues
 
 Active issues are tracked in [issues/](issues/) directory. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common solutions.

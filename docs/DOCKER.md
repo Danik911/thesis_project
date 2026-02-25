@@ -526,6 +526,39 @@ docker stats
 
 ---
 
+## MES Agentic BI Stack (docker-compose.bi.yml)
+
+Minimal 2-service architecture for MES Agentic BI PoC (branch: `feature/mes-agentic-bi`):
+
+| Service | Purpose | Technology |
+|---------|---------|------------|
+| **api** | BI API endpoints (`/bi/*`) | FastAPI + uvicorn |
+| **frontend** | Agentic BI interface (`/agentic-bi`) | Next.js 14 |
+
+**Note**: No PostgreSQL, LocalStack, or worker service. MES Agentic BI uses an in-memory session store. No ChromaDB — uploaded data is held in memory per session.
+
+```bash
+# Start MES Agentic BI stack
+docker-compose -f docker-compose.bi.yml up -d
+
+# Access
+# BI UI:  http://localhost:3000/agentic-bi
+# API:    http://localhost:8080/bi/*
+
+# Logs
+docker-compose -f docker-compose.bi.yml logs -f
+
+# Stop
+docker-compose -f docker-compose.bi.yml down
+```
+
+**Required env vars** (`BI_*` prefix):
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` — AWS Bedrock access
+- `BI_MAX_UPLOAD_MB` — Max upload file size (default: 50)
+- `BI_SESSION_TTL_SECONDS` — Session expiry (default: 3600)
+
+---
+
 ## AWS Migration Path
 
 ### ECS Fargate Compatibility
