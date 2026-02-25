@@ -10,7 +10,7 @@
 
 ## Objective
 
-Integrate AWS Bedrock Converse API with Claude 3.5 Sonnet for the copilot chat. The copilot receives the data schema as context and has 5 tools (apply_filter, remove_filter, search_data, summarize_column, answer_question). Implement the agentic loop: user message -> Bedrock with tools -> execute pandas operations -> feed results back -> natural language summary. Frontend: bottom expandable chat drawer with suggestion chips.
+Integrate AWS Bedrock Converse API with Claude Sonnet 4.6 for the copilot chat. The copilot receives the data schema as context and has 5 tools (apply_filter, remove_filter, search_data, summarize_column, answer_question). Implement the agentic loop: user message -> Bedrock with tools -> execute pandas operations -> feed results back -> natural language summary. Frontend: bottom expandable chat drawer with suggestion chips.
 
 **Kill criterion:** If Bedrock model access not available, switch to OpenRouter (same tool definitions, different client). `LIMS_OPENROUTER_API_KEY` is already in .env.local.
 
@@ -44,7 +44,7 @@ from langfuse.decorators import observe
 class BICopilot:
     def __init__(self, session_id: str, config: BIConfig):
         self.client = boto3.client('bedrock-runtime', region_name=config.bedrock_region)
-        self.model_id = config.bedrock_model_id  # us.anthropic.claude-3-5-sonnet-20241022-v2:0
+        self.model_id = config.bedrock_model_id  # us.anthropic.claude-sonnet-4-6
         self.filter_engine = FilterEngine(session_id)
         self.session_id = session_id
 
@@ -129,7 +129,7 @@ Follow `ChatInterface.tsx` pattern: message bubbles, auto-scroll, loading dots. 
 ```bash
 # Already in .env.local from pre-requisites:
 BI_BEDROCK_REGION=us-east-1
-BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 ```
 
 ---
@@ -141,7 +141,7 @@ BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
 python -c "
 import boto3
 client = boto3.client('bedrock-runtime', region_name='us-east-1')
-r = client.converse(modelId='us.anthropic.claude-3-5-sonnet-20241022-v2:0',
+r = client.converse(modelId='us.anthropic.claude-sonnet-4-6',
     messages=[{'role':'user','content':[{'text':'Say hello'}]}])
 print(r['output']['message']['content'][0]['text'])
 "

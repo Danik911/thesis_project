@@ -16,7 +16,7 @@ Est. 45 minutes manual work + 0-24 hour wait for Bedrock model access approval
 
 1. AWS credentials are completely absent from `.env.local`. boto3 will fail immediately without them.
 2. The Bedrock first-time-use form for Anthropic models must be submitted once per AWS account before any Claude model can be invoked. This is usually approved instantly to within a few minutes, but can take up to 24 hours.
-3. The correct model ID to use is the US inference profile `us.anthropic.claude-3-5-sonnet-20241022-v2:0`, NOT the base model ID `anthropic.claude-3-5-sonnet-20241022-v2:0`. The base model ID may not be directly invocable in us-east-1 — the inference profile is the recommended path.
+3. The correct model ID to use is the US inference profile `us.anthropic.claude-sonnet-4-6`, NOT the base model ID `anthropic.claude-sonnet-4-6`. The base model ID may not be directly invocable — the inference profile is the recommended path.
 
 ---
 
@@ -42,7 +42,7 @@ Est. 45 minutes manual work + 0-24 hour wait for Bedrock model access approval
 | `AWS_ACCESS_KEY_ID` | NOT in `.env.local` | Create IAM user, configure `~/.aws/credentials` |
 | `AWS_SECRET_ACCESS_KEY` | NOT in `.env.local` | Create IAM user, configure `~/.aws/credentials` |
 | `BI_BEDROCK_REGION` | NOT in `.env.local` | Add `BI_BEDROCK_REGION=us-east-1` |
-| `BI_BEDROCK_MODEL_ID` | NOT in `.env.local` | Add `BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| `BI_BEDROCK_MODEL_ID` | NOT in `.env.local` | Add `BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6` |
 | Bedrock model access | Unknown — may need first-time-use form | Submit via Bedrock console |
 
 ---
@@ -95,7 +95,7 @@ Then add to `.env.local` (NOT the keys themselves — just the profile reference
 ```bash
 # .env.local additions for BI feature
 BI_BEDROCK_REGION=us-east-1
-BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 AWS_PROFILE=bedrock-dev
 AWS_DEFAULT_REGION=us-east-1
 ```
@@ -123,9 +123,9 @@ AWS_DEFAULT_REGION=us-east-1
    - Industry category
    - Use case description
 4. Submit the form. Access is usually granted immediately or within minutes.
-5. Verify the model is accessible by checking: Bedrock -> Model access -> confirm `Claude 3.5 Sonnet v2` shows "Access granted".
+5. Verify the model is accessible by checking: Bedrock -> Model access -> confirm `Claude Sonnet 4.6` shows "Access granted".
 
-**Model ID note:** The PRP specifies `anthropic.claude-3-5-sonnet-20241022-v2:0` as the model ID. Based on research, the US inference profile `us.anthropic.claude-3-5-sonnet-20241022-v2:0` is the recommended approach for us-east-1 in February 2026. The `copilot.py` implementation should use the inference profile ID. The `BI_BEDROCK_MODEL_ID` env var in the PRP should be updated to `us.anthropic.claude-3-5-sonnet-20241022-v2:0`.
+**Model ID note:** The PRP specifies `anthropic.claude-sonnet-4-6` as the model ID. Based on research, the US inference profile `us.anthropic.claude-sonnet-4-6` is the recommended approach for us-east-1 in February 2026. The `copilot.py` implementation should use the inference profile ID. The `BI_BEDROCK_MODEL_ID` env var in the PRP should be updated to `us.anthropic.claude-sonnet-4-6`.
 
 ### Step 4: Verify Bedrock Connectivity
 **Time estimate:** 2 minutes
@@ -139,7 +139,7 @@ uv run python -c "
 import boto3
 client = boto3.client('bedrock-runtime', region_name='us-east-1')
 response = client.converse(
-    modelId='us.anthropic.claude-3-5-sonnet-20241022-v2:0',
+    modelId='us.anthropic.claude-sonnet-4-6',
     messages=[{'role': 'user', 'content': [{'text': 'Say hello'}]}]
 )
 print('SUCCESS:', response['output']['message']['content'][0]['text'])
@@ -196,7 +196,7 @@ Add the following block to `.env.local` (as specified in PRP Section 8, with one
 # -----------------------------------------------------------------------------
 BI_BEDROCK_REGION=us-east-1
 # CORRECTED: Use inference profile ID, not base model ID
-BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 BI_MAX_UPLOAD_SIZE_MB=50
 BI_MAX_ROWS=100000
 BI_SESSION_TTL_SECONDS=3600
@@ -216,15 +216,15 @@ Note: LangFuse keys (`LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BAS
 
 The PRP (Section 8 and throughout) specifies:
 ```
-BI_BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20241022-v2:0
+BI_BEDROCK_MODEL_ID=anthropic.claude-sonnet-4-6
 ```
 
 Research confirms this base model ID may not be directly invocable in us-east-1. The correct ID to use is the US cross-region inference profile:
 ```
-BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 ```
 
-The `copilot.py` implementation must use `us.anthropic.claude-3-5-sonnet-20241022-v2:0` when calling `client.converse(modelId=...)`.
+The `copilot.py` implementation must use `us.anthropic.claude-sonnet-4-6` when calling `client.converse(modelId=...)`.
 
 The PRP's Kill Criterion on Day 3 remains valid: if Bedrock model access is not available, fall back to OpenRouter (same tool definitions, different client — OpenRouter keys are already in `.env.local`).
 
@@ -246,8 +246,8 @@ If the account administrator prefers not to use the `AmazonBedrockLimitedAccess`
         "bedrock:InvokeModelWithResponseStream"
       ],
       "Resource": [
-        "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0",
-        "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+        "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-6",
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-6"
       ]
     },
     {
@@ -316,7 +316,7 @@ If the account administrator prefers not to use the `AmazonBedrockLimitedAccess`
 
 # MES Agentic BI PoC
 BI_BEDROCK_REGION=us-east-1
-BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 BI_MAX_UPLOAD_SIZE_MB=50
 BI_MAX_ROWS=100000
 BI_SESSION_TTL_SECONDS=3600

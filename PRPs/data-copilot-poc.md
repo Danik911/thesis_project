@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This PRP outlines a 5-day Proof of Concept for "MES Agentic BI" — a data copilot for PPRS (Plant Performance Reporting System). Users upload XLSX/CSV files exported from Snowflake (~15K rows, dynamic schemas), explore data via a virtual-scrolling grid with sidebar filters, interact with an AI copilot (AWS Bedrock Claude 3.5 Sonnet) that applies filters/searches/answers questions via tool use, and download filtered data as PDF or Excel.
+This PRP outlines a 5-day Proof of Concept for "MES Agentic BI" — a data copilot for PPRS (Plant Performance Reporting System). Users upload XLSX/CSV files exported from Snowflake (~15K rows, dynamic schemas), explore data via a virtual-scrolling grid with sidebar filters, interact with an AI copilot (AWS Bedrock Claude Sonnet 4.6) that applies filters/searches/answers questions via tool use, and download filtered data as PDF or Excel.
 
 The system reuses the existing `thesis_project` infrastructure (Next.js, FastAPI, Docker) with a strict **additive-only** strategy.
 
@@ -24,7 +24,7 @@ The system reuses the existing `thesis_project` infrastructure (Next.js, FastAPI
 
 **Key Decisions:**
 - **Data Grid:** TanStack Table v8 + @tanstack/react-virtual — headless, Tailwind-native, ~20KB
-- **Copilot LLM:** AWS Bedrock Converse API (Claude 3.5 Sonnet v2, us-east-1)
+- **Copilot LLM:** AWS Bedrock Converse API (Claude Sonnet 4.6, us-east-1)
 - **Data Processing:** pandas DataFrame in-memory per session (15K rows = ~30MB)
 - **PDF Export:** fpdf2 — lightweight, pure Python
 - **Excel Export:** openpyxl (already in project)
@@ -103,7 +103,7 @@ User Message
 [Build System Prompt] -- Column schema, data types, sample values,
     |                     active filters, row counts
     v
-[Bedrock Converse] -- Claude 3.5 Sonnet with 5 tools
+[Bedrock Converse] -- Claude Sonnet 4.6 with 5 tools
     |
     +-- tool_use? --YES--> [Execute pandas operation]
     |                           |
@@ -124,7 +124,7 @@ User Message
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | **Data Grid** | TanStack Table v8 + react-virtual | Headless (Tailwind-native), ~20KB vs AG Grid 1.5MB. 15K rows via virtual scroll. |
-| **LLM** | Bedrock Converse (Claude 3.5 Sonnet v2) | Best tool use accuracy. Native AWS. Fallback: OpenRouter. |
+| **LLM** | Bedrock Converse (Claude Sonnet 4.6) | Best tool use accuracy. Native AWS. Fallback: OpenRouter. |
 | **Data Handling** | pandas in-memory per session | 15K x 50 cols = ~30MB. 20-session cap + 1hr TTL. |
 | **Schema Detection** | Dynamic (auto-detect from file) | Varying Snowflake exports. Column metadata computed at upload. |
 | **Filtering** | Server-side pandas | Complex filters on 15K rows handled server-side. Frontend syncs state. |
@@ -138,7 +138,7 @@ User Message
 |-----------|-----------|-----------|
 | **UI** | Next.js 14 (reuse from thesis_project) | Existing: 3D effects, Framer Motion, dark theme, bold design. |
 | **Data Grid** | TanStack Table v8 + @tanstack/react-virtual | Headless, Tailwind-native, virtual scroll for 15K rows. |
-| **Copilot LLM** | AWS Bedrock Converse API (Claude 3.5 Sonnet v2) | Best tool use accuracy, native AWS integration. |
+| **Copilot LLM** | AWS Bedrock Converse API (Claude Sonnet 4.6) | Best tool use accuracy, native AWS integration. |
 | **Data Processing** | pandas + openpyxl | DataFrame operations, XLSX parsing, Excel export. |
 | **PDF Generation** | fpdf2 | Lightweight, pure Python tabular PDF. |
 | **Observability** | Langfuse Cloud (EU) | `@observe` on chat calls only. Reuse existing credentials. |
@@ -323,7 +323,7 @@ thesis_project/
 # .env.local (BI-specific additions)
 # AWS Bedrock
 BI_BEDROCK_REGION=us-east-1
-BI_BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 
 # Session limits
 BI_MAX_UPLOAD_SIZE_MB=50
@@ -341,7 +341,7 @@ LANGFUSE_HOST=https://cloud.langfuse.com
 
 ## 9. Pre-Requisites (Before Day 1)
 
-1. **Enable Bedrock model access**: AWS Console -> Bedrock -> Model access -> Request `us.anthropic.claude-3-5-sonnet-20241022-v2:0` in `us-east-1` (0-24 hours)
+1. **Enable Bedrock model access**: AWS Console -> Bedrock -> Model access -> Request `Claude Sonnet 4.6` in `us-east-1` (0-24 hours)
 2. **Sample data file**: XLSX or CSV with ~15K rows for testing
 3. **Install npm packages**: `cd main/frontend && npm install @tanstack/react-table @tanstack/react-virtual`
 4. **Install Python package**: Add `fpdf2>=2.7.0` to `pyproject.toml` and `uv sync`

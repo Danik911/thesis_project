@@ -8,7 +8,7 @@
 
 ## Change Context Received
 - **Change Type:** new_feature
-- **Change Summary:** Added MES Agentic BI for PPRS (Plant Performance Reporting System) — a data copilot PoC. Users upload XLSX/CSV files (~15K rows), explore data via virtual-scrolling grid with sidebar filters, chat with AWS Bedrock copilot (Claude 3.5 Sonnet) that applies filters/searches/answers via tool use, and export filtered data as PDF/Excel.
+- **Change Summary:** Added MES Agentic BI for PPRS (Plant Performance Reporting System) — a data copilot PoC. Users upload XLSX/CSV files (~15K rows), explore data via virtual-scrolling grid with sidebar filters, chat with AWS Bedrock copilot (Claude Sonnet 4.6) that applies filters/searches/answers via tool use, and export filtered data as PDF/Excel.
 - **Files Modified (planned):**
   - `PRPs/data-copilot-poc.md` (CREATED - PRP for the BI feature)
   - `CLAUDE.md` (MODIFIED - added MES Agentic BI section)

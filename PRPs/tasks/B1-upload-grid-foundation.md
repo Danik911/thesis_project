@@ -3,7 +3,7 @@
 **Phase:** 1 (Foundation) | **Day:** 1
 **Dependencies:** Pre-requisites complete (deps installed, env vars set)
 **Branch:** `feature/mes-agentic-bi`
-**Status:** NOT STARTED
+**Status:** MANUALLY VALIDATED (2026-02-25)
 **Estimated effort:** 1 day
 
 ---
@@ -46,7 +46,7 @@ import os
 
 class BIConfig:
     bedrock_region: str = os.getenv("BI_BEDROCK_REGION", "us-east-1")
-    bedrock_model_id: str = os.getenv("BI_BEDROCK_MODEL_ID", "us.anthropic.claude-3-5-sonnet-20241022-v2:0")
+    bedrock_model_id: str = os.getenv("BI_BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-6")
     max_upload_size_mb: int = int(os.getenv("BI_MAX_UPLOAD_SIZE_MB", "50"))
     max_rows: int = int(os.getenv("BI_MAX_ROWS", "100000"))
     session_ttl_seconds: int = int(os.getenv("BI_SESSION_TTL_SECONDS", "3600"))
@@ -98,10 +98,16 @@ cd main/frontend && npm run dev
 
 ## Gate Criteria (Pass/Fail)
 
-- [ ] `POST /bi/upload` with XLSX returns session_id + column metadata
-- [ ] `POST /bi/upload` with CSV returns session_id + column metadata
-- [ ] `GET /bi/data/{session_id}?page=1` returns 100 rows
-- [ ] `GET /bi/schema/{session_id}` returns column names, types, sample values
-- [ ] Frontend shows uploaded data in TanStack Table at `/agentic-bi`
-- [ ] Sidebar shows filename, field count, and field names
-- [ ] Thesis pages (`/generate`, `/history`, `/lims`) still accessible
+- [x] `POST /bi/upload` with XLSX returns session_id + column metadata
+- [x] `POST /bi/upload` with CSV returns session_id + column metadata
+- [x] `GET /bi/data/{session_id}?page=1` returns 100 rows
+- [x] `GET /bi/schema/{session_id}` returns column names, types, sample values
+- [x] Frontend shows uploaded data in TanStack Table at `/agentic-bi`
+- [x] Sidebar shows filename, field count, and field names
+- [x] Thesis pages (`/generate`, `/history`, `/lims`) still accessible
+
+## Validation Notes
+
+- Manual UI validation completed on `/agentic-bi` with sample PPRS CSV.
+- Pagination and sidebar field rendering verified.
+- Existing thesis and LIMS pages remained available during verification.

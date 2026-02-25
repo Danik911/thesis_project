@@ -214,7 +214,7 @@ The BI data copilot PoC uses AWS Bedrock Converse API for natural language data 
 
 | Setting | Value |
 |---------|-------|
-| Model ID | `us.anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| Model ID | `us.anthropic.claude-sonnet-4-6` |
 | Inference type | US cross-region inference profile |
 | Bedrock region | `us-east-1` (different from main app region `eu-west-2`) |
 | Routes | `/bi/*` |
@@ -231,7 +231,7 @@ The ECS task role for the API service must include the following Bedrock actions
     "bedrock:InvokeModel",
     "bedrock:InvokeModelWithResponseStream"
   ],
-  "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+  "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-6-v1"
 }
 ```
 
@@ -240,7 +240,7 @@ The ECS task role for the API service must include the following Bedrock actions
 Before the copilot can invoke the model, access must be enabled in the AWS Console:
 
 1. Open **AWS Console** -> **Amazon Bedrock** -> **Model access** (ensure region is `us-east-1`)
-2. Request access for **Claude 3.5 Sonnet v2** (`anthropic.claude-3-5-sonnet-20241022-v2:0`)
+2. Request access for **Claude Sonnet 4.6** (`anthropic.claude-sonnet-4-6`)
 3. Wait for status to change to **Access granted**
 
 ### Credentials
@@ -255,7 +255,7 @@ Before the copilot can invoke the model, access must be enabled in the AWS Conso
 | Variable | Example value | Description |
 |----------|--------------|-------------|
 | `BI_BEDROCK_REGION` | `us-east-1` | AWS region where Bedrock is called |
-| `BI_BEDROCK_MODEL_ID` | `us.anthropic.claude-3-5-sonnet-20241022-v2:0` | Cross-region inference profile ID |
+| `BI_BEDROCK_MODEL_ID` | `us.anthropic.claude-sonnet-4-6` | US cross-region inference profile ID |
 
 ---
 

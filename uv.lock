@@ -1121,6 +1121,20 @@ wheels = [
 ]
 
 [[package]]
+name = "fpdf2"
+version = "2.8.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "defusedxml" },
+    { name = "fonttools" },
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/74/3f/b23cf3a1943905645f44df95de8289770e69f85c9442abf89f93dc5c4a74/fpdf2-2.8.6.tar.gz", hash = "sha256:5132f26bbeee69a7ca6a292e4da1eb3241147b5aea9348b35e780ecd02bf5fc2", size = 362052, upload-time = "2026-02-19T03:45:25.736Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/06/93/af9bff8ea01bf0895b4ebf0641da613e4e342112ee82d50642638f763239/fpdf2-2.8.6-py3-none-any.whl", hash = "sha256:464658b896c6b0fcbf883abb316b8f0a52d582eb959d71822ba254d6c790bfdd", size = 326981, upload-time = "2026-02-19T03:45:23.732Z" },
+]
+
+[[package]]
 name = "freezegun"
 version = "1.5.5"
 source = { registry = "https://pypi.org/simple" }
@@ -4485,6 +4499,7 @@ dependencies = [
     { name = "clerk-backend-api" },
     { name = "cryptography" },
     { name = "faiss-cpu" },
+    { name = "fpdf2" },
     { name = "httpx" },
     { name = "json-repair" },
     { name = "kaleido" },
@@ -4556,6 +4571,7 @@ requires-dist = [
     { name = "clerk-backend-api", specifier = "==4.0.0" },
     { name = "cryptography", specifier = ">=45.0.6" },
     { name = "faiss-cpu", specifier = ">=1.7.4" },
+    { name = "fpdf2", specifier = ">=2.7.0" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "json-repair", specifier = ">=0.54.2" },
     { name = "kaleido", specifier = ">=1.0.0" },

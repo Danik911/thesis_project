@@ -6,7 +6,7 @@ Multi-agent LLM system for automated OQ (Operational Qualification) test generat
 
 > **AI4LIMS PoC** (branch: `prjoject_p_protatype`): **Demo-ready** AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates with full HITL workflow and two-layer pipeline architecture. Phase 8 in progress (L10-L14 complete): Classify Test Type -> Load Template -> Focused Extract -> Augment from Standards -> Merge with Provenance -> SME Review. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
 
-> **MES Agentic BI for PPRS** (branch: `feature/mes-agentic-bi`): Data copilot PoC for Plant Performance Reporting System. Upload XLSX/CSV (~15K rows), explore via virtual-scrolling grid with sidebar filters, and chat with an AWS Bedrock copilot (Claude 3.5 Sonnet) that applies filters and answers analytical questions via tool use. Export filtered data as PDF/Excel. See [PRP](PRPs/data-copilot-poc.md).
+> **MES Agentic BI for PPRS** (branch: `feature/mes-agentic-bi`): Data copilot PoC for Plant Performance Reporting System. Upload XLSX/CSV (~15K rows), explore via virtual-scrolling grid with sidebar filters, and chat with an AWS Bedrock copilot (Claude Sonnet 4.6) that applies filters and answers analytical questions via tool use. Export filtered data as PDF/Excel. See [PRP](PRPs/data-copilot-poc.md).
 
 ---
 

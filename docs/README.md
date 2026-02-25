@@ -87,15 +87,23 @@ Data copilot PoC for Plant Performance Reporting System (PPRS).
 
 - **Branch**: `feature/mes-agentic-bi`
 - **PRP**: `PRPs/data-copilot-poc.md`
-- **Stack**: TanStack Table v8 + AWS Bedrock (Claude 3.5 Sonnet) + pandas + fpdf2 + openpyxl
+- **Stack**: TanStack Table v8 + AWS Bedrock (Claude Sonnet 4.6) + pandas + fpdf2 + openpyxl
 - **Routes**: `/bi/*` (separate from thesis `/jobs/*` and LIMS `/lims/*` routes)
 
-**Features**: Upload XLSX/CSV (~15K rows), explore via virtual-scrolling grid with sidebar filters, chat with Bedrock copilot (tool use: apply filters, search, answer questions), export filtered data as PDF/Excel.
+**Current status (B1 validated)**: Upload XLSX/CSV, session-backed parsing, schema sidebar, tabular data grid, and pagination.
+
+**Planned next phases**: sidebar filters + virtual scrolling (B2), Bedrock chat copilot (B3), PDF/Excel export (B4), polish/deploy (B5).
 
 **Local Testing**:
 ```bash
-docker-compose -f docker-compose.bi.yml up -d
-# Access at http://localhost:3000/agentic-bi
+# Backend
+uv run uvicorn main.api.app:app --port 8080 --reload
+
+# Frontend
+cd main/frontend && npm run dev
+
+# Access
+http://localhost:3000/agentic-bi
 ```
 
 ## Issues

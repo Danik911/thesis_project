@@ -147,7 +147,7 @@ Located at `.claude/skills/`. Invoke via skill name.
 | Component | Technology |
 |-----------|-----------|
 | Data Grid | TanStack Table v8 + @tanstack/react-virtual |
-| Copilot LLM | AWS Bedrock Converse API (Claude 3.5 Sonnet v2, us-east-1) |
+| Copilot LLM | AWS Bedrock Converse API (Claude Sonnet 4.6, us-east-1) |
 | Data Processing | pandas DataFrame (in-memory sessions) |
 | PDF Export | fpdf2 |
 | Excel Export | openpyxl |

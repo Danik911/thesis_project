@@ -85,7 +85,7 @@ agents/
 |------|---------|
 | `docker-compose.dev.yml` | 5-service stack (full thesis system) |
 | `docker-compose.lims.yml` | AI4LIMS PoC stack (frontend + API only) |
-| `docker-compose.bi.yml` | MES Agentic BI stack (frontend + API only) |
+| `docker-compose.bi.yml` | MES Agentic BI stack (planned for later phase; not yet added) |
 | `Dockerfile.api` | API/Worker container |
 | `Dockerfile.frontend` | Next.js container |
 | `.env.example` | Configuration template |
@@ -130,11 +130,8 @@ frontend/
 │   ├── PipelineStageDetail.tsx # AI4LIMS: pipeline stage detail view
 │   ├── TemplatePreview.tsx  # AI4LIMS: template skeleton preview
 │   └── bi/                  # MES Agentic BI components
-│       ├── Sidebar.tsx      # Filter sidebar (column filters, date range)
-│       ├── DataGrid.tsx     # TanStack Table v8 virtual-scrolling grid
-│       ├── ChatDrawer.tsx   # Bedrock copilot chat drawer
-│       ├── ColumnSelector.tsx # Column visibility toggle
-│       └── ExportButtons.tsx # PDF/Excel export controls
+│       ├── Sidebar.tsx      # Data source + field list sidebar (B1)
+│       └── DataGrid.tsx     # TanStack Table v8 grid + pagination (B1)
 ├── utils/
 │   └── api.ts               # API client
 ├── middleware.ts            # Route protection
@@ -221,33 +218,36 @@ frontend/
 
 | File | Purpose |
 |------|---------|
+| `__init__.py` | BI package exports |
 | `config.py` | BI configuration (`BI_*` env vars) |
 | `session_store.py` | In-memory upload session management |
 | `data_parser.py` | XLSX/CSV ingestion via pandas (~15K rows) |
-| `filter_engine.py` | Column filter and search logic |
-| `copilot.py` | AWS Bedrock client (Claude 3.5 Sonnet) with tool use |
-| `exporters.py` | PDF export (fpdf2) and Excel export (openpyxl) |
+| `filter_engine.py` | Column filter and search logic (planned B2) |
+| `copilot.py` | AWS Bedrock client with tool use (planned B3) |
+| `exporters.py` | PDF/Excel export (planned B4) |
 
 ### API Routes (`main/api/bi_router.py`)
 
 | Endpoint | Purpose |
 |----------|---------|
 | `POST /bi/upload` | XLSX/CSV upload + parse into session |
-| `GET /bi/data` | Paginated data rows with active filters |
-| `POST /bi/chat` | Copilot message (Bedrock tool use) |
-| `GET /bi/export/pdf` | Filtered data PDF export |
-| `GET /bi/export/excel` | Filtered data Excel export |
+| `GET /bi/data/{session_id}` | Paginated data rows (B1) |
+| `GET /bi/schema/{session_id}` | Column metadata for sidebar (B1) |
+| `POST /bi/filter/{session_id}` | Filter updates (planned B2) |
+| `POST /bi/chat/{session_id}` | Copilot message (planned B3) |
+| `GET /bi/export/pdf/{session_id}` | Filtered PDF export (planned B4) |
+| `GET /bi/export/excel/{session_id}` | Filtered Excel export (planned B4) |
 
 ### Frontend Components
 
 | Component | Purpose |
 |-----------|---------|
-| `pages/agentic-bi.tsx` | Main BI page (upload, grid, chat) |
-| `bi/Sidebar.tsx` | Filter sidebar (column filters, date range) |
-| `bi/DataGrid.tsx` | TanStack Table v8 virtual-scrolling grid |
-| `bi/ChatDrawer.tsx` | Bedrock copilot chat drawer |
-| `bi/ColumnSelector.tsx` | Column visibility toggle |
-| `bi/ExportButtons.tsx` | PDF/Excel export controls |
+| `pages/agentic-bi.tsx` | Main BI page (upload + grid foundation, B1) |
+| `bi/Sidebar.tsx` | Data source + fields panel (B1) |
+| `bi/DataGrid.tsx` | TanStack Table grid + pagination (B1) |
+| `bi/ChatDrawer.tsx` | Bedrock copilot chat drawer (planned B3) |
+| `bi/ColumnSelector.tsx` | Column visibility toggle (planned B2) |
+| `bi/ExportButtons.tsx` | PDF/Excel export controls (planned B4) |
 
 ---
 
@@ -278,8 +278,9 @@ docker-compose -f docker-compose.lims.yml up -d
 ### MES Agentic BI
 
 ```bash
-# Docker Compose (Minimal Stack)
-docker-compose -f docker-compose.bi.yml up -d
+# Local dev (current B1 path)
+uv run uvicorn main.api.app:app --port 8080 --reload
+cd main/frontend && npm run dev
 
 # Access
 # BI UI: http://localhost:3000/agentic-bi
