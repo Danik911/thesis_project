@@ -2,7 +2,9 @@ import Head from 'next/head';
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import ChatDrawer from '@/components/bi/ChatDrawer';
 import DataGrid from '@/components/bi/DataGrid';
+import ExportButtons from '@/components/bi/ExportButtons';
 import Sidebar from '@/components/bi/Sidebar';
 import { getApiBaseUrl } from '@/lib/authenticatedFetch';
 import type { BIColumn, BIDataResponse, BIFilterDef, BIFilterResponse, BIUploadResponse } from '@/types/bi';
@@ -170,6 +172,15 @@ export default function AgenticBIPage() {
     }
   };
 
+  const handleCopilotFiltersChanged = async () => {
+    if (!sessionId) return;
+    try {
+      await loadPage(1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sync filters from copilot');
+    }
+  };
+
   return (
     <>
       <Head>
@@ -187,13 +198,23 @@ export default function AgenticBIPage() {
             </div>
 
             {isLoaded && (
-              <button
-                type="button"
-                onClick={resetToIdle}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 border border-slate-700 hover:border-slate-600"
-              >
-                Start Over
-              </button>
+              <div className="flex flex-col items-end gap-2">
+                <ExportButtons
+                  sessionId={sessionId!}
+                  columns={columns.map((column) => column.name)}
+                  visibleColumns={visibleColumns}
+                  onVisibleColumnsChange={setVisibleColumns}
+                  totalFilteredRows={totalFilteredRows}
+                />
+
+                <button
+                  type="button"
+                  onClick={resetToIdle}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 border border-slate-700 hover:border-slate-600"
+                >
+                  Start Over
+                </button>
+              </div>
             )}
           </div>
 
@@ -273,23 +294,32 @@ export default function AgenticBIPage() {
                     onRemove={resetToIdle}
                   />
 
-                  <DataGrid
-                    columns={columns.map((column) => column.name)}
-                    visibleColumns={visibleColumns}
-                    onVisibleColumnsChange={setVisibleColumns}
-                    data={rows}
-                    totalRows={totalRows}
-                    totalFilteredRows={totalFilteredRows}
-                    page={page}
-                    pageSize={PAGE_SIZE}
-                    totalPages={totalPages}
-                    onPageChange={(nextPage) => {
-                      if (nextPage < 1 || nextPage > totalPages) return;
-                      loadPage(nextPage).catch((pageError) => {
-                        setError(pageError instanceof Error ? pageError.message : 'Failed to fetch page');
-                      });
-                    }}
-                  />
+                  <div className="flex flex-col gap-4">
+                    <DataGrid
+                      columns={columns.map((column) => column.name)}
+                      visibleColumns={visibleColumns}
+                      onVisibleColumnsChange={setVisibleColumns}
+                      data={rows}
+                      totalRows={totalRows}
+                      totalFilteredRows={totalFilteredRows}
+                      page={page}
+                      pageSize={PAGE_SIZE}
+                      totalPages={totalPages}
+                      onPageChange={(nextPage) => {
+                        if (nextPage < 1 || nextPage > totalPages) return;
+                        loadPage(nextPage).catch((pageError) => {
+                          setError(pageError instanceof Error ? pageError.message : 'Failed to fetch page');
+                        });
+                      }}
+                    />
+
+                    {sessionId && (
+                      <ChatDrawer
+                        sessionId={sessionId}
+                        onFiltersChanged={handleCopilotFiltersChanged}
+                      />
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}

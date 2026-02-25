@@ -8,8 +8,6 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-import ColumnSelector from '@/components/bi/ColumnSelector';
-
 interface DataGridProps {
   columns: string[];
   visibleColumns: string[];
@@ -89,10 +87,6 @@ export default function DataGrid({
 
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-900 overflow-hidden">
-      <div className="flex items-center justify-end px-4 py-3 border-b border-slate-700/50 bg-slate-900">
-        <ColumnSelector columns={columns} visibleColumns={visibleColumns} onChange={onVisibleColumnsChange} />
-      </div>
-
       <div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 270px)' }}>
         <table className="min-w-full text-sm">
           <thead className="sticky top-0 z-10 bg-slate-900 border-b border-slate-700/50">

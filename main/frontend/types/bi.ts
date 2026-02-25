@@ -39,3 +39,25 @@ export interface BIFilterResponse {
   active_filters: BIFilterDef[];
   preview: BIDataResponse;
 }
+
+export interface BIChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  tool_calls?: BIToolCall[];
+  filters_changed?: boolean;
+}
+
+export interface BIToolCall {
+  tool: string;
+  input: Record<string, unknown>;
+  result: Record<string, unknown>;
+  status: 'success' | 'error';
+}
+
+export interface BIChatResponse {
+  response: string;
+  tool_calls: BIToolCall[];
+  filters_changed: boolean;
+  active_filters: BIFilterDef[];
+  filtered_row_count: number;
+}

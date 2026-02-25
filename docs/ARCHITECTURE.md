@@ -829,7 +829,7 @@ lims-two-layer-pipeline (parent trace)
 
 MES Agentic BI is a proof-of-concept data copilot for the Plant Performance Reporting System (PPRS). The currently validated implementation is B2 (filters + virtual scroll): users upload XLSX/CSV files, backend parses and stores data in an in-memory session, server-side filters are applied via pandas, and frontend renders schema + expandable per-field filters + column visibility + virtualized table rendering.
 
-### Current Implemented Flow (B2)
+### Current Implemented Flow (B2 + B4)
 
 ```
 User Uploads XLSX/CSV
@@ -847,7 +847,10 @@ User Uploads XLSX/CSV
   |                          |
   +------------+-------------+
          v
-   agentic-bi.tsx + Sidebar.tsx + DataGrid.tsx
+     agentic-bi.tsx + Sidebar.tsx + DataGrid.tsx + ExportButtons.tsx
+       |
+       v
+    /bi/export/pdf/{session_id} + /bi/export/excel/{session_id}
 ```
 
 ### Technology Stack
@@ -870,12 +873,14 @@ User Uploads XLSX/CSV
 | `/bi/data/{session_id}` | GET | Paginated filtered rows for selected session |
 | `/bi/schema/{session_id}` | GET | Column metadata for sidebar |
 | `/bi/filter/{session_id}` | POST | Apply/update active server-side filters |
+| `/bi/export/pdf/{session_id}` | GET | Filtered PDF export (landscape A4, max 1000 rows) |
+| `/bi/export/excel/{session_id}` | GET | Filtered Excel export with "Filters Applied" metadata |
 
-### Planned Next Flow (B2-B5)
+### Planned Next Flow (B3-B5)
 
 - **B2**: filter engine + sidebar filter controls + virtual scrolling (validated).
-- **B3**: Bedrock copilot chat (`/bi/chat/{session_id}`) with tool-use loop.
-- **B4**: PDF/Excel export endpoints.
+- **B3**: Bedrock copilot chat (`/bi/chat/{session_id}`) with tool-use loop (in progress).
+- **B4**: PDF/Excel export endpoints + top-bar export controls (implemented).
 - **B5**: polish, compose stack, deployment updates.
 
 ### Key Design Decisions

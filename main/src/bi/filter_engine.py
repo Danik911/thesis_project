@@ -70,6 +70,11 @@ class FilterEngine:
         filtered = self._apply_all_filters(dataframe)
         return int(len(filtered))
 
+    def get_filtered_dataframe(self) -> pd.DataFrame:
+        """Return the currently filtered DataFrame for this session."""
+        dataframe = get_dataframe(self.session_id)
+        return self._apply_all_filters(dataframe)
+
     def get_page(self, page: int, page_size: int) -> dict[str, Any]:
         if page < 1:
             raise ValueError("page must be >= 1")

@@ -15,6 +15,8 @@ This PRP outlines a 5-day Proof of Concept for "MES Agentic BI" — a data copil
 
 The system reuses the existing `thesis_project` infrastructure (Next.js, FastAPI, Docker) with a strict **additive-only** strategy.
 
+**Implementation snapshot (2026-02-25):** B1 complete, B2 complete, B3 in progress, B4 complete, B5 pending.
+
 **What the PoC must demonstrate:**
 1. Upload XLSX/CSV file with dynamic column schemas
 2. Data grid with virtual scrolling (15K rows), column visibility toggle
@@ -295,9 +297,9 @@ thesis_project/
 **Frontend:** `ExportButtons.tsx`, summary table via copilot
 
 **Gate Criteria:**
-- [ ] Excel export downloads filtered data with correct columns/rows
-- [ ] PDF export downloads formatted table (landscape, headers, max 1000 rows)
-- [ ] Export buttons show filtered row count
+- [x] Excel export downloads filtered data with correct columns/rows
+- [x] PDF export downloads formatted table (landscape, headers, max 1000 rows)
+- [x] Export buttons show filtered row count
 - [ ] Chat "Generate a summary table" produces summary
 
 ---

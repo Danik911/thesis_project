@@ -3,7 +3,7 @@
 **Phase:** 4 (Export) | **Day:** 4
 **Dependencies:** B2 (Filters — needs filtered data)
 **Branch:** `feature/mes-agentic-bi`
-**Status:** NOT STARTED
+**Status:** COMPLETE (Awaiting integrated B3/B5 regression)
 **Estimated effort:** 1 day
 
 ---
@@ -137,11 +137,11 @@ curl -o test_export.pdf http://localhost:8080/bi/export/pdf/{session_id}
 
 ## Gate Criteria (Pass/Fail)
 
-- [ ] Excel export contains only filtered rows (not full dataset)
-- [ ] Excel export has "Filters Applied" metadata sheet when filters active
-- [ ] PDF export is landscape A4 with readable table
-- [ ] PDF export caps at 1000 rows with warning in header
-- [ ] PDF header shows filename and filter summary
-- [ ] Export buttons show in top-right bar matching screenshot layout
-- [ ] Export buttons show filtered row count (e.g., "Exporting 847 rows")
-- [ ] `window.open()` triggers browser native download
+- [x] Excel export contains only filtered rows (not full dataset)
+- [x] Excel export has "Filters Applied" metadata sheet when filters active
+- [x] PDF export is landscape A4 with readable table
+- [x] PDF export caps at 1000 rows with warning in header
+- [x] PDF header shows filename and filter summary
+- [x] Export buttons show in top-right bar matching screenshot layout
+- [x] Export buttons show filtered row count (e.g., "Exporting 847 rows")
+- [x] `window.open()` triggers browser native download

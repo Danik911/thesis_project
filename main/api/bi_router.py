@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from main.src.bi.config import get_bi_config
+from main.src.bi.copilot import chat as copilot_chat
 from main.src.bi.data_parser import parse_file
+from main.src.bi.excel_exporter import export_excel
 from main.src.bi.filter_engine import get_filter_engine
+from main.src.bi.pdf_exporter import export_pdf
 from main.src.bi.session_store import create_session, get_session
 
 logger = logging.getLogger(__name__)
@@ -26,6 +31,10 @@ class BIFilterItem(BaseModel):
 
 class BIFilterRequest(BaseModel):
     filters: list[BIFilterItem]
+
+
+class BIChatRequest(BaseModel):
+    message: str
 
 
 @router.post("/upload")
@@ -130,3 +139,79 @@ async def apply_filters(session_id: str, request: BIFilterRequest) -> dict:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/export/excel/{session_id}")
+async def export_filtered_excel(session_id: str) -> StreamingResponse:
+    """Download filtered BI data as an Excel file."""
+    try:
+        session = get_session(session_id)
+        file_buffer = export_excel(session_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("BI Excel export failed for session '%s': %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"BI Excel export failed: {type(exc).__name__}: {exc}",
+        ) from exc
+
+    export_stem = Path(session.filename).stem or "bi_export"
+
+    return StreamingResponse(
+        content=file_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{export_stem}_filtered.xlsx"'
+        },
+    )
+
+
+@router.get("/export/pdf/{session_id}")
+async def export_filtered_pdf(session_id: str) -> StreamingResponse:
+    """Download filtered BI data as a PDF file."""
+    try:
+        session = get_session(session_id)
+        file_buffer = export_pdf(session_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("BI PDF export failed for session '%s': %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"BI PDF export failed: {type(exc).__name__}: {exc}",
+        ) from exc
+
+    export_stem = Path(session.filename).stem or "bi_export"
+
+    return StreamingResponse(
+        content=file_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{export_stem}_filtered.pdf"'},
+    )
+
+
+@router.post("/chat/{session_id}")
+async def chat_with_copilot(session_id: str, request: BIChatRequest) -> dict:
+    """Send a message to the BI copilot and receive an AI-generated response."""
+    if not request.message.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Chat message must not be empty",
+        )
+    try:
+        get_session(session_id)  # Validate session exists
+        result = copilot_chat(session_id, request.message)
+        return result
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("BI chat failed for session '%s': %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"BI chat failed: {type(exc).__name__}: {exc}",
+        ) from exc

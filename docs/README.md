@@ -90,9 +90,9 @@ Data copilot PoC for Plant Performance Reporting System (PPRS).
 - **Stack**: TanStack Table v8 + AWS Bedrock (Claude Sonnet 4.6) + pandas + fpdf2 + openpyxl
 - **Routes**: `/bi/*` (separate from thesis `/jobs/*` and LIMS `/lims/*` routes)
 
-**Current status (B2 validated)**: Upload XLSX/CSV, session-backed parsing, schema sidebar, per-field sidebar filters, column visibility toggle, and virtualized grid rendering.
+**Current status (B4 implemented, B3 in progress)**: Upload XLSX/CSV, session-backed parsing, schema sidebar, per-field sidebar filters, column visibility toggle, virtualized grid rendering, and filtered PDF/Excel export.
 
-**Planned next phases**: Bedrock chat copilot (B3), PDF/Excel export (B4), polish/deploy (B5).
+**Planned next phases**: Bedrock chat copilot completion (B3), polish/deploy (B5).
 
 **Local Testing**:
 ```bash

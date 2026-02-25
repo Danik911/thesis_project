@@ -223,8 +223,9 @@ frontend/
 | `session_store.py` | In-memory upload session management |
 | `data_parser.py` | XLSX/CSV ingestion via pandas (~15K rows) |
 | `filter_engine.py` | Server-side pandas filtering engine (B2) |
-| `copilot.py` | AWS Bedrock client with tool use (planned B3) |
-| `exporters.py` | PDF/Excel export (planned B4) |
+| `copilot.py` | AWS Bedrock client with tool use (B3 in progress) |
+| `pdf_exporter.py` | Filtered PDF export with row cap + filter summary (B4) |
+| `excel_exporter.py` | Filtered Excel export + "Filters Applied" sheet (B4) |
 
 ### API Routes (`main/api/bi_router.py`)
 
@@ -234,9 +235,9 @@ frontend/
 | `GET /bi/data/{session_id}` | Paginated filtered data rows (B1/B2) |
 | `GET /bi/schema/{session_id}` | Column metadata for sidebar (B1) |
 | `POST /bi/filter/{session_id}` | Filter updates (B2) |
-| `POST /bi/chat/{session_id}` | Copilot message (planned B3) |
-| `GET /bi/export/pdf/{session_id}` | Filtered PDF export (planned B4) |
-| `GET /bi/export/excel/{session_id}` | Filtered Excel export (planned B4) |
+| `POST /bi/chat/{session_id}` | Copilot message (B3 in progress) |
+| `GET /bi/export/pdf/{session_id}` | Filtered PDF export (B4) |
+| `GET /bi/export/excel/{session_id}` | Filtered Excel export (B4) |
 
 ### Frontend Components
 
@@ -245,9 +246,9 @@ frontend/
 | `pages/agentic-bi.tsx` | Main BI page (upload, filters, visibility, data sync) |
 | `bi/Sidebar.tsx` | Data source, field list, expandable per-field filters (B2) |
 | `bi/DataGrid.tsx` | TanStack Table + react-virtual grid + footer counts (B2) |
-| `bi/ChatDrawer.tsx` | Bedrock copilot chat drawer (planned B3) |
+| `bi/ChatDrawer.tsx` | Bedrock copilot chat drawer (B3 in progress) |
 | `bi/ColumnSelector.tsx` | Column visibility toggle (B2) |
-| `bi/ExportButtons.tsx` | PDF/Excel export controls (planned B4) |
+| `bi/ExportButtons.tsx` | PDF/Excel export controls (B4) |
 
 ---
 
