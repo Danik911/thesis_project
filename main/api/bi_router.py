@@ -3,16 +3,29 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, status
+from pydantic import BaseModel
 
 from main.src.bi.config import get_bi_config
 from main.src.bi.data_parser import parse_file
-from main.src.bi.session_store import create_session, get_page, get_session
+from main.src.bi.filter_engine import get_filter_engine
+from main.src.bi.session_store import create_session, get_session
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["BI"])
+
+
+class BIFilterItem(BaseModel):
+    column: str
+    operator: str
+    value: Any = None
+
+
+class BIFilterRequest(BaseModel):
+    filters: list[BIFilterItem]
 
 
 @router.post("/upload")
@@ -47,7 +60,7 @@ async def upload_file(file: UploadFile) -> dict:
         dataframe = parse_file(content, file.filename)
         session_id = create_session(file.filename, dataframe)
         session = get_session(session_id)
-        preview = get_page(session_id=session_id, page=1, page_size=100)
+        preview = get_filter_engine(session_id).get_page(page=1, page_size=100)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:
@@ -71,11 +84,11 @@ async def upload_file(file: UploadFile) -> dict:
 async def get_data_page(
     session_id: str,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=100, ge=1, le=1000),
+    page_size: int = Query(default=100, ge=1, le=50000),
 ) -> dict:
     """Fetch paginated session data for grid rendering."""
     try:
-        return get_page(session_id=session_id, page=page, page_size=page_size)
+        return get_filter_engine(session_id).get_page(page=page, page_size=page_size)
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
@@ -97,3 +110,23 @@ async def get_schema(session_id: str) -> dict:
         "total_columns": session.total_columns,
         "columns": [column.model_dump() for column in session.columns],
     }
+
+
+@router.post("/filter/{session_id}")
+async def apply_filters(session_id: str, request: BIFilterRequest) -> dict:
+    """Apply full filter set for a BI session and return updated preview."""
+    try:
+        get_session(session_id)
+        engine = get_filter_engine(session_id)
+        normalized_filters = [item.model_dump() for item in request.filters]
+        total_filtered_rows = engine.set_filters(normalized_filters)
+        preview = engine.get_page(page=1, page_size=100)
+        return {
+            "total_filtered_rows": total_filtered_rows,
+            "active_filters": engine.get_active_filters(),
+            "preview": preview,
+        }
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

@@ -17,9 +17,11 @@ export interface BISession {
 export interface BIDataResponse {
   rows: Array<Record<string, unknown>>;
   total_rows: number;
+  total_filtered_rows: number;
   page: number;
   page_size: number;
   total_pages: number;
+  active_filters?: BIFilterDef[];
 }
 
 export interface BIUploadResponse extends BISession {
@@ -30,4 +32,10 @@ export interface BIFilterDef {
   column: string;
   operator: string;
   value: string | number | boolean | null | Array<string | number>;
+}
+
+export interface BIFilterResponse {
+  total_filtered_rows: number;
+  active_filters: BIFilterDef[];
+  preview: BIDataResponse;
 }

@@ -6,7 +6,7 @@ Multi-agent LLM system for automated OQ (Operational Qualification) test generat
 
 > **AI4LIMS PoC** (branch: `prjoject_p_protatype`): **Demo-ready** AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates with full HITL workflow and two-layer pipeline architecture. Phase 8 in progress (L10-L14 complete): Classify Test Type -> Load Template -> Focused Extract -> Augment from Standards -> Merge with Provenance -> SME Review. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
 
-> **MES Agentic BI for PPRS** (branch: `feature/mes-agentic-bi`): Data copilot PoC for Plant Performance Reporting System. Upload XLSX/CSV (~15K rows), explore via virtual-scrolling grid with sidebar filters, and chat with an AWS Bedrock copilot (Claude Sonnet 4.6) that applies filters and answers analytical questions via tool use. Export filtered data as PDF/Excel. See [PRP](PRPs/data-copilot-poc.md).
+> **MES Agentic BI for PPRS** (branch: `feature/mes-agentic-bi`): B2 validated. Upload XLSX/CSV, apply sidebar filters, toggle visible columns, and explore via virtualized TanStack grid at `/agentic-bi`. Chat/export remain in subsequent BI tasks. See [PRP](PRPs/data-copilot-poc.md).
 
 ---
 
@@ -53,8 +53,10 @@ curl http://localhost:8080/health
 docker-compose -f docker-compose.lims.yml up -d
 # Frontend: http://localhost:3000/lims
 
-# MES Agentic BI PoC (minimal setup)
-docker-compose -f docker-compose.bi.yml up -d
+# MES Agentic BI PoC (current B1 local path)
+uv run uvicorn main.api.app:app --port 8080 --reload
+# In another terminal:
+cd main/frontend && npm run dev
 # Frontend: http://localhost:3000/agentic-bi
 ```
 

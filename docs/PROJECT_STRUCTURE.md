@@ -212,7 +212,7 @@ frontend/
 
 ## MES Agentic BI (`main/src/bi/`, `main/api/bi_router.py`)
 
-**Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **Compose**: `docker-compose.bi.yml`
+**Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **Compose**: planned (`docker-compose.bi.yml`)
 
 ### Backend (`main/src/bi/`)
 
@@ -222,7 +222,7 @@ frontend/
 | `config.py` | BI configuration (`BI_*` env vars) |
 | `session_store.py` | In-memory upload session management |
 | `data_parser.py` | XLSX/CSV ingestion via pandas (~15K rows) |
-| `filter_engine.py` | Column filter and search logic (planned B2) |
+| `filter_engine.py` | Server-side pandas filtering engine (B2) |
 | `copilot.py` | AWS Bedrock client with tool use (planned B3) |
 | `exporters.py` | PDF/Excel export (planned B4) |
 
@@ -231,9 +231,9 @@ frontend/
 | Endpoint | Purpose |
 |----------|---------|
 | `POST /bi/upload` | XLSX/CSV upload + parse into session |
-| `GET /bi/data/{session_id}` | Paginated data rows (B1) |
+| `GET /bi/data/{session_id}` | Paginated filtered data rows (B1/B2) |
 | `GET /bi/schema/{session_id}` | Column metadata for sidebar (B1) |
-| `POST /bi/filter/{session_id}` | Filter updates (planned B2) |
+| `POST /bi/filter/{session_id}` | Filter updates (B2) |
 | `POST /bi/chat/{session_id}` | Copilot message (planned B3) |
 | `GET /bi/export/pdf/{session_id}` | Filtered PDF export (planned B4) |
 | `GET /bi/export/excel/{session_id}` | Filtered Excel export (planned B4) |
@@ -242,11 +242,11 @@ frontend/
 
 | Component | Purpose |
 |-----------|---------|
-| `pages/agentic-bi.tsx` | Main BI page (upload + grid foundation, B1) |
-| `bi/Sidebar.tsx` | Data source + fields panel (B1) |
-| `bi/DataGrid.tsx` | TanStack Table grid + pagination (B1) |
+| `pages/agentic-bi.tsx` | Main BI page (upload, filters, visibility, data sync) |
+| `bi/Sidebar.tsx` | Data source, field list, expandable per-field filters (B2) |
+| `bi/DataGrid.tsx` | TanStack Table + react-virtual grid + footer counts (B2) |
 | `bi/ChatDrawer.tsx` | Bedrock copilot chat drawer (planned B3) |
-| `bi/ColumnSelector.tsx` | Column visibility toggle (planned B2) |
+| `bi/ColumnSelector.tsx` | Column visibility toggle (B2) |
 | `bi/ExportButtons.tsx` | PDF/Excel export controls (planned B4) |
 
 ---

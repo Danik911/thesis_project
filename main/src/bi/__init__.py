@@ -2,11 +2,14 @@
 
 from .config import BIConfig, get_bi_config
 from .data_parser import get_column_metadata, parse_file
+from .filter_engine import FilterEngine, get_filter_engine
 from .session_store import create_session, get_dataframe, get_page, get_session
 
 __all__ = [
     "BIConfig",
+    "FilterEngine",
     "create_session",
+    "get_filter_engine",
     "get_bi_config",
     "get_column_metadata",
     "get_dataframe",

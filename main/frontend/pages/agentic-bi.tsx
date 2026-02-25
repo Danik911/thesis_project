@@ -5,9 +5,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import DataGrid from '@/components/bi/DataGrid';
 import Sidebar from '@/components/bi/Sidebar';
 import { getApiBaseUrl } from '@/lib/authenticatedFetch';
-import type { BIColumn, BIDataResponse, BIUploadResponse } from '@/types/bi';
+import type { BIColumn, BIDataResponse, BIFilterDef, BIFilterResponse, BIUploadResponse } from '@/types/bi';
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 15000;
 const FADE = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 } };
 
 export default function AgenticBIPage() {
@@ -21,8 +21,11 @@ export default function AgenticBIPage() {
   const [columns, setColumns] = useState<BIColumn[]>([]);
   const [rows, setRows] = useState<Array<Record<string, unknown>>>([]);
   const [totalRows, setTotalRows] = useState(0);
+  const [totalFilteredRows, setTotalFilteredRows] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [activeFilters, setActiveFilters] = useState<BIFilterDef[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,8 +36,11 @@ export default function AgenticBIPage() {
     setColumns([]);
     setRows([]);
     setTotalRows(0);
+    setTotalFilteredRows(0);
     setPage(1);
     setTotalPages(1);
+    setActiveFilters([]);
+    setVisibleColumns([]);
     setError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -55,8 +61,10 @@ export default function AgenticBIPage() {
     const payload: BIDataResponse = await response.json();
     setRows(payload.rows);
     setTotalRows(payload.total_rows);
+    setTotalFilteredRows(payload.total_filtered_rows);
     setPage(payload.page);
     setTotalPages(payload.total_pages);
+    setActiveFilters(payload.active_filters ?? []);
   };
 
   const handleUpload = async () => {
@@ -84,10 +92,13 @@ export default function AgenticBIPage() {
       setSessionId(payload.session_id);
       setFilename(payload.filename);
       setColumns(payload.columns);
+      setVisibleColumns(payload.columns.map((column) => column.name));
       setRows(payload.preview.rows);
       setTotalRows(payload.total_rows);
+      setTotalFilteredRows(payload.preview.total_filtered_rows);
       setPage(payload.preview.page);
       setTotalPages(payload.preview.total_pages);
+      setActiveFilters(payload.preview.active_filters ?? []);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Upload failed');
     } finally {
@@ -131,6 +142,33 @@ export default function AgenticBIPage() {
   };
 
   const isLoaded = Boolean(sessionId);
+
+  const handleFiltersChange = async (filters: BIFilterDef[]) => {
+    if (!sessionId) return;
+
+    setError(null);
+
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/bi/filter/${sessionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filters }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.detail ?? `Failed to apply filters (${response.status})`);
+      }
+
+      const payload: BIFilterResponse = await response.json();
+      setActiveFilters(payload.active_filters);
+      await loadPage(1);
+    } catch (filterError) {
+      setError(filterError instanceof Error ? filterError.message : 'Failed to apply filters');
+    }
+  };
 
   return (
     <>
@@ -227,12 +265,21 @@ export default function AgenticBIPage() {
             ) : (
               <motion.div key="grid" {...FADE}>
                 <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
-                  <Sidebar filename={filename} fields={columns} onRemove={resetToIdle} />
+                  <Sidebar
+                    filename={filename}
+                    fields={columns}
+                    activeFilters={activeFilters}
+                    onFiltersChange={handleFiltersChange}
+                    onRemove={resetToIdle}
+                  />
 
                   <DataGrid
                     columns={columns.map((column) => column.name)}
+                    visibleColumns={visibleColumns}
+                    onVisibleColumnsChange={setVisibleColumns}
                     data={rows}
                     totalRows={totalRows}
+                    totalFilteredRows={totalFilteredRows}
                     page={page}
                     pageSize={PAGE_SIZE}
                     totalPages={totalPages}

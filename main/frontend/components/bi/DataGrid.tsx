@@ -1,15 +1,22 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import {
   flexRender,
   getCoreRowModel,
+  type VisibilityState,
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+import ColumnSelector from '@/components/bi/ColumnSelector';
 
 interface DataGridProps {
   columns: string[];
+  visibleColumns: string[];
+  onVisibleColumnsChange: (columns: string[]) => void;
   data: Array<Record<string, unknown>>;
   totalRows: number;
+  totalFilteredRows: number;
   page: number;
   pageSize: number;
   totalPages: number;
@@ -18,13 +25,18 @@ interface DataGridProps {
 
 export default function DataGrid({
   columns,
+  visibleColumns,
+  onVisibleColumnsChange,
   data,
   totalRows,
+  totalFilteredRows,
   page,
   pageSize,
   totalPages,
   onPageChange,
 }: DataGridProps) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
   const tableColumns = useMemo<ColumnDef<Record<string, unknown>>[]>(
     () =>
       columns.map((column) => ({
@@ -39,18 +51,49 @@ export default function DataGrid({
     [columns]
   );
 
+  const columnVisibility = useMemo<VisibilityState>(() => {
+    const visible = new Set(visibleColumns);
+    return Object.fromEntries(columns.map((column) => [column, visible.has(column)]));
+  }, [columns, visibleColumns]);
+
   const table = useReactTable({
     data,
     columns: tableColumns,
+    state: {
+      columnVisibility,
+    },
+    onColumnVisibilityChange: (updater) => {
+      const current: VisibilityState = { ...columnVisibility };
+      const next = typeof updater === 'function' ? updater(current) : updater;
+      const orderedVisible = columns.filter((column) => next[column] !== false);
+      if (orderedVisible.length > 0) {
+        onVisibleColumnsChange(orderedVisible);
+      }
+    },
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const start = totalRows === 0 ? 0 : (page - 1) * pageSize + 1;
-  const end = Math.min(page * pageSize, totalRows);
+  const tableRows = table.getRowModel().rows;
+
+  const rowVirtualizer = useVirtualizer({
+    count: tableRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 36,
+    overscan: 10,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+
+  const start = totalFilteredRows === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, totalFilteredRows);
 
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-900 overflow-hidden">
-      <div className="overflow-auto max-h-[72vh]">
+      <div className="flex items-center justify-end px-4 py-3 border-b border-slate-700/50 bg-slate-900">
+        <ColumnSelector columns={columns} visibleColumns={visibleColumns} onChange={onVisibleColumnsChange} />
+      </div>
+
+      <div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 270px)' }}>
         <table className="min-w-full text-sm">
           <thead className="sticky top-0 z-10 bg-slate-900 border-b border-slate-700/50">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -69,16 +112,25 @@ export default function DataGrid({
             ))}
           </thead>
 
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-slate-800/80 hover:bg-slate-800/50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2 text-slate-200 whitespace-nowrap">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
+          <tbody className="relative block" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+            {virtualRows.map((virtualRow) => {
+              const row = tableRows[virtualRow.index];
+              if (!row) return null;
+
+              return (
+                <tr
+                  key={row.id}
+                  className="absolute left-0 w-full border-b border-slate-800/80 hover:bg-slate-800/50"
+                  style={{ transform: `translateY(${virtualRow.start}px)` }}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-3 py-2 text-slate-200 whitespace-nowrap">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
 
             {data.length === 0 && (
               <tr>
@@ -93,7 +145,7 @@ export default function DataGrid({
 
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700/50 bg-slate-900">
         <p className="text-xs text-slate-400">
-          Showing {start}-{end} of {totalRows} rows
+          Showing {start}-{end} of {totalFilteredRows} rows (from {totalRows})
         </p>
 
         <div className="flex items-center gap-2">

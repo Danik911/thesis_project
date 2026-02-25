@@ -526,36 +526,29 @@ docker stats
 
 ---
 
-## MES Agentic BI Stack (docker-compose.bi.yml)
+## MES Agentic BI (Current Local Path)
 
-Minimal 2-service architecture for MES Agentic BI PoC (branch: `feature/mes-agentic-bi`):
-
-| Service | Purpose | Technology |
-|---------|---------|------------|
-| **api** | BI API endpoints (`/bi/*`) | FastAPI + uvicorn |
-| **frontend** | Agentic BI interface (`/agentic-bi`) | Next.js 14 |
-
-**Note**: No PostgreSQL, LocalStack, or worker service. MES Agentic BI uses an in-memory session store. No ChromaDB — uploaded data is held in memory per session.
+Current validated scope is B1 (upload + grid foundation). Use direct API + frontend startup:
 
 ```bash
-# Start MES Agentic BI stack
-docker-compose -f docker-compose.bi.yml up -d
+# Backend
+uv run uvicorn main.api.app:app --port 8080 --reload
+
+# Frontend
+cd main/frontend && npm run dev
 
 # Access
 # BI UI:  http://localhost:3000/agentic-bi
 # API:    http://localhost:8080/bi/*
-
-# Logs
-docker-compose -f docker-compose.bi.yml logs -f
-
-# Stop
-docker-compose -f docker-compose.bi.yml down
 ```
 
-**Required env vars** (`BI_*` prefix):
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` — AWS Bedrock access
-- `BI_MAX_UPLOAD_MB` — Max upload file size (default: 50)
+**Required env vars** (`BI_*` prefix for current B1):
+- `BI_MAX_UPLOAD_SIZE_MB` — Max upload file size (default: 50)
+- `BI_MAX_ROWS` — Max parsed rows (default: 100000)
 - `BI_SESSION_TTL_SECONDS` — Session expiry (default: 3600)
+- `BI_MAX_SESSIONS` — Max concurrent sessions (default: 20)
+
+**Note**: `docker-compose.bi.yml` is planned for a later BI phase and is not yet present in the repository.
 
 ---
 

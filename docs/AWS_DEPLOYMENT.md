@@ -218,7 +218,7 @@ The BI data copilot PoC uses AWS Bedrock Converse API for natural language data 
 | Inference type | US cross-region inference profile |
 | Bedrock region | `us-east-1` (different from main app region `eu-west-2`) |
 | Routes | `/bi/*` |
-| Local compose file | `docker-compose.bi.yml` |
+| Local run path | `uvicorn` + `npm run dev` (B1 current state) |
 
 ### IAM Permissions
 
