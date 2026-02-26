@@ -1,5 +1,6 @@
 """MES Agentic BI package."""
 
+from .chart_engine import get_chart_data, recommend_charts
 from .config import BIConfig, get_bi_config
 from .copilot import chat
 from .data_parser import get_column_metadata, parse_file
@@ -11,6 +12,7 @@ __all__ = [
     "FilterEngine",
     "chat",
     "create_session",
+    "get_chart_data",
     "get_filter_engine",
     "get_bi_config",
     "get_column_metadata",
@@ -18,4 +20,5 @@ __all__ = [
     "get_page",
     "get_session",
     "parse_file",
+    "recommend_charts",
 ]

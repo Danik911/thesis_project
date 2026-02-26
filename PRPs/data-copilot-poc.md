@@ -373,5 +373,6 @@ LANGFUSE_HOST=https://cloud.langfuse.com
 | B3 | `PRPs/tasks/B3-copilot-chat-bedrock.md` | 3 | AWS Bedrock Converse + 5 tools, agentic loop, bottom chat drawer |
 | B4 | `PRPs/tasks/B4-export-pdf-excel.md` | 4 | PDF export (fpdf2, max 1000 rows), Excel export (openpyxl), export buttons |
 | B5 | `PRPs/tasks/B5-polish-deploy.md` | 5 | Bold design, Docker compose, E2E testing, documentation |
+| B6 | `PRPs/tasks/B6-snowflake-datasource.md` | 6 | Snowflake data source: connect, browse tables/stages, load into BI session |
 
 Task prefix `B` avoids collision with thesis tasks (0.x-5.x) and LIMS tasks (Lx).

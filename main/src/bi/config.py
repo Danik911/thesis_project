@@ -21,6 +21,13 @@ class BIConfig:
     session_ttl_seconds: int = int(os.getenv("BI_SESSION_TTL_SECONDS", "3600"))
     max_sessions: int = int(os.getenv("BI_MAX_SESSIONS", "20"))
 
+    sf_account: str = os.getenv("BI_SF_ACCOUNT", "")
+    sf_user: str = os.getenv("BI_SF_USER", "")
+    sf_password: str = os.getenv("BI_SF_PASSWORD", "")
+    sf_warehouse: str = os.getenv("BI_SF_WAREHOUSE", "")
+    sf_database: str = os.getenv("BI_SF_DATABASE", "")
+    sf_schema: str = os.getenv("BI_SF_SCHEMA", "")
+
     voice_enabled: bool = _as_bool(os.getenv("BI_VOICE_ENABLED"), default=False)
     voice_transcribe_region: str = os.getenv("BI_VOICE_TRANSCRIBE_REGION", bedrock_region)
     voice_language_code: str = os.getenv("BI_VOICE_LANGUAGE_CODE", "en-US")

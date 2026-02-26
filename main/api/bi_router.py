@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from main.src.bi.chart_engine import get_chart_data, recommend_charts
 from main.src.bi.config import get_bi_config
 from main.src.bi.copilot import chat as copilot_chat
 from main.src.bi.data_parser import parse_file
@@ -17,6 +18,12 @@ from main.src.bi.excel_exporter import export_excel
 from main.src.bi.filter_engine import get_filter_engine
 from main.src.bi.pdf_exporter import export_pdf
 from main.src.bi.session_store import create_session, get_session
+from main.src.bi.snowflake_connector import (
+    fetch_stage_file as sf_fetch_stage_file,
+    fetch_table as sf_fetch_table,
+    list_stage_files as sf_list_stage_files,
+    list_tables as sf_list_tables,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +42,38 @@ class BIFilterRequest(BaseModel):
 
 class BIChatRequest(BaseModel):
     message: str
+
+
+class BIChartDataRequest(BaseModel):
+    chart_type: str
+    x_column: str
+    y_column: str | None = None
+    aggregation: str | None = None
+    group_by: str | None = None
+    bins: int = 20
+    limit: int = 50
+
+
+class SnowflakeConnectRequest(BaseModel):
+    account: str
+    user: str
+    password: str
+    warehouse: str
+    database: str
+    schema_name: str
+
+
+class SnowflakeLoadTableRequest(SnowflakeConnectRequest):
+    table_name: str
+
+
+class SnowflakeLoadStageFileRequest(SnowflakeConnectRequest):
+    stage_name: str
+    file_path: str
+
+
+def _snowflake_error_detail(prefix: str, exc: Exception) -> str:
+    return f"{prefix}: {type(exc).__name__}: {exc}"
 
 
 @router.post("/upload")
@@ -215,3 +254,185 @@ async def chat_with_copilot(session_id: str, request: BIChatRequest) -> dict:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"BI chat failed: {type(exc).__name__}: {exc}",
         ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Chart endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/charts/recommend/{session_id}")
+async def recommend_session_charts(session_id: str) -> dict:
+    """Analyze session schema and return recommended chart configurations."""
+    try:
+        get_session(session_id)
+        return recommend_charts(session_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Chart recommendation failed for session '%s': %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Chart recommendation failed: {type(exc).__name__}: {exc}",
+        ) from exc
+
+
+@router.post("/charts/data/{session_id}")
+async def get_session_chart_data(session_id: str, request: BIChartDataRequest) -> dict:
+    """Compute aggregated data for a specific chart configuration."""
+    try:
+        get_session(session_id)
+        return get_chart_data(
+            session_id,
+            chart_type=request.chart_type,
+            x_column=request.x_column,
+            y_column=request.y_column,
+            aggregation=request.aggregation,
+            group_by=request.group_by,
+            bins=request.bins,
+            limit=request.limit,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Chart data failed for session '%s': %s", session_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Chart data failed: {type(exc).__name__}: {exc}",
+        ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Snowflake data source endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.post("/snowflake/tables")
+async def list_snowflake_tables(request: SnowflakeConnectRequest) -> dict:
+    """List tables/views in a Snowflake schema."""
+    try:
+        tables = sf_list_tables(
+            account=request.account,
+            user=request.user,
+            password=request.password,
+            warehouse=request.warehouse,
+            database=request.database,
+            schema=request.schema_name,
+        )
+        return {
+            "tables": tables,
+            "database": request.database,
+            "schema": request.schema_name,
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Snowflake list_tables failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_snowflake_error_detail("Snowflake connection failed", exc),
+        ) from exc
+
+
+@router.post("/snowflake/stages/{stage_name}/files")
+async def list_snowflake_stage_files(stage_name: str, request: SnowflakeConnectRequest) -> dict:
+    """List files in a named Snowflake stage."""
+    try:
+        files = sf_list_stage_files(
+            account=request.account,
+            user=request.user,
+            password=request.password,
+            warehouse=request.warehouse,
+            database=request.database,
+            schema=request.schema_name,
+            stage_name=stage_name,
+        )
+        return {
+            "files": files,
+            "stage": stage_name,
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Snowflake list_stage_files failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_snowflake_error_detail("Snowflake stage listing failed", exc),
+        ) from exc
+
+
+@router.post("/snowflake/load/table")
+async def load_snowflake_table(request: SnowflakeLoadTableRequest) -> dict:
+    """Load a Snowflake table into a BI session."""
+    try:
+        dataframe = sf_fetch_table(
+            account=request.account,
+            user=request.user,
+            password=request.password,
+            warehouse=request.warehouse,
+            database=request.database,
+            schema=request.schema_name,
+            table_name=request.table_name,
+        )
+
+        source_name = f"sf://{request.database}.{request.schema_name}.{request.table_name}"
+        session_id = create_session(source_name, dataframe)
+        session = get_session(session_id)
+        preview = get_filter_engine(session_id).get_page(page=1, page_size=100)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Snowflake load_table failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_snowflake_error_detail("Snowflake load failed", exc),
+        ) from exc
+
+    return {
+        "session_id": session.session_id,
+        "filename": session.filename,
+        "total_rows": session.total_rows,
+        "total_columns": session.total_columns,
+        "columns": [column.model_dump() for column in session.columns],
+        "preview": preview,
+    }
+
+
+@router.post("/snowflake/load/stage-file")
+async def load_snowflake_stage_file(request: SnowflakeLoadStageFileRequest) -> dict:
+    """Download a stage file, parse it, and load into a BI session."""
+    try:
+        dataframe = sf_fetch_stage_file(
+            account=request.account,
+            user=request.user,
+            password=request.password,
+            warehouse=request.warehouse,
+            database=request.database,
+            schema=request.schema_name,
+            stage_name=request.stage_name,
+            file_path=request.file_path,
+        )
+
+        source_name = f"sf://@{request.stage_name}/{request.file_path}"
+        session_id = create_session(source_name, dataframe)
+        session = get_session(session_id)
+        preview = get_filter_engine(session_id).get_page(page=1, page_size=100)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Snowflake load_stage_file failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_snowflake_error_detail("Snowflake stage file load failed", exc),
+        ) from exc
+
+    return {
+        "session_id": session.session_id,
+        "filename": session.filename,
+        "total_rows": session.total_rows,
+        "total_columns": session.total_columns,
+        "columns": [column.model_dump() for column in session.columns],
+        "preview": preview,
+    }

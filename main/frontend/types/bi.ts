@@ -61,3 +61,124 @@ export interface BIChatResponse {
   active_filters: BIFilterDef[];
   filtered_row_count: number;
 }
+
+// ---------------------------------------------------------------------------
+// Chart types
+// ---------------------------------------------------------------------------
+
+export interface BIKPICard {
+  column: string;
+  dtype: string;
+  count: number;
+  mean: number | null;
+  min: number | null;
+  max: number | null;
+  sum: number | null;
+}
+
+export interface BIChartRecommendation {
+  chart_id: string;
+  chart_type: 'bar' | 'line' | 'scatter' | 'histogram' | 'heatmap';
+  title: string;
+  x_column: string;
+  y_column: string | null;
+  value_column?: string;
+  aggregation: string | null;
+  group_by?: string;
+  reason: string;
+}
+
+export interface BIChartRecommendResponse {
+  session_id: string;
+  filtered_row_count: number;
+  kpi_cards: BIKPICard[];
+  recommended_charts: BIChartRecommendation[];
+}
+
+export interface BIChartDataRequest {
+  chart_type: string;
+  x_column: string;
+  y_column?: string | null;
+  aggregation?: string | null;
+  group_by?: string | null;
+  bins?: number;
+  limit?: number;
+}
+
+export interface BIChartDataPoint {
+  x: string | number;
+  y: number;
+  [key: string]: string | number | null | undefined;
+}
+
+export interface BIHistogramBin {
+  bin_start: number;
+  bin_end: number;
+  count: number;
+}
+
+export interface BIHeatmapCell {
+  x: string;
+  y: string;
+  value: number;
+}
+
+export interface BIChartDataResponse {
+  chart_type: string;
+  x_column: string;
+  y_column?: string;
+  value_column?: string;
+  aggregation?: string;
+  group_by?: string;
+  groups?: string[];
+  data: BIChartDataPoint[] | BIHistogramBin[] | BIHeatmapCell[];
+  data_points: number;
+  sampled?: boolean;
+  sample_size?: number;
+  bins?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Snowflake data source types
+// ---------------------------------------------------------------------------
+
+export interface SnowflakeConnectRequest {
+  account: string;
+  user: string;
+  password: string;
+  warehouse: string;
+  database: string;
+  schema_name: string;
+}
+
+export interface SnowflakeTable {
+  name: string;
+  kind: string;
+  row_count: number | null;
+}
+
+export interface SnowflakeTablesResponse {
+  tables: SnowflakeTable[];
+  database: string;
+  schema: string;
+}
+
+export interface SnowflakeStageFile {
+  name: string;
+  size: number;
+  last_modified: string;
+}
+
+export interface SnowflakeStageFilesResponse {
+  files: SnowflakeStageFile[];
+  stage: string;
+}
+
+export interface SnowflakeLoadTableRequest extends SnowflakeConnectRequest {
+  table_name: string;
+}
+
+export interface SnowflakeLoadStageFileRequest extends SnowflakeConnectRequest {
+  stage_name: string;
+  file_path: string;
+}

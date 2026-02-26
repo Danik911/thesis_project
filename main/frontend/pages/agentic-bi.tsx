@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -6,6 +7,7 @@ import ChatDrawer from '@/components/bi/ChatDrawer';
 import DataGrid from '@/components/bi/DataGrid';
 import ExportButtons from '@/components/bi/ExportButtons';
 import Sidebar from '@/components/bi/Sidebar';
+import SnowflakeBrowser from '@/components/bi/SnowflakeBrowser';
 import { getApiBaseUrl } from '@/lib/authenticatedFetch';
 import type { BIColumn, BIDataResponse, BIFilterDef, BIFilterResponse, BIUploadResponse } from '@/types/bi';
 
@@ -28,8 +30,10 @@ export default function AgenticBIPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [activeFilters, setActiveFilters] = useState<BIFilterDef[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+  const [dataSource, setDataSource] = useState<'upload' | 'snowflake'>('upload');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const resetToIdle = () => {
     setFile(null);
@@ -44,6 +48,7 @@ export default function AgenticBIPage() {
     setActiveFilters([]);
     setVisibleColumns([]);
     setError(null);
+    setDataSource('upload');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -106,6 +111,20 @@ export default function AgenticBIPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSnowflakeSessionLoaded = (payload: BIUploadResponse) => {
+    setSessionId(payload.session_id);
+    setFilename(payload.filename);
+    setColumns(payload.columns);
+    setVisibleColumns(payload.columns.map((column) => column.name));
+    setRows(payload.preview.rows);
+    setTotalRows(payload.total_rows);
+    setTotalFilteredRows(payload.preview.total_filtered_rows);
+    setPage(payload.preview.page);
+    setTotalPages(payload.preview.total_pages);
+    setActiveFilters(payload.preview.active_filters ?? []);
+    setLoading(false);
   };
 
   const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,6 +229,14 @@ export default function AgenticBIPage() {
 
                 <button
                   type="button"
+                  onClick={() => router.push(`/bi-charts?session=${sessionId}`)}
+                  className="px-3 py-1.5 text-xs rounded-md border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 transition-colors"
+                >
+                  Charts
+                </button>
+
+                <button
+                  type="button"
                   onClick={resetToIdle}
                   className="px-3 py-1.5 text-xs rounded-md border border-slate-700 text-slate-300 hover:border-slate-600"
                 >
@@ -222,67 +249,101 @@ export default function AgenticBIPage() {
           <AnimatePresence mode="wait">
             {!isLoaded ? (
               <motion.div key="upload" {...FADE}>
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onClick={() => fileInputRef.current?.click()}
-                  onKeyDown={handleDropzoneKeyDown}
-                  role="button"
-                  tabIndex={0}
-                  className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all ${
-                    dragOver
-                      ? 'border-cyan-400 bg-cyan-500/10'
-                      : file
-                        ? 'border-cyan-500/40 bg-cyan-500/5'
-                        : 'border-slate-600 hover:border-cyan-500/50 hover:bg-slate-900'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".xlsx,.csv"
-                    onChange={handleFileInput}
-                    className="hidden"
-                  />
-
-                  {file ? (
-                    <div className="space-y-2">
-                      <p className="text-cyan-300 font-medium">{file.name}</p>
-                      <p className="text-slate-500 text-sm">{(file.size / 1024).toFixed(1)} KB</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-slate-300">Drop an XLSX/CSV file here or click to browse</p>
-                      <p className="text-slate-500 text-xs">Supports dynamic schemas up to configured upload limits.</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 flex items-center gap-3">
+                <div className="flex gap-2 mb-4">
                   <button
                     type="button"
-                    onClick={handleUpload}
-                    disabled={!file || loading}
-                    className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
-                      !file || loading
-                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                        : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                    onClick={() => setDataSource('upload')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      dataSource === 'upload'
+                        ? 'bg-cyan-600 text-white'
+                        : 'bg-slate-800 text-slate-300 border border-slate-700'
                     }`}
                   >
-                    {loading ? 'Uploading...' : 'Upload and Load Grid'}
+                    File Upload
                   </button>
-
-                  {file && (
-                    <button
-                      type="button"
-                      onClick={resetToIdle}
-                      className="px-6 py-3 rounded-xl text-sm font-medium text-slate-300 border border-slate-700 hover:border-slate-600"
-                    >
-                      Clear
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setDataSource('snowflake')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      dataSource === 'snowflake'
+                        ? 'bg-cyan-600 text-white'
+                        : 'bg-slate-800 text-slate-300 border border-slate-700'
+                    }`}
+                  >
+                    Snowflake
+                  </button>
                 </div>
+
+                {dataSource === 'upload' ? (
+                  <>
+                    <div
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={handleDropzoneKeyDown}
+                      role="button"
+                      tabIndex={0}
+                      className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all ${
+                        dragOver
+                          ? 'border-cyan-400 bg-cyan-500/10'
+                          : file
+                            ? 'border-cyan-500/40 bg-cyan-500/5'
+                            : 'border-slate-600 hover:border-cyan-500/50 hover:bg-slate-900'
+                      }`}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.csv"
+                        onChange={handleFileInput}
+                        className="hidden"
+                      />
+
+                      {file ? (
+                        <div className="space-y-2">
+                          <p className="text-cyan-300 font-medium">{file.name}</p>
+                          <p className="text-slate-500 text-sm">{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-slate-300">Drop an XLSX/CSV file here or click to browse</p>
+                          <p className="text-slate-500 text-xs">Supports dynamic schemas up to configured upload limits.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-6 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleUpload}
+                        disabled={!file || loading}
+                        className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
+                          !file || loading
+                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                            : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                        }`}
+                      >
+                        {loading ? 'Uploading...' : 'Upload and Load Grid'}
+                      </button>
+
+                      {file && (
+                        <button
+                          type="button"
+                          onClick={resetToIdle}
+                          className="px-6 py-3 rounded-xl text-sm font-medium text-slate-300 border border-slate-700 hover:border-slate-600"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <SnowflakeBrowser
+                    onSessionLoaded={handleSnowflakeSessionLoaded}
+                    onError={setError}
+                  />
+                )}
               </motion.div>
             ) : (
               <motion.div key="grid" {...FADE}>
