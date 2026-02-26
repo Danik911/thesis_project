@@ -5,6 +5,12 @@ from __future__ import annotations
 import os
 
 
+def _as_bool(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 class BIConfig:
     """Runtime BI configuration loaded from BI_* environment variables."""
 
@@ -14,6 +20,16 @@ class BIConfig:
     max_rows: int = int(os.getenv("BI_MAX_ROWS", "100000"))
     session_ttl_seconds: int = int(os.getenv("BI_SESSION_TTL_SECONDS", "3600"))
     max_sessions: int = int(os.getenv("BI_MAX_SESSIONS", "20"))
+
+    voice_enabled: bool = _as_bool(os.getenv("BI_VOICE_ENABLED"), default=False)
+    voice_transcribe_region: str = os.getenv("BI_VOICE_TRANSCRIBE_REGION", bedrock_region)
+    voice_language_code: str = os.getenv("BI_VOICE_LANGUAGE_CODE", "en-US")
+    voice_sample_rate_hz: int = int(os.getenv("BI_VOICE_SAMPLE_RATE_HZ", "16000"))
+
+    voice_tts_enabled: bool = _as_bool(os.getenv("BI_VOICE_TTS_ENABLED"), default=False)
+    voice_polly_region: str = os.getenv("BI_VOICE_POLLY_REGION", bedrock_region)
+    voice_polly_voice_id: str = os.getenv("BI_VOICE_POLLY_VOICE_ID", "Joanna")
+    voice_polly_output_format: str = os.getenv("BI_VOICE_POLLY_OUTPUT_FORMAT", "mp3")
 
 
 def get_bi_config() -> BIConfig:

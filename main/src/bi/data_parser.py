@@ -68,7 +68,7 @@ def parse_file(content: bytes, filename: str) -> pd.DataFrame:
     return dataframe
 
 
-def get_column_metadata(dataframe: pd.DataFrame, sample_size: int = 5) -> list[dict[str, Any]]:
+def get_column_metadata(dataframe: pd.DataFrame, sample_size: int = 50) -> list[dict[str, Any]]:
     """Build per-column metadata for schema sidebar and API responses."""
     columns: list[dict[str, Any]] = []
 

@@ -172,9 +172,13 @@ export default function AgenticBIPage() {
     }
   };
 
-  const handleCopilotFiltersChanged = async () => {
+  const handleCopilotFiltersChanged = async (copilotFilters?: BIFilterDef[]) => {
     if (!sessionId) return;
     try {
+      // Apply copilot-provided filters immediately so the sidebar updates
+      if (copilotFilters) {
+        setActiveFilters(copilotFilters);
+      }
       await loadPage(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sync filters from copilot');
@@ -187,18 +191,15 @@ export default function AgenticBIPage() {
         <title>MES Agentic BI</title>
       </Head>
 
-      <div className="min-h-screen bg-slate-950 text-slate-100 px-6 py-10">
+      <div className="min-h-screen bg-slate-950 text-slate-100 px-4 py-4">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8 flex items-end justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-cyan-300" style={{ fontFamily: 'var(--font-display)' }}>
-                MES Agentic BI for PPRS
-              </h1>
-              <p className="text-sm text-slate-400 mt-2">Upload XLSX/CSV data and explore it in the BI grid.</p>
-            </div>
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h1 className="text-2xl font-bold text-cyan-300 whitespace-nowrap" style={{ fontFamily: 'var(--font-display)' }}>
+              MES Agentic BI
+            </h1>
 
             {isLoaded && (
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
                 <ExportButtons
                   sessionId={sessionId!}
                   columns={columns.map((column) => column.name)}
@@ -210,7 +211,7 @@ export default function AgenticBIPage() {
                 <button
                   type="button"
                   onClick={resetToIdle}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 border border-slate-700 hover:border-slate-600"
+                  className="px-3 py-1.5 text-xs rounded-md border border-slate-700 text-slate-300 hover:border-slate-600"
                 >
                   Start Over
                 </button>
@@ -285,7 +286,7 @@ export default function AgenticBIPage() {
               </motion.div>
             ) : (
               <motion.div key="grid" {...FADE}>
-                <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[288px_minmax(0,1fr)] gap-4">
                   <Sidebar
                     filename={filename}
                     fields={columns}
@@ -294,7 +295,7 @@ export default function AgenticBIPage() {
                     onRemove={resetToIdle}
                   />
 
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-3">
                     <DataGrid
                       columns={columns.map((column) => column.name)}
                       visibleColumns={visibleColumns}

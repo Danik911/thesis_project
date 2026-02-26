@@ -87,6 +87,34 @@
   }
 }
 
+/* Custom scrollbar — thin, dark, matches slate theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(51 65 85) transparent; /* slate-700 on transparent */
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(51 65 85); /* slate-700 */
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(71 85 105); /* slate-600 */
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Custom Cursor Styles */
 .custom-cursor-active,
 .custom-cursor-active * {

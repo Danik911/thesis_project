@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   flexRender,
   getCoreRowModel,
@@ -34,6 +34,15 @@ export default function DataGrid({
   onPageChange,
 }: DataGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [search, setSearch] = useState('');
+
+  const filteredData = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return data;
+    return data.filter((row) =>
+      Object.values(row).some((val) => val != null && String(val).toLowerCase().includes(query))
+    );
+  }, [data, search]);
 
   const tableColumns = useMemo<ColumnDef<Record<string, unknown>>[]>(
     () =>
@@ -55,7 +64,7 @@ export default function DataGrid({
   }, [columns, visibleColumns]);
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns: tableColumns,
     state: {
       columnVisibility,
@@ -82,20 +91,46 @@ export default function DataGrid({
 
   const virtualRows = rowVirtualizer.getVirtualItems();
 
+  const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const colWidth = visibleColumnCount > 0 ? `${100 / visibleColumnCount}%` : 'auto';
+
   const start = totalFilteredRows === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalFilteredRows);
 
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-900 overflow-hidden">
-      <div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 270px)' }}>
+      {/* Quick search bar */}
+      <div className="px-4 py-2 border-b border-slate-700/50 flex items-center gap-2">
+        <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Quick search across all columns..."
+          className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 focus:outline-none"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="text-xs text-slate-500 hover:text-slate-300"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <div ref={parentRef} className="overflow-auto" style={{ height: 'calc(100vh - 230px)' }}>
         <table className="min-w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-slate-900 border-b border-slate-700/50">
+          <thead className="sticky top-0 z-10 bg-slate-900 border-b border-slate-700/50 block">
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
+              <tr key={headerGroup.id} className="flex w-full">
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-3 py-2 text-left text-xs uppercase tracking-wide text-slate-300 whitespace-nowrap"
+                    className="px-3 py-2 text-left text-xs uppercase tracking-wide text-slate-300 whitespace-nowrap overflow-hidden text-ellipsis border-r border-slate-700/30 last:border-r-0"
+                    style={{ width: colWidth, minWidth: 0 }}
                   >
                     {header.isPlaceholder
                       ? null
@@ -114,11 +149,15 @@ export default function DataGrid({
               return (
                 <tr
                   key={row.id}
-                  className="absolute left-0 w-full border-b border-slate-800/80 hover:bg-slate-800/50"
+                  className="absolute left-0 w-full flex border-b border-slate-800/80 hover:bg-slate-800/50"
                   style={{ transform: `translateY(${virtualRow.start}px)` }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-3 py-2 text-slate-200 whitespace-nowrap">
+                    <td
+                      key={cell.id}
+                      className="px-3 py-2 text-slate-200 whitespace-nowrap overflow-hidden text-ellipsis border-r border-slate-700/30 last:border-r-0"
+                      style={{ width: colWidth, minWidth: 0 }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -126,7 +165,7 @@ export default function DataGrid({
               );
             })}
 
-            {data.length === 0 && (
+            {filteredData.length === 0 && (
               <tr>
                 <td className="px-3 py-8 text-center text-slate-400" colSpan={Math.max(columns.length, 1)}>
                   No rows to display.
@@ -139,7 +178,9 @@ export default function DataGrid({
 
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700/50 bg-slate-900">
         <p className="text-xs text-slate-400">
-          Showing {start}-{end} of {totalFilteredRows} rows (from {totalRows})
+          {search.trim()
+            ? `Search: ${filteredData.length} matches in ${totalFilteredRows} rows`
+            : `Showing ${start}-${end} of ${totalFilteredRows} rows (from ${totalRows})`}
         </p>
 
         <div className="flex items-center gap-2">

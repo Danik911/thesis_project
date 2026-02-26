@@ -1492,7 +1492,9 @@ app.include_router(lims_router, prefix="/lims")
 
 # MES Agentic BI PoC - BI router (public, no auth)
 from .bi_router import router as bi_router
+from .bi_voice_router import router as bi_voice_router
 app.include_router(bi_router, prefix="/bi")
+app.include_router(bi_voice_router, prefix="/bi/voice")
 
 if __name__ == "__main__":
     import uvicorn

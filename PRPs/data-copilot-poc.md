@@ -15,7 +15,7 @@ This PRP outlines a 5-day Proof of Concept for "MES Agentic BI" — a data copil
 
 The system reuses the existing `thesis_project` infrastructure (Next.js, FastAPI, Docker) with a strict **additive-only** strategy.
 
-**Implementation snapshot (2026-02-25):** B1 complete, B2 complete, B3 in progress, B4 complete, B5 pending.
+**Implementation snapshot (2026-02-25):** B1 complete, B2 complete, B3 complete, B4 complete, B5 pending.
 
 **What the PoC must demonstrate:**
 1. Upload XLSX/CSV file with dynamic column schemas
@@ -26,7 +26,7 @@ The system reuses the existing `thesis_project` infrastructure (Next.js, FastAPI
 
 **Key Decisions:**
 - **Data Grid:** TanStack Table v8 + @tanstack/react-virtual — headless, Tailwind-native, ~20KB
-- **Copilot LLM:** AWS Bedrock Converse API (Claude Sonnet 4.6, us-east-1)
+- **Copilot LLM:** OpenRouter (`anthropic/claude-sonnet-4`) via OpenAI SDK — Bedrock kill criterion activated (AccessDeniedException)
 - **Data Processing:** pandas DataFrame in-memory per session (15K rows = ~30MB)
 - **PDF Export:** fpdf2 — lightweight, pure Python
 - **Excel Export:** openpyxl (already in project)
@@ -126,7 +126,7 @@ User Message
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | **Data Grid** | TanStack Table v8 + react-virtual | Headless (Tailwind-native), ~20KB vs AG Grid 1.5MB. 15K rows via virtual scroll. |
-| **LLM** | Bedrock Converse (Claude Sonnet 4.6) | Best tool use accuracy. Native AWS. Fallback: OpenRouter. |
+| **LLM** | OpenRouter (`anthropic/claude-sonnet-4`) | Bedrock AccessDeniedException on Day 3. Kill criterion activated. Same tool definitions, OpenAI SDK client. |
 | **Data Handling** | pandas in-memory per session | 15K x 50 cols = ~30MB. 20-session cap + 1hr TTL. |
 | **Schema Detection** | Dynamic (auto-detect from file) | Varying Snowflake exports. Column metadata computed at upload. |
 | **Filtering** | Server-side pandas | Complex filters on 15K rows handled server-side. Frontend syncs state. |
@@ -140,7 +140,7 @@ User Message
 |-----------|-----------|-----------|
 | **UI** | Next.js 14 (reuse from thesis_project) | Existing: 3D effects, Framer Motion, dark theme, bold design. |
 | **Data Grid** | TanStack Table v8 + @tanstack/react-virtual | Headless, Tailwind-native, virtual scroll for 15K rows. |
-| **Copilot LLM** | AWS Bedrock Converse API (Claude Sonnet 4.6) | Best tool use accuracy, native AWS integration. |
+| **Copilot LLM** | OpenRouter (`anthropic/claude-sonnet-4`) via OpenAI SDK | Bedrock kill criterion activated (AccessDeniedException). Same tool definitions. |
 | **Data Processing** | pandas + openpyxl | DataFrame operations, XLSX parsing, Excel export. |
 | **PDF Generation** | fpdf2 | Lightweight, pure Python tabular PDF. |
 | **Observability** | Langfuse Cloud (EU) | `@observe` on chat calls only. Reuse existing credentials. |
@@ -281,13 +281,13 @@ thesis_project/
 **Frontend:** `ChatDrawer.tsx` (bottom drawer, messages, suggestion chips, filter action badges)
 
 **Gate Criteria:**
-- [ ] Chat "Show data where Country = India" applies filter automatically
-- [ ] Chat "How many records have Death Rate > 100?" returns correct answer
-- [ ] Chat "Summarize the Year column" returns statistics
-- [ ] Filter changes from chat sync to sidebar
-- [ ] Bedrock Converse API responds within 5 seconds
+- [x] Chat "Show data where Country = India" applies filter automatically
+- [x] Chat "How many records have Death Rate > 100?" returns correct answer
+- [x] Chat "Summarize the Year column" returns statistics
+- [x] Filter changes from chat sync to sidebar
+- [x] LLM API responds within 5 seconds
 
-**Kill Criterion:** If Bedrock model access not available by Day 3, switch to OpenRouter (same tool definitions, different client).
+**Kill Criterion:** ACTIVATED (2026-02-25) — Bedrock returned AccessDeniedException. Switched to OpenRouter (`anthropic/claude-sonnet-4`) via OpenAI SDK (`https://openrouter.ai/api/v1`). `OPENROUTER_API_KEY` required. All 9 gate criteria passed.
 
 ---
 
@@ -323,9 +323,11 @@ thesis_project/
 
 ```bash
 # .env.local (BI-specific additions)
-# AWS Bedrock
-BI_BEDROCK_REGION=us-east-1
-BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
+# Copilot LLM — OpenRouter (Bedrock kill criterion activated 2026-02-25)
+OPENROUTER_API_KEY=sk-or-...
+# BI_BEDROCK_REGION and BI_BEDROCK_MODEL_ID no longer used (kept for reference)
+# BI_BEDROCK_REGION=us-east-1
+# BI_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 
 # Session limits
 BI_MAX_UPLOAD_SIZE_MB=50

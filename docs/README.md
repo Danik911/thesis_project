@@ -87,12 +87,23 @@ Data copilot PoC for Plant Performance Reporting System (PPRS).
 
 - **Branch**: `feature/mes-agentic-bi`
 - **PRP**: `PRPs/data-copilot-poc.md`
-- **Stack**: TanStack Table v8 + AWS Bedrock (Claude Sonnet 4.6) + pandas + fpdf2 + openpyxl
+- **Stack**: TanStack Table v8 + OpenRouter (Claude Sonnet 4) + pandas + fpdf2 + openpyxl
 - **Routes**: `/bi/*` (separate from thesis `/jobs/*` and LIMS `/lims/*` routes)
 
-**Current status (B4 implemented, B3 in progress)**: Upload XLSX/CSV, session-backed parsing, schema sidebar, per-field sidebar filters, column visibility toggle, virtualized grid rendering, and filtered PDF/Excel export.
+**Current status (B3 + B4 complete)**: Upload XLSX/CSV, session-backed parsing, schema sidebar, per-field sidebar filters, column visibility toggle, virtualized grid rendering, filtered PDF/Excel export, and AI Data Copilot chat.
 
-**Planned next phases**: Bedrock chat copilot completion (B3), polish/deploy (B5).
+**Key Components**:
+- Data grid — TanStack Table v8 + @tanstack/react-virtual (virtualized, filterable)
+- AI Copilot — agentic loop: user message -> OpenRouter LLM with tools -> pandas operations -> natural language summary
+- Copilot tools: `apply_filter`, `remove_filter`, `search_data`, `summarize_column`, `answer_question`
+- Frontend: bottom expandable chat drawer with suggestion chips and filter action badges
+- Observability: Langfuse tracing on copilot chat calls
+
+**Environment Variables**:
+- `OPENROUTER_API_KEY` — required for copilot chat
+- `BI_COPILOT_MODEL` — optional, defaults to `anthropic/claude-sonnet-4`
+
+**Planned next phases**: Polish and deploy (B5).
 
 **Local Testing**:
 ```bash

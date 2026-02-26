@@ -827,9 +827,9 @@ lims-two-layer-pipeline (parent trace)
 
 **Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **PRP**: `PRPs/data-copilot-poc.md`
 
-MES Agentic BI is a proof-of-concept data copilot for the Plant Performance Reporting System (PPRS). The currently validated implementation is B2 (filters + virtual scroll): users upload XLSX/CSV files, backend parses and stores data in an in-memory session, server-side filters are applied via pandas, and frontend renders schema + expandable per-field filters + column visibility + virtualized table rendering.
+MES Agentic BI is a proof-of-concept data copilot for the Plant Performance Reporting System (PPRS). The currently validated implementation covers B2 (filters + virtual scroll), B3 (copilot chat), and B4 (PDF/Excel export): users upload XLSX/CSV files, backend parses and stores data in an in-memory session, server-side filters are applied via pandas, an AI copilot can query and filter the data via an agentic tool-use loop, and frontend renders schema + expandable per-field filters + column visibility + virtualized table rendering + bottom chat drawer.
 
-### Current Implemented Flow (B2 + B4)
+### Current Implemented Flow (B2 + B3 + B4)
 
 ```
 User Uploads XLSX/CSV
@@ -840,18 +840,114 @@ User Uploads XLSX/CSV
         v
    session_store.py (in-memory)
   |
-  +--------------------------+
-  |                          |
-  v                          v
-  /bi/schema/{session_id}     /bi/data/{session_id}
-  |                          |
-  +------------+-------------+
-         v
-     agentic-bi.tsx + Sidebar.tsx + DataGrid.tsx + ExportButtons.tsx
+  +--------------------------+---------------------------+
+  |                          |                           |
+  v                          v                           v
+  /bi/schema/{session_id}    /bi/data/{session_id}      /bi/chat/{session_id}
+  |                          |                           |
+  +------------+-------------+                      copilot.py
+         v                                         (agentic loop)
+     agentic-bi.tsx + Sidebar.tsx + DataGrid.tsx + ExportButtons.tsx + ChatDrawer.tsx
        |
        v
     /bi/export/pdf/{session_id} + /bi/export/excel/{session_id}
 ```
+
+### Copilot Chat Backend (B3)
+
+The copilot is implemented in `main/src/bi/copilot.py` as a single `chat()` function with an agentic tool-use loop. It uses the OpenAI SDK pointed at the OpenRouter base URL (`https://openrouter.ai/api/v1`), model `anthropic/claude-sonnet-4`.
+
+**Note**: AWS Bedrock was the original target provider. It was abandoned after `IAM AccessDeniedException` errors confirmed the Bedrock kill criterion. OpenRouter with an OpenAI-compatible API is the replacement.
+
+#### Agentic Loop
+
+```python
+# main/src/bi/copilot.py
+@observe(name="bi-copilot-chat")
+def chat(session_id: str, user_message: str) -> dict[str, Any]:
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+    )
+    # Rebuild system prompt each call with current schema + filter state
+    system_prompt = _build_system_prompt(session_id)
+    messages = [{"role": "system", "content": system_prompt}, *history]
+
+    # Agentic loop — max 5 iterations
+    for iteration in range(5):
+        response = client.chat.completions.create(
+            model=config.copilot_model,  # "anthropic/claude-sonnet-4"
+            messages=messages,
+            tools=TOOLS,
+        )
+        if finish_reason == "stop" or not assistant_message.tool_calls:
+            break
+        # Dispatch tool calls, append results, continue loop
+```
+
+**Loop contract**: The LLM calls tools until it has enough data to answer, then emits a `stop` finish reason. If the loop reaches 5 iterations without stopping, the last assistant text is returned and a warning is logged. No exception is raised — failure is surfaced to the caller via the response content.
+
+#### Tools
+
+Five OpenAI function-calling tools are registered:
+
+| Tool | Description |
+|------|-------------|
+| `apply_filter` | Apply or replace a filter on a column (supports 11 operators: equals, not_equals, contains, greater_than, less_than, greater_equal, less_equal, between, in, is_null, is_not_null). Returns updated row count. |
+| `remove_filter` | Remove a filter from one column or clear all filters (pass `__all__`). |
+| `search_data` | Full-text search across one or more columns in the filtered dataset. Returns up to 50 matching rows. |
+| `summarize_column` | Descriptive statistics for a column: count/mean/std/min/max/quartiles for numeric; top-20 value counts for categorical. |
+| `answer_question` | Structured analytical operations (count, group_by, trend, outliers, comparison, general) on the filtered DataFrame. |
+
+#### System Prompt Design
+
+The system prompt is rebuilt on every call using `_build_system_prompt(session_id)`. It includes:
+- Dataset filename, total rows, filtered rows, column count
+- Per-column metadata: dtype, unique count, null count, 5 sample values
+- Currently active filter list
+
+This ensures the LLM always has current dataset state without stale context from earlier turns.
+
+#### Per-Session Chat History
+
+Chat history is stored in a module-level dict (`_chat_histories: dict[str, list]`) keyed by `session_id`. The system prompt is excluded from the stored history — it is prepended fresh on each call so filter state is always accurate.
+
+### Copilot Chat Frontend (B3)
+
+The `ChatDrawer` component (`main/frontend/components/bi/ChatDrawer.tsx`) is a bottom-anchored expandable drawer rendered on the `agentic-bi.tsx` page.
+
+```tsx
+// main/frontend/components/bi/ChatDrawer.tsx
+// Bottom drawer: collapsed=64px, expanded=420px, spring animation via Framer Motion
+export default function ChatDrawer({ sessionId, onFiltersChanged }) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Auto-expand on first message send
+  const handleSend = async (text) => {
+    setExpanded(true);
+    const data: BIChatResponse = await fetch(`/bi/chat/${sessionId}`, { ... });
+
+    // Render filter action badges for apply_filter / remove_filter tool calls
+    // If data.filters_changed, call onFiltersChanged() to sync grid state
+  };
+
+  return (
+    <motion.div
+      animate={{ height: expanded ? 420 : 64 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    >
+      {/* 3 suggestion chips when no messages present */}
+      {/* Message list with filter action badges */}
+    </motion.div>
+  );
+}
+```
+
+**Key behaviors:**
+- Collapsed (64 px) by default; auto-expands to 420 px when the first message is sent
+- Three suggestion chips are shown when the message list is empty
+- Filter action badges are rendered for `apply_filter` and `remove_filter` tool calls, displaying the column and operator applied
+- When the backend reports `filters_changed: true`, the drawer calls `onFiltersChanged()` to trigger a grid data refresh in the parent page
 
 ### Technology Stack
 
@@ -859,8 +955,11 @@ User Uploads XLSX/CSV
 |-----------|------------|---------|
 | **Data Ingestion** | pandas | XLSX/CSV parsing (~15K rows) |
 | **Data Grid** | TanStack Table v8 | Paginated grid rendering |
-| **Backend** | FastAPI (`/bi/*` routes) | Upload, session, schema, data endpoints |
-| **Frontend** | Next.js 14 (Pages Router, `agentic-bi.tsx`) | Upload, sidebar, grid, pagination |
+| **Copilot LLM** | `anthropic/claude-sonnet-4` via OpenRouter | Agentic tool-use chat loop |
+| **Copilot SDK** | OpenAI Python SDK (OpenRouter-compatible) | Function calling API |
+| **Copilot Tracing** | Langfuse `@observe` | Per-call trace: `bi-copilot-chat` |
+| **Backend** | FastAPI (`/bi/*` routes) | Upload, session, schema, data, chat endpoints |
+| **Frontend** | Next.js 14 (Pages Router, `agentic-bi.tsx`) | Upload, sidebar, grid, pagination, chat drawer |
 | **Docker Compose** | `docker-compose.bi.yml` | Planned in later phase |
 | **Authentication** | None (PoC) | No auth required |
 | **Color Accent** | Cyan/Teal | UI theme (vs blue for thesis, emerald for LIMS) |
@@ -873,14 +972,15 @@ User Uploads XLSX/CSV
 | `/bi/data/{session_id}` | GET | Paginated filtered rows for selected session |
 | `/bi/schema/{session_id}` | GET | Column metadata for sidebar |
 | `/bi/filter/{session_id}` | POST | Apply/update active server-side filters |
+| `/bi/chat/{session_id}` | POST | Copilot agentic chat turn (OpenRouter, tool-use loop) |
 | `/bi/export/pdf/{session_id}` | GET | Filtered PDF export (landscape A4, max 1000 rows) |
 | `/bi/export/excel/{session_id}` | GET | Filtered Excel export with "Filters Applied" metadata |
 
-### Planned Next Flow (B3-B5)
+### Planned Next Flow (B5)
 
 - **B2**: filter engine + sidebar filter controls + virtual scrolling (validated).
-- **B3**: Bedrock copilot chat (`/bi/chat/{session_id}`) with tool-use loop (in progress).
-- **B4**: PDF/Excel export endpoints + top-bar export controls (implemented).
+- **B3**: copilot chat (`/bi/chat/{session_id}`) via OpenRouter, agentic tool-use loop (validated).
+- **B4**: PDF/Excel export endpoints + top-bar export controls (validated).
 - **B5**: polish, compose stack, deployment updates.
 
 ### Key Design Decisions
@@ -894,6 +994,10 @@ User Uploads XLSX/CSV
 4. **Pagination-first strategy**: B1 uses server-side pagination (100 rows/page) before introducing virtual scroll in B2.
 
 5. **Additive Architecture**: `bi_router.py` is mounted separately from thesis routes and LIMS routes. Zero impact on existing code.
+
+6. **OpenRouter instead of Bedrock**: AWS Bedrock was the originally planned copilot LLM provider. After confirmed `IAM AccessDeniedException` errors (kill criterion), the copilot was switched to OpenRouter using the OpenAI-compatible API. `config.py` field renamed from `bedrock_model_id` to `copilot_model`. No other BI files required changes.
+
+7. **Dynamic system prompt**: The copilot system prompt is rebuilt on every chat call with current dataset schema and active filter state. It is never stored in chat history, preventing stale schema/filter information across turns.
 
 ---
 
@@ -998,6 +1102,23 @@ API → PostgreSQL → SQS → Worker → LangFuse traces
 | Backend | FastAPI (`/lims/*` routes) |
 | Frontend | Next.js 14 (Pages Router, `/lims.tsx`) |
 | Docker Compose | `docker-compose.lims.yml` (minimal: frontend + API only) |
+
+### MES Agentic BI (Branch: feature/mes-agentic-bi)
+
+| Component | Technology |
+|-----------|------------|
+| Data Ingestion | pandas (XLSX/CSV, ~15K rows) |
+| Data Grid | TanStack Table v8 + @tanstack/react-virtual |
+| Copilot LLM | `anthropic/claude-sonnet-4` via OpenRouter |
+| Copilot SDK | OpenAI Python SDK (OpenRouter-compatible base URL) |
+| Data Processing | pandas DataFrame (in-memory sessions) |
+| PDF Export | fpdf2 |
+| Excel Export | openpyxl |
+| Observability | Langfuse `@observe` (`bi-copilot-chat` span) |
+| Authentication | None (PoC: `NEXT_PUBLIC_AUTH_ENABLED=false`) |
+| Backend | FastAPI (`/bi/*` routes) |
+| Frontend | Next.js 14 (Pages Router, `/agentic-bi.tsx`) |
+| Docker Compose | `docker-compose.bi.yml` (minimal: frontend + API only) |
 
 ---
 

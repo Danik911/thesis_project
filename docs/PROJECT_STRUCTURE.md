@@ -13,11 +13,15 @@ thesis_project/
 │   ├── src/                 # Core logic
 │   │   ├── agents/          # Multi-agent system
 │   │   ├── adapters/        # Storage adapters
+│   │   ├── bi/              # MES Agentic BI modules
 │   │   ├── compliance/      # Regulatory validators
 │   │   ├── config/          # Configuration
 │   │   └── core/            # Workflow orchestration
 │   └── tests/               # Test suite
 ├── frontend/                # Next.js dashboard
+│   ├── components/bi/       # MES Agentic BI UI components
+│   ├── pages/               # Next.js pages
+│   └── types/               # Shared TypeScript type definitions
 ├── aws/                     # AWS infrastructure
 │   ├── terraform/           # IaC modules
 │   └── scripts/             # Deployment automation
@@ -131,7 +135,13 @@ frontend/
 │   ├── TemplatePreview.tsx  # AI4LIMS: template skeleton preview
 │   └── bi/                  # MES Agentic BI components
 │       ├── Sidebar.tsx      # Data source + field list sidebar (B1)
-│       └── DataGrid.tsx     # TanStack Table v8 grid + pagination (B1)
+│       ├── DataGrid.tsx     # TanStack Table v8 grid + pagination (B1)
+│       ├── ChatDrawer.tsx   # Bottom expandable copilot chat drawer with Framer Motion + suggestion chips (B3)
+│       ├── ColumnSelector.tsx # Column visibility toggle (B2)
+│       └── ExportButtons.tsx  # PDF/Excel export controls (B4)
+├── types/
+│   ├── lims.ts              # AI4LIMS TypeScript types
+│   └── bi.ts                # BI types: BIChatMessage, BIToolCall, BIChatResponse (B3)
 ├── utils/
 │   └── api.ts               # API client
 ├── middleware.ts            # Route protection
@@ -219,11 +229,11 @@ frontend/
 | File | Purpose |
 |------|---------|
 | `__init__.py` | BI package exports |
-| `config.py` | BI configuration (`BI_*` env vars) |
+| `config.py` | BI configuration (`BI_*` env vars, `copilot_model` field) |
 | `session_store.py` | In-memory upload session management |
 | `data_parser.py` | XLSX/CSV ingestion via pandas (~15K rows) |
-| `filter_engine.py` | Server-side pandas filtering engine (B2) |
-| `copilot.py` | AWS Bedrock client with tool use (B3 in progress) |
+| `filter_engine.py` | Server-side pandas filtering engine; exposes `get_filtered_dataframe()` for copilot tool access (B2) |
+| `copilot.py` | AI copilot agentic loop with 5 data tools via OpenRouter: apply_filter, remove_filter, search_data, summarize_column, answer_question (B3) |
 | `pdf_exporter.py` | Filtered PDF export with row cap + filter summary (B4) |
 | `excel_exporter.py` | Filtered Excel export + "Filters Applied" sheet (B4) |
 
@@ -235,7 +245,7 @@ frontend/
 | `GET /bi/data/{session_id}` | Paginated filtered data rows (B1/B2) |
 | `GET /bi/schema/{session_id}` | Column metadata for sidebar (B1) |
 | `POST /bi/filter/{session_id}` | Filter updates (B2) |
-| `POST /bi/chat/{session_id}` | Copilot message (B3 in progress) |
+| `POST /bi/chat/{session_id}` | Copilot agentic loop message (B3) |
 | `GET /bi/export/pdf/{session_id}` | Filtered PDF export (B4) |
 | `GET /bi/export/excel/{session_id}` | Filtered Excel export (B4) |
 
@@ -243,12 +253,13 @@ frontend/
 
 | Component | Purpose |
 |-----------|---------|
-| `pages/agentic-bi.tsx` | Main BI page (upload, filters, visibility, data sync) |
+| `pages/agentic-bi.tsx` | Main BI page (upload, filters, visibility, data sync, ChatDrawer integration) |
 | `bi/Sidebar.tsx` | Data source, field list, expandable per-field filters (B2) |
 | `bi/DataGrid.tsx` | TanStack Table + react-virtual grid + footer counts (B2) |
-| `bi/ChatDrawer.tsx` | Bedrock copilot chat drawer (B3 in progress) |
+| `bi/ChatDrawer.tsx` | Bottom expandable copilot chat drawer; Framer Motion animation, suggestion chips, filter action badges (B3) |
 | `bi/ColumnSelector.tsx` | Column visibility toggle (B2) |
 | `bi/ExportButtons.tsx` | PDF/Excel export controls (B4) |
+| `types/bi.ts` | BI TypeScript types: BIChatMessage, BIToolCall, BIChatResponse (B3) |
 
 ---
 

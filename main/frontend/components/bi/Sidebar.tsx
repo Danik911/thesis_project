@@ -45,7 +45,14 @@ export default function Sidebar({ filename, fields, activeFilters, onFiltersChan
 
   const updateCategoricalFilter = (column: string, value: string | number | boolean | null, checked: boolean) => {
     const existing = filtersByColumn.get(column);
-    const current = existing && existing.operator === 'in' && Array.isArray(existing.value) ? existing.value : [];
+    let current: Array<string | number> = [];
+    if (existing) {
+      if (existing.operator === 'in' && Array.isArray(existing.value)) {
+        current = existing.value;
+      } else if (existing.operator === 'equals' && existing.value != null) {
+        current = [String(existing.value)];
+      }
+    }
 
     const normalizedValue = value === null ? 'null' : String(value);
     const currentValues = current.map((item) => String(item));
@@ -100,44 +107,16 @@ export default function Sidebar({ filename, fields, activeFilters, onFiltersChan
   };
 
   return (
-    <aside className="w-full lg:w-80 rounded-2xl border border-slate-700/50 bg-slate-900 p-5">
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold text-cyan-300" style={{ fontFamily: 'var(--font-display)' }}>
-          MES Agentic BI for PPRS
-        </h2>
-      </div>
-
-      <div className="mb-6">
-        <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Data Source</p>
-        <div className="rounded-xl border border-slate-700/50 bg-slate-800/60 p-3">
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm text-slate-200 break-all">{filename}</p>
-            <button
-              type="button"
-              onClick={onRemove}
-              className="text-xs px-2 py-1 rounded-md border border-slate-600 text-slate-300 hover:text-slate-100 hover:border-slate-500"
-            >
-              Remove
-            </button>
-          </div>
+    <aside className="w-full lg:w-72 rounded-2xl border border-slate-700/50 bg-slate-900 p-4">
+      <div className="mb-4">
+        <div className="rounded-lg border border-slate-700/50 bg-slate-800/60 px-3 py-2">
+          <p className="text-xs text-slate-400 truncate">{filename}</p>
         </div>
       </div>
 
       <div>
-        <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Fields ({fields.length})</p>
-        <ul className="space-y-1 max-h-[420px] overflow-auto pr-2">
-          {fields.map((field) => (
-            <li key={field.name} className="text-sm text-slate-300 flex items-start gap-2">
-              <span className="mt-[7px] inline-block h-1.5 w-1.5 rounded-full bg-cyan-400" />
-              <span className="break-all">{field.name}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="mt-6">
-        <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Field Filters</p>
-        <div className="space-y-2 max-h-[420px] overflow-auto pr-2">
+        <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Filters</p>
+        <div className="space-y-1.5 max-h-[calc(100vh-180px)] overflow-auto pr-2">
           {fields.map((field) => {
             const isExpanded = expandedField === field.name;
             const activeFilter = filtersByColumn.get(field.name);
@@ -156,13 +135,18 @@ export default function Sidebar({ filename, fields, activeFilters, onFiltersChan
                   : '';
 
             return (
-              <div key={field.name} className="rounded-xl border border-slate-700/60 bg-slate-800/40">
+              <div key={field.name} className="rounded-lg border border-slate-600/80 bg-slate-800/40">
                 <button
                   type="button"
                   onClick={() => setExpandedField((current) => (current === field.name ? null : field.name))}
                   className="w-full px-3 py-2 flex items-center justify-between text-left"
                 >
-                  <span className="text-xs text-slate-200 break-all pr-2">{field.name}</span>
+                  <span className="text-xs text-slate-200 break-all pr-2 flex items-center gap-2">
+                    {activeFilter && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-cyan-400 flex-shrink-0" />
+                    )}
+                    {field.name}
+                  </span>
                   <span className="text-xs text-slate-400">{isExpanded ? '▾' : '▸'}</span>
                 </button>
 
@@ -182,7 +166,7 @@ export default function Sidebar({ filename, fields, activeFilters, onFiltersChan
                               ) as HTMLInputElement | null;
                               updateNumericFilter(field.name, nextMin, maxInput?.value ?? '');
                             }}
-                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-sm text-slate-100"
                           />
                           <input
                             type="number"
@@ -196,34 +180,57 @@ export default function Sidebar({ filename, fields, activeFilters, onFiltersChan
                               ) as HTMLInputElement | null;
                               updateNumericFilter(field.name, minInput?.value ?? '', nextMax);
                             }}
-                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+                            className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-sm text-slate-100"
                           />
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-1 max-h-40 overflow-auto pr-1">
-                        {field.sample_values.map((value) => {
-                          const normalizedValue = value === null ? 'null' : String(value);
-                          const selected =
-                            activeFilter?.operator === 'in' &&
-                            Array.isArray(activeFilter.value) &&
-                            activeFilter.value.map((item) => String(item)).includes(normalizedValue);
-
-                          return (
-                            <label key={normalizedValue} className="flex items-center gap-2 text-xs text-slate-200">
-                              <input
-                                type="checkbox"
-                                checked={Boolean(selected)}
-                                onChange={(event) =>
-                                  updateCategoricalFilter(field.name, value, event.currentTarget.checked)
-                                }
-                                className="rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
-                              />
-                              <span className="break-all">{normalizedValue}</span>
-                            </label>
+                      <div className="space-y-2 max-h-52 overflow-auto pr-1">
+                        {(() => {
+                          // Merge sample values with any actively-filtered values so copilot filters always appear
+                          const sampleNormalized = new Set(
+                            field.sample_values.map((v) => (v === null ? 'null' : String(v)))
                           );
-                        })}
-                        {field.sample_values.length === 0 && (
+                          const extraValues: Array<string | number | boolean | null> = [];
+                          if (activeFilter) {
+                            if (activeFilter.operator === 'equals' && activeFilter.value != null) {
+                              const fv = String(activeFilter.value);
+                              if (!sampleNormalized.has(fv)) extraValues.push(activeFilter.value as string);
+                            } else if (activeFilter.operator === 'in' && Array.isArray(activeFilter.value)) {
+                              for (const v of activeFilter.value) {
+                                if (!sampleNormalized.has(String(v))) extraValues.push(v);
+                              }
+                            }
+                          }
+                          const allValues = [...field.sample_values, ...extraValues];
+
+                          return allValues.map((value) => {
+                            const normalizedValue = value === null ? 'null' : String(value);
+                            const selected =
+                              (activeFilter?.operator === 'in' &&
+                                Array.isArray(activeFilter.value) &&
+                                activeFilter.value.map((item) => String(item)).includes(normalizedValue)) ||
+                              (activeFilter?.operator === 'equals' &&
+                                String(activeFilter.value) === normalizedValue) ||
+                              (activeFilter?.operator === 'contains' &&
+                                normalizedValue.toLowerCase().includes(String(activeFilter.value).toLowerCase()));
+
+                            return (
+                              <label key={normalizedValue} className="flex items-center gap-3 text-sm text-slate-200 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(selected)}
+                                  onChange={(event) =>
+                                    updateCategoricalFilter(field.name, value, event.currentTarget.checked)
+                                  }
+                                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                                />
+                                <span className="break-all">{normalizedValue}</span>
+                              </label>
+                            );
+                          });
+                        })()}
+                        {field.sample_values.length === 0 && !activeFilter && (
                           <p className="text-[11px] text-slate-500">No sample values available.</p>
                         )}
                       </div>
