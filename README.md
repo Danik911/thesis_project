@@ -6,7 +6,7 @@ Multi-agent LLM system for automated OQ (Operational Qualification) test generat
 
 > **AI4LIMS PoC** (branch: `prjoject_p_protatype`): **Demo-ready** AI-powered extraction from pharmaceutical test method PDFs into structured LabWare LIMS MDA templates with full HITL workflow and two-layer pipeline architecture. Phase 8 in progress (L10-L14 complete): Classify Test Type -> Load Template -> Focused Extract -> Augment from Standards -> Merge with Provenance -> SME Review. See [AI4LIMS PoC Plan](docs/project_p/AI4LIMS_PoC_Plan.md).
 
-> **MES Agentic BI for PPRS** (branch: `feature/mes-agentic-bi`): B2 validated. Upload XLSX/CSV, apply sidebar filters, toggle visible columns, and explore via virtualized TanStack grid at `/agentic-bi`. Chat/export remain in subsequent BI tasks. See [PRP](PRPs/data-copilot-poc.md).
+> **MES Agentic BI for PPRS** (branch: `feature/mes-agentic-bi`): B2 validated. Extracted into a standalone `mes-agentic-bi/` top-level directory with its own FastAPI, Next.js frontend, `pyproject.toml` (14 deps), and `docker-compose.yml` — independent of the legacy `main/` monolith. Upload XLSX/CSV, apply sidebar filters, toggle visible columns, and explore via virtualized TanStack grid at `/agentic-bi`. Chat/export remain in subsequent BI tasks. See [PRP](PRPs/data-copilot-poc.md).
 
 ---
 
@@ -53,10 +53,13 @@ curl http://localhost:8080/health
 docker-compose -f docker-compose.lims.yml up -d
 # Frontend: http://localhost:3000/lims
 
-# MES Agentic BI PoC (current B1 local path)
-uv run uvicorn main.api.app:app --port 8080 --reload
+# MES Agentic BI (standalone)
+cd mes-agentic-bi
+uv sync && uv run uvicorn api.app:app --port 8080 --reload
 # In another terminal:
-cd main/frontend && npm run dev
+cd mes-agentic-bi/frontend && npm install && npm run dev
+# Or via Docker:
+cd mes-agentic-bi && docker compose up -d
 # Frontend: http://localhost:3000/agentic-bi
 ```
 
@@ -189,9 +192,9 @@ docker-compose -f docker-compose.dev.yml logs -f
 docker-compose -f docker-compose.lims.yml up -d
 docker-compose -f docker-compose.lims.yml logs -f
 
-# MES Agentic BI development
-docker-compose -f docker-compose.bi.yml up -d
-docker-compose -f docker-compose.bi.yml logs -f
+# MES Agentic BI development (standalone)
+cd mes-agentic-bi && docker compose up -d
+cd mes-agentic-bi && docker compose logs -f
 
 # Testing
 uv run pytest main/tests/ -v
@@ -217,7 +220,13 @@ thesis_project/
 │       ├── adapters/     # Storage (local/S3)
 │       ├── compliance/   # ALCOA+, 21 CFR Part 11
 │       ├── lims/         # AI4LIMS PoC (MDA extraction)
-│       └── bi/           # MES Agentic BI (data copilot)
+│       └── bi/           # MES Agentic BI legacy copy (not removed)
+├── mes-agentic-bi/       # MES Agentic BI (standalone extraction)
+│   ├── api/              # FastAPI (no legacy deps, 14 deps total)
+│   ├── src/bi/           # Business logic
+│   ├── frontend/         # Next.js (no Clerk auth)
+│   ├── pyproject.toml    # Independent dependency set
+│   └── docker-compose.yml
 ├── aws/
 │   ├── terraform/        # Infrastructure as Code
 │   └── scripts/          # Deploy automation

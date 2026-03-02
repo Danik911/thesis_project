@@ -1,0 +1,16 @@
+# MES Agentic BI Cognito RBAC - client template
+# Copy to terraform.tfvars and edit for your environment.
+
+environment   = "production"
+pool_name     = "bi-user-pool"
+region        = "eu-west-1"
+
+callback_urls = [
+  "https://bi.your-domain.com/agentic-bi"
+]
+
+logout_urls = [
+  "https://bi.your-domain.com/login"
+]
+
+password_minimum_length = 12

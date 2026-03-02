@@ -1,0 +1,79 @@
+# =============================================================================
+# Docker Compose for MES Agentic BI (Standalone: API + Frontend)
+# =============================================================================
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f
+#   docker compose down
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: bi-api
+    restart: unless-stopped
+    env_file: .env.local
+    environment:
+      ENVIRONMENT: development
+      BI_AUTH_ENABLED: ${BI_AUTH_ENABLED:-false}
+      BI_COGNITO_REGION: ${BI_COGNITO_REGION:-eu-west-1}
+      BI_COGNITO_USER_POOL_ID: ${BI_COGNITO_USER_POOL_ID:-}
+      BI_COGNITO_CLIENT_ID: ${BI_COGNITO_CLIENT_ID:-}
+      BI_SITE_COLUMN_NAME: ${BI_SITE_COLUMN_NAME:-Site}
+      BI_CORS_ORIGINS: ${BI_CORS_ORIGINS:-*}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/app/api:ro
+      - ./src:/app/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - bi-dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: base
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+        NEXT_PUBLIC_BI_AUTH_ENABLED: ${NEXT_PUBLIC_BI_AUTH_ENABLED:-false}
+        NEXT_PUBLIC_BI_COGNITO_USER_POOL_ID: ${NEXT_PUBLIC_BI_COGNITO_USER_POOL_ID:-}
+        NEXT_PUBLIC_BI_COGNITO_CLIENT_ID: ${NEXT_PUBLIC_BI_COGNITO_CLIENT_ID:-}
+        NEXT_PUBLIC_BI_COGNITO_REGION: ${NEXT_PUBLIC_BI_COGNITO_REGION:-eu-west-1}
+    container_name: bi-frontend
+    restart: unless-stopped
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=1536"
+      NEXT_PUBLIC_BI_AUTH_ENABLED: ${NEXT_PUBLIC_BI_AUTH_ENABLED:-false}
+      NEXT_PUBLIC_BI_COGNITO_USER_POOL_ID: ${NEXT_PUBLIC_BI_COGNITO_USER_POOL_ID:-}
+      NEXT_PUBLIC_BI_COGNITO_CLIENT_ID: ${NEXT_PUBLIC_BI_COGNITO_CLIENT_ID:-}
+      NEXT_PUBLIC_BI_COGNITO_REGION: ${NEXT_PUBLIC_BI_COGNITO_REGION:-eu-west-1}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - bi-dev
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+networks:
+  bi-dev:
+    driver: bridge

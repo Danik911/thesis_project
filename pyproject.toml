@@ -5,6 +5,13 @@ description = "Thesis project with integrated PRP framework"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    # API framework and runtime server
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.4.0",
+    "python-multipart>=0.0.9",
+    "asyncpg>=0.29.0",
     # Core LlamaIndex components
     "llama-index-core>=0.12.0",
     "llama-index>=0.11.0",
@@ -89,7 +96,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["main/src"]
+packages = ["main"]
 
 [tool.uv]
 dev-dependencies = [

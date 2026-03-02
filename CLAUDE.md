@@ -58,6 +58,10 @@ When encountering bugs, errors, or unexpected behavior:
 | AI4LIMS PoC Plan | `docs/project_p/AI4LIMS_PoC_Plan.md` |
 | AI4LIMS Feature/Issue Docs | `docs/project_p/` — format: `LIMS-###-description.md` |
 | MES Agentic BI PRP | `PRPs/data-copilot-poc.md` |
+| MES Agentic BI README | `mes-agentic-bi/README.md` |
+| Client Handover Hub | `docs/client-handover/README.md` — central handover index |
+| Client AWS Runbook | `docs/client-handover/aws-migration-runbook.md` — migration execution steps |
+| Client Acceptance Gate | `docs/client-handover/validation-acceptance.md` — pass/fail handover validation |
 
 ---
 
@@ -152,11 +156,13 @@ Located at `.claude/skills/`. Invoke via skill name.
 | PDF Export | fpdf2 |
 | Excel Export | openpyxl |
 | Auth | None (PoC: `NEXT_PUBLIC_AUTH_ENABLED=false`) |
-| Docker | `docker-compose.bi.yml` (minimal: frontend + API) |
+| Docker | `mes-agentic-bi/docker-compose.yml` (standalone: frontend + API) |
 
-**Key files**: `main/src/bi/`, `main/api/bi_router.py`, `main/frontend/pages/agentic-bi.tsx`
+**Key files**: `mes-agentic-bi/src/bi/`, `mes-agentic-bi/api/bi_router.py`, `mes-agentic-bi/api/app.py` (standalone entry point), `mes-agentic-bi/frontend/pages/agentic-bi.tsx`
 
-**Strategy**: Additive only — never modify thesis or LIMS files. Separate router, compose, config. `BI_*` prefixed env vars.
+**Import paths**: Backend uses `from src.bi.*` (not `from main.src.bi.*`). Frontend uses `@/lib/apiBase` (not `@/lib/authenticatedFetch`).
+
+**Strategy**: Extracted to its own top-level `mes-agentic-bi/` directory — fully independent service with its own FastAPI app, frontend, Dockerfiles, and `pyproject.toml`. Never modify thesis or LIMS files. `BI_*` prefixed env vars.
 
 **Color accent**: `cyan-*` / `teal-*` (distinct from thesis `blue` and LIMS `emerald`).
 
@@ -171,8 +177,8 @@ docker-compose -f docker-compose.dev.yml up -d
 # AI4LIMS PoC (Docker Compose)
 docker-compose -f docker-compose.lims.yml up -d
 
-# MES Agentic BI (Docker Compose)
-docker-compose -f docker-compose.bi.yml up -d
+# MES Agentic BI (standalone)
+cd mes-agentic-bi && docker compose up -d
 
 # AWS Deployment
 python aws/scripts/redeploy.py              # Redeploy services

@@ -11,6 +11,7 @@
 | [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | Core files and directory layout |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues and solutions |
 | [AI4LIMS PoC Plan](project_p/AI4LIMS_PoC_Plan.md) | LIMS document extraction prototype (branch: `prjoject_p_protatype`) |
+| [MES Agentic BI README](../mes-agentic-bi/README.md) | Standalone MES data copilot service (branch: `feature/mes-agentic-bi`) |
 
 ## Getting Started
 
@@ -83,11 +84,13 @@ cd main/frontend && npm run dev
 
 ## MES Agentic BI for PPRS
 
-Data copilot PoC for Plant Performance Reporting System (PPRS).
+Data copilot PoC for Plant Performance Reporting System (PPRS). Extracted into a standalone top-level directory (`mes-agentic-bi/`) with its own API, frontend, Docker setup, and README.
 
 - **Branch**: `feature/mes-agentic-bi`
+- **Standalone directory**: `mes-agentic-bi/`
+- **Own README**: [`mes-agentic-bi/README.md`](../mes-agentic-bi/README.md)
 - **PRP**: `PRPs/data-copilot-poc.md`
-- **Stack**: TanStack Table v8 + OpenRouter (Claude Sonnet 4) + pandas + fpdf2 + openpyxl
+- **Stack**: FastAPI + TanStack Table v8 + OpenRouter (Claude Sonnet 4) + pandas + fpdf2 + openpyxl
 - **Routes**: `/bi/*` (separate from thesis `/jobs/*` and LIMS `/lims/*` routes)
 
 **Current status (B3 + B4 complete)**: Upload XLSX/CSV, session-backed parsing, schema sidebar, per-field sidebar filters, column visibility toggle, virtualized grid rendering, filtered PDF/Excel export, and AI Data Copilot chat.
@@ -101,20 +104,30 @@ Data copilot PoC for Plant Performance Reporting System (PPRS).
 
 **Environment Variables**:
 - `OPENROUTER_API_KEY` — required for copilot chat
-- `BI_COPILOT_MODEL` — optional, defaults to `anthropic/claude-sonnet-4`
+- `BI_COPILOT_MODEL` — optional, defaults to `anthropic/claude-sonnet-4-20250514`
 
 **Planned next phases**: Polish and deploy (B5).
 
 **Local Testing**:
 ```bash
-# Backend
-uv run uvicorn main.api.app:app --port 8080 --reload
+# Backend (from mes-agentic-bi/)
+cd mes-agentic-bi
+uv run uvicorn api.app:app --port 8080 --reload
 
-# Frontend
-cd main/frontend && npm run dev
+# Frontend (from mes-agentic-bi/frontend/)
+cd mes-agentic-bi/frontend && npm install && npm run dev
 
 # Access
 http://localhost:3000/agentic-bi
+```
+
+**Docker**:
+```bash
+cd mes-agentic-bi
+cp .env.example .env.local
+# Edit .env.local with your API keys
+docker compose up -d
+# API: http://localhost:8080  |  UI: http://localhost:3000/agentic-bi
 ```
 
 ## Issues

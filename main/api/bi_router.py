@@ -173,6 +173,7 @@ async def apply_filters(session_id: str, request: BIFilterRequest) -> dict:
             "total_filtered_rows": total_filtered_rows,
             "active_filters": engine.get_active_filters(),
             "preview": preview,
+            "filtered_columns": engine.get_filtered_column_metadata(),
         }
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

@@ -1,6 +1,6 @@
 # Docker Development & Architecture Guide
 
-**Last Updated:** 2025-12-09
+**Last Updated:** 2026-02-26
 **Infrastructure:** Docker Compose Multi-Service Stack
 
 Local development using Docker Compose 5-service stack with production-ready patterns.
@@ -526,29 +526,70 @@ docker stats
 
 ---
 
-## MES Agentic BI (Current Local Path)
+## MES Agentic BI (Standalone Docker)
 
-Current validated scope is B1 (upload + grid foundation). Use direct API + frontend startup:
+MES Agentic BI has been extracted into a self-contained `mes-agentic-bi/` directory with its own Dockerfiles and Compose file. It is completely independent from the thesis `docker-compose.dev.yml` and the AI4LIMS `docker-compose.lims.yml` stacks.
+
+### Quick Start
 
 ```bash
-# Backend
-uv run uvicorn main.api.app:app --port 8080 --reload
+cd mes-agentic-bi
+cp .env.example .env.local
+# Edit .env.local — set OPENROUTER_API_KEY and any BI_* vars
 
-# Frontend
-cd main/frontend && npm run dev
+docker compose up -d
 
-# Access
-# BI UI:  http://localhost:3000/agentic-bi
-# API:    http://localhost:8080/bi/*
+# API: http://localhost:8080
+# UI:  http://localhost:3000/agentic-bi
 ```
 
-**Required env vars** (`BI_*` prefix for current B1):
-- `BI_MAX_UPLOAD_SIZE_MB` — Max upload file size (default: 50)
-- `BI_MAX_ROWS` — Max parsed rows (default: 100000)
-- `BI_SESSION_TTL_SECONDS` — Session expiry (default: 3600)
-- `BI_MAX_SESSIONS` — Max concurrent sessions (default: 20)
+### Services
 
-**Note**: `docker-compose.bi.yml` is planned for a later BI phase and is not yet present in the repository.
+| Service | Dockerfile | Port | Purpose |
+|---------|-----------|------|---------|
+| api | `mes-agentic-bi/Dockerfile.api` | 8080 | FastAPI BI backend (pandas, fpdf2, openpyxl) |
+| frontend | `mes-agentic-bi/Dockerfile.frontend` | 3000 | Next.js BI dashboard |
+
+Both services run on the `bi-dev` bridge network defined in `mes-agentic-bi/docker-compose.yml`.
+
+### Dockerfile Notes
+
+- **`Dockerfile.api`**: Multi-stage Python 3.12. No `libpq` / no PostgreSQL dependency. Uses `tini` as PID 1, runs as non-root user.
+- **`Dockerfile.frontend`**: 3-stage Node 20 Alpine build (deps → builder → runner). No Clerk build argument — auth is disabled for this PoC.
+
+### Port Conflicts
+
+The BI stack exposes the same host ports as the other stacks (API `8080`, frontend `3000`). Do NOT run the BI stack simultaneously with `docker-compose.dev.yml` (thesis) or `docker-compose.lims.yml` (AI4LIMS).
+
+### Required Environment Variables
+
+```bash
+# LLM (REQUIRED)
+OPENROUTER_API_KEY=sk-or-v1-...
+
+# BI session limits (optional — defaults shown)
+BI_MAX_UPLOAD_SIZE_MB=50
+BI_MAX_ROWS=100000
+BI_SESSION_TTL_SECONDS=3600
+BI_MAX_SESSIONS=20
+```
+
+### Commands
+
+```bash
+# Start
+docker compose -f mes-agentic-bi/docker-compose.yml up -d
+
+# Logs
+docker compose -f mes-agentic-bi/docker-compose.yml logs -f
+
+# Stop
+docker compose -f mes-agentic-bi/docker-compose.yml down
+
+# Rebuild after dependency changes
+docker compose -f mes-agentic-bi/docker-compose.yml build --no-cache
+docker compose -f mes-agentic-bi/docker-compose.yml up -d
+```
 
 ---
 

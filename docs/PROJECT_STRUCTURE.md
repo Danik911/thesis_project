@@ -8,18 +8,32 @@ Core files and directory layout for the pharmaceutical test generation system.
 
 ```
 thesis_project/
-├── main/                    # Application code
-│   ├── api/                 # FastAPI backend
+├── main/                    # Legacy thesis + AI4LIMS
+│   ├── api/                 # FastAPI backend (includes BI routers for backwards compat)
 │   ├── src/                 # Core logic
 │   │   ├── agents/          # Multi-agent system
 │   │   ├── adapters/        # Storage adapters
-│   │   ├── bi/              # MES Agentic BI modules
+│   │   ├── bi/              # BI modules (legacy copy, still works)
 │   │   ├── compliance/      # Regulatory validators
 │   │   ├── config/          # Configuration
 │   │   └── core/            # Workflow orchestration
 │   └── tests/               # Test suite
-├── frontend/                # Next.js dashboard
-│   ├── components/bi/       # MES Agentic BI UI components
+├── mes-agentic-bi/          # Standalone MES Agentic BI service
+│   ├── api/                 # FastAPI app + routers
+│   │   ├── app.py           # Standalone entry point
+│   │   ├── bi_router.py     # BI data endpoints
+│   │   └── bi_voice_router.py
+│   ├── src/bi/              # Business logic (copilot, filters, charts, exporters)
+│   ├── frontend/            # Next.js (no Clerk, standalone)
+│   │   ├── pages/           # agentic-bi, bi-charts
+│   │   ├── components/bi/   # Grid, sidebar, chat, charts
+│   │   └── lib/apiBase.ts   # API URL utility (no auth)
+│   ├── Dockerfile.api
+│   ├── Dockerfile.frontend
+│   ├── docker-compose.yml
+│   └── pyproject.toml       # 14 deps (vs 85 in legacy)
+├── frontend/                # Next.js dashboard (thesis + AI4LIMS)
+│   ├── components/bi/       # MES Agentic BI UI components (legacy copy)
 │   ├── pages/               # Next.js pages
 │   └── types/               # Shared TypeScript type definitions
 ├── aws/                     # AWS infrastructure
@@ -89,7 +103,7 @@ agents/
 |------|---------|
 | `docker-compose.dev.yml` | 5-service stack (full thesis system) |
 | `docker-compose.lims.yml` | AI4LIMS PoC stack (frontend + API only) |
-| `docker-compose.bi.yml` | MES Agentic BI stack (planned for later phase; not yet added) |
+| `mes-agentic-bi/docker-compose.yml` | MES Agentic BI standalone stack (frontend + API, no Clerk) |
 | `Dockerfile.api` | API/Worker container |
 | `Dockerfile.frontend` | Next.js container |
 | `.env.example` | Configuration template |
@@ -220,11 +234,26 @@ frontend/
 
 ---
 
-## MES Agentic BI (`main/src/bi/`, `main/api/bi_router.py`)
+## MES Agentic BI (Standalone) (`mes-agentic-bi/`)
 
-**Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **Compose**: planned (`docker-compose.bi.yml`)
+**Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **Compose**: `mes-agentic-bi/docker-compose.yml`
 
-### Backend (`main/src/bi/`)
+Extracted from the monolithic `main/` directory into a self-contained service with its own API, frontend, Dockerfiles, and dependencies.
+
+### Key Files (`mes-agentic-bi/`)
+
+| File | Purpose |
+|------|---------|
+| `api/app.py` | FastAPI application, CORS, health endpoint, router registration |
+| `api/bi_router.py` | Upload, data, filter, chat, chart, export, Snowflake endpoints |
+| `api/bi_voice_router.py` | Voice session bootstrap, Polly TTS |
+| `src/bi/copilot.py` | LLM copilot (AWS Bedrock Converse API) |
+| `src/bi/filter_engine.py` | In-memory DataFrame filter engine |
+| `src/bi/chart_engine.py` | Chart data aggregation |
+| `src/bi/session_store.py` | In-memory session management |
+| `frontend/lib/apiBase.ts` | API base URL utility (no auth) |
+
+### Backend (`mes-agentic-bi/src/bi/`)
 
 | File | Purpose |
 |------|---------|
@@ -233,11 +262,12 @@ frontend/
 | `session_store.py` | In-memory upload session management |
 | `data_parser.py` | XLSX/CSV ingestion via pandas (~15K rows) |
 | `filter_engine.py` | Server-side pandas filtering engine; exposes `get_filtered_dataframe()` for copilot tool access (B2) |
-| `copilot.py` | AI copilot agentic loop with 5 data tools via OpenRouter: apply_filter, remove_filter, search_data, summarize_column, answer_question (B3) |
+| `chart_engine.py` | Chart data aggregation for visualizations |
+| `copilot.py` | AI copilot agentic loop via AWS Bedrock Converse API: apply_filter, remove_filter, search_data, summarize_column, answer_question (B3) |
 | `pdf_exporter.py` | Filtered PDF export with row cap + filter summary (B4) |
 | `excel_exporter.py` | Filtered Excel export + "Filters Applied" sheet (B4) |
 
-### API Routes (`main/api/bi_router.py`)
+### API Routes (`mes-agentic-bi/api/bi_router.py`)
 
 | Endpoint | Purpose |
 |----------|---------|
@@ -249,17 +279,28 @@ frontend/
 | `GET /bi/export/pdf/{session_id}` | Filtered PDF export (B4) |
 | `GET /bi/export/excel/{session_id}` | Filtered Excel export (B4) |
 
-### Frontend Components
+### Frontend Components (`mes-agentic-bi/frontend/`)
 
 | Component | Purpose |
 |-----------|---------|
 | `pages/agentic-bi.tsx` | Main BI page (upload, filters, visibility, data sync, ChatDrawer integration) |
-| `bi/Sidebar.tsx` | Data source, field list, expandable per-field filters (B2) |
-| `bi/DataGrid.tsx` | TanStack Table + react-virtual grid + footer counts (B2) |
-| `bi/ChatDrawer.tsx` | Bottom expandable copilot chat drawer; Framer Motion animation, suggestion chips, filter action badges (B3) |
-| `bi/ColumnSelector.tsx` | Column visibility toggle (B2) |
-| `bi/ExportButtons.tsx` | PDF/Excel export controls (B4) |
-| `types/bi.ts` | BI TypeScript types: BIChatMessage, BIToolCall, BIChatResponse (B3) |
+| `components/bi/Sidebar.tsx` | Data source, field list, expandable per-field filters (B2) |
+| `components/bi/DataGrid.tsx` | TanStack Table + react-virtual grid + footer counts (B2) |
+| `components/bi/ChatDrawer.tsx` | Bottom expandable copilot chat drawer; Framer Motion animation, suggestion chips, filter action badges (B3) |
+| `components/bi/ColumnSelector.tsx` | Column visibility toggle (B2) |
+| `components/bi/ExportButtons.tsx` | PDF/Excel export controls (B4) |
+| `lib/apiBase.ts` | API base URL utility (no Clerk auth) |
+
+### Legacy Copy (`main/src/bi/`, `main/api/bi_router.py`)
+
+The original BI modules remain under `main/` for backwards compatibility. The standalone `mes-agentic-bi/` service is the canonical location going forward.
+
+| File | Purpose |
+|------|---------|
+| `main/src/bi/copilot.py` | Legacy copilot (OpenRouter, pre-extraction) |
+| `main/src/bi/filter_engine.py` | Legacy filter engine |
+| `main/src/bi/session_store.py` | Legacy session store |
+| `main/api/bi_router.py` | Legacy BI router (still mounted in thesis API) |
 
 ---
 
@@ -287,12 +328,17 @@ docker-compose -f docker-compose.lims.yml up -d
 # API: http://localhost:8080/lims/*
 ```
 
-### MES Agentic BI
+### MES Agentic BI (Standalone)
 
 ```bash
-# Local dev (current B1 path)
-uv run uvicorn main.api.app:app --port 8080 --reload
-cd main/frontend && npm run dev
+# Docker Compose (Standalone Stack)
+docker-compose -f mes-agentic-bi/docker-compose.yml up -d
+
+# Local dev (API)
+uv run uvicorn mes_agentic_bi.api.app:app --port 8080 --reload
+
+# Local dev (Frontend)
+cd mes-agentic-bi/frontend && npm run dev
 
 # Access
 # BI UI: http://localhost:3000/agentic-bi

@@ -825,179 +825,197 @@ lims-two-layer-pipeline (parent trace)
 
 ## MES Agentic BI Architecture
 
-**Branch**: `feature/mes-agentic-bi` | **Routes**: `/bi/*` | **PRP**: `PRPs/data-copilot-poc.md`
+**Service**: `mes-agentic-bi/` (standalone) | **Branch**: `feature/mes-agentic-bi` | **PRP**: `PRPs/data-copilot-poc.md`
 
-MES Agentic BI is a proof-of-concept data copilot for the Plant Performance Reporting System (PPRS). The currently validated implementation covers B2 (filters + virtual scroll), B3 (copilot chat), and B4 (PDF/Excel export): users upload XLSX/CSV files, backend parses and stores data in an in-memory session, server-side filters are applied via pandas, an AI copilot can query and filter the data via an agentic tool-use loop, and frontend renders schema + expandable per-field filters + column visibility + virtualized table rendering + bottom chat drawer.
+MES Agentic BI is a standalone proof-of-concept data copilot for the Plant Performance Reporting System (PPRS). It has been extracted from the monolithic `main/` codebase into a self-contained service with zero imports from the thesis or AI4LIMS code. It carries its own `pyproject.toml` (14 runtime dependencies vs. 85 in `main/`), its own FastAPI application, and its own Next.js frontend.
 
-### Current Implemented Flow (B2 + B3 + B4)
+**Zero dependencies on the thesis codebase**: no Clerk, no ChromaDB, no PostgreSQL, no LlamaIndex, no shared `main/` modules.
+
+### Service Architecture
 
 ```
-User Uploads XLSX/CSV
-        |
-        v
-   data_parser.py (pandas)
-        |
-        v
-   session_store.py (in-memory)
-  |
-  +--------------------------+---------------------------+
-  |                          |                           |
-  v                          v                           v
-  /bi/schema/{session_id}    /bi/data/{session_id}      /bi/chat/{session_id}
-  |                          |                           |
-  +------------+-------------+                      copilot.py
-         v                                         (agentic loop)
-     agentic-bi.tsx + Sidebar.tsx + DataGrid.tsx + ExportButtons.tsx + ChatDrawer.tsx
-       |
-       v
-    /bi/export/pdf/{session_id} + /bi/export/excel/{session_id}
+mes-agentic-bi/
+├── api/
+│   ├── app.py              ← standalone FastAPI application
+│   ├── bi_router.py        ← /bi/* data endpoints
+│   └── bi_voice_router.py  ← /bi/voice/* voice endpoints
+├── src/bi/
+│   ├── config.py           ← BI_* env-var configuration
+│   ├── data_parser.py      ← CSV/XLSX → DataFrame
+│   ├── session_store.py    ← in-memory session dict
+│   ├── filter_engine.py    ← DataFrame query engine
+│   ├── chart_engine.py     ← aggregation + chart recommendation
+│   ├── copilot.py          ← agentic tool-use loop (OpenRouter)
+│   ├── excel_exporter.py   ← openpyxl export
+│   ├── pdf_exporter.py     ← fpdf2 export
+│   ├── snowflake_connector.py ← direct Snowflake table/stage queries
+│   └── voice_config.py     ← AWS Transcribe + Polly config
+├── frontend/               ← standalone Next.js app
+│   ├── pages/
+│   │   ├── agentic-bi.tsx  ← main BI page
+│   │   └── bi-charts.tsx   ← chart dashboard page
+│   └── components/bi/
+│       ├── DataGrid.tsx
+│       ├── Sidebar.tsx
+│       ├── ChatDrawer.tsx
+│       ├── ExportButtons.tsx
+│       ├── ColumnSelector.tsx
+│       ├── SnowflakeBrowser.tsx
+│       ├── VoiceInputButton.tsx
+│       └── charts/         ← BarChartView, LineChartView, ScatterChartView,
+│                             HistogramView, HeatmapView, KPICards, ChartBuilder
+├── docker-compose.yml      ← standalone 2-service compose
+├── Dockerfile.api
+├── Dockerfile.frontend
+└── pyproject.toml          ← 14 dependencies (self-contained)
 ```
 
-### Copilot Chat Backend (B3)
+### Data Flow
 
-The copilot is implemented in `main/src/bi/copilot.py` as a single `chat()` function with an agentic tool-use loop. It uses the OpenAI SDK pointed at the OpenRouter base URL (`https://openrouter.ai/api/v1`), model `anthropic/claude-sonnet-4`.
-
-**Note**: AWS Bedrock was the original target provider. It was abandoned after `IAM AccessDeniedException` errors confirmed the Bedrock kill criterion. OpenRouter with an OpenAI-compatible API is the replacement.
-
-#### Agentic Loop
-
-```python
-# main/src/bi/copilot.py
-@observe(name="bi-copilot-chat")
-def chat(session_id: str, user_message: str) -> dict[str, Any]:
-    client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-    )
-    # Rebuild system prompt each call with current schema + filter state
-    system_prompt = _build_system_prompt(session_id)
-    messages = [{"role": "system", "content": system_prompt}, *history]
-
-    # Agentic loop — max 5 iterations
-    for iteration in range(5):
-        response = client.chat.completions.create(
-            model=config.copilot_model,  # "anthropic/claude-sonnet-4"
-            messages=messages,
-            tools=TOOLS,
-        )
-        if finish_reason == "stop" or not assistant_message.tool_calls:
-            break
-        # Dispatch tool calls, append results, continue loop
+```
+Upload CSV/XLSX → data_parser.py → DataFrame → session_store (in-memory dict)
+                                                        |
+             +------------------------------------------+------------------------------------------+
+             |                                          |                                          |
+             v                                          v                                          v
+  /bi/schema/{session_id}               /bi/data/{session_id}                    /bi/chat/{session_id}
+  (column metadata)                     (paginated filtered rows)                         |
+             |                                          |                             copilot.py
+             |                                   filter_engine                      (agentic loop)
+             +------------------------------------------+                                  |
+                          v                                                    tool calls (apply_filter,
+                    agentic-bi.tsx                                             remove_filter, search_data,
+                    DataGrid + Sidebar                                         summarize_column,
+                    ChatDrawer + ExportButtons                                 answer_question)
+                          |
+           +--------------+--------------+
+           |                             |
+           v                             v
+  /bi/export/excel/{session_id}   /bi/export/pdf/{session_id}
+  (openpyxl)                      (fpdf2)
 ```
 
-**Loop contract**: The LLM calls tools until it has enough data to answer, then emits a `stop` finish reason. If the loop reaches 5 iterations without stopping, the last assistant text is returned and a warning is logged. No exception is raised — failure is surfaced to the caller via the response content.
+**Snowflake alternative source** (optional):
 
-#### Tools
+```
+SnowflakeBrowser → /bi/snowflake/tables or /bi/snowflake/fetch-table
+                         |
+                   snowflake_connector.py → fetch_table() / fetch_stage_file()
+                         |
+                   session_store (same in-memory path as file upload)
+```
+
+### Key Components
+
+#### Copilot (agentic tool-use loop)
+
+Implemented in `mes-agentic-bi/src/bi/copilot.py` as a single `chat()` function decorated with `@observe(name="bi-copilot-chat")` (Langfuse tracing).
+
+- **Provider**: OpenRouter (`https://openrouter.ai/api/v1`) via the OpenAI Python SDK
+- **Model**: configured via `BI_COPILOT_MODEL` env var (default: `anthropic/claude-sonnet-4`)
+- **Loop**: max 5 iterations — LLM calls tools until `finish_reason == "stop"`, then returns final text
 
 Five OpenAI function-calling tools are registered:
 
 | Tool | Description |
 |------|-------------|
-| `apply_filter` | Apply or replace a filter on a column (supports 11 operators: equals, not_equals, contains, greater_than, less_than, greater_equal, less_equal, between, in, is_null, is_not_null). Returns updated row count. |
+| `apply_filter` | Apply or replace a column filter (11 operators: equals, not_equals, contains, greater_than, less_than, greater_equal, less_equal, between, in, is_null, is_not_null). Returns updated row count. |
 | `remove_filter` | Remove a filter from one column or clear all filters (pass `__all__`). |
-| `search_data` | Full-text search across one or more columns in the filtered dataset. Returns up to 50 matching rows. |
-| `summarize_column` | Descriptive statistics for a column: count/mean/std/min/max/quartiles for numeric; top-20 value counts for categorical. |
-| `answer_question` | Structured analytical operations (count, group_by, trend, outliers, comparison, general) on the filtered DataFrame. |
+| `search_data` | Case-insensitive full-text search across one or more columns. Returns up to 50 matching rows. |
+| `summarize_column` | Descriptive statistics for one column: count/mean/std/min/max/quartiles (numeric) or top-20 value counts (categorical). |
+| `answer_question` | Structured analytics: count, group_by, trend, outliers, comparison, general — operates on the currently filtered DataFrame. |
 
-#### System Prompt Design
+The system prompt is rebuilt on every call with current dataset schema, row counts, and active filter list. It is never stored in chat history, so filter state is always fresh.
 
-The system prompt is rebuilt on every call using `_build_system_prompt(session_id)`. It includes:
-- Dataset filename, total rows, filtered rows, column count
-- Per-column metadata: dtype, unique count, null count, 5 sample values
-- Currently active filter list
+#### Session Store
 
-This ensures the LLM always has current dataset state without stale context from earlier turns.
+`mes-agentic-bi/src/bi/session_store.py` holds a module-level dict of `session_id → BISession`. Each session contains the raw DataFrame plus column metadata (`BIColumn`: name, dtype, unique count, null count, sample values). No database is required for PoC scale.
 
-#### Per-Session Chat History
+Configuration via `BI_*` env vars: `BI_MAX_ROWS` (default 100,000), `BI_SESSION_TTL_SECONDS` (default 3,600), `BI_MAX_SESSIONS` (default 20), `BI_MAX_UPLOAD_SIZE_MB` (default 50).
 
-Chat history is stored in a module-level dict (`_chat_histories: dict[str, list]`) keyed by `session_id`. The system prompt is excluded from the stored history — it is prepended fresh on each call so filter state is always accurate.
+#### Filter Engine
 
-### Copilot Chat Frontend (B3)
+`mes-agentic-bi/src/bi/filter_engine.py` maintains one active filter per column. Filters are stored in a module-level dict keyed by `session_id`. `get_filtered_dataframe()` applies all active filters to the raw DataFrame on every call (stateless computation, no cached result). Used by both the HTTP `/bi/data` endpoint and all copilot tool executors.
 
-The `ChatDrawer` component (`main/frontend/components/bi/ChatDrawer.tsx`) is a bottom-anchored expandable drawer rendered on the `agentic-bi.tsx` page.
+#### Chart Engine
 
-```tsx
-// main/frontend/components/bi/ChatDrawer.tsx
-// Bottom drawer: collapsed=64px, expanded=420px, spring animation via Framer Motion
-export default function ChatDrawer({ sessionId, onFiltersChanged }) {
-  const [expanded, setExpanded] = useState(false);
+`mes-agentic-bi/src/bi/chart_engine.py` provides two functions:
 
-  // Auto-expand on first message send
-  const handleSend = async (text) => {
-    setExpanded(true);
-    const data: BIChatResponse = await fetch(`/bi/chat/${sessionId}`, { ... });
+- `recommend_charts(session_id)` — classifies columns as numeric, categorical, temporal, or text; returns up to 8 auto-recommended chart configurations and KPI card data for all numeric columns.
+- `get_chart_data(session_id, chart_type, ...)` — computes aggregated data for a specific chart. Supports: `bar` (group-by with optional secondary grouping), `line` (sorted by x-axis), `scatter` (sampled at 500 points), `histogram` (numpy bins), `heatmap` (2 categoricals + 1 numeric, pivot aggregation).
 
-    // Render filter action badges for apply_filter / remove_filter tool calls
-    // If data.filters_changed, call onFiltersChanged() to sync grid state
-  };
+#### Snowflake Connector
 
-  return (
-    <motion.div
-      animate={{ height: expanded ? 420 : 64 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-    >
-      {/* 3 suggestion chips when no messages present */}
-      {/* Message list with filter action badges */}
-    </motion.div>
-  );
-}
-```
+`mes-agentic-bi/src/bi/snowflake_connector.py` provides direct queries to Snowflake without any intermediate ORM:
 
-**Key behaviors:**
-- Collapsed (64 px) by default; auto-expands to 420 px when the first message is sent
-- Three suggestion chips are shown when the message list is empty
-- Filter action badges are rendered for `apply_filter` and `remove_filter` tool calls, displaying the column and operator applied
-- When the backend reports `filters_changed: true`, the drawer calls `onFiltersChanged()` to trigger a grid data refresh in the parent page
+- `list_tables()` — INFORMATION_SCHEMA query, returns table names, types, and row counts
+- `list_stage_files()` — `LIST @stage` command
+- `fetch_table()` — `SELECT * FROM table LIMIT N` as pandas DataFrame
+- `fetch_stage_file()` — `GET @stage/path` to a temp dir, then parsed via `data_parser.py`
 
-### Technology Stack
+All identifiers are validated (no semicolons, no newlines) before interpolation into SQL. The connection is opened and closed per call; no connection pool.
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Data Ingestion** | pandas | XLSX/CSV parsing (~15K rows) |
-| **Data Grid** | TanStack Table v8 | Paginated grid rendering |
-| **Copilot LLM** | `anthropic/claude-sonnet-4` via OpenRouter | Agentic tool-use chat loop |
-| **Copilot SDK** | OpenAI Python SDK (OpenRouter-compatible) | Function calling API |
-| **Copilot Tracing** | Langfuse `@observe` | Per-call trace: `bi-copilot-chat` |
-| **Backend** | FastAPI (`/bi/*` routes) | Upload, session, schema, data, chat endpoints |
-| **Frontend** | Next.js 14 (Pages Router, `agentic-bi.tsx`) | Upload, sidebar, grid, pagination, chat drawer |
-| **Docker Compose** | `docker-compose.bi.yml` | Planned in later phase |
-| **Authentication** | None (PoC) | No auth required |
-| **Color Accent** | Cyan/Teal | UI theme (vs blue for thesis, emerald for LIMS) |
+### Independence
+
+The `mes-agentic-bi/` service has zero imports from `main/`. It is deployed independently via `mes-agentic-bi/docker-compose.yml` (2 services: `api` on port 8000, `frontend` on port 3001). All configuration is via `BI_*`-prefixed environment variables defined in `mes-agentic-bi/.env.example`.
 
 ### API Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/bi/upload` | POST | XLSX/CSV upload + parse into session |
-| `/bi/data/{session_id}` | GET | Paginated filtered rows for selected session |
+| `/bi/data/{session_id}` | GET | Paginated filtered rows |
 | `/bi/schema/{session_id}` | GET | Column metadata for sidebar |
-| `/bi/filter/{session_id}` | POST | Apply/update active server-side filters |
-| `/bi/chat/{session_id}` | POST | Copilot agentic chat turn (OpenRouter, tool-use loop) |
+| `/bi/filter/{session_id}` | POST | Apply/update server-side filters |
+| `/bi/chat/{session_id}` | POST | Copilot agentic chat turn (tool-use loop) |
+| `/bi/charts/recommend/{session_id}` | GET | Auto-recommended chart configurations + KPI cards |
+| `/bi/charts/data/{session_id}` | POST | Aggregated data for a specific chart |
 | `/bi/export/pdf/{session_id}` | GET | Filtered PDF export (landscape A4, max 1000 rows) |
 | `/bi/export/excel/{session_id}` | GET | Filtered Excel export with "Filters Applied" metadata |
+| `/bi/snowflake/tables` | POST | List tables in a Snowflake schema |
+| `/bi/snowflake/fetch-table` | POST | Fetch Snowflake table as session |
+| `/bi/voice/*` | POST | AWS Transcribe STT + Polly TTS (optional, `BI_VOICE_ENABLED`) |
+| `/health` | GET | Service health check |
 
-### Planned Next Flow (B5)
+**Authentication**: None (PoC mode).
 
-- **B2**: filter engine + sidebar filter controls + virtual scrolling (validated).
-- **B3**: copilot chat (`/bi/chat/{session_id}`) via OpenRouter, agentic tool-use loop (validated).
-- **B4**: PDF/Excel export endpoints + top-bar export controls (validated).
-- **B5**: polish, compose stack, deployment updates.
+### Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Backend** | FastAPI (`mes-agentic-bi/api/`) | Standalone app with 2 routers |
+| **Data Ingestion** | pandas | XLSX/CSV parsing (up to `BI_MAX_ROWS`) |
+| **Data Grid** | TanStack Table v8 + @tanstack/react-virtual | Virtualized grid rendering |
+| **Copilot LLM** | `anthropic/claude-sonnet-4` via OpenRouter | Agentic tool-use chat loop |
+| **Copilot SDK** | OpenAI Python SDK (OpenRouter base URL) | Function calling API |
+| **Copilot Tracing** | Langfuse `@observe` | Per-call span: `bi-copilot-chat` |
+| **Data Processing** | pandas DataFrame | In-memory session store + filter engine |
+| **Chart Engine** | pandas + numpy | Aggregation, binning, heatmap pivots |
+| **PDF Export** | fpdf2 | Landscape A4, max 1000 filtered rows |
+| **Excel Export** | openpyxl | Filtered data + "Filters Applied" metadata sheet |
+| **Snowflake** | snowflake-connector-python | Direct table/stage queries |
+| **Voice STT** | AWS Transcribe (boto3) | Optional voice input |
+| **Voice TTS** | AWS Polly (boto3) | Optional voice output |
+| **Frontend** | Next.js (Pages Router) | `agentic-bi.tsx` + `bi-charts.tsx` |
+| **Color Accent** | Cyan/Teal | UI theme (vs blue for thesis, emerald for LIMS) |
+| **Auth** | None (PoC) | No Clerk integration |
+| **Docker** | `mes-agentic-bi/docker-compose.yml` | 2-service standalone compose |
 
 ### Key Design Decisions
 
-1. **No Auth Required**: PoC only — no Clerk integration. Uses plain `fetch`.
+1. **Full extraction from `main/`**: The service lives in `mes-agentic-bi/` with its own `pyproject.toml` (14 deps). Zero shared Python modules with the thesis or LIMS codebase. Can be deployed, tested, and iterated independently.
 
-2. **In-Memory Session Store**: Uploaded data held in `session_store.py` (keyed by `session_id`). No database needed for PoC scale.
+2. **No Auth Required**: PoC only — no Clerk integration. Uses plain `fetch`.
 
-3. **Additive Delivery by phase**: B1 implemented and validated first; B2-B5 are layered without impacting thesis/LIMS routes.
+3. **In-Memory Session Store**: Uploaded data held in a module-level dict keyed by `session_id`. No database needed for PoC scale. TTL and max-sessions limits are enforced via `BI_*` env vars.
 
-4. **Pagination-first strategy**: B1 uses server-side pagination (100 rows/page) before introducing virtual scroll in B2.
+4. **Stateless filter computation**: `filter_engine.get_filtered_dataframe()` recomputes the filtered view on every call rather than caching. This keeps the implementation simple and avoids stale-cache bugs.
 
-5. **Additive Architecture**: `bi_router.py` is mounted separately from thesis routes and LIMS routes. Zero impact on existing code.
+5. **Dynamic system prompt**: The copilot system prompt is rebuilt on every chat call with current dataset schema and active filter state. It is never stored in chat history, preventing stale information across turns.
 
-6. **OpenRouter instead of Bedrock**: AWS Bedrock was the originally planned copilot LLM provider. After confirmed `IAM AccessDeniedException` errors (kill criterion), the copilot was switched to OpenRouter using the OpenAI-compatible API. `config.py` field renamed from `bedrock_model_id` to `copilot_model`. No other BI files required changes.
+6. **OpenRouter instead of Bedrock**: AWS Bedrock was the originally planned copilot LLM provider. After confirmed `IAM AccessDeniedException` errors (kill criterion), the copilot was switched to OpenRouter using the OpenAI-compatible API.
 
-7. **Dynamic system prompt**: The copilot system prompt is rebuilt on every chat call with current dataset schema and active filter state. It is never stored in chat history, preventing stale schema/filter information across turns.
+7. **Snowflake as alternative source**: `snowflake_connector.py` allows loading data directly from Snowflake tables or stage files into the same in-memory session pipeline, avoiding a manual export/upload step for PPRS production data.
 
 ---
 
@@ -1103,22 +1121,29 @@ API → PostgreSQL → SQS → Worker → LangFuse traces
 | Frontend | Next.js 14 (Pages Router, `/lims.tsx`) |
 | Docker Compose | `docker-compose.lims.yml` (minimal: frontend + API only) |
 
-### MES Agentic BI (Branch: feature/mes-agentic-bi)
+### MES Agentic BI (Standalone service: `mes-agentic-bi/`)
 
 | Component | Technology |
 |-----------|------------|
-| Data Ingestion | pandas (XLSX/CSV, ~15K rows) |
+| Service Root | `mes-agentic-bi/` (zero imports from `main/`) |
+| Backend | FastAPI standalone app (`mes-agentic-bi/api/app.py`, 2 routers) |
+| Data Ingestion | pandas (XLSX/CSV, up to `BI_MAX_ROWS`) |
 | Data Grid | TanStack Table v8 + @tanstack/react-virtual |
 | Copilot LLM | `anthropic/claude-sonnet-4` via OpenRouter |
 | Copilot SDK | OpenAI Python SDK (OpenRouter-compatible base URL) |
-| Data Processing | pandas DataFrame (in-memory sessions) |
+| Data Processing | pandas DataFrame (in-memory sessions, `session_store.py`) |
+| Filter Engine | pandas query engine (`filter_engine.py`) |
+| Chart Engine | pandas + numpy aggregation (`chart_engine.py`) |
 | PDF Export | fpdf2 |
 | Excel Export | openpyxl |
+| Snowflake | snowflake-connector-python (tables + stages) |
+| Voice STT | AWS Transcribe via boto3 (optional, `BI_VOICE_ENABLED`) |
+| Voice TTS | AWS Polly via boto3 (optional, `BI_VOICE_TTS_ENABLED`) |
 | Observability | Langfuse `@observe` (`bi-copilot-chat` span) |
-| Authentication | None (PoC: `NEXT_PUBLIC_AUTH_ENABLED=false`) |
-| Backend | FastAPI (`/bi/*` routes) |
-| Frontend | Next.js 14 (Pages Router, `/agentic-bi.tsx`) |
-| Docker Compose | `docker-compose.bi.yml` (minimal: frontend + API only) |
+| Authentication | None (PoC) |
+| Frontend | Next.js (Pages Router, `agentic-bi.tsx` + `bi-charts.tsx`) |
+| Docker Compose | `mes-agentic-bi/docker-compose.yml` (standalone: api + frontend) |
+| Dependencies | `mes-agentic-bi/pyproject.toml` (14 deps, self-contained) |
 
 ---
 
@@ -1211,4 +1236,53 @@ thesis_project/
 ├── chroma_db/
 │   └── mda_templates/                    # RAG collection
 └── docker-compose.lims.yml               # LIMS PoC compose file
+```
+
+### MES Agentic BI (Standalone service: `mes-agentic-bi/`)
+
+```
+thesis_project/
+└── mes-agentic-bi/                       # Fully standalone — zero imports from main/
+    ├── api/
+    │   ├── app.py                        # FastAPI application (2 routers)
+    │   ├── bi_router.py                  # /bi/* data + copilot endpoints
+    │   └── bi_voice_router.py            # /bi/voice/* STT + TTS endpoints
+    ├── src/bi/
+    │   ├── config.py                     # BI_* env-var configuration
+    │   ├── data_parser.py                # CSV/XLSX → pandas DataFrame
+    │   ├── session_store.py              # In-memory session dict
+    │   ├── filter_engine.py              # DataFrame query engine (per-column filters)
+    │   ├── chart_engine.py               # Chart recommendation + aggregation
+    │   ├── copilot.py                    # Agentic tool-use loop (OpenRouter, 5 tools)
+    │   ├── excel_exporter.py             # openpyxl export
+    │   ├── pdf_exporter.py               # fpdf2 export
+    │   ├── snowflake_connector.py        # Direct Snowflake table/stage queries
+    │   └── voice_config.py               # AWS Transcribe + Polly config
+    ├── frontend/
+    │   ├── pages/
+    │   │   ├── agentic-bi.tsx            # Main BI page (upload, grid, chat, export)
+    │   │   └── bi-charts.tsx             # Chart dashboard page
+    │   └── components/bi/
+    │       ├── DataGrid.tsx              # TanStack Table v8 + virtualized scroll
+    │       ├── Sidebar.tsx               # Column filter controls
+    │       ├── ChatDrawer.tsx            # Bottom-anchored copilot drawer
+    │       ├── ExportButtons.tsx         # PDF / Excel export controls
+    │       ├── ColumnSelector.tsx        # Column visibility toggle
+    │       ├── SnowflakeBrowser.tsx      # Snowflake table/stage browser
+    │       ├── VoiceInputButton.tsx      # Voice input (AWS Transcribe)
+    │       └── charts/
+    │           ├── ChartPage.tsx         # Chart page layout
+    │           ├── ChartBuilder.tsx      # Interactive chart builder
+    │           ├── ChartCard.tsx         # Recharts chart card wrapper
+    │           ├── KPICards.tsx          # Numeric KPI summary cards
+    │           ├── BarChartView.tsx
+    │           ├── LineChartView.tsx
+    │           ├── ScatterChartView.tsx
+    │           ├── HistogramView.tsx
+    │           └── HeatmapView.tsx
+    ├── docker-compose.yml                # Standalone 2-service compose (api:8000, frontend:3001)
+    ├── Dockerfile.api
+    ├── Dockerfile.frontend
+    ├── pyproject.toml                    # 14 runtime dependencies (self-contained)
+    └── .env.example                      # BI_* environment variable template
 ```

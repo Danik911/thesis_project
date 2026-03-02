@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-02-24 (ISSUE-040 updated: template-locked merge mode implemented for merge admission control part)
+**Last Updated:** 2026-02-27 (ISSUE-041 resolved: MES Agentic BI RBAC hardening and client handover artifacts)
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-041
+4. **Next Issue Number**: ISSUE-042
 
 ---
 
@@ -31,6 +31,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
+| [ISSUE-041](ISSUE-041-mes-bi-rbac-hardening-and-client-handover-gaps.md) | MES Agentic BI RBAC Hardening and Client Handover Gaps | 2026-02-27 | 2026-02-27 | Auth/API/Documentation |
 | [ISSUE-039](ISSUE-039-lims-xlsx-export-null-and-truncated-analysis-refs.md) | LIMS XLSX Export Fails — Null and Truncated Analysis References | 2026-02-21 | 2026-02-21 | API/Data Quality |
 | [ISSUE-038](ISSUE-038-lims-chat-missing-grounded-context-and-provenance.md) | LIMS Chat Missing Grounded Context and Provenance Attribution | 2026-02-21 | 2026-02-21 | API/Workflow |
 | [ISSUE-037](ISSUE-037-l15-frontend-delivery-and-local-e2e-consolidated.md) | L15 Frontend Delivery + Local E2E Validation (Consolidated) | 2026-02-20 | 2026-02-20 | Frontend/API/Config |
@@ -104,9 +105,9 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 32
+- **Total Issues:** 33
 - **Open:** 4
-- **Resolved:** 28
+- **Resolved:** 29
 - **Most Common Category:** Deployment (9 issues)
 
 ---

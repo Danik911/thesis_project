@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import ChatDrawer from '@/components/bi/ChatDrawer';
@@ -30,6 +30,7 @@ export default function AgenticBIPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [activeFilters, setActiveFilters] = useState<BIFilterDef[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+  const [filteredColumns, setFilteredColumns] = useState<BIColumn[] | null>(null);
   const [dataSource, setDataSource] = useState<'upload' | 'snowflake'>('upload');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +47,7 @@ export default function AgenticBIPage() {
     setPage(1);
     setTotalPages(1);
     setActiveFilters([]);
+    setFilteredColumns(null);
     setVisibleColumns([]);
     setError(null);
     setDataSource('upload');
@@ -185,6 +187,7 @@ export default function AgenticBIPage() {
 
       const payload: BIFilterResponse = await response.json();
       setActiveFilters(payload.active_filters);
+      setFilteredColumns(payload.filtered_columns ?? null);
       await loadPage(1);
     } catch (filterError) {
       setError(filterError instanceof Error ? filterError.message : 'Failed to apply filters');
@@ -194,15 +197,38 @@ export default function AgenticBIPage() {
   const handleCopilotFiltersChanged = async (copilotFilters?: BIFilterDef[]) => {
     if (!sessionId) return;
     try {
-      // Apply copilot-provided filters immediately so the sidebar updates
       if (copilotFilters) {
-        setActiveFilters(copilotFilters);
+        await handleFiltersChange(copilotFilters);
+      } else {
+        await loadPage(1);
       }
-      await loadPage(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sync filters from copilot');
     }
   };
+
+  const handleFilterRemove = useCallback(
+    async (column: string, value?: string | number) => {
+      const nextFilters: BIFilterDef[] = [];
+
+      for (const filter of activeFilters) {
+        if (filter.column !== column) {
+          nextFilters.push(filter);
+          continue;
+        }
+
+        if (value !== undefined && filter.operator === 'in' && Array.isArray(filter.value)) {
+          const remaining = filter.value.filter((item) => item !== value);
+          if (remaining.length > 0) {
+            nextFilters.push({ ...filter, value: remaining });
+          }
+        }
+      }
+
+      await handleFiltersChange(nextFilters);
+    },
+    [activeFilters, handleFiltersChange]
+  );
 
   return (
     <>
@@ -350,7 +376,7 @@ export default function AgenticBIPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-[288px_minmax(0,1fr)] gap-4">
                   <Sidebar
                     filename={filename}
-                    fields={columns}
+                    fields={filteredColumns ?? columns}
                     activeFilters={activeFilters}
                     onFiltersChange={handleFiltersChange}
                     onRemove={resetToIdle}
@@ -361,6 +387,8 @@ export default function AgenticBIPage() {
                       columns={columns.map((column) => column.name)}
                       visibleColumns={visibleColumns}
                       onVisibleColumnsChange={setVisibleColumns}
+                      activeFilters={activeFilters}
+                      onFilterRemove={handleFilterRemove}
                       data={rows}
                       totalRows={totalRows}
                       totalFilteredRows={totalFilteredRows}
