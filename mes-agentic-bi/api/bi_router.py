@@ -7,10 +7,12 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from src.bi.audit import get_audit_logger
+from src.bi.audit.models import AuditEventType
 from src.bi.auth import get_current_user, get_optional_user
 from src.bi.auth_models import BIUser, UserRole
 from src.bi.chart_engine import get_chart_data, recommend_charts
@@ -31,6 +33,13 @@ from src.bi.snowflake_connector import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["BI"])
+
+
+def _apply_authenticated_user_to_request_state(request: Request, user: BIUser | None) -> None:
+    if user is None:
+        return
+    request.state.user_id = user.sub
+    request.state.user_role = user.role.value
 
 
 # ---------------------------------------------------------------------------
@@ -159,12 +168,26 @@ def _snowflake_error_detail(prefix: str, exc: Exception) -> str:
 
 @router.get("/me")
 async def get_current_user_info(
+    request: Request,
     user: BIUser | None = Depends(get_optional_user),
 ) -> dict:
     """Return current user information (role, site, groups)."""
     config = get_bi_config()
     if user is None:
         return {"authenticated": False, "auth_enabled": config.auth_enabled}
+
+    _apply_authenticated_user_to_request_state(request, user)
+    await get_audit_logger().emit(
+        AuditEventType.AUTH_USER_IDENTIFIED,
+        request=request,
+        payload={
+            "authenticated": True,
+            "role": user.role.value,
+            "site": user.site,
+            "groups": user.groups,
+        },
+    )
+
     return {
         "authenticated": True,
         "auth_enabled": config.auth_enabled,
@@ -179,6 +202,7 @@ async def get_current_user_info(
 
 @router.post("/upload")
 async def upload_file(
+    request: Request,
     file: UploadFile,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
@@ -209,6 +233,7 @@ async def upload_file(
         )
 
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         dataframe = parse_file(content, file.filename)
         dataframe = _apply_site_filter(dataframe, user)
         session_id = create_session(
@@ -220,6 +245,15 @@ async def upload_file(
         )
         session = get_session(session_id)
         preview = get_filter_engine(session_id).get_page(page=1, page_size=100)
+
+        await get_audit_logger().log_data_uploaded(
+            request,
+            session_id=session_id,
+            filename=file.filename,
+            total_rows=session.total_rows,
+            total_columns=session.total_columns,
+            file_size_bytes=len(content),
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:
@@ -241,6 +275,7 @@ async def upload_file(
 
 @router.get("/data/{session_id}")
 async def get_data_page(
+    request: Request,
     session_id: str,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=100, ge=1, le=50000),
@@ -248,8 +283,16 @@ async def get_data_page(
 ) -> dict:
     """Fetch paginated session data for grid rendering."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
-        return get_filter_engine(session_id).get_page(page=page, page_size=page_size)
+        result = get_filter_engine(session_id).get_page(page=page, page_size=page_size)
+        await get_audit_logger().log_data_page_viewed(
+            request,
+            session_id=session_id,
+            page=page,
+            page_size=page_size,
+        )
+        return result
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
@@ -258,15 +301,24 @@ async def get_data_page(
 
 @router.get("/schema/{session_id}")
 async def get_schema(
+    request: Request,
     session_id: str,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """Fetch session schema metadata for sidebar display."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
         session = get_session(session_id)
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    await get_audit_logger().emit(
+        AuditEventType.SCHEMA_VIEWED,
+        request=request,
+        session_id=session_id,
+        payload={"session_id": session_id, "total_columns": session.total_columns},
+    )
 
     return {
         "session_id": session.session_id,
@@ -279,18 +331,26 @@ async def get_schema(
 
 @router.post("/filter/{session_id}")
 async def apply_filters(
+    request: Request,
     session_id: str,
-    request: BIFilterRequest,
+    filter_request: BIFilterRequest,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """Apply full filter set for a BI session and return updated preview."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
         get_session(session_id)
         engine = get_filter_engine(session_id)
-        normalized_filters = [item.model_dump() for item in request.filters]
+        normalized_filters = [item.model_dump() for item in filter_request.filters]
         total_filtered_rows = engine.set_filters(normalized_filters)
         preview = engine.get_page(page=1, page_size=100)
+        await get_audit_logger().log_filter_applied(
+            request,
+            session_id=session_id,
+            filters=engine.get_active_filters(),
+            filtered_row_count=total_filtered_rows,
+        )
         return {
             "total_filtered_rows": total_filtered_rows,
             "active_filters": engine.get_active_filters(),
@@ -305,14 +365,26 @@ async def apply_filters(
 
 @router.get("/export/excel/{session_id}")
 async def export_filtered_excel(
+    request: Request,
     session_id: str,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> StreamingResponse:
     """Download filtered BI data as an Excel file."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
         session = get_session(session_id)
+        engine = get_filter_engine(session_id)
+        filtered_rows = engine.filtered_count()
         file_buffer = export_excel(session_id)
+        await get_audit_logger().log_export(
+            request,
+            format="excel",
+            session_id=session_id,
+            row_count=filtered_rows,
+            active_filters=engine.get_active_filters(),
+            filename=session.filename,
+        )
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
@@ -337,14 +409,26 @@ async def export_filtered_excel(
 
 @router.get("/export/pdf/{session_id}")
 async def export_filtered_pdf(
+    request: Request,
     session_id: str,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> StreamingResponse:
     """Download filtered BI data as a PDF file."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
         session = get_session(session_id)
+        engine = get_filter_engine(session_id)
+        filtered_rows = engine.filtered_count()
         file_buffer = export_pdf(session_id)
+        await get_audit_logger().log_export(
+            request,
+            format="pdf",
+            session_id=session_id,
+            row_count=filtered_rows,
+            active_filters=engine.get_active_filters(),
+            filename=session.filename,
+        )
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
@@ -367,20 +451,34 @@ async def export_filtered_pdf(
 
 @router.post("/chat/{session_id}")
 async def chat_with_copilot(
+    request: Request,
     session_id: str,
-    request: BIChatRequest,
+    chat_request: BIChatRequest,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """Send a message to the BI copilot and receive an AI-generated response."""
-    if not request.message.strip():
+    if not chat_request.message.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Chat message must not be empty",
         )
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
         get_session(session_id)  # Validate session exists
-        result = copilot_chat(session_id, request.message, user=user)
+        result = copilot_chat(session_id, chat_request.message, user=user)
+        await get_audit_logger().log_copilot_chat(
+            request,
+            session_id=session_id,
+            message_length=len(chat_request.message),
+            response_length=len(result.get("response", "")),
+            tool_calls_count=len(result.get("tool_calls", [])),
+            tool_calls=[tc.get("tool", "") for tc in result.get("tool_calls", [])],
+            filters_changed=result.get("filters_changed", False),
+            filtered_row_count=result.get("filtered_row_count", 0),
+            model=get_bi_config().copilot_model,
+            langfuse_trace_id=result.get("langfuse_trace_id", ""),
+        )
         return result
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
@@ -399,14 +497,23 @@ async def chat_with_copilot(
 
 @router.get("/charts/recommend/{session_id}")
 async def recommend_session_charts(
+    request: Request,
     session_id: str,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """Analyze session schema and return recommended chart configurations."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
         get_session(session_id)
-        return recommend_charts(session_id)
+        result = recommend_charts(session_id)
+        await get_audit_logger().log_chart_operation(
+            request,
+            event_type=AuditEventType.CHART_RECOMMENDED,
+            session_id=session_id,
+            payload={"chart_count": len(result.get("recommended_charts", []))},
+        )
+        return result
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except Exception as exc:
@@ -419,24 +526,37 @@ async def recommend_session_charts(
 
 @router.post("/charts/data/{session_id}")
 async def get_session_chart_data(
+    request: Request,
     session_id: str,
-    request: BIChartDataRequest,
+    chart_request: BIChartDataRequest,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """Compute aggregated data for a specific chart configuration."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_session_access(session_id, user)
         get_session(session_id)
-        return get_chart_data(
+        result = get_chart_data(
             session_id,
-            chart_type=request.chart_type,
-            x_column=request.x_column,
-            y_column=request.y_column,
-            aggregation=request.aggregation,
-            group_by=request.group_by,
-            bins=request.bins,
-            limit=request.limit,
+            chart_type=chart_request.chart_type,
+            x_column=chart_request.x_column,
+            y_column=chart_request.y_column,
+            aggregation=chart_request.aggregation,
+            group_by=chart_request.group_by,
+            bins=chart_request.bins,
+            limit=chart_request.limit,
         )
+        await get_audit_logger().log_chart_operation(
+            request,
+            event_type=AuditEventType.CHART_DATA_REQUESTED,
+            session_id=session_id,
+            payload={
+                "chart_type": chart_request.chart_type,
+                "columns": [chart_request.x_column, chart_request.y_column],
+                "aggregation": chart_request.aggregation,
+            },
+        )
+        return result
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
@@ -456,24 +576,35 @@ async def get_session_chart_data(
 
 @router.post("/snowflake/tables")
 async def list_snowflake_tables(
-    request: SnowflakeConnectRequest,
+    request: Request,
+    snowflake_request: SnowflakeConnectRequest,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """List tables/views in a Snowflake schema."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _require_admin_when_auth_enabled(user)
         tables = sf_list_tables(
-            account=request.account,
-            user=request.user,
-            password=request.password,
-            warehouse=request.warehouse,
-            database=request.database,
-            schema=request.schema_name,
+            account=snowflake_request.account,
+            user=snowflake_request.user,
+            password=snowflake_request.password,
+            warehouse=snowflake_request.warehouse,
+            database=snowflake_request.database,
+            schema=snowflake_request.schema_name,
+        )
+        await get_audit_logger().log_snowflake_operation(
+            request,
+            event_type=AuditEventType.SF_TABLES_LISTED,
+            payload={
+                "database": snowflake_request.database,
+                "schema": snowflake_request.schema_name,
+                "table_count": len(tables),
+            },
         )
         return {
             "tables": tables,
-            "database": request.database,
-            "schema": request.schema_name,
+            "database": snowflake_request.database,
+            "schema": snowflake_request.schema_name,
         }
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
@@ -487,21 +618,28 @@ async def list_snowflake_tables(
 
 @router.post("/snowflake/stages/{stage_name}/files")
 async def list_snowflake_stage_files(
+    request: Request,
     stage_name: str,
-    request: SnowflakeConnectRequest,
+    snowflake_request: SnowflakeConnectRequest,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """List files in a named Snowflake stage."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _require_admin_when_auth_enabled(user)
         files = sf_list_stage_files(
-            account=request.account,
-            user=request.user,
-            password=request.password,
-            warehouse=request.warehouse,
-            database=request.database,
-            schema=request.schema_name,
+            account=snowflake_request.account,
+            user=snowflake_request.user,
+            password=snowflake_request.password,
+            warehouse=snowflake_request.warehouse,
+            database=snowflake_request.database,
+            schema=snowflake_request.schema_name,
             stage_name=stage_name,
+        )
+        await get_audit_logger().log_snowflake_operation(
+            request,
+            event_type=AuditEventType.SF_STAGE_FILES_LISTED,
+            payload={"stage_name": stage_name, "file_count": len(files)},
         )
         return {
             "files": files,
@@ -519,24 +657,26 @@ async def list_snowflake_stage_files(
 
 @router.post("/snowflake/load/table")
 async def load_snowflake_table(
-    request: SnowflakeLoadTableRequest,
+    request: Request,
+    load_request: SnowflakeLoadTableRequest,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """Load a Snowflake table into a BI session."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _require_admin_when_auth_enabled(user)
         dataframe = sf_fetch_table(
-            account=request.account,
-            user=request.user,
-            password=request.password,
-            warehouse=request.warehouse,
-            database=request.database,
-            schema=request.schema_name,
-            table_name=request.table_name,
+            account=load_request.account,
+            user=load_request.user,
+            password=load_request.password,
+            warehouse=load_request.warehouse,
+            database=load_request.database,
+            schema=load_request.schema_name,
+            table_name=load_request.table_name,
         )
 
         dataframe = _apply_site_filter(dataframe, user)
-        source_name = f"sf://{request.database}.{request.schema_name}.{request.table_name}"
+        source_name = f"sf://{load_request.database}.{load_request.schema_name}.{load_request.table_name}"
         session_id = create_session(
             source_name,
             dataframe,
@@ -546,6 +686,17 @@ async def load_snowflake_table(
         )
         session = get_session(session_id)
         preview = get_filter_engine(session_id).get_page(page=1, page_size=100)
+        await get_audit_logger().log_snowflake_operation(
+            request,
+            event_type=AuditEventType.SF_TABLE_LOADED,
+            session_id=session_id,
+            payload={
+                "table_name": load_request.table_name,
+                "database": load_request.database,
+                "schema": load_request.schema_name,
+                "row_count": session.total_rows,
+            },
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:
@@ -567,25 +718,27 @@ async def load_snowflake_table(
 
 @router.post("/snowflake/load/stage-file")
 async def load_snowflake_stage_file(
-    request: SnowflakeLoadStageFileRequest,
+    request: Request,
+    load_request: SnowflakeLoadStageFileRequest,
     user: BIUser | None = Depends(_get_user_dep()),
 ) -> dict:
     """Download a stage file, parse it, and load into a BI session."""
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _require_admin_when_auth_enabled(user)
         dataframe = sf_fetch_stage_file(
-            account=request.account,
-            user=request.user,
-            password=request.password,
-            warehouse=request.warehouse,
-            database=request.database,
-            schema=request.schema_name,
-            stage_name=request.stage_name,
-            file_path=request.file_path,
+            account=load_request.account,
+            user=load_request.user,
+            password=load_request.password,
+            warehouse=load_request.warehouse,
+            database=load_request.database,
+            schema=load_request.schema_name,
+            stage_name=load_request.stage_name,
+            file_path=load_request.file_path,
         )
 
         dataframe = _apply_site_filter(dataframe, user)
-        source_name = f"sf://@{request.stage_name}/{request.file_path}"
+        source_name = f"sf://@{load_request.stage_name}/{load_request.file_path}"
         session_id = create_session(
             source_name,
             dataframe,
@@ -595,6 +748,16 @@ async def load_snowflake_stage_file(
         )
         session = get_session(session_id)
         preview = get_filter_engine(session_id).get_page(page=1, page_size=100)
+        await get_audit_logger().log_snowflake_operation(
+            request,
+            event_type=AuditEventType.SF_STAGE_FILE_LOADED,
+            session_id=session_id,
+            payload={
+                "stage": load_request.stage_name,
+                "file_path": load_request.file_path,
+                "row_count": session.total_rows,
+            },
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:

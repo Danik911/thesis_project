@@ -62,6 +62,8 @@ export interface BIChatResponse {
   filters_changed: boolean;
   active_filters: BIFilterDef[];
   filtered_row_count: number;
+  langfuse_trace_id?: string | null;
+  model?: string;
 }
 
 // ---------------------------------------------------------------------------

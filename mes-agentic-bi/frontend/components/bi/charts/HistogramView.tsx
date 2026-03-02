@@ -41,7 +41,7 @@ export default function HistogramView({ data, xLabel }: HistogramViewProps) {
           contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
           labelStyle={{ color: '#94a3b8' }}
           itemStyle={{ color: '#67e8f9' }}
-          formatter={(value: number) => [value, 'Count']}
+          formatter={(value) => [value ?? 0, 'Count']}
         />
         <Bar dataKey="count" fill="#14b8a6" radius={[2, 2, 0, 0]} />
       </BarChart>

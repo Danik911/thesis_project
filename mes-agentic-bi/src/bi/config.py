@@ -46,6 +46,20 @@ class BIConfig:
     site_column_name: str = os.getenv("BI_SITE_COLUMN_NAME", "Site")
     cors_origins: str = os.getenv("BI_CORS_ORIGINS", "*")
 
+    # --- ALCOA+ Audit Trail ---
+    audit_enabled: bool = _as_bool(os.getenv("BI_AUDIT_ENABLED"), default=True)
+    audit_log_group: str = os.getenv("BI_AUDIT_LOG_GROUP", "/mes-agentic-bi/audit")
+    audit_log_stream_prefix: str = os.getenv("BI_AUDIT_LOG_STREAM_PREFIX", "bi-audit")
+    audit_aws_region: str = os.getenv("BI_AUDIT_AWS_REGION", "eu-west-2")
+
+    # --- CloudTrail Lake (deferred, env-gated) ---
+    cloudtrail_lake_enabled: bool = _as_bool(
+        os.getenv("BI_CLOUDTRAIL_LAKE_ENABLED"),
+        default=False,
+    )
+    cloudtrail_lake_channel_arn: str = os.getenv("BI_CLOUDTRAIL_LAKE_CHANNEL_ARN", "")
+    cloudtrail_lake_region: str = os.getenv("BI_CLOUDTRAIL_LAKE_REGION", "eu-west-2")
+
 
 def get_bi_config() -> BIConfig:
     """Return BI configuration instance."""

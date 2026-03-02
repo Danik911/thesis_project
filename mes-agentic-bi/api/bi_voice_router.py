@@ -9,10 +9,12 @@ from uuid import uuid4
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from src.bi.audit import get_audit_logger
+from src.bi.audit.models import AuditEventType
 from src.bi.auth import get_current_user, get_optional_user
 from src.bi.auth_models import BIUser, UserRole
 from src.bi.config import get_bi_config
@@ -22,6 +24,13 @@ from src.bi.voice_config import get_bi_voice_settings
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["BI-Voice"])
+
+
+def _apply_authenticated_user_to_request_state(request: Request, user: BIUser | None) -> None:
+    if user is None:
+        return
+    request.state.user_id = user.sub
+    request.state.user_role = user.role.value
 
 
 def _get_voice_user_dep():
@@ -66,6 +75,7 @@ def _validate_voice_session_access(session_id: str, user: BIUser | None) -> None
 
 @router.post("/session/{session_id}")
 async def start_voice_session(
+    request: Request,
     session_id: str,
     user: BIUser | None = Depends(_get_voice_user_dep()),
 ) -> dict:
@@ -79,11 +89,19 @@ async def start_voice_session(
         )
 
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_voice_session_access(session_id, user)
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    await get_audit_logger().emit(
+        AuditEventType.VOICE_SESSION_STARTED,
+        request=request,
+        session_id=session_id,
+        payload={"session_id": session_id},
+    )
 
     return {
         "voice_session_id": uuid4().hex,
@@ -108,8 +126,9 @@ async def start_voice_session(
 
 @router.post("/tts/{session_id}")
 async def synthesize_tts(
+    request: Request,
     session_id: str,
-    request: VoiceTTSRequest,
+    tts_request: VoiceTTSRequest,
     user: BIUser | None = Depends(_get_voice_user_dep()),
 ) -> StreamingResponse:
     """Synthesize BI copilot response text to audio with AWS Polly."""
@@ -127,13 +146,14 @@ async def synthesize_tts(
             detail="BI TTS is disabled. Set BI_VOICE_TTS_ENABLED=true to enable.",
         )
 
-    if not request.text.strip():
+    if not tts_request.text.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="TTS text must not be empty.",
         )
 
     try:
+        _apply_authenticated_user_to_request_state(request, user)
         _validate_voice_session_access(session_id, user)
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
@@ -141,7 +161,7 @@ async def synthesize_tts(
     try:
         polly = boto3.client("polly", region_name=settings.polly_region)
         response = polly.synthesize_speech(
-            Text=request.text[:3000],
+            Text=tts_request.text[:3000],
             OutputFormat=settings.polly_output_format,
             VoiceId=settings.polly_voice_id,
         )
@@ -161,6 +181,13 @@ async def synthesize_tts(
 
     with audio_stream:
         data = audio_stream.read()
+
+    await get_audit_logger().emit(
+        AuditEventType.VOICE_TTS_SYNTHESIZED,
+        request=request,
+        session_id=session_id,
+        payload={"text_length": len(tts_request.text)},
+    )
 
     buffer = BytesIO(data)
     media_type = _audio_media_type(settings.polly_output_format)

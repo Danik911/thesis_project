@@ -5,7 +5,8 @@ Central handover index for transferring the MES Agentic BI RBAC (B9) implementat
 ## Scope
 
 This package covers:
-- Cognito RBAC infrastructure handover
+- Cognito RBAC infrastructure handover (B9 baseline)
+- PingFederate SSO migration plan for Pfizer POS Home deployment (B10)
 - Backend and frontend environment handover
 - Security validation and acceptance criteria
 - Delivery artifacts and sign-off evidence
@@ -17,6 +18,7 @@ This package covers:
 3. [Snowflake Integration Guide](./snowflake-integration-guide.md)
 4. [Validation and Acceptance](./validation-acceptance.md)
 5. [Delivery Package Checklist](./delivery-package-checklist.md)
+6. [PingFederate SSO Migration Plan](./pingfederate-migration-plan.md) — Pfizer POS Home integration (B10)
 
 ## Authoritative Source Links
 

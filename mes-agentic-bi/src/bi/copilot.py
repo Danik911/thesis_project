@@ -11,7 +11,7 @@ from typing import Any
 import pandas as pd
 from openai import OpenAI
 
-from langfuse import observe
+from langfuse import get_client, observe
 
 from .config import get_bi_config
 from .filter_engine import get_filter_engine
@@ -302,6 +302,7 @@ def _build_system_prompt(
 # Tool executor functions
 # ---------------------------------------------------------------------------
 
+@observe(name="bi-tool-apply-filter")
 def _tool_apply_filter(session_id: str, column: str, operator: str, value: Any) -> dict[str, Any]:
     """Execute the apply_filter tool."""
     engine = get_filter_engine(session_id)
@@ -318,6 +319,7 @@ def _tool_apply_filter(session_id: str, column: str, operator: str, value: Any) 
     }
 
 
+@observe(name="bi-tool-remove-filter")
 def _tool_remove_filter(session_id: str, column: str) -> dict[str, Any]:
     """Execute the remove_filter tool."""
     engine = get_filter_engine(session_id)
@@ -334,6 +336,7 @@ def _tool_remove_filter(session_id: str, column: str) -> dict[str, Any]:
     }
 
 
+@observe(name="bi-tool-search-data")
 def _tool_search_data(
     session_id: str,
     query: str,
@@ -379,6 +382,7 @@ def _tool_search_data(
     }
 
 
+@observe(name="bi-tool-summarize-column")
 def _tool_summarize_column(session_id: str, column: str) -> dict[str, Any]:
     """Execute the summarize_column tool on the currently filtered DataFrame."""
     engine = get_filter_engine(session_id)
@@ -410,6 +414,7 @@ def _tool_summarize_column(session_id: str, column: str) -> dict[str, Any]:
     return result
 
 
+@observe(name="bi-tool-answer-question")
 def _tool_answer_question(
     session_id: str,
     analysis_type: str,
@@ -525,6 +530,7 @@ def _tool_answer_question(
 # Tool dispatch
 # ---------------------------------------------------------------------------
 
+@observe(name="bi-copilot-tool-dispatch")
 def _dispatch_tool(session_id: str, tool_name: str, tool_args: dict[str, Any]) -> dict[str, Any]:
     """Dispatch a tool call by name and return its result dict.
 
@@ -711,10 +717,17 @@ def chat(
         history.append(msg)
 
     engine = get_filter_engine(session_id)
+    langfuse_trace_id = None
+    _lf_client = get_client()
+    if _lf_client:
+        langfuse_trace_id = _lf_client.get_current_trace_id()
+
     return {
         "response": final_text,
         "tool_calls": tool_calls_made,
         "filters_changed": filters_changed,
         "active_filters": engine.get_active_filters(),
         "filtered_row_count": engine.filtered_count(),
+        "langfuse_trace_id": langfuse_trace_id,
+        "model": config.copilot_model,
     }

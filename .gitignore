@@ -366,3 +366,6 @@ output/
 
 # AI4LIMS ChromaDB local storage (seeded at runtime from bundled JSONL)
 chroma_db_lims/
+# User-requested exclusions
+PRPs/
+docs/

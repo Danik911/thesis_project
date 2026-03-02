@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-02-27 (ISSUE-041 resolved: MES Agentic BI RBAC hardening and client handover artifacts)
+**Last Updated:** 2026-03-02 (PingFederate SSO migration plan added; B10 task identified as follow-up to ISSUE-041)
 **Maintained By:** doc-updater agent
 
 ---
@@ -32,6 +32,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
 | [ISSUE-041](ISSUE-041-mes-bi-rbac-hardening-and-client-handover-gaps.md) | MES Agentic BI RBAC Hardening and Client Handover Gaps | 2026-02-27 | 2026-02-27 | Auth/API/Documentation |
+<!-- B10 follow-up: PingFederate SSO migration (Pfizer POS Home). Replaces Cognito for production deployment. See docs/client-handover/pingfederate-migration-plan.md -->
 | [ISSUE-039](ISSUE-039-lims-xlsx-export-null-and-truncated-analysis-refs.md) | LIMS XLSX Export Fails — Null and Truncated Analysis References | 2026-02-21 | 2026-02-21 | API/Data Quality |
 | [ISSUE-038](ISSUE-038-lims-chat-missing-grounded-context-and-provenance.md) | LIMS Chat Missing Grounded Context and Provenance Attribution | 2026-02-21 | 2026-02-21 | API/Workflow |
 | [ISSUE-037](ISSUE-037-l15-frontend-delivery-and-local-e2e-consolidated.md) | L15 Frontend Delivery + Local E2E Validation (Consolidated) | 2026-02-20 | 2026-02-20 | Frontend/API/Config |

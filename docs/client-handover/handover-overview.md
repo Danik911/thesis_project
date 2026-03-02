@@ -54,6 +54,28 @@ References:
 - B9 task baseline: [PRPs/tasks/B9-rbac-cognito-auth.md](../../PRPs/tasks/B9-rbac-cognito-auth.md)
 - Hardening record: [docs/issues/ISSUE-041-mes-bi-rbac-hardening-and-client-handover-gaps.md](../issues/ISSUE-041-mes-bi-rbac-hardening-and-client-handover-gaps.md)
 
+## PingFederate SSO Migration (B10)
+
+The B9 Cognito baseline is the handover artifact for generic AWS deployments. For Pfizer's production environment, authentication switches from Cognito to **PingFederate** via the **POS Home** gateway at `pos.pfizer.com`.
+
+Key decisions confirmed post-meeting:
+
+- No Snowflake RLS — app-level site filtering (`_apply_site_filter()`) is sufficient.
+- Auth provider changes from Cognito JWT to PingFederate opaque access_token.
+- POS Home handles login and delivers a validated user object (NTID, groups, tokens) to the app.
+- PoC: all authenticated users receive Admin role. Group-based RBAC is a follow-up.
+- AD group naming: `GBH-dev-agenticbi-<site>-<product>-<role>`.
+
+Full migration instructions: [pingfederate-migration-plan.md](./pingfederate-migration-plan.md)
+
+Backend files affected:
+- [mes-agentic-bi/src/bi/auth.py](../../mes-agentic-bi/src/bi/auth.py) — add PingFederate introspection path
+- [mes-agentic-bi/src/bi/config.py](../../mes-agentic-bi/src/bi/config.py) — add `BI_PINGFED_*` settings
+
+Frontend files affected:
+- [mes-agentic-bi/frontend/lib/auth.tsx](../../mes-agentic-bi/frontend/lib/auth.tsx) — replace Amplify with POS Home token reader
+- [mes-agentic-bi/frontend/lib/authenticatedFetch.ts](../../mes-agentic-bi/frontend/lib/authenticatedFetch.ts) — pull token from POS Home context
+
 ## Exit Criteria
 
 Use [validation-acceptance.md](./validation-acceptance.md) as the pass/fail gate for handover acceptance.

@@ -1,3 +1,23 @@
+## Decision Summary (Post-Meeting)
+
+**Date of decision**: 2026-03-02
+
+The following was confirmed with the Pfizer client after the meeting this document was prepared for:
+
+| Decision | Outcome |
+|----------|---------|
+| Snowflake RLS | Not required. App-level filtering (`_apply_site_filter()`) is sufficient for PoC and production. |
+| SSO Provider | PingFederate (by Ping Identity), not AWS IAM Identity Center. |
+| Auth Gateway | POS Home (`pos.pfizer.com`) handles login and passes validated user object + tokens to embedded apps. |
+| Token type | Opaque `access_token` (~30 min TTL) + `refresh_token`. Not a JWT — cannot be decoded locally. Must call PingFederate introspection endpoint. |
+| User object | Contains: NTID, firstname, lastname, displayName, mail, domain, username, group[], tier_info, access_token, refresh_token. |
+| PoC auth model | All authenticated users = Admin. Group-based RBAC is a follow-up (B10 scope). |
+| Group naming | `GBH-dev-agenticbi-<site>-<product>-<role>` (e.g., `GBH-dev-agenticbi-gc-readonly`). |
+| App embedding | App is a sub-route under POS Home (like `/yield`, `/anomaly`). POS Home routes `/agenticbi` to our app. |
+| Next step | B10 task: PingFederate SSO migration. See [docs/client-handover/pingfederate-migration-plan.md](../../docs/client-handover/pingfederate-migration-plan.md). |
+
+---
+
 # Client Meeting Prep: RLS + AWS SSO Impact on RBAC
 
 **Date**: 2026-02-27

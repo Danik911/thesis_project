@@ -1,6 +1,9 @@
 {
   "/_app": "pages/_app.js",
-  "/_document": "pages/_document.js",
   "/_error": "pages/_error.js",
-  "/agentic-bi": "pages/agentic-bi.js"
+  "/_document": "pages/_document.js",
+  "/api/langfuse/summary": "pages/api/langfuse/summary.js",
+  "/agentic-bi": "pages/agentic-bi.js",
+  "/": "pages/index.js",
+  "/api/langfuse/trace": "pages/api/langfuse/trace.js"
 }

@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+_ROOT_ENV = Path(__file__).resolve().parents[1] / ".env.local"
+load_dotenv(dotenv_path=_ROOT_ENV)
 load_dotenv()
+
+from src.bi.audit.logger import AuditLogger
+from src.bi.audit.middleware import AuditMiddleware
+from src.bi.audit.models import AuditEventType
+from src.bi.config import get_bi_config
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO").upper(),
@@ -40,10 +48,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(AuditMiddleware)
+
 
 @app.get("/health")
 async def health() -> dict:
     return {"status": "healthy", "service": "mes-agentic-bi"}
+
+
+@app.on_event("startup")
+async def startup_init_audit() -> None:
+    config = get_bi_config()
+    audit = AuditLogger.initialize(config)
+    await audit.emit(
+        AuditEventType.SYSTEM_STARTUP,
+        payload={
+            "service": "mes-agentic-bi",
+            "audit_enabled": config.audit_enabled,
+            "cloudtrail_lake_enabled": config.cloudtrail_lake_enabled,
+        },
+    )
 
 
 # Register BI routers

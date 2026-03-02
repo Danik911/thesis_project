@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import AuditDashboard from '@/components/bi/AuditDashboard';
 import ChatDrawer from '@/components/bi/ChatDrawer';
 import DataGrid from '@/components/bi/DataGrid';
 import ExportButtons from '@/components/bi/ExportButtons';
@@ -44,6 +45,8 @@ export default function AgenticBIPage() {
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [filteredColumns, setFilteredColumns] = useState<BIColumn[] | null>(null);
   const [dataSource, setDataSource] = useState<'upload' | 'snowflake'>('upload');
+  const [langfuseTraceIds, setLangfuseTraceIds] = useState<string[]>([]);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,6 +75,8 @@ export default function AgenticBIPage() {
     setActiveFilters([]);
     setFilteredColumns(null);
     setVisibleColumns([]);
+    setLangfuseTraceIds([]);
+    setIsAuditOpen(false);
     setError(null);
     setDataSource('upload');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -132,6 +137,7 @@ export default function AgenticBIPage() {
       setPage(payload.preview.page);
       setTotalPages(payload.preview.total_pages);
       setActiveFilters(payload.preview.active_filters ?? []);
+      setLangfuseTraceIds([]);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Upload failed');
     } finally {
@@ -150,6 +156,7 @@ export default function AgenticBIPage() {
     setPage(payload.preview.page);
     setTotalPages(payload.preview.total_pages);
     setActiveFilters(payload.preview.active_filters ?? []);
+    setLangfuseTraceIds([]);
     setLoading(false);
   };
 
@@ -288,6 +295,14 @@ export default function AgenticBIPage() {
                   className="px-3 py-1.5 text-xs rounded-md border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 transition-colors"
                 >
                   Charts
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAuditOpen(true)}
+                  className="px-3 py-1.5 text-xs rounded-md border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 transition-colors"
+                >
+                  Audit Trail
                 </button>
 
                 <button
@@ -440,6 +455,11 @@ export default function AgenticBIPage() {
                         sessionId={sessionId}
                         onFiltersChanged={handleCopilotFiltersChanged}
                         getAccessToken={getAccessToken}
+                        onTraceId={(traceId) => {
+                          setLangfuseTraceIds((prev) =>
+                            prev.includes(traceId) ? prev : [...prev, traceId]
+                          );
+                        }}
                       />
                     )}
                   </div>
@@ -455,6 +475,21 @@ export default function AgenticBIPage() {
           )}
         </div>
       </div>
+
+      {isAuditOpen && sessionId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-cyan-900/50 bg-slate-950 p-4">
+            <button
+              type="button"
+              onClick={() => setIsAuditOpen(false)}
+              className="absolute right-3 top-3 rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:border-slate-500"
+            >
+              Close
+            </button>
+            <AuditDashboard sessionId={sessionId} traceIds={langfuseTraceIds} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

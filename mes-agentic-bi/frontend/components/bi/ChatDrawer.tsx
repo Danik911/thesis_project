@@ -9,6 +9,7 @@ interface ChatDrawerProps {
   sessionId: string;
   onFiltersChanged: (copilotFilters?: BIFilterDef[]) => Promise<void>;
   getAccessToken: () => Promise<string | null>;
+  onTraceId?: (traceId: string) => void;
 }
 
 const SUGGESTIONS = [
@@ -17,7 +18,12 @@ const SUGGESTIONS = [
   'Remove all filters',
 ];
 
-export default function ChatDrawer({ sessionId, onFiltersChanged, getAccessToken }: ChatDrawerProps) {
+export default function ChatDrawer({
+  sessionId,
+  onFiltersChanged,
+  getAccessToken,
+  onTraceId,
+}: ChatDrawerProps) {
   const [messages, setMessages] = useState<BIChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +109,10 @@ export default function ChatDrawer({ sessionId, onFiltersChanged, getAccessToken
       }
 
       const data: BIChatResponse = await response.json();
+
+      if (data.langfuse_trace_id) {
+        onTraceId?.(data.langfuse_trace_id);
+      }
 
       setMessages((prev) => [
         ...prev,
