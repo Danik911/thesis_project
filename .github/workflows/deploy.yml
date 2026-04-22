@@ -50,7 +50,7 @@ jobs:
             echo "Building ${{ matrix.service }}..."
             docker build \
               -t ${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${IMAGE_TAG} \
-              -f Dockerfile.${{ matrix.service }}.pip .
+              -f Dockerfile.${{ matrix.service }} .
           fi
 
           echo "Pushing image to ECR..."
