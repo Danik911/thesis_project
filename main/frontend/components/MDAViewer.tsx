@@ -1,4 +1,4 @@
-uv run uvicorn api.app:app --port 8080 --reloadimport { useState } from 'react';
+import { useState } from 'react';
 import ProvenanceBadge from '@/components/ProvenanceBadge';
 import type { ProvenanceBadgeProps } from '@/components/ProvenanceBadge';
 
