@@ -101,6 +101,7 @@ USER appuser
 # PATH: Add virtual environment binaries to PATH
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app/main" \
     PATH="/app/.venv/bin:$PATH"
 
 # No EXPOSE or HEALTHCHECK for workers (no HTTP endpoint)
