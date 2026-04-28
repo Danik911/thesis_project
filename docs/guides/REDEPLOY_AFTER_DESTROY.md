@@ -2,7 +2,7 @@
 
 How to bring `https://csvgeneration.com/` back online after the AWS infrastructure has been destroyed via `/destroy` (or the `destroy.yml` workflow).
 
-**Last verified:** 2026-04-22 (deploy run `24796252803`, branch `fix/deploy-workflow-dockerfile-names`).
+**Last verified:** 2026-04-28 (deploy run `25047539593`, branch `fix/deploy-workflow-dockerfile-names` — clean first-try redeploy after `/destroy`, all 6 stages green in ~22 min).
 **Region:** `eu-west-2` · **Account:** `275333454012`
 
 ---
