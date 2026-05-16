@@ -2,7 +2,7 @@
 
 Quick reference for all documented issues in the pharmaceutical test generation project.
 
-**Last Updated:** 2026-03-02 (PingFederate SSO migration plan added; B10 task identified as follow-up to ISSUE-041)
+**Last Updated:** 2026-04-22 (ISSUE-042: thesis redeploy after MES-BI refactor resolved)
 **Maintained By:** doc-updater agent
 
 ---
@@ -12,7 +12,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 1. **Search First**: Before creating a new issue, search this catalog for existing solutions
 2. **Follow Naming**: Issues use format `ISSUE-###-short-description.md`
 3. **Update Status**: When resolving an issue, update its status here AND in the issue file
-4. **Next Issue Number**: ISSUE-042
+4. **Next Issue Number**: ISSUE-043
 
 ---
 
@@ -31,6 +31,7 @@ Quick reference for all documented issues in the pharmaceutical test generation 
 
 | ID | Title | Date Created | Date Resolved | Category |
 |----|-------|--------------|---------------|----------|
+| [ISSUE-042](ISSUE-042-redeploy-after-mes-bi-refactor.md) | Thesis Redeploy Blocked After MES-BI Refactor (Dockerfile rename, pyproject packaging, deleted `src/utils/`, frontend lint) | 2026-04-22 | 2026-04-22 | Deployment/Docker/API |
 | [ISSUE-041](ISSUE-041-mes-bi-rbac-hardening-and-client-handover-gaps.md) | MES Agentic BI RBAC Hardening and Client Handover Gaps | 2026-02-27 | 2026-02-27 | Auth/API/Documentation |
 <!-- B10 follow-up: PingFederate SSO migration (Pfizer POS Home). Replaces Cognito for production deployment. See docs/client-handover/pingfederate-migration-plan.md -->
 | [ISSUE-039](ISSUE-039-lims-xlsx-export-null-and-truncated-analysis-refs.md) | LIMS XLSX Export Fails — Null and Truncated Analysis References | 2026-02-21 | 2026-02-21 | API/Data Quality |
@@ -106,10 +107,10 @@ These issues were created before the standard naming convention:
 
 ## Statistics
 
-- **Total Issues:** 33
+- **Total Issues:** 34
 - **Open:** 4
-- **Resolved:** 29
-- **Most Common Category:** Deployment (9 issues)
+- **Resolved:** 30
+- **Most Common Category:** Deployment (10 issues)
 
 ---
 

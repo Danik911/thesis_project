@@ -213,6 +213,10 @@ secrets.yaml
 
 # Claude Code specific
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Next.js build output
+.next/
 
 # PRP Workflow State Management - TRACK IN GIT FOR GAMP-5 AUDIT COMPLIANCE
 # State files provide complete audit trail for pharmaceutical compliance
